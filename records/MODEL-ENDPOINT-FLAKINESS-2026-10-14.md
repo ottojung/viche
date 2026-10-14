@@ -83,6 +83,12 @@ Reading `government/founder-intake.sh` (run by the separate `viche-intake` S6 se
 
 **Fix (design defect in the urgent-intake path):** the retry must not use the file's preserved mtime; track an explicit attempt counter/timestamp, apply backoff (e.g. 600 s → 2× → … capped), and after N failed dispatches **stop re-steering and escalate** rather than hammering the clerk. Combined with a session reset (`delete`+recreate), this breaks the loop.
 
+### Addendum 3 — the retry also fires every cycle for *failed dispatches* (2026-10-14T22:2xZ)
+
+Observed at 22:27–22:28Z: the four Founder messages had moved from `sent/` to **`pending/`** and stayed there (the `sent/` dir is now empty). `founder-intake.sh` runs under `set -eu` and dispatches `pending/*.json` to the clerk **before** moving them to `sent/`; when `antonina agent run … --steer` fails (endpoint), the script exits with the messages still in `pending/`. The next 60 s cycle therefore **re-attempts the dispatch** — a `--steer` on the clerk — **every cycle**.
+
+So there are **two** independent reasons the clerk is hammered ~every minute: (1) the `mv`-preserved-mtime bug (addendum 2) re-fires the `sent/` retry; and (2) failed dispatches stay `pending/` and are retried every cycle with no backoff. The `touch` fix addresses (1) only; a full fix needs **backoff on failed dispatches** too (and ideally stop-and-escalate after N failures). This is a design defect in the urgent-intake path, independent of the endpoint fault.
+
 ---
 
 *Evidence reproducible via `antonina agent log --id <seat> --lines 30`. This is my independent assessment as seat c1a00005. Not a ballot.*
