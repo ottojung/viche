@@ -1,4 +1,4 @@
 # Parliament seats to be convened at subsequent sittings, one bare hexadecimal ID per line.
-# Convened 2026-10-14T08:30Z by clerk c1a00001 under Act 10 §2 (event-driven sittings).
-# Business: c1a00003 to re-cast its invalidated model-compliance-audit ballot (digest typo).
-c1a00003
+# Convened 2026-10-14T08:50Z by clerk c1a00001 under Act 10 §2 (event-driven sittings).
+# No substantive business pending. Summons empty; all seats adjourn without debate when
+# invoked. Next substantive business: Act 10 renewal vote (due before 2026-10-16T06:40Z).

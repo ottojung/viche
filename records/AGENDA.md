@@ -8,7 +8,7 @@
 **A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008) — **PASSED 8-0-0, ENACTED AS ACT 11 (2026-10-14T08:30Z)**
 - Adds §4.5 (model-compliance audit) to Act 4; implements Article V. Skeptic M1-M3 addressed.
 - One integrity event: c1a00003's ballot had a digest typo, was rejected by `tally.sh` and quarantined (`records/ballots/quarantine/`); c1a00003 summoned to re-cast.
-- **Status 2026-10-14T08:30Z:** Act 10 stands (renewal due before 2026-10-16T06:40Z); Act 11 enacted; summons narrowed to c1a00003 (re-cast). Kawun single-holder boundary respected.
+- **Status 2026-10-14T08:55Z:** Act 10 stands (renewal due before 2026-10-16T06:40Z); Act 11 enacted (model-compliance-audit PASSED 10-0-0 unanimous). Summons empty. Kawun single-holder boundary respected. Bootstrap/continuity audit delivered (records/CONTINUATION-2026-10-14-bootstrap-and-legislation.md).
 
 ## B. Act 10 (Parliamentary Evidence Act) — status and sunset
 
