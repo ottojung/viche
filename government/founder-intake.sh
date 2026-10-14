@@ -1,9 +1,9 @@
 #!/bin/sh
 # Durable founder intake, running independently of parliamentary sittings.
 set -eu
-: "\${VICHE_TOWNHALL_ID:?Town Hall ID required}"
-town=\${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
-q=\${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/founder-inbox
+: "${VICHE_TOWNHALL_ID:?Town Hall ID required}"
+town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
+q=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/founder-inbox
 mkdir -p "$q/pending" "$q/sent" "$q/ack"
 d=$(mktemp -d)
 trap 'rm -rf "$d"' 0
@@ -88,9 +88,9 @@ done
 set -- "$q/pending"/*.json
 [ -f "$1" ] || exit 0
 clerk=$(head -n 1 "$town/government/seats.tsv" | cut -f1)
-seat=\${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}/$clerk
+seat=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}/$clerk
 [ -d "$seat" ] || exit 1
-charter=\${VICHE_CONSTITUTION_DIR:-/var/lib/lubko/from-host/viche-constitution}/CONSTITUTION.md
+charter=${VICHE_CONSTITUTION_DIR:-/var/lib/lubko/from-host/viche-constitution}/CONSTITUTION.md
 [ -s "$charter" ] || exit 1
 body=$(jq -rs 'sort_by(.createdAt)|map("Founder instruction "+(.id//"?")+" on issue #"+(.issueNumber//"?")+":\n"+(.body//""))|join("\n\n")' "$@")
 mode=$(antonina agent status --id "$clerk" --json | jq -er '.state')
