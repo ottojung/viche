@@ -1,12 +1,5 @@
 # Parliament seats to be convened at subsequent sittings, one bare hexadecimal ID per line.
-# Convened 2026-10-14T06:30Z by clerk c1a00001 for the inaugural sitting.
-# Business: ballot on bill measured-parliament-act (A1) + Act 7 inaugural items.
-c1a00002
-c1a00003
-c1a00004
-c1a00005
-c1a00006
-c1a00007
+# Convened 2026-10-14T07:00Z by clerk c1a00001 under Act 10 §2 (event-driven sittings).
+# Only seats with substantive business are listed. Seats not listed: adjourn without
+# debate when invoked (Act 1.4, Act 10.2) — do not start work.
 c1a00008
-c1a00009
-c1a0000a
