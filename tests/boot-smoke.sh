@@ -84,4 +84,10 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+1)) ]
-printf 'Viche: %s seats initialized, charter injected and routine sitting summons clerk only\n' "$seat_count"
+# A documented summons must wake the clerk plus exactly the summoned seat(s).
+summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
+printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
+/bin/sh "$town/constitution/boot.sh" --once
+[ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
+printf 'Viche: %s seats initialized, charter injected, routine sitting summons clerk only, and a documented summons wakes clerk+summoned seat\n' "$seat_count"
