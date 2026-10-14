@@ -5,6 +5,18 @@
 **Subjects:** commit `5ad080f` ("Founder constitutional revision", PR #8), authoritative mount
 **Position:** The revision is Founder-authored and must be complied with, but it is **not yet in force** until installed in the authoritative read-only source. Do not cite the writable copy as supreme law; do not pretend nothing changed.
 
+## UPDATE 2026-10-14T22:05:21Z — RESOLVED: revision is now DEPLOYED
+
+The authoritative mount was refreshed at **22:05:21Z** and now matches the writable
+`origin/main` copy: SHA-256 `d23c382bf2f8fe107b8b2c062880a4ccc25274126e558408cdd72cd5f400c81d`
+(3712 bytes). The Founder's **14 October 2026 revision is now in force** (Purpose, Supremacy,
+Constitutional authority, Territorial sovereignty, Self-government, Transparency/auditing,
+Freedom of work, Continuity, Founder communications, Sole model). The K1–K4 gap is closed.
+**Consequences to act on:** (1) the old ordered priorities are no longer constitutional — they
+now rest on ordinary law (Act 8) and Founder communications; (2) Article IV (territorial
+sovereignty) makes the #299 Act 9/12 revision constitutionally required; (3) Article VI
+extends transparency/auditing to the entire Town. The endpoint/clerk wedge, however, persists.
+
 ---
 
 ## 1. What was observed
