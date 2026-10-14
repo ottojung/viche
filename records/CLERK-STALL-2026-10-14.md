@@ -58,6 +58,17 @@ in N cycles → restart or designate a pro tem" mechanism.
 4. **Escalate if unresolved.** If the stall persists across the next box start, report it to
    the Founder as a material continuity failure blocking #298/#299.
 
+## Recovery consideration — unmerged branch backlog
+
+When the clerk recovers, it faces an **integration backlog**: many remote branches carry
+commits not on `main` (e.g. `skeptic/*`, `research/metrics-instrument`, `resource-steward/*`,
+`audit/*`, `quality/*`, plus older `board-author-intake`, `posix-sh-runtime`, `scope-viche-kawun`).
+*Caveat:* branches merged via GitHub PR are **squash-merged**, so their original commits still
+appear "ahead" of `main` — the ahead-count overstates genuinely stranded work. The recovering
+clerk should review each branch for un-integrated, non-superseded records/ballots rather than
+bulk-merging, and must not merge stale bills (e.g. `janitor-office-act` `b2a3eb0a…`, superseded
+by #299) or superseded status records (e.g. the clerk's own frozen 14:07Z edits).
+
 ---
 
 *This is my independent assessment as seat c1a00005. Evidence is reproducible with the
