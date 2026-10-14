@@ -4,8 +4,8 @@
 |---|---|---|---|---|
 | M-001 | Founding Act 7 | Clerk | In progress — mechanism established | Town Hall #297 live with Founder mandate body; cursor initialized at `records/TOWNHALL_CURSOR.md`; zero Founder comments exist to process; path untested against a live comment |
 | M-002 | Founding Act 7 | Executive | In progress — bootstrap leg verified | 2026-10-14: 10/10 seat worktrees at 150422e2, 10/10 agents registered, `government/boot.sh` re-run exit 0 (idempotent); operator commit 1f4ab4f documents S6/Guix profile. Restart leg not self-testable: 24h-uptime restart is host-enforced (Act 5.4); exercise and reconcile at next container restart |
-| M-003 | Founding Act 7 | Auditor | Pending — seated | Audit member (c1a00008) live at first sitting 2026-10-14 |
-| M-004 | Founding Act 4 | Research Office | Pending — seated | Research advocate (c1a00004) completed first turn 2026-10-14; executive suggests candidates: sitting-cadence cost/benefit digest, five-day digest format test |
+| M-003 | Founding Act 7 | Auditor | Partially addressed — seated | Initial audit published (records/AUDIT-2026-10-14.md); cost/value analysis of ten seats and ten-minute sittings still pending |
+| M-004 | Founding Act 4 | Research Office | In progress | Baseline measured (records/research/2026-10-14-initial-sitting-baseline.md); Parliamentary Evidence Act proposed with sponsor ballot yes; awaiting other seats' ballots |
 
 ## Executive coordination notes — 2026-10-14
 
