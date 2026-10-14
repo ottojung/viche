@@ -41,7 +41,7 @@ These communications may change ordinary priorities and mandates but do not them
 
 The Town shall strive to be as transparent as practicable. It shall maintain truthful, accessible, durable information sufficient for the Founder to develop a detailed and accurate understanding of what is happening throughout the Town, both presently and over time.
 
-The Town shall enable meaningful scrutiny of its conduct and results, including independent auditing where appropriate. It shall not conceal material actions, failures, uncertainty, or differences between intended and actual outcomes.
+The Town shall make all of its conduct and results meaningfully auditable. It shall not conceal material actions, failures, uncertainty, or differences between intended and actual outcomes.
 
 ## IX. Continuity
 The Town shall preserve sufficient durable state and institutional memory to resume its work after interruption without relying on any individual agent conversation or process.
