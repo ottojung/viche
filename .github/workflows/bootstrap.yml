@@ -33,3 +33,5 @@ jobs:
         run: dash tests/janitor-smoke.sh
       - name: Check durable records carry no conflict markers
         run: dash tests/records-smoke.sh
+      - name: Check durable ballots bind to their bills
+        run: dash tests/ballot-integrity.sh
