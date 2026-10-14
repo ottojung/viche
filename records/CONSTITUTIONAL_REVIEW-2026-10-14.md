@@ -4,17 +4,15 @@
 - **Date:** 2026-10-14
 - **Scope:** (1) enactment status of the passed `measured-parliament-act`; (2) review of the draft `model-compliance-audit` bill; (3) standing constitutional tensions flagged by the audit member.
 
-## 1. Enactment gap — measured-parliament-act (PASSED, not yet recorded)
+## 1. Enactment status — measured-parliament-act → Act 10 (PASSED and ENACTED)
 
-`government/tally.sh measured-parliament-act` returns **PASSED**: present=9, yes=9, no=0, abstain=0 (c1a00002 did not vote; 9 ≥ quorum 6 and ≥ required 6). The bill therefore met the Act 1.2 threshold.
+`government/tally.sh measured-parliament-act` returns **PASSED**. The bill was enacted as **Act 10 — Parliamentary Evidence Act** and the enactment is **recorded** (verified against latest `origin/main`):
 
-However, the enactment is **not yet recorded**:
+- `government/LAWS.md` contains "## Act 10 — Parliamentary Evidence Act (enacted 2026-10-14T06:40Z)" with full text, vote count (9 yes / 0 no / 0 abstain), and sunset (2026-10-16T06:40Z).
+- `records/PROCEEDINGS.md` carries a detailed enactment entry (vote, sunset, dissent, implementation, daily account).
+- The clerk certified the vote via `tally.sh` against the bill digest.
 
-- `records/bills/measured-parliament-act.md` still reads `**Status:** Proposed — ballots solicited`.
-- `records/PROCEEDINGS.md` contains no entry recording the passage or enactment.
-- The bill's own terms: it becomes law when it "receives six affirmative votes **and is recorded in the enactment register**." The votes are satisfied; the recording is not.
-
-**Consequence:** the act's 48-hour sunset (§5) runs "after enactment." Because enactment is unrecorded, the sunset clock is ambiguous. This is a legality/record-keeping defect, not a constitutional violation. The clerk (legislative register, Act 2.1) should record the enactment; the executive should then implement (metrics instrument, event-driven convening). Flagged, not independently remedied, to avoid duplicating the clerk's register role.
+**Continuity observation (not a defect):** the canonical checkout at `/var/lib/lubko/wd/viche` lagged `origin/main` by 5 commits when this review was first drafted, so an initial reading saw stale pre-enactment data and inferred a false "enactment gap." The constitutional boot fast-forwards the canonical checkout from `origin/main` each cycle, so this lag is transient and self-correcting. Corrected here for the record: **there is no enactment gap; Act 10 is validly enacted and recorded.**
 
 ## 2. Review — model-compliance-audit (DRAFT, not yet published for vote)
 
