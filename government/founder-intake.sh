@@ -96,10 +96,15 @@ body=$(jq -rs 'sort_by(.createdAt)|map("Founder instruction "+(.id//"?")+" on is
 mode=$(antonina agent status --id "$clerk" --json | jq -er '.state')
 keys=
 for f in "$@"; do keys="$keys $(basename "$f" .json)"; done
+charter_text=$(cat "$charter")
 prompt=$(cat <<EOF
 PRIORITY FOUNDER INTAKE. These independently retrieved messages are authored exactly Vitalik:
 $body
-Immediately read full linked issues, record a durable actionable mandate with owner and next action, and summon/delegate the appropriate Viche parliamentarians. In particular, initiate Janitor Office issue #298 without waiting for routine sittings. Preserve existing in-flight work, avoid duplicate workers, and follow the existing Viche+Kawun exclusive scope. After publicly recording meaningful triage (not just reading), write an empty receipt file in $q/ack for every processed key:$keys. Missing receipts cause automatic retry in 10 minutes. The protected charter is $charter. Use the required free model through Antonina only. Do not enact laws without actual votes.
+Immediately read full linked issues, record a durable actionable mandate with owner and next action, and summon/delegate the appropriate Viche parliamentarians. Preserve existing in-flight work, avoid duplicate workers, and follow the existing Viche+Kawun exclusive scope. After publicly recording meaningful triage (not just reading), write an empty receipt file in $q/ack for every processed key:$keys. Missing receipts cause automatic retry in 10 minutes. The authoritative founder-controlled Constitution is reproduced below and has highest authority; parliament may NOT amend it or its S6 bootstrap. Use the required free model through Antonina only. Do not enact laws without actual votes.
+
+=== AUTHORITATIVE CONSTITUTION ===
+$charter_text
+=== END AUTHORITATIVE CONSTITUTION ===
 EOF
 )
 if [ "$mode" = running ]; then
