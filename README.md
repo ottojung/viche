@@ -9,6 +9,8 @@
 - [`records/`](records) — durable proceedings, mandates, ballot evidence, Town Hall cursor, summons and published evaluations.
 - [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) and [`deploy/s6/viche/run`](deploy/s6/viche/run) — install Viche as an **additional S6 service in the existing Lubko container**, configured through `config-private`. No separate Docker Compose stack.
 
+The **initial Founder happiness priorities** are ordered: **high-quality resolution of Antonina board tasks first, timely resolution second, economy of the Founder's attention third**. Agents should not interrupt the Founder for routine decisions they can resolve themselves. These are starting preferences that the Founder may later revise through authenticated feedback—not an efficiency metric that supplants happiness.
+
 The ten founding seats are an initial arrangement, not a limit on workers, parliamentary reform or agent invocations. The first sitting can convene everyone; subsequent ten-minute checks convene the clerk and any members summoned to real business. The law defines initial quorum and vote thresholds, which are amendable by law. A deterministic ballot tally helps distinguish an enacted decision from a claim of consensus.
 
 Once the executive merges approved government code into GitHub `main`, the constitutional boot **fast-forwards the canonical town checkout** and invokes the updated parliamentary setup on its next cycle. It never auto-updates its own read-only constitutional source.
