@@ -1,4 +1,4 @@
-name: Bootstrap validation
+name: Constitutional bootstrap validation
 on:
   push:
   pull_request:
@@ -10,12 +10,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Validate Bash syntax
-        run: bash -n government/boot.sh government/sitting.sh government/entrypoint.sh deploy/verify-founder.sh tests/boot-smoke.sh
-      - name: Check constitutional model pin and seat count
+      - name: Check shell syntax
+        run: bash -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run
+      - name: Check seat roster and constitutional model
         run: |
           grep -Fq 'opencode-go/longcat-2.5-preview-free' constitution/CONSTITUTION.md
-          test "$(wc -l < government/seats.tsv)" -eq 10
-          test "$(cut -f1 government/seats.tsv | sort -u | wc -l)" -eq 10
-      - name: Bootstrap and restart rehearsal
+          test -s government/seats.tsv
+          awk -F '\t' 'NF != 3 || $1 !~ /^[0-9a-f]+$/ { exit 1 }' government/seats.tsv
+          test "$(cut -f1 government/seats.tsv | sort -u | wc -l)" -eq "$(wc -l < government/seats.tsv)"
+      - name: Exercise constitutional launch and recovery
         run: bash tests/boot-smoke.sh
+      - name: Verify GPG Founder directives and replay prevention
+        run: bash tests/signature-smoke.sh

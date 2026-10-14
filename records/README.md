@@ -1,9 +1,11 @@
 # Durable public records
 
-This directory is parliament-editable. It starts small so the government can invent better forms, and should be committed and pushed through normal Git revisions.
+This directory is ordinary government state. Parliament may improve its format. Commit and publish important records; the signed Antonina board is also a durable evidence source.
 
-- [`TOWNHALL_CURSOR.md`](TOWNHALL_CURSOR.md) tracks last processed Board activity. The clerk must consult *all* unseen pages, not only the newest 50 comments.
-- [`MANDATES.md`](MANDATES.md) records lawful current obligations, ownership, pending decisions and resumable work across container deaths.
-- [`PROCEEDINGS.md`](PROCEEDINGS.md) records proposals, individual votes, dissent, enacted changes, work done, evaluations and failures.
+- `TOWNHALL_CURSOR.md`: which Founder comments the clerk processed (pages contain at most 50 comments).
+- `MANDATES.md`: outstanding obligations and ownership across agent deaths.
+- `PROCEEDINGS.md`: bills, hearings, individual votes, dissent, enactment, audit and daily account.
+- `SUMMONED.txt`: seat IDs that should wake at the next constitutional sitting beyond the clerk; a list of invitations, not a permanent seat limit.
+- `ballots/<bill>.tsv`: one explicit ballot per participating seat, bound to an immutable bill text. `government/tally.sh` deterministically evaluates the configured quorum and affirmative threshold.
 
-Antonina board records are also durable. Link to them instead of copy/pasting large histories. Distinguish the status of every claimed result. Agent conversation state is not a replacement for the public record.
+Neither this directory nor the Antonina board is a cryptographic guarantee that a particular agent cast a vote; their write credentials are shared. The constitution and Founder-message verifier are **outside** parliament's writable checkout in the installed environment. Reconstruct public decisions from mutually corroborating evidence, not merely from a narrative summary.

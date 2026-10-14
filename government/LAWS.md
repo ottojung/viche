@@ -5,7 +5,7 @@ The constitution overrides this document. Laws govern institutions and recurring
 
 ## Act 1 — Parliament
 1. The founding parliament has ten persistent seats, listed in `government/seats.tsv`. The initial ten are a bootstrap, not a constitutional requirement.
-2. Each seat has one vote. Six seats constitute a quorum. An ordinary bill passes with at least **six affirmative votes** from the ten founding seats. Abstentions do not count as affirmative. The parliament may legislate different arrangements.
+2. Each seat has one vote. Six seats constitute a quorum. An ordinary bill passes with at least **six affirmative votes** from the ten founding seats, recorded as individually attributable ballots and checked by the initial deterministic `government/tally.sh` procedure. Parliament may amend `government/voting.conf` along with its voting law. Abstentions do not count as affirmative. The parliament may legislate different arrangements.
 3. Bills are published before voting. A valid law records its text, sponsor, rationale, votes, significant dissent, date, and link to its enactment and implementation. Interested members may conduct hearings, commission research, and amend proposals.
 4. Parliamentary sittings are initially offered every ten minutes. Members busy with useful work need not be interrupted. If there is nothing substantive on the agenda, proceedings may be adjourned without debate.
 5. Seat assignments and diversity strategies are experimental. Parliament should consider whether independent investigation, adversarial scrutiny and specialized perspectives improve its work, without assuming that ten conversations using the same model are ten independent minds.
@@ -17,9 +17,9 @@ The constitution overrides this document. Laws govern institutions and recurring
 4. Neither parliament nor the executive imposes fixed numerical ceilings on workers, simultaneous agents or invocations. They should avoid wasteful duplicate work and manage logical dependencies. There is no fixed resource-awareness admission gate.
 
 ## Act 3 — Town Hall
-1. The primary channel for founder requests and feedback is the permanent Antonina board issue designated by `VICHE_TOWNHALL_ID`. The clerk shall acknowledge authenticated messages and record the resulting action, investigation, deliberation or explanation.
+1. The primary channel for founder requests and feedback is the permanent Antonina board issue designated by `VICHE_TOWNHALL_ID`. A signed directive uses the `VICHE-FOUNDER-DIRECTIVE/1` envelope with bound issue, monotonically increasing sequence, and ISO-8601 issuance time. The clerk shall acknowledge authenticated messages and record the resulting action, investigation, deliberation or explanation.
 2. The clerk must read enough pages to capture all new comments, not merely page 1: Antonina issue pages contain up to 50 comments. A durable cursor or last-processed identifier must be recorded and reconciled on restart.
-3. The Founder's directives must be authenticated by an authorized signing key. The displayed author string is not adequate because Antonina uses a shared full-access board key. Unverified comments may be considered suggestions but not Founder orders.
+3. The Founder's directives must be authenticated by an authorized signing key, using only the founder-owned `constitution/verify-founder.sh` script, including anti-replay checks. Its writable replay state is not a strong security boundary while agents share the same Unix identity; the government shall work toward stronger separation. The displayed author string is not adequate because Antonina uses a shared full-access board key. Unverified comments may be considered suggestions but not Founder orders.
 4. Questions to the Founder should be concise and relevant. The government must not claim a problem solved merely because an agent exited successfully.
 
 ## Act 4 — Research and audit
@@ -30,13 +30,13 @@ The constitution overrides this document. Laws govern institutions and recurring
 
 ## Act 5 — Durability and restart
 1. Laws, elected or appointed officers, mandates, investigations, unresolved work and decisions shall have durable records in Git and/or the signed Antonina board. Conversation transcripts are supplemental, not the sole institutional memory.
-2. After a container restart the clerk shall reconcile interrupted work and make continuation requests without duplicating already active tasks. Apparent process success is not proof of substantive completion.
+2. After a container restart the founder-owned constitutional boot invokes the parliamentary setup and reconciles interrupted work. The clerk shall make continuation requests without duplicating already active tasks. Apparent process success is not proof of substantive completion.
 3. The executive shall publish a concise daily account covering decisions, completed work, failed work, institutional changes, outstanding mandates and uncertainties. Over five days the Founder should be able to review the record in about ten minutes.
-4. The external host may restart the container at 01:00 America/Vancouver daily, independently of whether the parliament agrees that it is ready.
+4. The existing host's S6 supervisor runs the founder-controlled `constitution/boot.sh` directly. The external host may restart the container at 01:00 America/Vancouver daily, independently of whether the parliament agrees that it is ready.
 
 ## Act 6 — Legislation and publication
-1. Changes to `government/LAWS.md`, `government/boot.sh`, `government/sitting.sh`, `government/seats.tsv`, and other government-managed programs require either a valid recorded legislative act or authorized executive implementation of an existing act.
-2. Adopted changes shall be recorded in a Git branch/commit and merged to the governing branch with a link to the enabling decision. Draft changes alone are not law; votes alone do not deploy code.
+1. Changes to `government/LAWS.md`, `government/boot.sh`, `government/sitting.sh`, `government/seats.tsv`, `government/voting.conf`, and other government-managed programs require either a valid recorded legislative act or authorized executive implementation of an existing act.
+2. Adopted changes shall be recorded in a Git branch/commit and merged to the governing branch with a link to the enabling decision. The constitutional S6 boot automatically fast-forwards its canonical `/town` checkout from that branch each cycle; a failed fast-forward is an integration error to investigate, not a silent permission to ignore new law. Draft changes alone are not law; votes alone do not deploy code.
 3. Ordinary laws may be repealed or rewritten—including the voting rules in this Act—consistent with the Constitution. Only the Founder may install a changed authoritative Constitution.
 4. Parliament shall maintain a plain-language method to restore prior versions, explain divergent deployments, and assist the Founder in dissolving or resetting the government.
 

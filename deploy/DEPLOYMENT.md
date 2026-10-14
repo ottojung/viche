@@ -1,93 +1,82 @@
-# Deploy Viche (founder-operated host setup)
+# Deploy Viche inside the existing Lubko/S6 container
 
-These instructions install an experimental government; they do **not** launch it just by merging the repository. Execute the following on a Docker-capable Linux host that may reach GitHub, the Antonina board, and OpenCode providers.
+This **replaces** the old Viche-specific Docker Compose plan. The host already operates the Lubko worker under S6. The existing private deployment source on Marceline is `/workspace/config-private/other/lubko-fs/`; it contains `s6-service-defaults/lubko/run` (which calls the existing Lubko supervisor). Viche should be a **second S6 service in the same container**, not a second container or a replacement for Lubko.
 
-## 1. Founder-controlled source and writable town
+## Three separately controlled directories
 
-The host should maintain **two separate checkouts**, to keep the authoritative constitution outside the agents' writable area:
+1. **Founder-owned readonly constitution** (confirmed existing mount path `/var/lib/lubko/from-host/viche-constitution`): `CONSTITUTION.md`, `boot.sh`, `verify-founder.sh`. All three must come from the **same Founder-approved Git revision**. The town must not be able to write this directory or the source of its bind mount.
+2. **Parliament's writable Git clone**, at `/var/lib/lubko/wd/viche`, with `government/LAWS.md`, `government/boot.sh`, `government/sitting.sh`, laws, ballot rules, and records. Give it GitHub SSH access for PRs/pushes.
+3. **Persistent runtime data**, e.g. `/var/lib/lubko/wd/viche-seats` and `/var/lib/lubko/wd/viche-state`, alongside the existing Antonina managed agent state. Preserve these across container restarts; delete only deliberately during Founder reset.
 
-```sh
-git clone https://github.com/ottojung/viche.git /srv/viche-foundation
-cd /srv/viche-foundation/deploy
-mkdir -p data/seats data/state data/cache private/config/antonina private/config/opencode private/share/opencode private/ssh private/gnupg private/founder
-git clone git@github.com:ottojung/viche.git data/town
-```
+Do not give parliament write access to the founder's constitutional mount **or its source checkout**. A readonly mount of an ordinary checkout that automatically pulls from an agent-writable repository is NOT sufficient. Deploy the exact founder-approved commit by copying its `constitution/` directory into the private host repository at `config-private/other/lubko-fs/from-host/viche-constitution/`, which is already bind-mounted at `/var/lib/lubko/from-host` **read-only** in the existing container (confirmed via `findmnt`). Never refresh that private copy on ordinary agent pushes. Hash and record the mounted revision. A GitHub rule is defense in depth; a pinned, separately managed deployment is the real boundary.
 
-The Foundation checkout at `/srv/viche-foundation` is **not mounted writable into the container**. Compose mounts only its `constitution/` directory at `/constitution:ro`; it mounts `deploy/data/town` as `/town:rw`. The parliament may edit and push government code in `/town`, but does not acquire access to the host's Foundation checkout. **Do not automatically pull agent-authored constitutional changes into the Founder's source checkout.** The Founder decides when to install a new constitutional revision.
+## GitHub protection for constitutional files
 
-Make the data directories readable/writable by the image's UID 10001 and secure the credential directories:
+The repository includes `.github/CODEOWNERS` designating `@ottojung` for `constitution/**` and the CODEOWNERS file itself.
 
-```sh
-sudo chown -R 10001:10001 data private
-chmod 700 private private/config private/share private/ssh private/gnupg
-```
+In repository Settings → Rules → Rulesets, configure a rule covering `main` to require a pull request and code-owner approval for changes, without agent-accessible bypass. The currently observed ruleset **only forbids deletion and non-fast-forward updates**; it does **not yet** require PRs or code-owner review. Do not assume CODEOWNERS enforces itself. If an agent has an owner-level credential or can bypass rulesets, use a separately permissioned GitHub identity or distinct owner-controlled repository for the constitutional release. Only a Founder-approved revision is copied into the readonly mount.
 
-Use a separate Linux host or isolated Docker daemon if possible. The container runs non-root with its capability set dropped and a read-only root filesystem. There are **no fixed worker-count, invocation, CPU or memory quotas** in the government configuration.
+## S6 integration in config-private
 
-## 2. Configure credentials and authentication
-
-Place the existing Antonina board credential in:
+The concrete existing structure is:
 
 ```text
-deploy/private/config/antonina/credential.json
+config-private/other/lubko-fs/s6-service-defaults/
+  lubko/run                      # existing working worker: leave untouched
+  viche/run                      # new S6 run script
 ```
 
-Do not run `antonina board initialize` against an existing board. The board's shared credential grants full write access; do not mistake its author labels for verified Founder identity.
+Use `deploy/s6/viche/run` as the initial template in `config-private`. It sets `VICHE_TOWN_ROOT`, `VICHE_SEATS_ROOT`, and `VICHE_STATE_ROOT`, then **executes `/var/lib/lubko/from-host/viche-constitution/boot.sh`**. No parliament-writable entrypoint is allowed between S6 and the constitutional bootstrap. Provision `VICHE_TOWNHALL_ID` through host-controlled S6 environment configuration, not from the town's writable Git checkout. If a shell wrapper sets it, keep that wrapper with the private S6 service definition. Include the S6 service directory in the existing container service-tree deployment, and reuse the existing read-only `/var/lib/lubko/from-host` bind mount, and verify it remains `ro` after rebuilding. Check the container's actual S6 service registration/install mechanism before enabling the service; copying a file to Git alone does not activate a service.
 
-Configure OpenCode for `opencode-go/longcat-2.5-preview-free` in `deploy/private/config/opencode/` and its required authentication under `deploy/private/share/opencode/`. This runtime uses no model fallback. The image builds Antonina from the current `main` source and installs OpenCode; verify versions and credentials before deployment. Credential scope is broader than the constitutional model rule, so consider provider-side restrictions if available. **Never commit secrets.**
+The Viche S6 service should have `bash`, `git`, `jq`, `flock`, `gpg`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. **Do not run another OpenCode provider, model or wrapper**: the sole authorized model is `opencode-go/longcat-2.5-preview-free`, variant `low`, through Antonina. Verify the installed Antonina build matches its pinned runtime before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
 
-Place a GitHub-scoped SSH key and SSH host trust configuration under `deploy/private/ssh/` so parliament can clone, branch, push and propose pull requests. Configure git author/signing identity and, if necessary, the signing key under `deploy/private/gnupg/`. Ensure any provided GPG/SSH keys have only the powers you intend; the town gets shell and internet access.
+## Founder's signed Town Hall directives
 
-For signed Founder instructions, put the Founder's **public** key at `deploy/private/founder/public.asc`, and its full uppercase fingerprint (no spaces) at `deploy/private/founder/fingerprint`. Never expose the Founder's private signing key to the town. Use `bash /town/deploy/verify-founder.sh /path/to/exact-message.asc` to validate copied clear-signed comments. Until this is configured, the town must treat alleged Founder instructions as unauthenticated. The verifier is a helper, not a board-side cryptographic permission layer.
-
-## 3. Create the one Town Hall issue
-
-With a trusted Antonina CLI session pointing at your **existing** board:
+Create a permanent Antonina board issue with the regular trusted CLI:
 
 ```sh
-antonina board create --title "Viche Town Hall — Founder Communications" --body "Founder's signed requests and feedback for Viche. Parliament should preserve and acknowledge them." --json
+antonina board create --title "Viche Town Hall — Founder Communications" --body "Signed Founder instructions and feedback for Viche" --json
 ```
 
-Read the returned issue ID. On the host create `deploy/.env` (not committed):
+Use its returned ID for `VICHE_TOWNHALL_ID`. Do **not** reinitialize the existing shared board. Existing board author labels are not proof of Founder identity.
 
-```dotenv
-VICHE_TOWNHALL_ID=YOUR_NEW_ISSUE_NUMBER
+Provide only your **public** GPG signing key as `/founder/public.asc` and its full fingerprint as `/founder/fingerprint`; your private signing key stays outside the container. An exact directive body to GPG clear-sign looks like:
+
+```text
+VICHE-FOUNDER-DIRECTIVE/1
+issue: 123
+sequence: 1
+issued-at: 2026-10-14T06:00:00Z
+
+Please investigate the restart failures and explain what happened.
 ```
 
-The ID is **not** guessed or auto-created by the container. The parliamentary clerk must page beyond the newest 50 comments and keep `records/TOWNHALL_CURSOR.md` current. A clear-signed Founder directive can be generated off-host with `gpg --armor --clearsign` and pasted, including its signature, as a board comment.
+Replace `123` and the timestamp with the actual issue and time, increment sequence for every new signed directive, and create an armored clear-signed message using `gpg --armor --clearsign` **on a machine outside the town**. Paste the entire signed message, including signature delimiters, as a single Antonina comment. Verify the exact stored comment using `/var/lib/lubko/from-host/viche-constitution/verify-founder.sh /path/to/comment.asc`. The verifier binds issue ID and sequence and rejects replay/out-of-order signatures using `viche-state/founder-verification`.
 
-## 4. Build, start, and observe
+**Important remaining caveat:** the verifier's durable counter and board access are not a true privilege boundary if the same Unix identity can tamper with them. Isolating the verification service and its state from all worker UIDs is a subsequent hardening task. Also verify experimentally that Antonina preserves clearsigned comments byte-for-byte.
 
-```sh
-cd /srv/viche-foundation/deploy
-docker compose build
-docker compose up -d
-docker compose logs -f town
-docker compose exec town antonina agent list --page 1 --json
-```
+## Starting the town and seeing enacted law take effect
 
-At start, `government/entrypoint.sh` calls `government/boot.sh`, which ensures every seat in `government/seats.tsv` has its own worktree and persistent Antonina ID. It then invokes `government/sitting.sh` and schedules additional non-preempting sittings every ten minutes. Agent starts are detached and parallel. Parliament can legally change these scripts, their cadence, or its roster. Running workers are not interrupted just because another sitting begins.
+1. Install the frozen constitutional files read-only; provision the Town Hall ID, public key and credentials outside Git.
+2. Clone `git@github.com:ottojung/viche.git` into the worker's `/var/lib/lubko/wd/viche`, keeping `origin/main` as its upstream.
+3. Provision the extra S6 service. The host's S6 starts **constitutional `boot.sh`**, which calls the parliament-editable `government/boot.sh` to ensure each currently legislated seat exists, then launches a sitting with the constitution injected.
+4. On the first sitting all currently legislated seats wake. Later the clerk wakes every ten minutes and others are invoked when their IDs are recorded in `records/SUMMONED.txt`; running agents are not preempted.
+5. The clerk handles Town Hall intake; other seats independently investigate, deliberate and vote. A bill has explicit ballots and `government/tally.sh` evaluates the currently legislated quorum and affirmative-vote threshold.
 
-The container has normal outbound networking, Git, OpenCode, Antonina CLI, GPG and SSH. The mounted read-only charter is authoritative even if worktree copies differ. The runtime's state, agent conversations, Git worktrees, credentials and caches are persisted in separate `deploy/data` and `deploy/private` host directories; re-creating a container does not erase them.
+**Law integration:** parliamentary members work in independent Git worktrees/branches, record a valid vote, submit proposed code changes via PR and have the authorized executor merge the PR into `main`. Each constitutional S6 cycle performs `git pull --ff-only` of the canonical town checkout before running parliamentary setup. Failed pulls, dirty worktrees or rejected PRs are **visible integration failures**, not silent continued reliance on stale legislation. This does not automatically merge unreviewed bills, and it never pulls from `main` into the mounted Founder-controlled constitutional tree.
 
-## 5. Nightly termination and recovery
+Use `antonina agent list --running --page 1 --json`, `antonina board show --id ID --page 1 --json`, S6 logs, `records/`, and Git logs for live inspection.
 
-Schedule an external host job to execute at **01:00 America/Vancouver**, for example a systemd timer that invokes:
+## Shutdowns, reset, and validation
 
-```sh
-cd /srv/viche-foundation/deploy && docker compose restart town
-```
+The 01:00 **America/Vancouver** host-level interruption, if enabled by the Founder, should terminate/recreate the **town container**, rather than merely restarting the S6 `viche` service if ephemeral agent children can survive outside it. Check how your existing S6 host schedules container restarts. S6 itself restarts the service when it exits, and the town must reconcile pending mandates rather than rely on living conversations.
 
-Host-side timing, not a parliament-controlled script, causes the shutdown. Expect a real container termination. The next boot reconciles persisted Antonina states, creates missing seats without duplicating existing identities, and resumes sittings. Parliament must independently maintain and verify recovery of unfinished legislative/executive mandates; simply restarting processes is not sufficient.
+The Founder may stop the S6 service, revert the government clone to an approved Git revision, preserve/archive signed board records and state, and restart. A constitutional amendment is a separate Founder-approved update of the read-only mounted source. Do not automatically overwrite that source from a routine Git pull.
 
-Do not mount the Docker socket, SSH agent forwarding with excessive authority, the Founder's private key, or the source Foundation checkout into the town. The container cannot guarantee correctness or spending safety if supplied credentials are broader than its rules.
+Repository smoke tests: `bash -n constitution/*.sh government/*.sh tests/*.sh` and `bash tests/boot-smoke.sh`. The tests mock Antonina and use a test-only `VICHE_TEST_NO_SYNC=1` to avoid fetching Git history. **Never set that variable in production S6.** The tests do not prove real model invocation, signature preservation in board comments, or correct S6 volume mappings. These must be checked during deployment.
 
-## 6. Recovery, revision and founder reset
+## Supply chain and hardening notes
 
-Inspect `records/`, Antonina board activity, agent logs and Git history. A parliament-merged government change affects `data/town`; normal Git collaboration and explicit integration should bring new revision(s) into that checkout. Running `docker compose restart town` reloads the entrypoint and current laws.
+Reuse the existing Antonina installation in the Lubko container rather than rebuilding an unpinned Antonina/OpenCode image. Pin the constitutional deployment to an exact Git commit. If rebuilding the overall container, pin dependencies in its existing source rather than automatically cloning `main` during every image build. Unlimited agent concurrency does not mean infinite physical RAM; do not invent a worker-count cap. A container-level memory/tmpfs boundary is optional infrastructure protection, not parliamentary admission policy.
 
-For a Founder reset, stop the town, select a trusted government revision in the host's writable clone, record the reason, and start it again. The Constitution mount comes only from the Foundation checkout. To amend it, the **Founder** explicitly changes that host-controlled copy and recreates/restarts the container. Preserve an archival backup of both Git and signed Antonina board records for experiments requiring cold-start restoration.
-
-## 7. Verification and limitations
-
-Run `bash -n government/*.sh deploy/verify-founder.sh` and `bash tests/boot-smoke.sh` in a Git checkout. The tests validate the script's basic behavior with a mocked Antonina executable; they cannot validate live model availability, board signatures, container runtime or recovered conversations. The design currently asks the clerk to perform intake verification and record keeping; **there is not yet a deterministic board-ingestion service enforcing signed-only Founder instructions**. This should be one of parliament's first engineering improvements, without weakening the constitutional signature rule.
+Current separation is strongest for the read-only constitutional file. With shared board credentials, Git access and process UID, a sufficiently adversarial agent could bypass text-level instructions or tamper with runtime state. The experiment currently accepts a trust-based model policy; stronger capability isolation can be invented later by the Town and approved by the Founder where constitutional controls are involved.

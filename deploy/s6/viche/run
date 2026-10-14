@@ -1,0 +1,9 @@
+#!/bin/sh
+# Template for config-private/other/lubko-fs/s6-service-defaults/viche/run
+# S6 directly invokes the founder-controlled bootstrap.
+export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
+export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
+export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
+# The operator sets the Town Hall issue number in S6 service environment.
+: "${VICHE_TOWNHALL_ID:?Set Town Hall issue number in S6 environment}"
+exec /bin/bash /var/lib/lubko/from-host/viche-constitution/boot.sh

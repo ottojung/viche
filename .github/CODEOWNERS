@@ -1,0 +1,4 @@
+# Founder-only constitutional authority. Effective only with GitHub's
+# Require review from Code Owners rule and required PR reviews enabled on main.
+/constitution/ @ottojung
+/.github/CODEOWNERS @ottojung
