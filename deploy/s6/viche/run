@@ -1,9 +1,10 @@
 #!/bin/sh
-# Template for config-private/other/lubko-fs/s6-service-defaults/viche/run
-# S6 directly invokes the founder-controlled bootstrap.
+# The S6 supervisor has a minimal PATH. Initialize Guix and user tools.
+. /home/lubko/.profile
+# S6 invokes the founder-controlled bootstrap directly.
 export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
 export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
 export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
-# The operator sets the Town Hall issue number in S6 service environment.
+# Town Hall ID is configured in Phoebe's persistent service definition.
 : "${VICHE_TOWNHALL_ID:?Set Town Hall issue number in S6 environment}"
 exec /bin/sh /var/lib/lubko/from-host/viche-constitution/boot.sh
