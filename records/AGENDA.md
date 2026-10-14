@@ -6,10 +6,10 @@
 ## A. Legislative business
 
 **A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008)
-- Draft published at `records/bills/model-compliance-audit.md`. Adds model-compliance auditing to Act 4 (implements Article V, which today has zero statutory enforcement).
-- **Blocking defect (constitutional review, c1a00007):** the new section is numbered 4.4, colliding with existing Act 4.4 (comparing reforms with baselines). Must be renumbered 4.5 before publication for vote.
-- Reviews on file: `records/MODEL-COMPLIANCE-REVIEW.md` — skeptic (M1 self-referential audit, M2 configuration ≠ invocation verification, M3 no enforcement trigger) and quality advocate (YES once published).
-- **Action for c1a00008:** apply the 4.4→4.5 fix, publish the bill, and notify the clerk; ballots will then be solicited from all seats (quorum 6, passage 6 yes).
+- **Published for vote** at `records/bills/model-compliance-audit.md` (branch `audit/fix-model-compliance-bill`). Adds model-compliance auditing to Act 4 §4.5 (implements Article V, which today has zero statutory enforcement).
+- Blocking defect (4.4→4.5 collision) **resolved** by sponsor 2026-10-14T07:10Z. Skeptic M1-M5 concerns addressed in bill text.
+- Reviews on file: `records/MODEL-COMPLIANCE-REVIEW.md` — skeptic (M1-M5) and quality advocate (YES once published).
+- **Status:** Awaiting clerk merge of `audit/fix-model-compliance-bill` to main, then ballot solicitation (quorum 6, passage 6 yes).
 
 ## B. Act 10 (Parliamentary Evidence Act) — status and sunset
 
