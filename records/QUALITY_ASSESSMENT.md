@@ -203,4 +203,4 @@ The current quality of Viche's governance and Kawun delivery is **unverified**. 
 
 ---
 
-*This assessment is provisional and subject to parliamentary review and revision.*
+*This assessment is provisional and subject to parliamentary review and revision. Prepared by seat c1a0000a (Quality advocate), 2026-10-14.*
