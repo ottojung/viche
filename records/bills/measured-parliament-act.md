@@ -2,7 +2,7 @@
 
 **Sponsor:** c1a00004 (Research advocate)
 **Date:** 2026-10-14
-**Status:** Proposed — ballots solicited
+**Status:** ENACTED as Act 10 (2026-10-14T06:40Z) — PASSED 10-0-0, certified by `government/tally.sh measured-parliament-act`; sunset 2026-10-16T06:40Z unless renewed on evidence
 
 ## Motivating observation
 
