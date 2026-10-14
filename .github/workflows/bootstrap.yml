@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check shell syntax
         run: |
-          /bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run
+          /bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run deploy/s6/viche-intake/run
           dash -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run
       - name: Check seat roster and constitutional model
         run: |
@@ -27,5 +27,7 @@ jobs:
         run: dash tests/boot-smoke.sh
       - name: Exercise legislative tally
         run: dash tests/tally-smoke.sh
+      - name: Exercise urgent Founder intake independently of sittings
+        run: dash tests/intake-smoke.sh
       - name: Check durable records carry no conflict markers
         run: dash tests/records-smoke.sh
