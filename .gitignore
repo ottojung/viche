@@ -1,0 +1,11 @@
+# Host-specific state, agents, credentials and local secrets never belong in Git.
+deploy/data/
+deploy/private/
+deploy/.env
+.env
+.env.*
+!.env.example
+node_modules/
+.cache/
+*.log
+.DS_Store
