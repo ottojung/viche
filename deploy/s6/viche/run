@@ -6,4 +6,4 @@ export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
 export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
 # The operator sets the Town Hall issue number in S6 service environment.
 : "${VICHE_TOWNHALL_ID:?Set Town Hall issue number in S6 environment}"
-exec /bin/bash /var/lib/lubko/constitution/viche/boot.sh
+exec /bin/bash /var/lib/lubko/from-host/viche-constitution/boot.sh
