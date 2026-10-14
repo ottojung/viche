@@ -17,10 +17,10 @@ The constitution overrides this document. Laws govern institutions and recurring
 4. Neither parliament nor the executive imposes fixed numerical ceilings on workers, simultaneous agents or invocations. They should avoid wasteful duplicate work and manage logical dependencies. There is no fixed resource-awareness admission gate.
 
 ## Act 3 — Town Hall
-1. The primary channel for founder requests and feedback is the permanent Antonina board issue designated by `VICHE_TOWNHALL_ID`. A signed directive uses the `VICHE-FOUNDER-DIRECTIVE/1` envelope with bound issue, monotonically increasing sequence, and ISO-8601 issuance time. The clerk shall acknowledge authenticated messages and record the resulting action, investigation, deliberation or explanation.
-2. The clerk must read enough pages to capture all new comments, not merely page 1: Antonina issue pages contain up to 50 comments. A durable cursor or last-processed identifier must be recorded and reconciled on restart.
-3. The Founder's directives must be authenticated by an authorized signing key, using only the founder-owned `constitution/verify-founder.sh` script, including anti-replay checks. Its writable replay state is not a strong security boundary while agents share the same Unix identity; the government shall work toward stronger separation. The displayed author string is not adequate because Antonina uses a shared full-access board key. Unverified comments may be considered suggestions but not Founder orders.
-4. Questions to the Founder should be concise and relevant. The government must not claim a problem solved merely because an agent exited successfully.
+1. The Founder may create any Antonina board issue or comment. **The author field exactly equal to `Vitalik` is sufficient** for the town to treat it as a Founder communication; no signature, message envelope, identity verification, nonce or sequence is required. The permanent Town Hall issue identified by `VICHE_TOWNHALL_ID` remains the preferred place for Viche-specific feedback.
+2. The clerk shall consider Founder-authored issues and comments, acknowledge significant requests, and create or delegate tasks appropriately. It shall page through older Town Hall comments beyond the newest 50 when needed, and record a durable last-processed identifier so requests do not get lost or repeatedly reprocessed after a restart.
+3. Comments and issues authored by other users may be ordinary submissions, not Founder directives. This is an explicitly trust-based arrangement: the shared Antonina board credential does not cryptographically authenticate its displayed author field. The Founder accepts this for the initial experiment; parliament shall not demand further authentication unless the Founder requests it.
+4. Questions to the Founder must be consequential and concise. The government shall independently resolve ordinary questions, routine blockers, and technical disagreements. It must not mark an issue solved solely because an agent exited.
 
 ## Act 4 — Research and audit
 1. A **Research Office** is established as a continuing function, with personnel assigned by the executive as required. It may grow into a permanent laboratory or be reorganized by parliament.
@@ -29,10 +29,10 @@ The constitution overrides this document. Laws govern institutions and recurring
 4. The Town shall compare attempted reforms with reasonable simpler baselines where practical, and reconsider laws whose claimed benefits were not demonstrated.
 
 ## Act 5 — Durability and restart
-1. Laws, elected or appointed officers, mandates, investigations, unresolved work and decisions shall have durable records in Git and/or the signed Antonina board. Conversation transcripts are supplemental, not the sole institutional memory.
+1. Laws, elected or appointed officers, mandates, investigations, unresolved work and decisions shall have durable records in Git and/or the Antonina board. Conversation transcripts are supplemental, not the sole institutional memory.
 2. After a container restart the founder-owned constitutional boot invokes the parliamentary setup and reconciles interrupted work. The clerk shall make continuation requests without duplicating already active tasks. Apparent process success is not proof of substantive completion.
 3. The executive shall publish a concise daily account covering decisions, completed work, failed work, institutional changes, outstanding mandates and uncertainties. Over five days the Founder should be able to review the record in about ten minutes.
-4. The existing host's S6 supervisor runs the founder-controlled `constitution/boot.sh` directly. The external host may restart the container at 01:00 America/Vancouver daily, independently of whether the parliament agrees that it is ready.
+4. The existing host's S6 supervisor runs the founder-controlled `constitution/boot.sh` directly. The external host shall restart the entire box **after every 24 hours of uptime**, counted from the box's most recent start, not at a fixed wall-clock time. This restart is independent of parliament's readiness; unexpected earlier termination also remains possible.
 
 ## Act 6 — Legislation and publication
 1. Changes to `government/LAWS.md`, `government/boot.sh`, `government/sitting.sh`, `government/seats.tsv`, `government/voting.conf`, and other government-managed programs require either a valid recorded legislative act or authorized executive implementation of an existing act.
@@ -41,7 +41,7 @@ The constitution overrides this document. Laws govern institutions and recurring
 4. Parliament shall maintain a plain-language method to restore prior versions, explain divergent deployments, and assist the Founder in dissolving or resetting the government.
 
 ## Act 7 — First agenda
-The inaugural parliament shall establish practical signed-Founder intake, audit its own startup and continuity, assess whether its ten-seat organization and hearing cadence actually help the Founder, consider a first evidence-backed institutional improvement, and report the outcomes publicly. This is a starting agenda, not a permanent commitment to the initial institutions.
+The inaugural parliament shall establish practical author-based Founder intake, audit its own startup and continuity, assess whether its ten-seat organization and hearing cadence actually help the Founder, consider a first evidence-backed institutional improvement, and report the outcomes publicly. This is a starting agenda, not a permanent commitment to the initial institutions.
 
 
 ## Act 8 — Founding Service Priorities
@@ -50,4 +50,4 @@ The inaugural parliament shall establish practical signed-Founder intake, audit 
 3. **Quality first:** verify that deliverables actually satisfy the issue: suitable tests, independent review as warranted, resolution of review feedback, required merge or deployment, and evidence of acceptance. Do not close a task merely because an agent ran successfully or a PR exists.
 4. **Timeliness second:** parallelize useful independent fronts without numerical worker or invocation caps; avoid ceremonial debates, redundant reports, repeated investigations or blocking on questions with reasonable answers. Do not trade substantial quality for superficial speed.
 5. **Attention third:** institutions shall make routine choices on their own initiative, using delegated authority and documented Founder preferences. Do not ask the Founder to approve technical details or settle disagreements the government can competently resolve; do not send routine chatter. Request intervention only for reserved Founder powers, genuinely unresolved and consequential preference questions, needed external authorizations, or material risks. Distinguish an actionable request from an informative public report.
-6. The auditor shall judge the government against these three priorities **in their stated order**, not by number of laws, agents, messages or meetings. It shall report trade-offs candidly. The government may propose a different operational approach, but only authenticated Founder feedback may supersede these initial Founder priorities.
+6. The auditor shall judge the government against these three priorities **in their stated order**, not by number of laws, agents, messages or meetings. It shall report trade-offs candidly. The government may propose a different operational approach, but only later Founder communications (issues or comments authored `Vitalik`) may supersede these initial Founder priorities.
