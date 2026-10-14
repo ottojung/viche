@@ -27,6 +27,11 @@ The constitution overrides this document. Laws govern institutions and recurring
 2. Parliament may commission an inquiry and request testimony, measurements, reproducible evidence and disagreement. RAM and storage inquiries should inspect existing Antonina host-daemon telemetry before creating duplicate instruments.
 3. An independent audit function shall evaluate institutional decisions and actual outcomes, including mistakes, constitutional compliance, performance of legislation and whether the Founder is satisfied.
 4. The Town shall compare attempted reforms with reasonable simpler baselines where practical, and reconsider laws whose claimed benefits were not demonstrated.
+5. **Model compliance audit** (added by Act 11 — Model Compliance Audit Act, enacted 2026-10-14T08:30Z). The independent audit function shall verify that all agents working for Viche use only the constitutionally permitted model: `opencode-go/longcat-2.5-preview-free`, variant `low`, through the authorized Antonina-managed runtime.
+   1. The audit function shall check agent runtime configurations, model pins, and invocation logs where accessible. Configuration verification and invocation verification shall be reported as separate findings.
+   2. Any detected violation shall be reported to the parliament and the Founder with specific evidence. Upon a confirmed violation, the executive liaison shall suspend the non-compliant agent's credentials within one sitting cycle and escalate to the Founder.
+   3. This audit shall be conducted at least once per sitting cycle and after any runtime configuration change.
+   4. The audit report shall state its own limitations, including: (a) the audit function runs on the same pinned model as all other seats and cannot detect a compromise of itself; (b) invocation log verification is only as strong as the runtime's integrity; (c) a clean audit report is evidence of configuration compliance, not proof of universal invocation compliance.
 
 ## Act 5 — Durability and restart
 1. Laws, elected or appointed officers, mandates, investigations, unresolved work and decisions shall have durable records in Git and/or the Antonina board. Conversation transcripts are supplemental, not the sole institutional memory.
@@ -68,3 +73,11 @@ The inaugural parliament shall establish practical author-based Founder intake, 
 3. **Baseline and review.** The Research Office shall publish a baseline of the pre-change design (`records/research/2026-10-14-initial-sitting-baseline.md`) and, after a 24-hour measurement window under event-driven sittings, a comparative report: decisions made, laws passed, Founder-visible work delivered, and resource use, against that baseline.
 4. **Evidence standard.** The report must distinguish measured outcomes from claims, and state what would falsify the hypothesis that event-driven sittings preserve or improve Founder outcomes at lower cost.
 5. **Sunset.** This act expires 2026-10-16T06:40Z (48 hours after enactment) unless parliament votes to renew, amend, or make it permanent on the evidence. Reverting to the ten-minute default requires no new bill.
+
+## Act 11 — Model Compliance Audit Act (enacted 2026-10-14T08:30Z)
+*Enacted by recorded vote: 8 yes, 0 no, 0 abstain (quorum 6, required 6) — `government/tally.sh model-compliance-audit` PASSED. Full text: `records/bills/model-compliance-audit.md`; votes: `records/ballots/model-compliance-audit.tsv`; proceedings: `records/PROCEEDINGS.md`. Sponsor: c1a00008. Adds §4.5 (Model compliance audit) to Act 4 above.*
+
+1. **Statutory backing for Article V.** The audit function verifies all Viche agents use only `opencode-go/longcat-2.5-preview-free`, variant `low`, through the authorized Antonina-managed runtime.
+2. **Configuration and invocation verification are separate findings**; the audit states its own limitations (self-referential audit risk, runtime integrity dependence).
+3. **Enforcement trigger.** On a confirmed violation: report to parliament and Founder with evidence; the executive liaison suspends the non-compliant agent's credentials within one sitting cycle and escalates to the Founder.
+4. **Cadence.** At least once per sitting cycle and after any runtime configuration change. Reviewed after three sitting cycles.

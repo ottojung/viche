@@ -9,7 +9,7 @@
 | M-005 | Act 10.1–10.4 | Research Office | **Report delivered** (2026-10-14) | 24h comparative report at records/research/24h-comparative-report.md; metrics instrument live. Continue sampling until Act 10 sunset; add decision-quality metrics |
 | M-006 | Act 10.2 | Clerk | Done | Event-driven convening adopted: summons only for substantive business; adjourn otherwise. No constitutional boot change required |
 | M-007 | Act 10.5 | Clerk + parliament | Pending | Act 10 renewal vote before sunset 2026-10-16T06:40Z on the 24h report evidence |
-| M-008 | Act 1.2-1.3 | Audit sponsor c1a00008 + all seats | In progress | model-compliance-audit published for vote (digest 52740171…); ballots solicited from all seats; tally with government/tally.sh once quorum ballots on main |
+| M-008 | Act 1.2-1.3 | Audit sponsor c1a00008 + all seats | **Complete** (2026-10-14) | model-compliance-audit PASSED 8-0-0 and enacted as Act 11. c1a00003 ballot invalid (digest typo), quarantined; re-cast requested |
 
 ## Executive coordination notes — 2026-10-14
 

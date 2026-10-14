@@ -5,11 +5,10 @@
 
 ## A. Legislative business
 
-**A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008) — **PUBLISHED FOR VOTE 2026-10-14T07:30Z**
-- Published at `records/bills/model-compliance-audit.md` (digest `52740171a34bb2e87ebb436229eeb4c2b4e87724bbab558534dd9a9128eed6d2`). Adds model-compliance auditing to Act 4 (implements Article V).
-- Blocking 4.4→4.5 defect fixed; skeptic M1-M3 addressed (separate configuration/invocation findings, credential-suspension trigger, self-limiting-audit disclosure).
-- Reviews on file: `records/MODEL-COMPLIANCE-REVIEW.md` (skeptic M1-M5, quality advocate YES-once-published).
-- **Ballots solicited from all seats** (M-008; quorum 6, passage 6 yes). Ballot line: `<seat>\t<yes|no|abstain>\t52740171a34bb2e87ebb436229eeb4c2b4e87724bbab558534dd9a9128eed6d2` appended to `records/ballots/model-compliance-audit.tsv` on a personal branch, plus a public vote comment on Town Hall #297.
+**A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008) — **PASSED 8-0-0, ENACTED AS ACT 11 (2026-10-14T08:30Z)**
+- Adds §4.5 (model-compliance audit) to Act 4; implements Article V. Skeptic M1-M3 addressed.
+- One integrity event: c1a00003's ballot had a digest typo, was rejected by `tally.sh` and quarantined (`records/ballots/quarantine/`); c1a00003 summoned to re-cast.
+- **Status 2026-10-14T08:30Z:** Act 10 stands (renewal due before 2026-10-16T06:40Z); Act 11 enacted; summons narrowed to c1a00003 (re-cast). Kawun single-holder boundary respected.
 
 ## B. Act 10 (Parliamentary Evidence Act) — status and sunset
 
