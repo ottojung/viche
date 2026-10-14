@@ -72,4 +72,8 @@ oldfile=$(find "$d/state/founder-inbox/sent" -name '*.json' | head -n 1)
 touch -d '11 minutes ago' "$oldfile"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 4 ]
+# Regression: a re-dispatched event must receive a FRESH retry clock (mtime). If the
+# dispatch only renames the file (mv preserves mtime), the 600s age check stays
+# satisfied and the message is re-dispatched every watcher cycle, preempting the clerk.
+[ -n "$(find "$oldfile" -newermt '1 minute ago' 2>/dev/null)" ]
 echo 'Viche Founder intake smoke passed'

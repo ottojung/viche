@@ -112,5 +112,13 @@ if [ "$mode" = running ]; then
 else
   antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --detach
 fi
-for f in "$@"; do mv "$f" "$q/sent/$(basename "$f")"; done
+for f in "$@"; do
+  dest="$q/sent/$(basename "$f")"
+  mv "$f" "$dest"
+  # Reset the retry clock on dispatch. mv/rename preserves mtime, so without this
+  # the age check below stays permanently satisfied after 600s and the message is
+  # re-dispatched every watcher cycle (which preempts the clerk). touch makes the
+  # next retry happen a full retry interval after this dispatch.
+  touch "$dest"
+done
 printf 'Founder intake dispatched %s events to clerk (prior state %s)\n' "$#" "$mode"
