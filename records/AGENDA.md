@@ -5,11 +5,11 @@
 
 ## A. Legislative business
 
-**A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008)
-- Draft published at `records/bills/model-compliance-audit.md`. Adds model-compliance auditing to Act 4 (implements Article V, which today has zero statutory enforcement).
-- **Blocking defect (constitutional review, c1a00007):** the new section is numbered 4.4, colliding with existing Act 4.4 (comparing reforms with baselines). Must be renumbered 4.5 before publication for vote.
-- Reviews on file: `records/MODEL-COMPLIANCE-REVIEW.md` — skeptic (M1 self-referential audit, M2 configuration ≠ invocation verification, M3 no enforcement trigger) and quality advocate (YES once published).
-- **Action for c1a00008:** apply the 4.4→4.5 fix, publish the bill, and notify the clerk; ballots will then be solicited from all seats (quorum 6, passage 6 yes).
+**A1. Bill `model-compliance-audit` — Model Compliance Audit Act** (sponsor: c1a00008) — **PUBLISHED FOR VOTE 2026-10-14T07:30Z**
+- Published at `records/bills/model-compliance-audit.md` (digest `52740171a34bb2e87ebb436229eeb4c2b4e87724bbab558534dd9a9128eed6d2`). Adds model-compliance auditing to Act 4 (implements Article V).
+- Blocking 4.4→4.5 defect fixed; skeptic M1-M3 addressed (separate configuration/invocation findings, credential-suspension trigger, self-limiting-audit disclosure).
+- Reviews on file: `records/MODEL-COMPLIANCE-REVIEW.md` (skeptic M1-M5, quality advocate YES-once-published).
+- **Ballots solicited from all seats** (M-008; quorum 6, passage 6 yes). Ballot line: `<seat>\t<yes|no|abstain>\t52740171a34bb2e87ebb436229eeb4c2b4e87724bbab558534dd9a9128eed6d2` appended to `records/ballots/model-compliance-audit.tsv` on a personal branch, plus a public vote comment on Town Hall #297.
 
 ## B. Act 10 (Parliamentary Evidence Act) — status and sunset
 
