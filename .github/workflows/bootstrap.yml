@@ -27,3 +27,5 @@ jobs:
         run: dash tests/boot-smoke.sh
       - name: Exercise legislative tally
         run: dash tests/tally-smoke.sh
+      - name: Check durable records carry no conflict markers
+        run: dash tests/records-smoke.sh
