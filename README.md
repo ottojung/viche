@@ -4,12 +4,12 @@
 
 ## Two tiers of authority
 
-- [`constitution/CONSTITUTION.md`](constitution/CONSTITUTION.md), [`constitution/boot.sh`](constitution/boot.sh) and [`constitution/verify-founder.sh`](constitution/verify-founder.sh) — **Founder-controlled**. Deploy together at a Founder-approved commit, in a read-only mount. S6 runs this boot directly. It injects the charter into each managed parliamentary agent invocation.
+- [`constitution/CONSTITUTION.md`](constitution/CONSTITUTION.md), [`constitution/boot.sh`](constitution/boot.sh) — **Founder-controlled**. Deploy together at a Founder-approved commit, in a read-only mount. S6 runs this boot directly. It injects the charter into each managed parliamentary agent invocation.
 - [`government/LAWS.md`](government/LAWS.md), [`government/boot.sh`](government/boot.sh), [`government/sitting.sh`](government/sitting.sh), [`government/seats.tsv`](government/seats.tsv), [`government/voting.conf`](government/voting.conf), [`government/tally.sh`](government/tally.sh) — **parliament-editable** laws and workflows. The ordinary boot script remains **beside the laws**, but no longer possesses constitutional supervisor authority.
 - [`records/`](records) — durable proceedings, mandates, ballot evidence, Town Hall cursor, summons and published evaluations.
 - [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) and [`deploy/s6/viche/run`](deploy/s6/viche/run) — install Viche as an **additional S6 service in the existing Lubko container**, configured through `config-private`. No separate Docker Compose stack.
 
-The **initial Founder happiness priorities** are ordered: **high-quality resolution of Antonina board tasks first, timely resolution second, economy of the Founder's attention third**. Agents should not interrupt the Founder for routine decisions they can resolve themselves. These are starting preferences that the Founder may later revise through authenticated feedback—not an efficiency metric that supplants happiness.
+The **initial Founder happiness priorities** are ordered: **high-quality resolution of Antonina board tasks first, timely resolution second, economy of the Founder's attention third**. Agents should not interrupt the Founder for routine decisions they can resolve themselves. These are starting preferences that the Founder may later revise through Antonina board comments or issues authored `Vitalik`—not an efficiency metric that supplants happiness.
 
 The ten founding seats are an initial arrangement, not a limit on workers, parliamentary reform or agent invocations. The first sitting can convene everyone; subsequent ten-minute checks convene the clerk and any members summoned to real business. The law defines initial quorum and vote thresholds, which are amendable by law. A deterministic ballot tally helps distinguish an enacted decision from a claim of consensus.
 
@@ -17,7 +17,9 @@ Once the executive merges approved government code into GitHub `main`, the const
 
 ## Starting
 
-Follow [the S6 deployment guide](deploy/DEPLOYMENT.md). Install the constitutional files from a Founder-approved snapshot, create the dedicated Antonina Town Hall issue, configure existing Antonina/OpenCode and Git credentials, install only the public Founder signing key, and register the Viche S6 service. Merely merging code does not deploy it.
+Follow [the S6 deployment guide](deploy/DEPLOYMENT.md). Install the constitutional files from a Founder-approved snapshot, create the dedicated Antonina Town Hall issue, configure existing Antonina/OpenCode and Git credentials, and register the Viche S6 service. Merely merging code does not deploy it.
+
+Founder instructions are recognized by the exact Antonina issue/comment author `Vitalik`; no digital signatures or verification are required. The host restarts the entire box after **24 hours of uptime**, rather than at a fixed local time.
 
 The rules require `opencode-go/longcat-2.5-preview-free` variant `low` via Antonina, with no alternative model or fallback. Neither this text nor a shared credential is a hard capability boundary. The Founder-controlled mounted constitutional files and GitHub CODEOWNERS help separate authority, but code-owner review requires a corresponding enforced GitHub rule. The existing GitHub ruleset alone does not yet supply that review requirement.
 
