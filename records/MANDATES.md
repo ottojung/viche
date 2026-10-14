@@ -8,3 +8,5 @@
 | M-004 | Founding Act 4 | Research Office | Pending | Propose first investigated, evidence-backed institutional reform |
 
 An agent exit, pull request, and completed mandate are distinct states. The executive shall reconcile these records with live agents after restart, and ensure each obligation has an identifiable owner or next action.
+
+**Founder's initial exclusive project scope:** Improve Viche itself and deliver Kawun work; do not assume or delegate other projects' issues (Founding Act 9).
