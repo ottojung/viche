@@ -3,11 +3,12 @@
 set -eu
 root=$(git rev-parse --show-toplevel)
 scratch=$(mktemp -d)
+town=$scratch/town
 cleanup() {
     if [ -d "$scratch/seats" ]; then
         for dir in "$scratch"/seats/*; do
             if [ -f "$dir/.git" ] || [ -d "$dir/.git" ]; then
-                git -C "$root" worktree remove --force "$dir" >/dev/null 2>&1 || :
+                git -C "$town" worktree remove --force "$dir" >/dev/null 2>&1 || :
             fi
         done
     fi
@@ -15,6 +16,11 @@ cleanup() {
 }
 trap 'cleanup' 0
 mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/state" "$scratch/mock"
+
+# Run against a hermetic town copy. The live records/SUMMONED.txt must not change
+# what a routine sitting does, so clear the summons in the copy.
+git clone --quiet --no-hardlinks "$root" "$town"
+: > "$town/records/SUMMONED.txt"
 
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
@@ -62,7 +68,7 @@ chmod +x "$scratch/bin/antonina"
 
 MOCK_STATE=$scratch/mock
 PATH=$scratch/bin:$PATH
-VICHE_TOWN_ROOT=$root
+VICHE_TOWN_ROOT=$town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
 VICHE_TEST_NO_SYNC=1
@@ -70,12 +76,18 @@ VICHE_TOWNHALL_ID=999
 export MOCK_STATE PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT
 export VICHE_STATE_ROOT VICHE_TEST_NO_SYNC VICHE_TOWNHALL_ID
 
-seat_count=$(wc -l < "$root/government/seats.tsv")
+seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
-/bin/sh "$root/constitution/boot.sh" --once
+/bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
-/bin/sh "$root/constitution/boot.sh" --once
+/bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+1)) ]
-printf 'Viche: %s seats initialized, charter injected and routine sitting summons clerk only\n' "$seat_count"
+# A documented summons must wake the clerk plus exactly the summoned seat(s).
+summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
+printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
+/bin/sh "$town/constitution/boot.sh" --once
+[ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
+printf 'Viche: %s seats initialized, charter injected, routine sitting summons clerk only, and a documented summons wakes clerk+summoned seat\n' "$seat_count"
