@@ -1,69 +1,59 @@
 #!/usr/bin/env bash
-# Exercise the boot path with a mocked Antonina CLI. Needs only git, bash, jq.
+# End-to-end mocked S6 constitutional boot, without network or real models.
 set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
 scratch="$(mktemp -d)"
 cleanup() {
   if [[ -d "$scratch/seats" ]]; then
-    while IFS= read -r worktree; do
-      [[ -n "$worktree" ]] || continue
-      git -C "$root" worktree remove --force "$worktree" 2>/dev/null || true
-    done < <(find "$scratch/seats" -mindepth 1 -maxdepth 1 -type d)
+    for dir in "$scratch"/seats/*; do
+      [[ -e "$dir/.git" ]] && git -C "$root" worktree remove --force "$dir" >/dev/null 2>&1 || true
+    done
   fi
   rm -rf "$scratch"
 }
 trap cleanup EXIT
-mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/mock-state"
+mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/state" "$scratch/mock"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
 [[ "$1" == agent ]] || exit 91
-command="$2"
-shift 2
-agent_id=''
+command="$2"; shift 2
+id='' prompt=''
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
-    --id) agent_id="$2"; shift 2;;
-    --cwd|--title|--prompt) shift 2;;
+    --id) id="$2"; shift 2;;
+    --cwd|--title) shift 2;;
+    --prompt) prompt="$2"; shift 2;;
     --json|--detach) shift;;
-    *) echo "Mock: unexpected option $1" >&2; exit 90;;
+    *) echo "Unexpected Antonina flag $1" >&2; exit 92;;
   esac
 done
-[[ -n "$agent_id" ]] || exit 89
+[[ -n "$id" ]] || exit 93
 case "$command" in
-  status)
-    [[ -e "$MOCK_STATE/$agent_id" ]] || exit 3
-    echo '{"state":"idle"}'
-    ;;
-  new)
-    [[ ! -e "$MOCK_STATE/$agent_id" ]] || exit 4
-    touch "$MOCK_STATE/$agent_id"
-    echo "$agent_id" >> "$MOCK_STATE/new.log"
-    ;;
+  status) [[ -e "$MOCK_STATE/$id" ]] || exit 3; echo '{"state":"idle"}';;
+  new) [[ ! -e "$MOCK_STATE/$id" ]] || exit 4; touch "$MOCK_STATE/$id"; echo "$id" >> "$MOCK_STATE/created";;
   run)
-    [[ -e "$MOCK_STATE/$agent_id" ]] || exit 5
-    echo "$agent_id" >> "$MOCK_STATE/run.log"
-    ;;
-  *) exit 92;;
+    [[ -e "$MOCK_STATE/$id" ]] || exit 5
+    [[ "$prompt" == *"=== AUTHORITATIVE CONSTITUTION ==="* ]] || exit 6
+    [[ "$prompt" == *"opencode-go/longcat-2.5-preview-free"* ]] || exit 7
+    echo "$id" >> "$MOCK_STATE/ran";;
+  *) exit 94;;
 esac
 MOCK
 chmod +x "$scratch/bin/antonina"
-
-export MOCK_STATE="$scratch/mock-state"
+export MOCK_STATE="$scratch/mock"
 export PATH="$scratch/bin:$PATH"
 export VICHE_TOWN_ROOT="$root"
 export VICHE_SEATS_ROOT="$scratch/seats"
-export VICHE_CONSTITUTION="$root/constitution/CONSTITUTION.md"
+export VICHE_STATE_ROOT="$scratch/state"
+export VICHE_TEST_NO_SYNC=1
 export VICHE_TOWNHALL_ID=999
-
-bash "$root/government/boot.sh"
-[[ "$(wc -l < "$scratch/mock-state/new.log")" -eq 10 ]]
-[[ "$(wc -l < "$scratch/mock-state/run.log")" -eq 10 ]]
-bash "$root/government/boot.sh"
-[[ "$(wc -l < "$scratch/mock-state/new.log")" -eq 10 ]] # identities persisted
-[[ "$(wc -l < "$scratch/mock-state/run.log")" -eq 20 ]] # sittings resume
-
-for id in c1a00001 c1a00002 c1a00003 c1a00004 c1a00005 c1a00006 c1a00007 c1a00008 c1a00009 c1a0000a; do
-  [[ -e "$scratch/seats/$id/.git" ]] || { echo "Missing worktree: $id" >&2; exit 1; }
-done
-echo "Viche: idempotent ten-seat bootstrap OK"
+seat_count="$(grep -Ec '^[0-9a-f]+[[:space:]]' "$root/government/seats.tsv")"
+(( seat_count >= 1 ))
+bash "$root/constitution/boot.sh" --once
+[[ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]]
+[[ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]]
+bash "$root/constitution/boot.sh" --once
+[[ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]]
+[[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count + 1)) ]]
+echo "Viche: $seat_count seats initialized, constitutional prompt injected, subsequent sitting summons clerk only"
