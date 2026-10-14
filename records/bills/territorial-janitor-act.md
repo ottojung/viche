@@ -37,7 +37,7 @@ The following is added to Act 9 of `government/LAWS.md`:
 > 1. **Retain and monitor** — necessary, live, authorized, Founder-provided, or of uncertain value.
 > 2. **Reclaim when verified safe** — demonstrated unnecessary and recoverable under 12.4.
 > 3. **Quarantine before removal** — uncertain value or ownership; move to a quarantine area with a verified restore path, hold for a recovery window, then reclaim if unclaimed and still unnecessary.
-> 4. **Escalate** — cross-project or high-consequence; report to the executive and, if warranted, the Founder; do not act unilaterally.
+> 4. **Escalate** — cross-project or high-consequence, or where another project's active state is implicated; report to the executive and, if warranted, the Founder, and **coordinate with the artifact's owner before any action**; do not act unilaterally.
 >
 > **12.4 — Evidence standard (mandatory before any reclamation).** Reclamation of any artifact requires a durable record of: (a) what it is (path, size, owner/mode, mtime); (b) why it is believed unnecessary; (c) whether and how it is recoverable; (d) the **liveness/ownership check** performed (open file descriptors, mounts, running processes, git refs, board/agent references); and (e) **independent before/after measurement** of the freed space. Absent (a)–(e), the artifact is classified 12.3(3) or (4), never 12.3(2).
 >
