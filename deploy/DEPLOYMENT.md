@@ -4,7 +4,7 @@ This **replaces** the old Viche-specific Docker Compose plan. The host already o
 
 ## Three separately controlled directories
 
-1. **Founder-owned readonly constitution** (confirmed existing mount path `/var/lib/lubko/from-host/viche-constitution`): `CONSTITUTION.md` and `boot.sh`. All three must come from the **same Founder-approved Git revision**. The town must not be able to write this directory or the source of its bind mount.
+1. **Founder-owned readonly constitution** (confirmed existing mount path `/var/lib/lubko/from-host/viche-constitution`): `CONSTITUTION.md` and `boot.sh`. Both files must come from the **same Founder-approved Git revision**. The town must not be able to write this directory or the source of its bind mount.
 2. **Parliament's writable Git clone**, at `/var/lib/lubko/wd/viche`, with `government/LAWS.md`, `government/boot.sh`, `government/sitting.sh`, laws, ballot rules, and records. Give it GitHub SSH access for PRs/pushes.
 3. **Persistent runtime data**, e.g. `/var/lib/lubko/wd/viche-seats` and `/var/lib/lubko/wd/viche-state`, alongside the existing Antonina managed agent state. Preserve these across container restarts; delete only deliberately during Founder reset.
 
@@ -28,7 +28,7 @@ config-private/other/lubko-fs/s6-service-defaults/
 
 Use `deploy/s6/viche/run` as the initial template in `config-private`. It sets `VICHE_TOWN_ROOT`, `VICHE_SEATS_ROOT`, and `VICHE_STATE_ROOT`, then **executes `/var/lib/lubko/from-host/viche-constitution/boot.sh`**. No parliament-writable entrypoint is allowed between S6 and the constitutional bootstrap. Provision `VICHE_TOWNHALL_ID` through host-controlled S6 environment configuration, not from the town's writable Git checkout. If a shell wrapper sets it, keep that wrapper with the private S6 service definition. Include the S6 service directory in the existing container service-tree deployment, and reuse the existing read-only `/var/lib/lubko/from-host` bind mount, and verify it remains `ro` after rebuilding. Check the container's actual S6 service registration/install mechanism before enabling the service; copying a file to Git alone does not activate a service.
 
-The Viche S6 service should have `bash`, `git`, `jq`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. **Do not run another OpenCode provider, model or wrapper**: the sole authorized model is `opencode-go/longcat-2.5-preview-free`, variant `low`, through Antonina. Verify the installed Antonina build matches its pinned runtime before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
+The Viche S6 service should have a POSIX-compliant `/bin/sh`, `git`, `jq`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. **Do not run another OpenCode provider, model or wrapper**: the sole authorized model is `opencode-go/longcat-2.5-preview-free`, variant `low`, through Antonina. Verify the installed Antonina build matches its pinned runtime before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
 
 ## Founder communication via Antonina author labels
 
@@ -60,7 +60,7 @@ The external host shall restart the **entire box after 24 hours of uptime measur
 
 The Founder may stop the S6 service, revert the government clone to an approved Git revision, preserve/archive board records and state, and restart. A constitutional amendment is a separate Founder-approved update of the read-only mounted source. Do not automatically overwrite that source from a routine Git pull.
 
-Repository smoke tests: `bash -n constitution/*.sh government/*.sh tests/*.sh` and `bash tests/boot-smoke.sh`. The tests mock Antonina and use a test-only `VICHE_TEST_NO_SYNC=1` to avoid fetching Git history. **Never set that variable in production S6.** The tests do not prove real model invocation, correct displayed author fields in board issues/comments, or correct S6 volume mappings. These must be checked during deployment.
+Repository checks: `/bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run`, `/bin/sh tests/boot-smoke.sh`, and `/bin/sh tests/tally-smoke.sh`. The scripts are also checked with `dash` in CI. The tests mock Antonina and use a test-only `VICHE_TEST_NO_SYNC=1` to avoid fetching Git history. **Never set that variable in production S6.** The tests do not prove real model invocation, correct displayed author fields in board issues/comments, or correct S6 volume mappings. These must be checked during deployment.
 
 ## Supply chain and hardening notes
 

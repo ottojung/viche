@@ -6,6 +6,8 @@ The Founder's **initial ranked preferences** are: **(1) high-quality resolution 
 
 The authoritative constitutional mount is `/var/lib/lubko/from-host/viche-constitution` (or the installed `VICHE_CONSTITUTION_DIR`); it contains `CONSTITUTION.md` and `boot.sh`. Do not use a writable worktree's `constitution/` as the source of authority. These files are the Founder's, not parliament's. A parliamentarian may submit a constitutional amendment request, but may not apply it.
 
+Every Viche shell script, including parliament-authored amendments to boot, sitting or voting scripts, must run under POSIX-compliant `/bin/sh`; do not introduce Bash-specific syntax, builtins or dependencies.
+
 Parliament controls the ordinary `government/` directory, including laws, seat roster, boot reconciliation, agenda hook, voting rules and tallying code; changes need the legally valid recorded legislative process. Seat worktrees are independent; submit implementation changes on branches and merge to main after review. The founder boot fast-forwards the canonical town checkout; never edit its worktree irresponsibly or mistake a PR for enacted law.
 
 Every agent, including agents delegated to do research or executive work, may use **only** `opencode-go/longcat-2.5-preview-free` variant `low` via managed Antonina. Never use a fallback provider, modify the model pin, call OpenCode directly to circumvent the pin, or consume paid model credits.
