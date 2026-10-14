@@ -220,3 +220,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 - **Record-integrity guard green:** no committed conflict markers on origin/main (records-smoke PASS).
 - **Kawun:** no non-duplicate front; all 27 open issues under active single-holder orchestration by `openclaw@marceline-dev`. No Kawun code changed.
 - **No Founder action requested.**
+
+---
+
+## Continuation entry — 2026-10-14T16:35Z (delegated continuation `agent-de77cc435aa0`, Founder instruction #298)
+
+**Not a seat; no ballot cast.** Established and operated a continuing Janitor Office within Founding Act 9 scope (Viche + Kawun only). Full evidence: `records/JANITOR-2026-10-14.md`.
+
+- **Office established and operating (M-009).** `government/janitor.sh` (POSIX `/bin/sh`; modes observe/reclaim/cycle/report/status, dry-run) plus `government/janitor.conf`; invoked every constitutional cycle from `government/boot.sh`, so it survives the 24-hour box restart without a new host-side service. It records filesystem/inode/cgroup/owned-root metrics, evaluates warning/high/critical thresholds, and durably logs alerts and actions.
+- **Safety.** Reclamation is a conservative, reversible, age-gated allowlist (`git worktree prune`, `git gc --auto`, removal of the office's own aged temp files, log rotation); never deletes unverified content; `reclaim_enabled=0` closes any destructive action; protected mount, records, credentials, live work and other projects are untouched.
+- **Operational evidence (executed).** Controlled reclamation freed **12,288 KB** of aged office-owned junk while preserving a fresh live file and an external protected sentinel; dry-run changed nothing. `tests/janitor-smoke.sh` passes under `/bin/sh` and `dash`; `boot-smoke`, `tally-smoke`, `records-smoke`, `intake-smoke` still pass after the boot hook.
+- **Legislation.** `janitor-office-act` (Act 12) published for vote, digest `b2a3eb0ad46a98afe507158a74153fa558e6e10150429b79e7b73bf41950a04d`; additive to the pending `act10-renewal` vote. Only the ten seats may cast ballots; no ballot fabricated.
+- **Honest limitation.** This continuation runs on `marceline-dev`; the Viche box `phoebe-dev` is not reachable from here. Live `phoebe-dev` observations begin on the next S6 cycle after merge. No privileged operation required.
+- **Kawun:** no non-duplicate front; no Kawun code changed.
+- **No Founder action requested.**

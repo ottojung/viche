@@ -44,3 +44,10 @@ while IFS="$tab" read -r agent_id title focus; do
         antonina agent new --id "$agent_id" --cwd "$seat_dir" --title "Viche: $title"
     fi
 done < "$town/government/seats.tsv"
+
+# Janitor Office: observe disk health each cycle; safe reclamation is self-throttled and
+# non-fatal so it can never block seat reconciliation. Authority and safeguards:
+# records/bills/janitor-office-act.md (Act 12); observation is within Act 4.2.
+if [ -f "$town/government/janitor.sh" ]; then
+    /bin/sh "$town/government/janitor.sh" cycle || echo "Viche: janitor cycle failed" >&2
+fi

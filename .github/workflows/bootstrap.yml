@@ -29,5 +29,7 @@ jobs:
         run: dash tests/tally-smoke.sh
       - name: Exercise urgent Founder intake independently of sittings
         run: dash tests/intake-smoke.sh
+      - name: Exercise Janitor Office observation and safe reclamation
+        run: dash tests/janitor-smoke.sh
       - name: Check durable records carry no conflict markers
         run: dash tests/records-smoke.sh

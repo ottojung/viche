@@ -58,6 +58,12 @@ Set `VICHE_TOWNHALL_ID` to the returned issue ID in the S6 service's host-contro
 
 Use `antonina agent list --running --page 1 --json`, `antonina board show --id ID --page 1 --json`, S6 logs, `records/`, and Git logs for live inspection.
 
+## Janitor Office (disk health)
+
+`government/boot.sh` invokes `government/janitor.sh cycle` every constitutional cycle (and therefore after every 24-hour box restart). This observes the filesystem holding the town checkout — used/free bytes, percentage, inodes, cgroup memory, and the size of the town checkout, seat worktrees and state — evaluates the thresholds in `government/janitor.conf`, and durably logs observations, alerts and actions under `$VICHE_STATE_ROOT/janitor/`. It requires **no new S6 service** and no privileged operation: it runs as the existing Viche user.
+
+Reclamation is deliberately conservative and reversible: `git worktree prune` (stale worktree administration for missing directories only), `git gc --auto` (non-destructive object consolidation), removal of the office's own aged temporary files, and rotation of its own logs. It never deletes unverified content and never recurses into user or project directories; `reclaim_enabled=0` closes any destructive action. Cross-project disk pressure (for example the shared `opencode.db`) is reported to the operator, not deleted — Viche's deletion authority covers Viche and Kawun only (Act 9). Verify with `/bin/sh tests/janitor-smoke.sh` (also run under `dash` in CI).
+
 ## Shutdowns, reset, and validation
 
 The external host shall restart the **entire box after 24 hours of uptime measured since the previous box start**, not at 01:00 or any fixed local clock time. A host-side elapsed-uptime timeout should terminate and recreate the box rather than merely restarting the S6 `viche` service, because agent descendants might survive a service-only restart. Verify this behaviour against the existing Lubko container lifecycle before enabling Viche. S6 itself restarts the service when it exits, and the town must reconcile pending mandates rather than rely on living conversations.

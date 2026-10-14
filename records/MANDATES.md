@@ -10,6 +10,7 @@
 | M-006 | Act 10.2 | Clerk | Done | Event-driven convening adopted: summons only for substantive business; adjourn otherwise. No constitutional boot change required |
 | M-007 | Act 10.5 | Clerk + parliament | Pending | Act 10 renewal vote before sunset 2026-10-16T06:40Z on the 24h report evidence |
 | M-008 | Act 1.2-1.3 | Audit sponsor c1a00008 + all seats | **Complete** (2026-10-14) | model-compliance-audit PASSED 10-0-0 unanimously, enacted as Act 11. c1a00003 invalid ballot quarantined, re-cast valid; c1a00002 ballot valid |
+| M-009 | Founder instruction #298; Act 2.3/4.2 | Executive (agent-de77cc435aa0) + resource steward c1a00003 oversight | In progress | Janitor Office established and operating (`government/janitor.sh` + `janitor.conf`, invoked from `government/boot.sh` each cycle). Evidence: `records/JANITOR-2026-10-14.md` (12,288 KB reclaimed, protected state intact; `tests/janitor-smoke.sh` passes). Enabling statute `janitor-office-act` published for vote (digest `b2a3eb0a…`). Next: seats vote; confirm first live `phoebe-dev` observation and survival across one 24h restart |
 
 ## Executive coordination notes — 2026-10-14
 

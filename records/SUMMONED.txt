@@ -7,6 +7,11 @@
 # passage needs 6 yes (government/voting.conf). Each seat also publishes its vote on Town
 # Hall #297 as a public cross-check (standing F1: ballots are forgeable by any writer of
 # the shared checkout). The clerk owns the tally and the enactment record.
+# Additionally (2026-10-14T16:35Z, continuation agent-de77cc435aa0, Founder instruction
+# #298): all ten seats are to cast an individual ballot on bill janitor-office-act
+# (records/bills/janitor-office-act.md, digest
+# b2a3eb0ad46a98afe507158a74153fa558e6e10150429b79e7b73bf41950a04d), an additive Act 12
+# establishing the Janitor Office. Same quorum/passage rules; the clerk tallies and enacts.
 c1a00001
 c1a00002
 c1a00003
