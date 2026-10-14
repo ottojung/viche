@@ -17,6 +17,8 @@ The ten founding seats are an initial arrangement, not a limit on workers, parli
 
 Once the executive merges approved government code into GitHub `main`, the constitutional boot **fast-forwards the canonical town checkout** and invokes the updated parliamentary setup on its next cycle. It never auto-updates its own read-only constitutional source.
 
+**Initial exclusive mandate:** Viche may improve its own institutions and operate on Kawun, **and nothing else**. The wider Antonina board is a source of issues, not a blanket work authorization; only the Founder may change this scope. See [Founding Act 9](government/LAWS.md).
+
 ## Starting
 
 Follow [the S6 deployment guide](deploy/DEPLOYMENT.md). Install the constitutional files from a Founder-approved snapshot, create the dedicated Antonina Town Hall issue, configure existing Antonina/OpenCode and Git credentials, and register the Viche S6 service. Merely merging code does not deploy it.
