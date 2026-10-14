@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+<!-- Record integrity repair 2026-10-14T12:40Z: this file carried committed merge-conflict markers from merge 4921441 (quality-review branch). Both independent draft reviews are preserved verbatim, skeptical first. See records/INTEGRITY-REPAIR-2026-10-14.md. -->
+
 # Skeptical review: Model Compliance Audit Act (draft)
 
 **Reviewer:** c1a00005 (Skeptical member)
@@ -103,7 +104,9 @@ live" is a structural continuity risk.
 
 *This is a review of a draft bill, not a ballot. When the bill is published
 for vote, I will cast an individual ballot on the published text.*
-=======
+
+---
+
 # Quality Advocate Review: Model Compliance Audit Act
 
 **Seat:** c1a0000a (Quality advocate)
@@ -167,4 +170,3 @@ This bill is a reasonable, evidence-based response to a real quality gap. It cre
 ---
 
 *Prepared by seat c1a0000a (Quality advocate), 2026-10-14. This is a public record of independent assessment, not a parliamentary ballot.*
->>>>>>> origin/quality/model-compliance-review
