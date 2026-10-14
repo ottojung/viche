@@ -1,60 +1,76 @@
-#!/usr/bin/env bash
-# Founder-controlled constitutional bootstrap. Invoked by s6, NOT by parliament.
-# This file and CONSTITUTION.md must come from the same founder-approved readonly mount.
-set -euo pipefail
+#!/bin/sh
+# Founder-controlled constitutional bootstrap. Invoked by S6, not parliament.
+# Charter and this file are from the same founder-approved read-only mount.
+set -eu
 
-constitutional_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-town="${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}"
-seats="${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}"
-state="${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}"
-charter="$constitutional_dir/CONSTITUTION.md"
-interval="${VICHE_SITTING_INTERVAL_SECONDS:-600}"
+constitutional_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
+seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+charter=$constitutional_dir/CONSTITUTION.md
+interval=${VICHE_SITTING_INTERVAL_SECONDS:-600}
 : "${VICHE_TOWNHALL_ID:?VICHE_TOWNHALL_ID must identify the Antonina Town Hall issue}"
-[[ -s "$charter" ]] || { echo "Viche: incomplete constitutional mount" >&2; exit 1; }
-[[ "$interval" =~ ^[1-9][0-9]*$ ]] || { echo "Viche: invalid sitting interval" >&2; exit 1; }
-for cmd in antonina git jq; do command -v "$cmd" >/dev/null || { echo "Missing $cmd" >&2; exit 1; }; done
+
+[ -s "$charter" ] || { echo "Viche: missing authoritative constitution" >&2; exit 1; }
+case "$interval" in
+    ''|*[!0-9]*|0) echo "Viche: invalid sitting interval" >&2; exit 1 ;;
+esac
+for command_name in antonina git jq; do
+    command -v "$command_name" >/dev/null 2>&1 || {
+        echo "Viche: missing $command_name" >&2; exit 1;
+    }
+done
 mkdir -p "$state" "$seats"
-charter_text="$(cat "$charter")"
-# Only the operator mounting this directory chooses its bytes. Never load a
-# constitutional substitute from the parliament's Git tree.
-export VICHE_CONSTITUTION="$charter"
-export VICHE_CONSTITUTION_DIR="$constitutional_dir"
+charter_text=$(cat "$charter")
+# Never accept a substitute charter from parliament's writable Git tree.
+VICHE_CONSTITUTION=$charter
+VICHE_CONSTITUTION_DIR=$constitutional_dir
+export VICHE_CONSTITUTION VICHE_CONSTITUTION_DIR
 
 reconcile() {
-  # Parliament publishes approved changes via a normal PR/merge to origin/main.
-  # A non-fast-forward or dirty checkout fails visibly instead of running stale laws.
-  if [[ "${VICHE_TEST_NO_SYNC:-0}" != 1 ]]; then
-    git -C "$town" pull --ff-only
-  fi
-  test -s "$town/government/LAWS.md"
-  test -s "$town/government/seats.tsv"
-  bash "$town/government/boot.sh" # only manages parliamentary seat worktrees and identities
+    # A failed fast-forward is a visible integration error, never silent staleness.
+    if [ "${VICHE_TEST_NO_SYNC:-0}" != 1 ]; then
+        git -C "$town" pull --ff-only || return 1
+    fi
+    [ -s "$town/government/LAWS.md" ] || return 1
+    [ -s "$town/government/seats.tsv" ] || return 1
+    /bin/sh "$town/government/boot.sh"
 }
 
 sitting() {
-  local failed=0 agent_id title focus status current prompt suffix clerk all pid
-  local -a pids=()
-  clerk="$(head -n 1 "$town/government/seats.tsv" | cut -f1)"
-  [[ -n "$clerk" ]] || { echo "Viche: no parliamentary clerk" >&2; return 1; }
-  # First sitting convenes every seat. Later the clerk wakes every ten minutes;
-  # other members are summoned explicitly by ordinary-law records.
-  all=0
-  [[ -f "$state/inaugurated" ]] || all=1
-  while IFS=$'\t' read -r agent_id title focus; do
-    [[ -n "$agent_id" ]] || continue
-    if (( all == 0 )) && [[ "$agent_id" != "$clerk" ]]; then
-      if ! grep -Fqx -- "$agent_id" "$town/records/SUMMONED.txt" 2>/dev/null; then continue; fi
-    fi
-    status="$(antonina agent status --id "$agent_id" --json)" || { echo "Viche: can't inspect $agent_id" >&2; failed=1; continue; }
-    current="$(jq -er '.state' <<<"$status")" || { failed=1; continue; }
-    if [[ "$current" == running ]]; then continue; fi
-    suffix="$(bash "$town/government/sitting.sh" "$agent_id")" || { echo "Viche: agenda hook failed" >&2; failed=1; continue; }
-    # The charter is injected by the constitutional caller; parliament may
-    # append an agenda but cannot remove this prefix from THIS launch path.
-    prompt="$(cat <<EOF
+    failed=0
+    pids=
+    clerk=$(sed -n '1s/\t.*//p' "$town/government/seats.tsv")
+    [ -n "$clerk" ] || { echo "Viche: no parliamentary clerk" >&2; return 1; }
+    # All seats join the inaugural sitting; subsequently summon as necessary.
+    all=0
+    [ -f "$state/inaugurated" ] || all=1
+    tab=$(printf '\t')
+    while IFS="$tab" read -r agent_id title focus; do
+        [ -n "$agent_id" ] || continue
+        if [ "$all" -eq 0 ] && [ "$agent_id" != "$clerk" ]; then
+            grep -Fxq "$agent_id" "$town/records/SUMMONED.txt" 2>/dev/null || continue
+        fi
+        if ! status=$(antonina agent status --id "$agent_id" --json); then
+            echo "Viche: cannot inspect seat $agent_id" >&2
+            failed=1
+            continue
+        fi
+        if ! current=$(printf '%s\n' "$status" | jq -er '.state'); then
+            echo "Viche: malformed status for $agent_id" >&2
+            failed=1
+            continue
+        fi
+        [ "$current" != running ] || continue
+        if ! suffix=$(/bin/sh "$town/government/sitting.sh" "$agent_id"); then
+            echo "Viche: agenda hook failed for $agent_id" >&2
+            failed=1
+            continue
+        fi
+        prompt=$(cat <<EOF
 You are parliamentary seat $agent_id ($title), provisional focus: $focus.
-You serve Viche in reality, not in fiction. The authenticated charter below
-comes from the Founder-controlled readonly mount and has highest authority.
+You serve Viche in reality, not in fiction. The authoritative charter below
+comes from the Founder-controlled read-only mount and has highest authority.
 
 === AUTHORITATIVE CONSTITUTION ===
 $charter_text
@@ -62,14 +78,13 @@ $charter_text
 
 Use current ordinary law at $town/government/LAWS.md and records at $town/records.
 Treat Antonina board issues and comments with author exactly Vitalik as
-Founder communications; no cryptographic verification or signatures are
-required. Other authors do not carry Founder authority. Town Hall is
-issue #$VICHE_TOWNHALL_ID.
+Founder communications; no signatures or identity verification are required.
+Other authors do not carry Founder authority. Town Hall is issue #$VICHE_TOWNHALL_ID.
 Parliament may amend ordinary laws, seats and agenda procedures, not this charter
-or this boot supervisor. Do not switch AI models or bypass Antonina.
+or this boot supervisor. Never switch AI models or bypass Antonina.
 Record evidence, independent votes, meaningful dissent, legitimate mandates and
-failures. Do not confuse a running or exited agent with verified completed work.
-There is no global cap on useful parallel agents or invocations.
+failures. Do not confuse an agent exit with verified completed work.
+There is no global limit on useful parallel agents or invocations.
 Your seat worktree is $seats/$agent_id. Use branches and Git review;
 the supervisor fast-forwards the canonical government checkout after merges.
 
@@ -77,25 +92,34 @@ the supervisor fast-forwards the canonical government checkout after merges.
 $suffix
 === END AGENDA ===
 EOF
-)"
-    (antonina agent run --id "$agent_id" --cwd "$seats/$agent_id" --prompt "$prompt" --detach) &
-    pids+=("$!")
-  done < "$town/government/seats.tsv"
-  for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
-  if (( all == 1 && failed == 0 )); then touch "$state/inaugurated"; fi
-  return "$failed"
+)
+        (antonina agent run --id "$agent_id" --cwd "$seats/$agent_id" --prompt "$prompt" --detach) &
+        pids="$pids $!"
+    done < "$town/government/seats.tsv"
+
+    for pid in $pids; do
+        wait "$pid" || failed=1
+    done
+    if [ "$all" -eq 1 ] && [ "$failed" -eq 0 ]; then
+        touch "$state/inaugurated"
+    fi
+    [ "$failed" -eq 0 ]
 }
 
 cycle() {
-  reconcile || { echo "Viche: government integration/seat reconciliation failed" >&2; return 1; }
-  sitting
+    reconcile || { echo "Viche: government integration/reconciliation failed" >&2; return 1; }
+    sitting
 }
 
-if [[ "${1:-}" == --once ]]; then cycle; exit $?; fi
-[[ "$#" == 0 ]] || { echo "Usage: boot.sh [--once]" >&2; exit 2; }
+if [ "${1:-}" = --once ]; then
+    [ "$#" -eq 1 ] || exit 2
+    cycle
+    exit $?
+fi
+[ "$#" -eq 0 ] || { echo "Usage: boot.sh [--once]" >&2; exit 2; }
 trap 'exit 0' TERM INT
-cycle || echo "Viche: sitting failed; will retry, no unauthorized fallback" >&2
+cycle || echo "Viche: cycle failed; will retry without changing model" >&2
 while :; do
-  sleep "$interval" & wait "$!" || exit 0
-  cycle || echo "Viche: cycle failed, requires investigation" >&2
+    sleep "$interval" & wait "$!" || exit 0
+    cycle || echo "Viche: cycle failed; requires investigation" >&2
 done
