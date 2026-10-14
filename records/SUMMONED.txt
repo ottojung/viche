@@ -1,0 +1,2 @@
+# Parliament seats to be convened at subsequent sittings, one bare hexadecimal ID per line.
+# Empty by default; initial full sitting is triggered by the constitutional boot.
