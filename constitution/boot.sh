@@ -3,7 +3,7 @@
 # Charter and this file are from the same founder-approved read-only mount.
 set -eu
 
-constitutional_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+constitutional_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
@@ -40,7 +40,7 @@ reconcile() {
 sitting() {
     failed=0
     pids=
-    clerk=$(sed -n '1s/\t.*//p' "$town/government/seats.tsv")
+    clerk=$(head -n 1 "$town/government/seats.tsv" | cut -f 1)
     [ -n "$clerk" ] || { echo "Viche: no parliamentary clerk" >&2; return 1; }
     # All seats join the inaugural sitting; subsequently summon as necessary.
     all=0
