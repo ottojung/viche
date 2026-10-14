@@ -6,11 +6,13 @@ set -euo pipefail
 town="${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}"
 roster="$town/government/seats.tsv"
 ballots="$town/records/ballots/$1.tsv"
+proposal="$town/records/bills/$1.md"
 rules="$town/government/voting.conf"
-[[ -s "$roster" && -s "$ballots" && -f "$rules" ]] || { echo "Missing voting roster, rules, or ballots" >&2; exit 2; }
+[[ -s "$roster" && -s "$ballots" && -s "$proposal" && -f "$rules" ]] || { echo "Missing voting roster, rules, or ballots" >&2; exit 2; }
 quorum="$(sed -n 's/^quorum=//p' "$rules")"
 required="$(sed -n 's/^ayes=//p' "$rules")"
 [[ "$quorum" =~ ^[1-9][0-9]*$ && "$required" =~ ^[1-9][0-9]*$ ]] || { echo "Invalid voting rules" >&2; exit 2; }
+expected_digest="$(sha256sum "$proposal" | cut -d " " -f1)"
 declare -A members=() voted=()
 while IFS=$'\t' read -r id _; do
   [[ -n "$id" ]] || continue
@@ -24,6 +26,7 @@ abstain=0
 while IFS=$'\t' read -r id vote digest extra; do
   [[ -n "$id" ]] || continue
   [[ -v 'members[$id]' && ! -v 'voted[$id]' && -n "$digest" && -z "${extra:-}" ]] || { echo "Invalid/duplicate/unknown ballot: $id" >&2; exit 2; }
+  [[ "$digest" == "$expected_digest" ]] || { echo "Ballot for $id has wrong bill digest" >&2; exit 2; }
   voted["$id"]=1
   case "$vote" in
     yes) ((++yes));;
@@ -33,6 +36,6 @@ while IFS=$'\t' read -r id vote digest extra; do
   esac
 done < "$ballots"
 present=$((yes+no+abstain))
-echo "Bill $1: present=$present yes=$yes no=$no abstain=$abstain (quorum=$quorum, required_yes=$required)"
+echo "Bill $1 (SHA256: $expected_digest): present=$present yes=$yes no=$no abstain=$abstain (quorum=$quorum, required_yes=$required)"
 if (( present >= quorum && yes >= required )); then echo "PASSED"; exit 0; fi
 echo "NOT PASSED"; exit 1
