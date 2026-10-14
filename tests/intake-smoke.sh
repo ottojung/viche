@@ -62,4 +62,14 @@ printf 'failed\n' > "$d/mock/status"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 2 ]
 if tail -n 1 "$d/mock/prompts" | grep -q -- '--steer'; then exit 1; fi
+# Pagination regression: 55 comments must retrieve a Founder message on page 2.
+jq -n '{messages:[range(0;55)|{id:(.|tostring),author:(if .==3 then "Vitalik" else "other" end),createdAt:"2026-10-14T04:00:00Z",body:"paginated instruction"}]}' > "$d/mock/comments"
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(wc -l < "$d/mock/calls")" -eq 3 ]
+[ "$(find "$d/state/founder-inbox/sent" -name '*.json' | wc -l)" -eq 3 ]
+# A previously sent event without a receipt is requeued after ten minutes.
+oldfile=$(find "$d/state/founder-inbox/sent" -name '*.json' | head -n 1)
+touch -d '11 minutes ago' "$oldfile"
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(wc -l < "$d/mock/calls")" -eq 4 ]
 echo 'Viche Founder intake smoke passed'
