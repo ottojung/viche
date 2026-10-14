@@ -11,6 +11,8 @@
 
 The **initial Founder happiness priorities** are ordered: **high-quality resolution of Antonina board tasks first, timely resolution second, economy of the Founder's attention third**. Agents should not interrupt the Founder for routine decisions they can resolve themselves. These are starting preferences that the Founder may later revise through Antonina board comments or issues authored `Vitalik`—not an efficiency metric that supplants happiness.
 
+All Viche launch, governance and test shell scripts use **POSIX `/bin/sh` only**; the S6 service does not need Bash.
+
 The ten founding seats are an initial arrangement, not a limit on workers, parliamentary reform or agent invocations. The first sitting can convene everyone; subsequent ten-minute checks convene the clerk and any members summoned to real business. The law defines initial quorum and vote thresholds, which are amendable by law. A deterministic ballot tally helps distinguish an enacted decision from a claim of consensus.
 
 Once the executive merges approved government code into GitHub `main`, the constitutional boot **fast-forwards the canonical town checkout** and invokes the updated parliamentary setup on its next cycle. It never auto-updates its own read-only constitutional source.
@@ -23,6 +25,6 @@ Founder instructions are recognized by the exact Antonina issue/comment author `
 
 The rules require `opencode-go/longcat-2.5-preview-free` variant `low` via Antonina, with no alternative model or fallback. Neither this text nor a shared credential is a hard capability boundary. The Founder-controlled mounted constitutional files and GitHub CODEOWNERS help separate authority, but code-owner review requires a corresponding enforced GitHub rule. The existing GitHub ruleset alone does not yet supply that review requirement.
 
-Run `bash tests/boot-smoke.sh` to exercise a mocked constitutional launch and restart. The CI workflow intentionally does **not** require exactly ten seats, because parliament is authorized to change that number.
+Run `/bin/sh tests/boot-smoke.sh` and `/bin/sh tests/tally-smoke.sh` to exercise a mocked constitutional launch and restart. The CI workflow intentionally does **not** require exactly ten seats, because parliament is authorized to change that number.
 
 Licensed under [AGPL-3.0-only](LICENSE).
