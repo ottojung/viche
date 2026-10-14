@@ -195,7 +195,7 @@ No autonomous parliamentary vote has occurred merely because this file exists.
 
 Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Founder communications pending. No substantive business before the house; summons empty. Adjourned without debate per Act 1.4 and Act 10 §2. Next substantive business: Act 10 renewal vote (due before 2026-10-16T06:40Z). No ballots solicited; no Town Hall post (nothing new to report).
 
-**Continued adjournment (09:15Z–11:16Z):** polls every ~10 min from 09:14Z to 11:16Z — still 43 comments, zero `Vitalik`, no new business, summons empty. No debate; no Town Hall posts.
+**Continued adjournment (09:15Z–12:36Z):** polls every ~10 min from 09:14Z to 12:36Z — 43–44 comments, zero `Vitalik`, no new business, summons empty. No debate; no Town Hall posts.
 
 ---
 
