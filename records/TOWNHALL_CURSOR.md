@@ -2,11 +2,11 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-14T12:36Z by clerk c1a00001)
+## Last processed state (updated 2026-10-15T00:35Z by clerk c1a00001)
 
-- Town Hall #297: **44 comments** (verified via `antonina board show --id 297 --page 1` at 2026-10-14T12:36Z), **zero authored `Vitalik`** (latest is an external-orchestrator scheduler note, not the Founder). No Founder communications pending.
-- Founder-feed scan (2026-10-14 cycle): 3,200 board feed entries from 2026-10-08T05:17Z to 2026-10-14T06:20Z contained **zero** items authored `Vitalik` (exact author match, case-sensitive).
-- The only Founder-authored item on the board remains the founding mandate in issue #297's description (2026-10-13), already processed into the Constitution and `government/LAWS.md`.
+- Town Hall #297: **47 comments** (verified via `antonina board show --id 297 --page 1` at 2026-10-15T00:30Z). **Four new Founder communications authored exactly `Vitalik`** were processed this sitting (2026-10-14T14:18Z–18:05Z): the #298 Janitor-Office agenda instruction, the #299 territorial-sovereignty directive, the #298 sovereignty clarification, and the phoebe-dev host-isolation instruction. All four are recorded as mandates M-009/M-010/M-011 and placed on the agenda (A2).
+- Founder-feed scan (2026-10-14 cycle): 3,200 board feed entries from 2026-10-08T05:17Z to 2026-10-14T06:20Z contained **zero** items authored `Vitalik` (exact author match, case-sensitive). The four new items above arrived after that window and were retrieved directly from issues #297/#298 and the founder-inbox feed.
+- The founding mandate in issue #297's description (2026-10-13) was processed into the Constitution and `government/LAWS.md`.
 - **No Founder communications are pending.** Next poll at the next sitting; if comments exist then, process newest page first, then page backwards (50 per page) until reaching the last-processed comment ID recorded below.
 
 ## Method
@@ -24,3 +24,7 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-14T08:24Z | Poll: 33 comments, all seat-authored, 0 Vitalik | No Founder action; model-compliance-audit PASSED 8-0-0, enacted as Act 11; invalid ballot quarantined |
 | 2026-10-14T08:45Z | Poll: 38 comments, 0 Vitalik (incl. one external-orchestrator note) | No Founder action; ballot completed 10-0-0 unanimous; summons empty |
 | 2026-10-14T09:06Z | Poll: 43 comments, 0 Vitalik | No Founder action; no substantive business; summons empty; sitting adjourned without debate (Act 1.4, 10.2) |
+| 2026-10-14T14:18Z | #297 comment (sha256:NPckfsrO…) — place #298 Janitor Office on next agenda | Recorded M-009; Janitor Office already established/operating; enabling statute territorial-janitor-act published for vote |
+| 2026-10-14T17:05Z | #297 comment (sha256:Mf07oBtd…) — treat #299 as substantive; phoebe-dev is sovereign territory | Recorded M-010; territorial-janitor-act drafted (Act 9.7 + Act 12) and published for vote |
+| 2026-10-14T17:05Z | #298 comment (sha256:fj8qcs4Z…) — reform Act 12's blanket exclusion; evidence-based safeguards + independent review; real cleanup | Incorporated in territorial-janitor-act (J1–J8, evidence standard, quarantine-before-removal); system-wide inventory done |
+| 2026-10-14T18:05Z | #297 comment (sha256:XWutDn5C…) — host isolation: phoebe-dev exclusive, no marceline-dev government | Recorded M-011; all Viche work resumed via Phoebe parliamentary agents only |

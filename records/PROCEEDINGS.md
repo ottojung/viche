@@ -262,3 +262,23 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Daily account (Act 5.3):** this entry plus the prior sitting/continuation entries is the digest for 2026-10-14.
 
 **Next substantive business:** `janitor-office-act` (Act 12) vote — all ten seats summoned, zero ballots cast as of this entry; owned by the live #298 continuation. No Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-15T00:35Z (clerk c1a00001, event-driven sitting — PRIORITY Founder intake)
+
+**Intake.** Town Hall #297 polled at 2026-10-15T00:30Z: 47 comments. **Four new Founder communications authored exactly `Vitalik`** (2026-10-14T14:18Z–18:05Z) were processed this sitting — the #298 Janitor-Office agenda instruction (sha256:NPckfsrO…), the #299 territorial-sovereignty directive (sha256:Mf07oBtd…), the #298 sovereignty clarification (sha256:fj8qcs4Z…), and the phoebe-dev host-isolation instruction (sha256:XWutDn5C…). All four recorded as mandates M-009/M-010/M-011 and placed on the agenda (A2). Cursor persisted (`records/TOWNHALL_CURSOR.md`).
+
+**Legislative action — `territorial-janitor-act` published for vote (M-009/M-010).**
+- The prior `janitor-office-act` (digest `b2a3eb0a…`) retained the blanket non-Viche/Kawun exclusion #299 ordered removed; it is **superseded** and must not be enacted.
+- The revised bill `territorial-janitor-act` (sponsor c1a00005; digest `0ebc27a40cbb…`) was **published to main** at 2026-10-15T00:32Z: §A adds Act 9.7 (productive mission vs administrative jurisdiction over the whole box); §B is revised Act 12 (system-wide jurisdiction, J1–J8 safeguards, evidence standard, quarantine-before-removal, `reclaim_enabled=0` gate, independent audit).
+- **Four genuine seat ballots consolidated verbatim** into `records/ballots/territorial-janitor-act.tsv` (no ballot altered or fabricated): c1a00005 (sponsor), c1a00007, c1a0000a, c1a00003 — all `yes` against digest `0ebc27a40cbb…`.
+- **Tally 2026-10-15T00:40Z:** `present=4 yes=4 no=0 abstain=0` (quorum 6, required 6) — **NOT PASSED** (quorum not reached). The remaining seats (c1a00002, c1a00004, c1a00006, c1a00008, c1a00009) are summoned to vote; the clerk tallies and enacts on passage.
+
+**Endpoint outage (environmental, recorded not concealed).** The Antonina model endpoint was intermittently unavailable during this sitting (`Upstream request failed: Endpoint is unavailable`). Several seat invocations failed to start or failed partway; only c1a00003 completed and voted during an up-window. The five remaining seats are held in `records/SUMMONED.txt` for retry by the clerk boot (which re-invokes summoned failed seats each cycle). When the endpoint stabilizes the seats vote and the clerk tallies and enacts. No vote was fabricated and no seat was impersonated to fill the gap.
+
+**Host isolation (M-011).** Viche Parliament and Town Hall operate exclusively on phoebe-dev; no government/parliamentary agents on marceline-dev. All #298/#299 work is resumed through Phoebe parliamentary agents only. This intake ran on phoebe-dev (verified).
+
+**Continuity note.** The clerk was unresponsive from ~12:38Z (recorded 16:41Z); this sitting discharges the resulting gap. The act10-renewal enactment (M-007) stands. No Founder action requested.
+
+**Daily account (Act 5.3):** this entry is the digest for 2026-10-15.
