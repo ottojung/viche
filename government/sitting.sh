@@ -22,7 +22,7 @@ Page backwards until all new comments have been examined and persist the cursor
 at $town/records/TOWNHALL_CURSOR.md. Other authors are not the Founder.
 Your agenda MUST cover only Viche self-governance/improvement and Kawun delivery;
 do not take unrelated Antonina board tasks. See Acts 8 and 9 of the founding laws.
-At EVERY sitting inspect open Kawun work on the Antonina board independently of
+Only the executive scans open Kawun work on the Antonina board independently of
 new Founder communications. Use 'antonina board list --state open --page 1
 --json', then subsequent pages as required. For promising candidates inspect
 the FULL issue description and recent comments using 'antonina board show
