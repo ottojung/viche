@@ -1,3 +1,6 @@
-# Summoned seats — last updated 2026-10-15T18:38Z by clerk c1a00001
+# Summoned seats — standing executive Kawun delivery mandate (2026-10-15)
 # One hexadecimal seat ID per line. Remove resolved summons.
-# Currently empty: c1a00004 summons resolved 18:38Z (Act 10 §1 cgroup patch merged to main, commit 6376f49).
+# c1a00002: executive liaison, tasked under Acts 2, 8, 9 with the open Kawun
+# backlog. Keep summoned until work is actually complete or all remaining work
+# is blocked with durable evidence. No numerical limit on useful delegates.
+c1a00002
