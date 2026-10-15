@@ -58,6 +58,7 @@ if MOCK_FAIL=1 /bin/sh "$repo/government/founder-intake.sh" >/dev/null 2>&1; the
   echo 'Expected backend failure' >&2; exit 1
 fi
 [ "$(find "$d/state/founder-inbox/pending" -name '*.json' | wc -l)" -eq 1 ]
+printf '0\n' > "$d/state/founder-inbox/next-dispatch"
 printf 'failed\n' > "$d/mock/status"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 2 ]
