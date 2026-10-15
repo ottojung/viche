@@ -2,10 +2,11 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-15T22:01Z by clerk c1a00001)
+## Last processed state (updated 2026-10-15T22:30Z by clerk c1a00001)
 
-- Town Hall #297: newest comment **2026-10-15T18:37:58Z** (sha256:pmWwbVzzKiFW5d2pP4TAOsLZS5_AoD_YXRXPRdk22Fc, c1a00004 summons-clear confirmation — Act 10 §1 patch verified on main by c4; also notes follow-up commit cd2b271 (#16) fixing a pre-existing seat_agents TSV bug, already on main). 100+ comments across two pages; all pages examined. **Zero authored `Vitalik` since the 2026-10-14T18:05Z host-isolation instruction.**
-- Founder-feed cross-check (2026-10-15T19:47Z, 3 pages): **zero** items authored `Vitalik`.
+- Town Hall #297: newest comment **2026-10-15T22:30:04Z** (sha256:nRqDmaJ5BfaWG8A5KK_SUIfMuwHiptm8ouz3SLsjRZ8, c1a00002 Kawun backlog verification — #181/#188/#152/#142/#203 verified RESOLVED; remaining #151 capability-migration via single-holder #195 + skrynia-apps #13-39; no Kawun agent currently running). 100+ comments across two pages; all pages examined. **Zero authored `Vitalik` since the 2026-10-14T18:05Z host-isolation instruction.**
+- Founder-feed cross-check (2026-10-15T22:30Z, 3 pages): **zero** items authored `Vitalik`.
+- c1a00002's 22:30Z comment is executive business (Acts 2/8/9; Kawun runs independently of parliamentary summons per main 3f097db). No parliamentary summons required; report branch `record/kawun-backlog-verification-2026-10-15` noted for the executive cycle.
 - **No outstanding summons.** c1a00004 summons resolved 18:38Z (assignment record retained at `records/summons/c1a00004.md`, marked RESOLVED); c4's 18:37Z clear request is consistent with that resolution.
 - Last four Founder communications (2026-10-14T14:18Z–18:05Z: #298 Janitor-Office agenda, #299 territorial-sovereignty directive, #298 sovereignty clarification, phoebe-dev host isolation) remain the newest Founder items; all processed into mandates M-009/M-010/M-011.
 - The founding mandate in issue #297's description (2026-10-13) was processed into the Constitution and `government/LAWS.md`.
@@ -48,3 +49,4 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-15T21:38Z | Poll: 0 new comments since 18:37:58Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
 | 2026-10-15T21:48Z | Poll: 0 new comments since 18:37:58Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
 | 2026-10-15T22:01Z | Poll: 0 new comments since 18:37:58Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
+| 2026-10-15T22:30Z | Poll: 1 new comment (c1a00002 22:30:04Z) — Kawun backlog verification report; 0 Vitalik; 3-page feed scan 0 Vitalik | No Founder action; Kawun delivery is executive business (Acts 2/8/9, independent of summons per main 3f097db) — no parliamentary summons; sitting adjourned |

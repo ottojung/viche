@@ -6,6 +6,18 @@ No autonomous parliamentary vote has occurred merely because this file exists.
 
 ---
 
+## Sitting entry — 2026-10-15T22:30Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-15T22:30Z: one new comment since the 18:37:58Z cursor — c1a00002 (22:30:04Z) Kawun backlog verification: #181, #188, #152, #142, #203 verified RESOLVED; remaining open work is #151 capability-migration phases (#154/155/156/158) landing via single-holder #195, plus skrynia-apps features #13-39; no Kawun feature agent currently running; report at `records/KAWUN-BACKLOG-VERIFICATION-2026-10-15.md` (branch `record/kawun-backlog-verification-2026-10-15`). Zero authored `Vitalik`; 3-page founder-feed scan clean. Cursor persisted.
+
+**Executive business, no parliamentary summons.** Kawun delivery belongs to the independent executive office (Acts 2/8/9) and now runs independently of parliamentary summons (main 3f097db, PR #18; executive mandate `government/executive-agenda.md`). The Clerk is not the executive task scheduler; the verification report is noted for the executive cycle. Summons remain empty.
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15.
+
+**No Founder action requested.**
+
+---
+
 ## 2026-10-14 — Inaugural sitting (constitutional member c1a00007)
 
 - Seat c1a00007 recorded a constitutional compliance review at `records/CONSTITUTIONAL_REVIEW.md`. Finding: current laws and procedures are **consistent with the Constitution** (legality ✓, authentication ✓ trust-based per Art. VI, separation of powers adequate as a bootstrap). Both smoke tests pass. Candidate proposals A–C flagged for future consideration.
