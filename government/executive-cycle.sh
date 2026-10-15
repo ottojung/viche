@@ -16,3 +16,5 @@ case "$mode" in
     idle|succeeded) : ;;
     *) echo "Unexpected executive session state" >&2; exit 1 ;;
 esac
+cwd=$seats/$id
+[ -d "$cwd" ] || exit 1
