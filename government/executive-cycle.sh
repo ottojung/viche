@@ -1,3 +1,3 @@
 #!/bin/sh
 set -eu
-# This will run executive tasks independently of Parliament.
+town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
