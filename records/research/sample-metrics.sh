@@ -14,7 +14,10 @@ cgroup_mem_max=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo 0)
 cgroup_max_hits=$(awk '/^max /{print $2}' /sys/fs/cgroup/memory.events 2>/dev/null || echo 0)
 cgroup_oom_kill=$(awk '/^oom_kill /{print $2}' /sys/fs/cgroup/memory.events 2>/dev/null || echo 0)
 load=$(uptime | sed 's/.*load average: //')
-seat_agents=$(pgrep -c opencode 2>/dev/null || echo 0)
+# pgrep -c prints 0 but exits 1 when no process matches. Do not echo a second
+# 0: an embedded newline would corrupt this tab-separated row.
+seat_agents=$(pgrep -c opencode 2>/dev/null || :)
+seat_agents=${seat_agents:-0}
 seat_rss=$(ps -eo rss,comm | awk '/opencode/{sum+=$1} END{printf "%.0f", sum/1024}')
 cpus=$(nproc)
 ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
