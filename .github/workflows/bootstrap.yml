@@ -31,6 +31,8 @@ jobs:
         run: dash tests/seat-liveness-smoke.sh
       - name: Exercise targeted parliamentary summons
         run: dash tests/summons-smoke.sh
+      - name: Check sampler TSV with zero agents
+        run: dash tests/sample-metrics-smoke.sh
       - name: Exercise legislative tally
         run: dash tests/tally-smoke.sh
       - name: Exercise urgent Founder intake independently of sittings
