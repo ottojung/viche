@@ -12,7 +12,7 @@ cat > "$scratch/bin/antonina" <<'MOCK'
 set -eu
 case "$1 $2" in
   "agent status") printf '{"state":"%s","model":"%s","variant":"%s"}\n' "$MODE" "$MODEL" "$VARIANT" ;;
-  "agent run") printf '%s\n' "$*" >> "$OUTPUT" ;;
+  "agent run") case "$*" in *"Founder charter fixture"*) :;; *) exit 9;; esac; printf "accepted\n" >> "$OUTPUT" ;;
   *) exit 7 ;;
 esac
 MOCK
@@ -30,7 +30,7 @@ export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 touch "$scratch/state/inaugurated"
 /bin/sh "$repo/government/executive-cycle.sh"
 [ "$(wc -l < "$OUTPUT")" -eq 1 ]
-grep -Fq "Founder charter fixture" "$OUTPUT"
+grep -Fq "accepted" "$OUTPUT"
 MODE=running; export MODE
 /bin/sh "$repo/government/executive-cycle.sh"
 [ "$(wc -l < "$OUTPUT")" -eq 1 ]
