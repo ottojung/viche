@@ -18,6 +18,15 @@ now=$(date +%s)
 last=0
 [ ! -s "$state/last-reset" ] || last=$(cat "$state/last-reset")
 case "$last" in ''|*[!0-9]*) last=0;; esac
+# The ordinary sitting and independent Founder intake both honor this gate.
+# A failed session must not be retried with the same unsafe continuation.
+if [ "${1:-}" = --gate ]; then
+  if [ $((now-last)) -lt 1800 ]; then
+    echo "Viche: waiting for Clerk endpoint recovery cooldown" >&2
+    exit 1
+  fi
+  exit 0
+fi
 [ $((now-last)) -ge 1800 ] || exit 0
 [ -d "$seats/$id" ] || exit 1
 snapshot="$state/recovery-$(date -u +%Y%m%dT%H%M%SZ)"
