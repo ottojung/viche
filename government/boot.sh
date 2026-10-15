@@ -68,3 +68,14 @@ fi
 if [ -f "$town/government/executive-cycle.sh" ]; then
     /bin/sh "$town/government/executive-cycle.sh" || echo "Viche: executive cycle failed" >&2
 fi
+
+# Deterministic oversight continues even when every AI session is unavailable.
+# Failure of telemetry/auditing must not prevent unrelated reconciliation.
+if [ -f "$town/government/oversight-watch.sh" ]; then
+    /bin/sh "$town/government/oversight-watch.sh" ||
+        echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
+fi
+if [ -f "$town/government/audit-cycle.sh" ]; then
+    /bin/sh "$town/government/audit-cycle.sh" ||
+        echo "Viche: independent audit scheduling failed" >&2
+fi
