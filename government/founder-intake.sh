@@ -112,5 +112,5 @@ if [ "$mode" = running ]; then
 else
   antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --detach
 fi
-for f in "$@"; do mv "$f" "$q/sent/$(basename "$f")"; done
+for f in "$@"; do dest="$q/sent/$(basename "$f")"; mv "$f" "$dest"; touch "$dest"; done
 printf 'Founder intake dispatched %s events to clerk (prior state %s)\n' "$#" "$mode"
