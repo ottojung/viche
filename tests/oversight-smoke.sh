@@ -11,6 +11,9 @@ cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
 case "$1 $2" in
+"board comment")
+    printf "posted\\n" >> "$NOTICES"
+    ;;
 "board list")
     printf '%s\n' "$MOCK_BOARD"
     ;;
@@ -45,9 +48,11 @@ AUDIT_STATE=idle
 MODEL=opencode-go/longcat-2.5-preview-free
 VARIANT=low
 DISPATCHES=$scratch/dispatches
+NOTICES=$scratch/notices
+VICHE_TOWNHALL_ID=297
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_KAWUN_REPO VICHE_OVERSIGHT_NOW MOCK_BOARD EXEC_STATE ERROR LAST
-export AUDIT_STATE MODEL VARIANT DISPATCHES
+export AUDIT_STATE MODEL VARIANT DISPATCHES NOTICES VICHE_TOWNHALL_ID
 /bin/sh "$repo/government/oversight-watch.sh"
 incident=$scratch/state/oversight/incident.json
 jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_kawun_issues_first_page == 1' "$incident" >/dev/null
@@ -60,6 +65,9 @@ VICHE_OVERSIGHT_NOW=28001
 export VICHE_OVERSIGHT_NOW
 /bin/sh "$repo/government/oversight-watch.sh"
 jq -e '.parliamentary_response_overdue == true and .parliamentary_hearing_recorded == false and .first_seen == 20000' "$incident" >/dev/null
+[ "$(wc -l < "$NOTICES")" -eq 1 ]
+/bin/sh "$repo/government/oversight-watch.sh"
+[ "$(wc -l < "$NOTICES")" -eq 1 ]
 
 printf '%s\n' '{"incident_id":20000,"evidence_ref":"https://example.com/hearing"}' > "$scratch/state/oversight/hearings/20000.json"
 /bin/sh "$repo/government/oversight-watch.sh"
