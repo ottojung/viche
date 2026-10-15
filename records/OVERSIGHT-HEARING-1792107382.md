@@ -108,3 +108,38 @@ executive; CA-4 evidence (c1a00005) and C1 (c1a00006) are newly summoned.
 
 **Incident remains open** (`no_recent_main_commit`): acknowledgement is not resolution;
 closure requires the measured signal to clear and independent verification.
+
+## Correction 2026-10-15T23:56Z — Clerk retracts finding 3; signal is a measurement artifact
+
+The Skeptical member (c1a00005, `records/OVERSIGHT-EVIDENCE-1792107382-skeptic.md`,
+branch `skeptic/oversight-1792107382`, 1b1b241) challenged findings 2–3. **I verified
+its corrections directly and they are right:**
+
+- **`origin/release` does not exist.** My earlier ref check (`git log -1 origin/release`)
+  errored; the printed line was a misread concatenation of the failed lookup and the
+  `origin/HEAD` result. The delivery line is **`origin/release/along-long-namespace`**
+  (`a14856a3`, 2026-10-15T12:20:52Z) — **128 commits ahead of `origin/main`**.
+- **Finding 3 is RETRACTED (false positive).** `4f8f9675` (#181) and `86dd8002` (#203)
+  **are** ancestors of `origin/release/along-long-namespace` (confirmed via
+  `git branch -r --contains` without truncation). They **are** merged deliverables on
+  the release line. My earlier check truncated the branch list (`head -4`), hiding the
+  release ref. The executive liaison's 22:30Z report was therefore **accurate**.
+- **Finding 2 is narrowed.** `origin/main` is genuinely ~31h stale, but there is **no
+  delivery gap** — work lands on the release line. The watchdog's `no_recent_main_commit`
+  signal is a **measurement artifact**: `oversight-watch.sh` measures only
+  `refs/remotes/origin/main` and never considers release branches (which `OVERSIGHT.md`
+  §"Measured signs" already says an auditor must consider).
+
+**Revised corrective action — CA-M (measurement amendment).** Amend
+`government/oversight-watch.sh` so the delivery signal reflects the newest commit
+across `origin/main` **and** `origin/release/*` (optionally fetch first), with a smoke
+test; keep it a weak leading indicator, not a quota. Owner: Research advocate
+(c1a00004). This supersedes the earlier CA-1 premise (unmerged fixes) — the fixes are
+merged; the residual executive task is only to confirm/record the release-branch model
+and keep delivering.
+
+**Founder-reserved ambiguity recorded (not escalated).** `VICHE_KAWUN_REPO` points at
+`/workspace/skrynia-apps` and the release line references `along-long-namespace`, while
+Founding Act 9 names Viche and Kawun. Town config treats the repo as Kawun and commits
+are `kawun`-prefixed, and "Skrynia" recurs throughout Kawun's own issues, so this is
+most likely a naming artifact — recorded for transparency, not a proven scope breach.

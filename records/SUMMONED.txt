@@ -1,6 +1,6 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Oversight inquiry 1792107382 (Clerk hearing 2026-10-15T23:36Z; updated 23:48Z):
-c1a00005
-c1a00003
+# Oversight inquiry 1792107382 (Clerk hearing 2026-10-15T23:36Z; corrected 23:56Z):
+#   CA-M measurement amendment -> c1a00004; C1 recovery timing -> c1a00006.
+c1a00004
 c1a00006
