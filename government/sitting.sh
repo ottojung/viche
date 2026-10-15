@@ -67,3 +67,27 @@ as a blocker rather than inventing or repeating old work.
 EOF
     fi
 fi
+
+# A watchdog incident is mandatory parliamentary business, even when Town Hall
+# has no new Founder messages. This hook is ordinary law, not constitutional code.
+if [ "$seat" = "$clerk" ]; then
+    oversight=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/oversight
+    if [ -s "$oversight/incident.json" ]; then
+        cat <<EOF
+=== MANDATORY OPEN OVERSIGHT INQUIRY ===
+$(cat "$oversight/incident.json")
+=== END OVERSIGHT INCIDENT ===
+Do not adjourn for "no business": independently investigate this open incident.
+Examine the auditor's findings and actual Kawun outcomes, convene an inquiry
+and summon needed members for evidence or corrective legislation. Require
+a concrete corrective action, its owner and a follow-up evaluation date.
+For incident first_seen ID from JSON, publish a real hearing record on the
+Antonina board or in a merged Git record, then write
+$oversight/hearings/ID.json containing {"incident_id":ID,"evidence_ref":"URL-or-commit"}.
+A hearing record is an acknowledgment, NEVER proof the failure is resolved.
+The independent watchdog will flag non-response after two hours and must not
+silently close unresolved audit findings. Do not fabricate proceedings or
+require Founder attention for routine technical corrections.
+EOF
+    fi
+fi
