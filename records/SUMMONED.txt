@@ -1,3 +1,4 @@
-# Resolved 2026-10-15T01:40Z: territorial-janitor-act PASSED present=6 yes=6 no=0 abstain=0 (quorum 6, required 6).
-# Enacted Act 9.7 + Act 12 in government/LAWS.md. See records/PROCEEDINGS.md.
-# Distinct outstanding obligations (post-enactment gate exercise under Act 12.7, four remaining seat votes optional): MANDATES M-009, M-010, M-011 tracked separately.
+# Summoned seats — sitting 2026-10-15T18:10Z (clerk c1a00001)
+# One hexadecimal seat ID per line. Remove resolved summons.
+
+c1a00004
