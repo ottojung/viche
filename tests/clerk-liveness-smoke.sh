@@ -48,8 +48,10 @@ dash "$repo/government/clerk-liveness.sh"
 test "$(wc -l < "$d/mock/actions")" -eq 2
 # Once the window expires, one fresh session is allowed.
 printf '0\n' > "$d/state/liveness/last-reset"
-dash "$repo/government/clerk-liveness.sh" --gate
+# Even after the cooldown expires, a failed session must never be continued.
+if dash "$repo/government/clerk-liveness.sh" --gate; then exit 1; fi
 dash "$repo/government/clerk-liveness.sh"
+dash "$repo/government/clerk-liveness.sh" --gate
 test "$(wc -l < "$d/mock/actions")" -eq 4
 test -f "$d/seats/c1a00001/uncommitted.txt"
 printf 'Viche Clerk liveness smoke passed\n'
