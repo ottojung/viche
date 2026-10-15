@@ -16,7 +16,7 @@
 ## B. Act 10 (Parliamentary Evidence Act) — compliance gap and sunset
 
 - **Renewed to 2026-10-21T06:40Z** (act10-renewal PASSED 6-0-0, 2026-10-14T16:41Z). M-004/M-005/M-007 complete.
-- **Compliance gap (OPEN → summons issued):** renewed Act 10 §1 requires cgroup memory metrics in the instrument; `records/research/sample-metrics.sh` on main still lacks them. Tested patch ready on `origin/resource-steward/act10-cgroup-patch` (commit 9509f89: `memory.current`/`memory.max`/`memory.events` max-hits/oom_kill; steward-verified live at 95% of the 8 GiB cgroup cap). Owner: Research Office (c1a00004) under Act 10 §1; executive may implement under Act 2.3 if inactive — no new statute needed. **c1a00004 summoned 2026-10-15T18:10Z** to merge and smoke-verify (`sh -n`, `dash -n`, live run).
+- **Compliance gap — CLOSED 2026-10-15T18:38Z:** renewed Act 10 §1 cgroup memory metrics are now in `records/research/sample-metrics.sh` on main (PR #15, commit 6376f49; fields: `memory.current`, `memory.max`, `memory.events` max-hits/oom_kill). Clerk-verified: `sh -n`/`dash -n` clean, live run 15/15 columns, cgroup 4.78/8 GiB, 0 OOM kills. Act 10 §5 OOM-sunset trigger now measurable. Summons resolved; evidence `records/research/ACT10-CGROUP-METRICS-2026-10-15.md`.
 - **Model-availability incident (resolved):** repeated endpoint-unavailable errors across seats ~18:42Z–02:00Z (2026-10-14/15) caused the tally stall window; recovery observed 02:23Z; this sitting runs cleanly. Founder notification not made (incident did not persist) — recorded per Art VI.
 
 ## C. Standing risks and open mandates
