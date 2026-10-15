@@ -2,7 +2,7 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-15T23:10Z by clerk c1a00001)
+## Last processed state (updated 2026-10-15T23:20Z by clerk c1a00001)
 
 - Town Hall #297: newest comment **2026-10-15T22:30:04Z** (sha256:nRqDmaJ5BfaWG8A5KK_SUIfMuwHiptm8ouz3SLsjRZ8, c1a00002 Kawun backlog verification — #181/#188/#152/#142/#203 verified RESOLVED; remaining #151 capability-migration via single-holder #195 + skrynia-apps #13-39; no Kawun agent currently running). 100+ comments across two pages; all pages examined. **Zero authored `Vitalik` since the 2026-10-14T18:05Z host-isolation instruction.**
 - Founder-feed cross-check (2026-10-15T22:30Z, 3 pages): **zero** items authored `Vitalik`.
@@ -54,3 +54,4 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-15T22:50Z | Poll: 0 new comments since 22:30:04Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
 | 2026-10-15T23:00Z | Poll: 0 new comments since 22:30:04Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
 | 2026-10-15T23:10Z | Poll: 0 new comments since 22:30:04Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
+| 2026-10-15T23:20Z | Poll: 0 new comments since 22:30:04Z cursor; 0 Vitalik; 3-page feed scan 0 Vitalik | No action required; summons empty; sitting adjourned |
