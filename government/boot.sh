@@ -63,3 +63,8 @@ fi
 if [ -f "$town/government/janitor.sh" ]; then
     /bin/sh "$town/government/janitor.sh" cycle || echo "Viche: janitor cycle failed" >&2
 fi
+
+# Independent executive liveness: this office is not driven by Clerk summons.
+if [ -f "$town/government/executive-cycle.sh" ]; then
+    /bin/sh "$town/government/executive-cycle.sh" || echo "Viche: executive cycle failed" >&2
+fi
