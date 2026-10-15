@@ -45,6 +45,12 @@ while IFS="$tab" read -r agent_id title focus; do
     fi
 done < "$town/government/seats.tsv"
 
+# Restore a failed Clerk's independent Antonina session only after a cooldown.
+# Ordinary government owns this recovery; constitutional boot/model are unchanged.
+if [ -f "$town/government/clerk-liveness.sh" ]; then
+    /bin/sh "$town/government/clerk-liveness.sh" || echo "Viche: Clerk liveness reconciliation failed" >&2
+fi
+
 # Janitor Office: observe disk health each cycle; safe reclamation is self-throttled and
 # non-fatal so it can never block seat reconciliation. Authority and safeguards:
 # records/bills/janitor-office-act.md (Act 12); observation is within Act 4.2.

@@ -6,6 +6,12 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
+if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
+    /bin/sh "$town/government/clerk-liveness.sh" --gate || {
+        echo "Viche: Clerk sitting deferred until endpoint retry cooldown" >&2
+        exit 1
+    }
+fi
 if [ "$seat" = "$clerk" ]; then
     cat <<EOF
 You are the provisional parliamentary clerk. Poll Town Hall issue
