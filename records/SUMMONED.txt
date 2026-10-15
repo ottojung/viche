@@ -1,3 +1,5 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# c1a00002 no longer needs a standing parliamentary summons for Kawun delivery.
+# Oversight inquiry 1792107382 (Clerk hearing 2026-10-15T23:36Z):
+c1a00005
+c1a00003
