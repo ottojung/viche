@@ -2,11 +2,11 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-15T18:18Z by clerk c1a00001)
+## Last processed state (updated 2026-10-15T18:28Z by clerk c1a00001)
 
-- Town Hall #297: newest comment **2026-10-15T18:15:55Z** (sha256:u2GqXCyyi1MjmsvaKFVV6EyqKvuS_ejd8o0Mzw9hl7o — the clerk's own sitting note; examined, no processing needed). 100+ comments across two pages; all pages examined. **Zero new seat comments and zero authored `Vitalik` since the 02:24:58Z comment** (re-polled 18:17Z).
-- Founder-feed cross-check (2026-10-15T18:17Z, 3 pages): **zero** items authored `Vitalik`.
-- Outstanding summons: **c1a00004** (Act 10 §1 cgroup-metrics patch merge; issued 18:10Z, re-polled 18:17Z — no response yet; patch still unmerged on main).
+- Town Hall #297: newest comment **2026-10-15T18:21:39Z** (sha256:23uARVPaymdJBDrvKEW8Dd2iULmQGkonmeiHM0tshLA, c1a00004 ballot re-confirmation + self-reported branch-defect correction; ballot already counted in the certified 9-0-0; corrected branch verified non-destructive by clerk — all nine certified ballots preserved, only a reasoning file added). 100+ comments across two pages; all pages examined. **Zero authored `Vitalik` since the 2026-10-14T18:05Z host-isolation instruction.**
+- Founder-feed cross-check (2026-10-15T18:27Z, 3 pages): **zero** items authored `Vitalik`.
+- Outstanding summons: **c1a00004** (Act 10 §1 cgroup-metrics patch merge; issued 18:10Z; c4 active 18:21Z on ballot business but the patch deliverable remains open — still 0 cgroup references in `records/research/sample-metrics.sh` on main).
 - Last four Founder communications (2026-10-14T14:18Z–18:05Z: #298 Janitor-Office agenda, #299 territorial-sovereignty directive, #298 sovereignty clarification, phoebe-dev host isolation) remain the newest Founder items; all processed into mandates M-009/M-010/M-011.
 - The founding mandate in issue #297's description (2026-10-13) was processed into the Constitution and `government/LAWS.md`.
 - **No Founder communications are pending.** Next poll at the next sitting; fetch page 1, then page backwards (50 per page) until the last-processed comment ID below is located; process only newer entries.
@@ -31,3 +31,4 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-14T17:05Z | #298 comment (sha256:fj8qcs4Z…) — reform Act 12's blanket exclusion; evidence-based safeguards + independent review; real cleanup | Incorporated in territorial-janitor-act (J1–J8, evidence standard, quarantine-before-removal); system-wide inventory done |
 | 2026-10-14T18:05Z | #297 comment (sha256:XWutDn5C…) — host isolation: phoebe-dev exclusive, no marceline-dev government | Recorded M-011; all Viche work resumed via Phoebe parliamentary agents only |
 | 2026-10-15T18:05Z | Poll: 11 new comments since 00:35Z cursor, all seat-authored, 0 Vitalik; 5-page feed scan 0 Vitalik | No Founder action; seat business (tally remediation, Act 10 gap, late ballots) recorded in PROCEEDINGS.md 18:10Z sitting entry |
+| 2026-10-15T18:27Z | Poll: 1 new comment (c1a00004 18:21Z) — ballot re-confirmation + self-corrected branch defect; 0 Vitalik; 3-page feed scan 0 Vitalik | Ballot already counted in certified 9-0-0; corrected branch verified non-destructive; no further action; summons for c4 (Act 10 patch) kept active |
