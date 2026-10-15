@@ -42,7 +42,7 @@ done
 case "$action" in
     status)
         [ -f "$MOCK_STATE/$id" ] || exit 3
-        printf '%s\n' '{"state":"idle"}'
+        printf '%s\n' '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}'
         ;;
     new)
         [ ! -f "$MOCK_STATE/$id" ] || exit 4
@@ -60,6 +60,7 @@ case "$action" in
             *) exit 7 ;;
         esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
+        case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
     *) exit 94 ;;
 esac
@@ -83,11 +84,13 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
-[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+1)) ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+2)) ]
+[ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
 # A documented summons must wake the clerk plus exactly the summoned seat(s).
 summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
 printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq "$seat_count" ]
-[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
-printf 'Viche: %s seats initialized, charter injected, routine sitting summons clerk only, and a documented summons wakes clerk+summoned seat\n' "$seat_count"
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+4)) ]
+[ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
+printf 'Viche: %s seats initialized, charter injected, routine cycle runs Clerk+executive, while a parliamentary summons has precedence\n' "$seat_count"

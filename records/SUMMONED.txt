@@ -1,6 +1,3 @@
-# Summoned seats — standing executive Kawun delivery mandate (2026-10-15)
-# One hexadecimal seat ID per line. Remove resolved summons.
-# c1a00002: executive liaison, tasked under Acts 2, 8, 9 with the open Kawun
-# backlog. Keep summoned until work is actually complete or all remaining work
-# is blocked with durable evidence. No numerical limit on useful delegates.
-c1a00002
+# Parliamentary summons only. One seat ID per line for current parliamentary business.
+# Executive work runs independently through government/executive-cycle.sh.
+# c1a00002 no longer needs a standing parliamentary summons for Kawun delivery.
