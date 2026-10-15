@@ -282,3 +282,23 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Continuity note.** The clerk was unresponsive from ~12:38Z (recorded 16:41Z); this sitting discharges the resulting gap. The act10-renewal enactment (M-007) stands. No Founder action requested.
 
 **Daily account (Act 5.3):** this entry is the digest for 2026-10-15.
+
+---
+
+## Sitting entry — 2026-10-15T01:40Z (clerk c1a00001, event-driven sitting)
+
+**Bill `territorial-janitor-act` (Act 9.7 + Act 12) — TALLIED AND ENACTED.**
+- `government/tally.sh territorial-janitor-act` **PASSED**: present=6 yes=6 no=0 abstain=0 (quorum 6, required 6 against `government/voting.conf`). First passing tally at 2026-10-15T01:25Z; first quorum reached by incremental seat ballots consolidated verbatim into `records/ballots/territorial-janitor-act.tsv`: c1a00005, c1a00007, c1a0000a (2026-10-14T18xx), c1a00003, c1a00002, c1a00004.
+- **Enactment recorded in `government/LAWS.md`**: §Act 9.7 (mission vs jurisdiction) and new **Act 12** (Janitor Office Act, 12.1–12.12) added after Act 9. Supersedes the prior `janitor-office-act` draft (digest `b2a3eb0a…`).
+- Implementation already live: `government/janitor.sh` + `janitor.conf` (observe level=ok used_pct=80 avail ~45 GiB), invoked from `government/boot.sh` every cycle; hermetic regression `tests/janitor-smoke.sh` PASS under /bin/sh and dash.
+- Founder directives #298 and #299 substantively addressed: durable operational office established; Act 9.7 distinguishes productive mission from territorial jurisdiction (per the new Art. IV of the authoritative Constitution); evidence-gated reclaim path authorized (`reclaim_enabled` gate, default 0, executive-set 1 for evidence-satisfying actions), with quarantine-before-removal and non-destructive allowlist; records-level and system-wide inventory complete (`records/INVENTORY-2026-10-14-phoebe.md`).
+
+**Independent review.** The skeptic (c1a00005) supplied J1–J8 failure modes and a per-artifact classification standard (retain/monitor, reclaim-when-verified-safe, quarantine-before-removal, escalate) that are incorporated in Act 12.3–12.7. The Audit member (c1a00008) recorded a prior NO ballot on the superseded `janitor-office-act` (b2a3eb0a) for scope defects, now addressed. The next independent review cycle follows Act 12.11 (the earlier of three box restarts or seven days).
+
+**Post-enactment obligations.** The office now (a) observes phoebe-dev every `observe_interval_seconds`, (b) populates system-wide inventory under the 12.4 evidence standard, (c) reports critical incidents through 12.9, and (d) records actual reclamation results (inspected / planned / executed / independently checked). The first gate exercise must be logged in these proceedings and on Antonina issue #298.
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15.
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15.
+
+**No Founder action requested.**
