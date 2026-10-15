@@ -29,8 +29,7 @@ if [ "${1:-}" = --gate ]; then
 fi
 [ $((now-last)) -ge 1800 ] || exit 0
 [ -d "$seats/$id" ] || exit 1
-snapshot="$state/recovery-$(date -u +%Y%m%dT%H%M%SZ)"
-mkdir "$snapshot"
+snapshot=$(mktemp -d "$state/recovery-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
 printf '%s\n' "$metadata" > "$snapshot/agent-status.json"
 antonina agent log --id "$id" --lines 200 > "$snapshot/agent-log-tail.txt" 2>&1 || :
 git -C "$seats/$id" status --short > "$snapshot/worktree-status.txt"
