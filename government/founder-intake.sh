@@ -129,10 +129,10 @@ if [ "$accepted" -ne 1 ]; then
   i=1
   while [ "$i" -lt "$n" ] && [ "$delay" -lt 1800 ]; do delay=$((delay*2)); i=$((i+1)); done
   [ "$delay" -le 1800 ] || delay=1800
-  printf '%s\\n' "$n" > "$q/failure-count"
-  printf '%s\\n' "$((now+delay))" > "$retry"
-  printf '%s failures=%s retry_seconds=%s\\n' "$(date -u +%FT%TZ)" "$n" "$delay" >> "$q/failures.log"
-  [ "$n" -lt 5 ] || printf 'Dispatch failure count %s; pending events retained; retry in %ss\\n' "$n" "$delay" > "$q/ESCALATION"
+  printf '%s\n' "$n" > "$q/failure-count"
+  printf '%s\n' "$((now+delay))" > "$retry"
+  printf '%s failures=%s retry_seconds=%s\n' "$(date -u +%FT%TZ)" "$n" "$delay" >> "$q/failures.log"
+  [ "$n" -lt 5 ] || printf 'Dispatch failure count %s; pending events retained; retry in %ss\n' "$n" "$delay" > "$q/ESCALATION"
   exit 1
 fi
 rm -f "$retry" "$q/failure-count" "$q/ESCALATION"
