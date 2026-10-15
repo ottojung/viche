@@ -100,6 +100,11 @@ charter=${VICHE_CONSTITUTION_DIR:-/var/lib/lubko/from-host/viche-constitution}/C
 [ -s "$charter" ] || exit 1
 body=$(jq -rs 'sort_by(.createdAt)|map("Founder instruction "+(.id//"?")+" on issue #"+(.issueNumber//"?")+":\n"+(.body//""))|join("\n\n")' "$@")
 mode=$(antonina agent status --id "$clerk" --json | jq -er '.state')
+# Founder instructions remain pending while a failed Clerk is cooling down.
+# Do not bypass the same liveness gate used by ordinary sittings.
+if [ -f "$town/government/clerk-liveness.sh" ]; then
+  /bin/sh "$town/government/clerk-liveness.sh" --gate || exit 0
+fi
 keys=
 for f in "$@"; do keys="$keys $(basename "$f" .json)"; done
 charter_text=$(cat "$charter")
