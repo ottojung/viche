@@ -29,6 +29,8 @@ jobs:
         run: dash tests/clerk-liveness-smoke.sh
       - name: Exercise parliamentary seat liveness recovery
         run: dash tests/seat-liveness-smoke.sh
+      - name: Exercise independent executive delivery
+        run: dash tests/executive-cycle-smoke.sh
       - name: Exercise targeted parliamentary summons
         run: dash tests/summons-smoke.sh
       - name: Check sampler TSV with zero agents
