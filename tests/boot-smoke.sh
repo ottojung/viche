@@ -25,6 +25,7 @@ git clone --quiet --no-hardlinks "$root" "$town"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
+if [ "$1" = board ] && [ "$2" = list ]; then echo "[]"; exit 0; fi
 [ "$1" = agent ] || exit 91
 action=$2
 shift 2
@@ -77,6 +78,9 @@ VICHE_TOWNHALL_ID=999
 export MOCK_STATE PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT
 export VICHE_STATE_ROOT VICHE_TEST_NO_SYNC VICHE_TOWNHALL_ID
 
+# Periodic broad audit is separately tested. Suppress its timer in bootstrap smoke.
+mkdir -p "$scratch/state/oversight"
+date +%s > "$scratch/state/oversight/last-audit-dispatch"
 seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
 /bin/sh "$town/constitution/boot.sh" --once
