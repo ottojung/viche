@@ -14,8 +14,8 @@ export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID
 printf '%s\n' 'UNIQUE LIVE KAWUN EXECUTIVE ASSIGNMENT' > "$scratch/records/summons/c1a00002.md"
 /bin/sh "$repo/government/sitting.sh" c1a00002 > "$scratch/executive.txt"
 grep -Fq 'UNIQUE LIVE KAWUN EXECUTIVE ASSIGNMENT' "$scratch/executive.txt"
-grep -Fq 'deliver Kawun, not merely debate or report' "$scratch/executive.txt"
-grep -Fq 'open Kawun' "$scratch/executive.txt"
+grep -Fq 'You are a voting parliamentarian' "$scratch/executive.txt"
+if grep -Fq 'Your ongoing job is to' "$scratch/executive.txt"; then exit 1; fi
 
 /bin/sh "$repo/government/sitting.sh" c1a00004 > "$scratch/seat4.txt"
 grep -Fq 'UNIQUE ACT 10 CGROUP ASSIGNMENT' "$scratch/seat4.txt"
@@ -32,6 +32,6 @@ fi
 /bin/sh "$repo/government/sitting.sh" c1a00001 > "$scratch/clerk.txt"
 grep -Fq 'records/summons/SEAT_ID.md' "$scratch/clerk.txt"
 grep -Fq 'records/SUMMONED.txt' "$scratch/clerk.txt"
-grep -Fq 'At EVERY sitting inspect open Kawun work' "$scratch/clerk.txt"
-grep -Fq 'An empty Founder inbox' "$scratch/clerk.txt"
+grep -Fq 'Executive discovery, issue prioritization' "$scratch/clerk.txt"
+if grep -Fq 'At EVERY sitting inspect' "$scratch/clerk.txt"; then exit 1; fi
 echo 'Summons smoke checks passed'
