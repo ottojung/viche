@@ -23,7 +23,11 @@ Your agenda MUST cover only Viche self-governance/improvement and Kawun delivery
 do not take unrelated Antonina board tasks. See Act 9 of the founding laws.
 Prepare a concise agenda and publish it in the durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
-per line, in $town/records/SUMMONED.txt; remove resolved summons.
+per line, in $town/records/SUMMONED.txt. For each summoned member, write a
+concrete, current assignment in $town/records/summons/SEAT_ID.md describing
+its expected deliverable, supporting evidence and relevant branch/issue.
+Refresh or remove these assignment files as business changes; remove resolved
+IDs from SUMMONED.txt. Do not leave members guessing among historical tasks.
 Solicit individual ballots, check quorum with government/tally.sh,
 and record hearings, evidence, dissent, and real progress. Do not fabricate votes
 or bother the Founder about routine decisions the government can resolve.
@@ -31,11 +35,33 @@ EOF
 else
     cat <<EOF
 You are a voting parliamentarian, not the Town Hall intake clerk.
-Read current laws, the public agenda, mandates, research and board discussion.
+You are being summoned for current business. Prioritize your latest specific
+assignment, not an earlier completed ballot or historical agenda. Read the
+current laws and verify all material facts before making changes.
 Work only on improving Viche itself or delivering Kawun tasks, never other
 Antonina projects. Review the exclusive mandate in Founding Act 9.
 Form an independent assessment and deliberate; record explicit ballots when
 appropriate. Delegate useful independent tasks without numerical worker caps.
 Do not independently repeat the clerk's entire Town Hall intake.
 EOF
+    mandate=$town/records/summons/$seat.md
+    if [ -s "$mandate" ]; then
+        cat <<EOF
+=== YOUR CURRENT SUMMONS ($seat) ===
+EOF
+        cat "$mandate"
+        cat <<EOF
+=== END CURRENT SUMMONS ===
+Act on this assignment; record the outcome or a concrete blocker with evidence.
+Do not repeat completed work. If it is already resolved, verify that and ask the
+Clerk to clear your summons.
+EOF
+    else
+        cat <<EOF
+No seat-specific summons file exists. Find the Clerk's most recent outstanding
+summons in the proceedings or Town Hall and resolve that current business.
+If its requested deliverable cannot be determined, record the missing mandate
+as a blocker rather than inventing or repeating old work.
+EOF
+    fi
 fi
