@@ -91,5 +91,15 @@ jq -n --argjson first "$first" --argjson now "$now" --arg signals "$signals" \
 mv -f "$temp" "$old"
 if [ "$overdue" = true ]; then
     printf '%s\t%s\tunanswered oversight incident\n' "$now" "$first" >> "$root/escalations.tsv"
+    # Keep the Founder informed even if the model provider cannot run Parliament.
+    marker=$root/escalated-$first
+    if [ ! -e "$marker" ] && [ -n "${VICHE_TOWNHALL_ID:-}" ]; then
+        notice="Viche oversight incident $first has received no parliamentary hearing for two hours. Measured signs: $signals; visible open Kawun issues: $open; executive state: $mode ($reason). Investigation required, not a misconduct verdict. Parliament has this on its mandatory agenda. No routine Founder action requested."
+        if antonina board comment --id "$VICHE_TOWNHALL_ID" --author "Viche watchdog" --body "$notice" >/dev/null 2>&1; then
+            printf '%s\n' "$now" > "$marker"
+        else
+            echo 'Viche watchdog: Town Hall notice failed; will retry later' >&2
+        fi
+    fi
 fi
 printf 'Viche oversight: %s (incident %s, unanswered=%s)\n' "$signals" "$first" "$overdue" >&2
