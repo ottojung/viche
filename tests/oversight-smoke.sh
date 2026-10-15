@@ -1,0 +1,83 @@
+#!/bin/sh
+# Hermetic test of independent, clocked failure detection and auditor dispatch.
+set -eu
+repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" "$scratch/state" "$scratch/seats/c1a00008"
+printf 'authoritative fixture\n' > "$scratch/charter"
+: > "$scratch/town/records/SUMMONED.txt"
+cat > "$scratch/bin/antonina" <<'MOCK'
+#!/bin/sh
+set -eu
+case "$1 $2" in
+"board list")
+    printf '%s\n' "$MOCK_BOARD"
+    ;;
+"agent status")
+    case "$*" in
+        *c1a00008*) printf '{"state":"%s","model":"%s","variant":"%s"}\n' "$AUDIT_STATE" "$MODEL" "$VARIANT";;
+        *) printf '{"state":"%s","last_activity_at":%s,"backend_error":{"classification":"%s"}}\n' "$EXEC_STATE" "$LAST" "$ERROR";;
+    esac
+    ;;
+"agent run")
+    case "$*" in
+        *"authoritative fixture"*) printf 'audit-dispatch\n' >> "$DISPATCHES";;
+        *) exit 70;;
+    esac
+    ;;
+*) exit 90 ;;
+esac
+MOCK
+chmod +x "$scratch/bin/antonina"
+PATH=$scratch/bin:$PATH
+VICHE_TOWN_ROOT=$scratch/town
+VICHE_SEATS_ROOT=$scratch/seats
+VICHE_STATE_ROOT=$scratch/state
+VICHE_CONSTITUTION=$scratch/charter
+VICHE_KAWUN_REPO=$scratch/unavailable-kawun
+VICHE_OVERSIGHT_NOW=20000
+MOCK_BOARD='[{"number":152,"title":"Kawun: audit secrets"},{"number":43,"title":"Unrelated project"}]'
+EXEC_STATE=failed
+ERROR=upstream_endpoint_unavailable
+LAST=19500
+AUDIT_STATE=idle
+MODEL=opencode-go/longcat-2.5-preview-free
+VARIANT=low
+DISPATCHES=$scratch/dispatches
+export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
+export VICHE_KAWUN_REPO VICHE_OVERSIGHT_NOW MOCK_BOARD EXEC_STATE ERROR LAST
+export AUDIT_STATE MODEL VARIANT DISPATCHES
+/bin/sh "$repo/government/oversight-watch.sh"
+incident=$scratch/state/oversight/incident.json
+jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_kawun_issues_first_page == 1' "$incident" >/dev/null
+/bin/sh "$repo/government/audit-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+/bin/sh "$repo/government/audit-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+
+VICHE_OVERSIGHT_NOW=28001
+export VICHE_OVERSIGHT_NOW
+/bin/sh "$repo/government/oversight-watch.sh"
+jq -e '.parliamentary_response_overdue == true and .parliamentary_hearing_recorded == false and .first_seen == 20000' "$incident" >/dev/null
+
+printf '%s\n' '{"incident_id":20000,"evidence_ref":"https://example.com/hearing"}' > "$scratch/state/oversight/hearings/20000.json"
+/bin/sh "$repo/government/oversight-watch.sh"
+jq -e '.parliamentary_response_overdue == false and .parliamentary_hearing_recorded == true' "$incident" >/dev/null
+printf '%s\n' c1a00008 > "$scratch/town/records/SUMMONED.txt"
+/bin/sh "$repo/government/audit-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+
+: > "$scratch/town/records/SUMMONED.txt"
+MODEL=forbidden
+export MODEL
+/bin/sh "$repo/government/audit-cycle.sh" >/dev/null 2>&1 && exit 1
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+MODEL=opencode-go/longcat-2.5-preview-free
+EXEC_STATE=idle
+MOCK_BOARD='[]'
+export MODEL EXEC_STATE MOCK_BOARD
+/bin/sh "$repo/government/oversight-watch.sh"
+[ ! -e "$incident" ]
+[ -s "$scratch/state/oversight/history.jsonl" ]
+echo 'Independent oversight smoke checks passed'
