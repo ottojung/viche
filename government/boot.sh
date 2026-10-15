@@ -43,6 +43,12 @@ while IFS="$tab" read -r agent_id title focus; do
     if ! antonina agent status --id "$agent_id" --json >/dev/null 2>&1; then
         antonina agent new --id "$agent_id" --cwd "$seat_dir" --title "Viche: $title"
     fi
+    # All seats have durable, independently recoverable sessions; don't let a
+    # failed provider continuation permanently remove a future voter.
+    if [ -f "$town/government/seat-liveness.sh" ]; then
+        /bin/sh "$town/government/seat-liveness.sh" "$agent_id" ||
+            echo "Viche: seat $agent_id recovery failed" >&2
+    fi
 done < "$town/government/seats.tsv"
 
 # Restore a failed Clerk's independent Antonina session only after a cooldown.
