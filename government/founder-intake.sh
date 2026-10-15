@@ -87,6 +87,12 @@ for f in "$q/sent"/*.json; do
 done
 set -- "$q/pending"/*.json
 [ -f "$1" ] || exit 0
+retry="$q/next-dispatch"
+now=$(date +%s)
+next=0
+[ ! -s "$retry" ] || next=$(cat "$retry")
+case "$next" in ''|*[!0-9]*) next=0;; esac
+[ "$now" -ge "$next" ] || exit 0
 clerk=$(head -n 1 "$town/government/seats.tsv" | cut -f1)
 seat=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}/$clerk
 [ -d "$seat" ] || exit 1
@@ -108,9 +114,27 @@ $charter_text
 EOF
 )
 if [ "$mode" = running ]; then
-  antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --steer --detach
+  accepted=0
+  antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --steer --detach && accepted=1
 else
-  antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --detach
+  accepted=0
+  antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --detach && accepted=1
 fi
+if [ "$accepted" -ne 1 ]; then
+  n=0
+  [ ! -s "$q/failure-count" ] || n=$(cat "$q/failure-count")
+  case "$n" in ''|*[!0-9]*) n=0;; esac
+  n=$((n+1))
+  delay=60
+  i=1
+  while [ "$i" -lt "$n" ] && [ "$delay" -lt 1800 ]; do delay=$((delay*2)); i=$((i+1)); done
+  [ "$delay" -le 1800 ] || delay=1800
+  printf '%s\\n' "$n" > "$q/failure-count"
+  printf '%s\\n' "$((now+delay))" > "$retry"
+  printf '%s failures=%s retry_seconds=%s\\n' "$(date -u +%FT%TZ)" "$n" "$delay" >> "$q/failures.log"
+  [ "$n" -lt 5 ] || printf 'Dispatch failure count %s; pending events retained; retry in %ss\\n' "$n" "$delay" > "$q/ESCALATION"
+  exit 1
+fi
+rm -f "$retry" "$q/failure-count" "$q/ESCALATION"
 for f in "$@"; do dest="$q/sent/$(basename "$f")"; mv "$f" "$dest"; touch "$dest"; done
 printf 'Founder intake dispatched %s events to clerk (prior state %s)\n' "$#" "$mode"
