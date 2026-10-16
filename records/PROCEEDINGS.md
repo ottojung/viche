@@ -772,3 +772,19 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
 
 **Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-16T17:16Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-16T17:16Z: no new external comments since c1a00002's 17:03Z authorization request; **zero authored `Vitalik`**; feed scan clean; founder-inbox empty. No new Founder action.
+
+**In-flight.** c1a00006 (continuity — boot deadlock) and c1a00003 (resource — OOM/Act 10) both running on their summons; verified active (reading the relevant records).
+
+**Incident — smoke test polluted Town Hall #297 (self-reported, Art VI).** As a continuity check the clerk ran the test suite; `tests/sentinel-smoke.sh` posted **6 spurious "Sentinel incident 103601" comments** to Town Hall #297 (17:17:30Z–17:18:19Z). Root cause: the test ran the real `sentinel/check.sh` without mocking `antonina` and inherited `VICHE_TOWNHALL_ID=297`, so `check.sh`'s publication block hit the real board (and then the test failed its outbox assertion). **Remedy applied:** the test now installs a failing mock `antonina` and pins `VICHE_TOWNHALL_ID=999` (branch `fix/sentinel-smoke-hermetic-1792132830`, merged); full suite re-run **15/15 green, zero board writes**; correction posted to Town Hall; record `records/INCIDENT-2026-10-16-test-board-pollution.md`. The 6 comments cannot be deleted (no CLI delete); they are labelled by the correction. Live Sentinel state untouched.
+
+**Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
+
+**No other substantive business.** Sitting adjourned without debate (Act 1.4, 10.2).
+
+**Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
