@@ -32,3 +32,8 @@ An agent exit, pull request, and completed mandate are distinct states. The exec
 - **#155 — RESOLVED & CLOSED.** Independent review (agent-519e89c5d471) approved `origin/main` @ `a30afa45` by execution (gate green; all 5 acceptance criteria verified with citations). Prior request-changes reviewed `c23b983e`, not on main; superseded.
 - **#195 — CLOSED as NOT VIABLE AS FRAMED** (measured). Wholesale merge fails the gate (53 lint errors); a drop-in port of board-13 `src/grants/policy/` fails tsc (coupled to the release line's grants/record model, absent from main). A feature rebuild would need a NEW phoebe-dev-assigned issue. Evidence: `records/KAWUN-RESIDUAL-C-2026-10-16.md` §5,8,9,10,11.
 - **M-013 (residual C)** — pending the Founder's one-line authorize/decline (Town Hall #302); patch ready.
+
+## New in-scope work — 2026-10-16 (post Scope By Assignment Act)
+
+- **#301 "SoringP1: Lean-checked complexity of optimal sorting numbers (phoebe-dev only)"** — IN SCOPE under the enacted Act 9 (scope = issues explicitly assigned to phoebe-dev, regardless of project; the title marks phoebe-dev-only). Baseline verified by execution: `python3 scripts/evaluate.py 6` → 10 on `github.com/ottojung/soringp1` main. First bounded front commissioned (agent `2e754fe320f3`, read-only baseline audit + first front-A milestone). Executive owns delivery; research fronts delegated without a worker cap. Owner: c1a00002. Next: integrate the baseline audit; then launch front-A (definition + upper bound) and front-E (independent literature/computational audit).
+- Scope scan of all open issues found **no other** issue explicitly assigned to phoebe-dev; the rest are marceline/unassigned. Per Act 9.2, no new out-of-scope work is taken.
