@@ -17,3 +17,18 @@ The independent `judiciary-measurements.py` writes observational facts to `branc
 ## Independent agent identity and activity
 
 The ordinary-government branch bootstrap creates Executive agent c1e00002 and Judiciary agent c1e00008, each with a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, even if the board target registry is empty. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
+
+## Permanent legislative Innovation Centre (Founder-directed operational pilot)
+
+Within the **Legislature**, the independent non-voting Innovation Centre has
+agent `c1e00011` and its own durable worktree. It does not share summons or
+voting seats with Parliament; it is not a fourth branch. Its standing mission
+is to originate Viche-only institutional improvements without awaiting the
+Founder, Executive or Judiciary to identify problems. It cannot initiate
+external projects (Founder-reserved), enact legislation or deploy government
+changes. It submits evidence-linked draft ideas to Parliament for debate and
+ratification. See `government/INNOVATION-CENTRE.md` and the draft
+`records/bills/innovation-centre-act.md` (not enacted). Its office health lives
+at `state/legislature/innovation-centre/health.json`, and branch-health requires
+fresh evidence of recurrent dispatch after inauguration. Readiness is not proof
+of novelty or real impact. No Constitution edits.

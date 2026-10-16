@@ -1,7 +1,8 @@
 #!/bin/sh
 # Aggregate objective branch readiness; failure mandates inquiry, not punishment.
 set -eu
-root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+root=$state/branches
 mkdir -p "$root"
 now=${VICHE_BRANCH_NOW:-$(date +%s)}
 max_age=${VICHE_BRANCH_MAX_AGE:-1800}
@@ -28,6 +29,32 @@ for branch in legislature executive judiciary; do
     signals="${signals}${signals:+,}${branch}_unhealthy"
   fi
 done
+# Mandatory legislative sub-institution. It is not a fourth government branch.
+if [ -f "$state/inaugurated" ]; then
+  innovation=$state/legislature/innovation-centre/health.json
+  if [ ! -s "$innovation" ]; then
+    signals="${signals}${signals:+,}innovation_missing"
+  else
+    valid=$(jq -r 'if .office=="innovation-centre" and .legislative_branch==true and
+       .voting_seat==false and .separate_summons==true and
+       (.observed_at|type=="number") and (.last_dispatch_at|type=="number") and
+       (.readiness=="running" or .readiness=="ready" or .readiness=="dispatched")
+       then "yes" else "no" end' "$innovation" 2>/dev/null) || valid=no
+    if [ "$valid" != yes ]; then
+      signals="${signals}${signals:+,}innovation_unhealthy"
+    else
+      observed=$(jq -r '.observed_at' "$innovation")
+      last=$(jq -r '.last_dispatch_at' "$innovation")
+      mode=$(jq -r '.readiness' "$innovation")
+      if [ "$observed" -gt "$now" ] || [ $((now-observed)) -gt "$max_age" ]; then
+        signals="${signals}${signals:+,}innovation_stale"
+      elif [ "$last" -eq 0 ] ||
+        { [ "$mode" = ready ] && [ $((now-last)) -gt 28800 ]; }; then
+        signals="${signals}${signals:+,}innovation_not_dispatched"
+      fi
+    fi
+  fi
+fi
 printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"
 if [ -z "$signals" ]; then
   if [ -s "$root/incident.json" ]; then

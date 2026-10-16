@@ -84,6 +84,12 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
     /bin/sh "$town/government/branch-liveness.sh" judiciary ||
         echo "Viche: Judiciary liveness investigation required" >&2
 fi
+# Autonomous legislative Innovation Centre (not a fourth branch or voting seat).
+# Its dispatch and recovery do not depend on the Clerk or parliamentary summons.
+if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
+    /bin/sh "$town/government/innovation-centre-cycle.sh" ||
+        echo "Viche: legislative Innovation Centre failed; investigate" >&2
+fi
 if [ -f "$town/government/branch-health.sh" ]; then
     /bin/sh "$town/government/branch-health.sh" ||
         echo "Viche: independent branch readiness incident recorded" >&2

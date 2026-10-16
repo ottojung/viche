@@ -33,6 +33,8 @@ jobs:
         run: dash tests/seat-liveness-smoke.sh
       - name: Exercise independent executive delivery
         run: dash tests/executive-cycle-smoke.sh
+      - name: Exercise autonomous legislative Innovation Centre
+        run: dash tests/innovation-centre-smoke.sh
       - name: Exercise independent institutional oversight
         run: dash tests/oversight-smoke.sh
       - name: Exercise targeted parliamentary summons

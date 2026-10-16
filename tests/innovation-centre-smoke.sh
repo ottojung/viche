@@ -1,0 +1,72 @@
+#!/bin/sh
+# Hermetic: autonomous legislative office, cadence, model pin, health inquiry.
+set -eu
+repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+mkdir -p "$scratch/town/government" "$scratch/town/records" "$scratch/bin" "$scratch/state/branches"
+printf 'c1a00001\tClerk\tlegislature\n' > "$scratch/town/government/seats.tsv"
+printf '%s\n' c1e00011 > "$scratch/town/records/SUMMONED.txt"
+printf 'Founder test constitution, no other model allowed\n' > "$scratch/constitution"
+touch "$scratch/state/inaugurated"
+cat > "$scratch/town/government/branch-bootstrap.sh" <<'BOOT'
+#!/bin/sh
+mkdir -p "$VICHE_SEATS_ROOT/branches/innovation-centre"
+BOOT
+chmod +x "$scratch/town/government/branch-bootstrap.sh"
+cat > "$scratch/bin/antonina" <<'MOCK'
+#!/bin/sh
+set -eu
+case "$1 $2" in
+ "agent status")
+  printf '{"state":"%s","model":"%s","variant":"%s","last_activity_at":%s}\n' "$MODE" "$MODEL" "$VARIANT" "$ACTIVITY" ;;
+ "agent run")
+  case "$*" in *"INNOVATION CENTRE"*"cannot originate or authorize external projects"*"Parliament alone"*) : ;;
+   *) echo "Required scope/authority missing from prompt" >&2; exit 1;; esac
+  printf 'sent\n' >> "$DISPATCHES" ;;
+ *) echo "Unexpected mock: $*" >&2; exit 1 ;;
+esac
+MOCK
+chmod +x "$scratch/bin/antonina"
+PATH=$scratch/bin:$PATH
+VICHE_TOWN_ROOT=$scratch/town
+VICHE_SEATS_ROOT=$scratch/seats
+VICHE_STATE_ROOT=$scratch/state
+VICHE_CONSTITUTION=$scratch/constitution
+VICHE_INNOVATION_NOW=1000
+MODE=idle MODEL=opencode-go/longcat-2.5-preview-free VARIANT=low ACTIVITY=1000
+DISPATCHES=$scratch/runs
+export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
+export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
+cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-CENTRE.md"
+/bin/sh "$repo/government/innovation-centre-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+jq -e '.legislative_branch==true and .voting_seat==false and .separate_summons==true and .readiness=="dispatched"' "$scratch/state/legislature/innovation-centre/health.json" >/dev/null
+# Even a summons listing this ID cannot block the independent office.
+MODE=running
+/bin/sh "$repo/government/innovation-centre-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+MODE=idle
+VICHE_INNOVATION_NOW=1200
+export MODE VICHE_INNOVATION_NOW
+/bin/sh "$repo/government/innovation-centre-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+VICHE_INNOVATION_NOW=23000
+export VICHE_INNOVATION_NOW
+/bin/sh "$repo/government/innovation-centre-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
+MODEL=forbidden
+export MODEL
+if /bin/sh "$repo/government/innovation-centre-cycle.sh" >/dev/null 2>&1; then exit 1; fi
+# Checks are mandatory after inauguration, and must not confuse this office
+# with a fourth branch or parliamentary voting seat.
+for branch in legislature executive judiciary; do
+ printf '{"branch":"%s","readiness":"ready","observed_at":23000}\n' "$branch" > "$scratch/state/branches/$branch.json"
+done
+VICHE_BRANCH_NOW=23000
+export VICHE_BRANCH_NOW
+/bin/sh "$repo/government/branch-health.sh"
+rm "$scratch/state/legislature/innovation-centre/health.json"
+if /bin/sh "$repo/government/branch-health.sh" 2>/dev/null; then exit 1; fi
+jq -e '.signals | index("innovation_missing")' "$scratch/state/branches/incident.json" >/dev/null
+echo 'Independent legislative Innovation Centre smoke checks passed'
