@@ -11,9 +11,9 @@ This implementation executes **existing** Founding Acts 4 (independent audit), 5
 
 ## Measured signs (not performance quotas)
 
-First-page open Kawun issue count is a **lower bound** based on titles (`Kawun`, `kawunapp`, `skrynia-apps`). If unreadable, create a telemetry incident rather than guessing there is no work. Agent state and last activity come from Antonina. The age of the **local tracked** Kawun main Git commit is a weak leading indicator, not proof of deployment or completion.
+First-page open Kawun issue count is a **lower bound** based on titles (`Kawun`, `kawunapp`, `skrynia-apps`). If unreadable, create a telemetry incident rather than guessing there is no work. Agent state and last activity come from Antonina. The age of the newest **local tracked** Kawun delivery commit — across `origin/main` and every `origin/release/*` ref — is a weak leading indicator, not proof of deployment or completion. (A bounded, read-only `git fetch` may refresh these refs when `VICHE_OVERSIGHT_FETCH=1`; by default the measurement is explicitly local-only.)
 
-An open backlog plus a failed executive, half an hour of non-running inactivity, two hours of apparent running without recent activity, or 24 hours without a local main commit triggers an **inquiry**, not punishment. Missing source telemetry also triggers investigation. The auditor must consider progress on difficult work, release branches, genuine external blockers and false positives. These are review thresholds, **not ceilings on agent work or arbitrary task deadlines**.
+An open backlog plus a failed executive, half an hour of non-running inactivity, two hours of apparent running without recent activity, or 24 hours without a local delivery commit on any of those lines triggers an **inquiry**, not punishment. Missing source telemetry also triggers investigation. The auditor must consider progress on difficult work, release branches, genuine external blockers and false positives. These are review thresholds, **not ceilings on agent work or arbitrary task deadlines**.
 
 ## Durable feedback and anti-capture
 

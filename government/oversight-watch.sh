@@ -33,8 +33,37 @@ fi
 
 # Git is a *leading signal*, not proof of correct completion.
 # A stale local tracking branch is explicitly only a local observation.
+#
+# Delivery age (CA-M): the delivery signal must reflect the newest commit across
+# the delivery lines, not origin/main alone. Kawun's active delivery line is
+# origin/release/* (e.g. origin/release/along-long-namespace); measuring only
+# main false-positives whenever work lands on the release line. We therefore take
+# the NEWEST commit across origin/main and every origin/release/* ref. A fresh
+# commit on ANY delivery line suppresses the signal. This stays a weak leading
+# indicator — not a quota and not proof of deployment. The signal NAME
+# `no_recent_main_commit` is retained for continuity with existing incident
+# records; its measurement basis is delivery-wide.
 main_age=-1
+delivery_age=-1
 if [ -d "$kawun/.git" ]; then
+    if [ "${VICHE_OVERSIGHT_FETCH:-0}" = 1 ]; then
+        # Optional, bounded, read-only fetch so delivery refs reflect the remote.
+        # Off by default to keep the watchdog deterministic and testable.
+        if command -v timeout >/dev/null 2>&1; then
+            timeout 30 git -C "$kawun" fetch --quiet --prune 2>/dev/null || :
+        else
+            git -C "$kawun" fetch --quiet --prune 2>/dev/null || :
+        fi
+    fi
+    newest=
+    release_refs=$(git -C "$kawun" for-each-ref --format='%(refname)' refs/remotes/origin/release 2>/dev/null) || release_refs=
+    for ref in refs/remotes/origin/main $release_refs; do
+        ts=$(git -C "$kawun" log -1 --format=%ct "$ref" 2>/dev/null) || ts=
+        case "$ts" in ''|*[!0-9]*) :;; *)
+            if [ -z "$newest" ] || [ "$ts" -gt "$newest" ]; then newest=$ts; fi
+        ;; esac
+    done
+    if [ -n "$newest" ] && [ "$newest" -le "$now" ]; then delivery_age=$((now-newest)); fi
     last_commit=$(git -C "$kawun" log -1 --format=%ct refs/remotes/origin/main 2>/dev/null) || last_commit=
     case "$last_commit" in ''|*[!0-9]*) :;; *)
         if [ "$last_commit" -le "$now" ]; then main_age=$((now-last_commit)); fi
@@ -52,12 +81,12 @@ elif [ "$open" -gt 0 ]; then
     if [ "$mode" = running ] && [ "$age" -ge 7200 ]; then
         signals=${signals:+$signals,}running_without_recent_activity
     fi
-    if [ "$main_age" -ge 86400 ]; then
+    if [ "$delivery_age" -ge 86400 ]; then
         signals=${signals:+$signals,}no_recent_main_commit
     fi
 fi
 
-printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$now" "$open" "$mode" "$age" "$main_age" "$reason" "${signals:-clear}" >> "$root/observations.tsv"
+printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$now" "$open" "$mode" "$age" "$main_age" "$delivery_age" "$reason" "${signals:-clear}" >> "$root/observations.tsv"
 old=$root/incident.json
 if [ -z "$signals" ]; then
     if [ -s "$old" ]; then
@@ -84,10 +113,11 @@ if [ "$answered" = false ] && [ $((now-first)) -ge 7200 ]; then overdue=true; fi
 temp=$(mktemp "$root/incident.XXXXXXXX")
 jq -n --argjson first "$first" --argjson now "$now" --arg signals "$signals" \
    --argjson count "$open" --arg mode "$mode" --arg error "$reason" \
-   --argjson agent_age "$age" --argjson git_age "$main_age" \
-   --argjson board_ok "$board_ok" --argjson agent_ok "$agent_ok" \
-   --argjson answered "$answered" --argjson overdue "$overdue" \
-   '{first_seen:$first,observed_at:$now,signals:($signals|split(",")),open_kawun_issues_first_page:$count,executive_state:$mode,executive_error:$error,executive_last_activity_age_seconds:$agent_age,local_main_commit_age_seconds:$git_age,board_access_ok:$board_ok,agent_status_ok:$agent_ok,parliamentary_hearing_recorded:$answered,parliamentary_response_overdue:$overdue,assessment:"investigation_required_not_proof_of_misconduct"}' > "$temp"
+    --argjson agent_age "$age" --argjson git_age "$main_age" \
+    --argjson delivery_age "$delivery_age" \
+    --argjson board_ok "$board_ok" --argjson agent_ok "$agent_ok" \
+    --argjson answered "$answered" --argjson overdue "$overdue" \
+    '{first_seen:$first,observed_at:$now,signals:($signals|split(",")),open_kawun_issues_first_page:$count,executive_state:$mode,executive_error:$error,executive_last_activity_age_seconds:$agent_age,local_main_commit_age_seconds:$git_age,local_delivery_commit_age_seconds:$delivery_age,board_access_ok:$board_ok,agent_status_ok:$agent_ok,parliamentary_hearing_recorded:$answered,parliamentary_response_overdue:$overdue,assessment:"investigation_required_not_proof_of_misconduct"}' > "$temp"
 mv -f "$temp" "$old"
 if [ "$overdue" = true ]; then
     printf '%s\t%s\tunanswered oversight incident\n' "$now" "$first" >> "$root/escalations.tsv"
