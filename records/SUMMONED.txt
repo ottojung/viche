@@ -1,9 +1,10 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# EMPTY 2026-10-16T17:56Z: all current summons resolved.
-#   c1a00006 (continuity boot-deadlock verification + remedy) RESOLVED 17:56Z — branch pushed, record merged.
-#   c1a00003 (Resource Safety Act draft) RESOLVED 17:56Z — bill published for vote.
-# PENDING (NOT summoned — cgroup headroom ~1.75 GiB < 2 GiB floor; see AGENDA.md):
-#   - Resource Safety Act vote (needs quorum; summon when headroom >= 2 GiB).
-#   - c1a00007 constitutional/boundary review of both deliverables.
-# Re-evaluate headroom at the next sitting before populating this file.
+# Resource Safety Act VOTE (2026-10-16T18:07Z) — memory-safe batch 1 (headroom ~3.1 GiB):
+#   vote on records/bills/resource-safety-act.md (id resource-safety-act, digest 8e6f8d9a...).
+#   Instructions: records/ballots/RESOURCE-SAFETY-ACT-VOTE.md ; per-seat: records/summons/<seat>.md
+#   Batch 1: c1a00005, c1a00007 (also Constitution VII review), c1a00008.
+#   Clerk: after batch 1 votes, clear them and summon batch 2 (need >=6 yes; quorum 6).
+c1a00005
+c1a00007
+c1a00008

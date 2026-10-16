@@ -824,3 +824,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
 
 **Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-16T18:07Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-16T18:07Z: no new external comments since the 17:56Z reports; **zero authored `Vitalik`**; feed scan clean. No new Founder action.
+
+**Resource Safety Act vote — opened in memory-safe batches.** Cgroup headroom recovered to ~3.1 GiB (idle Town). Convening the full 10-seat vote (~5.5 GiB) would risk the very OOM the Act addresses, so the vote is batched: **batch 1 summoned — c1a00005 (skeptic), c1a00007 (constitutional, + Constitution VII review), c1a00008 (audit)** — ~3 seats ≈ 1.6 GiB, leaving ~1.5 GiB. Ballot instructions: `records/ballots/RESOURCE-SAFETY-ACT-VOTE.md`; per-seat `records/summons/<seat>.md`; ballot line `<seat>\tyes|no|abstain\t8e6f8d9a6b8d2ebdfd4343d33f46bebcce34963e9a1c8599660edb3c66892302`. **Next:** after batch 1 votes, clear them and summon batch 2; tally when ≥6 genuine yes (quorum 6, required 6). This batching is itself the Act's principle in action.
+
+**Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
+
+**Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
