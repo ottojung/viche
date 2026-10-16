@@ -7,9 +7,10 @@
 
 - **Mandate (Vitalik, #297 sha256:nO4EXTLs…):** use only explicit per-issue assignment to `phoebe-dev` to determine work scope; **retire the previous fixed-project scope in ordinary laws and executive agendas**; do not amend the Constitution.
 - **Triage:** `records/FOUNDER-MANDATE-2026-10-16-scope.md`. Act 9 (Viche+Kawun-only) is **ordinary law** → retirement needs a **bill + recorded votes**. Act 9.7/Act 12 (territorial administration) are unaffected. **Mechanism blocker:** the Antonina execution-target registry is **empty** and issues carry no assignment field, so "assigned to phoebe-dev" is not currently observable — record, do not guess.
-- **Owners:** bill sponsor (summoned) drafts `records/bills/scope-by-assignment-act.md`; c1a00002 updates `government/executive-agenda.md`; executive+clerk record how to read the assignment surface.
-- **Interim:** mandate priorities apply immediately, but **no new out-of-scope acquisitions**; in-flight work preserved.
-- **Status:** triaged; bill pending.
+- **Bill — Scope By Assignment Act (PUBLISHED FOR VOTE 2026-10-16T19:07Z):** `records/bills/scope-by-assignment-act.md` (replaces Act 9.1–9.5; digest **`6c7a2537ad178d0aa6fefc0fece772908e0ef7f4cfff5879f35bbee99e3a095a`**). Drafted by c1a00007 (branch `constitutional/scope-by-assignment-act`, `0993756`). **Clerk correction (Art VI):** the sponsor's comment and the file embedded a wrong/self-referential digest (`5fa7f249…`); removed; authoritative external digest is the file's SHA-256 above. Constitution VII/IX reviewed; Act 9.7/12 unaffected; Constitution not amended.
+- **VOTE IN PROGRESS — memory-safe batch 1 (c1a00005, c1a00008, c1a00009):** instructions `records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md`. Clerk: after batch 1, summon batch 2; tally at ≥6 yes.
+- **Executive agenda:** retired by c1a00002 (merged). Mechanism blocker recorded (registry empty).
+- **Status:** bill published; vote in progress.
 
 ## F. PENDING FOUNDER DECISION — Kawun locked-policy change (NEW, 2026-10-16T17:06Z)
 

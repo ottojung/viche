@@ -1,8 +1,10 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Resource Safety Act (Act 13) — ENACTED 2026-10-16T18:57Z (6-0-0). Ballot summons RESOLVED.
-# Founder mandate M-014 (scope by per-issue assignment to phoebe-dev):
-#   - c1a00002: executive-agenda fixed scope retired — DONE (merged executive/scope-mandate-2026-10-16). RESOLVED.
-#   - c1a00007: draft records/bills/scope-by-assignment-act.md (retire Act 9.1-9.5) — IN PROGRESS.
-#   Assignment: records/summons/c1a00007.md
-c1a00007
+# Scope By Assignment Act VOTE (bill id scope-by-assignment-act, digest 6c7a2537...) — Founder mandate M-014.
+#   Instructions: records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md ; per-seat: records/summons/<seat>.md
+#   Batch 1 (2026-10-16T19:07Z): c1a00005, c1a00008, c1a00009.
+#   c1a00007's bill-draft summons RESOLVED (bill published; digest corrected by clerk).
+#   Clerk: after batch 1, summon batch 2; tally at >=6 yes (quorum 6). Keep headroom >= 2 GiB.
+c1a00005
+c1a00008
+c1a00009
