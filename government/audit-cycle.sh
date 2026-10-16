@@ -52,6 +52,9 @@ timeliness, and conservation of Founder attention (Acts 8 and 9). Examine
 actual Git changes, tests, merges, deployment, live owners and board issues.
 The sample is drawn from the board without executive cooperation. Auditing an
 unassigned issue is not acquiring it for productive work.
+For host compliance, distinguish Viche agent execution from GitHub Actions
+verification. GitHub-hosted CI, including Lean and tests, is explicitly allowed.
+Treat disabling CI solely due to agent host assignment as a policy mistake.
 An agent being alive or writing a report is NOT evidence of useful delivery.
 Do not equate number of commits or a stale local main checkout with success.
 Separate verified evidence, uncertainty, and mere leading indicators.

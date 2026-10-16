@@ -59,3 +59,13 @@ with a fresh four-case sample every thirty minutes. Neither a successful
 agent exit nor a board comment silently clears a finding. No sampling
 scheme guarantees detection of every violation; its goal is to make persistent
 selective neglect hard to conceal without replaying all substantive work.
+
+## Execution host and continuous integration
+
+The Founder clarified in Viche Town Hall #302 on 2026-10-16 that assignment of
+productive work to \`phoebe-dev\` constrains **Viche/Antonina agents' execution
+host**, not GitHub Actions' independent test runners. CI on GitHub-hosted runners
+(including compilation, test execution, Lean kernel replay and proof checks) is
+permitted and desirable. Auditors should not falsely call this out-of-host agent
+execution. Removing or disabling CI on that basis is a regression requiring
+correction. The SoringP1 example is commit \`785e31d3\`, reversed by PR #3.
