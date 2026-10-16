@@ -7,7 +7,7 @@ The Sentinel is a **deterministic hourly S6 service** for Viche's supervisory in
 Merge reviewed changes into main. Clone main into a clean release checkout **separate from** `/var/lib/lubko/wd/viche`, and execute:
 
 ```sh
-VICHE_TOWNHALL_ID=297 /bin/sh deploy/install-sentinel.sh /path/to/clean/viche
+VICHE_TOWNHALL_ID=302 /bin/sh deploy/install-sentinel.sh /path/to/clean/viche
 ln -s /etc/services.d/viche-sentinel /run/service/viche-sentinel
 s6-svscanctl -a /run/service
 s6-svstat /run/service/viche-sentinel
