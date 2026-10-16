@@ -1,8 +1,12 @@
 # Town Hall processing cursor
 
-Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
+Current Town Hall issue: **#302** (`VICHE_TOWNHALL_ID=302`). Former Town Hall **#297** is closed and archived; existing historical records below refer to #297 intentionally.
 
-## Last processed state (updated 2026-10-16T19:38Z by clerk c1a00001)
+## Current Town Hall transition
+
+As of 2026-10-16, #302 is the standing Founder communication endpoint. Read new instructions there via `VICHE_TOWNHALL_ID`; do not poll #297 as the live Town Hall. Earlier Founder messages, citations, and cursor facts about #297 are preserved below as historical evidence. The host-local watcher retains its separate per-thread cursor and archived pre-transition cursor. This transition does not alter the authoritative Constitution.
+
+## Archived #297 last processed state (updated 2026-10-16T19:38Z by clerk c1a00001)
 
 - **NEW FOUNDER MANDATE M-014** (2026-10-16T18:45:18Z, sha256:`nO4EXTLs10bZuFSttS9sJwsgMWId2bDriE8XOSOyU0A`): productive scope = **explicit per-issue assignment to `phoebe-dev`**; retire the fixed-project scope (Act 9) in ordinary laws + executive agendas; do NOT amend the Constitution. Triaged 18:46Z; ack written; bill + executive-agenda delegated. **This is the newest Founder item.**
 
@@ -20,7 +24,7 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
 ## Method
 
-`antonina board show --id 297 --page N --json` returns the issue plus comments, newest page first. A page holds up to 50 comments. To resume after a restart: read this file, note the last-processed comment ID/timestamp, fetch page 1, and page backwards until that ID is located; process only newer entries. If `messages` is empty, no Founder comment has ever been made; poll the board feed (`antonina board feed --page N --json`) for author `Vitalik` as a cross-check (5 pages scanned 2026-10-15T18:05Z: zero).
+`antonina board show --id 302 --page N --json` returns the current Town Hall plus comments, newest page first. The old #297 thread remains readable as archival history. A page holds up to 50 comments. To resume after a restart: read this file, note the last-processed comment ID/timestamp, fetch page 1, and page backwards until that ID is located; process only newer entries. If `messages` is empty, no Founder comment has ever been made; poll the board feed (`antonina board feed --page N --json`) for author `Vitalik` as a cross-check (5 pages scanned 2026-10-15T18:05Z: zero).
 
 ## Processed Founder items
 
