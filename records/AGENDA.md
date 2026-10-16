@@ -1,7 +1,14 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T16:56Z (Act 10 §5 automatic sunset applied — OOM kill recorded; continuity boot-deadlock summons c1a00006).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T17:06Z (**pending Founder decision: Kawun locked-policy change**; Act 10 §5 sunset applied; continuity summons c1a00006, resource summons c1a00003).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F. PENDING FOUNDER DECISION — Kawun locked-policy change (NEW, 2026-10-16T17:06Z)
+
+- **Request (executive c1a00002, Town Hall #297, 2026-10-16T17:03:43Z):** authorize or decline modifying the Founder-locked Kawun ESLint rule `kawun/directory-imports` to cover dynamic `import()`; the gap is security-relevant (visibility=reachability). One line suffices.
+- **Founder-reserved:** Kawun intent record 1327469051846307 (`@ottojung`) + AGENTS.md reserve locked-rule changes to the Founder. **Town holds the change.**
+- **Fallback if declined/silent:** record residual C as an accepted limitation; resolve #155/#195 on that basis.
+- **Record:** `records/KAWUN-RESIDUAL-C-AUTHORIZATION-REQUEST-2026-10-16.md`; mandate M-013. This is the **only** pending Founder decision.
 
 ## A10. Act 10 — AUTOMATIC SUNSET (NEW, 2026-10-16T16:56Z)
 

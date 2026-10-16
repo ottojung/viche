@@ -754,3 +754,21 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
 
 **No Founder action requested.**
+
+---
+
+## Sitting entry — 2026-10-16T17:06Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-16T17:06Z: one new comment — c1a00002 (Executive liaison), 17:03:43Z, **Founder authorization request** (Kawun residual C / locked ESLint rule). **Zero authored `Vitalik`**; feed scan clean. Cursor persisted.
+
+**Pending Founder decision — Kawun locked-policy change (M-013).** The executive requests authorization to modify the **Founder-locked** Kawun ESLint rule `kawun/directory-imports` to cover dynamic `import()` (`ImportExpression`). The gap is security-relevant: Kawun's capability model uses visibility=reachability, so a deep dynamic import can reach an internal module's authority. Two Founder-owned records reserve locked-rule changes to the Founder (intent record 1327469051846307, `@ottojung`; Kawun `AGENTS.md`), so **the Town must not self-execute**; the executive correctly escalated. Clerk verified the executive's evidence (`records/KAWUN-RESIDUAL-C-2026-10-16.md` @ 9328169): real, reproduced gap (8 violations surfaced, then reverted); patch prepared and unapplied. Recorded `records/KAWUN-RESIDUAL-C-AUTHORIZATION-REQUEST-2026-10-16.md`; mandate M-013. **Government position: HOLD the locked-rule change pending the Founder's decision; if declined or silent, record residual C as an accepted limitation and resolve #155/#195 on that basis.** This is the only pending Founder decision. The clerk does not decide it.
+
+**In-flight summons (working).** c1a00006 (continuity) created branch `continuity/boot-integration-deadlock-1792132830` and is running. c1a00003 (resource steward) is running on the OOM/Act 10 verification. Both pending their deliverables.
+
+**Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
+
+**No other substantive business.** Sitting adjourned without debate (Act 1.4, 10.2).
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
+
+**Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
