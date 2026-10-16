@@ -51,10 +51,12 @@ while IFS="$tab" read -r agent_id title focus; do
     fi
 done < "$town/government/seats.tsv"
 
-# Restore a failed Clerk's independent Antonina session only after a cooldown.
-# Ordinary government owns this recovery; constitutional boot/model are unchanged.
-if [ -f "$town/government/clerk-liveness.sh" ]; then
-    /bin/sh "$town/government/clerk-liveness.sh" || echo "Viche: Clerk liveness reconciliation failed" >&2
+# Three independent branches: readiness is checked separately and durably.
+# The protected constitutional boot still owns parliamentary sittings.
+# A branch failure never suppresses another branch's reconciliation.
+if [ -f "$town/government/branch-liveness.sh" ]; then
+    /bin/sh "$town/government/branch-liveness.sh" legislature ||
+        echo "Viche: Legislature liveness investigation required" >&2
 fi
 
 # Janitor Office: observe disk health each cycle; safe reclamation is self-throttled and
@@ -64,9 +66,10 @@ if [ -f "$town/government/janitor.sh" ]; then
     /bin/sh "$town/government/janitor.sh" cycle || echo "Viche: janitor cycle failed" >&2
 fi
 
-# Independent executive liveness: this office is not driven by Clerk summons.
-if [ -f "$town/government/executive-cycle.sh" ]; then
-    /bin/sh "$town/government/executive-cycle.sh" || echo "Viche: executive cycle failed" >&2
+# Independent Executive: no parliamentary summons required.
+if [ -f "$town/government/branch-liveness.sh" ]; then
+    /bin/sh "$town/government/branch-liveness.sh" executive ||
+        echo "Viche: Executive liveness investigation required" >&2
 fi
 
 # Deterministic oversight continues even when every AI session is unavailable.
@@ -75,9 +78,19 @@ if [ -f "$town/government/oversight-watch.sh" ]; then
     /bin/sh "$town/government/oversight-watch.sh" ||
         echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
 fi
-if [ -f "$town/government/audit-cycle.sh" ]; then
-    /bin/sh "$town/government/audit-cycle.sh" ||
-        echo "Viche: independent audit scheduling failed" >&2
+# Independent Judiciary: evidence and adjudication, not executive delivery,
+# proposing bills, or modifying its own measurement rules.
+if [ -f "$town/government/branch-liveness.sh" ]; then
+    /bin/sh "$town/government/branch-liveness.sh" judiciary ||
+        echo "Viche: Judiciary liveness investigation required" >&2
+fi
+if [ -f "$town/government/branch-health.sh" ]; then
+    /bin/sh "$town/government/branch-health.sh" ||
+        echo "Viche: independent branch readiness incident recorded" >&2
+fi
+if [ -f "$town/government/judiciary-measurements.py" ]; then
+    python3 "$town/government/judiciary-measurements.py" ||
+        echo "Viche: Judiciary self-measurement unavailable" >&2
 fi
 
 # Government setup completed; not proof of delivery.
