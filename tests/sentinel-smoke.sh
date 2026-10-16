@@ -9,6 +9,16 @@ cat > "$scratch/bin/s6-svstat" <<'MOCK'
 echo 'up (pid 10 pgid 10) 200 seconds'
 MOCK
 chmod +x "$scratch/bin/s6-svstat"
+# Hermetic board: never touch the real Town Hall. Fail so the sentinel's
+# durable outbox path (pending-message preserved when the board is
+# unreachable) is the one exercised. Without this mock, a set
+# VICHE_TOWNHALL_ID in the caller's environment makes check.sh post to the
+# real board and the test's outbox assertion fails.
+cat > "$scratch/bin/antonina" <<'MOCK'
+#!/bin/sh
+exit 1
+MOCK
+chmod +x "$scratch/bin/antonina"
 git -C "$scratch/town" init -q
 git -C "$scratch/town" config user.name test
 git -C "$scratch/town" config user.email test@example.invalid
@@ -24,8 +34,11 @@ VICHE_SENTINEL_STATE=$scratch/state
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_OVERSIGHT_STATE=$scratch/oversight
 VICHE_GOV_HEALTH_STATE=$scratch/health
+# Pin a dummy Town Hall id so the publication path is exercised deterministically
+# against the failing mock above, independent of the caller's environment.
+VICHE_TOWNHALL_ID=999
 export PATH VICHE_SENTINEL_NOW VICHE_SENTINEL_STATE VICHE_TOWN_ROOT
-export VICHE_OVERSIGHT_STATE VICHE_GOV_HEALTH_STATE
+export VICHE_OVERSIGHT_STATE VICHE_GOV_HEALTH_STATE VICHE_TOWNHALL_ID
 /bin/sh "$root/sentinel/check.sh"
 [ ! -e "$scratch/state/incident.json" ]
 # Inject a real unmerged index without losing committed fixture data.
