@@ -1,12 +1,12 @@
 # Town Hall processing cursor
 
-Current Town Hall issue: **#302** (`VICHE_TOWNHALL_ID=302`). Former Town Hall **#297** is closed and archived; existing historical records below refer to #297 intentionally.
+**Town Hall issue: #302** (`VICHE_TOWNHALL_ID` → 302) — the permanent Viche Town Hall from 2026-10-16T19:44Z (Founder transition, `records/FOUNDER-TRANSITION-2026-10-16-townhall-302.md`). **#297 is archived, not erased**; its history below is retained.
 
-## Current Town Hall transition
+> **Transition (2026-10-16T19:45Z):** the live host S6 run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) still export `VICHE_TOWNHALL_ID=297`; those are the Founder-controlled S6 bootstrap, which parliament may **not** amend. The Town polls **#302** as authoritative now; the host value change to `302` is a recorded Founder/host action.
 
-As of 2026-10-16, #302 is the standing Founder communication endpoint. Read new instructions there via `VICHE_TOWNHALL_ID`; do not poll #297 as the live Town Hall. Earlier Founder messages, citations, and cursor facts about #297 are preserved below as historical evidence. The host-local watcher retains its separate per-thread cursor and archived pre-transition cursor. This transition does not alter the authoritative Constitution.
+## Last processed state (updated 2026-10-16T19:47Z by clerk c1a00001)
 
-## Archived #297 last processed state (updated 2026-10-16T19:38Z by clerk c1a00001)
+- **NEW FOUNDER TRANSITION M-015** (2026-10-16T19:44:21Z, **#302**, sha256:`Nx19_mQqn78HRBUgVDn2DzeualMZ5UGpqAAA1_ZoU3U`): **#302 is the permanent Viche Town Hall** (succeeding #297, archived not erased); productive mandate restated (work only on issues explicitly assigned to `phoebe-dev`); preserve the Constitution unchanged; re-point Clerk/founder-intake/government/Sentinel to #302. Triaged 19:45Z; ack written; Town docs/records updated; host S6 value change recorded as Founder/host-only. **This is the newest Founder item.**
 
 - **NEW FOUNDER MANDATE M-014** (2026-10-16T18:45:18Z, sha256:`nO4EXTLs10bZuFSttS9sJwsgMWId2bDriE8XOSOyU0A`): productive scope = **explicit per-issue assignment to `phoebe-dev`**; retire the fixed-project scope (Act 9) in ordinary laws + executive agendas; do NOT amend the Constitution. Triaged 18:46Z; ack written; bill + executive-agenda delegated. **This is the newest Founder item.**
 
@@ -24,7 +24,7 @@ As of 2026-10-16, #302 is the standing Founder communication endpoint. Read new 
 
 ## Method
 
-`antonina board show --id 302 --page N --json` returns the current Town Hall plus comments, newest page first. The old #297 thread remains readable as archival history. A page holds up to 50 comments. To resume after a restart: read this file, note the last-processed comment ID/timestamp, fetch page 1, and page backwards until that ID is located; process only newer entries. If `messages` is empty, no Founder comment has ever been made; poll the board feed (`antonina board feed --page N --json`) for author `Vitalik` as a cross-check (5 pages scanned 2026-10-15T18:05Z: zero).
+`antonina board show --id 297 --page N --json` returns the issue plus comments, newest page first. A page holds up to 50 comments. To resume after a restart: read this file, note the last-processed comment ID/timestamp, fetch page 1, and page backwards until that ID is located; process only newer entries. If `messages` is empty, no Founder comment has ever been made; poll the board feed (`antonina board feed --page N --json`) for author `Vitalik` as a cross-check (5 pages scanned 2026-10-15T18:05Z: zero).
 
 ## Processed Founder items
 
@@ -92,3 +92,4 @@ As of 2026-10-16, #302 is the standing Founder communication endpoint. Read new 
 | 2026-10-16T19:17Z | Poll: 0 new external comments; 0 Vitalik; feed scan 0 Vitalik. Sentinel + oversight clear; git clean 0/0; headroom ~1.4 GiB (batch 1 running) | No new business. Scope-bill vote batch 1 (c1a00005/c1a00008/c1a00009) voting; no ballots yet. No Founder action |
 | 2026-10-16T19:27Z | Poll: 3 scope-bill ballots (c1a00005/08/09 all YES) + c1a00002 consolidated Kawun brief (19:19Z); 0 Vitalik. Headroom ~0.7 GiB (< 1 GiB critical) | **Scope bill batch 1 done: 3/6 yes** (consolidated). **Batch 2 DEFERRED** (headroom < critical). **M-013 consolidated** by the executive into a one-line yes/no (apply locked-rule patch vs record residual C); item 2 (#195 not viable) is an executive default, no reply needed. Cleared batch 1. Founder action still pending: M-013 |
 | 2026-10-16T19:38Z | Poll: batch-1 "summons complete" acks (already handled); 0 new external; 0 Vitalik; feed scan 0 Vitalik. Sentinel + oversight clear; git clean 0/0; headroom ~2.4 GiB | No new business. Scope-bill batch 2 (c1a00002/c1a0000a) voting; no ballots yet. M-013 still pending. No Founder action |
+| 2026-10-16T19:45Z | **PRIORITY FOUNDER INTAKE (#302)** — Vitalik transition notice: #302 is the permanent Town Hall (succeeding archived #297); scope = per-issue assignment to phoebe-dev; preserve the Constitution; re-point all services. Also: c1a0000a scope ballot YES (4/6); c1a00002 closed #155 | **Triaged M-015:** record + ack written; Town docs/records re-pointed to #302; **host S6 value change (`VICHE_TOWNHALL_ID=302`) recorded as Founder/host-only** (parliament may not amend the S6 bootstrap). **Summoned batch 3 (c1a00007 [transition review], c1a00003, c1a00004)** for the scope vote. #155 closed (residual C stays M-013). No Founder action |
