@@ -14,11 +14,11 @@ case "$branch" in
     program=clerk-liveness.sh
     duty=constitutional_sitting ;;
   executive)
-    id=$(sed -n '2s/[[:space:]].*//p' "$town/government/seats.tsv")
+    id=c1e00002
     program=executive-cycle.sh
     duty=independent_delivery ;;
   judiciary)
-    id=c1a00008
+    id=c1e00008
     program=audit-cycle.sh
     duty=independent_randomized_review ;;
   *) echo "Unknown branch: $branch" >&2; exit 2 ;;
@@ -26,7 +26,11 @@ esac
 now=${VICHE_BRANCH_NOW:-$(date +%s)}
 case "$now" in ''|*[!0-9]*) exit 2;; esac
 cycle_ok=false
-if [ -n "$id" ] && [ -s "$town/government/$program" ]; then
+bootstrap_ok=true
+if [ "$branch" != legislature ]; then
+  /bin/sh "$town/government/branch-bootstrap.sh" "$branch" > "$root/$branch-bootstrap.log" 2>&1 || bootstrap_ok=false
+fi
+if [ "$bootstrap_ok" = true ] && [ -n "$id" ] && [ -s "$town/government/$program" ]; then
   if /bin/sh "$town/government/$program" > "$root/$branch-cycle.log" 2>&1; then
     cycle_ok=true
   fi
@@ -51,6 +55,23 @@ if [ "$cycle_ok" = true ] && [ "$readable" = true ] &&
     idle|succeeded) readiness=ready ;;
     *) readiness=unhealthy ;;
   esac
+fi
+# Detect a repeatedly idle Executive despite independently observed eligible work.
+if [ "$branch" = executive ] && [ "$readiness" = ready ] &&
+   [ -s "$root/eligible-issues.json" ]; then
+  backlog=$(jq -r '.count // 0' "$root/eligible-issues.json")
+  if [ "$backlog" -gt 0 ]; then
+    activity=$(printf '%s\n' "$meta" | jq -r '.last_activity_at // 0 | floor')
+    previous=0
+    [ ! -s "$root/executive-activity" ] || previous=$(cat "$root/executive-activity")
+    if [ "$activity" -gt "$previous" ]; then
+      printf '%s\n' "$activity" > "$root/executive-activity"
+      printf '%s\n' "$now" > "$root/executive-pending-since"
+    fi
+    [ -s "$root/executive-pending-since" ] || printf '%s\n' "$now" > "$root/executive-pending-since"
+    since=$(cat "$root/executive-pending-since")
+    if [ $((now-since)) -ge 1800 ]; then readiness=unhealthy; else readiness=pending; fi
+  fi
 fi
 # Legislature is dispatched by constitutional sitting() AFTER this check.
 # An agent that is idle between sessions is ready, not proven productive.

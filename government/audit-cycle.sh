@@ -10,11 +10,10 @@ mkdir -p "$root"
 if [ "${VICHE_AUDIT_CHECKS:-1}" = 1 ]; then
   python3 "$town/government/audit-accountability.py" check > "$root/random-check.log" || exit 1
 fi
-id=c1a00008
-[ -s "$charter" ] && [ -d "$seats/$id" ] || exit 1
+id=c1e00008
+[ -s "$charter" ] && [ -d "$seats/branches/judiciary" ] || exit 1
 [ -f "$root/observations.tsv" ] || exit 0
-# Never dispatch a second run over a parliamentary sitting.
-if grep -Fxq "$id" "$town/records/SUMMONED.txt" 2>/dev/null; then exit 0; fi
+# The Judiciary has its own durable officer; parliamentary summons never gate it.
 meta=$(antonina agent status --id "$id" --json)
 kind=$(printf '%s\n' "$meta" | jq -r '.state')
 case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1;; idle|succeeded) :;; *) exit 1;; esac
@@ -97,6 +96,6 @@ it thinks it is effective. Use Antonina and only its constitutionally allowed
 free model. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
 EOF
 )
-antonina agent run --id "$id" --cwd "$seats/$id" --prompt "$prompt" --detach
+antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$prompt" --detach
 printf '%s\n' "$now" > "$root/last-audit-dispatch"
 printf '%s\t%s\taccepted_not_verified\n' "$now" "$incident" >> "$root/audit-dispatches.tsv"

@@ -14,7 +14,7 @@ for branch in legislature executive judiciary; do
     continue
   fi
   valid=$(jq -r --arg b "$branch" 'if .branch==$b and (.observed_at|type=="number") and
-    (.readiness=="running" or .readiness=="ready" or .readiness=="unhealthy")
+    (.readiness=="running" or .readiness=="ready" or .readiness=="unhealthy" or .readiness=="pending")
     then "yes" else "no" end' "$path" 2>/dev/null) || valid=no
   if [ "$valid" != yes ]; then
     signals="${signals}${signals:+,}${branch}_unreadable"

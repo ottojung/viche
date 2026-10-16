@@ -3,7 +3,7 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-mkdir -p "$scratch/bin" "$scratch/state/oversight" "$scratch/seats/c1a00008" "$scratch/town/records"
+mkdir -p "$scratch/bin" "$scratch/state/oversight" "$scratch/seats/branches/judiciary" "$scratch/town/records"
 printf 'charter fixture\n' > "$scratch/charter"
 printf 'observation\n' > "$scratch/state/oversight/observations.tsv"
 : > "$scratch/town/records/SUMMONED.txt"
@@ -20,7 +20,7 @@ case "$1 $2" in
 "board show")
   echo '{"body":"Execution host: phoebe-dev. Independent task.","messages":[{"author":"Vitalik","body":"Carry out assigned work."}]}' ;;
 "agent list")
-  echo '{"agents":[{"id":"c1a00008"}],"unreadable":0}' ;;
+  echo '{"agents":[{"id":"c1e00008"}],"unreadable":0}' ;;
 "agent status")
   echo '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}' ;;
 "agent run")
