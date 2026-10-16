@@ -91,3 +91,20 @@ require Founder attention for routine technical corrections.
 EOF
     fi
 fi
+
+# Independent Sentinel findings are mandatory oversight business, even when
+# ordinary Git reconciliation or executive delivery has previously failed.
+if [ "$seat" = "$clerk" ]; then
+    sentinel=${VICHE_SENTINEL_STATE:-/var/lib/lubko/wd/viche-sentinel-state}
+    if [ -s "$sentinel/incident.json" ]; then
+        cat <<EOF
+=== INDEPENDENT SENTINEL INCIDENT ===
+$(cat "$sentinel/incident.json")
+=== END SENTINEL INCIDENT ===
+Do not adjourn for lack of business. Investigate, acknowledge with evidence,
+identify the operational remedy and verify it. A service marked 'up' does NOT
+establish successful Git reconciliation, functioning oversight, or delivery.
+Do not ask the Founder to resolve ordinary Git conflicts or agent failures.
+EOF
+    fi
+fi
