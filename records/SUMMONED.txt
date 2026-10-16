@@ -1,7 +1,8 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Oversight inquiry 1792107382 — CLOSED 2026-10-16T16:26Z (CA-M 3f4d93e; C1 636f938).
-# Sentinel incident 1792132830 — CLOSED 2026-10-16T16:26Z (git reconciled, PR #21).
-# Continuity business (new 2026-10-16T16:46Z): boot deadlock on Git integration failure.
+# Continuity (2026-10-16T16:46Z): boot deadlock on Git integration failure -> c1a00006.
 #   Assignment: records/summons/c1a00006.md; finding: records/CONTINUITY-BOOT-INTEGRATION-DEADLOCK-2026-10-16.md
+# Act 10 §5 sunset (2026-10-16T16:56Z): OOM kill recorded during renewal period -> c1a00003.
+#   Assignment: records/summons/c1a00003.md; determination: records/ACT10-SUNSET-2026-10-16.md
 c1a00006
+c1a00003
