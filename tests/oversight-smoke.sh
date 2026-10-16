@@ -4,7 +4,7 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" "$scratch/state" "$scratch/seats/c1a00008"
+mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" "$scratch/state" "$scratch/seats/branches/judiciary"
 printf 'authoritative fixture\n' > "$scratch/charter"
 : > "$scratch/town/records/SUMMONED.txt"
 cat > "$scratch/bin/antonina" <<'MOCK'
@@ -19,7 +19,7 @@ case "$1 $2" in
     ;;
 "agent status")
     case "$*" in
-        *c1a00008*) printf '{"state":"%s","model":"%s","variant":"%s"}\n' "$AUDIT_STATE" "$MODEL" "$VARIANT";;
+        *c1e00008*) printf '{"state":"%s","model":"%s","variant":"%s"}\n' "$AUDIT_STATE" "$MODEL" "$VARIANT";;
         *) printf '{"state":"%s","last_activity_at":%s,"backend_error":{"classification":"%s"}}\n' "$EXEC_STATE" "$LAST" "$ERROR";;
     esac
     ;;
@@ -76,13 +76,13 @@ printf '%s\n' '{"incident_id":20000,"evidence_ref":"https://example.com/hearing"
 jq -e '.parliamentary_response_overdue == false and .parliamentary_hearing_recorded == true' "$incident" >/dev/null
 printf '%s\n' c1a00008 > "$scratch/town/records/SUMMONED.txt"
 /bin/sh "$repo/government/audit-cycle.sh"
-[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 
 : > "$scratch/town/records/SUMMONED.txt"
 MODEL=forbidden
 export MODEL
 /bin/sh "$repo/government/audit-cycle.sh" >/dev/null 2>&1 && exit 1
-[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
+[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 MODEL=opencode-go/longcat-2.5-preview-free
 EXEC_STATE=idle
 MOCK_BOARD='[]'
