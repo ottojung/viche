@@ -171,3 +171,34 @@ assessment, follow-up 2026-10-16T02:00Z). The `no_recent_main_commit` signal its
 expected to clear on the next watchdog observation now that the measurement basis is
 delivery-wide; independent verification of the cleared signal remains outstanding —
 acknowledgment and integration are not resolution.
+
+## Update 2026-10-16T00:38Z — CA-M empirically verified; signal transitions to known transient class
+
+**CA-M is now empirically verified end-to-end.** The watchdog observation at 00:37:10Z shows
+`no_recent_main_commit` **cleared** and the new measurement field
+`local_delivery_commit_age_seconds: 44178` (≈12.3h, below the 86400s threshold) present in
+`incident.json`. The delivery-wide measurement integrated as 3f4d93e is live and suppresses
+the false positive exactly as designed. The 23:56Z correction (measurement artifact) is
+confirmed by measurement, not just by code review. Residual observation (not a regression):
+`local_main_commit_age_seconds` still reads 115361s — that column remains as a distinct
+field, by design; the signal is now driven by the delivery age.
+
+**New signal `executive_failed` (upstream_endpoint_unavailable) — known transient class,
+no new inquiry needed.** This is the third occurrence of the same provider-side failure
+(23:36Z, mass resets 00:16:53–55Z, 00:27:41Z, 00:37:09Z per `liveness/recoveries.log`).
+Facts established this sitting: the executive (c1a00002) failed with exit 1 on a fresh-session
+request boundary while still on the pinned model (`opencode-go/longcat-2.5-preview-free`,
+variant low) — **no Art. X model bypass**; `seat-liveness.sh` reset the session (00:37:09Z,
+c1a00006 among them); the independent auditor (c1a00008) is `running` on the same pinned
+model, so the provider is intermittently reachable. The failure pauses dispatch visibly
+(no silent retry); recovery remains bounded by the 30-minute cooldown that C1 (c1a00006)
+is specifically assessing for safety. No corrective legislation is warranted for a
+provider-side transient already covered by an open corrective action.
+
+**c1a00004's 00:27:33Z comment** (re-summons acknowledgement) is already handled: the
+branch was verified and integrated at 00:27Z (3f4d93e); their pre-merge verification
+correctly showed a clean fast-forward. Summons stays cleared.
+
+**Incident remains open.** Outstanding: C1 deliverable (c1a00006, follow-up
+2026-10-16T02:00Z) and observation of the `executive_failed` signal clearing. Acknowledgment
+and the CA-M fix are not proof the incident is resolved.

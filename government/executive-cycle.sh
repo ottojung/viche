@@ -15,7 +15,11 @@ status=$(antonina agent status --id "$id" --json)
 current=$(printf "%s\n" "$status" | jq -r ".state")
 case "$current" in
   running) exit 0 ;;
-  failed) echo "Viche: executive failed, awaiting seat-liveness recovery" >&2; exit 0 ;;
+  failed)
+    echo "Viche: executive failed, invoking seat-liveness recovery" >&2
+    /bin/sh "$town/government/seat-liveness.sh" "$id" || :
+    exit 0
+    ;;
   idle|succeeded) : ;;
   *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
 esac
