@@ -1,7 +1,13 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T21:26Z (**NEW M-017: Judiciary Independence Act published for vote** — make the Judiciary non-voting; **M-016** CI clarification; **M-015** Town Hall #302; **M-014** scope act enacted; **M-013** Kawun residual C pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T23:39Z (**TWO BILLS pending vote: M-017 Judiciary Independence Act, M-018 Innovation Centre Act**; **M-016** CI clarification; **M-015** Town Hall #302; **M-014** scope act enacted; **M-013** Kawun residual C pending).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F-3. FOUNDER MANDATE M-018 — Innovation Centre Act (vote in progress) (NEW, 2026-10-16T23:39Z)
+
+- **Mandate (Vitalik, #302 sha256:`2U-rDx3Q…`):** create/operate a permanent autonomous **Innovation Centre inside the Legislature** (deployed PR #27 @ `8b4e43e`; non-voting office `c1e00011`) to originate original improvements to **Viche itself** (external projects remain Founder-reserved). Bring **#307** + draft `records/bills/innovation-centre-act.md` (**DRAFT**) to Parliament for a lawful vote. No summons/vote for the Centre; do not auto-enact any Centre idea; judge **originality + measured benefit, not proposal count**.
+- **State:** bill DRAFT (digest `e7902aa5…`); instructions `records/ballots/INNOVATION-CENTRE-ACT-VOTE.md`; **batch 1 (c1a00005/c1a00007/c1a00009) votes on BOTH this and M-017**. On passage: add Act 14 to `LAWS.md`; record office `c1e00011` as a permanent non-voting legislative office; verify liveness.
+- **Status:** triaged; bill published; vote in progress (Act 13 guard throttle applies).
 
 ## F-2. FOUNDER MANDATE M-017 — Judiciary Independence Act (vote in progress) (NEW, 2026-10-16T21:26Z)
 
