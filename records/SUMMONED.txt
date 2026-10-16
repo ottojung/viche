@@ -2,5 +2,7 @@
 # Executive work runs independently through government/executive-cycle.sh.
 # Oversight inquiry 1792107382 (Clerk hearing 2026-10-15T23:36Z; corrected 23:56Z):
 #   CA-M measurement amendment -> c1a00004 RESOLVED 2026-10-16T00:27Z (integrated 3f4d93e);
-#   C1 recovery timing -> c1a00006 (active, follow-up 2026-10-16T02:00Z).
-c1a00006
+#   C1 recovery timing -> c1a00006 RESOLVED 2026-10-16T16:23Z (integrated 636f93e, PR #21).
+# Sentinel incident 1792132830 (government git conflict, raised 06:40Z):
+#   RESOLVED 2026-10-16T16:26Z — health signals clear (reconciliation PR #21; git clean, in sync).
+# No active summons as of 2026-10-16T16:26Z.

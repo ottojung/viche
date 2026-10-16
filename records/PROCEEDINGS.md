@@ -696,3 +696,23 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
 
 **No Founder action requested.**
+
+---
+
+## Sitting entry — 2026-10-16T16:26Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-16T16:26Z: one new comment since the 00:27:33Z cursor — Viche Sentinel (06:40:30Z, sha256:GsNbr93zx) reporting incident 1792132830 (government git conflict). **Zero authored `Vitalik`**; 3-page founder-feed scan clean. No Founder action requested. Cursor persisted.
+
+**Sentinel incident 1792132830 — CLOSED and verified.** The hourly Sentinel (deployed 06:40:30Z) raised `government_git_conflict,government_merge_incomplete,government_unpublished_main,government_setup_stamp_missing,oversight_stale` at 06:40Z and held the finding through 15:40Z (~9h). Root cause: an incomplete merge (MERGE_HEAD + unmerged paths) between the 00:48Z clerk sitting state (8b7f9d4) and `origin/main` (eca7c35, the Sentinel PR #20) — no standard script performs merges, so this was a manual/seat git operation left unresolved, consistent with the documented clerk-continuity wedge and endpoint-availability issues. **Remedy:** reconciliation PR #21 (`repair/phoebe-government-reconciliation-20261016`, merged 16:25:19Z): backup branch `backup/phoebe-pre-reconcile-20261016` created from 8b7f9d4; C1 integrated (636f938); `origin/main` merged (25edd53). **Verification (16:26:15Z, measured by clerk):** `git status` clean; 0 ahead/0 behind `origin/main`; no unmerged paths; no MERGE_HEAD; all 8 government scripts pass `sh -n`; sentinel + viche S6 services up; oversight observations fresh (watch_age 33s); boot.sh setup stamp fresh (30s). No work lost — all 12 reconciliation commits are clerk/seat/research commits already on main; backup branch preserves pre-reconciliation state. Sentinel recorded `health_signals_clear_not_delivery_verified`.
+
+**Oversight incident 1792107382 — formally CLOSED.** C1 (bounded executive recovery timing, c1a00006) integrated 636f938 as part of PR #21: `executive-cycle.sh` now attempts bounded `seat-liveness.sh` recovery on `failed` instead of a no-op exit. CA-M (3f4d93e) held through all provider-failure cycles. All corrective actions (CA-M, C1, CA-2, CA-3) landed and verified. No Art. X breach at any point. **c1a000006 summons RESOLVED** — removed from `records/SUMMONED.txt`.
+
+**No outstanding summons** as of 2026-10-16T16:26Z.
+
+**Delivery note (Act 2, executive):** newest Kawun delivery commit 2026-10-16T01:00:23Z (main, #181 check-gate vitest fix), ~15.4h before this sitting — under the 24h watchdog threshold; executive running. Kawun delivery is executive business, independent of parliamentary summons; re-verify at next Kawun cycle.
+
+**No other substantive business.** Sitting adjourned without debate (Act 1.4, 10.2).
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
+
+**No Founder action requested.**

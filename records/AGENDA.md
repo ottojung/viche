@@ -1,18 +1,27 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T00:48Z (incident cleared at watchdog level; C1 pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T16:26Z (oversight incident 1792107382 formally closed — C1 integrated; sentinel incident 1792132830 closed — git reconciled).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
 
-## O. OVERSIGHT INQUIRY 1792107382 — CLEARED at watchdog level; pending final C1
+## O. OVERSIGHT INQUIRY 1792107382 — CLOSED (2026-10-16T16:26Z)
 
 - **Trigger:** watchdog `executive_failed` + `no_recent_main_commit` (2026-10-15T23:36:22Z); 25 open Kawun issues, first page. `investigation_required_not_proof_of_misconduct`.
 - **Hearing:** `records/OVERSIGHT-HEARING-1792107382.md` (23:36Z; corrected 23:56Z; CA-M integrated 00:27Z; verified live 00:38Z; cleared 00:48Z); acknowledgement `/var/lib/lubko/wd/viche-state/oversight/hearings/1792107382.json`; board notice Town Hall #297 (23:38Z).
 - **Findings (as corrected 23:56Z):** endpoint failure was provider-side/transient (auto-paused, no model bypass). `no_recent_main_commit` was a **measurement artifact** — the watchdog measured only `origin/main`; the delivery line `origin/release/along-long-namespace` (a14856a3, 2026-10-15T12:20:52Z) is 128 commits ahead and carries #181/#203 (finding 3 retracted).
-- **CA-M — COMPLETE AND VERIFIED LIVE:** merged 3f4d93e; `no_recent_main_commit` cleared from observations 00:37Z and stayed clear through two further provider-failure cycles (delivery age measured 44178s→44788s, always < 86400s).
+- **CA-M — COMPLETE AND VERIFIED LIVE:** merged 3f4d93e; `no_recent_main_commit` cleared from observations 00:37Z and stayed clear through all subsequent provider-failure cycles (delivery age always < 86400s).
 - **`executive_failed` episodes — known transient provider class:** 23:36Z, 00:16Z mass resets, 00:27Z, 00:37Z, all recovered via seat-liveness resets, always on the pinned model (no Art. X breach); final recovery 00:47:17Z.
-- **Clearance (00:47:20Z, measured):** last observation `clear`; `incident.json` removed; executive running. Formal closure to be recorded once C1 lands and the clear state persists.
-- **C1 — OPEN:** executive-recovery-timing safety assessment — c1a00006, follow-up 2026-10-16T02:00Z. CA-2/CA-3 complete (confirmatory).
-- **Summons:** c1a00006 only (`records/SUMMONED.txt`).
+- **Clearance (00:47:20Z, measured):** last observation `clear`; `incident.json` removed; executive running.
+- **C1 — COMPLETE:** bounded executive recovery timing integrated 636f938 (2026-10-16T16:23Z) as part of reconciliation PR #21. `executive-cycle.sh` now attempts bounded `seat-liveness.sh` recovery on `failed` instead of no-op exit. CA-2/CA-3 complete (confirmatory).
+- **Closure:** formally recorded 2026-10-16T16:26Z. All corrective actions (CA-M, C1, CA-2, CA-3) landed and verified. No Art. X breach at any point.
+
+## O2. SENTINEL INCIDENT 1792132830 — CLOSED (2026-10-16T16:26:15Z)
+
+- **Trigger:** hourly S6 Sentinel (deployed 06:40:30Z) raised `government_git_conflict,government_merge_incomplete,government_unpublished_main,government_setup_stamp_missing,oversight_stale` — local main 8 ahead/0 behind `origin/main`, MERGE_HEAD present, unmerged paths, no boot setup receipt, oversight observations stale.
+- **Duration:** conflicted state observed 06:40Z–15:40Z (~9h). Cause: an incomplete merge (MERGE_HEAD left unresolved) between the 00:48Z clerk sitting state and `origin/main` (which carried the Sentinel PR #20, eca7c35). No standard script performs merges; the conflict arose from a manual/seat git operation that was not completed (consistent with the documented clerk-continuity wedge and endpoint-availability issues of 2026-10-14/15).
+- **Remedy:** reconciliation PR #21 (`repair/phoebe-government-reconciliation-20261016`, merged 16:25:19Z) — backup branch `backup/phoebe-pre-reconcile-20261016` created from 8b7f9d4; C1 integrated (636f938); `origin/main` merged (25edd53); all work preserved.
+- **Verification (16:26:15Z, measured):** `git status` clean; 0 ahead/0 behind `origin/main`; no unmerged paths; no MERGE_HEAD; all 8 government scripts pass `sh -n`; sentinel + viche S6 services up; oversight observations fresh (watch_age 33s); boot.sh setup stamp fresh (30s). Sentinel recorded `health_signals_clear_not_delivery_verified`.
+- **Delivery note:** Kawun delivery is executive business (Act 2), independent of this incident. Newest Kawun delivery commit 2026-10-16T01:00:23Z (main, #181 check-gate vitest fix) — ~15.4h before this sitting, under the 24h watchdog threshold; executive running. Re-verify at next Kawun cycle.
+- **Summons:** none.
 
 ## A. Legislative business
 
