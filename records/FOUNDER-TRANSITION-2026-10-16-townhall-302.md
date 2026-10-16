@@ -35,7 +35,11 @@
 
 The live S6 **run scripts** were updated to `export VICHE_TOWNHALL_ID=302` (host/Founder, mtime 19:50; a `run.pre302` backup retained), and **viche-sentinel** picked it up (running env = 302). But **viche** (the boot supervisor) and **viche-intake** were started at ~19:50 *before* their run scripts were rewritten and still carried `VICHE_TOWNHALL_ID=297` — so the Clerk's prompt and the founder-intake watcher were still pointed at #297. Confirmed by `/proc/<pid>/environ`.
 
-**Remedy applied by the clerk (operational restart, not an amendment of the S6 bootstrap):** `s6-svc -r /run/service/viche-intake` and `s6-svc -r /run/service/viche`, so both reload the Founder's already-updated run scripts and now export `VICHE_TOWNHALL_ID=302`. The run scripts themselves are unchanged by the Town. Verified post-restart (see the record's git commit / the services' `/proc/<pid>/environ`).
+**Mechanism:** `/run/service/viche` and `/run/service/viche-intake` point at **runtime copies** under `/run/s6/legacy-services/*` (made at container start), while `/run/service/viche-sentinel` links **directly** to `/etc/services.d/viche-sentinel`. So the sentinel picked up 302 automatically; the boot and intake did not.
+
+**Remedy applied by the clerk (operational, applying the Founder's already-published config — not an amendment of the S6 bootstrap):** the clerk copied the Founder's updated `/etc/services.d/{viche,viche-intake}/run` over the stale runtime copies (the only difference was the Town Hall id) and restarted both services with `s6-svc -r`. The Town changed no run-script logic — only synced the runtime mirror to the Founder's source.
+
+**Verified (2026-10-16T20:15Z):** all three services now export `VICHE_TOWNHALL_ID=302` — viche (pid 171943), viche-intake (pid 171595), viche-sentinel (pid 158880). The boot re-ran cleanly (fresh health stamp; services up; sentinel `clear`). New sittings/intake/Sentinel now use **#302**. (The clerk's *current* session predates the restart and still carries 297 in its own env, but it polls #302 per the mandate.)
 
 ## Acknowledgement
 
