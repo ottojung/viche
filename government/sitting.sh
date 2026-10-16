@@ -12,6 +12,15 @@ if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
         exit 1
     }
 fi
+# Resource Safety Act: defer convening when cgroup headroom is below the floor.
+# A memory-safety gate, not a worker cap (Constitution VII); the boot defers the
+# seat on non-zero exit, the same mechanism as the clerk-liveness gate.
+if [ -f "$town/government/resource-safety.sh" ]; then
+    /bin/sh "$town/government/resource-safety.sh" "$seat" || {
+        echo "Viche: $seat sitting deferred by resource-safety guard" >&2
+        exit 1
+    }
+fi
 if [ "$seat" = "$clerk" ]; then
     cat <<EOF
 You are the provisional parliamentary clerk. Poll Town Hall issue
