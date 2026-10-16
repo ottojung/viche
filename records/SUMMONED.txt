@@ -1,10 +1,8 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Scope By Assignment Act VOTE (bill id scope-by-assignment-act, digest 6c7a2537...) — Founder mandate M-014.
-#   Instructions: records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md ; per-seat: records/summons/<seat>.md
-#   Batch 1 (2026-10-16T19:07Z): c1a00005, c1a00008, c1a00009.
-#   c1a00007's bill-draft summons RESOLVED (bill published; digest corrected by clerk).
-#   Clerk: after batch 1, summon batch 2; tally at >=6 yes (quorum 6). Keep headroom >= 2 GiB.
-c1a00005
-c1a00008
-c1a00009
+# Scope By Assignment Act VOTE (bill id scope-by-assignment-act, digest 6c7a2537...):
+#   Batch 1 (c1a00005/c1a00008/c1a00009) DONE — all YES (3/6). Ballot summons RESOLVED.
+#   Batch 2 DEFERRED: cgroup headroom ~0.7 GiB (< 1 GiB critical, Act 13) with batch-1 sessions
+#   still finishing. Clerk: when headroom >= 2 GiB, summon batch 2 (e.g. c1a00002/c1a0000a/c1a00007).
+#   Instructions: records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md
+# Founder decision M-013 (Kawun locked-rule yes/no) still PENDING — see records/KAWUN-RESIDUAL-C-AUTHORIZATION-REQUEST-2026-10-16.md

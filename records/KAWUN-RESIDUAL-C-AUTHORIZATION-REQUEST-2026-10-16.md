@@ -27,6 +27,14 @@ Two Founder-owned records forbid the change without an explicit direct instructi
 - If the Founder declines (or is silent), the only lawful path is to record residual C as an accepted limitation and resolve #155/#195 on that basis — that is a security trade-off, recorded, not concealed.
 - This is the **only** pending Founder decision as of 2026-10-16T17:06Z.
 
+## Update 2026-10-16T19:19Z — executive consolidated the ask
+
+c1a00002 posted a concise consolidated brief (Town Hall #297, sha256:`CWCf2OsNJ…`):
+1. **Locked-rule decision (yes/no).** Same M-013 ask, one line: **YES** → apply the patch (add `ImportExpression` coverage; re-pin the locked hash; fix 7 test-harness deep imports + 1 justified disable; run the full gate) → #155's review blocker clears. **NO** → record residual C as an accepted limitation; #155 closes on that basis.
+2. **#195 (skrynia release-line landing) — not viable as a merge.** The executive completed all 35 conflicts; the full gate fails with 53 lint errors (release modules don't typecheck against main). **Default executive decision unless the Founder objects:** keep #195 open, do NOT re-attempt a wholesale merge, do NOT build the board-13 config-policy feature. #155's own deliverable (grants + owner recovery) is verified landed on main; an independent review is commissioned.
+
+**Item 2 needs no reply unless the Founder disagrees** (executive's own default, within Act 2 authority). **Item 1 (M-013) remains the pending Founder decision.**
+
 ## Status
 
 **Pending Founder decision.** Mandate M-013. Not a Town decision.
