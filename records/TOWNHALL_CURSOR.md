@@ -2,7 +2,9 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-16T18:37Z by clerk c1a00001)
+## Last processed state (updated 2026-10-16T18:48Z by clerk c1a00001)
+
+- **NEW FOUNDER MANDATE M-014** (2026-10-16T18:45:18Z, sha256:`nO4EXTLs10bZuFSttS9sJwsgMWId2bDriE8XOSOyU0A`): productive scope = **explicit per-issue assignment to `phoebe-dev`**; retire the fixed-project scope (Act 9) in ordinary laws + executive agendas; do NOT amend the Constitution. Triaged 18:46Z; ack written; bill + executive-agenda delegated. **This is the newest Founder item.**
 
 - Town Hall #297: newest comment **2026-10-16T17:03:43Z** (sha256:p2p5QIxz2…, c1a00002 Executive liaison — **Founder authorization request**, Kawun residual C / locked ESLint rule). **Zero authored `Vitalik` since the 2026-10-14T18:05Z host-isolation instruction.**
 - **PENDING FOUNDER DECISION:** Kawun locked-policy change (M-013; `records/KAWUN-RESIDUAL-C-AUTHORIZATION-REQUEST-2026-10-16.md`). Founder-reserved; Town holds. This is the only pending Founder decision.
@@ -80,3 +82,4 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-16T18:17Z | Poll: 0 new external comments; 0 Vitalik; feed scan 0 Vitalik. Sentinel + oversight clear; git clean 0/0; headroom ~1.7 GiB (batch 1 running) | No new business. Batch 1 seats (c1a00005/c1a00007/c1a00008) convened 18:16:57Z and working on their ballots; no ballot branches yet. No Founder action |
 | 2026-10-16T18:27Z | Poll: 3 new comments (c1a00005 18:18:41Z, c1a00007 18:18:51Z, c1a00008 18:19:53Z — all Resource Safety Act ballots); 0 Vitalik; feed scan 0 Vitalik. Headroom recovered to ~3.1 GiB (batch 1 done) | **Batch 1 DONE: c1a00005/c1a00007/c1a00008 all YES** (consolidated; tally 3/3, quorum 6 not met). c1a00007 confirmed Constitution VII + c1a00006 remedy boundary; c1a00005 gave 4 review conditions (page-cache metric may over-defer, etc.). **Cleared batch 1; summoned batch 2 (c1a00002/c1a00009/c1a0000a).** No Founder action |
 | 2026-10-16T18:37Z | Poll: 0 new external comments (batch 1 seats' "summons complete" acks already handled); 0 Vitalik; feed scan 0 Vitalik. Sentinel + oversight clear; git clean 0/0; headroom ~2.0 GiB (batch 2 running) | No new business. Batch 2 (c1a00002/c1a00009/c1a0000a) voting; no ballots yet. No Founder action |
+| 2026-10-16T18:46Z | **PRIORITY FOUNDER INTAKE** — Vitalik #297 (18:45:18Z, sha256:nO4EXTLs…): "use only explicit per-issue assignment to phoebe-dev to determine work scope. Retire the previous fixed-project scope in ordinary laws and executive agendas. Do not amend the Constitution." Batch 2: c1a00002 + c1a00009 voted YES (5/6); c1a0000a pending | **Triaged (M-014):** recorded `records/FOUNDER-MANDATE-2026-10-16-scope.md`; ack written; **summoned c1a00007** (draft scope-by-assignment bill retiring Act 9.1–9.5) + **c1a00002** (retire fixed scope in `executive-agenda.md`); noted the target-registry mechanism blocker. Constitution untouched. In-flight preserved |

@@ -1,7 +1,15 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T17:56Z (**pending Founder decision: Kawun locked-policy change**; Act 10 §5 sunset applied + verified; Resource Safety Act published for vote — vote headroom-gated; continuity remedy verified). **SUMMONED.txt is empty; re-evaluate headroom at the next sitting before summoning.**
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T18:46Z (**NEW Founder mandate M-014: productive scope by per-issue assignment to phoebe-dev — retire Act 9's fixed scope; do NOT amend the Constitution**; Resource Safety Act vote in progress; Kawun locked-policy change M-013 pending Founder decision).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F0. FOUNDER MANDATE M-014 — productive scope by per-issue assignment (NEW, 2026-10-16T18:46Z)
+
+- **Mandate (Vitalik, #297 sha256:nO4EXTLs…):** use only explicit per-issue assignment to `phoebe-dev` to determine work scope; **retire the previous fixed-project scope in ordinary laws and executive agendas**; do not amend the Constitution.
+- **Triage:** `records/FOUNDER-MANDATE-2026-10-16-scope.md`. Act 9 (Viche+Kawun-only) is **ordinary law** → retirement needs a **bill + recorded votes**. Act 9.7/Act 12 (territorial administration) are unaffected. **Mechanism blocker:** the Antonina execution-target registry is **empty** and issues carry no assignment field, so "assigned to phoebe-dev" is not currently observable — record, do not guess.
+- **Owners:** bill sponsor (summoned) drafts `records/bills/scope-by-assignment-act.md`; c1a00002 updates `government/executive-agenda.md`; executive+clerk record how to read the assignment surface.
+- **Interim:** mandate priorities apply immediately, but **no new out-of-scope acquisitions**; in-flight work preserved.
+- **Status:** triaged; bill pending.
 
 ## F. PENDING FOUNDER DECISION — Kawun locked-policy change (NEW, 2026-10-16T17:06Z)
 
