@@ -53,7 +53,7 @@ case "$action" in
     run)
         [ -f "$MOCK_STATE/$id" ] || exit 5
         case "$prompt" in
-            *"=== AUTHORITATIVE CONSTITUTION ==="*) : ;;
+            *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
         case "$prompt" in
@@ -93,14 +93,15 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+2)) ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
 /bin/sh "$town/constitution/boot.sh" --once
-[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+2)) ]
-[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+2)) ]
+[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
+[ -f "$scratch/mock/c1e00011" ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
 # A summons wakes legislative seats and must NOT suppress the independent Executive.
 summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
 printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
 /bin/sh "$town/constitution/boot.sh" --once
-[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+2)) ]
-[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+5)) ]
+[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+6)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 2 ]
 printf 'Viche: %s seats initialized, charter injected, routine cycle runs Clerk+executive, while a parliamentary summons has precedence\n' "$seat_count"

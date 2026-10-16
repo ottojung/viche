@@ -15,7 +15,10 @@ now=${VICHE_INNOVATION_NOW:-$(date +%s)}
 interval=${VICHE_INNOVATION_INTERVAL:-21600}
 case "$now:$interval" in *[!0-9:]*|:*|*:) exit 2;; esac
 [ "$interval" -gt 0 ] || { echo 'Innovation cadence must be positive' >&2; exit 2; }
-[ -s "$charter" ] && [ -f "$state/inaugurated" ] || exit 1
+[ -s "$charter" ] || exit 1
+# The Founder's constitutional first boot inaugurates the town. Research starts
+# on the next cycle, without treating pre-inauguration as a failed office.
+[ -f "$state/inaugurated" ] || exit 0
 /bin/sh "$town/government/branch-bootstrap.sh" innovation-centre \
     > "$root/bootstrap.log" 2>&1 || { echo 'Innovation Centre bootstrap failed' >&2; exit 1; }
 status=$(antonina agent status --id "$id" --json)
