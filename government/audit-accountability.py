@@ -5,6 +5,7 @@ Auditor submissions are claims with evidence references, not independently verif
 facts. The controller never declares an issue solved from agent completion alone.
 """
 import argparse
+import re
 import json
 import os
 from pathlib import Path
@@ -30,6 +31,8 @@ def base():
 
 def report(args):
     root = base()
+    if not re.fullmatch(r"[0-9a-f]{18}", args.case):
+        raise ValueError("invalid audit case identifier")
     case = json_file(root / "cases" / f"{args.case}.json")
     if case is None:
         raise ValueError("unknown audit case")

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Randomized, independent audit selection. Does not trust executive task lists."""
 import hashlib
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -52,7 +53,15 @@ def choose(rng, items, size, now, root, kind):
             previous = root / "seen" / key
             last = int(previous.read_text()) if previous.exists() else 0
             age = now - last if last else now
-            weights.append(1.0 + min(8.0, max(0, age) / (3 * 86400)))
+            try:
+                created = datetime.fromisoformat(item.get("createdAt", "").replace("Z", "+00:00")).timestamp()
+                issue_age = max(0, now - created)
+            except (ValueError, TypeError):
+                issue_age = 0
+            # Persistently old issues grow harder to neglect even if somebody
+            # comments on them. No project title or executive report is used.
+            weights.append(1.0 + min(8.0, max(0, age) / (3 * 86400))
+                           + (min(6.0, issue_age / (7 * 86400)) if kind == "ignored_work" else 0))
         threshold = rng.random() * sum(weights)
         for i, weight in enumerate(weights):
             threshold -= weight
@@ -77,7 +86,7 @@ def main():
         if len(sha) == 40:
             decisions.append({"id": sha, "title": title})
     pools = {
-        "ignored_work": [{"id": str(i["number"]), "title": i["title"]} for i in open_issues],
+        "ignored_work": [{"id": str(i["number"]), "title": i["title"], "createdAt": i.get("createdAt", "")} for i in open_issues],
         "claimed_delivery": [{"id": str(i["number"]), "title": i["title"]} for i in closed],
         "government_decision": decisions,
     }
