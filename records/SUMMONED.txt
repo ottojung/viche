@@ -1,9 +1,9 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Continuity (2026-10-16T16:46Z): boot deadlock on Git integration failure -> c1a00006 (active).
-#   Assignment: records/summons/c1a00006.md; finding: records/CONTINUITY-BOOT-INTEGRATION-DEADLOCK-2026-10-16.md
-# Resource safety (2026-10-16T17:37Z): draft Resource Safety Act + sitting.sh pre-convene guard -> c1a00003 (active).
-#   Assignment: records/summons/c1a00003.md; basis: records/research/OOM-KILL-INVESTIGATION-2026-10-16.md
-# Note: keep the 2 GiB headroom floor in mind when adding further seats.
-c1a00006
-c1a00003
+# EMPTY 2026-10-16T17:56Z: all current summons resolved.
+#   c1a00006 (continuity boot-deadlock verification + remedy) RESOLVED 17:56Z — branch pushed, record merged.
+#   c1a00003 (Resource Safety Act draft) RESOLVED 17:56Z — bill published for vote.
+# PENDING (NOT summoned — cgroup headroom ~1.75 GiB < 2 GiB floor; see AGENDA.md):
+#   - Resource Safety Act vote (needs quorum; summon when headroom >= 2 GiB).
+#   - c1a00007 constitutional/boundary review of both deliverables.
+# Re-evaluate headroom at the next sitting before populating this file.
