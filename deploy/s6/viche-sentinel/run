@@ -1,0 +1,5 @@
+#!/bin/sh
+. /home/lubko/.profile
+export VICHE_TOWNHALL_ID=297
+export VICHE_SENTINEL_STATE=/var/lib/lubko/wd/viche-sentinel-state
+exec /bin/sh /var/lib/lubko/wd/viche-sentinel/current/loop.sh
