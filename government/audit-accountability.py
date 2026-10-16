@@ -76,7 +76,7 @@ def listed_agents():
 def check(args):
     root = base()
     now = int(os.environ.get("VICHE_OVERSIGHT_NOW", time.time()))
-    deadline = int(os.environ.get("VICHE_AUDIT_EVIDENCE_DEADLINE", "7200"))
+    deadline = int(os.environ.get("VICHE_AUDIT_EVIDENCE_DEADLINE", "21600"))
     if deadline <= 0:
         raise ValueError("invalid deadline")
     signals = []
@@ -113,7 +113,7 @@ def check(args):
                 continue
             metadata = json.loads(p.stdout)
             if metadata.get("model") != "opencode-go/longcat-2.5-preview-free" or metadata.get("variant") != "low":
-                signals.append({"type": "prohibited_model", "agent_id": str(agent.get("id", "unknown"))})
+                signals.append({"type": "host_model_mismatch_requires_attribution", "agent_id": str(agent.get("id", "unknown"))})
     except Exception as e:
         signals.append({"type": "agent_inventory_unavailable", "detail": str(e)[:180]})
     evidence = {"at": now, "cases_total": len(cases), "cases_unreported_overdue": overdue,

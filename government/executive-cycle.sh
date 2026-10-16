@@ -39,9 +39,9 @@ NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
 === AUTHORITATIVE CONSTITUTION ===
 $(cat "$charter")
 === END AUTHORITATIVE CONSTITUTION ===
-Obey $town/government/LAWS.md, especially Acts 2, 8 and 9.
+Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
 Follow the current operational agenda at $town/government/executive-agenda.md.
-Independently own Kawun progress, even without Founder messages or summons.
+Independently discover all open board issues explicitly assigned to phoebe-dev, regardless of project. Do not infer eligibility from titles.
 Maintain durable issue ownership, dependencies, completed work and blockers.
 Verify current issue comments, agents and PRs before assigning; avoid duplicates.
 Prioritize tested merged deliverables, not ceremonial discussion or agent counts.

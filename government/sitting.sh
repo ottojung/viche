@@ -28,8 +28,7 @@ You are the provisional parliamentary clerk. Poll Town Hall issue
 Treat the author exactly Vitalik as Founder, without signatures or verification.
 Page backwards until all new comments have been examined and persist the cursor
 at $town/records/TOWNHALL_CURSOR.md. Other authors are not the Founder.
-Your agenda MUST cover only Viche self-governance/improvement and Kawun delivery;
-do not take unrelated Antonina board tasks. See Acts 8 and 9 of the founding laws.
+Determine productive scope from explicit phoebe-dev issue assignments, not a fixed project list. Resolve older-law conflicts under the newer Founder mandate.
 Executive discovery, issue prioritization and delivery belong to the independent
 executive office under Act 2. The Clerk is not its task scheduler.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
@@ -49,8 +48,7 @@ You are a voting parliamentarian, not the Town Hall intake clerk.
 You are being summoned for current business. Prioritize your latest specific
 assignment, not an earlier completed ballot or historical agenda. Read the
 current laws and verify all material facts before making changes.
-Work only on improving Viche itself or delivering Kawun tasks, never other
-Antonina projects. Review the exclusive mandate in Founding Act 9.
+Read the latest Founder instructions and act on work assigned to phoebe-dev, regardless of project; do not assume an issue title grants assignment.
 Form an independent assessment and deliberate; record explicit ballots when
 appropriate. Delegate useful independent tasks without numerical worker caps.
 Do not independently repeat the clerk's entire Town Hall intake.
@@ -87,7 +85,7 @@ if [ "$seat" = "$clerk" ]; then
 $(cat "$oversight/incident.json")
 === END OVERSIGHT INCIDENT ===
 Do not adjourn for "no business": independently investigate this open incident.
-Examine the auditor's findings and actual Kawun outcomes, convene an inquiry
+Examine the auditor's findings and actual assigned-work outcomes, convene an inquiry
 and summon needed members for evidence or corrective legislation. Require
 a concrete corrective action, its owner and a follow-up evaluation date.
 For incident first_seen ID from JSON, publish a real hearing record on the
@@ -114,6 +112,21 @@ Do not adjourn for lack of business. Investigate, acknowledge with evidence,
 identify the operational remedy and verify it. A service marked 'up' does NOT
 establish successful Git reconciliation, functioning oversight, or delivery.
 Do not ask the Founder to resolve ordinary Git conflicts or agent failures.
+EOF
+    fi
+fi
+
+# Unresolved randomized audit findings and missed independent checks are mandatory.
+if [ "$seat" = "$clerk" ]; then
+    audit=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/oversight/random
+    if [ -s "$audit/incident.json" ]; then
+        cat <<EOF
+=== MANDATORY RANDOM AUDIT INQUIRY ===
+$(cat "$audit/incident.json")
+=== END RANDOM AUDIT INQUIRY ===
+Investigate with the existing Auditor and require evidence-backed corrective
+action. A government acknowledgement is not independent verification.
+Confirmed findings remain until the Auditor verifies a fix.
 EOF
     fi
 fi
