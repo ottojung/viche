@@ -16,10 +16,12 @@ current=$(printf "%s\n" "$status" | jq -r ".state")
 case "$current" in
   running) exit 0 ;;
   failed)
-    echo "Viche: executive failed, invoking seat-liveness recovery" >&2
-    /bin/sh "$town/government/seat-liveness.sh" "$id" || :
-    exit 0
-    ;;
+    echo "Viche: executive failed, attempting bounded seat-liveness recovery" >&2
+    if [ -f "$town/government/seat-liveness.sh" ]; then
+      /bin/sh "$town/government/seat-liveness.sh" "$id" ||
+        echo "Viche: executive seat recovery attempt failed" >&2
+    fi
+    exit 0 ;;
   idle|succeeded) : ;;
   *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
 esac
