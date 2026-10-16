@@ -1,0 +1,6 @@
+#!/bin/sh
+# S6 service entrypoint, independently versioned from the live government checkout.
+. /home/lubko/.profile
+export VICHE_SENTINEL_STATE=/var/lib/lubko/wd/viche-sentinel-state
+: "${VICHE_TOWNHALL_ID:?Host must configure Viche Town Hall}" 
+exec /bin/sh /var/lib/lubko/wd/viche-sentinel/current/loop.sh

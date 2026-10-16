@@ -79,3 +79,8 @@ if [ -f "$town/government/audit-cycle.sh" ]; then
     /bin/sh "$town/government/audit-cycle.sh" ||
         echo "Viche: independent audit scheduling failed" >&2
 fi
+
+# Government setup completed; not proof of delivery.
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/health
+mkdir -p "$state"
+date +%s > "$state/government-setup.last"
