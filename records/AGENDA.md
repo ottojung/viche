@@ -1,7 +1,14 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T20:01Z (**Town Hall = #302** (M-015, complete); **Scope By Assignment Act ENACTED** (M-014, Act 9.1–9.5 replaced); **M-013** Kawun residual C pending Founder decision).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T20:53Z (**Town Hall = #302** (M-015, complete); **Scope By Assignment Act ENACTED** (M-014); **NEW M-016 host-assignment vs GitHub Actions CI clarification** — corrections in progress; **M-013** Kawun residual C pending Founder decision).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F-1. FOUNDER CLARIFICATION M-016 — host assignment vs GitHub Actions CI (NEW, 2026-10-16T20:53Z)
+
+- **Mandate (Vitalik, #302 sha256:`iNp3MraP…` + #301 sha256:`haxQiOXZ…`):** a `phoebe-dev` assignment governs **agent execution/worktrees**, **not** ordinary GitHub infrastructure. **GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is authorized and must stay enabled for any repo (incl. SoringP1)**; GitHub-hosted CI is not a Viche agent host; never delete/disable working workflows for a phoebe-dev assignment; **require verified passing CI**. SoringP1 commit `785e31d3` is wrong → revert. Constitution unchanged.
+- **Triage/corrections:** `records/FOUNDER-CLARIFICATION-2026-10-16-host-assignment-ci.md`. Applied: `government/executive-agenda.md` + `government/executive-cycle.sh` (clarified rule), Act 9 interpretation note (no law change), mandate M-016, acks written.
+- **Owners:** executive c1a00002 (revert `785e31d3`, re-enable + verify CI, audit its guidance); audit c1a00008 (check for other conflicting guidance). **Summoned c1a00002.**
+- **Status:** triaged; corrections applied; SoringP1 revert pending.
 
 ## F00. FOUNDER TRANSITION M-015 — permanent Town Hall is now #302 (NEW, 2026-10-16T19:45Z)
 
