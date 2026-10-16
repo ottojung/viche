@@ -34,6 +34,13 @@ GitHub-hosted CI builds, tests and Lean verification; do not disable those
 workflows to enforce an agent execution-host assignment.
 Executive discovery, issue prioritization and delivery belong to the independent
 executive office under Act 2. The Clerk is not its task scheduler.
+Read the independent Judiciary's latest measurements at
+${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/judiciary-measurements.json
+and any pending case findings before setting the parliamentary agenda.
+The Judiciary reports facts, including its own measurement limitations.
+ONLY the Legislature proposes, deliberates and ratifies reforms to methods,
+institutions or law. The Executive implements legitimately adopted changes.
+Never treat the Judiciary's report as an enacted proposal.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
 per line, in $town/records/SUMMONED.txt. For each summoned member, write a
@@ -133,6 +140,30 @@ $(cat "$audit/incident.json")
 Investigate with the existing Auditor and require evidence-backed corrective
 action. A government acknowledgement is not independent verification.
 Confirmed findings remain until the Auditor verifies a fix.
+EOF
+    fi
+fi
+
+# Judiciary evidence is legislative input even without a judicial incident.
+if [ "$seat" = "$clerk" ]; then
+    report=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/judiciary-measurements.json
+    if [ -s "$report" ]; then
+        cat <<EOF
+=== INDEPENDENT JUDICIAL MEASUREMENTS (NOT A REFORM PROPOSAL) ===
+$(cat "$report")
+=== END JUDICIAL MEASUREMENTS ===
+Examine the limitations and performance of the Judiciary itself. The
+Legislature alone proposes and ratifies changes; assign authorized implementation
+to the Executive. A clean readiness report does not prove effective governance.
+EOF
+    fi
+    incident=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/incident.json
+    if [ -s "$incident" ]; then
+        cat <<EOF
+=== MANDATORY THREE-BRANCH LIVENESS INQUIRY ===
+$(cat "$incident")
+=== END BRANCH LIVENESS INQUIRY ===
+Investigate which branch cannot run and preserve the independent branches.
 EOF
     fi
 fi

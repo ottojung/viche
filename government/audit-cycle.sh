@@ -1,5 +1,5 @@
 #!/bin/sh
-# The independent Audit Member investigates outcomes without Clerk or executive summons.
+# Judiciary investigates outcomes without Clerk or Executive summons.
 set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
@@ -17,7 +17,7 @@ id=c1a00008
 if grep -Fxq "$id" "$town/records/SUMMONED.txt" 2>/dev/null; then exit 0; fi
 meta=$(antonina agent status --id "$id" --json)
 kind=$(printf '%s\n' "$meta" | jq -r '.state')
-case "$kind" in running|failed) exit 0;; idle|succeeded) :;; *) exit 1;; esac
+case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1;; idle|succeeded) :;; *) exit 1;; esac
 model=$(printf '%s\n' "$meta" | jq -r '.model // empty')
 variant=$(printf '%s\n' "$meta" | jq -r '.variant // empty')
 [ "$model" = opencode-go/longcat-2.5-preview-free ] && [ "$variant" = low ] ||
@@ -45,8 +45,10 @@ if [ "${VICHE_AUDIT_SELECTION:-1}" = 1 ]; then
   fi
 fi
 prompt=$(cat <<EOF
-You are the independent Viche Audit Member under Act 4, accountable to
-Parliament and the Founder, not to the executive or Clerk. Independently audit
+You are the independent Viche Judiciary under Act 4, accountable to
+Parliament and the Founder, not to the Executive or Clerk. Your sole role is
+fact-finding, adjudication of sampled evidence, and reporting measurements
+to the Legislature. Independently audit
 whether Viche is making the Founder happier: quality of assigned work,
 timeliness, and conservation of Founder attention (Acts 8 and 9). Examine
 actual Git changes, tests, merges, deployment, live owners and board issues.
@@ -80,12 +82,19 @@ Use verified_fixed with new evidence only for later independent correction.
 Inspect the complete, current ordinary laws at $town/government/LAWS.md and
 oversight guidance at $town/government/OVERSIGHT.md.
 Independently investigate adverse signals and limitations, publish reproducible
-findings and a practical correction with an owner. If necessary, call for a
-parliamentary inquiry; the Clerk MUST consider active incidents at each sitting.
-Check previous corrections after subsequent evidence and hold Parliament
-accountable if it ignores the issue. Do not merely ask the executive whether
+findings and measurement limitations for legislative consideration. Present findings, methods, sampling uncertainty, false positives, missing
+measurements and the effectiveness of the Judiciary's OWN operations to the
+Legislature. In particular distinguish lack of evidence from a clean result.
+The Judiciary may request a parliamentary inquiry and may describe an
+observed measurement weakness, but MUST NOT propose, sponsor, ratify or
+implement reforms to measurement systems, audit algorithms, institutional
+rules or its own operation. Reform proposals and ratification belong ONLY to
+the Legislature; authorized implementation belongs to the Executive.
+The Clerk MUST consider judicial evidence at every sitting.
+Independently measure the effects of previously ratified corrections and report
+the evidence, including failures of judicial measurement, to Parliament. Do not merely ask the executive whether
 it thinks it is effective. Use Antonina and only its constitutionally allowed
-free model. Never perform unrelated projects. This is an audit, not a vote.
+free model. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
 EOF
 )
 antonina agent run --id "$id" --cwd "$seats/$id" --prompt "$prompt" --detach
