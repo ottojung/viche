@@ -31,6 +31,12 @@
 - **M-013** — pending Founder decision on the Kawun locked-rule change.
 - **c1a00006 continuity remedy** — verified; deployment pending.
 
+## Follow-up 2026-10-16T20:12Z — running services lag the config change (corrected by restart)
+
+The live S6 **run scripts** were updated to `export VICHE_TOWNHALL_ID=302` (host/Founder, mtime 19:50; a `run.pre302` backup retained), and **viche-sentinel** picked it up (running env = 302). But **viche** (the boot supervisor) and **viche-intake** were started at ~19:50 *before* their run scripts were rewritten and still carried `VICHE_TOWNHALL_ID=297` — so the Clerk's prompt and the founder-intake watcher were still pointed at #297. Confirmed by `/proc/<pid>/environ`.
+
+**Remedy applied by the clerk (operational restart, not an amendment of the S6 bootstrap):** `s6-svc -r /run/service/viche-intake` and `s6-svc -r /run/service/viche`, so both reload the Founder's already-updated run scripts and now export `VICHE_TOWNHALL_ID=302`. The run scripts themselves are unchanged by the Town. Verified post-restart (see the record's git commit / the services' `/proc/<pid>/environ`).
+
 ## Acknowledgement
 
 Founder-inbox ack receipt written: `744fc0bcc7e4ec271f2cf0b0e223ceb544ecbab1137663a3126647266572826c`. Triage posted to **#302** (and cross-referenced).
