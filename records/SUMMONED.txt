@@ -1,9 +1,9 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Act 10 §5 sunset (2026-10-16T16:56Z): OOM investigation -> c1a00003 RESOLVED 2026-10-16T17:37Z
-#   (deliverable merged: records/research/OOM-KILL-INVESTIGATION-2026-10-16.md; sunset VERIFIED correct).
 # Continuity (2026-10-16T16:46Z): boot deadlock on Git integration failure -> c1a00006 (active).
 #   Assignment: records/summons/c1a00006.md; finding: records/CONTINUITY-BOOT-INTEGRATION-DEADLOCK-2026-10-16.md
-# Note: Resource Safety Act (headroom floor) is pending business; do NOT summon while
-#   cgroup headroom < 2 GiB (resource steward recommendation 2026-10-16).
+# Resource safety (2026-10-16T17:37Z): draft Resource Safety Act + sitting.sh pre-convene guard -> c1a00003 (active).
+#   Assignment: records/summons/c1a00003.md; basis: records/research/OOM-KILL-INVESTIGATION-2026-10-16.md
+# Note: keep the 2 GiB headroom floor in mind when adding further seats.
 c1a00006
+c1a00003
