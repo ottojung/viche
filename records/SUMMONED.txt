@@ -1,8 +1,9 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Continuity (2026-10-16T16:46Z): boot deadlock on Git integration failure -> c1a00006.
+# Act 10 §5 sunset (2026-10-16T16:56Z): OOM investigation -> c1a00003 RESOLVED 2026-10-16T17:37Z
+#   (deliverable merged: records/research/OOM-KILL-INVESTIGATION-2026-10-16.md; sunset VERIFIED correct).
+# Continuity (2026-10-16T16:46Z): boot deadlock on Git integration failure -> c1a00006 (active).
 #   Assignment: records/summons/c1a00006.md; finding: records/CONTINUITY-BOOT-INTEGRATION-DEADLOCK-2026-10-16.md
-# Act 10 §5 sunset (2026-10-16T16:56Z): OOM kill recorded during renewal period -> c1a00003.
-#   Assignment: records/summons/c1a00003.md; determination: records/ACT10-SUNSET-2026-10-16.md
+# Note: Resource Safety Act (headroom floor) is pending business; do NOT summon while
+#   cgroup headroom < 2 GiB (resource steward recommendation 2026-10-16).
 c1a00006
-c1a00003
