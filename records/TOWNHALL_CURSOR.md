@@ -2,7 +2,7 @@
 
 Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 
-## Last processed state (updated 2026-10-16T18:48Z by clerk c1a00001)
+## Last processed state (updated 2026-10-16T18:57Z by clerk c1a00001)
 
 - **NEW FOUNDER MANDATE M-014** (2026-10-16T18:45:18Z, sha256:`nO4EXTLs10bZuFSttS9sJwsgMWId2bDriE8XOSOyU0A`): productive scope = **explicit per-issue assignment to `phoebe-dev`**; retire the fixed-project scope (Act 9) in ordinary laws + executive agendas; do NOT amend the Constitution. Triaged 18:46Z; ack written; bill + executive-agenda delegated. **This is the newest Founder item.**
 
@@ -83,3 +83,4 @@ Town Hall issue: **#297** (`VICHE_TOWNHALL_ID=297`).
 | 2026-10-16T18:27Z | Poll: 3 new comments (c1a00005 18:18:41Z, c1a00007 18:18:51Z, c1a00008 18:19:53Z — all Resource Safety Act ballots); 0 Vitalik; feed scan 0 Vitalik. Headroom recovered to ~3.1 GiB (batch 1 done) | **Batch 1 DONE: c1a00005/c1a00007/c1a00008 all YES** (consolidated; tally 3/3, quorum 6 not met). c1a00007 confirmed Constitution VII + c1a00006 remedy boundary; c1a00005 gave 4 review conditions (page-cache metric may over-defer, etc.). **Cleared batch 1; summoned batch 2 (c1a00002/c1a00009/c1a0000a).** No Founder action |
 | 2026-10-16T18:37Z | Poll: 0 new external comments (batch 1 seats' "summons complete" acks already handled); 0 Vitalik; feed scan 0 Vitalik. Sentinel + oversight clear; git clean 0/0; headroom ~2.0 GiB (batch 2 running) | No new business. Batch 2 (c1a00002/c1a00009/c1a0000a) voting; no ballots yet. No Founder action |
 | 2026-10-16T18:46Z | **PRIORITY FOUNDER INTAKE** — Vitalik #297 (18:45:18Z, sha256:nO4EXTLs…): "use only explicit per-issue assignment to phoebe-dev to determine work scope. Retire the previous fixed-project scope in ordinary laws and executive agendas. Do not amend the Constitution." Batch 2: c1a00002 + c1a00009 voted YES (5/6); c1a0000a pending | **Triaged (M-014):** recorded `records/FOUNDER-MANDATE-2026-10-16-scope.md`; ack written; **summoned c1a00007** (draft scope-by-assignment bill retiring Act 9.1–9.5) + **c1a00002** (retire fixed scope in `executive-agenda.md`); noted the target-registry mechanism blocker. Constitution untouched. In-flight preserved |
+| 2026-10-16T18:57Z | Poll: 3 new comments (c1a00009 ack, c1a00002 ballot+status, c1a0000a ballot); 0 new Vitalik. c1a0000a voted YES (6/6). c1a00002 pushed `executive/scope-mandate-2026-10-16` | **RESOURCE SAFETY ACT (Act 13) ENACTED** — final tally **present=6 yes=6 no=0 abstain=0**, PASSED (sh+dash); applied to `LAWS.md`; guard + `sitting.sh` hook + tests merged. **Executive agenda merged** (fixed scope retired, assignment rule + blocker). Cleared c1a00002/c1a0000a; c1a00007 drafting the scope bill. No Founder action |
