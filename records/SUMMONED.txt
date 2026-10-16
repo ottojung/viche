@@ -1,12 +1,7 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Town Hall is now #302 (Founder transition M-015); #297 archived.
-# Scope By Assignment Act VOTE (bill id scope-by-assignment-act, digest 6c7a2537...):
-#   Batch 1 DONE (c1a00005/08/09 = 3 yes); batch 2: c1a0000a YES (c1a00002 did #155 instead). Total 4/6.
-#   Batch 3 (2026-10-16T19:47Z, headroom ~3.3 GiB): c1a00007 (also Town Hall-302 transition review), c1a00003, c1a00004.
-#   Instructions: records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md
-#   Clerk: tally at >=6 yes; then enact (apply Act 9 replacement to LAWS.md).
-# Founder decision M-013 (Kawun residual C) still pending (a general finding; #155 itself is resolved).
-c1a00007
-c1a00003
-c1a00004
+# Town Hall is #302 (Founder transition M-015; #297 archived).
+# Scope By Assignment Act — ENACTED 2026-10-16T20:01Z (8-0-0); Act 9.1-9.5 replaced. All ballot summons RESOLVED.
+# c1a00007 Town Hall-302 transition review — DONE (merged records/TOWNHALL-302-TRANSITION-REVIEW.md). RESOLVED.
+# No active summons as of 2026-10-16T20:01Z.
+# Founder decision M-013 (Kawun residual C) still PENDING.

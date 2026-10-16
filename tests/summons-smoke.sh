@@ -8,7 +8,7 @@ mkdir -p "$scratch/government" "$scratch/records/summons"
 printf 'c1a00001\tClerk\tintake\nc1a00002\tExecutive\tdelivery\nc1a00004\tResearch\tmetrics\nc1a00005\tResource\taudit\n' > "$scratch/government/seats.tsv"
 printf '%s\n' 'UNIQUE ACT 10 CGROUP ASSIGNMENT' > "$scratch/records/summons/c1a00004.md"
 VICHE_TOWN_ROOT=$scratch
-VICHE_TOWNHALL_ID=297
+VICHE_TOWNHALL_ID=302
 export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID
 
 printf '%s\n' 'UNIQUE LIVE KAWUN EXECUTIVE ASSIGNMENT' > "$scratch/records/summons/c1a00002.md"

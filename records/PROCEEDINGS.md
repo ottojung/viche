@@ -866,3 +866,19 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
 
 **Founder action requested:** one line — authorize or decline the Kawun locked-policy change (M-013). No other Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-16T20:01Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Polled #302 (new Town Hall) and #297: batch-3 ballots + c1a00007's transition review; **zero new `Vitalik`**.
+
+**SCOPE BY ASSIGNMENT ACT — ENACTED.** Batch 3 (c1a00007, c1a00003, c1a00004) all voted YES → consolidated **present=8 yes=8 no=0 abstain=0**; `government/tally.sh scope-by-assignment-act` **PASSED** (sh + dash). Enacted: **Act 9.1–9.5 replaced** in `government/LAWS.md` by **"Act 9 — Productive scope by assignment"** (scope = issues explicitly assigned to `phoebe-dev`; no assignment → no new out-of-scope work; in-flight preserved; Act 9.7/12 unaffected; Constitution not amended). Ballots `records/ballots/scope-by-assignment-act.tsv`; bill `records/bills/scope-by-assignment-act.md`. This implements the Founder mandate (M-014/M-015).
+
+**Town Hall transition (M-015) — COMPLETE.** Host/Founder applied the S6 value change (live run scripts now `export VICHE_TOWNHALL_ID=302`); PR #22 moved the active references. c1a00007's review merged (`records/TOWNHALL-302-TRANSITION-REVIEW.md`): confirms the S6 bootstrap is Founder-only and the Town-side re-pointing is complete; the clerk updated the remaining test fixtures to #302 (all smoke tests green).
+
+**Summons.** All resolved; `SUMMONED.txt` empty. M-013 (Kawun residual C) remains the only pending Founder decision.
+
+**Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
+
+**Founder action requested:** one line — authorize or decline the Kawun residual-C locked-rule change (M-013). No other Founder action requested.

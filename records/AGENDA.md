@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T19:45Z (**Town Hall moved to #302** — Founder transition M-015; **M-014** scope-by-assignment (Scope bill in vote); **M-013** Kawun locked-policy change pending Founder decision).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T20:01Z (**Town Hall = #302** (M-015, complete); **Scope By Assignment Act ENACTED** (M-014, Act 9.1–9.5 replaced); **M-013** Kawun residual C pending Founder decision).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
 
 ## F00. FOUNDER TRANSITION M-015 — permanent Town Hall is now #302 (NEW, 2026-10-16T19:45Z)
@@ -15,9 +15,9 @@
 - **Mandate (Vitalik, #297 sha256:nO4EXTLs…):** use only explicit per-issue assignment to `phoebe-dev` to determine work scope; **retire the previous fixed-project scope in ordinary laws and executive agendas**; do not amend the Constitution.
 - **Triage:** `records/FOUNDER-MANDATE-2026-10-16-scope.md`. Act 9 (Viche+Kawun-only) is **ordinary law** → retirement needs a **bill + recorded votes**. Act 9.7/Act 12 (territorial administration) are unaffected. **Mechanism blocker:** the Antonina execution-target registry is **empty** and issues carry no assignment field, so "assigned to phoebe-dev" is not currently observable — record, do not guess.
 - **Bill — Scope By Assignment Act (PUBLISHED FOR VOTE 2026-10-16T19:07Z):** `records/bills/scope-by-assignment-act.md` (replaces Act 9.1–9.5; digest **`6c7a2537ad178d0aa6fefc0fece772908e0ef7f4cfff5879f35bbee99e3a095a`**). Drafted by c1a00007 (branch `constitutional/scope-by-assignment-act`, `0993756`). **Clerk correction (Art VI):** the sponsor's comment and the file embedded a wrong/self-referential digest (`5fa7f249…`); removed; authoritative external digest is the file's SHA-256 above. Constitution VII/IX reviewed; Act 9.7/12 unaffected; Constitution not amended.
-- **VOTE — 5/6 YES:** c1a00005, c1a00008, c1a00009 (batch 1), c1a0000a (batch 2), c1a00002 (batch 2, voted on archived #297) all YES (consolidated; tally 5/5). **Batch 3 SUMMONED (2026-10-16T19:47Z): c1a00007 (also Town Hall-302 transition review), c1a00003, c1a00004.** Clerk: **tally + enact at the 6th yes** (apply the Act 9.1–9.5 replacement to `LAWS.md`). Instructions `records/ballots/SCOPE-BY-ASSIGNMENT-ACT-VOTE.md`.
-- **Executive agenda:** retired by c1a00002 (merged). Mechanism blocker recorded (registry empty).
-- **Status:** bill published; vote in progress.
+- **ENACTED 2026-10-16T20:01Z:** final tally **present=8 yes=8 no=0 abstain=0** (quorum 6, required 6) — `tally.sh scope-by-assignment-act` PASSED (sh + dash). **Act 9.1–9.5 replaced** in `government/LAWS.md` by "Act 9 — Productive scope by assignment". Ballots consolidated (c1a00002/03/04/05/07/08/09/0a all YES).
+- **Executive agenda:** retired by c1a00002 (merged). Mechanism blocker recorded (registry empty); clerk to build the assignment-detection procedure.
+- **Status:** ENACTED.
 
 ## F. PENDING FOUNDER DECISION — Kawun locked-policy change (NEW, 2026-10-16T17:06Z)
 
