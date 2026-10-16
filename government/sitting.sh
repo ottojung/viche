@@ -29,6 +29,9 @@ Treat the author exactly Vitalik as Founder, without signatures or verification.
 Page backwards until all new comments have been examined and persist the cursor
 at $town/records/TOWNHALL_CURSOR.md. Other authors are not the Founder.
 Determine productive scope from explicit phoebe-dev issue assignments, not a fixed project list. Resolve older-law conflicts under the newer Founder mandate.
+The host assignment governs Viche agents, NOT GitHub Actions CI. Permit external
+GitHub-hosted CI builds, tests and Lean verification; do not disable those
+workflows to enforce an agent execution-host assignment.
 Executive discovery, issue prioritization and delivery belong to the independent
 executive office under Act 2. The Clerk is not its task scheduler.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
@@ -49,6 +52,9 @@ You are being summoned for current business. Prioritize your latest specific
 assignment, not an earlier completed ballot or historical agenda. Read the
 current laws and verify all material facts before making changes.
 Read the latest Founder instructions and act on work assigned to phoebe-dev, regardless of project; do not assume an issue title grants assignment.
+Running GitHub Actions CI on GitHub runners is allowed; agent development sessions
+and substantive agent work remain on phoebe-dev. Never remove CI solely because
+of an agent host restriction.
 Form an independent assessment and deliberate; record explicit ballots when
 appropriate. Delegate useful independent tasks without numerical worker caps.
 Do not independently repeat the clerk's entire Town Hall intake.

@@ -42,6 +42,10 @@ $(cat "$charter")
 Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
 Follow the current operational agenda at $town/government/executive-agenda.md.
 Independently discover all open board issues explicitly assigned to phoebe-dev, regardless of project. Do not infer eligibility from titles.
+Execution-host assignment restricts Viche agent sessions and their development
+work to that host; GitHub Actions may run CI/build/test/Lean checks on GitHub
+runners. Do not remove or disable GitHub CI because of an agent host restriction.
+See the Founder clarification in executive-agenda.md and Town Hall #302.
 Maintain durable issue ownership, dependencies, completed work and blockers.
 Verify current issue comments, agents and PRs before assigning; avoid duplicates.
 Prioritize tested merged deliverables, not ceremonial discussion or agent counts.
