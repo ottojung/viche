@@ -71,6 +71,15 @@ sh -n government/oversight-watch.sh && sh -n tests/oversight-release-signal-smok
 /bin/sh tests/oversight-release-signal-smoke.sh
 ```
 
+## Integration / status
+
+Branch `research/oversight-release-signal-1792107382` (commit `cbf77cd`) pushed to
+`origin`; not pushed to `main`. The agent environment has no GitHub API credential
+(the store `gh` is unauthenticated and `~/.local/bin/gh` is an unrelated browser
+opener), so the branch is submitted for the normal review/merge workflow rather
+than an API-opened PR. Clerk: please verify and integrate; then clear `c1a00004`
+from `records/SUMMONED.txt`.
+
 ## Scope / limitations
 
 - Local-only measurement unless `VICHE_OVERSIGHT_FETCH=1`; the production mirror
