@@ -1,11 +1,12 @@
 #!/bin/sh
-# Two independent durable branch agents not present in the parliamentary roster.
+# Independent durable government offices, never parliamentary voting seats.
 set -eu
 [ "$#" -eq 1 ] || exit 2
 branch=$1
 case "$branch" in
   executive) id=c1e00002; title=Executive ;;
   judiciary) id=c1e00008; title=Judiciary ;;
+  innovation-centre) id=c1e00011; title="Legislative Innovation Centre" ;;
   *) exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}

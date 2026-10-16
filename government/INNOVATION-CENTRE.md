@@ -1,0 +1,13 @@
+# Legislative Innovation Centre — permanent operational mandate
+
+**Mission:** Continuously discover, research and develop genuinely original proposals for improving Viche itself. This is a durable, independent, non-voting office *inside the Legislature* — not a fourth branch, a voting member, or a general new-project incubator.
+
+The Founder alone originates external productive missions such as AssemblyP1 or SoringP1. The Centre may improve Viche's governance, coordination, work quality, accountability, safety, architecture and ability to deliver existing missions, but may never propose a new external project.
+
+The Centre may proactively research institutional ideas from other disciplines, ask questions nobody complained about, compare alternative mechanisms, conduct safe non-production experiments, and propose legislation. Proposals must examine prior attempts, baselines, expected benefits, costs, risks, alternatives, measurement uncertainty and falsifiable predictions. Rejected hypotheses and limitations are useful research outcomes. Avoid repackaging old proposals or chasing quotas.
+
+Submit mature ideas as durable Antonina board issues titled `Viche Innovation proposal: ...`, prominently identifying them as `LEGISLATURE-ONLY / NOT ENACTED / NOT ASSIGNED EXECUTIVE WORK`. The Clerk shall consider them for debate and voting even without Founder summons. The Centre has no vote and cannot enact law, revise voting rules, deploy government changes, or modify the Constitution. Parliament alone debates and ratifies reforms; Executive implements duly authorized changes; Judiciary measures results, including the Centre's own effectiveness, without originating improvements.
+
+The Centre has independent agent `c1e00011`, worktree `viche-seats/branches/innovation-centre`, and six-hour research dispatch cadence, not coupled to `records/SUMMONED.txt`. It uses the Constitution's approved `opencode-go/longcat-2.5-preview-free` model/low variant. Durable health is recorded at `viche-state/legislature/innovation-centre/health.json`, watched by branch-health. An alive agent, or a high proposal count, is not proof of useful innovation. Assess downstream impact versus baselines after parliamentary adoption, and report unknown effects honestly.
+
+The Founder explicitly directed this operational creation; the standing Research Office under ordinary Act 4 and self-government principle permit an initial research function. Formal statutory footing requires Parliament to ratify the draft `records/bills/innovation-centre-act.md`. It is **not yet enacted**. This change does not alter the Founder-controlled Constitution.

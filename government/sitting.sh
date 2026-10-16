@@ -41,6 +41,13 @@ The Judiciary reports facts, including its own measurement limitations.
 ONLY the Legislature proposes, deliberates and ratifies reforms to methods,
 institutions or law. The Executive implements legitimately adopted changes.
 Never treat the Judiciary's report as an enacted proposal.
+The permanent legislative Innovation Centre is independently researching new
+ways to improve Viche itself. It does NOT originate external productive projects
+or enact laws. Examine its latest evidence, open innovation-proposal issues,
+rejected hypotheses, and counterarguments. Debate and vote on sound proposals
+using ordinary legislative procedures; do not automatically enact them.
+An absence of adopted innovations is a reason to ask whether the Centre is
+producing worthwhile ideas, not to demand an arbitrary number of bills.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
 per line, in $town/records/SUMMONED.txt. For each summoned member, write a
@@ -84,6 +91,21 @@ No seat-specific summons file exists. Find the Clerk's most recent outstanding
 summons in the proceedings or Town Hall and resolve that current business.
 If its requested deliverable cannot be determined, record the missing mandate
 as a blocker rather than inventing or repeating old work.
+EOF
+    fi
+fi
+
+# Institutionally generated legislative input; never represented as a law.
+if [ "$seat" = "$clerk" ]; then
+    innovation=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/legislature/innovation-centre
+    if [ -s "$innovation/health.json" ]; then
+        cat <<EOF
+=== AUTONOMOUS LEGISLATIVE INNOVATION CENTRE STATUS ===
+$(cat "$innovation/health.json")
+=== END INNOVATION CENTRE STATUS ===
+The Centre is an independent non-voting legislative research office.
+Inspect its proposals on the board, scrutinize evidence, and arrange
+lawful parliamentary deliberation. Do not equate activity with originality.
 EOF
     fi
 fi
