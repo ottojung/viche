@@ -1,7 +1,11 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
-# Town Hall is #302 (Founder transition M-015; #297 archived).
-# Scope By Assignment Act — ENACTED 2026-10-16T20:01Z (8-0-0); Act 9.1-9.5 replaced. All ballot summons RESOLVED.
-# c1a00007 Town Hall-302 transition review — DONE (merged records/TOWNHALL-302-TRANSITION-REVIEW.md). RESOLVED.
-# No active summons as of 2026-10-16T20:01Z.
-# Founder decision M-013 (Kawun residual C) still PENDING.
+# Town Hall is #302.
+# FOUNDER CLARIFICATION M-016 (2026-10-16T20:53Z, #302 sha256:iNp3MraP... + #301 sha256:haxQiOXZ...):
+#   phoebe-dev assignment = agent execution/worktrees, NOT GitHub infra. GitHub Actions CI on
+#   GitHub-hosted runners is authorized + must stay enabled; require verified passing CI.
+#   SoringP1 commit 785e31d3 is wrong -> revert.
+#   - c1a00002 (executive): revert 785e31d3, re-enable + verify SoringP1 CI, audit guidance.
+#     Assignment: records/summons/c1a00002.md
+#   - c1a00008 (audit): check for other conflicting guidance/records (optional, add if headroom allows).
+c1a00002
