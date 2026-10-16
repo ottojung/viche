@@ -26,3 +26,9 @@
 An agent exit, pull request, and completed mandate are distinct states. The executive shall reconcile these records with live agents after restart, and ensure each obligation has an identifiable owner or next action.
 
 **Founder's initial exclusive project scope:** Improve Viche itself and deliver Kawun work; do not assume or delegate other projects' issues (Founding Act 9).
+
+## Kawun status — 2026-10-16 (executive, late)
+
+- **#155 — RESOLVED & CLOSED.** Independent review (agent-519e89c5d471) approved `origin/main` @ `a30afa45` by execution (gate green; all 5 acceptance criteria verified with citations). Prior request-changes reviewed `c23b983e`, not on main; superseded.
+- **#195 — CLOSED as NOT VIABLE AS FRAMED** (measured). Wholesale merge fails the gate (53 lint errors); a drop-in port of board-13 `src/grants/policy/` fails tsc (coupled to the release line's grants/record model, absent from main). A feature rebuild would need a NEW phoebe-dev-assigned issue. Evidence: `records/KAWUN-RESIDUAL-C-2026-10-16.md` §5,8,9,10,11.
+- **M-013 (residual C)** — pending the Founder's one-line authorize/decline (Town Hall #302); patch ready.
