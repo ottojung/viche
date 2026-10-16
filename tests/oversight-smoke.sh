@@ -52,7 +52,9 @@ NOTICES=$scratch/notices
 VICHE_TOWNHALL_ID=302
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_KAWUN_REPO VICHE_OVERSIGHT_NOW MOCK_BOARD EXEC_STATE ERROR LAST
-export AUDIT_STATE MODEL VARIANT DISPATCHES NOTICES VICHE_TOWNHALL_ID
+VICHE_AUDIT_SELECTION=0
+VICHE_AUDIT_CHECKS=0
+export AUDIT_STATE MODEL VARIANT DISPATCHES NOTICES VICHE_TOWNHALL_ID VICHE_AUDIT_SELECTION VICHE_AUDIT_CHECKS
 /bin/sh "$repo/government/oversight-watch.sh"
 incident=$scratch/state/oversight/incident.json
 jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_kawun_issues_first_page == 1' "$incident" >/dev/null

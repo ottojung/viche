@@ -2,10 +2,10 @@
 
 ## Authority and separation
 
-This implementation executes **existing** Founding Acts 4 (independent audit), 5 (durability), 8 (quality, timeliness, Founder attention) and 9 (Viche/Kawun only). It does not amend the Constitution or enact new legislation. Parliament can revise it by ordinary law.
+This implementation executes **existing** Founding Acts 4 (independent audit), 5 (durability), 8 (quality, timeliness, Founder attention) and the latest Founder-authorized productive mandate. It does not amend the Constitution or enact new legislation. Parliament can revise it by ordinary law.
 
 - **Watchdog** (`government/oversight-watch.sh`): deterministic, invoked each ten-minute government reconciliation, independent of the Clerk, executive, Auditor, and model provider. Writes readable, durable observations and a current incident into the host's persistent Viche state. Does not edit Git working trees, close board issues, or judge wrongdoing.
-- **Independent Auditor** (`government/audit-cycle.sh`): autonomously dispatched for an open incident or a periodic six-hour sample when the provider permits; retains its own seat and constitutional model restriction. Must verify actual outcomes and investigate measurement blind spots, not rely on executive self-reports.
+- **Independent Auditor** (`government/audit-cycle.sh`): autonomously dispatched for an open incident or a periodic bounded four-case random sample when the provider permits; retains its own seat and constitutional model restriction. Must verify actual outcomes and investigate measurement blind spots, not rely on executive self-reports.
 - **Clerk/Parliament** (`government/sitting.sh`): receive active oversight incidents **as mandatory agenda items**, independently of Founder communications. The Clerk coordinates evidence and parliamentary remedies, not executive task selection.
 - **Executive**: remains independent, accountable to outcomes, and can correct operational shortcomings under existing law without parliamentary ceremony.
 
@@ -22,3 +22,40 @@ Persistent evidence is under `${VICHE_STATE_ROOT}/oversight/`: `observations.tsv
 Watchdog automatically clears an incident only when **its measured signals** disappear, with closure explicitly marked as requiring independent outcome verification. It may reopen when poor delivery recurs. The Auditor must report whether any reform actually improved quality and delivery. The Founder must not be told that an agent launch, a hearing, or an incidental commit proves successful governance.
 
 The watchdog's on-box state survives S6 and container restarts. Git and Antonina board remain the durable public record of actual proceedings. Provider outages cannot prevent deterministic detection, but they can delay model-driven investigation; that limitation is explicit.
+
+## Randomized adversarial oversight (existing Auditor; no new office)
+
+The independent selector (`government/audit-selection.py`) reads **all paginated
+open and closed issue summaries**, and recent government decisions directly. It
+freezes that universe before drawing a 256-bit secret seed. Selection is
+reproducible from the stored seed and snapshot hash, but cannot be known
+from a public timestamp before the draw. Every source item has nonzero
+selection weight; items not inspected recently are weighted more heavily.
+
+Every ordinary six-hour Audit Member cycle selects at most four deep cases:
+**two independently chosen open issues**, **one closed claim**, and **one
+government decision**. The Auditor independently checks whether the open
+issues are assigned to `phoebe-dev` from their bodies and current Founder
+communications, then inspects neglect only if eligible. A random unassigned
+issue is NOT a violation. Sample selection does not use the executive's list.
+
+Outcomes must be filed per case using `government/audit-accountability.py
+report --case CASE_ID --verdict ... --evidence REF`. Valid verdicts are
+`verified`, `not_assigned`, `finding`, and `inconclusive`; an outstanding
+`finding` requires a later `verified_fixed` with independent corrective
+evidence. These reports are auditable assertions, not machine-verified proofs.
+
+The deterministic controller runs on every government reconciliation and
+records `${VICHE_STATE_ROOT}/oversight/random/health.json`. It checks **all**
+currently running agent records through individual model/variant status reads,
+and scans **all** issued audit cases for missed evidence and findings. If the
+controller cannot inspect the inventory, it records missing telemetry instead
+of falsely reporting compliance. Overdue selections and unresolved findings
+produce `random/incident.json`, placed on the Clerk's mandatory agenda. Two
+findings against the same subject also produce a repeated-finding signal.
+
+Incident rechecks use the existing draw; they do not flood the Audit Member
+with a fresh four-case sample every thirty minutes. Neither a successful
+agent exit nor a board comment silently clears a finding. No sampling
+scheme guarantees detection of every violation; its goal is to make persistent
+selective neglect hard to conceal without replaying all substantive work.

@@ -70,6 +70,12 @@ chmod +x "$scratch/bin/antonina"
 
 MOCK_STATE=$scratch/mock
 PATH=$scratch/bin:$PATH
+mkdir -p "$scratch/cgroup"
+printf "max\n" > "$scratch/cgroup/memory.max"
+RESOURCE_SAFETY_CGROUP_DIR=$scratch/cgroup
+VICHE_AUDIT_CHECKS=0
+VICHE_AUDIT_SELECTION=0
+export RESOURCE_SAFETY_CGROUP_DIR VICHE_AUDIT_CHECKS VICHE_AUDIT_SELECTION
 VICHE_TOWN_ROOT=$town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
