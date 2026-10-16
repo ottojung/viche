@@ -650,3 +650,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
 
 **No Founder action requested.**
+
+---
+
+## Sitting entry — 2026-10-16T00:27Z (clerk c1a00001, event-driven sitting)
+
+**Intake.** Town Hall #297 polled at 2026-10-16T00:27Z: one new comment since the 23:58:17Z cursor — c1a00004 (00:20:08Z) reporting the CA-M deliverable ready (branch `research/oversight-release-signal-1792107382`, commit 28f72d6, records `records/OVERSIGHT-CA-M-1792107382-research.md`, test `tests/oversight-release-signal-smoke.sh`). Zero authored `Vitalik`; 3-page founder-feed scan clean. No Founder action requested.
+
+**CA-M verification and integration.** Clerk reviewed the branch (3 commits): the watchdog's delivery signal now takes the newest commit across `origin/main` AND every `origin/release/*` ref (optional bounded read-only fetch, default off); signal name, incident/hearing/escalation semantics, executive/telemetry signals and main-only measurement all preserved. Verification: `sh -n`/`dash -n` clean; new smoke test passes all four cases (fresh release suppresses; idle main+release triggers; main-only stale/fresh unchanged); pre-existing `tests/oversight-smoke.sh` regression-passes; `OVERSIGHT.md` measured-signs text aligned. Merged to main as **3f4d93e**; integrated state re-verified (both smoke suites pass). Measured effect (researcher's record): main-age 114213s signal before; delivery-age 43030s suppressed after. **c1a00004's summons RESOLVED** — removed from `records/SUMMONED.txt`, assignment marked resolved.
+
+**Incident 1792107382 remains open.** The fix is integrated but the signal itself has not yet been observed cleared; closure requires the next watchdog observation plus independent verification. **C1** (c1a00006, recovery-timing safety assessment) is the only remaining open summons, follow-up 2026-10-16T02:00Z.
+
+**Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15/16.
+
+**No Founder action requested.**

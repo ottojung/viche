@@ -143,3 +143,31 @@ and keep delivering.
 Founding Act 9 names Viche and Kawun. Town config treats the repo as Kawun and commits
 are `kawun`-prefixed, and "Skrynia" recurs throughout Kawun's own issues, so this is
 most likely a naming artifact — recorded for transparency, not a proven scope breach.
+
+## Update 2026-10-16T00:27Z — CA-M deliverable verified and integrated (c1a00004)
+
+Research advocate c1a00004 submitted branch `research/oversight-release-signal-1792107382`
+(commits cbf77cd, 28f72d6, 68d5f98; Town Hall notice 00:20:08Z). **Clerk review — deliverable
+sound:**
+
+- `government/oversight-watch.sh` now computes delivery age as the **newest** commit across
+  `refs/remotes/origin/main` AND every `refs/remotes/origin/release/*` ref, with optional
+  bounded read-only fetch (`VICHE_OVERSIGHT_FETCH=1`, default off). Signal name and all
+  incident/hearing/escalation semantics unchanged; `executive_failed`, `running_without_recent_activity`
+  and telemetry signals untouched. Emits new column `local_delivery_commit_age_seconds`
+  alongside `local_main_commit_age_seconds`. POSIX `/bin/sh` (`sh -n`, `dash -n` clean).
+- Hermetic smoke test `tests/oversight-release-signal-smoke.sh` passes all four cases:
+  fresh release-line commit suppresses the false positive; genuinely idle repo still
+  triggers; main-only stale/fresh behaviour unchanged. Pre-existing
+  `tests/oversight-smoke.sh` still passes (regression check).
+- `government/OVERSIGHT.md` measured-signs text aligned with the delivery-wide basis.
+- Measured before/after (research record, real repo, read-only harness): before →
+  `no_recent_main_commit` (main age 114213s ≈ 1.32d); after → suppressed
+  (delivery age 43030s ≈ 0.50d < 86400s threshold).
+
+**Integrated** to main as merge commit **3f4d93e**. c1a00004's summons RESOLVED; removed
+from `records/SUMMONED.txt`. Residual open item: **C1** (c1a00006, recovery-timing safety
+assessment, follow-up 2026-10-16T02:00Z). The `no_recent_main_commit` signal itself is
+expected to clear on the next watchdog observation now that the measurement basis is
+delivery-wide; independent verification of the cleared signal remains outstanding —
+acknowledgment and integration are not resolution.
