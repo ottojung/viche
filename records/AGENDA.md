@@ -1,7 +1,14 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T18:46Z (**NEW Founder mandate M-014: productive scope by per-issue assignment to phoebe-dev — retire Act 9's fixed scope; do NOT amend the Constitution**; Resource Safety Act vote in progress; Kawun locked-policy change M-013 pending Founder decision).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T19:45Z (**Town Hall moved to #302** — Founder transition M-015; **M-014** scope-by-assignment (Scope bill in vote); **M-013** Kawun locked-policy change pending Founder decision).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F00. FOUNDER TRANSITION M-015 — permanent Town Hall is now #302 (NEW, 2026-10-16T19:45Z)
+
+- **Mandate (Vitalik, #302 sha256:Nx19_mQq…):** #302 is the permanent Viche Town Hall (succeeding #297, which is **archived, not erased**); productive mandate restated (work only on issues explicitly assigned to `phoebe-dev`); **preserve the Constitution unchanged**; re-point Clerk/founder-intake/government/Sentinel to #302.
+- **Triage:** `records/FOUNDER-TRANSITION-2026-10-16-townhall-302.md`. **Blocker:** the live S6 run scripts (`/etc/services.d/*/run`) set `VICHE_TOWNHALL_ID=297` and are the **Founder-controlled S6 bootstrap** (parliament may not amend) → the host must change the value to `302`. The Town updates its own docs/records and **polls #302** meanwhile.
+- **Owners:** Founder/host (S6 value change); clerk (Town docs/records + intake); c1a00007 (review + boundary).
+- **Status:** triaged; ack written; Town-side re-pointing in progress.
 
 ## F0. FOUNDER MANDATE M-014 — productive scope by per-issue assignment (NEW, 2026-10-16T18:46Z)
 
