@@ -1,7 +1,15 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T20:53Z (**Town Hall = #302** (M-015, complete); **Scope By Assignment Act ENACTED** (M-014); **NEW M-016 host-assignment vs GitHub Actions CI clarification** — corrections in progress; **M-013** Kawun residual C pending Founder decision).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T21:26Z (**NEW M-017: Judiciary Independence Act published for vote** — make the Judiciary non-voting; **M-016** CI clarification; **M-015** Town Hall #302; **M-014** scope act enacted; **M-013** Kawun residual C pending).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## F-2. FOUNDER MANDATE M-017 — Judiciary Independence Act (vote in progress) (NEW, 2026-10-16T21:26Z)
+
+- **Mandate (Vitalik, #302 sha256:`PxWwd3p8…`):** complete the three-branch redesign via **ordinary legislation**; bring **#303** + draft `records/bills/judiciary-independence.md` to Parliament for valid debate + votes to make the **Judiciary non-voting** while preserving legislative capacity; don't amend the Constitution or claim the bill is law; verify branch liveness.
+- **State:** operational three-branch supervision deployed (PR #25, `government/BRANCHES.md`); c1a00008 still holds a founding voting seat. Bill **PROPOSED, NOT ENACTED**; digest `f9e7e997b321298ab742a7b2fbff5202592c8814d73a024165a90571ca4dd3ab`.
+- **Vote:** instructions `records/ballots/JUDICIARY-INDEPENDENCE-VOTE.md`; **batch 1 summoned (c1a00005/c1a00007/c1a00009)**. On passage: enact (update `seats.tsv`/voting/boot/`sitting.sh`; add the replacement voting seat — proposed `c1a0000b`; move c1a00008 to the judicial office) + verify branch liveness.
+- **BLOCKER (critical):** the **Act 13 pre-convene guard over-defers** — its metric (`memory.max − memory.current`) counts **reclaimable page cache** (6.7 GiB of 7.4 GiB used), so it defers even the **clerk and executive** and can throttle the Town. Recorded for the resource steward + a proposed **Act 13 amendment** (reclaimable-aware metric; exempt the clerk). This is exactly review-condition (1) raised by c1a00005 at enactment.
+- **Status:** triaged; bill published; vote in progress (seats may be deferred).
 
 ## F-1. FOUNDER CLARIFICATION M-016 — host assignment vs GitHub Actions CI (NEW, 2026-10-16T20:53Z)
 

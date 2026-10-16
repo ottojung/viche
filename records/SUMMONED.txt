@@ -1,11 +1,14 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Executive work runs independently through government/executive-cycle.sh.
 # Town Hall is #302.
-# FOUNDER CLARIFICATION M-016 (2026-10-16T20:53Z, #302 sha256:iNp3MraP... + #301 sha256:haxQiOXZ...):
-#   phoebe-dev assignment = agent execution/worktrees, NOT GitHub infra. GitHub Actions CI on
-#   GitHub-hosted runners is authorized + must stay enabled; require verified passing CI.
-#   SoringP1 commit 785e31d3 is wrong -> revert.
-#   - c1a00002 (executive): revert 785e31d3, re-enable + verify SoringP1 CI, audit guidance.
-#     Assignment: records/summons/c1a00002.md
-#   - c1a00008 (audit): check for other conflicting guidance/records (optional, add if headroom allows).
+# M-016 (SoringP1 CI revert): c1a00002 (executive). Assignment: records/summons/c1a00002.md
+# M-017 Judiciary Independence Act VOTE (bill id judiciary-independence, digest f9e7e997...):
+#   Instructions: records/ballots/JUDICIARY-INDEPENDENCE-VOTE.md ; per-seat: records/summons/<seat>.md
+#   Batch 1: c1a00005, c1a00007, c1a00009. Clerk: more batches + tally at >=6 yes; then enact
+#   (update seats.tsv/voting/boot/sitting per the bill; add replacement voting seat; move c1a00008).
+# WARNING: the Act 13 pre-convene guard currently OVER-DEFERS (page-cache metric) and may defer
+#   these seats. Recorded for the resource steward + a proposed amendment; seats run when headroom allows.
 c1a00002
+c1a00005
+c1a00007
+c1a00009
