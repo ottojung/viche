@@ -7,8 +7,8 @@
 
 - **Mandate (Vitalik, #302 sha256:Nx19_mQq…):** #302 is the permanent Viche Town Hall (succeeding #297, which is **archived, not erased**); productive mandate restated (work only on issues explicitly assigned to `phoebe-dev`); **preserve the Constitution unchanged**; re-point Clerk/founder-intake/government/Sentinel to #302.
 - **Triage:** `records/FOUNDER-TRANSITION-2026-10-16-townhall-302.md`. **Blocker:** the live S6 run scripts (`/etc/services.d/*/run`) set `VICHE_TOWNHALL_ID=297` and are the **Founder-controlled S6 bootstrap** (parliament may not amend) → the host must change the value to `302`. The Town updates its own docs/records and **polls #302** meanwhile.
-- **Owners:** Founder/host (S6 value change); clerk (Town docs/records + intake); c1a00007 (review + boundary).
-- **Status:** triaged; ack written; Town-side re-pointing in progress.
+- **Owners:** Founder/host (S6 value change — **DONE**); clerk (Town docs/records + intake — done); c1a00007 (review + boundary — pending).
+- **Status:** **host change COMPLETE 2026-10-16T19:52Z** — live S6 run scripts now `export VICHE_TOWNHALL_ID=302`; PR #22 moved active refs; viche service restarted. Town polls #302. c1a00007's boundary review pending.
 
 ## F0. FOUNDER MANDATE M-014 — productive scope by per-issue assignment (NEW, 2026-10-16T18:46Z)
 

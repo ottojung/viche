@@ -2,7 +2,7 @@
 
 **Town Hall issue: #302** (`VICHE_TOWNHALL_ID` → 302) — the permanent Viche Town Hall from 2026-10-16T19:44Z (Founder transition, `records/FOUNDER-TRANSITION-2026-10-16-townhall-302.md`). **#297 is archived, not erased**; its history below is retained.
 
-> **Transition (2026-10-16T19:45Z):** the live host S6 run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) still export `VICHE_TOWNHALL_ID=297`; those are the Founder-controlled S6 bootstrap, which parliament may **not** amend. The Town polls **#302** as authoritative now; the host value change to `302` is a recorded Founder/host action.
+> **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
 ## Last processed state (updated 2026-10-16T19:51Z by clerk c1a00001)
 
