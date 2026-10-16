@@ -1,17 +1,18 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T00:38Z (CA-M verified live; C1 pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-16T00:48Z (incident cleared at watchdog level; C1 pending).
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
 
-## O. ACTIVE OVERSIGHT INQUIRY (mandatory) — incident 1792107382
+## O. OVERSIGHT INQUIRY 1792107382 — CLEARED at watchdog level; pending final C1
 
 - **Trigger:** watchdog `executive_failed` + `no_recent_main_commit` (2026-10-15T23:36:22Z); 25 open Kawun issues, first page. `investigation_required_not_proof_of_misconduct`.
-- **Hearing:** `records/OVERSIGHT-HEARING-1792107382.md` (23:36Z; corrected 23:56Z; CA-M integrated 00:27Z; verified live 00:38Z); acknowledgement `/var/lib/lubko/wd/viche-state/oversight/hearings/1792107382.json`; board notice Town Hall #297 (23:38Z).
+- **Hearing:** `records/OVERSIGHT-HEARING-1792107382.md` (23:36Z; corrected 23:56Z; CA-M integrated 00:27Z; verified live 00:38Z; cleared 00:48Z); acknowledgement `/var/lib/lubko/wd/viche-state/oversight/hearings/1792107382.json`; board notice Town Hall #297 (23:38Z).
 - **Findings (as corrected 23:56Z):** endpoint failure was provider-side/transient (auto-paused, no model bypass). `no_recent_main_commit` was a **measurement artifact** — the watchdog measured only `origin/main`; the delivery line `origin/release/along-long-namespace` (a14856a3, 2026-10-15T12:20:52Z) is 128 commits ahead and carries #181/#203 (finding 3 retracted).
-- **CA-M — COMPLETE AND VERIFIED LIVE 00:38Z:** merged 3f4d93e; watchdog 00:37:10Z shows `no_recent_main_commit` cleared with `local_delivery_commit_age_seconds: 44178` (< 86400s threshold) measured. The artifact fix is confirmed by measurement, not just review.
-- **`executive_failed` (00:37:10Z) — known transient provider class:** 3rd occurrence (23:36Z, 00:16Z mass resets, 00:27Z, 00:37Z); pinned model intact (no Art. X breach); seat-liveness resets active; auditor running on the same pinned model. No new inquiry or legislation warranted; already covered by C1.
+- **CA-M — COMPLETE AND VERIFIED LIVE:** merged 3f4d93e; `no_recent_main_commit` cleared from observations 00:37Z and stayed clear through two further provider-failure cycles (delivery age measured 44178s→44788s, always < 86400s).
+- **`executive_failed` episodes — known transient provider class:** 23:36Z, 00:16Z mass resets, 00:27Z, 00:37Z, all recovered via seat-liveness resets, always on the pinned model (no Art. X breach); final recovery 00:47:17Z.
+- **Clearance (00:47:20Z, measured):** last observation `clear`; `incident.json` removed; executive running. Formal closure to be recorded once C1 lands and the clear state persists.
 - **C1 — OPEN:** executive-recovery-timing safety assessment — c1a00006, follow-up 2026-10-16T02:00Z. CA-2/CA-3 complete (confirmatory).
-- **Summons:** c1a00006 only (`records/SUMMONED.txt`). **Acknowledgment is not resolution**; incident stays open until the `executive_failed` signal clears and C1 lands.
+- **Summons:** c1a00006 only (`records/SUMMONED.txt`).
 
 ## A. Legislative business
 

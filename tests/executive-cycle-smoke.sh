@@ -53,7 +53,7 @@ MODE=running; export MODE
 MODE=failed; export MODE
 /bin/sh "$repo/government/executive-cycle.sh"
 [ "$(wc -l < "$OUTPUT")" -eq 1 ]
-[ ! -e "$LIVENESS_ACTIONS" ] || [ ! -s "$LIVENESS_ACTIONS" ]
+[ "$(wc -l < "$LIVENESS_ACTIONS")" -eq 2 ]
 MODE=idle MODEL=not-approved; export MODEL MODE
 if /bin/sh "$repo/government/executive-cycle.sh"; then exit 1; fi
 [ "$(wc -l < "$OUTPUT")" -eq 1 ]
@@ -67,10 +67,11 @@ printf "b2000002\n" > "$scratch/town/records/SUMMONED.txt"
 MODE=failed; export MODE
 /bin/sh "$repo/government/executive-cycle.sh"
 [ "$(wc -l < "$OUTPUT")" -eq 2 ]
-[ ! -s "$LIVENESS_ACTIONS" ]
-mkdir -p "$scratch/state/liveness"
-printf '0\n' > "$scratch/state/liveness/last-reset-b2000002"
+[ "$(wc -l < "$LIVENESS_ACTIONS")" -eq 2 ]
+printf '%s\n' "$(date +%s)" > "$scratch/state/liveness/last-reset-b2000002"
 /bin/sh "$repo/government/executive-cycle.sh"
 [ "$(wc -l < "$LIVENESS_ACTIONS")" -eq 2 ]
-[ "$(wc -l < "$OUTPUT")" -eq 2 ]
+printf '0\n' > "$scratch/state/liveness/last-reset-b2000002"
+/bin/sh "$repo/government/executive-cycle.sh"
+[ "$(wc -l < "$LIVENESS_ACTIONS")" -eq 4 ]
 echo 'Executive cycle smoke checks passed'

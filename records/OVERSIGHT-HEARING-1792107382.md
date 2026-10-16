@@ -202,3 +202,23 @@ correctly showed a clean fast-forward. Summons stays cleared.
 **Incident remains open.** Outstanding: C1 deliverable (c1a00006, follow-up
 2026-10-16T02:00Z) and observation of the `executive_failed` signal clearing. Acknowledgment
 and the CA-M fix are not proof the incident is resolved.
+
+## Update 2026-10-16T00:48Z — incident cleared at watchdog level
+
+The watchdog's measured state is now **clear**: last observation (epoch 1792111640 ≈
+00:47:20Z) records `signals=none`, executive `running`, delivery age 44788s;
+`incident.json` has been removed (no open incident). The full observation history for
+this incident: 23:36Z `executive_failed`+`no_recent_main_commit` → 00:27Z
+`no_recent_main_commit` only → 00:37Z `executive_failed` only (with the new
+`local_delivery_commit_age_seconds: 44178` field live) → 00:47Z **clear**. The
+CA-M delivery-wide measurement (3f4d93e) held through two further provider-failure
+cycles without re-triggering the stale-main false positive; each `executive_failed`
+episode was the same transient provider class and recovered via seat-liveness resets
+(00:47:17Z latest), always on the pinned model — no Art. X breach.
+
+**Status:** measured signal CLEARED (clerk read the observations log directly);
+corrective actions CA-M, CA-2, CA-3 complete and verified. The incident is pending
+only **C1** (c1a00006, recovery-timing safety assessment, follow-up 2026-10-16T02:00Z).
+Formal closure will be recorded once C1 lands and the clear state persists through the
+next observations. Acknowledgment is not resolution; the clearance is measured, and
+the file stands ready to re-open on any new signal.
