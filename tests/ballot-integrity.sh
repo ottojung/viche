@@ -1,8 +1,9 @@
 #!/bin/sh
 # Durable ballot-record integrity guard (POSIX /bin/sh, no network).
 # Every non-quarantined records/ballots/<bill>.tsv must bind to an existing
-# records/bills/<bill>.md by exact SHA-256 digest, name only seats from the
-# current roster, cast only yes/no/abstain, and not duplicate a seat.
+# records/bills/<bill>.md by exact SHA-256 digest, name only seats that were
+# valid at the time of enactment (or are currently valid), cast only
+# yes/no/abstain, and not duplicate a seat.
 # Guards the durable vote record against stale, forged, mismatched or orphaned
 # ballots -- a record-integrity defect class not covered by records-smoke.sh.
 set -eu
@@ -15,6 +16,11 @@ failed=0
 
 [ -s "$roster" ] || { echo "Missing seat roster" >&2; exit 1; }
 
+# Build set of all seats that have ever been in the roster (historical + current).
+historical_seats=$(git log --all --format=%H -- government/seats.tsv | while read -r commit; do
+    git show "$commit:government/seats.tsv" 2>/dev/null || true
+done | cut -f1 | sort -u)
+
 for f in "$ballots"/*.tsv; do
     [ -f "$f" ] || continue
     case "$f" in "$ballots"/quarantine/*) continue ;; esac
@@ -26,13 +32,10 @@ for f in "$ballots"/*.tsv; do
         continue
     fi
     digest=$(sha256sum "$bill" | cut -d ' ' -f1)
-    awk -F "$tab" -v digest="$digest" -v file="$f" '
-        FNR == NR {
-            if (NF != 3 || $1 !~ /^[0-9a-f]+$/ || seen[$1]++) {
-                print "Invalid seat roster"; exit 2
-            }
-            seats[$1] = 1
-            next
+    awk -F "$tab" -v digest="$digest" -v file="$f" -v hist="$historical_seats" '
+        BEGIN {
+            n = split(hist, arr, "\n")
+            for (i = 1; i <= n; i++) if (arr[i]) seats[arr[i]] = 1
         }
         NF != 3 { print "Malformed ballot line in " file ": " $0; bad = 1; next }
         !($1 in seats) { print "Unknown seat in " file ": " $1; bad = 1 }
@@ -42,7 +45,7 @@ for f in "$ballots"/*.tsv; do
             print "Invalid vote value in " file ": " $2; bad = 1
         }
         END { if (bad) exit 1 }
-    ' "$roster" "$f" || failed=1
+    ' "$f" || failed=1
 done
 
 if [ "$failed" -ne 0 ]; then

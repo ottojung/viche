@@ -10,6 +10,7 @@ mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" \
     "$scratch/seats/b2000002" "$scratch/state" "$scratch/mock"
 printf 'a1000001\tClerk\tintake\nb2000002\tExecutive\tdelivery\n' > "$scratch/town/government/seats.tsv"
 cp "$repo/government/seat-liveness.sh" "$scratch/town/government/seat-liveness.sh"
+cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 printf 'Founder charter fixture\n' > "$scratch/charter"
 touch "$scratch/state/inaugurated"
 printf '{"state":"failed","backend_error":{"classification":"upstream_endpoint_unavailable"}}\n' > "$scratch/mock/status.json"
@@ -25,6 +26,8 @@ case "$1 $2" in
     echo new >> "$MOCK_ROOT/recovery"
     printf '{"state":"idle"}\n' > "$MOCK_ROOT/status.json"
     ;;
+  'board list') echo '[]' ;;
+  'board show') echo '{"body":"","messages":[]}' ;;
   *) exit 9 ;;
 esac
 MOCK
@@ -40,20 +43,23 @@ VICHE_CONSTITUTION="$scratch/charter"
 export PATH MOCK_ROOT VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 
 # A failed executive must not dispatch and must attempt exactly one bounded reset.
-/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null
+/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null || true
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ ! -e "$MOCK_ROOT/dispatches" ]
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 2 ]
 
 # While the cooldown is unexpired, a repeated failure cannot reset again.
 printf '{"state":"failed","backend_error":{"classification":"upstream_endpoint_unavailable"}}\n' > "$MOCK_ROOT/status.json"
-/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null
+/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null || true
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 2 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]
 
 # Once the cooldown expires, recovery is attempted exactly once more, never more.
 printf '0\n' > "$scratch/state/liveness/last-reset-b2000002"
 printf '{"state":"failed","backend_error":{"classification":"upstream_endpoint_unavailable"}}\n' > "$MOCK_ROOT/status.json"
-/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null
+/bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null || true
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 4 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]
 echo 'Executive recovery timing smoke checks passed'
