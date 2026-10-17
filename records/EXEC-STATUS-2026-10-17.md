@@ -1,6 +1,6 @@
 # Executive delivery status — 2026-10-17T07:15Z
 
-## #301 — SoringP1 Lean-checked complexity — **A0/A1/A2/A4/A5/A6/A7/A8/A9/A10/A11/A12/A13 DELIVERED (merged)**
+## #301 — SoringP1 Lean-checked complexity — **A0–A14 DELIVERED (merged)**
 - **A0** `exists_hasBudget` (9bc4110): a correct sorting decision tree exists for every n.
 - **A1** `Attainment.lean` (e6c12eb): S(n) is attained and minimal (`hasBudget_S`, `S_le_iff`, `S_is_minimal`, `S_le_explicit`, `exists_tree_S`).
 - **A2** `LowerBound.lean` (7f8cacb): information lower bound `n! ≤ 2^(S n)`.
@@ -15,7 +15,9 @@
 
 - **A10** `TightBound.lean` (d5040cc): **`S_le_tight (n) : S n ≤ n*(n-1)/2`** — tight upper bound (comparison-exact height invariant; length-only invariant). CI green.
 - **A12** `Bounds.lean` (dc34465): **`log2_factorial_le_S (n) : Nat.log2 n.factorial ≤ S n`** — information bound in log form. CI green.
-- **A13** `SmallValues7.lean` (91e2335): **`13 ≤ S 7 ≤ 21`** (bracket; S 7 is beyond the evaluator/generator range). CI run 39029319238 in progress.
+- **A13** `SmallValues7.lean` (91e2335): **`13 ≤ S 7 ≤ 21`**. CI green.
+- **A14** `Bounds.lean` (6911245): `le_S_of_pow_lt (n k) (h : 2^(k-1) < n!) : k ≤ S n` (+ `13 ≤ S 7`, `16 ≤ S 8`). CI run 39030687166 in progress.
+- **Evaluator (front 2)**: attempted (`adv` recurrence + adversary); blocked on a fiddly splitting-pair lemma + well-founded recursion; draft abandoned, repo clean. Planned as a dedicated effort.
 - **A11** `Monotone.lean` (91ea2da): `hasBudget_prune {n k} (h : HasBudget (n+1) k) : HasBudget n k` — feasibility monotone in n. CI run 39023110618 in progress.
 
 ## #298 / #299 — Janitor Office — **capability + prevention + attribution delivered**
