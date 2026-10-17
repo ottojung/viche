@@ -18,7 +18,15 @@ for n in "$quorum" "$required"; do
 done
 digest=$(sha256sum "$proposal" | cut -d ' ' -f 1)
 tab=$(printf '\t')
-awk -F "$tab" -v quorum="$quorum" -v required="$required" -v digest="$digest" -v bill="$1" '
+# Build set of all seats that have ever been in the roster (historical + current).
+historical_seats=$(git -C "$town" log --all --format=%H -- government/seats.tsv 2>/dev/null | while read -r commit; do
+    git -C "$town" show "$commit:government/seats.tsv" 2>/dev/null || true
+done | cut -f1 | sort -u)
+awk -F "$tab" -v quorum="$quorum" -v required="$required" -v digest="$digest" -v bill="$1" -v hist="$historical_seats" '
+BEGIN {
+    n = split(hist, arr, "\n")
+    for (i = 1; i <= n; i++) if (arr[i]) hist_seats[arr[i]] = 1
+}
 FNR == NR {
     if (NF != 3 || $1 !~ /^[0-9a-f]+$/ || seen[$1]++) {
         bad=1; print "Invalid seat roster"; exit 2
@@ -27,7 +35,7 @@ FNR == NR {
     next
 }
 {
-    if (NF != 3 || !($1 in seen) || voted[$1]++ ||
+    if (NF != 3 || !($1 in hist_seats) || voted[$1]++ ||
         $3 != digest || ($2 != "yes" && $2 != "no" && $2 != "abstain")) {
         bad=1; print "Invalid, duplicate or mismatched ballot"; exit 2
     }
