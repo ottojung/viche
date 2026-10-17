@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T15:32Z (**J1 judiciary-measurement fix ACTUALLY merged — the 15:01Z "merged" claim was unverified and false; corrected**; **J2 mandatory audit inquiry blocked by repeated auditor endpoint failures**; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T15:32Z (**J1 judiciary-measurement fix ACTUALLY merged — the 15:01Z "merged" claim was unverified and false; corrected**; **J2 mandatory audit inquiry blocked by repeated auditor endpoint failures**; **T1 two stale smoke tests found + assigned**; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
 
 ## IC1. Innovation Centre proposal #308 — Epistemic Adversarialism Act (vote in progress, 2026-10-17)
 
@@ -38,6 +38,14 @@
 - **Assigned:** Auditor/Judiciary (c1e00008) to investigate all 4 cases and produce evidence-backed outcomes or documented explanations. **Summons retained.**
 - **Status:** assigned; blocked by transient auditor endpoint failures; awaiting auditor investigation.
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## T1. Stale smoke tests on `main` (NEW, 2026-10-17T15:32Z)
+
+- **Finding (Art VI):** `records/INCIDENT-2026-10-17-stale-smoke-tests.md`. Two of 20 `tests/*.sh` fail on `main` (pre-existing, confirmed at `5349f1c`):
+  1. `tests/ballot-integrity.sh` — Act 15 (`9d8586f`) replaced voting seat `c1a00008` with `c1a0000b` in `seats.tsv`; the guard validates every ballot against the **current** roster, so historical ballots naming `c1a00008` fail. A real durable-vote-record guard is red; a genuine regression would be indistinguishable from this noise.
+  2. `tests/executive-recovery-timing-smoke.sh` — `executive-cycle.sh` now needs `eligible-work.py`/board discovery (`41dc1bc`/`830e909`), but the fixture copies only `seat-liveness.sh`, so the cycle exits 1 and the C1 bounded-recovery assertions never run.
+- **Assigned:** Executive (c1a00002) to fix both **without** editing historical ballot files (that would falsify the record): make the ballot guard roster-aware for historical ballots; update the recovery-timing fixture to the cycle's current dependencies.
+- **Status:** assigned; **summoned c1a00002**.
 
 ## F-3. FOUNDER MANDATE M-018 — Innovation Centre Act (vote in progress) (NEW, 2026-10-16T23:39Z)
 

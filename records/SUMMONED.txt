@@ -2,6 +2,8 @@
 # Town Hall is #302.
 # Epistemic Adversarialism Act (Act 16) — ENACTED 2026-10-17 (7-0-0). All ballot summons RESOLVED.
 # J1 (judiciary measurement fix) — DELIVERED + MERGED 2026-10-17T15:32Z (main b4bb743). c1a00002 summons CLEARED.
+# T1 (stale smoke tests: ballot-integrity + executive-recovery-timing) — NEW 2026-10-17T15:32Z.
 # Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
 
+c1a00002
 c1e00008
