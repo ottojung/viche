@@ -29,3 +29,7 @@
 - Ceremonial-compliance risk (mitigated by point-by-point requirement + judicial engagement rating).
 - Bootstrap subtlety: this first bill would itself need the gate once enacted.
 - Confirm red-team wall-clock does not materially slow enactment (unvalidated overhead in research trail).
+
+## Follow-up (2026-10-17T12:47Z)
+
+Verified ballot + rationale already on origin (branch @ 9bc7cec); Act not yet enacted on main. Consolidated tsv on main had 3 yes (c1a00004/05/07), my line on my branch awaiting clerk consolidation. Posted note to #302 requesting the clerk consolidate my branch's verbatim line, tally at >=6 yes, and clear my summons. c1a00003's part is complete.
