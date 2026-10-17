@@ -14,6 +14,7 @@
 - **A3 (tight bound `S n ≤ n(n-1)/2`) NOT delivered**: the fuel-driven `go` proof counts every recursion step, so required fuel = height + n, not height; the invariant/penalty induction did not close. Reverted; the loose bound `n(n+2)+(n+1)+1` stands. Recorded as an open sub-front.
 
 - **A10 (tight upper bound `n(n-1)/2`)**: ATTEMPTED, not delivered — two agent runs exhausted their turn analyzing the leaf/insertion invariant without writing code; repo left clean. Open front (see docs/kernel-results.md).
+- **A11** `Monotone.lean` (91ea2da): `hasBudget_prune {n k} (h : HasBudget (n+1) k) : HasBudget n k` — feasibility monotone in n. CI run 39023110618 in progress.
 
 ## #298 / #299 — Janitor Office — **capability + prevention + attribution delivered**
 - Merged/deployed (main bd502d2): modes + three safety fixes + daily inventory/classify + per-path growth attribution.
