@@ -1,6 +1,6 @@
 # Executive delivery status — 2026-10-17T07:15Z
 
-## #301 — SoringP1 Lean-checked complexity — **A0–A16 DELIVERED (merged)**
+## #301 — SoringP1 Lean-checked complexity — **A0–A17 DELIVERED (merged)**
 - **A0** `exists_hasBudget` (9bc4110): a correct sorting decision tree exists for every n.
 - **A1** `Attainment.lean` (e6c12eb): S(n) is attained and minimal (`hasBudget_S`, `S_le_iff`, `S_is_minimal`, `S_le_explicit`, `exists_tree_S`).
 - **A2** `LowerBound.lean` (7f8cacb): information lower bound `n! ≤ 2^(S n)`.
@@ -18,8 +18,9 @@
 - **A13** `SmallValues7.lean` (91e2335): **`13 ≤ S 7 ≤ 21`**. CI green.
 - **A14** `Bounds.lean` (2773ce3): `le_S_of_pow_lt (n k) (h : 2^(k-1) < n!) : k ≤ S n` (+ `13 ≤ S 7`, `16 ≤ S 8`). CI green.
 - **A15** `Bounds.lean` (864d7f9): `clog_factorial_le_S (n) : Nat.clog 2 n.factorial ≤ S n`. CI green.
-- **A16** `TightSmall.lean` (5a8ee5e): `S_eq_clog_of_le_six` — the info bound is tight for n ≤ 6 (`S n = Nat.clog 2 n!`). CI run 39034712402 in progress.
-- **Evaluator (front 2)**: attempted (`adv` recurrence + adversary); blocked on a fiddly splitting-pair lemma + well-founded recursion; draft abandoned, repo clean. Planned as a dedicated effort.
+- **A16** `TightSmall.lean` (5a8ee5e): `S_eq_clog_of_le_six` — the info bound is tight for n ≤ 6. CI green.
+- **A17** `Minimax.lean` (de02c93): evaluator groundwork — `splitPairs`, `card_filter_lt`, `split_of_lt`, `splitPairs_nonempty` (a splitting comparison always exists for |S| ≥ 2). CI run 39036512853 in progress.
+- **Evaluator (front 2)**: groundwork landed (A17 splitting-pair lemma). Next: define recurrence `adv`, prove `adv S ≤ height T`, and the achieving tree.
 - **A11** `Monotone.lean` (91ea2da): `hasBudget_prune {n k} (h : HasBudget (n+1) k) : HasBudget n k` — feasibility monotone in n. CI run 39023110618 in progress.
 
 ## #298 / #299 — Janitor Office — **capability + prevention + attribution delivered**
