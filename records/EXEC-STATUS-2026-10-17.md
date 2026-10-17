@@ -22,5 +22,8 @@
 - Growth attributed to transient build/agent artifacts (not a leak); a `/tmp/opencode` wipe freed ~1.5 GB (recorded incident, no durable loss).
 - Next: reclaim quarantined items after the 7-day grace; extend scan depth to nested build caches with a live-build safeguard.
 
+## Janitor reporting (this cycle)
+- `government/janitor.sh` `report` now shows quarantine status (item count, staged KB, grace, `reclaim_enabled`, dir) — Act 12.10 transparency. Deployed (d5236c0).
+
 ## Resource notes
 - cgroup ~6.5/8.6 GB; `leanchecker` needs `LEAN_NUM_THREADS=1`. SoringP1 clone moved to durable `/home/lubko/soring301`.
