@@ -1,11 +1,5 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Resource Safety Metric Amendment VOTE (bill id resource-safety-metric-amendment, digest 71189026...):
-#   Batch 1: c1a00003 (pending), c1a00005 (yes), c1a00007 (yes). Batch 2: c1a00002, c1a00004, c1a00006, c1a00009.
-#   Instructions: records/ballots/RESOURCE-SAFETY-METRIC-AMENDMENT-VOTE.md
-#   Clerk: tally at >=6 yes; then enact (apply to LAWS.md Act 13).
-c1a00002
-c1a00003
-c1a00004
-c1a00006
-c1a00009
+# Resource Safety Metric Amendment — ENACTED 2026-10-17 (7-0-0); Act 13 §1/§2 amended, §9 (clerk exemption) added.
+# All ballot summons RESOLVED. SUMMONED.txt empty.
+# Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
