@@ -1,0 +1,27 @@
+# Enactment Status Cross-Reference
+
+*Durable record of bill enactment status. Bill files are digest-bound to their
+ballots and must not be edited after enactment; this file provides the
+authoritative enactment status for each bill.*
+
+| Bill ID | Act | Enacted | Vote | Notes |
+|---------|-----|---------|------|-------|
+| territorial-janitor-act | Act 9.7 + Act 12 | 2026-10-15T01:40Z | 9-0-0 | Sponsor c1a00005 |
+| measured-parliament-act | Act 10 | 2026-10-14T06:40Z | 10-0-0 | Sponsor c1a00004; SUNSET 2026-10-16 |
+| act10-renewal | Act 10 renewal | 2026-10-14T16:41Z | 6-0-0 | Renewed to 2026-10-21T06:40Z; SUNSET 2026-10-16 |
+| model-compliance-audit | Act 11 | 2026-10-14T08:30Z | 8-0-0 | Sponsor c1a00008 |
+| resource-safety-act | Act 13 | 2026-10-16T18:57Z | 6-0-0 | Sponsor c1a00003 |
+| scope-by-assignment-act | Act 9 | 2026-10-16T20:01Z | 8-0-0 | Sponsor c1a00007; replaces former Act 9.1-9.5 |
+| resource-safety-metric-amendment | Act 13 amendment | 2026-10-17T10:11Z | 7-0-0 | Amends Act 13 headroom metric |
+| innovation-centre-act | Act 14 | 2026-10-17T12:46Z | 8-0-0 | Sponsor c1a00007 |
+| judiciary-independence | Act 15 | 2026-10-17T12:46Z | 7-0-1 | Sponsor c1a00007; c1a00008 -> c1a0000b |
+| epistemic-adversarialism-act | Act 16 | 2026-10-17T12:46Z | 7-0-0 | Sponsor c1e00011 (Innovation Centre) |
+
+## Notes
+
+- Bill files (`records/bills/*.md`) are digest-bound to their ballots and retain
+  their publication-time headers (DRAFT/PROPOSED) as a historical record.
+  This file provides the authoritative enactment status.
+- `janitor-office-act.md` was superseded by `territorial-janitor-act.md` and
+  was never enacted.
+- Vote counts: present-yes-no-abstain.
