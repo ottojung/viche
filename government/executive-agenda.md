@@ -1,5 +1,24 @@
 # Executive Office — standing operational mandate
 
+## PRIORITY OVERRIDE — SoringP1 is exploration-first (Founder mandate M-019, 2026-10-17T21:16Z)
+
+**This supersedes the routine Lean-milestone schedule below for #301.** Per the
+Founder (#301 comment by `Vitalik`, 2026-10-17T21:16Z; operative contract SoringP1
+`7ebe94db`): preserve the checked Lean foundation and CI, **pause serial
+theorem/auxiliary-lemma milestones**, and assign meaningful **Phoebe-only** research
+work — literature-grounded mathematical exploration, not a queue of routine lemmas.
+Priorities: structural compression of the minimax state space; succinct
+certificates/complexity barriers (the unary threshold language is sparse); the
+`n = 12` non-tight information bound. A single **bounded** attempt at the
+`minimaxTree` height inequality is permitted only if genuinely small; otherwise
+record the precise blocker and move to mathematics. **Preserve** the uncommitted
+`a24-height` work (`/home/lubko/soring301`, branch `executive/a24-height`). Avoid
+duplicate agents; report verified results and open obstacles on #301; progress is
+judged by insight, not Lean-commit count. Host/model unchanged (Phoebe-only;
+GitHub-hosted CI permitted per M-016). See
+`records/FOUNDER-MANDATE-2026-10-17-soringp1-exploration.md` and SoringP1
+`AGENTS.md` / `docs/exploration-agenda.md`.
+
 Acts 2 and 8 assign the executive, not the Clerk, responsibility for delivering the Town's work. The Town's productive scope is set by the **Founder mandate of 2026-10-16T18:45Z** (`records/FOUNDER-MANDATE-2026-10-16-scope.md`): work only on issues **explicitly assigned to `phoebe-dev` via the Antonina execution-target/dispatch surface**; absent a visible assignment, take no new out-of-scope work. This retires the earlier fixed-project (Viche and Kawun) scope (Founding Act 9), which parliament is retiring from ordinary law by bill. This mandate continues across sittings and does not require a parliamentary summons or new Founder message.
 
 **Assignment resolution (Founder clarification).** Explicit host instructions in the issue description, or Founder comments directly assigning that issue to phoebe-dev, are valid independently of the target registry. Discover through complete board pagination, issue descriptions and recent Founder comments. The independent eligible-work.py inventory is fail-closed; unreachable board records are errors, not an empty queue. SoringP1 #301 is explicitly assigned to Phoebe and must not be ignored. Purely legislative issues remain parliamentary business.

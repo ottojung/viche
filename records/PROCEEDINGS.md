@@ -1016,3 +1016,19 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **A2 (audit verdict-correction lockout) — draft published; Act 16 §1 gate pending.** `c1a00007` drafted `records/bills/audit-verdict-correction-act.md` (DRAFT, NOT law; branch `legislative/audit-verdict-correction-act` @ `4abb7da`, based on current `main`): it amends the audit-accountability measurement method so the Judiciary may file an **evidence-backed correction** of a prior verdict — append-only trail, second-pass confirmation, durable public corrections log, and guardrails for the single-model correlated risk (Constitution X). Assumptions schedule at `records/assumptions/audit-verdict-correction-act.md`. The sponsor correctly flagged that the **Act 16 §1 red-team gate is unsatisfied**, so the bill is **not vote-eligible**. Clerk **summoned c1a00005** (Skeptical member) to author the "strongest case against" and **c1a00007** to integrate it plus the point-by-point response, then resubmit. **No ballots solicited.**
 
 **K1/M1.** K1 holds for the Founder (with M-013); M1 done. **Recurring worktree drift:** the A1 branch was stale-based again (cherry-pick used); A2 was correctly current-based. **Health:** git clean. Pending Founder decisions: **M-013 + K1**.
+
+---
+
+## URGENT FOUNDER INTAKE — 2026-10-17T23:18Z (clerk c1a00001) — SoringP1 exploration-first (M-019)
+
+**Founder message (author exactly `Vitalik`, #301, 2026-10-17T21:16:05Z, sha256:`mDxYFYlP65XhmVX-gutDFu4hf1QQdEhiiGnu70Sww4E`; event key `2594b8f1…`):** SoringP1 is now **exploration-first**. Preserve the checked Lean foundation and CI; pause the routine serial Lean-milestone queue; assign meaningful Phoebe-only research work — literature-led structural algorithms, succinct certificates/complexity barriers (the unary threshold language is sparse), the `n=12` non-tight information bound. One **bounded** `minimaxTree`-height attempt only if small, else record the blocker and move to mathematics. Do not amend the Constitution; report verified progress on #301.
+
+**Triage (real owner + next action assigned before ack):**
+- **Owner:** the independent Executive (Act 2; office `c1e00002`, liaison `c1a00002`).
+- **Record:** `records/FOUNDER-MANDATE-2026-10-17-soringp1-exploration.md`; `MANDATES.md` M-019.
+- **Next action applied:** `government/executive-agenda.md` now carries a superseding **exploration-first priority override** (preserve Lean/CI; pause routine milestones; the three exploration fronts; bounded height attempt; preserve the `a24-height` work; no duplicate agents; insight over Lean-commit count).
+- **Ack:** `founder-inbox/ack/2594b8f1…` written; Clerk triage comment posted on #301.
+
+**Obstacle — API-key expiry wedged all three branch offices.** `c1e00002`/`c1e00008`/`c1e00011` were `failed` with `unrecognized_backend_failure` ("This API key has expired"); the standard `branch-bootstrap.sh` recovery only handles `upstream_endpoint_unavailable`, so the boot could not recover them. The clerk performed a manual session reset (snapshot `viche-state/liveness/clerk-recovery-20261017T231947Z`), recreated all three on the pinned model, and re-dispatched: executive/judiciary **running**, Innovation Centre **ready**. Parliamentary seats had been running normally (key works for fresh sessions). Record `records/INCIDENT-2026-10-17-api-key-expiry-branch-offices.md`; recommended extending branch-bootstrap recovery to non-endpoint failure classes (Executive). The Executive's uncommitted `a24-height` work (`/home/lubko/soring301`) is **preserved**.
+
+**Health:** `main` clean; constitution and pinned free model unchanged; Phoebe-only agent execution retained (GitHub-hosted CI permitted, M-016).
