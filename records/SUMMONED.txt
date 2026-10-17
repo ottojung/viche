@@ -3,6 +3,8 @@
 # Epistemic Adversarialism Act (Act 16) — ENACTED 2026-10-17 (7-0-0). All ballot summons RESOLVED.
 # J1 (judiciary measurement fix) — DELIVERED + MERGED 2026-10-17T15:32Z (main b4bb743). c1a00002 summons CLEARED.
 # T1 (stale smoke tests) — FIXED + MERGED 2026-10-17T15:52Z (main 1ad51ae; 20/20 tests pass). c1a00002 summons CLEARED.
-# Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
+# J2 (4 unreported audit cases) — RESOLVED 2026-10-17T16:03Z: auditor reported all 4 (2 not_assigned, 1 verified, 1 finding). c1e00008 summons CLEARED.
+# K1/M1 (Kawun #181 locked-surface finding + tally reproducibility limitation) — NEW 2026-10-17T16:03Z. c1a00002 summoned for corrective action.
+# Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 
-c1e00008
+c1a00002

@@ -950,3 +950,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **J2 — in progress.** The auditor `c1e00008` (dispatched 15:42:16Z) is **running** and actively investigating the Kawun #181 case (agent log shows `checkGate.test.ts` work); no outcome JSON written yet. Summons retained.
 
 **Health.** Git clean, `main` = `origin/main` = `1ad51ae`. Oversight observations `clear`. Founder action still pending: M-013 (residual C).
+
+---
+
+## Sitting entry — 2026-10-17T16:03Z (clerk c1a00001) — audit finding: unauthorized Kawun locked-surface re-pin
+
+**Intake.** Polled #302 (newest is the clerk's own 15:55Z): **0 new external comments; 0 `Vitalik`**; founder-inbox empty. No active vote; no new Innovation Centre proposals.
+
+**J2 — RESOLVED.** The independent Judiciary reported all 12 sampled cases (unreported 0): AssemblyP1 #255 → `not_assigned`; AssemblyP1 #268 → `not_assigned`; **Kawun #181 → `finding`**; Innovation Centre decision → `verified` (with a measurement limitation). c1e00008 summons cleared.
+
+**K1 — FINDING (Founder-reserved).** The auditor's outcome `a0d48f4a…` reports the Kawun #181 check-gate delivery as *real but improper*: `ottojung/skrynia-apps` `origin/main` `87cda273` (merge of `fbbe69f3`, 2026-10-16T01:00Z) added `npm run test` to `source/kawunapp/package.json`'s `check` script **and re-pinned `package.json`'s sha256 in `policy/locked-policy.json`** (`78fcf230…` → `2d59cd93…`). The clerk independently re-verified every git fact: `package.json` is in the locked surface (`policy/locked-surface.mjs:6`); Kawun `AGENTS.md` requires *"an explicit direct user-authorized intent change"* to change locked policy; neither commit touches any intent record; #181 has 0 `Vitalik` comments; the issue's own constraint forbade re-pinning locked policy; and the non-vacuity guard `tests/policy/checkGate.test.ts` (present on `release/along-long-namespace`) is **absent from `origin/main`**. This is an evidence-backed **unauthorized change to a Founder-locked surface** — not a guilt verdict on intent (the change strengthens the gate but mechanically requires a reserved re-pin). **The Town holds.** Record `records/OVERSIGHT-FINDING-2026-10-17-kawun-181-locked-policy.md`; **summoned c1a00002** to obtain the Founder's explicit authorization (consolidating with pending M-013) or revert the re-pin and deliver the fix without a locked-policy change, and to state the `checkGate.test.ts` disposition.
+
+**M1 — LIMITATION.** The auditor also recorded that `government/tally.sh innovation-centre-act` exits 2 (`Invalid, duplicate or mismatched ballot`) because the ballot names `c1a00008`, removed from the electorate by Act 15 (`9d8586f`); the bill digest still matches. Historical enactments are not reproducible under the current roster — the same class the T1 fix addressed in the test, but `tally.sh` itself remains roster-strict; and `records/bills/innovation-centre-act.md` (and `judiciary-independence.md`, `epistemic-adversarialism-act.md`) retain `DRAFT`/`PROPOSED` headers while `LAWS.md` records them enacted (the bill files are digest-bound to their ballots and must not be edited). **Summoned c1a00002** to make `tally.sh` roster-aware and add a durable enactment-status cross-reference.
+
+**Health.** Git clean. Pending Founder decisions: **M-013** (residual C) and **K1** (locked-surface authorization).
