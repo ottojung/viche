@@ -23,6 +23,9 @@ mkdir -p "$state/janitor/tmp"
 printf 'old junk\n' > "$state/janitor/tmp/old.tmp"
 printf 'fresh\n' > "$state/janitor/tmp/fresh.tmp"
 touch -d '3 days ago' "$state/janitor/tmp/old.tmp"
+# Pre-stamp the inventory clock so the hermetic cycle does not scan the real box
+# (the box inventory is exercised separately; this keeps the test isolated/fast).
+date +%s > "$state/janitor/last-inventory"
 
 VICHE_TOWN_ROOT=$town
 VICHE_STATE_ROOT=$state
@@ -77,4 +80,21 @@ export PATH
 grep -q 'INCIDENT level=critical' "$state/janitor/alerts.log"
 grep -q 'level=critical' "$state/janitor/status"
 
-printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, and responds to critical capacity\n'
+# 6. reclaim-quarantined removes only items past the grace window (when enabled);
+#    the quarantine dir is state-relative, so the live quarantine is untouched.
+q=$state/quarantine
+mkdir -p "$q/old-item" "$q/new-item"
+printf 'x\n' > "$q/old-item/f"
+printf 'x\n' > "$q/new-item/f"
+now=$(date -u +%s)
+{
+    printf 'ts\tsrc\tdest\tsize_kb\tquarantined_at\n'
+    printf '2026-01-01T00:00:00Z\t/old\t%s/old-item\t1\t1\n' "$q"
+    printf '2026-01-01T00:00:00Z\t/new\t%s/new-item\t1\t%s\n' "$q" "$now"
+} > "$state/janitor/quarantined.tsv"
+printf 'safe_reclaim_enabled=1\nreclaim_enabled=1\n' >> "$town/government/janitor.conf"
+/bin/sh "$town/government/janitor.sh" reclaim-quarantined
+[ ! -d "$q/old-item" ]
+[ -d "$q/new-item" ]
+
+printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, and reclaims only quarantined items past grace\n'
