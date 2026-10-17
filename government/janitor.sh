@@ -321,6 +321,31 @@ incident() {
     return 0
 }
 
+# Record one inventory row for a directory into $tmp_inv (read-only probe).
+record_inv_dir() {
+    d=$1
+    size=$(timeout 10 du -s -k "$d" 2>/dev/null | awk 'NR==1{print $1; exit}')
+    is_num "$size" || return 0
+    [ "$size" -ge "$inventory_min_kb" ] || return 0
+    mtime=$(stat -c %Y "$d" 2>/dev/null || printf '0')
+    is_num "$mtime" || mtime=0
+    age_days=$(( (now - mtime) / 86400 ))
+    is_git=0
+    uncommitted=0
+    unpushed=0
+    if [ -d "$d/.git" ]; then
+        is_git=1
+        if [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ]; then
+            uncommitted=1
+        fi
+        unpushed=$(timeout 15 git -C "$d" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
+        is_num "$unpushed" || unpushed=0
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n' \
+        "$ts" "$host" "$d" "$size" "$mtime" "$age_days" "$is_git" "$uncommitted" "$unpushed" >> "$tmp_inv"
+    return 0
+}
+
 # --- box inventory (read-only) -------------------------------------------------
 inventory() {
     inv=$jstate/inventory.tsv
@@ -332,25 +357,12 @@ inventory() {
     for root in /workspace /home/lubko /var/lib/lubko/wd /tmp/opencode; do
         [ -d "$root" ] || continue
         find "$root" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while IFS= read -r d; do
-            size=$(timeout 10 du -s -k "$d" 2>/dev/null | awk 'NR==1{print $1; exit}')
-            is_num "$size" || continue
-            [ "$size" -ge "$inventory_min_kb" ] || continue
-            mtime=$(stat -c %Y "$d" 2>/dev/null || printf '0')
-            is_num "$mtime" || mtime=0
-            age_days=$(( (now - mtime) / 86400 ))
-            is_git=0
-            uncommitted=0
-            unpushed=0
-            if [ -d "$d/.git" ]; then
-                is_git=1
-                if [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ]; then
-                    uncommitted=1
-                fi
-                unpushed=$(timeout 15 git -C "$d" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
-                is_num "$unpushed" || unpushed=0
-            fi
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n' \
-                "$ts" "$host" "$d" "$size" "$mtime" "$age_days" "$is_git" "$uncommitted" "$unpushed" >> "$tmp_inv"
+            record_inv_dir "$d"
+        done
+        # Build caches (e.g. Lean .lake dirs) sit one level below the worktree; they are
+        # the largest transient consumers, so track them as their own inventory rows.
+        find "$root" -maxdepth 2 -mindepth 2 -type d -name .lake 2>/dev/null | while IFS= read -r d; do
+            record_inv_dir "$d"
         done
     done
     mv "$tmp_inv" "$inv"
@@ -384,17 +396,39 @@ classify() {
         [ -n "$path" ] || continue
         [ -d "$path" ] || continue
         class=retain
-        if [ "$is_git" -eq 1 ] && [ "${unpushed:-0}" -gt 0 ]; then
-            class=retain-unpushed
-        elif [ "$is_git" -eq 1 ] && [ "$uncommitted" -eq 1 ]; then
-            class=retain-live
-        elif [ "$is_git" -eq 1 ] && [ "$age" -ge 30 ]; then
-            class=quarantine-candidate
-        elif [ "$is_git" -eq 0 ] && [ "$age" -ge 30 ] && [ "$size" -ge 1048576 ]; then
-            class=quarantine-candidate
-        elif [ "$age" -ge 7 ]; then
-            class=monitor
-        fi
+        case "$path" in
+        */.lake)
+            # Build cache (e.g. Lean .lake). Never quarantine a live or recently
+            # touched cache: it may be reused by an in-flight or upcoming build.
+            # Only an aged cache whose parent worktree is also gone or aged is a
+            # quarantine candidate (the work it supported is surely merged/abandoned).
+            parent=${path%/.lake}
+            if [ "$age" -lt 30 ]; then
+                class=monitor
+            else
+                page=$(awk -F'\t' -v p="$parent" 'NR>1 && $3==p {print $6; exit}' "$inv" 2>/dev/null)
+                is_num "$page" || page=999999
+                if [ "$page" -lt 30 ]; then
+                    class=monitor
+                else
+                    class=quarantine-candidate
+                fi
+            fi
+            ;;
+        *)
+            if [ "$is_git" -eq 1 ] && [ "${unpushed:-0}" -gt 0 ]; then
+                class=retain-unpushed
+            elif [ "$is_git" -eq 1 ] && [ "$uncommitted" -eq 1 ]; then
+                class=retain-live
+            elif [ "$is_git" -eq 1 ] && [ "$age" -ge 30 ]; then
+                class=quarantine-candidate
+            elif [ "$is_git" -eq 0 ] && [ "$age" -ge 30 ] && [ "$size" -ge 1048576 ]; then
+                class=quarantine-candidate
+            elif [ "$age" -ge 7 ]; then
+                class=monitor
+            fi
+            ;;
+        esac
         printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             "$ts" "$host" "$path" "$size" "$mtime" "$age" "$is_git" "$uncommitted" "$unpushed" "$class" >> "$tmp"
     done

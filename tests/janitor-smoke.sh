@@ -97,4 +97,29 @@ printf 'safe_reclaim_enabled=1\nreclaim_enabled=1\n' >> "$town/government/janito
 [ ! -d "$q/old-item" ]
 [ -d "$q/new-item" ]
 
-printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, and reclaims only quarantined items past grace\n'
+# 7. build-cache (.lake) classification: a live/recent cache is only monitored;
+#    an aged cache whose parent worktree is also aged is a quarantine candidate.
+box=$d/box
+mkdir -p "$box/live-work/.lake" "$box/aged-work/.lake"
+printf 'x\n' > "$box/live-work/.lake/f"
+printf 'x\n' > "$box/aged-work/.lake/f"
+touch -d '2 days ago' "$box/live-work/.lake" "$box/live-work"
+touch -d '40 days ago' "$box/aged-work/.lake" "$box/aged-work"
+now=$(date -u +%s)
+host=phoebe-dev
+live_mtime=$(stat -c %Y "$box/live-work/.lake")
+aged_mtime=$(stat -c %Y "$box/aged-work/.lake")
+live_age=$(( (now - live_mtime) / 86400 ))
+aged_age=$(( (now - aged_mtime) / 86400 ))
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t5\t0\t0\t0\t\n' "$host" "$box/live-work" "$live_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t%s\t0\t0\t0\t\n' "$host" "$box/live-work/.lake" "$live_mtime" "$live_age"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$box/aged-work" "$aged_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t%s\t0\t0\t0\t\n' "$host" "$box/aged-work/.lake" "$aged_mtime" "$aged_age"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$box"'/live-work/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'monitor'
+awk -F'\t' 'NR>1 && $3=="'"$box"'/aged-work/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'quarantine-candidate'
+
+printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, and classifies build caches by liveness\n'
