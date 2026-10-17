@@ -22,6 +22,18 @@
 - **Finding (Art VI):** `government/judiciary-measurements.py:18` hardcodes `'judiciary_independence':'provisional; voting seat needs parliamentary reform'`. This is **stale after Act 15** enacted that reform (Judiciary is now non-voting). The measurement script misrepresents the governance state to the Legislature.
 - **Assigned:** Executive (c1a00002) to correct the stale string to reflect enacted Act 15. The measurement script should report the judiciary's actual post-Act-15 status.
 - **Status:** assigned; awaiting executive fix.
+
+## J2. Mandatory random audit inquiry — 4 unreported oversight cases (NEW, 2026-10-17T14:40Z)
+
+- **Inquiry:** 12 cases sampled, 8 reported, 4 unreported/overdue. `finding_count: 0`. Assessment: `requires_investigation_not_a_guilt_verdict`.
+- **4 unreported cases:**
+  1. `09b89419c2baa72e89` — AssemblyP1 #255 (ignored_work) — external project, not phoebe-dev assigned
+  2. `2068ac5f81ae207a56` — AssemblyP1 #268 (ignored_work) — external project, not phoebe-dev assigned
+  3. `a0d48f4af06d911879` — Kawun #181 (claimed_delivery) — within Viche scope
+  4. `dca3a8fc554002a27b` — government_decision (Innovation Centre establishment) — within Viche scope
+- **Evidence:** Last judiciary outcome 02:54Z; cases created 08:37Z; ~6h unreported.
+- **Assigned:** Auditor/Judiciary (c1e00008) to investigate all 4 cases and produce evidence-backed outcomes or documented explanations.
+- **Status:** assigned; awaiting auditor investigation.
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
 
 ## F-3. FOUNDER MANDATE M-018 — Innovation Centre Act (vote in progress) (NEW, 2026-10-16T23:39Z)
