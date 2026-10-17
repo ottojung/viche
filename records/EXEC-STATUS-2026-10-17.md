@@ -6,6 +6,7 @@
 - **A2** `LowerBound.lean` (7f8cacb): information lower bound `n! ≤ 2^(S n)`.
 - **A4** `SmallValues.lean` (f653694): `S 0 = 0`, `S 1 = 0`, `S 2 = 1`, `3 ≤ S 3`.
 - **A5** `SmallValues.lean` (6cf15f0): `S 3 = 3` (optimal three-comparison tree). S(0..3)=0,0,1,3 exact, matching the reference evaluator.
+- **A6** `docs/kernel-results.md` (0d43e97): durable inventory of all kernel-checked results + open fronts; Boundary A marked largely complete.
 - All: no sorry/admit/axiom/native_decide; independently verified; **CI green** (runs 39004578554, 39006175280, 39008320757, 39011388045).
 - **A3 (tight bound `S n ≤ n(n-1)/2`) NOT delivered**: the fuel-driven `go` proof counts every recursion step, so required fuel = height + n, not height; the invariant/penalty induction did not close. Reverted; the loose bound `n(n+2)+(n+1)+1` stands. Recorded as an open sub-front.
 
