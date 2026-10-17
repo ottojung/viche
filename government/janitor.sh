@@ -322,6 +322,8 @@ incident() {
 inventory() {
     inv=$jstate/inventory.tsv
     tmp_inv=$jstate/tmp/inventory.tsv
+    prev=$jstate/tmp/inventory.prev.tsv
+    if [ -f "$inv" ]; then cp "$inv" "$prev" 2>/dev/null || : > "$prev"; else : > "$prev"; fi
     printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n' > "$tmp_inv"
     log_append "$jstate/actions.log" "$ts inventory begin min_kb=$inventory_min_kb"
     for root in /workspace /home/lubko /var/lib/lubko/wd /tmp/opencode; do
@@ -350,6 +352,18 @@ inventory() {
     done
     mv "$tmp_inv" "$inv"
     rotate "$inv"
+    if [ -s "$prev" ]; then
+        grow=$jstate/growth.tsv
+        printf 'ts\tpath\tprev_kb\tnow_kb\tdelta_kb\n' > "$grow"
+        awk -F'\t' 'NR==FNR { if (FNR>1) old[$3]=$4; next } FNR>1 && ($3 in old) { d=$4-old[$3]; if (d!=0) printf "%s\t%s\t%s\t%s\t%d\n", $1, $3, old[$3], $4, d }' "$prev" "$inv" \
+            | sort -t"$(printf '\t')" -k5,5nr | head -n 20 >> "$grow"
+        top=$(tail -n +2 "$grow" | head -n 1)
+        if [ -n "$top" ]; then
+            tpath=$(printf '%s' "$top" | cut -f2)
+            tdelta=$(printf '%s' "$top" | cut -f5)
+            log_append "$jstate/actions.log" "$ts inventory growth_top=$tpath delta_kb=$tdelta"
+        fi
+    fi
     n=$(wc -l < "$inv" 2>/dev/null || printf '0')
     log_append "$jstate/actions.log" "$ts inventory end entries=$n"
     printf 'janitor: inventory complete, %s entries (min %s KB)\n' "$n" "$inventory_min_kb"
@@ -499,6 +513,10 @@ case "$mode" in
         if [ -f "$jstate/alerts.log" ]; then
             printf 'recent alerts:\n'
             tail -n 8 "$jstate/alerts.log"
+        fi
+        if [ -f "$jstate/growth.tsv" ]; then
+            printf 'top growers (KB):\n'
+            head -n 11 "$jstate/growth.tsv"
         fi
         ;;
     status)
