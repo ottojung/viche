@@ -15,7 +15,7 @@ for p in cases:
         counts['unreported']+=1
     except (ValueError,TypeError):
         counts['unreadable']+=1
-payload={'observed_at':int(os.environ.get('VICHE_BRANCH_NOW',time.time())),'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'provisional; voting seat needs parliamentary reform', 'no_proposals':True}
+payload={'observed_at':int(os.environ.get('VICHE_BRANCH_NOW',time.time())),'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True}
 p=root/'branches/judiciary-measurements.json'
 p.parent.mkdir(parents=True,exist_ok=True)
 tmp=p.with_suffix('.json.tmp')
