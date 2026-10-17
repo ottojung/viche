@@ -1,14 +1,6 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# TWO BILLS pending vote (each seat casts both ballots):
-#   M-017 Judiciary Independence Act  (id judiciary-independence, digest ebb22709...)  records/ballots/JUDICIARY-INDEPENDENCE-VOTE.md
-#   M-018 Innovation Centre Act        (id innovation-centre-act,  digest e7902aa5...)  records/ballots/INNOVATION-CENTRE-ACT-VOTE.md
-#   Done: c1a00005 (both yes), c1a00007 (both yes), c1a00009 (innovation yes; judiciary re-vote needed).
-#   Summoned now: c1a00002, c1a00003, c1a00004, c1a00006, c1a00008, c1a00009.
-#   Clerk: tally at >=6 yes per bill; then enact.
-c1a00002
-c1a00003
-c1a00004
-c1a00006
-c1a00008
-c1a00009
+# Act 14 (Legislative Innovation Centre) and Act 15 (Judiciary Independence) — ENACTED 2026-10-17.
+#   All ballot summons RESOLVED. SUMMONED.txt empty.
+# Note: c1a00008 is no longer a voting seat (moved to the judicial office c1e00008); replacement seat c1a0000b.
+# Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
