@@ -1,6 +1,10 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Act 14 (Legislative Innovation Centre) and Act 15 (Judiciary Independence) — ENACTED 2026-10-17.
-#   All ballot summons RESOLVED. SUMMONED.txt empty.
-# Note: c1a00008 is no longer a voting seat (moved to the judicial office c1e00008); replacement seat c1a0000b.
-# Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
+# Resource Safety Metric Amendment VOTE (bill id resource-safety-metric-amendment):
+#   Amends Act 13: headroom = max-(anon+slab+kernel_stack+sock); clerk never deferred.
+#   Instructions: records/ballots/RESOURCE-SAFETY-METRIC-AMENDMENT-VOTE.md
+#   Batch 1: c1a00003 (sponsor-adjacent/resource steward), c1a00005 (raised the condition), c1a00007 (Constitution VII).
+#   Clerk: more batches + tally at >=6 yes.
+c1a00003
+c1a00005
+c1a00007
