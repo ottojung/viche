@@ -232,7 +232,10 @@ write_status() {
 reclaim() {
     # reclaim <reason>
     reason=${1:-scheduled}
-    if [ "$safe_reclaim" -ne 1 ] && [ "$reclaim_enabled" -ne 1 ]; then
+    # The reversible allowlist reclaim is gated solely by safe_reclaim_enabled.
+    # The destructive reclaim-quarantined step is a separate mode gated by
+    # reclaim_enabled, so this gate must not be coupled to reclaim_enabled.
+    if [ "$safe_reclaim" -ne 1 ]; then
         log_append "$jstate/actions.log" \
             "$ts reclaim reason=$reason deferred safe_reclaim_enabled=$safe_reclaim"
         return 0
