@@ -1,14 +1,14 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
-# Executive work runs independently through government/executive-cycle.sh.
 # Town Hall is #302.
-# M-016 (SoringP1 CI revert): c1a00002 (executive). Assignment: records/summons/c1a00002.md
-# TWO BILLS pending vote (each seat casts both ballots when convened):
-#   M-017 Judiciary Independence Act  (bill id judiciary-independence,  digest f9e7e997...)  records/ballots/JUDICIARY-INDEPENDENCE-VOTE.md
-#   M-018 Innovation Centre Act        (bill id innovation-centre-act,     digest e7902aa5...)  records/ballots/INNOVATION-CENTRE-ACT-VOTE.md
-#   Batch 1: c1a00005, c1a00007, c1a00009. Clerk: more batches + tally at >=6 yes; then enact.
-# WARNING: the Act 13 pre-convene guard currently OVER-DEFERS (page-cache metric) and may defer
-#   these seats; recorded for the resource steward + a proposed amendment. Seats run when headroom allows.
-c1a00002
+# TWO BILLS pending vote (each seat casts both ballots):
+#   M-017 Judiciary Independence Act  (id judiciary-independence,  digest ebb22709... [REWORDED])  records/ballots/JUDICIARY-INDEPENDENCE-VOTE.md
+#   M-018 Innovation Centre Act        (id innovation-centre-act,   digest e7902aa5...)              records/ballots/INNOVATION-CENTRE-ACT-VOTE.md
+#   Batch 1 (re-vote judiciary with new digest + innovation): c1a00005, c1a00007, c1a00009
+#   Batch 2: c1a00003, c1a00004
+#   M-016 (SoringP1 CI revert): c1a00002 DONE (verified) -> CLEARED.
+#   Clerk: tally at >=6 yes per bill; then enact.
+c1a00003
+c1a00004
 c1a00005
 c1a00007
 c1a00009
