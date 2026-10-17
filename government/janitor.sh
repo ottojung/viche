@@ -12,7 +12,7 @@
 # Usage: janitor.sh <observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined> [--dry-run]
 #   observe             record filesystem + cgroup metrics, evaluate thresholds; never mutates
 #   reclaim             perform the safe, reversible, age-gated reclamation allowlist
-#   cycle               observe; reclaim when due and enabled; safe-reclaim on critical pressure
+#   cycle               observe; refresh inventory+classify when due; reclaim when due and enabled; safe-reclaim on critical pressure
 #   report              print a concise human-readable summary
 #   status              print one machine-readable status line
 #   inventory           scan the box for large directories; read-only, records findings
@@ -473,6 +473,11 @@ case "$mode" in
         if due "$jstate/last-observe" "$observe_interval"; then record_observation; fi
         alert_if_needed
         write_status
+        if due "$jstate/last-inventory" "$reclaim_interval"; then
+            inventory
+            classify
+            stamp "$jstate/last-inventory"
+        fi
         if [ "$level" = critical ]; then
             incident
         elif due "$jstate/last-reclaim" "$reclaim_interval"; then
