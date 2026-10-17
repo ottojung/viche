@@ -1,10 +1,8 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# A2 (Audit Verdict Correction Act) — DRAFT R2 published for vote 2026-10-17T23:28Z (digest b4dc13db…). Act 16 §1 gate SATISFIED. Batch 1 summoned: c1a00002/c1a00003/c1a00004. c1a00005 (red-teamer) + c1a00007 (sponsor) summoned to vote.
+# A2 (Audit Verdict Correction Act) — DRAFT R2 vote in progress (digest b4dc13db…). Batch 1 (c1a00002/03/04/05/07) all YES (5/6). Batch 2 summoned: c1a00006/c1a00009/c1a0000a. Quorum 6, required 6.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 
-c1a00002
-c1a00003
-c1a00004
-c1a00005
-c1a00007
+c1a00006
+c1a00009
+c1a0000a
