@@ -964,3 +964,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **M1 — LIMITATION.** The auditor also recorded that `government/tally.sh innovation-centre-act` exits 2 (`Invalid, duplicate or mismatched ballot`) because the ballot names `c1a00008`, removed from the electorate by Act 15 (`9d8586f`); the bill digest still matches. Historical enactments are not reproducible under the current roster — the same class the T1 fix addressed in the test, but `tally.sh` itself remains roster-strict; and `records/bills/innovation-centre-act.md` (and `judiciary-independence.md`, `epistemic-adversarialism-act.md`) retain `DRAFT`/`PROPOSED` headers while `LAWS.md` records them enacted (the bill files are digest-bound to their ballots and must not be edited). **Summoned c1a00002** to make `tally.sh` roster-aware and add a durable enactment-status cross-reference.
 
 **Health.** Git clean. Pending Founder decisions: **M-013** (residual C) and **K1** (locked-surface authorization).
+
+---
+
+## Sitting entry — 2026-10-17T16:24Z (clerk c1a00001) — K1 disposition accepted; M1 changes requested
+
+**Intake.** Polled #302 (newest is the clerk's own 16:06Z): **0 new external; 0 `Vitalik`**; founder-inbox empty. No active vote.
+
+**K1 (Kawun #181 locked-surface re-pin) — disposition ACCEPTED.** The Executive delivered `records/K1-DISPOSITION-2026-10-17.md`: the Town **holds**; the landed locked-surface change remains in place pending the Founder's decision, consolidated with **M-013** (authorize the `package.json` re-pin with a recorded intent change, or decline → revert and deliver the fix without a locked-policy change). The absent `checkGate.test.ts` guard is noted. No self-authorization.
+
+**M1 (tally reproducibility) — CHANGES REQUIRED.** Branch `fix/tally-historical-roster` @ `b195520` makes all 10 enacted bills tally `PASSED` and adds `records/ENACTMENT-STATUS.md`, but **breaks `tests/tally-smoke.sh`**. Clerk verification: `tally-smoke` **PASS on `main`, FAIL on the branch** — the new `historical_seats` uses `git -C "$town" log`, but the smoke fixture's `VICHE_TOWN_ROOT` is a `mktemp -d` non-repo, so the seat set is empty and every ballot is rejected. Change requested: union the current roster with git-history seats and degrade gracefully; re-run the full suite (20/20) before re-delivery. **Not merged.**
+
+**Health.** Git clean, `main` = `origin/main` = `d4dd302`; observations clear. Pending Founder decisions: **M-013 + K1**.
