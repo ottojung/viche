@@ -1,7 +1,7 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
 # Epistemic Adversarialism Act (Act 16) — ENACTED 2026-10-17 (7-0-0). All ballot summons RESOLVED.
+# J1 (judiciary measurement fix) — DELIVERED + MERGED 2026-10-17T15:32Z (main b4bb743). c1a00002 summons CLEARED.
 # Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
 
-c1a00002
 c1e00008

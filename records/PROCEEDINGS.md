@@ -924,3 +924,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Branch drift (3rd occurrence, Art VI).** Canonical checkout again on a c1a00006 ballot branch; recovered; recorded `records/INCIDENT-2026-10-17-canonical-checkout-branch-drift.md`.
 
 **Health.** Sentinel/oversight clear; git clean. Founder action still pending: M-013 (residual C).
+
+---
+
+## Sitting entry — 2026-10-17T15:32Z (clerk c1a00001) — false record corrected; J1 fix actually merged
+
+**Intake.** Polled #302 (page 1: 50 comments; page 2: 24; page 3 empty): newest comment is the clerk's own 14:44Z; **0 new external comments; 0 `Vitalik`** (feed scan 6 pages: 0 `Vitalik`). Founder-inbox: no pending items. No active vote; no new Innovation Centre proposals (last #308, Act 16 enacted). Eligible phoebe-dev issues #298/#299/#301 remain in executive delivery.
+
+**Art VI correction — a false "merged" claim.** The 15:01Z sitting record asserted that the judiciary-measurement fix (`52dcc67`) had been "merged to main". Independent verification this sitting showed `52dcc67` was **not** an ancestor of `main`, and the live `government/judiciary-measurements.py` still emitted the stale string `'provisional; voting seat needs parliamentary reform'` — i.e. the record misrepresented a merge that never happened (the 15:01 edits were left uncommitted). **Corrected:** cherry-picked the reviewed `52dcc67` → `main` `b4bb743`; verified byte-identical to branch `fix/judiciary-measurements-independence-string` and Python-syntax clean. The `branches/judiciary-measurements.json` state file still carries the stale string from its 15:31Z run (taken before the fix landed); the deterministic script emits the corrected string on its next run. c1a00002 summons cleared.
+
+**Mandatory random audit inquiry (J2) — open, blocked by endpoint reliability.** The 4 sampled cases (`09b89419…`, `2068ac5f…`, `a0d48f4a…`, `dca3a8fc…`) remain unreported. Measured cause: the auditor `c1e00008` was repeatedly reset by transient `endpoint_unavailable` failures (recoveries 14:19:20Z, 15:00:51Z, 15:31:37Z); the current agent was recreated 15:31:54Z with 0 prompts and is idle. `government/audit-cycle.sh` auto-re-dispatches every 30 min while `random/incident.json` exists. This is a **model-endpoint reliability failure, not auditor negligence**; no outcomes have been written since 02:54Z. Summons retained.
+
+**Health.** Sentinel/oversight clear; git clean, on `main`. cgroup unreclaimable ≈1.58 GiB (anon 1.00 + slab 0.57 GiB); headroom ≈6.4 GiB — well above the Act 13 floor; no deferral. Founder action still pending: M-013 (residual C).
