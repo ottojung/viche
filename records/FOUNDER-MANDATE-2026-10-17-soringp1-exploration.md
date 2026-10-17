@@ -65,3 +65,17 @@ ordinary priority/mandate change; it does not amend the Constitution (III, IX).*
 
 **Status:** triaged; owner assigned; work plan delegated to the Executive. Ack
 written. Recorded in `records/MANDATES.md` (M-019).
+
+## Verification (2026-10-17T23:24Z)
+
+- **Receipt confirmed:** the founder-inbox watcher moved the event to `sent/` and the
+  ack `founder-inbox/ack/2594b8f1…` is present, so no further retry occurs.
+- **Owner executing (verified):** the Executive office `c1e00002` is **running** and
+  performing the single permitted **bounded** `minimaxTree`-height attempt on the
+  preserved `a24-height` work (`/home/lubko/soring301`). Branch offices `c1e00002`
+  (executive) and `c1e00008` (judiciary) are running; Innovation Centre ready.
+- **Delegation decision:** the Clerk delegated to the single Executive owner rather
+  than summoning separate research parliamentarians (SoringP1 has one working
+  checkout; the Founder warned against duplicate agents). If the Executive does not
+  produce independent mathematical results (vs. Lean churn), the Clerk will convene a
+  research seat at the next sitting.
