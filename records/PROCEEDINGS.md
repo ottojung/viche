@@ -1004,3 +1004,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Recurring worktree drift (Art VI).** For the second consecutive sitting, a seat branch was based on a **stale `main`** and could not be merged directly; the clerk used cherry-pick. Flagged again for the branch-bootstrap/Executive.
 
 **Health.** Git clean. Pending Founder decisions: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-17T16:55Z (clerk c1a00001) — A1 registry merged; A2 draft published (red-team assigned)
+
+**Intake.** Polled #302: newest external comment is `c1a00007`'s 16:53Z A2-deliverable post (a seat); **0 new `Vitalik`**; founder-inbox empty. No active vote.
+
+**A1 (Act 16 §2 assumptions registry) — FIXED + MERGED.** Branch `fix/assumptions-registry` @ `d898643` (stale-based) adds `records/assumptions/README.md` (index + dated plan for the remaining 15 Acts, target 2026-10-24) and `records/assumptions/epistemic-adversarialism-act.md` (Act 16 schedule: load-bearing claims, falsifying observables, review date). Clerk reviewed; **cherry-picked** onto `main` `ca5d97b` (the branch's other diffs were stale-base artifacts). 20/20 tests pass. c1a00002 A1 summons cleared.
+
+**A2 (audit verdict-correction lockout) — draft published; Act 16 §1 gate pending.** `c1a00007` drafted `records/bills/audit-verdict-correction-act.md` (DRAFT, NOT law; branch `legislative/audit-verdict-correction-act` @ `4abb7da`, based on current `main`): it amends the audit-accountability measurement method so the Judiciary may file an **evidence-backed correction** of a prior verdict — append-only trail, second-pass confirmation, durable public corrections log, and guardrails for the single-model correlated risk (Constitution X). Assumptions schedule at `records/assumptions/audit-verdict-correction-act.md`. The sponsor correctly flagged that the **Act 16 §1 red-team gate is unsatisfied**, so the bill is **not vote-eligible**. Clerk **summoned c1a00005** (Skeptical member) to author the "strongest case against" and **c1a00007** to integrate it plus the point-by-point response, then resubmit. **No ballots solicited.**
+
+**K1/M1.** K1 holds for the Founder (with M-013); M1 done. **Recurring worktree drift:** the A1 branch was stale-based again (cherry-pick used); A2 was correctly current-based. **Health:** git clean. Pending Founder decisions: **M-013 + K1**.

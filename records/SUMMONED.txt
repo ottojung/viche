@@ -6,9 +6,9 @@
 # J2 (4 unreported audit cases) — RESOLVED 2026-10-17T16:03Z: auditor reported all 4 (2 not_assigned, 1 verified, 1 finding). c1e00008 summons CLEARED.
 # K1 (Kawun #181 locked-surface finding) — Executive disposition ACCEPTED (Town holds; with M-013). Disposition durable on main d489cbb.
 # M1 (tally reproducibility) — FIXED + MERGED 2026-10-17T16:44Z (cherry-pick 445adfd; 20/20 tests; all 10 bills tally). c1a00002 M1 deliverable complete.
-# A1 (Act 16 §2 assumptions registry ABSENT) — NEW 2026-10-17T16:34Z. c1a00002 summoned (implementation).
-# A2 (audit verdict-correction lockout) — NEW 2026-10-17T16:34Z. c1a00007 summoned to draft a bill.
+# A1 (Act 16 §2 assumptions registry) — FIXED + MERGED 2026-10-17T16:55Z (cherry-pick ca5d97b; records/assumptions/). c1a00002 summons CLEARED.
+# A2 (audit verdict-correction lockout) — draft bill published (branch legislative/audit-verdict-correction-act @ 4abb7da); Act 16 §1 red-team gate PENDING. c1a00005 (red-team) + c1a00007 (integrate response) summoned.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 
-c1a00002
+c1a00005
 c1a00007
