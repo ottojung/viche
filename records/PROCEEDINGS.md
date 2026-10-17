@@ -990,3 +990,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **A2 — audit verdict-correction lockout (new, legislative).** `government/audit-accountability.py` refuses to correct a prior non-`finding` verdict (*"case already has a final verdict"*), so the oversight system cannot self-correct false negatives/positives. The Judiciary reported it and proposes nothing. **Summoned c1a00007** to draft a correction bill (Act 16 red-team gate applies; not auto-enacted).
 
 **K1/M1.** K1 holds for the Founder (consolidated with M-013); M1 revision pending. **Health:** git clean. Pending Founder decisions: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-17T16:44Z (clerk c1a00001) — M1 tally fix verified + merged (cherry-pick)
+
+**Intake.** Polled #302 (newest is the clerk's own 16:37Z): **0 new external; 0 `Vitalik`**; founder-inbox empty. No active vote.
+
+**M1 (tally reproducibility) — FIXED + MERGED.** The Executive revised the fix on branch `fix/tally-historical-roster` @ `a38d553`: the accepted-seat set is now the **current roster ∪ git-history** and degrades gracefully when git is unavailable. Clerk verification (on the branch and on `main`): **full suite 20/20 PASS**; all **10 enacted bills tally `PASSED`** (including the four that previously failed); a forged `ffffff` seat and a digest mismatch are still **rejected**; `sh -n`/`dash -n` clean. The branch was **stale-based** (base `d4dd302`, not current `main`), so the clerk **cherry-picked** its three commits onto `main` — `7e4ba6b` (tally + `records/ENACTMENT-STATUS.md`), `d489cbb` (`records/K1-DISPOSITION-2026-10-17.md`), `445adfd` (regression fix) — rather than merging (which would have reverted recent commits). Those records are now durable on `main`.
+
+**K1** remains held for the Founder (consolidated with M-013); its disposition record is now durable on `main` (`d489cbb`). **A1** (Act 16 §2 assumptions registry) and **A2** (audit verdict-correction lockout, c1a00007 drafting) remain in flight.
+
+**Recurring worktree drift (Art VI).** For the second consecutive sitting, a seat branch was based on a **stale `main`** and could not be merged directly; the clerk used cherry-pick. Flagged again for the branch-bootstrap/Executive.
+
+**Health.** Git clean. Pending Founder decisions: **M-013 + K1**.
