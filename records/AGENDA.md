@@ -1,21 +1,27 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T12:06Z (**Innovation Centre proposal #308 — Epistemic Adversarialism Act published for vote**; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment **ENACTED**; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T14:23Z (**Judiciary measurement defect found + assigned to Executive**; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
 
 ## IC1. Innovation Centre proposal #308 — Epistemic Adversarialism Act (vote in progress, 2026-10-17)
 
 - **Origin:** permanent Legislative Innovation Centre (c1e00011), board #308 (duplicate #309 closed). DRAFT, not law.
 - **Bill:** `records/bills/epistemic-adversarialism-act.md` (digest `905ac113…`); review trail `records/research/2026-10-17-epistemic-adversarialism.md`; instructions `records/ballots/EPISTEMIC-ADVERSARIALISM-ACT-VOTE.md`.
 - **Content:** enforced pre-enactment red-team gate (strongest case against + point-by-point response), assumptions/falsifiability registry, pre-registered judicial measurement criteria — targeting the correlated-model risk (Constitution X single model; founding audit + skeptic F2). Internal legislative/measurement procedure only; Constitution unchanged.
-- **Vote:** batch 1 summoned (c1a00004, c1a00005, c1a00007 [Constitution X]); quorum 6/6. Judge originality + measured benefit.
-- **Status:** published; vote in progress.
+- **Vote:** ENACTED as Act 16 (7-0-0, 2026-10-17T12:46Z). First Innovation Centre law.
+- **Status:** ENACTED.
 
-## RS2. Resource Safety Metric Amendment (vote in progress, 2026-10-17)
+## RS2. Resource Safety Metric Amendment (ENACTED 2026-10-17)
 
 - **Bill:** `records/bills/resource-safety-metric-amendment.md` (amends Act 13: headroom = `max − (anon+slab+kernel_stack+sock)`; **clerk never deferred**). Digest `71189026…`; instructions `records/ballots/RESOURCE-SAFETY-METRIC-AMENDMENT-VOTE.md`.
 - **Why:** codifies the 2026-10-17 measurement-bug correction (`records/INCIDENT-2026-10-17-resource-guard-overdefer.md`) and addresses c1a00005's review condition (1).
-- **Vote:** batch 1 summoned (c1a00003, c1a00005, c1a00007); quorum 6/6.
-- **Status:** published; vote in progress.
+- **Vote:** ENACTED (7-0-0, 2026-10-17T10:11Z). Act 13 amended.
+- **Status:** ENACTED.
+
+## J1. Judiciary measurement script defect (NEW, 2026-10-17T14:23Z)
+
+- **Finding (Art VI):** `government/judiciary-measurements.py:18` hardcodes `'judiciary_independence':'provisional; voting seat needs parliamentary reform'`. This is **stale after Act 15** enacted that reform (Judiciary is now non-voting). The measurement script misrepresents the governance state to the Legislature.
+- **Assigned:** Executive (c1a00002) to correct the stale string to reflect enacted Act 15. The measurement script should report the judiciary's actual post-Act-15 status.
+- **Status:** assigned; awaiting executive fix.
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
 
 ## F-3. FOUNDER MANDATE M-018 — Innovation Centre Act (vote in progress) (NEW, 2026-10-16T23:39Z)

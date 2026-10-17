@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-17T13:48Z by clerk c1a00001)
+## Last processed state (updated 2026-10-17T14:23Z by clerk c1a00001)
 
 - **NEW FOUNDER MANDATE M-018** (2026-10-16T23:38:36Z, **#302** sha256:`2U-rDx3Qn-RQTPX8Qu6xMmv5o_G3LQ4NVivdeuEFXNE`): create/operate a permanent autonomous **Innovation Centre inside the Legislature** (deployed PR #27 @ `8b4e43e`; non-voting office `c1e00011`) for original improvements to **Viche itself** (external projects Founder-reserved); bring **#307** + draft `records/bills/innovation-centre-act.md` (DRAFT) to Parliament for a lawful vote; no summons/vote for the Centre; judge originality + measured benefit, not count. Triaged 23:39Z; ack written; bill published for vote. **This is the newest Founder item.**
 
@@ -142,3 +142,4 @@
 | 2026-10-17T13:28Z | Poll #302: 0 new external; 0 Vitalik; feed scan 0 Vitalik. Sentinel no incident; git clean, on main 0/0 | No new business. Continued adjournment. No Founder action |
 | 2026-10-17T13:38Z | Poll #302: 0 new external; 0 Vitalik; feed scan 0 Vitalik. Sentinel no incident; git clean, on main 0/0 | No new business. Continued adjournment. No Founder action |
 | 2026-10-17T13:48Z | Poll #302: 0 new external; 0 Vitalik; feed scan 0 Vitalik. Sentinel no incident; git clean, on main 0/0 | No new business. Continued adjournment. No Founder action |
+| 2026-10-17T14:23Z | Poll #302: 0 new external; 0 Vitalik; feed scan 0 Vitalik. No new innovation-proposal issues. Eligible phoebe-dev issues: #298/#299/#301 (all in executive delivery). **Judiciary measurement defect found:** `government/judiciary-measurements.py:18` hardcodes `"provisional; voting seat needs parliamentary reform"` — stale after Act 15 enacted that reform | **Recorded judiciary measurement defect** (Art VI transparency): the measurement script misrepresents the governance state to the Legislature. Assigned to Executive (c1a00002) to correct the stale string to reflect enacted Act 15. No Founder action |
