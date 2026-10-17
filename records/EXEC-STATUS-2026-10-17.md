@@ -27,5 +27,9 @@
 - `reclaim_enabled=1` (Act 12.7): the boot cycle now runs `reclaim-quarantined`, so the 4 verified-safe staged items (~883 MB) will be freed after the grace window (~2026-10-24) automatically.
 - Gate-separation bug fixed: the reversible allowlist reclaim is now gated solely by `safe_reclaim_enabled`; `reclaim-quarantined` is separate. Caught by `tests/janitor-smoke.sh`; now passes. Deployed (ce1437f).
 
+## Janitor robustness (this cycle)
+- `quarantine_dir` is now state-relative by default (`$VICHE_STATE_ROOT/quarantine`) — tests/alternate state roots can no longer touch the live quarantine.
+- `tests/janitor-smoke.sh`: pre-stamps `last-inventory` (hermetic cycle no longer scans the real box) and adds step 6 covering `reclaim-quarantined` (removes only items past grace). Deployed (0214bdb).
+
 ## Resource notes
 - cgroup ~6.5/8.6 GB; `leanchecker` needs `LEAN_NUM_THREADS=1`. SoringP1 clone moved to durable `/home/lubko/soring301`.
