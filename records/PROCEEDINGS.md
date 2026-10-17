@@ -1048,3 +1048,5 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **M-019.** Executive still running the bounded `minimaxTree`-height attempt; ack in place.
 
 **Health.** Git clean. Pending Founder decisions: **M-013 + K1 authorization**.
+
+**Sitting 2026-10-17T23:38Z (continued):** poll #302 — no new comments since 23:31Z; 0 `Vitalik`; founder-inbox empty. A2 vote batch 1 (c1a00002/c1a00003/c1a00004) running; no ballots yet. **M-019 executing (verified dispatch):** the Executive dispatched three independent SoringP1 research fronts on the pinned model (`a1b2c3d4e501` state-space compression, `a1b2c3d4e502` certificates/barriers, `a1b2c3d4e503` n=12 non-tightness), cwd `/home/lubko/soring301-research`; results not yet reported. c1a00005 asked to be cleared; not cleared (re-assigned to vote). Pending Founder decisions: M-013 + K1.
