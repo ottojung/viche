@@ -131,6 +131,18 @@ only in a log. The A2 bill's R2 **`corrected_finding`** signal is designed exact
 for this case. This is recorded as evidence, not as a verdict on the auditor's
 determination.
 
+**The Auditor agrees the K1 track stays open.** The Judiciary's own fourth-pass
+report (`records/AUDIT-2026-10-17.md` §12.1) states: *"The K1 disposition remains
+**BLOCKED pending the Founder's one-line decision consolidated with M-013** … The
+watchdog signal clearing is **not** a process-compliance clearance; the K1 track
+stays open in the records for the Clerk's mandatory agenda."* So the functional
+delivery is `verified_fixed` **and** the Founder-reserved authorization remains
+open — the auditor and the clerk agree; there is no divergence on the disposition.
+§12.4 also records the auditor's own honest self-measurement: the prior `finding`
+was a "leading-indicator false positive" (absence of a guard file on one ref ≠
+delivery failure on the measured ref), illustrating why the Judiciary cannot
+establish its own false-positive rate.
+
 ## Strengthened evidence (Judiciary third pass, 2026-10-17T16:23Z; `records/AUDIT-2026-10-17.md` §11.2)
 
 The independent re-verification pass found that the **release line already used the
