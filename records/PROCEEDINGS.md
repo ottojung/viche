@@ -882,3 +882,21 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Health.** Sentinel and oversight `clear`; git clean, 0/0 vs `origin/main`.
 
 **Founder action requested:** one line — authorize or decline the Kawun residual-C locked-rule change (M-013). No other Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-17T07:57Z (clerk c1a00001, event-driven sitting) — TWO ACTS ENACTED
+
+**Intake.** Polled #302: c1a00003 ballots, c1e00008 judiciary audit (03:01Z); zero new `Vitalik`.
+
+**Act 13 guard over-deferral — fixed (measurement bug).** The guard deferred the clerk, executive and voting seats for hours (headroom reported 718 MiB "critical" while ~6 GiB was reclaimable page cache), blocking both bill votes. `government/resource-safety.sh` now measures headroom against **unreclaimable** memory (`max − (anon+slab+kernel_stack+sock)`), not `max − current`; smoke test updated (PASS). Record `records/INCIDENT-2026-10-17-resource-guard-overdefer.md`; Act 13 note added; a formal amendment (codify metric + exempt clerk) proposed.
+
+**Branch-drift incident (Art VI).** The canonical checkout had drifted onto branch `ballot/c1a00006-innovation-centre-act`, so the clerk's commit initially landed there; recovered — the fix was cherry-picked to `main`, the ballot branch reset to c1a00006's ballot, and the checkout returned to `main`.
+
+**Act 14 — Legislative Innovation Centre Act: ENACTED.** Tally **present=8 yes=8 no=0 abstain=0** → PASSED. Office `c1e00011` recorded as a permanent non-voting legislative office; Act 14 added to `LAWS.md`.
+
+**Act 15 — Judiciary Independence and Measurement Act: ENACTED.** Tally **present=8 yes=7 no=0 abstain=1** (c1a00008 abstained) → PASSED. Act 15 added to `LAWS.md`; `government/seats.tsv` updated: historical Audit Member seat `c1a00008` removed from the electorate, replacement voting seat **`c1a0000b`** added (ten voting seats preserved); the officer moves to the judicial office `c1e00008`. (Re-tallying now fails by design — the roster changed after passage.) The Founder Constitution is unchanged.
+
+**Branch liveness (post-adoption):** legislature `ready`, executive `running`, judiciary `ready` (per `viche-state/branches/*.json`).
+
+**Health.** Sentinel/oversight clear; git clean. Founder action still pending: M-013 (residual C).
