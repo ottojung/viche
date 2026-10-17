@@ -518,6 +518,13 @@ case "$mode" in
             printf 'top growers (KB):\n'
             head -n 11 "$jstate/growth.tsv"
         fi
+        if [ -d "$quarantine_dir" ]; then
+            qn=$(find "$quarantine_dir" -mindepth 1 -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
+            qsz=$(du -sk "$quarantine_dir" 2>/dev/null | awk 'NR==1{print $1; exit}')
+            is_num "$qsz" || qsz=0
+            printf 'quarantine: %s item(s), %s KB staged, grace=%ss, reclaim_enabled=%s, dir=%s\n' \
+                "$qn" "$qsz" "$quarantine_grace" "$reclaim_enabled" "$quarantine_dir"
+        fi
         ;;
     status)
         if [ -f "$jstate/status" ]; then
