@@ -90,3 +90,24 @@ change.
 - **M1:** OPEN — Executive implementation required.
 - **Auditor:** the independent audit cycle re-checks `unresolved_finding` signals;
   the Auditor must independently verify any fix (`verified_fixed`).
+
+## Strengthened evidence (Judiciary third pass, 2026-10-17T16:23Z; `records/AUDIT-2026-10-17.md` §11.2)
+
+The independent re-verification pass found that the **release line already used the
+correct, authorized pattern**, making main's deviation unambiguous:
+
+- `4f8f9675` (`release/along-long-namespace`, author `opencode`, 2026-10-10) added
+  `npm run test` to the check script **and** the non-vacuity guard
+  `tests/policy/checkGate.test.ts`, and **explicitly did NOT re-pin** locked policy —
+  its message: *"No locked policy is re-pinned: `policy/locked-policy.json` is
+  untouched … the sanctioned one-line hash update remains a deliberate human step."*
+- `95ce7585` (`agent-af18c775e967`, 2026-10-14) is the **separate, deliberate**
+  "Re-pin locked policy" commit on the release line.
+- By contrast, main's `fbbe69f3`/`87cda273` **bundled** the re-pin with the script
+  change and **omitted** the guard.
+
+The Judiciary also independently executed `npm run check` at `a30afa45`: **exit 0**
+with `npm run test` → vitest **413 files / 1367 tests passed**, confirming the
+functional fix is real. Fresh `git fetch` still returns `a30afa45` — **no corrective
+commit** since the finding.
+

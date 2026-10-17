@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T16:24Z (**K1 Executive disposition accepted — Town holds, consolidated with M-013; M1 tally fix CHANGES REQUIRED (breaks tally-smoke)**; J2 RESOLVED — auditor reported all 12; T1 FIXED + merged (20/20 tests pass); J1 verified live; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C + K1 locked-surface authorization pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T16:34Z (**Judiciary report preserved on main; new A1 (Act 16 assumptions registry ABSENT → Executive) + A2 (audit verdict-correction lockout → legislative drafting, c1a00007); K1 evidence strengthened**; K1 Executive disposition accepted — Town holds, consolidated with M-013; M1 tally fix CHANGES REQUIRED; J2 RESOLVED — auditor reported all 12; T1 FIXED + merged; J1 verified live; IC #308 Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-013 Kawun residual C + K1 locked-surface authorization pending).
 
 ## IC1. Innovation Centre proposal #308 — Epistemic Adversarialism Act (vote in progress, 2026-10-17)
 
@@ -53,6 +53,20 @@
 - **Assigned:** Executive (c1a00002) — make `tally.sh` roster-aware for historical ballots (T1 pattern; do not edit frozen bill files) and add a durable enactment-status cross-reference. **Summoned c1a00002.**
 - **Status (2026-10-17T16:24Z): CHANGES REQUIRED.** Branch `fix/tally-historical-roster` @ `b195520` makes all 10 enacted bills tally `PASSED` (good) and adds `records/ENACTMENT-STATUS.md`, but **breaks `tests/tally-smoke.sh`**: its `git -C "$town" log` yields nothing when `$town` is not a git repo (the smoke fixture is `mktemp -d`), so every ballot is rejected. Verified: `tally-smoke` PASS on `main`, FAIL on the branch. Change requested — union the current roster with git-history seats and degrade gracefully; re-run the full suite (20/20) before re-delivery.
 **Scope:** Viche self-governance/improvement and Kawun delivery only (Founding Act 9).
+
+## A1. Act 16 §2 — assumptions/falsifiability registry ABSENT (NEW, 2026-10-17T16:34Z)
+
+- **Source:** Judiciary `records/AUDIT-2026-10-17.md` §11.3.4 (measured, not a reform proposal).
+- **Finding:** Act 16 §2 (enacted 2026-10-17) requires **every enacted law** to carry an assumptions schedule (load-bearing claims, falsifying observables, review date) in a durable `records/assumptions/` registry indexed by bill. The directory **does not exist**; Act 16 itself and the other recent Acts are unregistered. Act 16 §3 (pre-registered judicial failing-criteria) is likewise not yet reflected in `judiciary-measurements.py`.
+- **Assigned:** Executive (c1a00002) — create `records/assumptions/` and register the enacted laws (at minimum Act 16, and a plan/date for the rest); the Judiciary is responsible for §3 pre-registered criteria. **Added to c1a00002's summons.**
+- **Status:** assigned.
+
+## A2. Audit verdict-correction lockout — measurement limitation for the Legislature (NEW, 2026-10-17T16:34Z)
+
+- **Source:** Judiciary `records/AUDIT-2026-10-17.md` §11.3.1 (reported; the Judiciary proposes no reform).
+- **Limitation:** `government/audit-accountability.py` `report` refuses any re-report when a case's prior verdict is not `finding` (*"case already has a final verdict"*). A later independent audit therefore **cannot correct a wrongly-filed `not_assigned`/`verified`** (nor re-affirm it), and a wrongly-filed `finding` can only be superseded by `verified_fixed`, never by a corrected finding. The oversight system cannot self-correct false negatives/positives.
+- **Disposition:** **Legislative** — only the Legislature may reform measurement methods. **Summoned c1a00007** (Constitutional member) to draft a short, red-teamable bill amending the audit-accountability rules to permit **evidence-backed correction** of a prior verdict (e.g. a superseding verdict with a durable evidence reference, preserving the audit trail) — for ordinary debate and vote. Not auto-enacted.
+- **Status:** assigned for drafting.
 
 ## T1. Stale smoke tests on `main` (NEW, 2026-10-17T15:32Z)
 

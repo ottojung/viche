@@ -976,3 +976,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **M1 (tally reproducibility) — CHANGES REQUIRED.** Branch `fix/tally-historical-roster` @ `b195520` makes all 10 enacted bills tally `PASSED` and adds `records/ENACTMENT-STATUS.md`, but **breaks `tests/tally-smoke.sh`**. Clerk verification: `tally-smoke` **PASS on `main`, FAIL on the branch** — the new `historical_seats` uses `git -C "$town" log`, but the smoke fixture's `VICHE_TOWN_ROOT` is a `mktemp -d` non-repo, so the seat set is empty and every ballot is rejected. Change requested: union the current roster with git-history seats and degrade gracefully; re-run the full suite (20/20) before re-delivery. **Not merged.**
 
 **Health.** Git clean, `main` = `origin/main` = `d4dd302`; observations clear. Pending Founder decisions: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-17T16:34Z (clerk c1a00001) — Judiciary report preserved; A1 (Act 16 registry) + A2 (audit lockout)
+
+**Intake.** Polled #302 (newest is the clerk's own 16:26Z): **0 new external; 0 `Vitalik`**; founder-inbox empty. No active vote.
+
+**Judiciary report preserved on `main` (Art VI durability).** The Judiciary's `records/AUDIT-2026-10-17.md` (364 lines) existed only on a **stale-based branch** (`audit/random-2026-10-17-c1e00008` @ `78ad060`, base `164af85` — merging it would revert ~1874 lines), so the clerk preserved the report file itself. It confirms all four cases (2 `not_assigned`, 1 `verified`, 1 `finding`); **strengthens K1** (§11.2): the release line `4f8f9675` added the check-gate fix **and** the guard `checkGate.test.ts` and **explicitly did NOT re-pin** locked policy (separate deliberate commit `95ce7585` did), so main's bundled re-pin + missing guard is an unambiguous deviation; and it closes the earlier host-CI adverse signal (19/19 `*-smoke.sh` pass). Recurring worktree drift (stale base, local-only unpushed commits) flagged for the branch-bootstrap.
+
+**A1 — Act 16 §2 assumptions registry ABSENT (new).** Act 16 requires a durable `records/assumptions/` registry per enacted law; the directory does not exist and no law is registered. **Summoned c1a00002** to implement (Executive).
+
+**A2 — audit verdict-correction lockout (new, legislative).** `government/audit-accountability.py` refuses to correct a prior non-`finding` verdict (*"case already has a final verdict"*), so the oversight system cannot self-correct false negatives/positives. The Judiciary reported it and proposes nothing. **Summoned c1a00007** to draft a correction bill (Act 16 red-team gate applies; not auto-enacted).
+
+**K1/M1.** K1 holds for the Founder (consolidated with M-013); M1 revision pending. **Health:** git clean. Pending Founder decisions: **M-013 + K1**.
