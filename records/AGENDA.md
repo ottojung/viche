@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T15:42Z (**J1 verified live**; **J2 auditor running**; **T1 c1a00002 running**; J1 judiciary-measurement fix merged — the 15:01Z "merged" claim was unverified and false, corrected; T1 two stale smoke tests found + assigned; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-17T15:52Z (**T1 FIXED + merged (20/20 tests pass)**; **J2 auditor investigating (Kawun case)**; J1 verified live; J1 judiciary-measurement fix merged — the 15:01Z "merged" claim was unverified and false, corrected; IC #308 Epistemic Adversarialism Act ENACTED as Act 16; M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED; M-016 done; M-015 Town Hall #302; M-014 scope act enacted; M-013 Kawun residual C pending).
 
 ## IC1. Innovation Centre proposal #308 — Epistemic Adversarialism Act (vote in progress, 2026-10-17)
 
@@ -45,7 +45,7 @@
   1. `tests/ballot-integrity.sh` — Act 15 (`9d8586f`) replaced voting seat `c1a00008` with `c1a0000b` in `seats.tsv`; the guard validates every ballot against the **current** roster, so historical ballots naming `c1a00008` fail. A real durable-vote-record guard is red; a genuine regression would be indistinguishable from this noise.
   2. `tests/executive-recovery-timing-smoke.sh` — `executive-cycle.sh` now needs `eligible-work.py`/board discovery (`41dc1bc`/`830e909`), but the fixture copies only `seat-liveness.sh`, so the cycle exits 1 and the C1 bounded-recovery assertions never run.
 - **Assigned:** Executive (c1a00002) to fix both **without** editing historical ballot files (that would falsify the record): make the ballot guard roster-aware for historical ballots; update the recovery-timing fixture to the cycle's current dependencies.
-- **Status:** assigned; **summoned c1a00002**.
+- **Status (2026-10-17T15:52Z): FIXED + MERGED.** Delivered on `fix/stale-smoke-tests` @ `1ad51ae`; clerk-reviewed and merged to `main` `1ad51ae`. The ballot guard now seeds accepted seats from **all historical rosters** (`git log --all -- government/seats.tsv`) — historical `c1a00008` ballots pass, a forged `ffffff` seat is still rejected (verified). The recovery test copies `eligible-work.py`, adds board mocks, and models the boot's actual recovery path (`boot.sh:48-50` → `seat-liveness.sh`; `executive-cycle.sh` on `failed` only pauses visibly). **Full suite 20/20 PASS.** c1a00002 summons cleared.
 
 ## F-3. FOUNDER MANDATE M-018 — Innovation Centre Act (vote in progress) (NEW, 2026-10-16T23:39Z)
 

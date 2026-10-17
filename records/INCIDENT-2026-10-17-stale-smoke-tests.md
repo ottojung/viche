@@ -5,6 +5,21 @@
 **Pre-existing:** confirmed failing at `5349f1c` (before this sitting's changes) in a
 detached worktree; **not** caused by the 15:32Z sitting.
 
+## RESOLVED — 2026-10-17T15:52Z
+
+Fixed by the Executive (c1a00002) on branch `fix/stale-smoke-tests` @ `1ad51ae`;
+clerk-reviewed and merged to `main` `1ad51ae` (fast-forward). **Full suite 20/20 PASS.**
+Clerk verification of the fix (not merely the claim):
+- `tests/ballot-integrity.sh` now seeds the accepted-seat set from **all historical
+  rosters** (`git log --all -- government/seats.tsv`); historical ballots naming
+  `c1a00008` pass, while a **synthetic forged `ffffff` ballot is still rejected**
+  (verified) and digest/duplicate/value checks are unchanged.
+- `tests/executive-recovery-timing-smoke.sh` now copies `eligible-work.py`, adds
+  board mocks, and models the boot's actual recovery path: `boot.sh:48-50` calls
+  `seat-liveness.sh` per agent, and `executive-cycle.sh` on `failed` only pauses
+  visibly (exit 1, no dispatch). The test asserts no dispatch + bounded resets
+  (1800s cooldown).
+
 ## 1. `tests/ballot-integrity.sh` — FAIL
 
 ```
