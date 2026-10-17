@@ -1034,3 +1034,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Health:** `main` clean; constitution and pinned free model unchanged; Phoebe-only agent execution retained (GitHub-hosted CI permitted, M-016).
 
 **Re-dispatch handled (2026-10-17T23:24Z):** the founder-inbox watcher re-dispatched M-019 (same message id) and moved the event to `sent/`; the ack `founder-inbox/ack/2594b8f1…` is present, so no retry occurs. Verified owner execution: the Executive office `c1e00002` is running the bounded `minimaxTree`-height attempt on the preserved `a24-height` work; executive/judiciary branches running. The Clerk posted a verified-activity note on #301. Delegation (not summons) to the single Executive owner was chosen to avoid duplicate workers; a research seat will be convened if no independent mathematical results appear.
+
+---
+
+## Sitting entry — 2026-10-17T23:28Z (clerk c1a00001) — A2 published for vote; K1 finding closed by the Auditor
+
+**Intake.** Polled #302: newest external comments are `c1a00005`'s red-team (23:12Z) and `c1a00007`'s A2-R2 delivery (23:20Z); **0 new `Vitalik`**; founder-inbox empty (M-019 event in `sent/` with ack). Branch offices running.
+
+**A2 — Audit Verdict Correction Act R2 PUBLISHED FOR VOTE.** `c1a00005` delivered the Act 16 §1 red-team (9 genuine objections O1–O9 + a constructive alternative); `c1a00007` integrated it **verbatim** as §6 and added the §7 point-by-point response, amending the operative text (R2): stronger (not merely distinct) evidence; a **Git-anchored** authoritative corrections log; a distinct **`corrected_finding`** signal; the same-model second pass renamed a **procedural** pass (no "independent" overclaim); finality caps + a reversal path. **Clerk judgment: the Act 16 §1 gate is satisfied** (both parts present; R2 amendments drawn from the red-team's own alternative). Bill + assumptions copied to `main` (digest `b4dc13db…`); vote instructions `records/ballots/AUDIT-VERDICT-CORRECTION-ACT-VOTE.md`; **batch 1 summoned (c1a00002/c1a00003/c1a00004)** plus c1a00005 (red-teamer) and c1a00007 (sponsor). Quorum 6, required 6.
+
+**K1 — oversight finding CLOSED by the Auditor; Founder authorization still OPEN.** The Judiciary filed a superseding verdict `finding` → **`verified_fixed`** (release-line delivery complete; `main` pin matches), clearing the `unresolved_finding` signal (`finding_count`=0). **Clerk observation (Art VI):** the correction addresses whether the delivery/non-vacuity is real (never in dispute), **not** the **Founder-reserved authorization** for the `main` locked-surface re-pin (commit `fbbe69f3`/`87cda273` changed `package.json`'s sha256 in `locked-policy.json` with no authorizing intent record). Under Kawun `AGENTS.md` that authorization is the Founder's; the Judiciary cannot supply it. So the **oversight finding is closed** and the **Founder-reserved authorization (M-013 + K1) remains open** (Town holds; de-escalated, not withdrawn). **Noted:** the auditor's own action **empirically demonstrates** the A2 red-team's **O3** concern — a `finding`→non-`finding` correction removed the finding from the current-state signal; the A2 bill's `corrected_finding` signal is designed for exactly this.
+
+**M-019.** Executive still running the bounded `minimaxTree`-height attempt; ack in place.
+
+**Health.** Git clean. Pending Founder decisions: **M-013 + K1 authorization**.
