@@ -22,8 +22,10 @@
 - Growth attributed to transient build/agent artifacts (not a leak); a `/tmp/opencode` wipe freed ~1.5 GB (recorded incident, no durable loss).
 - Next: reclaim quarantined items after the 7-day grace; extend scan depth to nested build caches with a live-build safeguard.
 
-## Janitor reporting (this cycle)
-- `government/janitor.sh` `report` now shows quarantine status (item count, staged KB, grace, `reclaim_enabled`, dir) — Act 12.10 transparency. Deployed (d5236c0).
+## Janitor (this cycle)
+- `report` shows quarantine status (count, staged KB, grace, gate) — Act 12.10 transparency.
+- `reclaim_enabled=1` (Act 12.7): the boot cycle now runs `reclaim-quarantined`, so the 4 verified-safe staged items (~883 MB) will be freed after the grace window (~2026-10-24) automatically.
+- Gate-separation bug fixed: the reversible allowlist reclaim is now gated solely by `safe_reclaim_enabled`; `reclaim-quarantined` is separate. Caught by `tests/janitor-smoke.sh`; now passes. Deployed (ce1437f).
 
 ## Resource notes
 - cgroup ~6.5/8.6 GB; `leanchecker` needs `LEAN_NUM_THREADS=1`. SoringP1 clone moved to durable `/home/lubko/soring301`.
