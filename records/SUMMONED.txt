@@ -1,5 +1,9 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Resource Safety Metric Amendment — ENACTED 2026-10-17 (7-0-0); Act 13 §1/§2 amended, §9 (clerk exemption) added.
-# All ballot summons RESOLVED. SUMMONED.txt empty.
-# Pending: M-013 (Kawun residual C) awaits the Founder's one-line decision.
+# Epistemic Adversarialism Act VOTE (Innovation Centre proposal #308; bill id epistemic-adversarialism-act):
+#   Instructions: records/ballots/EPISTEMIC-ADVERSARIALISM-ACT-VOTE.md
+#   Batch 1: c1a00007 (Constitution X), c1a00005 (skeptic), c1a00004 (research).
+#   Clerk: more batches + tally at >=6 yes; then enact (add the Act to LAWS.md).
+c1a00004
+c1a00005
+c1a00007
