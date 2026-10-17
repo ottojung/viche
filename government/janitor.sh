@@ -499,6 +499,9 @@ case "$mode" in
         else
             log_append "$jstate/actions.log" "$ts reclaim deferred reason=not-due level=$level"
         fi
+        if [ "$reclaim_enabled" -eq 1 ]; then
+            reclaim_quarantined
+        fi
         ;;
     report)
         if [ -f "$jstate/status" ]; then
