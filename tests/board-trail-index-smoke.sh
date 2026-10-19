@@ -15,13 +15,15 @@ cp "$repo/government/LAWS.md" "$town/government/"
 cp "$repo"/records/bills/judiciary-independence.md "$repo"/records/bills/board-reporting-act.md "$town/records/bills/"
 
 # Mock board: titles per issue; #312 has a terminal verification update, others do not.
+# #303 carries a stage marker plus a PROSE MENTION of the terminal token: the §7
+# declaration-position rule must reject it (regression for the §5/§7 false positive).
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
 case "$1 $2" in
 "board show")
   case "$*" in
-    *"303"*) printf '{"title":"Three-branch legislation","messages":[]}' ;;
+    *"303"*) printf '{"title":"Three-branch legislation","messages":[{"author":"agent","body":"Stage marker: verification. We must not claim verification:confirmed in this prose sentence."}]}' ;;
     *"307"*) printf '{"title":"Innovation Centre","messages":[]}' ;;
     *"308"*) printf '{"title":"Epistemic Adversarialism","messages":[]}' ;;
     *"310"*) printf '{"title":"Detector Calibration Act","messages":[]}' ;;

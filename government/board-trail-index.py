@@ -38,6 +38,19 @@ TERMINAL_STATES = (
     "deferred",
 )
 
+# Act 18 §3.4 content standard: a terminal update carries exactly one stage
+# marker AND a DECLARED terminal state. Both the §5 lens
+# (government/board-trail-check.sh) and this §7 generator use the SAME rules so
+# the two instruments cannot disagree. A terminal token counts only in a
+# declaration position — start of line, after a sentence/clause terminator, or
+# after a declaration label — never as a bare prose/quoted mention.
+STAGE_MARKER_RE = re.compile(
+    r"(?i)stage\s*marker[^\n]{0,12}\b(proposal|enactment|deployment|verification)\b")
+TERMINAL_DECLARATION_RE = re.compile(
+    r"(?m)(^|[.:;—-]\s*|(?i:state|status|terminal|result|outcome|transition)\s+)"
+    r"(verification:confirmed|verification:blocked|enactment:not_enacted|deferred)"
+    r"([.\s,;:]|$)")
+
 
 def read(path):
     try:
@@ -62,26 +75,28 @@ def board_title(num):
         return ""
 
 
-def board_has_terminal_update(num):
-    """A terminal board update carries a stage marker AND a DECLARED terminal
-    state (Act 18 §3.3/§3.4) — a terminal token in a declaration position, not a
-    quoted/prose mention. Automated scheduler/agent status lines are not updates."""
+def board_terminal_state(num):
+    """Return the DECLARED terminal state of an originating issue, or None.
+
+    Act 18 §3.3/§3.4: a terminal update carries a stage marker AND a declared
+    terminal state — a terminal token in a declaration position, not a
+    quoted/prose mention. Automated scheduler/agent status lines are not
+    updates. Mirrors the §5 lens exactly (same regexes) so §5 and §7 agree."""
     try:
         issue = board_invoke("show", "--id", str(num), "--page", "1", "--json")
     except Exception:
-        return False
+        return None
     for msg in issue.get("messages") or []:
         body = msg.get("body") or ""
         low = body.lower()
         if "[scheduler-turn]" in low or "[terminal-handoff]" in low:
             continue
-        has_marker = any(m in low for m in STAGE_MARKERS)
-        has_terminal = re.search(
-            r"(verification:confirmed|verification:blocked|enactment:not_enacted)([.\s,;:]|$)",
-            body) is not None
-        if has_marker and has_terminal:
-            return True
-    return False
+        if not STAGE_MARKER_RE.search(body):
+            continue
+        declared = TERMINAL_DECLARATION_RE.search(body)
+        if declared:
+            return declared.group(2)
+    return None
 
 
 def parse_originating():
@@ -143,12 +158,13 @@ def build_index():
         work_list = by_issue[num]
         enacted = any(w["type"] == "law" and w["enacted_epoch"] > 0 for w in work_list)
         title = board_title(num)
-        has_terminal = board_has_terminal_update(num)
+        declared = board_terminal_state(num)
+        has_terminal = declared is not None
         # git_only_gap: work enacted/completed in Git but no terminal board update.
         git_only_gap = enacted and not has_terminal
         stage = "enactment" if enacted else "proposal"
         if enacted and has_terminal:
-            terminal = "verification:confirmed"
+            terminal = declared
         elif enacted:
             terminal = None  # enacted but not yet a terminal board update
         elif any(w["type"] == "draft" for w in work_list):
