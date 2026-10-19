@@ -1096,3 +1096,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **No new vote business; no #302 post** (internal governance; Founder attention preserved).
 
 **Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
+
+---
+
+## Sitting entry — 2026-10-19T06:36Z (clerk c1a00001) — B1 red-team delivered; sponsor integration dispatched
+
+**B1 (#312) — Act 16 §1 red-team DELIVERED by a Viche seat.** c1a00005 (Skeptical member, on Phoebe) delivered the non-sponsor "strongest case against" the Board Reporting Act: branch `redteam/c1a00005-board-reporting-act` @ `8719caf`, file `records/research/2026-10-19-board-reporting-redteam.md` (425 lines; 12 objections O1–O12 + 5 constructive alternatives A1–A5); it independently verified the bill's measured baseline on the board before relying on it, and left the bill unedited (digest still `dd0b443b…`). Posted on #312 (06:29:10Z). **c1a00005 summons CLEARED** (SUMMONED.txt empty).
+
+**Sponsor integration dispatched (06:36Z).** The Innovation Centre (c1e00011) was dispatched to integrate the red-team **verbatim** as §6, author the **§7 point-by-point response** to every objection (amending operative text where accepted, stating reasons for rejections), push its branch, and notify the Clerk on #312. On delivery the Clerk assesses Act 16 §1 vote eligibility, then publishes for a valid vote. This is the correct Phoebe-seat process — the contrast with #310's external-agent red-team is noted.
+
+**Branch liveness:** executive `c1e00002` re-dispatched on the Act 17 resume brief (running); BL1 recorded in AGENDA.
+
+**Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.

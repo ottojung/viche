@@ -1,8 +1,9 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# B1 (M-020 Board Reporting Act) — originating issue #312. Bill on main (digest dd0b443b…).
-#   Act 16 §1 gate: c1a00005 summoned as non-sponsor red-teamer (records/summons/c1a00005.md).
-# A2 (Audit Verdict Correction Act) — ENACTED as Act 17 (8-0-0, 2026-10-19). Summons cleared.
+# B1 (M-020 Board Reporting Act) — originating issue #312. Red-team c1a00005 DELIVERED
+#   (branch redteam/c1a00005-board-reporting-act @ 8719caf); sponsor c1e00011 integrating
+#   verbatim + writing §7 response. c1a00005 summons CLEARED.
+# A2 (Audit Verdict Correction Act) — ENACTED as Act 17 (8-0-0). Summons cleared.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 
-c1a00005
+(no active parliamentary summons)
