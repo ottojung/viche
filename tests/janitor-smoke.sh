@@ -122,4 +122,26 @@ aged_age=$(( (now - aged_mtime) / 86400 ))
 awk -F'\t' 'NR>1 && $3=="'"$box"'/live-work/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'monitor'
 awk -F'\t' 'NR>1 && $3=="'"$box"'/aged-work/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'quarantine-candidate'
 
-printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, and classifies build caches by liveness\n'
+# 8. build-toolchain classification: an aged, large Lean/elAN toolchain install is a
+#    live build dependency (the project's pinned toolchain), NOT clutter. It must be
+#    retained, never quarantined, even though it is non-git, old and >=1 GB (J2).
+tbox=$d/tbox
+mkdir -p "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0/bin"
+printf 'x\n' > "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean"
+touch -d '40 days ago' "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0" \
+    "$tbox/proj/.elan" "$tbox/proj"
+now=$(date -u +%s)
+tc_mtime=$(stat -c %Y "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0")
+tc_age=$(( (now - tc_mtime) / 86400 ))
+el_mtime=$(stat -c %Y "$tbox/proj/.elan/toolchains")
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$tbox/proj/.elan" "$el_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t%s\t0\t0\t0\t\n' "$host" \
+        "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0" "$tc_mtime" "$tc_age"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan/toolchains/leanprover--lean4---v4.34.0" {print $10}' \
+    "$state/janitor/inventory.tsv" | grep -qx 'retain'
+
+printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, and retains live build toolchains\n'

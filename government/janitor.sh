@@ -415,6 +415,17 @@ classify() {
                 fi
             fi
             ;;
+        */.elan/toolchains/*)
+            # Live Lean/elAN toolchain install (e.g. the pinned default for an
+            # active project). Quarantining it breaks the build until elan
+            # re-downloads it (failure mode J2: live build dependency). The
+            # directory mtime ages after install, so age is not a signal of
+            # abandonment here; retain it.
+            class=retain
+            ;;
+        */.elan/toolchains)
+            class=retain
+            ;;
         *)
             if [ "$is_git" -eq 1 ] && [ "${unpushed:-0}" -gt 0 ]; then
                 class=retain-unpushed
