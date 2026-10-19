@@ -22,7 +22,7 @@ mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/state" "$scratch/mock"
 git clone --quiet --no-hardlinks "$root" "$town"
 # A worktree at a detached PR commit may clone its default main instead of HEAD.
 # Test the exact checked-out source commit inside this disposable clone.
-git -C "$town" reset --hard "$(git -C "$root" rev-parse HEAD)" >/dev/null
+git -C "$town" switch -C main "$(git -C "$root" rev-parse HEAD)" >/dev/null
 : > "$town/records/SUMMONED.txt"
 
 cat > "$scratch/bin/antonina" <<'MOCK'
