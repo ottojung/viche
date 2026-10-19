@@ -415,15 +415,12 @@ classify() {
                 fi
             fi
             ;;
-        */.elan/toolchains/*)
-            # Live Lean/elAN toolchain install (e.g. the pinned default for an
-            # active project). Quarantining it breaks the build until elan
-            # re-downloads it (failure mode J2: live build dependency). The
-            # directory mtime ages after install, so age is not a signal of
-            # abandonment here; retain it.
-            class=retain
-            ;;
-        */.elan/toolchains)
+        */.elan)
+            # Live Lean/elAN toolchain installation (elan home: toolchains, the
+            # elan binary, settings). Quarantining it breaks the Lean build until
+            # elan re-downloads the pinned toolchain (failure mode J2: live build
+            # dependency). The directory mtime ages after install, so age is not
+            # an abandonment signal here; retain it.
             class=retain
             ;;
         *)

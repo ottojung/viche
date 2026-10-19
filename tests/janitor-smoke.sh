@@ -129,18 +129,23 @@ tbox=$d/tbox
 mkdir -p "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0/bin"
 printf 'x\n' > "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean"
 touch -d '40 days ago' "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0" \
-    "$tbox/proj/.elan" "$tbox/proj"
+    "$tbox/proj/.elan/toolchains" "$tbox/proj/.elan" "$tbox/proj"
 now=$(date -u +%s)
 tc_mtime=$(stat -c %Y "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0")
-tc_age=$(( (now - tc_mtime) / 86400 ))
 el_mtime=$(stat -c %Y "$tbox/proj/.elan/toolchains")
+top_mtime=$(stat -c %Y "$tbox/proj/.elan")
 {
     printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
-    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$tbox/proj/.elan" "$el_mtime"
-    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t%s\t0\t0\t0\t\n' "$host" \
-        "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0" "$tc_mtime" "$tc_age"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$tbox/proj/.elan" "$top_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$tbox/proj/.elan/toolchains" "$el_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t40\t0\t0\t0\t\n' "$host" \
+        "$tbox/proj/.elan/toolchains/leanprover--lean4---v4.34.0" "$tc_mtime"
 } > "$state/janitor/inventory.tsv"
 /bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan" {print $10}' \
+    "$state/janitor/inventory.tsv" | grep -qx 'retain'
+awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan/toolchains" {print $10}' \
+    "$state/janitor/inventory.tsv" | grep -qx 'retain'
 awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan/toolchains/leanprover--lean4---v4.34.0" {print $10}' \
     "$state/janitor/inventory.tsv" | grep -qx 'retain'
 
