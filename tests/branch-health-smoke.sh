@@ -6,7 +6,8 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 mkdir -p "$scratch/branches"
 VICHE_STATE_ROOT=$scratch
 VICHE_BRANCH_NOW=1000
-export VICHE_STATE_ROOT VICHE_BRANCH_NOW
+VICHE_BOARD_TRAIL_CHECKS=0
+export VICHE_STATE_ROOT VICHE_BRANCH_NOW VICHE_BOARD_TRAIL_CHECKS
 for branch in legislature executive judiciary; do
   printf '{"branch":"%s","observed_at":1000,"readiness":"ready"}\n' "$branch" > "$scratch/branches/$branch.json"
 done

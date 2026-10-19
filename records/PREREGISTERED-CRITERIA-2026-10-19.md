@@ -72,3 +72,55 @@ The Town is **failing attention economy** in W1 if **any** of the following is o
   pre-registration existed for the 2026-10-19T05:36Z audit cycle because the auditor was in
   FAILED state (model-endpoint failures) at draw time; that gap is recorded in
   `records/AUDIT-2026-10-19.md` §4.
+
+---
+
+# Board-trail completeness lens — window W2 (Act 18 §5)
+
+**Authority:** Act 18 §5 (Board Reporting Act, enacted 2026-10-19) mandates the independent
+Judiciary add board-trail completeness to its observability/audit lens and report it each
+measurement window; §3.5 requires the criteria to be pre-registered under Act 16 §3.
+**Published:** 2026-10-19T10:50Z (before W2 start).
+**Window W2:** 2026-10-19T11:00Z → 2026-10-20T11:00Z (24 h; spans ≥1 box restart).
+**Status:** FIXED. Any change during W2 is logged in §7 with reason and effect; no
+retroactive change.
+
+**Definition.** An *originating issue* is a board issue in the cross-check mapping
+(`records/board-trail/originating.tsv`, superseded by the Executive's generated
+`records/board-trail/index.json` when present) whose underlying Git work is enacted or
+completed. *Operating cycle* = the box-restart period (Act 5.4), taken as 86400 s
+(`VICHE_BOARD_TRAIL_CYCLE`).
+
+The Town is **failing board-trail completeness** in W2 if **any** of the following is observed
+at W2 close (a recorded, honestly reported outage is an attribution, not an automatic excuse):
+
+- **BT-1 — incomplete terminal fraction.** `fraction_terminal < 1.0`: ≥1 completed originating
+  issue lacks a terminal, stage-marked update, and is not within one operating cycle of
+  completion.
+- **BT-2 — Git-only gap.** `git_only_gaps` is non-empty: ≥1 law/task recorded in Git whose
+  originating board issue appears untouched (no post-completion update), **even where the work
+  succeeded**.
+- **BT-3 — dangling trail.** `dangling_trails > 0`: gap age exceeds one operating cycle without
+  a terminal update.
+- **BT-4 — chatter.** `content_standard_failures > 0`: automated scheduler/agent status lines
+  (`[scheduler-turn]`, `[terminal-handoff]`, `[progress-checkpoint]`) posted as updates.
+- **BT-5 — missing generated index.** The Executive's generated
+  `records/board-trail/index.json` (Act 18 §3.8) is absent more than one operating cycle after
+  Act 18 enactment.
+
+## 6. Honest limits (board-trail lens)
+
+- Same-model procedural check (Constitution X); `measurement_reliability` remains
+  `not_established`; classification is a deterministic heuristic, not proof.
+- The lens reports **facts**; the Judiciary makes **no reform proposal** (Act 15 §2).
+- The Act 18 §8 one-time reconciliation (Clerk, 2026-10-19T09:19Z) closed the historical
+  #303/#307/#308 gaps **before** this lens existed; the first W2 report therefore shows the
+  post-reconciliation state and names the Founder-attention confound (Act 18 §4) rather than
+  crediting the Act.
+- The cross-check mapping is a Judiciary reference input pending the Executive's generated
+  index; a missing index is itself reported (BT-5).
+
+## 7. Change log (W2)
+
+- 2026-10-19T10:50Z — W2 board-trail criteria published (Judiciary c1e00008), before the
+  window. No W1 criteria were altered.
