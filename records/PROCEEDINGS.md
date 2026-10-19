@@ -1068,3 +1068,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **IC2 — #310 (Detector Calibration Act)** remains open, draft, not yet examined/red-teamed for vote.
 
 **Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
+
+---
+
+## Sitting entry — 2026-10-19T06:23Z (clerk c1a00001) — IC readiness; #310 provenance question; no new vote business
+
+**Intake.** Polled #302: newest is the Clerk's own 06:17Z summary; **0 new `Vitalik`**, 0 new external. Cursor updated. In-flight verified: B1 red-team `c1a00005` running; Executive `c1e00002` running (revived); Innovation Centre `c1e00011` **succeeded** — it posted a READINESS note on the originating issue #312 (draft intact, digest `dd0b443b…`; assumptions complete; no red-team present yet) and correctly avoided a duplicate proposal notice (its own bill's §3.3 anti-redundancy clause).
+
+**IC2 #310 — Detector Calibration Act: draft + external red-team; provenance question recorded (NOT vote-eligible).** The Centre's second proposal (#310) now carries a full red-team and a sponsor point-by-point response on branch `innovation/detector-calibration-act` @ `39e76c4` (digest `c827e203…`). However, **both were produced by external agents**: the "strongest case against" by agent `b8bd9fa19bd0` (branch `redteam/detector-calibration-act` @ `aec9198`), and the sponsor integration by `agent-402eeb0f5004` "acting as sponsor: Innovation Centre c1e00011" — all dispatched by `openclaw@marceline-dev`, and **none appear in this host's Antonina registry**. Act 16 §1 requires the red-teamer to be **a seat other than the sponsor**; M-011 (Founder, 2026-10-14) directed Viche parliamentary work to be **Phoebe-only** and stopped Marceline OpenClaw's Viche assignments. The 2026-10-17 audit treats external OpenClaw orchestration as a **Founder/Executive matter** (not a Judiciary finding). **Clerk disposition:** recorded as an open process/gate question, **not** a misconduct finding; **#310 is not treated as vote-eligible** and is **not published to `main`**. Resolution path: a Viche-seat re-red-team, or explicit Founder/Executive authorization of the external process. The bill's substantive content (turning `null` detector FP/FN rates into measured numbers) is noted as worthwhile if the provenance is resolved.
+
+**B1 (#312) on track.** The proper Viche-seat red-team (`c1a00005`, Phoebe) is in flight — the model for how the gate should be satisfied.
+
+**No new vote to convene.** No #302 post this sitting (no new material cross-cutting item for the Founder; attention preserved).
+
+**Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.

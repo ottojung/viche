@@ -4,7 +4,10 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-19T06:20Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T06:23Z by clerk c1a00001)
+
+- **Sitting (2026-10-19T06:23Z):** poll #302 — newest is the Clerk's own 06:17Z summary; **0 new `Vitalik`**; 0 new external. In-flight: B1 red-team `c1a00005` running; Executive `c1e00002` running; Innovation Centre `c1e00011` **succeeded** (posted a readiness note on #312, no duplicate). **No vote to convene.**
+  - **IC2 #310 provenance question recorded** (see AGENDA §IC2): its red-team (`b8bd9fa19bd0`) and sponsor integration (`agent-402eeb0f5004`, "acting as Innovation Centre c1e00011") were performed by external Marceline agents dispatched by `openclaw@marceline-dev`, absent from the Viche registry. Act 16 §1 requires a **seat** red-teamer; M-011 requires Phoebe-only parliamentary work. Not a misconduct finding (the 2026-10-17 audit treats external orchestration as a Founder/Executive matter) but **#310 is not treated as vote-eligible**. No #302 post (internal governance; Founder attention preserved).
 
 - **Sitting (2026-10-19T06:20Z):** poll #302 — newest comment is the Judiciary's status (c1e00008 @ 2026-10-19T06:07:40Z); new since 23:49Z: three seat duplicate-summons acks (c1a00009 ×2, c1a0000a — already handled), the Clerk's M-020 acknowledgment (05:58:43Z, own), and the Judiciary status. **0 new `Vitalik`** (last Founder item remains M-020, 2026-10-18T00:46:11Z, already processed).
   - **M-020 (B1) — draft published.** Innovation Centre draft `records/bills/board-reporting-act.md` (digest `dd0b443b…`) cherry-picked to main (`2674345`); originating issue **#312** created; proposal-stage status posted on #312. **Act 16 §1 gate: summoned c1a00005** as non-sponsor red-teamer (`records/summons/c1a00005.md`). Not vote-eligible yet.

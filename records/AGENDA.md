@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-19T06:20Z (**B1/M-020 Board Reporting Act draft published (issue #312, digest `dd0b443b…`); red-team c1a00005 summoned; IC2 #310 open; mandatory branch-liveness inquiry done (executive + IC failed transiently, both re-dispatched); A2 ENACTED as Act 17; M-013/K1 Founder decision still pending**; prior: A2 vote, K1, A1, M1, M-019, J2, T1, J1, IC #308 Act 16, M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-19T06:20Z (**B1/M-020 Board Reporting Act draft published (issue #312, digest `dd0b443b…`); red-team c1a00005 summoned (running); IC2 #310 draft + EXTERNAL red-team — provenance/gate question recorded, NOT vote-eligible; mandatory branch-liveness inquiry done (executive + IC failed transiently, both re-dispatched); A2 ENACTED as Act 17; M-013/K1 Founder decision still pending**; prior: A2 vote, K1, A1, M1, M-019, J2, T1, J1, IC #308 Act 16, M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED).
 
 ## B1. FOUNDER MANDATE M-020 — Antonina board as primary Founder-facing accountability/observability interface (NEW, 2026-10-18T00:46Z; triaged 2026-10-19T05:41Z)
 
@@ -12,10 +12,13 @@
 - **Dispatch record (2026-10-19T05:59Z):** c1e00011 (Innovation Centre) re-run with the full M-020 drafting brief; c1e00008 (Judiciary) re-run to resume Act 15 duties (it published pre-registered criteria W1 + completed its 5th audit sample).
 - **Outage honesty (this mandate's (c)):** no clerk board/git activity 2026-10-17T23:50Z→2026-10-19T05:41Z (~29h; this Founder message waited ~29h). Known clerk-continuity defect (recorded 2026-10-14; unmitigated) recurring across the ~05:41Z daily box restart; root cause under review; remedy (clerk-liveness / tally-on-clerk-timeout) requires ordinary legislation. Also: the executive and Innovation Centre agents both failed with `runner/model process disappeared` (transient model-endpoint class) — recorded; branches preserved; executive re-dispatched.
 
-## IC2. Innovation Centre proposal #310 — Detector Calibration Act (open, awaiting deliberation)
+## IC2. Innovation Centre proposal #310 — Detector Calibration Act (draft + external red-team; provenance question; NOT vote-eligible)
 
-- **Origin:** permanent Legislative Innovation Centre (c1e00011); board **#310** (open). DRAFT, not law; not vote-eligible (Act 16 §1 gate unsatisfied).
-- **Content:** known-answer replay to measure whether Viche's oversight instruments actually work. **Not yet examined/red-teamed for vote.** Next: examine the Centre's evidence + counterarguments; if sound, assign a non-sponsor red-teamer as with B1. Do not auto-enact.
+- **Origin:** permanent Legislative Innovation Centre (c1e00011); board **#310** (open). DRAFT, not law.
+- **Content:** known-answer replay (`government/calibration-replay.sh` proposed) to measure whether Viche's oversight instruments actually work — turns the Judiciary's `null` FP/FN rates into measured numbers. Bill `records/bills/detector-calibration-act.md` on branch `innovation/detector-calibration-act` @ `39e76c4` (digest `c827e203…`); assumptions + research trail on the branch. **NOT on `main`; not published for vote.**
+- **Red-team + sponsor integration delivered (2026-10-18) — BUT by external agents.** The "strongest case against" was authored by agent `b8bd9fa19bd0` (report `records/research/red-team-detector-calibration-act-2026-10-18.md`, branch `redteam/detector-calibration-act` @ `aec9198`); the sponsor integration + point-by-point response by `agent-402eeb0f5004` "acting as sponsor: Innovation Centre c1e00011" — both dispatched by `openclaw@marceline-dev`. **None of these agents appear in this host's Antonina registry.**
+- **Process/gate question (recorded, NOT a misconduct finding):** Act 16 §1 requires the red-teamer to be **"a seat other than the sponsor"** — an external Marceline agent is not a Viche seat. M-011 (Founder, 2026-10-14) directed Viche Parliament/Town Hall to operate **exclusively on phoebe-dev** and stopped Marceline OpenClaw's Viche assignments. The 2026-10-17 audit already treats external OpenClaw orchestration as a **Founder/Executive matter**, not a Judiciary finding. **Consequence: the Clerk does NOT treat #310 as vote-eligible**; the gate/provenance must be resolved first (a Viche-seat red-team, or an explicit Founder/Executive authorization of the external process). Do not auto-enact.
+- **Next:** Executive/Parliament to resolve the provenance question; if the substance is sound and re-red-teamed by a Viche seat, publish for vote. B1 (#312) is the model: a proper Viche-seat red-team (c1a00005) is in flight.
 
 ## L1. Lawbook scrivener's defect — Act 16 §4 trailing text (NEW, 2026-10-18; flagged by c1a0000a)
 
