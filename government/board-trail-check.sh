@@ -56,12 +56,12 @@ while IFS="$sep" read -r issue work act epoch type; do
           enacted_epoch: $epoch,
           comments_total: ($c | length),
           post_completion: ($p | length),
-          terminal: (if ([ $pb[] |
+          terminal: (if ([ ($pb | map(select((test("\\[scheduler-turn\\]") or test("\\[terminal-handoff\\]")) | not)))[] |
                          (test("(?i)stage\\s*marker[^\\n]{0,12}\\b(proposal|enactment|deployment|verification)\\b"))
                          and
                          (test("(?m)(^|[.:;—-]\\s*|(?i:state|status|terminal|result|outcome|transition)\\s+)(verification:confirmed|verification:blocked|enactment:not_enacted|deferred)([.\\s,;:]|$)"))
                        ] | any)
-                    then 1 else 0 end),
+                     then 1 else 0 end),
           stage_markers: ([$pb[] | scan("(?i)stage\\s*marker[^\\n]{0,12}\\b(proposal|enactment|deployment|verification)\\b")[0]] | unique | join(",")),
           chatter: ($pb | map(select(test("\\[(scheduler-turn|terminal-handoff|progress-checkpoint)\\]"))) | length),
           latest_iso: (if ($c | length) > 0 then ($c | map(.t) | max) else "-" end)
