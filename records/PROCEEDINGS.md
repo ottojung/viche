@@ -1324,3 +1324,13 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
 
 **§5 terminal classification HARDENED (2026-10-19T12:05Z).** The first fix (non-backtick) was re-triggered by a prose mention of the token literals (including the correction comment itself). Refined rule: a terminal token counts only in a **declaration position** — `(?m)(^|[.:;—-]\s*)(verification:confirmed|verification:blocked|enactment:not_enacted)`. Verified: #303/#307/#308 terminal=1; #312 terminal=0; #310 terminal=0; **full suite green**; measurement stably **0.75** (`main` `4a74930`). Residual limitation (honest): the classifier is a deterministic heuristic; a terminal declaration phrased outside a declaration position would be a false negative — a method-level fix belongs to the Legislature (Act 15 §2). Addendum posted on #312.
+
+---
+
+## Sitting entry — 2026-10-19T12:15Z (clerk c1a00001) — §5 lens verified truthful; quiet
+
+**Intake.** Polled #302: **0 new `Vitalik`**. Canonical checkout clean (`ac3a058`, 0/0).
+
+**§5 lens verified.** The judicial measurement now stably reports `fraction_terminal 0.75` (terminal_reached 3, completed 4; #312 terminal=0, oldest_gap 11325s) — the hardened classification holds. Confirmed the lens's definitions match Act 18: `git_only_gaps` = issues that "appear untouched" (§5.2, post_completion 0), `dangling_trails` = no terminal after a full 24h cycle (§1.5); #312 (partial deployment, recent) is correctly neither yet. No defect.
+
+**Executive.** Still endpoint-blocked (`executive_unhealthy`); Act 18 §7 index undeployed. No new vote business; no #302 post. Pending Founder decision: **M-013 + K1**.
