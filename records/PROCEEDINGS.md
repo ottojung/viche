@@ -1230,3 +1230,15 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Event:** the founder-inbox watcher **re-dispatched** the M-020 message (key `5f513eb6…`, sha256 `ryOAzhON…`, 2026-10-18T00:46:11Z) — **already processed and acked** (receipt present since 05:59Z; re-confirmed). No new Founder content.
 
 **Meaningful triage (re-dispatch).** Posted a **concise, evidence-linked status on #302** (the mandate asks for Founder-visible reporting): M-020 is substantially delivered — **Act 18 enacted** (6-0-0); **§5 deployed** (Judiciary board-trail lens, main `afaa2c0`, first measurement fraction 0.75 / Git-only gaps 0); **§8 reconciliation done** (#303/#307/#308 terminal); **§6/§7 blocked** (Executive `Endpoint is unavailable`). Originating issue #312 carries the enactment + partial-deployment transitions. `MANDATES M-020` updated to "DEPLOYMENT PARTIAL". No new Founder action requested.
+
+---
+
+## Sitting entry — 2026-10-19T11:02Z (clerk c1a00001) — §5 lens live; §6/§7 still endpoint-blocked
+
+**Intake.** Polled #302: newest is the Clerk's own 10:52Z M-020 status; **0 new `Vitalik`**. Canonical checkout clean (`e2e84e5`, 0/0).
+
+**Act 18 §5 lens — live and reported.** The judicial measurements now carry the `board_trail` block (authority "Act 18 §5"): completed_total 4, terminal_reached 4, **fraction_terminal 1.0**, **git_only_gaps []**, dangling_trails 0, content_standard_failures 6 (all on draft #310), executive_index_present **false**, measurement_reliability not_established. The §5 mandate is working end-to-end.
+
+**Act 18 §6/§7 — still blocked.** The Executive agent `c1e00002` is being re-dispatched each cycle but fails on the **first tool call** with `Endpoint is unavailable` (not a task-size issue — it dies immediately). No `records/board-trail/index.json`. **The M-020 mandate remains partially deployed**; the §5 lens flags `executive_index_present: false`. The endpoint fault is external (Founder/host-tracked, board #311); the Clerk cannot fix it and does not add redundant dispatches. If it persists, this is a candidate escalation item for the Founder/audit.
+
+**No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
