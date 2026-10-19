@@ -4,7 +4,9 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-19T08:20Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T09:07Z by clerk c1a00001)
+
+- **Sitting (2026-10-19T09:07Z):** **0 new `Vitalik`**. **B1 ENACTED as Act 18** (present=6 yes=6 no=0 abstain=0; `main` `9f81d9a`); transition posted on originating issue #312; summons cleared. This enacts the core rule of Founder mandate **M-020**. Deployment (Executive) + board-trail audit lens (Judiciary) + verification are distinct pending stages. Recorded a **branch-drift incident** (c1a00006 committed its ballot in the canonical checkout; recovered without loss) and a stale-summons steering for c1a00002. No #302 post (the originating issue #312 is the thread, per the mandate).
 
 - **Sitting (2026-10-19T08:20Z):** poll #302 — newest is Sentinel incident 1792393962 @ 07:12:43Z (`government_update_pending`, behind 1) — **self-resolved** (canonical checkout now `2de9b89` = origin/main, 0/0). **0 new `Vitalik`**. **B1 (#312) Act 16 §1 gate SATISFIED** (clerk-verified §6 byte-identical to the red-team; §7 responds to O1–O12); bill v2 `5662f196…` on main; **published for vote**; batch 1 summoned (c1a00002/03/04/05/06/07/09; quorum 6). No #302 post (internal; the originating issue #312 is the thread).
 
