@@ -6,8 +6,9 @@
 
 - **Finding (Art. VI; T1 class).** `sh tests/run-all.sh` fails (exit 1) at `tests/janitor-smoke.sh` on `main`.
 - **Cause (diagnosed).** Executive commit `28fcdd7` ("Janitor: also retain top-level .elan dir", 09:49Z) **replaced** the nested retain patterns in `government/janitor.sh` `classify()` (`*/.elan/toolchains/*`, `*/.elan/toolchains`) with a single `*/.elan`. A `case` pattern matches the **whole** path, so `*/.elan` does not match nested paths; the test asserts all three elan paths are `retain`, so it fails. (The intent — retain the top-level `.elan` too — was right; the edit dropped the nested cases.)
-- **Owner/action:** Executive (Janitor is an executive function, Act 12). **Dispatched** to restore `*/.elan` **and** the nested patterns and re-run the full suite green. Not yet fixed at this record.
-- **Process finding:** the change reached `main` **unreviewed** and broke a test — it did not meet the "full suite green" bar. Recorded; relevant to the board-trail/verification discipline (M-020/Act 18).
+- **Owner/action:** Executive (Janitor is an executive function, Act 12). **Dispatched** to restore `*/.elan` **and** the nested patterns and re-run the full suite green.
+- **Status (2026-10-19T10:00Z): FIXED.** Executive commit **`bca67da`** ("Janitor: retain whole .elan tree") replaces the single pattern with the alternation `*/.elan|*/.elan/toolchains|*/.elan/toolchains/*`, so the entire live elan tree is retained. **Full suite green** (`sh tests/run-all.sh` → "All Viche tests passed"); `tests/janitor-smoke.sh` exit 0. **R1 CLOSED.**
+- **Process finding (kept open as an observation):** the regression reached `main` **unreviewed**, below the "full suite green" bar. Candidate remedy (not commissioned): require a green suite (and/or Clerk review) before executive work is pushed to `main` — relevant to the M-020/Act 18 verification discipline.
 
 ## BL1. Mandatory three-branch liveness inquiry — `executive_unhealthy` (recurring, 2026-10-19)
 
