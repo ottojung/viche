@@ -29,6 +29,21 @@ def base():
     return Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state")) / "oversight" / "random"
 
 
+def records_dir():
+    # Authoritative, Git-anchored append-only trail (Act 17 §2.2). Lives in the
+    # town repository, which the audit office does not solely control.
+    return Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche")) / "records" / "oversight" / "corrections"
+
+
+def append_correction(case_id, record):
+    # Append-only: never overwrite or rewrite a committed entry (Act 17 §2.2, §2.7).
+    d = records_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    with open(d / f"{case_id}.jsonl", "a") as fh:
+        fh.write(json.dumps(record, sort_keys=True) + "\n")
+    return d / f"{case_id}.jsonl"
+
+
 def report(args):
     root = base()
     if not re.fullmatch(r"[0-9a-f]{18}", args.case):
@@ -40,11 +55,85 @@ def report(args):
         raise ValueError("durable evidence reference is required")
     path = root / "outcomes" / f"{args.case}.json"
     prior = json_file(path)
+    now = int(os.environ.get("VICHE_OVERSIGHT_NOW", time.time()))
+
+    if args.confirm:
+        # Second procedural pass (Act 17 §2.4): same office, same pinned model.
+        # Explicitly NOT independent verification (Constitution X single substrate).
+        if prior is None:
+            raise ValueError("no prior outcome to confirm against")
+        if not prior.get("correction_pending"):
+            raise ValueError("no pending correction to confirm")
+        pending = None
+        for h in prior.get("history", []):
+            if h.get("correction") and not h.get("confirmed"):
+                pending = h
+        if pending is None:
+            raise ValueError("no pending correction to confirm")
+        pending["confirmed"] = True
+        pending["confirmed_at"] = now
+        pending["confirm_evidence_ref"] = args.evidence
+        append_correction(args.case, {
+            "at": now, "case_id": args.case, "verdict": pending["verdict"],
+            "evidence_ref": args.evidence, "auditor": pending.get("auditor", ""),
+            "correction": True, "supersedes": pending["supersedes"],
+            "reason_code": pending.get("reason_code", ""),
+            "why_stronger": pending.get("why_stronger", ""),
+            "confirmed": True, "phase": "second_procedural_pass_not_independent",
+        })
+        prior["verdict"] = pending["verdict"]
+        prior["at"] = now
+        prior["evidence_ref"] = pending["evidence_ref"]
+        prior["details"] = pending.get("details", prior.get("details", ""))
+        prior["correction_pending"] = False
+        if pending["supersedes"] == "finding" and pending["verdict"] != "finding":
+            prior["corrected_from_finding"] = True
+        atomic(path, prior)
+        print(json.dumps(prior))
+        return
+
+    if args.correction:
+        # File a superseding verdict (Act 17 §2.1-2.2, §2.5-2.6).
+        if prior is None:
+            raise ValueError("no prior verdict; file an ordinary verdict first")
+        if not args.supersedes or args.supersedes != prior["verdict"]:
+            raise ValueError("correction must state the verdict it supersedes")
+        if prior.get("correction_pending"):
+            raise ValueError("one correction per case per cycle (finality)")
+        if args.evidence == prior.get("evidence_ref"):
+            raise ValueError("correction evidence must be distinct from the original reference")
+        if not args.why_stronger or not args.why_stronger.strip():
+            raise ValueError("correction must state why the new evidence is stronger")
+        if not args.reason_code or not args.reason_code.strip():
+            raise ValueError("correction requires a reason_code")
+        if not args.auditor or not args.auditor.strip():
+            raise ValueError("correction requires auditor identity")
+        if args.verdict == "verified_fixed" and prior["verdict"] != "finding":
+            raise ValueError("verified_fixed requires a previous finding")
+        held = [h.get("verdict") for h in prior.get("history", [])]
+        if args.verdict in held:
+            raise ValueError("bare re-flip: target verdict already held by this case")
+        rec = {
+            "at": now, "case_id": args.case, "verdict": args.verdict,
+            "evidence_ref": args.evidence, "auditor": args.auditor,
+            "correction": True, "supersedes": args.supersedes,
+            "reason_code": args.reason_code, "why_stronger": args.why_stronger[:1000],
+            "details": args.details[:1000], "confirmed": False,
+            "phase": "correction_filed",
+        }
+        append_correction(args.case, rec)
+        hist = prior.get("history", [])
+        hist.append(rec)
+        prior["history"] = hist
+        prior["correction_pending"] = True
+        atomic(path, prior)
+        print(json.dumps(prior))
+        return
+
     if prior and prior["verdict"] != "finding":
         raise ValueError("case already has a final verdict")
     if args.verdict == "verified_fixed" and (not prior or prior["verdict"] != "finding"):
         raise ValueError("verified_fixed requires a previous finding")
-    now = int(os.environ.get("VICHE_OVERSIGHT_NOW", time.time()))
     result = {"case_id": args.case, "population": case["population"],
               "subject": case["id"], "verdict": args.verdict, "at": now,
               "evidence_ref": args.evidence, "details": args.details[:1000],
@@ -92,13 +181,19 @@ def check(args):
         if verdict is None and now - int(case["at"]) > deadline:
             overdue += 1
             signals.append({"type": "unreported_sample", "case_id": case["case_id"]})
-        if verdict is not None and verdict["verdict"] == "finding":
-            subject = f"{case['population']}:{case['id']}"
-            findings[subject] = findings.get(subject, 0) + 1
-            signals.append({"type": "unresolved_finding", "case_id": case["case_id"],
-                            "evidence_ref": verdict["evidence_ref"]})
-        if verdict is not None and verdict["verdict"] == "inconclusive" and now - verdict["at"] > deadline:
-            signals.append({"type": "unresolved_inconclusive", "case_id": case["case_id"]})
+        if verdict is not None:
+            if verdict.get("correction_pending"):
+                signals.append({"type": "correction_pending", "case_id": case["case_id"]})
+            if verdict["verdict"] == "finding":
+                subject = f"{case['population']}:{case['id']}"
+                findings[subject] = findings.get(subject, 0) + 1
+                signals.append({"type": "unresolved_finding", "case_id": case["case_id"],
+                                "evidence_ref": verdict["evidence_ref"]})
+            elif verdict.get("corrected_from_finding"):
+                signals.append({"type": "corrected_finding", "case_id": case["case_id"],
+                                "evidence_ref": verdict["evidence_ref"]})
+            if verdict["verdict"] == "inconclusive" and now - verdict["at"] > deadline:
+                signals.append({"type": "unresolved_inconclusive", "case_id": case["case_id"]})
     for subject, count in findings.items():
         if count >= 2:
             signals.append({"type": "repeated_finding", "subject": subject,
@@ -140,9 +235,23 @@ def main():
                                            "finding", "inconclusive", "verified_fixed"])
     p.add_argument("--evidence", default="")
     p.add_argument("--details", default="")
+    p.add_argument("--correction", action="store_true",
+                   help="file a superseding verdict (Act 17); requires --supersedes, "
+                        "--why_stronger, --reason_code, --auditor")
+    p.add_argument("--confirm", action="store_true",
+                   help="second procedural pass confirming a pending correction (Act 17 §2.4)")
+    p.add_argument("--supersedes", default="")
+    p.add_argument("--why_stronger", default="")
+    p.add_argument("--reason_code", default="")
+    p.add_argument("--auditor", default="")
     args = p.parse_args()
     if args.action == "report":
-        if not args.case or not args.verdict:
+        if args.correction and args.confirm:
+            raise ValueError("--correction and --confirm are mutually exclusive")
+        if args.confirm:
+            if not args.case:
+                raise ValueError("case is required")
+        elif not args.case or not args.verdict:
             raise ValueError("case and verdict are required")
         report(args)
     else:
