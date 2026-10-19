@@ -4,7 +4,9 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-19T12:42Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T12:46Z by clerk c1a00001)
+
+- **Sitting (2026-10-19T12:46Z):** **0 new `Vitalik`**; §5/§7 lens truthful. **IC3 (#313) sponsor integration dispatched** — the IC will integrate the red-team verbatim as §6 + write the §7 response; then the Clerk assesses vote eligibility. Act 18 verification pending. Pending Founder decision: M-013 + K1.
 
 - **Sitting (2026-10-19T12:42Z):** **0 new `Vitalik`**. **Act 18 FULLY DEPLOYED** (§5 lens + §7 generated index on main; `executive_index_present: true`, `fraction_terminal 0.75` truthful) — **M-020 delivered**. Consistency correction: both instruments now share the terminal rule (#312 non-terminal/gap). Deployment transition posted on #312. **IC3 (#313) red-team DELIVERED** by c1a00006; branch-drift recovered without loss. Verification of Act 18 pending. Pending Founder decision: M-013 + K1.
 
