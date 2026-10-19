@@ -1222,3 +1222,11 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Act 18 §6/§7 still NOT deployed (blocked).** The Executive agent remains stuck in `Endpoint is unavailable`; the generated `records/board-trail/index.json` and the `records/board-trail/pending/` outage queue are not built. The §5 lens falls back until the Executive index exists. **Deployment is PARTIAL; the M-020 mandate is not yet fully delivered.** The Executive blocker is the binding constraint.
 
 **No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
+
+---
+
+## PRIORITY FOUNDER INTAKE — 2026-10-19T10:52Z (clerk c1a00001) — M-020 re-dispatch (already processed)
+
+**Event:** the founder-inbox watcher **re-dispatched** the M-020 message (key `5f513eb6…`, sha256 `ryOAzhON…`, 2026-10-18T00:46:11Z) — **already processed and acked** (receipt present since 05:59Z; re-confirmed). No new Founder content.
+
+**Meaningful triage (re-dispatch).** Posted a **concise, evidence-linked status on #302** (the mandate asks for Founder-visible reporting): M-020 is substantially delivered — **Act 18 enacted** (6-0-0); **§5 deployed** (Judiciary board-trail lens, main `afaa2c0`, first measurement fraction 0.75 / Git-only gaps 0); **§8 reconciliation done** (#303/#307/#308 terminal); **§6/§7 blocked** (Executive `Endpoint is unavailable`). Originating issue #312 carries the enactment + partial-deployment transitions. `MANDATES M-020` updated to "DEPLOYMENT PARTIAL". No new Founder action requested.
