@@ -2,6 +2,13 @@
 
 **Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-19T06:34Z (**BL1 branch-liveness: executive agent repeatedly dying on `Endpoint is unavailable` — confirmed external endpoint fault, branch intact, re-dispatched; B1/M-020 red-team c1a00005 running; IC2 #310 external-red-team provenance question, NOT vote-eligible; A2 ENACTED as Act 17; M-013/K1 Founder decision still pending**; prior: A2 vote, K1, A1, M1, M-019, J2, T1, J1, IC #308 Act 16, M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED).
 
+## R1. Regression on `main` — `janitor-smoke.sh` fails (NEW, 2026-10-19T09:55Z)
+
+- **Finding (Art. VI; T1 class).** `sh tests/run-all.sh` fails (exit 1) at `tests/janitor-smoke.sh` on `main`.
+- **Cause (diagnosed).** Executive commit `28fcdd7` ("Janitor: also retain top-level .elan dir", 09:49Z) **replaced** the nested retain patterns in `government/janitor.sh` `classify()` (`*/.elan/toolchains/*`, `*/.elan/toolchains`) with a single `*/.elan`. A `case` pattern matches the **whole** path, so `*/.elan` does not match nested paths; the test asserts all three elan paths are `retain`, so it fails. (The intent — retain the top-level `.elan` too — was right; the edit dropped the nested cases.)
+- **Owner/action:** Executive (Janitor is an executive function, Act 12). **Dispatched** to restore `*/.elan` **and** the nested patterns and re-run the full suite green. Not yet fixed at this record.
+- **Process finding:** the change reached `main` **unreviewed** and broke a test — it did not meet the "full suite green" bar. Recorded; relevant to the board-trail/verification discipline (M-020/Act 18).
+
 ## BL1. Mandatory three-branch liveness inquiry — `executive_unhealthy` (recurring, 2026-10-19)
 
 - **Signal:** `viche-state/branches/incident.json` + `executive.json` report `executive_unhealthy` (re-observed 2026-10-19T06:33Z).
@@ -9,7 +16,8 @@
 - **Branch preservation (verified):** the executive worktree is clean; current branch `exec/act17-verdict-correction` has no commits beyond `origin/main` (it died before committing); no unpushed executive work is at risk; all prior executive branches intact. **No branch is structurally unable to run.**
 - **Disposition:** recorded as an endpoint-reliability failure (Art. VI honesty; not misconduct). Executive **re-dispatched** with a focused Act 17 resume brief. The branch-health cycle auto-observes; the signal will clear when an executive run survives. Root cause is external infra (Founder/Antonina), not Viche's to fix — but Viche can reduce its own SPOF (the clerk-continuity + auto-recovery remedies are ordinary-law candidates, e.g. B1's scope or a separate bill).
 - **Caveat:** a running agent is not proof of useful work (per the inquiry's own caveat).
-- **Update (2026-10-19T09:29Z): still flapping.** `executive.json` observed `agent_state: unknown` at 09:28:54Z; the agent was re-dispatched at 09:29:07Z. Log evidence: the executive hit `Upstream request failed: Endpoint is unavailable` **twice** while developing a janitor toolchain-retention guard (`exec/janitor-toolchain-guard`, in-flight changes `government/janitor.sh` + `tests/janitor-smoke.sh` preserved uncommitted in the worktree). Same conclusion: **endpoint reliability, not a branch defect**; branch/worktree intact. **Consequence to watch:** Act 18 (and Act 17) deployment is Executive work and no deployment branch has appeared yet — the endpoint flapping is the likely cause of deployment delay, not a decision to defer. Recorded honestly; the executive branch can run (running now).
+- **Update (2026-10-19T09:29Z): still flapping.** `executive.json` observed `agent_state: unknown` at 09:28:54Z; the agent was re-dispatched at 09:29:07Z. Log evidence: the executive hit `Upstream request failed: Endpoint is unavailable` **twice** while developing a janitor toolchain-retention guard. Same conclusion: **endpoint reliability, not a branch defect**; branch/worktree intact.
+- **CORRECTION (2026-10-19T09:55Z):** the earlier claim here that "Act 17/18 deployment ... no deployment branch has appeared" was **wrong for Act 17** — Act 17 was already implemented on `main` (`0e701b9`, 07:09Z; test `tests/audit-correction-smoke.sh` passes). The Clerk had searched for a branch and missed the merged commit. The handoff concern applies only to **Act 18** (enacted 09:06Z; deployment not started, **not overdue**). Separately, the executive's janitor commit `28fcdd7` broke `janitor-smoke.sh` on `main` — see **§R1**.
 
 ## B1. FOUNDER MANDATE M-020 — Antonina board as primary Founder-facing accountability/observability interface (NEW, 2026-10-18T00:46Z; triaged 2026-10-19T05:41Z)
 
