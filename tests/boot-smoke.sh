@@ -91,6 +91,12 @@ export VICHE_STATE_ROOT VICHE_TEST_NO_SYNC VICHE_TOWNHALL_ID
 # Periodic broad audit is separately tested. Suppress its timer in bootstrap smoke.
 mkdir -p "$scratch/state/oversight"
 date +%s > "$scratch/state/oversight/last-audit-dispatch"
+# The box-wide janitor inventory (find+du over /workspace, /home/lubko, ...) is
+# likewise separately tested and is not part of boot reconciliation; suppress
+# its timers so the smoke is hermetic w.r.t. the host's disk layout.
+mkdir -p "$scratch/state/janitor"
+date +%s > "$scratch/state/janitor/last-observe"
+date +%s > "$scratch/state/janitor/last-inventory"
 seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
 /bin/sh "$town/constitution/boot.sh" --once

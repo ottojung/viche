@@ -9,6 +9,7 @@ printf 'c1a00001\tClerk\tintake\nc1a00002\tMember\tvoting\n' > "$scratch/town/go
 printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
+cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu

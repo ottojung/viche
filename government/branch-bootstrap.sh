@@ -12,6 +12,7 @@ esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+liv=$state/liveness
 cwd=$seats/branches/$branch
 if cut -f 1 "$town/government/seats.tsv" | grep -Fxq "$id"; then
   echo "Office $branch must never share a parliamentary voting seat" >&2
@@ -25,32 +26,42 @@ if [ ! -f "$cwd/.git" ] && [ ! -d "$cwd/.git" ]; then
   mkdir -p "$(dirname "$cwd")"
   git -C "$town" worktree add --detach "$cwd" HEAD
 fi
+. "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/office-continuity.sh"
+mkdir -p "$liv"
+umask 077
 if ! meta=$(antonina agent status --id "$id" --json 2>/dev/null); then
   antonina agent new --id "$id" --cwd "$cwd" --title "Viche: $title"
   meta=$(antonina agent status --id "$id" --json)
 fi
+now=$(date +%s)
 mode=$(printf '%s\n' "$meta" | jq -r '.state')
+reason=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // ""')
+tflag=$(printf '%s\n' "$meta" | jq -r '.backend_error.transient // false')
 if [ "$mode" = failed ]; then
-  reason=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // ""')
-  if [ "$reason" = upstream_endpoint_unavailable ]; then
-    dir=$state/liveness
-    mkdir -p "$dir"
-    now=$(date +%s)
-    stamp=$dir/last-reset-$id
-    last=0
-    [ ! -s "$stamp" ] || last=$(cat "$stamp")
-    case "$last" in ''|*[!0-9]*) last=0 ;; esac
-    if [ $((now-last)) -ge 1800 ]; then
-      snapshot=$(mktemp -d "$dir/branch-$id-recovery-XXXXXX")
-      printf '%s\n' "$meta" > "$snapshot/status.json"
-      antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
-      git -C "$cwd" status --short > "$snapshot/worktree.txt"
-      printf '%s\n' "$now" > "$stamp"
-      antonina agent delete --id "$id"
-      antonina agent new --id "$id" --cwd "$cwd" --title "Viche: $title"
-      meta=$(antonina agent status --id "$id" --json)
-    fi
+  if oc_is_transient "$reason" "$tflag"; then
+    oc_record_failure "$liv" "$id" "$reason" "$now" "$cwd"
+  else
+    oc_surface_permanent "$liv" "$id" "$reason"
   fi
+fi
+oc_commit_age_signal "$liv" "$id" "$cwd" "$now"
+# Act 19 §3.1: the reset decision is decidable from the failure record alone
+# and does not depend on the currently-observed state. An oscillating agent
+# (failed -> re-dispatched -> running) is reset once it accumulates the
+# threshold of consecutive transient failures inside the window.
+if oc_reset_due "$liv" "$id" "$now"; then
+  snapshot=$(mktemp -d "$liv/branch-$id-recovery-XXXXXX")
+  printf '%s\n' "$meta" > "$snapshot/status.json"
+  antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
+  git -C "$cwd" status --short > "$snapshot/worktree.txt"
+  printf '%s\n' "$now" > "$liv/last-reset-$id"
+  antonina agent delete --id "$id"
+  antonina agent new --id "$id" --cwd "$cwd" --title "Viche: $title"
+  meta=$(antonina agent status --id "$id" --json)
+  oc_clear_failures "$liv" "$id"
+  printf '%s branch=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
+    "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
+    >> "$liv/recoveries.log"
 fi
 model=$(printf '%s\n' "$meta" | jq -r '.model // empty')
 variant=$(printf '%s\n' "$meta" | jq -r '.variant // empty')

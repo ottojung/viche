@@ -28,9 +28,27 @@ A process exit, an open PR, and a passed vote are **distinct** states. Recovery 
 
 The clerk owns the tally and enactment record (Act 2.1). When the clerk is *unavailable* and business risks lapsing, a delegated continuation or the executive may perform the **mechanical** steps above as executive implementation of an already-passed mandate (Constitution III; Act 6.2) — using only the seats' own ballots and the deterministic tally, impersonating no seat and inventing no vote. Record the substitution and the officer failure explicitly; do not conceal it. Structural remedies (a clerk-liveness check, or an executive tally-on-timeout rule) are legislative and are **not** enacted here.
 
+## Act 19 (enacted 2026-10-19): failure-count recovery and durable handoff queue
+
+The state-triggered recovery described above was replaced by ordinary law (Act 19,
+bill `records/bills/office-continuity-act.md`; deployment record
+`records/DEPLOYMENT-2026-10-19-act19-office-continuity.md`):
+
+- Office resets are failure-count based: 3 consecutive transient failures inside
+  a 30-minute window, 1800 s cooldown, progress guard (no reset after a durable
+  commit between failures); permanent failures are surfaced, not reset. The
+  decision is decidable from `$VICHE_STATE_ROOT/liveness/failures/<id>`
+  regardless of the currently-observed state.
+- Work intent is durable: `records/handoffs/` is the dispatch's single input
+  (`government/handoff-queue.sh`); the Executive dispatch must include open
+  handoffs and must not run the generic eligible-issue prompt while any are
+  open, and must not dispatch at all if it fails before reading the queue.
+- AGENDA/MANDATES reference queue entries by id; the queue prevails on conflict.
+
 ## Verification
 
 - `dash tests/boot-smoke.sh` — launch and recovery of all seats.
+- `dash tests/act19-office-continuity-smoke.sh` — Act 19 mechanisms (failure-count reset, non-supersession, commit-age signal).
 - `dash tests/tally-smoke.sh` — tally accepts valid ballots, rejects stale ones.
 - `dash tests/records-smoke.sh` — no committed conflict markers in durable records.
 - `dash tests/ballot-integrity.sh` — ballots bind to their bills and use only roster seats.
