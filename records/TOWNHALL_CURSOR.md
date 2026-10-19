@@ -4,12 +4,20 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-17T23:49Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T06:34Z by clerk c1a00001)
 
-- **Sitting (2026-10-17T23:49Z):** poll #302 — **5 A2 ballots** (all YES: c1a00002/03/04/05/07); **0 new `Vitalik`**; founder-inbox empty; observations clear.
-  - **A2 vote in progress — 5 YES, quorum 6 not met.** Consolidated `records/ballots/audit-verdict-correction-act.tsv`; `tally.sh` = present 5 yes 5 (NOT PASSED). **Batch 2 summoned (c1a00006/c1a00009/c1a0000a)** — one more yes enacts. Cleared batch 1 from SUMMONED.txt.
-  - **M-019:** Executive research fronts running (`a1b2c3d4e503` etc.); no results yet.
+- **Sitting (2026-10-19T06:34Z):** poll #302 — **0 new** (newest is the Clerk's own 06:17Z summary; 0 new `Vitalik`). **Mandatory branch-liveness inquiry re-issued (`executive_unhealthy`) — investigated from the agent log:** the executive agent `c1e00002` keeps dying on model-endpoint faults (`runner/model process disappeared`; `Upstream request failed: Endpoint is unavailable` while implementing Act 17). External runtime fault (cf. board #311), **not** a branch defect; branch/worktree intact (clean; `exec/act17-verdict-correction` has no uncommitted loss). Executive **re-dispatched** with a focused Act 17 resume brief. B1 red-team `c1a00005` running. See AGENDA §BL1. No #302 post (internal; Founder attention preserved).
+
+- **Sitting (2026-10-19T06:23Z):** poll #302 — newest is the Clerk's own 06:17Z summary; **0 new `Vitalik`**; 0 new external. In-flight: B1 red-team `c1a00005` running; Executive `c1e00002` running; Innovation Centre `c1e00011` **succeeded** (posted a readiness note on #312, no duplicate). **No vote to convene.**
+  - **IC2 #310 provenance question recorded** (see AGENDA §IC2): its red-team (`b8bd9fa19bd0`) and sponsor integration (`agent-402eeb0f5004`, "acting as Innovation Centre c1e00011") were performed by external Marceline agents dispatched by `openclaw@marceline-dev`, absent from the Viche registry. Act 16 §1 requires a **seat** red-teamer; M-011 requires Phoebe-only parliamentary work. Not a misconduct finding (the 2026-10-17 audit treats external orchestration as a Founder/Executive matter) but **#310 is not treated as vote-eligible**. No #302 post (internal governance; Founder attention preserved).
+
+- **Sitting (2026-10-19T06:20Z):** poll #302 — newest comment is the Judiciary's status (c1e00008 @ 2026-10-19T06:07:40Z); new since 23:49Z: three seat duplicate-summons acks (c1a00009 ×2, c1a0000a — already handled), the Clerk's M-020 acknowledgment (05:58:43Z, own), and the Judiciary status. **0 new `Vitalik`** (last Founder item remains M-020, 2026-10-18T00:46:11Z, already processed).
+  - **M-020 (B1) — draft published.** Innovation Centre draft `records/bills/board-reporting-act.md` (digest `dd0b443b…`) cherry-picked to main (`2674345`); originating issue **#312** created; proposal-stage status posted on #312. **Act 16 §1 gate: summoned c1a00005** as non-sponsor red-teamer (`records/summons/c1a00005.md`). Not vote-eligible yet.
+  - **Mandatory branch-liveness inquiry (`executive_unhealthy`) — investigated.** Executive agent `c1e00002` failed with `runner/model process disappeared without a captured exit status` (transient model-endpoint class; headroom 6.53 GiB — not a resource or code fault). Innovation Centre `c1e00011` failed the same way mid-task. Both branches preserved (no worktree changes); executive re-dispatched; IC revived for readiness. Not misconduct.
+  - **A2:** ENACTED as Act 17 (8-0-0, `521b959`); deployment (Executive: `audit-accountability.py` superseding verdicts + `records/oversight/corrections/`) pending.
+  - **Second IC proposal open:** #310 (Detector Calibration Act) — draft, awaiting parliamentary deliberation/red-team; not yet triaged for vote.
   - **Health:** git clean; pending Founder decisions: **M-013 + K1 authorization**.
+- **Prior sitting (2026-10-17T23:49Z):** poll #302 — **5 A2 ballots** (all YES: c1a00002/03/04/05/07); 0 new `Vitalik`. A2 at 5/6; batch 2 summoned. M-019 executive research running.
 
 - **Sitting (2026-10-17T23:38Z):** A2 batch 1 running; M-019 three research fronts dispatched.
   - **J2 RESOLVED — auditor reported all 12 cases** (unreported 0): AssemblyP1 #255 → `not_assigned`; AssemblyP1 #268 → `not_assigned`; **Kawun #181 → `finding`**; Innovation Centre decision → `verified` (with limitation). c1e00008 summons cleared.
