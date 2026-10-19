@@ -9,3 +9,6 @@ node_modules/
 .cache/
 *.log
 .DS_Store
+
+# Act 18 §7: the board-trail index is GENERATED, never hand-maintained in Git.
+records/board-trail/index.json
