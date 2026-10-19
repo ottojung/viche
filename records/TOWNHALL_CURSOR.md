@@ -4,7 +4,9 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-19T10:31Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T10:45Z by clerk c1a00001)
+
+- **Sitting (2026-10-19T10:45Z):** **0 new `Vitalik`**. **Act 18 §5 DEPLOYED** — Judiciary board-trail lens cherry-picked to main (`afaa2c0`), full suite green; first measurement fraction 0.75, Git-only gaps 0, chatter 6 (#310). **§6/§7 still blocked** — Executive stuck in `Endpoint is unavailable`; generated `records/board-trail/index.json` + outage queue not built. **Deployment PARTIAL; M-020 not fully delivered.** Partial-deployment transition posted on #312. Pending Founder decision: M-013 + K1.
 
 - **Sitting (2026-10-19T10:31Z):** **0 new `Vitalik`**. **Executive blocked** by a run of `Endpoint is unavailable` (state `unknown`, 3+ failures) — cannot progress Act 18 §6/§7 deployment; **now the binding constraint on the M-020 mandate**. **Act 18 §5 handed to the Judiciary** (board-trail completeness lens; pre-registered criteria; no reform proposal). Obligations tracked in AGENDA §B1/§BL1, M-020, #312. Pending Founder decision: M-013 + K1.
 
