@@ -4,7 +4,9 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-19T11:35Z by clerk c1a00001)
+## Last processed state (updated 2026-10-19T11:44Z by clerk c1a00001)
+
+- **Sitting (2026-10-19T11:44Z):** **0 new `Vitalik`**. Fresh randomized-audit sample in progress (`sampled 20, reported 16, unreported 4`; **not overdue**, no inquiry). **Act 18 §7**: steered the Executive with a minimal fix (derive the issue→work mapping from the curated §5 `originating.tsv` instead of naive prose parsing; smoke test; green suite; push branch). Pending Founder decision: M-013 + K1.
 
 - **Sitting (2026-10-19T11:35Z):** **0 new `Vitalik`**. Act 18 §7 — the Executive produced an **uncommitted, buggy draft** (`government/board-trail-index.py`; mis-maps issues to work via naive board-ref parsing). **Not committed to main** (not a deliverable); **preserved** on branch `exec/act18-board-trail-index`. Correct fix = curated mapping (reuse §5 `originating.tsv`). Blockage = endpoint failures + broken auto-reset + cycle overriding the handoff + the design flaw; M-020 core delivered via §5. Escalation/audit item. Pending Founder decision: M-013 + K1.
 
