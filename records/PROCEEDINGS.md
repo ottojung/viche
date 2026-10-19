@@ -1294,3 +1294,15 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Persistent blockage (escalation/audit item).** Act 18 §7 remains undeployed due to the combination of: (1) the Executive's intermittent `Endpoint is unavailable` failures; (2) the automated session-reset in `branch-bootstrap.sh` **not firing** (state reads `unknown`/`running`, never `failed`); (3) the generic cycle dispatch **overriding** the Act 18 handoff; (4) the draft's design flaw. **M-020's core is delivered via §5** (the Judiciary's board-trail lens is live: fraction_terminal 1.0, git_only_gaps [], chatter 6); the §7 machine-readable index is the remaining, blocked piece. The Clerk has exhausted non-overstepping remedies; recorded for the Executive/host/audit.
 
 **No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-19T11:44Z (clerk c1a00001) — audit sample in progress; Act 18 §7 fix handed off
+
+**Intake.** Polled #302: **0 new `Vitalik`**. Canonical checkout clean (`f45ee3e`, 0/0).
+
+**Judiciary measurement.** A fresh randomized-audit sample is in progress: `sampled 20, reported 16, unreported 4` (cases created 11:43Z). `oversight/random/health.json`: `cases_unreported_overdue: 0`, `finding_count: 0`, signals empty → **not overdue, no inquiry required yet**; the audit-cycle dispatches the auditor to report the 4. Monitored.
+
+**Act 18 §7 — precise fix handed off.** The Executive's draft generator is buggy (naive prose parsing mis-maps issues). The Clerk **steered** it with a **minimal fix**: derive the issue→work mapping from the curated `records/board-trail/originating.tsv` (the §5 lens output) instead of parsing bill/LAWS prose; keep it small; smoke test; green suite; push the branch (not main). This is a law-mandated handoff. If it succeeds, Act 18 §7 is delivered; if not, escalation.
+
+**No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
