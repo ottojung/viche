@@ -1140,3 +1140,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in practice. Git remains the detailed record.
 
 **Remaining distinct stages:** Act 18 deployment (Executive: generated `records/board-trail/index.json`, outage queue, eligibility check) + Judiciary board-trail audit lens + independent verification. Pending Founder decision: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-19T09:30Z (clerk c1a00001) — BL1 re-inquiry (executive endpoint flapping)
+
+**Intake.** Polled #302: newest external is c1a00009's 09:01Z duplicate-summons ack (already handled); **0 new `Vitalik`**. Canonical checkout clean (`7235803`, 0/0).
+
+**Mandatory three-branch liveness inquiry (`executive_unhealthy`) — investigated from primary evidence.** `executive.json` reported `agent_state: unknown` at 09:28:54Z; the agent was re-dispatched at 09:29:07Z (running). Its log shows **two** `Upstream request failed: Endpoint is unavailable` errors while developing a janitor toolchain-retention guard (`exec/janitor-toolchain-guard`; in-flight changes to `government/janitor.sh` + `tests/janitor-smoke.sh` preserved uncommitted). **Conclusion (unchanged from §BL1): external endpoint-reliability fault, not a branch/worktree/code defect.** No branch is structurally unable to run.
+
+**Consequence recorded (Art. VI).** Act 18 (and Act 17) **deployment is Executive work and no deployment branch has appeared yet**; the endpoint flapping is the likely cause of delay, not a decision to defer. The obligation is recorded in AGENDA §B1/§BL1 and MANDATES M-020; the Clerk is not the Executive's task scheduler (Act 2), so it is handed off, not micro-scheduled. If deployment still has not begun after further cycles, this is an escalation/audit item.
+
+**No new vote business; no #302 post** (the originating issues #312/#303/#307/#308 are the threads). Pending Founder decision: **M-013 + K1**.
