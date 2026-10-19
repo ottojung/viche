@@ -47,7 +47,7 @@ def board_trail():
     if shutil.which('antonina') is None:
         out['reason']='antonina CLI unavailable'; return out
     try:
-        done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,timeout=45)
+        done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,timeout=30)
     except (subprocess.TimeoutExpired,OSError) as err:
         out['reason']='cross-check unavailable: '+str(err)[:160]; return out
     if done.returncode!=0:
