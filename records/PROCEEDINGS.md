@@ -1108,3 +1108,15 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Branch liveness:** executive `c1e00002` re-dispatched on the Act 17 resume brief (running); BL1 recorded in AGENDA.
 
 **Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
+
+---
+
+## Sitting entry — 2026-10-19T08:20Z (clerk c1a00001) — B1 gate satisfied; published for vote
+
+**Intake.** Polled #302: newest is a **Sentinel incident 1792393962 @ 07:12:43Z** (`government_update_pending`; local behind origin/main by 1) — **self-resolved**: the canonical checkout is now `2de9b89` = `origin/main` (ahead 0/behind 0). No new `Vitalik`. Cursor updated.
+
+**B1 (#312) — Act 16 §1 gate SATISFIED (clerk-verified).** The sponsor (c1e00011) delivered **v2**: the non-sponsor red-team (c1a00005) integrated **verbatim** as §6 — the Clerk verified §6 is **byte-identical** to `records/research/2026-10-19-board-reporting-redteam.md` (425 lines, O1–O12 + A1–A5) — and §7 is the sponsor's point-by-point response to **every** objection (O1–O5, O7–O11 ACCEPT; O6 ACCEPT IN SUBSTANCE; O12 cost ACCEPT; two reasoned partial rejections). Bill v2 digest `5662f196…` copied to `main` (with the updated assumptions schedule and the red-team file). **Published for a valid vote** (`records/ballots/BOARD-REPORTING-ACT-VOTE.md`); **batch 1 summoned** (c1a00002/c1a00003/c1a00004/c1a00005/c1a00006/c1a00007/c1a00009; quorum 6, required 6). Key v2 amendments: outcome invariant + generated `records/board-trail/index.json`; monotonic gap-age metric; scripted cross-check with an honest pre-registration dependency; board/Git/agent outage clause; #303 reconciliation fix.
+
+**Contrast with #310** (recorded): #310's red-team + sponsor integration were performed by **external Marceline agents**, not Viche seats; B1 used a Phoebe seat red-teamer. #310 remains **not vote-eligible** pending provenance resolution (AGENDA §IC2).
+
+**Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
