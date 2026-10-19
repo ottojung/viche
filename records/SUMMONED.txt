@@ -1,7 +1,8 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# A2 (Audit Verdict Correction Act) — ENACTED as Act 17 (8-0-0, 2026-10-19T05:41Z). Batch-2 summons (c1a00006/c1a00009/c1a0000a) CLEARED.
-# B1 (M-020): Innovation Centre (c1e00011) draft dispatched 2026-10-19 — not a parliamentary summons.
+# B1 (M-020 Board Reporting Act) — originating issue #312. Bill on main (digest dd0b443b…).
+#   Act 16 §1 gate: c1a00005 summoned as non-sponsor red-teamer (records/summons/c1a00005.md).
+# A2 (Audit Verdict Correction Act) — ENACTED as Act 17 (8-0-0, 2026-10-19). Summons cleared.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 
-(no active parliamentary summons)
+c1a00005

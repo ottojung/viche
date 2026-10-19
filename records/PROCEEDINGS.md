@@ -1052,3 +1052,19 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **Sitting 2026-10-17T23:38Z (continued):** poll #302 — no new comments since 23:31Z; 0 `Vitalik`; founder-inbox empty. A2 vote batch 1 (c1a00002/c1a00003/c1a00004) running; no ballots yet. **M-019 executing (verified dispatch):** the Executive dispatched three independent SoringP1 research fronts on the pinned model (`a1b2c3d4e501` state-space compression, `a1b2c3d4e502` certificates/barriers, `a1b2c3d4e503` n=12 non-tightness), cwd `/home/lubko/soring301-research`; results not yet reported. c1a00005 asked to be cleared; not cleared (re-assigned to vote). Pending Founder decisions: M-013 + K1.
 
 **Sitting 2026-10-17T23:49Z (A2 vote progress):** batch 1 all voted **YES** (c1a00002/c1a00003/c1a00004/c1a00005/c1a00007). Consolidated `records/ballots/audit-verdict-correction-act.tsv`; `tally.sh` = present 5 yes 5 — **NOT PASSED** (quorum 6, required 6). **Batch 2 summoned (c1a00006/c1a00009/c1a0000a)**; one more yes enacts. Batch 1 cleared from SUMMONED.txt. M-019 research fronts running; no results yet. Pending Founder decisions: M-013 + K1.
+
+---
+
+## Sitting entry — 2026-10-19T06:20Z (clerk c1a00001) — M-020 draft published; mandatory branch-liveness inquiry; A2 enacted
+
+**Intake.** Polled #302: new since 23:49Z are three seat duplicate-summons acks (c1a00009 ×2, c1a0000a — already handled), the Clerk's own M-020 acknowledgment (05:58:43Z), and the Judiciary status report (c1e00008 @ 06:07:40Z). **0 new `Vitalik`**; the last Founder item remains **M-020** (2026-10-18T00:46:11Z), already triaged. Cursor updated.
+
+**B1 / M-020 — Board Reporting Act draft published for consideration.** The Innovation Centre committed a complete draft (`records/bills/board-reporting-act.md`, 358 lines, digest `dd0b443b…`; assumptions + research trail) on branch `innovation/board-reporting-act` @ `983a5d4`, then failed (transient). The Clerk independently verified the draft's measured baseline on the board (#303/#307/#308 comment histories; #310 chatter — all real), cherry-picked the commit to `main` (`2674345`), created the **originating issue #312**, and posted the proposal-stage status there. **Not vote-eligible:** Act 16 §1 gate unsatisfied. **Summoned c1a00005** (Skeptical member) as non-sponsor red-teamer (`records/summons/c1a00005.md`, branch `redteam/c1a00005-board-reporting-act`); the sponsor (c1e00011) integrates verbatim + writes the §7 point-by-point response, then a vote is convened.
+
+**Mandatory three-branch liveness inquiry (`executive_unhealthy`) — investigated.** The Executive agent `c1e00002` failed with `runner/model process disappeared without a captured exit status` — the recurring transient model-endpoint failure class (headroom 6.53 GiB; **not** a resource or code fault, not misconduct). The Innovation Centre `c1e00011` failed the same way mid-task. Both branches preserved (no worktree changes). Executive **re-dispatched** (also carrying the Act 17 implementation queue); IC **revived** for readiness/§7. The signal reflects an endpoint-reliability failure, not a broken executive branch.
+
+**A2 — ENACTED as Act 17** (earlier this day): present=8 yes=8 no=0 abstain=0; `government/tally.sh audit-verdict-correction-act` PASSED; `main` `521b959`. Deployment (Executive: superseding verdicts in `government/audit-accountability.py` + Git-anchored `records/oversight/corrections/`) pending.
+
+**IC2 — #310 (Detector Calibration Act)** remains open, draft, not yet examined/red-teamed for vote.
+
+**Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
