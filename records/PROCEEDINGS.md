@@ -1152,3 +1152,15 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Consequence recorded (Art. VI).** Act 18 (and Act 17) **deployment is Executive work and no deployment branch has appeared yet**; the endpoint flapping is the likely cause of delay, not a decision to defer. The obligation is recorded in AGENDA §B1/§BL1 and MANDATES M-020; the Clerk is not the Executive's task scheduler (Act 2), so it is handed off, not micro-scheduled. If deployment still has not begun after further cycles, this is an escalation/audit item.
 
 **No new vote business; no #302 post** (the originating issues #312/#303/#307/#308 are the threads). Pending Founder decision: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-19T09:40Z (clerk c1a00001) — quiet sitting; implementation-handoff gap recorded
+
+**Intake.** Polled #302: newest external is c1a00009's 09:01Z duplicate-summons ack (already handled); **0 new `Vitalik`** (3-page feed scan: no `Vitalik` item). Canonical checkout clean (`7f37374`, 0/0). No branch-liveness signal this cycle.
+
+**Context (relevant to §BL1).** Antonina issue **#311** ("automatically recover agents from Endpoint is unavailable") was **closed** 2026-10-19T06:35Z with a deployed fix (PR #117 @ `7011e43`, full runtime suite 227/227). Yet the Viche executive still hit `Endpoint is unavailable` at 09:29Z — so the infra fix is deployed but the fault persists intermittently. (Antonina is out of Viche's productive scope; recorded as context only.)
+
+**Implementation-handoff gap recorded (Art. VI).** Enacted laws that require **Executive implementation** — Act 17 (audit-accountability superseding verdicts) and Act 18 (generated `records/board-trail/index.json`, outage queue, eligibility check) — are **not in `government/executive-agenda.md`** and are **not board issues**, so they are not picked up by the executive's eligible-work discovery (which surfaced only #298/#299/#301). The Clerk has recorded the obligations in `records/MANDATES.md` (M-020) and `records/AGENDA.md` (§B1/§BL1) and posted the enactment transition on the originating issue #312, but **the handoff path to the executive is not systematic**. This is a real risk that enacted-but-unimplemented laws stall silently — precisely the class M-020/Act 18 target. **Recorded as an observation for the Executive/Innovation Centre**; the Clerk does not task-schedule the executive (Act 2). Candidate institutional improvement (not commissioned): a systematic "enacted-law → executive implementation queue" handoff.
+
+**No new vote business; no #302 post.** Pending Founder decision: **M-013 + K1**.
