@@ -3,5 +3,5 @@
 # IC3 (board #313 Office Continuity and Handoff Integrity Act) — ENACTED as Act 19 (8-0-0, 2026-10-19). Summons cleared.
 # B1 (Act 18) — ENACTED + DEPLOYED (M-020 delivered). Summons cleared.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
-
-(no active parliamentary summons)
+# IC4 (board #315 Canonical Checkout Integrity Act) — Act 16 §1 gate NOT met (external non-seat red-team, O12); non-sponsor Viche-seat re-red-team required. Summoned c1a00004 (Research advocate). NOT vote-eligible.
+c1a00004

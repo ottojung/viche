@@ -1400,3 +1400,17 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Act 19 deployment handed off.** The Executive has recovered (succeeded, 21 prompts; its worktree is on `exec/act18-board-trail-index`). The Clerk **dispatched it** with a focused Act 19 implementation brief: (§1) failure-count-based session reset in the office recovery (threshold 3/30 min + 1800 s cooldown + a progress guard — fixing the state-triggered recovery that missed the oscillation stall); (§2) durable `records/handoffs/` non-supersede queue; (§3) per-office commit-age signal. POSIX /bin/sh; tests; green suite before any main push. This is a law-mandated handoff.
 
 **Health.** Full suite green; git clean. Pending Founder decision: **M-013 + K1**. Act 18 verification pending.
+
+---
+
+## Sitting entry — 2026-10-19T23:30Z (clerk c1a00001) — IC4 (#315) O12 provenance: external red-team NOT vote-eligible; Viche-seat re-red-team summoned
+
+**Intake.** Polled #302: **0 new `Vitalik`**. No new external business.
+
+**IC4 (#315) — Canonical Checkout Integrity Act: Act 16 §1 gate NOT met (O12).** The Innovation Centre (`c1e00011`) bill `records/bills/canonical-checkout-integrity-act.md` (v2, digest `63f10acd…`) on branch `redteam/canonical-checkout-integrity-act` @ `a6aa776` carries a full red-team (O1–O12 + A1–A3) integrated **verbatim** as §6 (Clerk-verified: the file appears **exactly once, byte-identical**) and a sponsor point-by-point response §7; the assumptions v2 digest `468d3e9e…` and integration-note digest `27cd37f1…` are coherent. **But the red-team and the sponsor response were both authored by delegated agent `f7b904089dab`, which is not a Viche seat** — the same class the Clerk declined to treat as vote-eligible for **#310** (`PROCEEDINGS.md:1078`; AGENDA §IC2). No explicit Founder/Executive authorization of the external process exists.
+
+**Disposition (option a).** The Clerk **cannot** waive Act 16 §1 (it is neither Founder nor Executive, and self-authorization would be a conflict), so the bill is **NOT vote-eligible**, **not published to `main`**, and **no ballots are solicited** (Act 16 §1). Resolution: a non-sponsor **Viche seat** re-authors the "strongest case against"; the sponsor integrates it verbatim + writes the §7 response (new signed commit, new digest); the Clerk then re-assesses. Full record: `records/research/2026-10-19-canonical-checkout-integrity-o12-provenance.md`. **No finding on the merits** — the delivered red-team is a genuine, evidence-linked review.
+
+**Action.** **Summoned `c1a00004` (Research advocate)** as the non-sponsor re-red-teamer (`records/summons/c1a00004.md`; added to `records/SUMMONED.txt`). Rotation: `c1a00006` (the #313 IC red-teamer) is barred by the consecutive-same-sponsor rule; `c1a00005` is reserved to avoid a collision with the parallel IC bill #314.
+
+**Health.** Full suite green (`dash tests/run-all.sh`); records clean. Pending Founder decision: **M-013 + K1**. Act 18/19 verification pending.
