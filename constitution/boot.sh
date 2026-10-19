@@ -28,10 +28,20 @@ VICHE_CONSTITUTION_DIR=$constitutional_dir
 export VICHE_CONSTITUTION VICHE_CONSTITUTION_DIR
 
 reconcile() {
-    # A failed fast-forward is a visible integration error, never silent staleness.
-    if [ "${VICHE_TEST_NO_SYNC:-0}" != 1 ]; then
-        git -C "$town" pull --ff-only || return 1
+    # The canonical checkout must always use main, never a seat's ballot branch.
+    # A failed switch preserves uncommitted work; never reset or force it.
+    if [ "$(git -C "$town" branch --show-current)" != main ]; then
+        git -C "$town" switch main || return 1
     fi
+    if [ "${VICHE_TEST_NO_SYNC:-0}" != 1 ]; then
+        # A temporary GitHub outage must not disable local agent recovery.
+        if git -C "$town" fetch origin main; then
+            git -C "$town" merge --ff-only FETCH_HEAD || return 1
+        else
+            echo "Viche: Git fetch unavailable; using local main" >&2
+        fi
+    fi
+    [ "$(git -C "$town" branch --show-current)" = main ] || return 1
     [ -s "$town/government/LAWS.md" ] || return 1
     [ -s "$town/government/seats.tsv" ] || return 1
     /bin/sh "$town/government/boot.sh"
