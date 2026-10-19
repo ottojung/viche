@@ -253,3 +253,6 @@
 ## D. Publication
 
 Clerk publishes this agenda, summons and proceedings to durable records; daily account obligation (Act 5.3) is satisfied by the sitting entries in `records/PROCEEDINGS.md`.
+
+## IC3 status — ENACTED as Act 19 (2026-10-19T13:40Z)
+The Office Continuity and Handoff Integrity Act (board #313) was ENACTED: present=8 yes=8 no=0 abstain=0 (quorum 6, required 6); `main` `acbd033`. Ballots `records/ballots/office-continuity-act.tsv`; enactment transition on #313. **Deployment pending Executive/host** (failure-count reset, `records/handoffs/` queue, commit-age signal); Judiciary evaluates per §12. Summons cleared.
