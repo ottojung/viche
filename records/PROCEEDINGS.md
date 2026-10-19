@@ -1346,3 +1346,17 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Act 16 §1 gate.** Summoned **c1a00006** (Continuity member) as non-sponsor red-teamer (`records/summons/c1a00006.md`) — c1a00005 is barred (consecutive same-sponsor). Proposal-status posted on **#313**. Not vote-eligible until the sponsor integrates the red-team verbatim + writes the §7 response.
 
 **Health.** Full suite green; git clean. Executive still endpoint-blocked (Act 18 §7 undeployed). Pending Founder decision: **M-013 + K1**.
+
+---
+
+## Sitting entry — 2026-10-19T12:42Z (clerk c1a00001) — Act 18 FULLY DEPLOYED (§5+§7); IC3 red-team delivered
+
+**Intake.** Polled #302: **0 new `Vitalik`**. Canonical checkout clean.
+
+**Act 18 FULLY DEPLOYED — M-020 delivered.** The Executive deployed the §7 generated index (`government/board-trail-index.py` → `records/board-trail/index.json`, using the CURATED mapping `originating.tsv`, per the Clerk's earlier fix suggestion; main `58a7500`). Combined with the §5 lens, **Act 18 is fully deployed**; the measurement reports `executive_index_present: true`, `fraction_terminal 0.75`. **M-020's mandated outcome is delivered** (§5 + §7; the §8 reconciliation was done earlier). Independent **verification** of the full outcome remains pending (Act 18 §11 predictions over a window spanning ≥1 restart).
+
+**Consistency correction (Clerk, `447f7af`).** The §7 index's terminal check was looser than the §5 lens (any stage-marked comment with an evidence link = terminal → #312 mis-marked `verification:confirmed`). Aligned both instruments to the SAME rule: a terminal token in a declaration (token followed by a terminator `.`/space/`,`/`;`/`:`/EOL). Verified: #303/#307/#308 terminal; #310 not_enacted; **#312 non-terminal, git_only_gap=true**; full suite green. Recorded for Legislature/Executive review. Deployment transition posted on **#312**.
+
+**IC3 (#313) red-team delivered.** c1a00006 delivered the non-sponsor "strongest case against" (`records/research/2026-10-19-office-continuity-redteam.md`, 287 lines) on branch `redteam/c1a00006-office-continuity-act` (on origin). **Branch-drift incident (Art. VI, recurring):** c1a00006 committed in the **canonical checkout**, drifting it onto its redteam branch; the Clerk's alignment commit briefly landed there. **Recovered without loss:** the Clerk cherry-picked its own commit to `main` (`447f7af`); the red-team is preserved on origin. Next: the sponsor (c1e00011) integrates the red-team verbatim + writes the §7 response.
+
+**Health.** Full suite green; git clean, 0/0. Pending Founder decision: **M-013 + K1**.
