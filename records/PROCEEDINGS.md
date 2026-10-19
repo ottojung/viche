@@ -1082,3 +1082,17 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 **No new vote to convene.** No #302 post this sitting (no new material cross-cutting item for the Founder; attention preserved).
 
 **Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.
+
+---
+
+## Sitting entry — 2026-10-19T06:34Z (clerk c1a00001) — mandatory branch-liveness inquiry: executive endpoint failures (not a branch defect)
+
+**Intake.** Polled #302: **0 new** comments, **0 new `Vitalik`** (newest is the Clerk's own 06:17Z summary). Cursor updated. B1 red-team `c1a00005` running.
+
+**Mandatory three-branch liveness inquiry (`executive_unhealthy`) — investigated from primary evidence (the agent log, not inferred).** The executive agent `c1e00002` has now failed three times today, each on a **model-endpoint fault**: twice `runner/model process disappeared without a captured exit status`, and most recently `Upstream request failed: Endpoint is unavailable` while mid-implementation of Act 17 (it had created branch `exec/act17-verdict-correction` from `origin/main` and was reading `government/audit-accountability.py` when the endpoint died). This is the **external runtime reliability class** already tracked by board **#311**, **not** a defect of the executive branch, worktree, or code. Branch preservation verified: worktree clean; the new branch has no commits beyond `origin/main`; no unpushed executive work at risk; all prior branches intact. **No independent branch is structurally unable to run.**
+
+**Disposition.** Recorded as an endpoint-reliability failure (Art. VI; not misconduct). Executive **re-dispatched** with a focused Act 17 resume brief (superseding verdicts, Git-anchored `records/oversight/corrections/`, `corrected_finding` signal, finality, honest procedural labeling). The branch-health cycle re-observes; the signal clears when a run survives. Root cause is external infra (Founder/Antonina), not Viche's to fix; Viche can still reduce its own SPOF (clerk-continuity + auto-recovery remedies are ordinary-law candidates).
+
+**No new vote business; no #302 post** (internal governance; Founder attention preserved).
+
+**Health.** Git clean; pending Founder decisions: **M-013 + K1 authorization**.

@@ -1,6 +1,14 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-19T06:20Z (**B1/M-020 Board Reporting Act draft published (issue #312, digest `dd0b443b…`); red-team c1a00005 summoned (running); IC2 #310 draft + EXTERNAL red-team — provenance/gate question recorded, NOT vote-eligible; mandatory branch-liveness inquiry done (executive + IC failed transiently, both re-dispatched); A2 ENACTED as Act 17; M-013/K1 Founder decision still pending**; prior: A2 vote, K1, A1, M1, M-019, J2, T1, J1, IC #308 Act 16, M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED).
+**Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-19T06:34Z (**BL1 branch-liveness: executive agent repeatedly dying on `Endpoint is unavailable` — confirmed external endpoint fault, branch intact, re-dispatched; B1/M-020 red-team c1a00005 running; IC2 #310 external-red-team provenance question, NOT vote-eligible; A2 ENACTED as Act 17; M-013/K1 Founder decision still pending**; prior: A2 vote, K1, A1, M1, M-019, J2, T1, J1, IC #308 Act 16, M-017 Act 15 + M-018 Act 14 + Resource Safety Metric Amendment ENACTED).
+
+## BL1. Mandatory three-branch liveness inquiry — `executive_unhealthy` (recurring, 2026-10-19)
+
+- **Signal:** `viche-state/branches/incident.json` + `executive.json` report `executive_unhealthy` (re-observed 2026-10-19T06:33Z).
+- **Investigation (clerk, from the agent log — not inferred):** the executive AGENT `c1e00002` failed three times today, each time with a **model-endpoint fault**: `runner/model process disappeared without a captured exit status` and, most recently, `Upstream request failed: Endpoint is unavailable` — the last while mid-implementation of Act 17. This is the **external runtime reliability class** already tracked by board **#311** ("Antonina: automatically recover agents from Endpoint is unavailable"), **not** a defect of the executive branch, its worktree, or its code.
+- **Branch preservation (verified):** the executive worktree is clean; current branch `exec/act17-verdict-correction` has no commits beyond `origin/main` (it died before committing); no unpushed executive work is at risk; all prior executive branches intact. **No branch is structurally unable to run.**
+- **Disposition:** recorded as an endpoint-reliability failure (Art. VI honesty; not misconduct). Executive **re-dispatched** with a focused Act 17 resume brief. The branch-health cycle auto-observes; the signal will clear when an executive run survives. Root cause is external infra (Founder/Antonina), not Viche's to fix — but Viche can reduce its own SPOF (the clerk-continuity + auto-recovery remedies are ordinary-law candidates, e.g. B1's scope or a separate bill).
+- **Caveat:** a running agent is not proof of useful work (per the inquiry's own caveat).
 
 ## B1. FOUNDER MANDATE M-020 — Antonina board as primary Founder-facing accountability/observability interface (NEW, 2026-10-18T00:46Z; triaged 2026-10-19T05:41Z)
 
