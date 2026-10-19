@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
-"""Evidence to Legislature; no judicial policy proposals or modifications."""
-import json, os, time
+"""Evidence to Legislature; no judicial policy proposals or modifications.
+
+Act 18 §5 (Board Reporting Act) mandates that the independent Judiciary add
+board-trail completeness to its observability/audit lens and report it each
+measurement window. The deterministic board/Git cross-check is scripted in
+POSIX /bin/sh (government/board-trail-check.sh); this file aggregates its facts
+into the durable measurement report. The same-model / measurement-reliability
+limitation is reported, not hidden.
+"""
+import json, os, shutil, subprocess, time
 from pathlib import Path
+
 root=Path(os.environ.get('VICHE_STATE_ROOT','/var/lib/lubko/wd/viche-state'))
+town=Path(os.environ.get('VICHE_TOWN_ROOT','/var/lib/lubko/wd/viche'))
+now=int(os.environ.get('VICHE_BRANCH_NOW',time.time()))
 a=root/'oversight/random'
 cases=list((a/'cases').glob('*.json')) if (a/'cases').exists() else []
 counts={'sampled':len(cases),'reported':0,'unreported':0,'finding':0,'unreadable':0}
@@ -15,7 +26,65 @@ for p in cases:
         counts['unreported']+=1
     except (ValueError,TypeError):
         counts['unreadable']+=1
-payload={'observed_at':int(os.environ.get('VICHE_BRANCH_NOW',time.time())),'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True}
+
+
+def board_trail():
+    """Act 18 §5 board-trail completeness lens (facts only; no proposals)."""
+    cycle=int(os.environ.get('VICHE_BOARD_TRAIL_CYCLE','86400'))
+    script=town/'government/board-trail-check.sh'
+    mapping=town/'records/board-trail/originating.tsv'
+    index=town/'records/board-trail/index.json'
+    out={'authority':'Act 18 §5','criteria':'records/PREREGISTERED-CRITERIA-2026-10-19.md (W2)',
+         'status':'not_measured','executive_index_present':index.exists(),
+         'measurement_reliability':'not_established',
+         'caveat':'same-model procedural check; classification is a deterministic heuristic, not proof'}
+    if os.environ.get('VICHE_BOARD_TRAIL_CHECKS','1')=='0':
+        out['reason']='disabled by VICHE_BOARD_TRAIL_CHECKS=0'; return out
+    if not script.exists():
+        out['reason']='cross-check script absent'; return out
+    if not mapping.exists():
+        out['reason']='no Git cross-check mapping (records/board-trail/originating.tsv)'; return out
+    if shutil.which('antonina') is None:
+        out['reason']='antonina CLI unavailable'; return out
+    try:
+        done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,timeout=45)
+    except (subprocess.TimeoutExpired,OSError) as err:
+        out['reason']='cross-check unavailable: '+str(err)[:160]; return out
+    if done.returncode!=0:
+        out['reason']='cross-check failed: '+done.stderr.strip()[-160:]; return out
+    rows=[]
+    for line in done.stdout.splitlines():
+        line=line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    completed=[r for r in rows if int(r.get('enacted_epoch',0))>0 and r.get('type') in ('law','task')]
+    terminal=[r for r in completed if r.get('terminal')==1]
+    gaps=[r for r in completed if int(r.get('post_completion',0))==0]
+    no_stage=[r for r in completed if not r.get('stage_markers')]
+    dangling=[r for r in completed if r.get('terminal')!=1 and now-int(r['enacted_epoch'])>cycle]
+    ages=[now-int(r['enacted_epoch']) for r in completed if r.get('terminal')!=1]
+    out.update({
+        'status':'measured',
+        'originating_total':len(rows),
+        'completed_total':len(completed),
+        'terminal_reached':len(terminal),
+        'fraction_terminal':(round(len(terminal)/len(completed),4) if completed else None),
+        'git_only_gaps':[{'issue':r['issue'],'work':r['work'],'act':r.get('act')} for r in gaps],
+        'stage_marker_missing':[{'issue':r['issue'],'work':r['work']} for r in no_stage],
+        'dangling_trails':len(dangling),
+        'oldest_gap_age_seconds':(max(ages) if ages else 0),
+        'content_standard_failures':sum(int(r.get('chatter',0)) for r in rows),
+        'cycle_seconds':cycle,
+        'per_issue':rows,
+    })
+    return out
+
+
+payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'board_trail':board_trail()}
 p=root/'branches/judiciary-measurements.json'
 p.parent.mkdir(parents=True,exist_ok=True)
 tmp=p.with_suffix('.json.tmp')
