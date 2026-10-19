@@ -20,6 +20,9 @@ mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/state" "$scratch/mock"
 # Run against a hermetic town copy. The live records/SUMMONED.txt must not change
 # what a routine sitting does, so clear the summons in the copy.
 git clone --quiet --no-hardlinks "$root" "$town"
+# A worktree at a detached PR commit may clone its default main instead of HEAD.
+# Test the exact checked-out source commit inside this disposable clone.
+git -C "$town" switch -C main "$(git -C "$root" rev-parse HEAD)" >/dev/null
 : > "$town/records/SUMMONED.txt"
 
 cat > "$scratch/bin/antonina" <<'MOCK'
@@ -104,4 +107,19 @@ printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
 [ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+6)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 2 ]
+# A stray ballot checkout must not strand the government. Preserve its commit
+# and recover even if fetching origin also fails transiently.
+git -C "$town" switch -q -c ballot/bootstrap-smoke-drift
+printf 'saved vote\n' > "$town/ballot-drift-sentinel"
+git -C "$town" add ballot-drift-sentinel
+git -C "$town" -c user.name='Bootstrap Smoke' -c user.email='bootstrap@example.invalid' commit -qm 'Test: preserved ballot on stray branch'
+ballot_head=$(git -C "$town" rev-parse HEAD)
+origin_url=$(git -C "$town" remote get-url origin)
+git -C "$town" remote set-url origin "$scratch/unavailable-origin"
+VICHE_TEST_NO_SYNC=0 /bin/sh "$town/constitution/boot.sh" --once
+[ "$(git -C "$town" branch --show-current)" = main ]
+[ "$(git -C "$town" rev-parse refs/heads/ballot/bootstrap-smoke-drift)" = "$ballot_head" ]
+[ ! -e "$town/ballot-drift-sentinel" ]
+git -C "$town" remote set-url origin "$origin_url"
+printf 'Viche: bootstrap recovered main from ballot drift without discarding the vote, despite origin outage\n'
 printf 'Viche: %s seats initialized, charter injected, routine cycle runs Clerk+executive, while a parliamentary summons has precedence\n' "$seat_count"
