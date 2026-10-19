@@ -63,8 +63,9 @@ def board_title(num):
 
 
 def board_has_terminal_update(num):
-    """A terminal board update carries a stage marker and a terminal state or
-    an evidence link. Automated scheduler/agent status lines are not updates."""
+    """A terminal board update carries a stage marker AND a DECLARED terminal
+    state (Act 18 §3.3/§3.4) — a terminal token in a declaration position, not a
+    quoted/prose mention. Automated scheduler/agent status lines are not updates."""
     try:
         issue = board_invoke("show", "--id", str(num), "--page", "1", "--json")
     except Exception:
@@ -75,10 +76,10 @@ def board_has_terminal_update(num):
         if "[scheduler-turn]" in low or "[terminal-handoff]" in low:
             continue
         has_marker = any(m in low for m in STAGE_MARKERS)
-        has_terminal = any(t in low for t in TERMINAL_STATES)
-        has_evidence = ("records/" in body or "commit" in low or "ballot" in low
-                        or "tally" in low)
-        if has_marker and (has_terminal or has_evidence):
+        has_terminal = re.search(
+            r"(verification:confirmed|verification:blocked|enactment:not_enacted)([.\s,;:]|$)",
+            body) is not None
+        if has_marker and has_terminal:
             return True
     return False
 
