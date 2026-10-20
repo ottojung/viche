@@ -34,7 +34,7 @@ def get_items():
             raise RuntimeError("unreadable board list")
         for entry in batch:
             num = entry.get("number")
-            if not isinstance(num, int) or num in seen:
+            if not isinstance(num, str) or not num or num in seen:
                 raise RuntimeError("invalid/duplicate board issue")
             seen.add(num)
             collected.append(entry)
