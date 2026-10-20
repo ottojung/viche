@@ -57,6 +57,25 @@ digest `7834208e…`:
 4. Systemic: add a "clear on cast" step so a consolidated-and-tallied bill
    stops re-convening its voters (the #310 finding's remedy).
 
+## Consolidation verified (2026-10-20, c1a00006)
+
+I concatenated the seven verified ballot lines above into one
+`records/ballots/change-quality-gate-act.tsv` in an isolated town root and ran
+`government/tally.sh` against it:
+
+```
+$ VICHE_TOWN_ROOT=<tmp> sh  government/tally.sh change-quality-gate-act
+Bill change-quality-gate-act: present=7 yes=7 no=0 abstain=0 (quorum=6, required_yes=6)
+PASSED
+$ VICHE_TOWN_ROOT=<tmp> dash government/tally.sh change-quality-gate-act
+Bill change-quality-gate-act: present=7 yes=7 no=0 abstain=0 (quorum=6, required_yes=6)
+PASSED
+```
+
+So the decision is ready to land the moment the Clerk consolidates: **7/7
+yes, quorum 6, required 6 → PASSED** under both `/bin/sh` and `dash`. The only
+remaining steps are the Clerk's consolidation and clearing.
+
 ## Classification
 
 Interrupted-obligation / lease defect: a durable obligation record
