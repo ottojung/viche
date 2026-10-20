@@ -42,6 +42,7 @@ NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
 $(cat "$charter")
 === END AUTHORITATIVE CONSTITUTION ===
 Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
+Follow the standing operational agenda at $town/government/executive-agenda.md, including continuous SoringP1 research-pool maintenance; unrelated one-off handoffs do not suspend this duty.
 Act 19 §3.2: the following OPEN DURABLE HANDOFFS at $town/records/handoffs/ govern this dispatch. Do NOT run the generic eligible-issue cycle while any open handoff exists; act on each open handoff now, then mark it done (with an evidence link) or superseded (by a newer handoff) in the queue:
 $handoffs
 A phoebe-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to phoebe-dev. Require verified passing CI when applicable (a green run, not a claim).
