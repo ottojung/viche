@@ -37,6 +37,8 @@ export PATH MOCK_BOARD LAST
 
 NOW=2000000000
 VICHE_OVERSIGHT_NOW=$NOW
+mkdir -p "$scratch/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_STATE_ROOT=$scratch/state
 VICHE_KAWUN_REPO=$scratch/kawun

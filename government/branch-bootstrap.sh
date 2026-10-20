@@ -29,10 +29,8 @@ fi
 . "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/office-continuity.sh"
 mkdir -p "$liv"
 umask 077
-if ! meta=$(antonina agent status --id "$id" --json 2>/dev/null); then
-  antonina agent new --id "$id" --cwd "$cwd" --title "Viche: $title"
-  meta=$(antonina agent status --id "$id" --json)
-fi
+id=$(/bin/sh "$town/government/appointments.sh" ensure "$branch")
+meta=$(antonina agent status --id "$id" --json)
 now=$(date +%s)
 mode=$(printf '%s\n' "$meta" | jq -r '.state')
 reason=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // ""')
@@ -55,8 +53,7 @@ if oc_reset_due "$liv" "$id" "$now"; then
   antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
   git -C "$cwd" status --short > "$snapshot/worktree.txt"
   printf '%s\n' "$now" > "$liv/last-reset-$id"
-  antonina agent delete --id "$id"
-  antonina agent new --id "$id" --cwd "$cwd" --title "Viche: $title"
+  id=$(/bin/sh "$town/government/appointments.sh" replace "$branch")
   meta=$(antonina agent status --id "$id" --json)
   oc_clear_failures "$liv" "$id"
   printf '%s branch=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \

@@ -16,7 +16,7 @@ The independent `judiciary-measurements.py` writes observational facts to `branc
 
 ## Independent agent identity and activity
 
-The ordinary-government branch bootstrap creates Executive agent c1e00002 and Judiciary agent c1e00008, each with a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, even if the board target registry is empty. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
+The branch bootstrap appoints generated agents to stable Executive and Judiciary office keys, using the durable state/appointments registry. Each office has a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, even if the board target registry is empty. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
 
 ## Permanent legislative Innovation Centre (Founder-directed operational pilot)
 

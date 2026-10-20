@@ -40,6 +40,8 @@ liv=$d/state/liveness
 log=$liv/failures/c1e00002
 PATH="$d/bin:$PATH"
 MOCK_ROOT="$d/mock"
+mkdir -p "$d/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$d/town/government/appointments.sh"
 VICHE_TOWN_ROOT="$d/town"
 VICHE_SEATS_ROOT="$d/seats"
 VICHE_STATE_ROOT="$d/state"
@@ -174,6 +176,8 @@ MOCK
 chmod +x "$d2/bin/antonina"
 touch "$d2/state/inaugurated"
 PATH="$d2/bin:$PATH"
+mkdir -p "$d2/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$d2/town/government/appointments.sh"
 VICHE_TOWN_ROOT="$d2/town"
 VICHE_SEATS_ROOT="$d2/seats"
 VICHE_STATE_ROOT="$d2/state"

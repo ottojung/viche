@@ -23,6 +23,8 @@ case "$1 $2" in
   echo '{"agents":[{"id":"c1e00008"}],"unreadable":0}' ;;
 "agent status")
   echo '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}' ;;
+"agent new")
+  printf "generated-audit-agent-1\n" ;;
 "agent run")
   printf 'invoked\n' >> "$DISPATCHES" ;;
 *) echo "unexpected mock call: $*" >&2; exit 90 ;;

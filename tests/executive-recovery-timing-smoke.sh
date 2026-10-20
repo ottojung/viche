@@ -41,6 +41,8 @@ git -C "$scratch/seats/branches/executive" init -q
 git -C "$scratch/seats/branches/executive" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm baseline
 PATH="$scratch/bin:$PATH"
 MOCK_ROOT="$scratch/mock"
+mkdir -p "$scratch/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 VICHE_TOWN_ROOT="$scratch/town"
 VICHE_SEATS_ROOT="$scratch/seats"
 VICHE_STATE_ROOT="$scratch/state"

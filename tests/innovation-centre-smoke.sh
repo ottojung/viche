@@ -31,6 +31,8 @@ esac
 MOCK
 chmod +x "$scratch/bin/antonina"
 PATH=$scratch/bin:$PATH
+mkdir -p "$scratch/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
