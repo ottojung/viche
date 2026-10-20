@@ -51,6 +51,21 @@ TERMINAL_DECLARATION_RE = re.compile(
     r"(verification:confirmed|verification:blocked|enactment:not_enacted|deferred)"
     r"([.\s,;:]|$)")
 
+# Act 18 §3.3.4: automated scheduler/agent status lines are not updates.
+AUTOMATED_RE = re.compile(
+    r"(?i)\[(scheduler-turn|terminal-handoff|progress-checkpoint)\]")
+# A terminal token counts only when DECLARED, never inside an inline-code or
+# quoted span: strip those before matching so a comment that merely QUOTES a
+# declaration (or the classifier's own fixture) cannot false-positive.
+INLINE_CODE_RE = re.compile(r"`[^`]*`")
+QUOTED_RE = re.compile(r'"[^"\n]*"')
+
+
+def unquote(text):
+    """Remove inline-code and double-quoted spans (Act 18 §3.3/§3.4: a terminal
+    token must be DECLARED, not a quoted/prose mention)."""
+    return QUOTED_RE.sub(" ", INLINE_CODE_RE.sub(" ", text))
+
 
 def read(path):
     try:
@@ -81,19 +96,22 @@ def board_terminal_state(num):
     Act 18 §3.3/§3.4: a terminal update carries a stage marker AND a declared
     terminal state — a terminal token in a declaration position, not a
     quoted/prose mention. Automated scheduler/agent status lines are not
-    updates. Mirrors the §5 lens exactly (same regexes) so §5 and §7 agree."""
+    updates (Act 18 §3.3.4). Inline-code and quoted spans are stripped first so
+    a comment that merely QUOTES a declaration (or the classifier's own test
+    fixture) cannot false-positive. Mirrors the §5 lens exactly (same rules) so
+    §5 and §7 agree."""
     try:
         issue = board_invoke("show", "--id", str(num), "--page", "1", "--json")
     except Exception:
         return None
     for msg in issue.get("messages") or []:
         body = msg.get("body") or ""
-        low = body.lower()
-        if "[scheduler-turn]" in low or "[terminal-handoff]" in low:
+        if AUTOMATED_RE.search(body):
             continue
-        if not STAGE_MARKER_RE.search(body):
+        clean = unquote(body)
+        if not STAGE_MARKER_RE.search(clean):
             continue
-        declared = TERMINAL_DECLARATION_RE.search(body)
+        declared = TERMINAL_DECLARATION_RE.search(clean)
         if declared:
             return declared.group(2)
     return None

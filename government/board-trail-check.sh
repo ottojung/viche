@@ -9,6 +9,13 @@
 # them (Act 15 §2 — no reform proposals). Same-model / measurement-reliability
 # limits are reported by the caller, not hidden.
 #
+# Terminal rule (Act 18 §3.3/§3.4), identical to government/board-trail-index.py
+# §7: a terminal update carries a stage marker AND a DECLARED terminal state in a
+# declaration position. Inline-code/quoted spans are stripped before matching, so
+# a comment that merely QUOTES a declaration (e.g. the classifier's own fixture)
+# cannot false-positive; automated [scheduler-turn]/[terminal-handoff]/
+# [progress-checkpoint] lines are excluded (§3.3.4).
+#
 # Output: one JSON object per line (JSONL) on stdout, one per originating
 # issue, with classified fields. The caller (government/judiciary-measurements.py)
 # aggregates the §5 metrics and records the honest limitations.
@@ -47,6 +54,14 @@ while IFS="$sep" read -r issue work act epoch type; do
         --arg issue "$issue" --arg work "$work" --arg act "$act" \
         --arg type "$type" --argjson epoch "$epoch" '
         def clean: (.createdAt // "") | sub("\\.[0-9]+Z$"; "Z");
+        # Act 18 §3.3.4: automated scheduler/agent status lines are not updates.
+        def automated: test("(?i)\\[(scheduler-turn|terminal-handoff|progress-checkpoint)\\]");
+        # A terminal token counts only when DECLARED, never inside an inline-code
+        # or quoted span: strip those before matching so a comment that merely
+        # QUOTES a declaration (or the classifier own fixture) cannot false-positive.
+        def unquoted: gsub("`[^`]*`"; " ") | gsub("\"[^\"\\n]*\""; " ");
+        def stage_marker: test("(?i)stage\\s*marker[^\\n]{0,12}\\b(proposal|enactment|deployment|verification)\\b");
+        def terminal_decl: test("(?m)(^|[.:;—-]\\s*|(?i:state|status|terminal|result|outcome|transition)\\s+)(verification:confirmed|verification:blocked|enactment:not_enacted|deferred)([.\\s,;:]|$)");
         ($epoch | if . > 0 then todate else "" end) as $since |
         [ .[] | {a:(.author // ""), b:(.body // ""), t:clean} ] as $c |
         (if $epoch > 0 then ($c | map(select(.t > $since))) else $c end) as $p |
@@ -57,13 +72,13 @@ while IFS="$sep" read -r issue work act epoch type; do
           comments_total: ($c | length),
           post_completion: ($p | length),
           terminal: (if ([ $pb[] |
-                         (test("(?i)stage\\s*marker[^\\n]{0,12}\\b(proposal|enactment|deployment|verification)\\b"))
-                         and
-                         (test("(?m)(^|[.:;—-]\\s*|(?i:state|status|terminal|result|outcome|transition)\\s+)(verification:confirmed|verification:blocked|enactment:not_enacted|deferred)([.\\s,;:]|$)"))
+                         select(automated | not) |
+                         unquoted |
+                         (stage_marker and terminal_decl)
                        ] | any)
                     then 1 else 0 end),
           stage_markers: ([$pb[] | scan("(?i)stage\\s*marker[^\\n]{0,12}\\b(proposal|enactment|deployment|verification)\\b")[0]] | unique | join(",")),
-          chatter: ($pb | map(select(test("\\[(scheduler-turn|terminal-handoff|progress-checkpoint)\\]"))) | length),
+          chatter: ($pb | map(select(automated)) | length),
           latest_iso: (if ($c | length) > 0 then ($c | map(.t) | max) else "-" end)
         }'
 done < "$map"
