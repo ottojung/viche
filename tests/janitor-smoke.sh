@@ -149,4 +149,54 @@ awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan/toolchains" {print $10}' \
 awk -F'\t' 'NR>1 && $3=="'"$tbox"'/proj/.elan/toolchains/leanprover--lean4---v4.34.0" {print $10}' \
     "$state/janitor/inventory.tsv" | grep -qx 'retain'
 
-printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, and retains live build toolchains\n'
+# 9. Act 12.4(d) liveness gate: a quarantine candidate with a live process cwd
+#    inside it is retain-live, never a removal candidate; the check is logged.
+lbox=$d/lbox
+mkdir -p "$lbox/live-target"
+printf 'x\n' > "$lbox/live-target/f"
+touch -d '40 days ago' "$lbox/live-target"
+( cd "$lbox/live-target" && sleep 15 & )
+lt_mtime=$(stat -c %Y "$lbox/live-target")
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t40\t0\t0\t0\t\n' "$host" "$lbox/live-target" "$lt_mtime"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$lbox"'/live-target" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'retain-live'
+grep -q 'liveness-gate.*result=in-use' "$state/janitor/actions.log"
+
+# 10. An aged .lake cache whose parent worktree still has a live process is
+#     retained: worktree liveness implies the cache may be in active use.
+pbox=$d/pbox
+mkdir -p "$pbox/live-parent/.lake"
+printf 'x\n' > "$pbox/live-parent/.lake/f"
+touch -d '40 days ago' "$pbox/live-parent/.lake" "$pbox/live-parent"
+( cd "$pbox/live-parent" && sleep 15 & )
+lp_mtime=$(stat -c %Y "$pbox/live-parent")
+ll_mtime=$(stat -c %Y "$pbox/live-parent/.lake")
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t40\t0\t0\t0\t\n' "$host" "$pbox/live-parent" "$lp_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$pbox/live-parent/.lake" "$ll_mtime"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$pbox"'/live-parent/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'retain-live'
+grep -q 'liveness-gate.*parent='"$pbox"'/live-parent.*result=in-use' "$state/janitor/actions.log"
+
+# 11. With no live process, the same aged structure stays a quarantine candidate
+#     (the gate retains, it does not loosen, classification).
+qbox=$d/qbox
+mkdir -p "$qbox/dead-parent/.lake"
+printf 'x\n' > "$qbox/dead-parent/.lake/f"
+touch -d '40 days ago' "$qbox/dead-parent/.lake" "$qbox/dead-parent"
+dp_mtime=$(stat -c %Y "$qbox/dead-parent")
+dl_mtime=$(stat -c %Y "$qbox/dead-parent/.lake")
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t2097152\t%s\t40\t0\t0\t0\t\n' "$host" "$qbox/dead-parent" "$dp_mtime"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1024\t%s\t40\t0\t0\t0\t\n' "$host" "$qbox/dead-parent/.lake" "$dl_mtime"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$qbox"'/dead-parent/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'quarantine-candidate'
+
+printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, and gates quarantine on a recorded Act 12.4(d) liveness check\n'

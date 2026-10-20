@@ -19,6 +19,8 @@
 #   classify            classify inventory candidates by ownership/liveness; read-only
 #   quarantine           move classified candidates to quarantine; reversible
 #   reclaim-quarantined remove quarantined items past their grace period; destructive
+#   scratch-quarantine   stage aged, unreferenced /tmp runtime scratch for the
+#                        grace+reclaim pipeline (never deletes directly)
 #
 # Safety: this script never removes unverified content, never writes outside
 # $VICHE_STATE_ROOT, and never touches records/, government/, constitution/, the
@@ -38,7 +40,7 @@ mode=${1:-}
 dry_run=0
 if [ "${2:-}" = "--dry-run" ]; then dry_run=1; fi
 case "$mode" in
-    observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined) : ;;
+    observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined|scratch-quarantine) : ;;
     *) usage; exit 2 ;;
 esac
 
@@ -324,7 +326,7 @@ incident() {
 # Record one inventory row for a directory into $tmp_inv (read-only probe).
 record_inv_dir() {
     d=$1
-    size=$(timeout 10 du -s -k "$d" 2>/dev/null | awk 'NR==1{print $1; exit}')
+    size=$(timeout 60 du -s -k "$d" 2>/dev/null | awk 'NR==1{print $1; exit}')
     is_num "$size" || return 0
     [ "$size" -ge "$inventory_min_kb" ] || return 0
     mtime=$(stat -c %Y "$d" 2>/dev/null || printf '0')
@@ -354,7 +356,10 @@ inventory() {
     if [ -f "$inv" ]; then cp "$inv" "$prev" 2>/dev/null || : > "$prev"; else : > "$prev"; fi
     printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n' > "$tmp_inv"
     log_append "$jstate/actions.log" "$ts inventory begin min_kb=$inventory_min_kb"
-    for root in /workspace /home/lubko /var/lib/lubko/wd /tmp/opencode; do
+    # Act 12.2: jurisdiction covers the entire box. /tmp (bind-mounted writable
+    # territory) and /gnu (host-managed Guix store, observed-only) were previously
+    # missed; /tmp/opencode is subsumed by /tmp.
+    for root in /workspace /home/lubko /var/lib/lubko/wd /tmp /gnu; do
         [ -d "$root" ] || continue
         find "$root" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while IFS= read -r d; do
             record_inv_dir "$d"
@@ -365,6 +370,76 @@ inventory() {
             record_inv_dir "$d"
         done
     done
+    # Large individual files at the roots: a single 500 MB file would otherwise be
+    # invisible to the office, which previously inventoried directories only.
+    for root in /workspace /home/lubko /var/lib/lubko/wd /tmp; do
+        [ -d "$root" ] || continue
+        find "$root" -maxdepth 1 -mindepth 1 -type f -size +"${inventory_min_kb}"k 2>/dev/null | while IFS= read -r f; do
+            record_inv_dir "$f"
+        done
+    done
+    # Transient runtime scratch batch (node/opencode bytecode-file scratch in
+    # /tmp, pattern observed 2026-10-20): aggregate count, size, age and a
+    # one-pass liveness probe so accumulation is visible before it is acted on.
+    scratch_count=0
+    scratch_kb=0
+    scratch_oldest=
+    scratch_newest=
+    scratch_live=0
+    if [ -d /tmp ]; then
+        for f in /tmp/.bcf*; do
+            [ -f "$f" ] || continue
+            scratch_count=$((scratch_count + 1))
+            fkb=$(du -k "$f" 2>/dev/null | awk 'NR==1{print $1; exit}')
+            is_num "$fkb" || fkb=0
+            scratch_kb=$((scratch_kb + fkb))
+            fm=$(stat -c %Y "$f" 2>/dev/null || printf '0')
+            is_num "$fm" || fm=0
+            if [ -z "$scratch_oldest" ] || [ "$fm" -lt "$scratch_oldest" ]; then scratch_oldest=$fm; fi
+            if [ -z "$scratch_newest" ] || [ "$fm" -gt "$scratch_newest" ]; then scratch_newest=$fm; fi
+        done
+        # One /proc pass: count scratch files still mapped or open.
+        for _sf_p in /proc/[0-9]*; do
+            if [ -r "$_sf_p/maps" ]; then
+                if grep -q -F -e "/tmp/.bcf" "$_sf_p/maps" 2>/dev/null; then scratch_live=1; fi
+            fi
+            if [ -d "$_sf_p/fd" ]; then
+                for _sf_fd in "$_sf_p/fd"/*; do
+                    _sf_val=$(readlink "$_sf_fd" 2>/dev/null) || continue
+                    case "$_sf_val" in
+                        /tmp/.bcf*) scratch_live=1 ;;
+                    esac
+                done
+            fi
+        done
+    fi
+    scratch_smallest_age_days=999999
+    if [ "$scratch_count" -gt 0 ]; then
+        scratch_smallest_age_days=$(( (now - scratch_newest) / 86400 ))
+    fi
+    scratch_verdict=small
+    if [ "$scratch_kb" -ge "$inventory_min_kb" ]; then scratch_verdict=accumulating; fi
+    if [ "$scratch_kb" -ge "$inventory_min_kb" ] && [ "$scratch_smallest_age_days" -ge 1 ]; then
+        if [ "$scratch_live" -eq 1 ]; then
+            scratch_verdict=live
+        else
+            scratch_verdict=quarantine-eligible
+        fi
+    fi
+    scratch=$jstate/scratch.tsv
+    if [ ! -f "$scratch" ]; then
+        printf 'ts\thost\tpattern\tcount\tsize_kb\tnewest_age_days\tlive_referenced\tverdict\n' > "$scratch"
+    fi
+    printf '%s\t%s\t/tmp/.bcf*\t%s\t%s\t%s\t%s\t%s\n' \
+        "$ts" "$host" "$scratch_count" "$scratch_kb" "$scratch_smallest_age_days" \
+        "$scratch_live" "$scratch_verdict" >> "$scratch"
+    rotate "$scratch"
+    log_append "$jstate/actions.log" \
+        "$ts scratch-batch pattern=/tmp/.bcf* count=$scratch_count size_kb=$scratch_kb newest_age_days=$scratch_smallest_age_days live=$scratch_live verdict=$scratch_verdict"
+    if [ "$scratch_verdict" = "quarantine-eligible" ]; then
+        log_append "$jstate/actions.log" \
+            "$ts PREVENTION scratch batch quarantine-eligible (aged, unreferenced); run scratch-quarantine to stage it reversibly"
+    fi
     mv "$tmp_inv" "$inv"
     rotate "$inv"
     if [ -s "$prev" ]; then
@@ -379,10 +454,72 @@ inventory() {
             log_append "$jstate/actions.log" "$ts inventory growth_top=$tpath delta_kb=$tdelta"
         fi
     fi
+    # Territorial accounting (Act 12.2, #298/#299): attribute the shared device
+    # between box-visible usage (inventoried rows) and usage outside the box's
+    # visibility (host system, other containers). Observation only; the office
+    # never acts on outside-box usage. Row sizes are threshold-filtered
+    # (>= inventory_min_kb), so small directories are not counted here.
+    terr=$jstate/territorial.tsv
+    printf 'ts\thost\tdevice\tdevice_size_kb\tdevice_used_kb\tdevice_avail_kb\tbox_visible_kb\toutside_box_kb\n' > "$terr"
+    box_kb=0
+    if [ -s "$inv" ]; then
+        box_kb=$(awk -F'\t' 'NR>1 {s+=$4} END {printf "%d", s+0}' "$inv")
+        is_num "$box_kb" || box_kb=0
+    fi
+    dev_size=$(df_field "$probe" 2)
+    dev_used=$(df_field "$probe" 3)
+    dev_avail=$(df_field "$probe" 4)
+    outside_kb=$((dev_used - box_kb))
+    if [ "$outside_kb" -lt 0 ]; then outside_kb=0; fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$ts" "$host" "$fs_dev" "$dev_size" "$dev_used" "$dev_avail" \
+        "$box_kb" "$outside_kb" >> "$terr"
+    log_append "$jstate/actions.log" \
+        "$ts territorial device_used_kb=$dev_used box_visible_kb=$box_kb outside_box_kb=$outside_kb"
     n=$(wc -l < "$inv" 2>/dev/null || printf '0')
     log_append "$jstate/actions.log" "$ts inventory end entries=$n"
     printf 'janitor: inventory complete, %s entries (min %s KB)\n' "$n" "$inventory_min_kb"
     return 0
+}
+
+path_in_use() {
+    # path_in_use <path>: return 0 if any live process references the path
+    # (cwd/root at or under it, an open fd or memory map under it) or a mount
+    # sits at or under it. Read-only liveness probe backing the Act 12.4(d)
+    # evidence standard: no artifact is quarantine-classified while referenced.
+    _piu=$1
+    [ -n "$_piu" ] || return 1
+    _piu_canon=$(readlink -f "$_piu" 2>/dev/null) || return 1
+    [ -n "$_piu_canon" ] || return 1
+    [ "$_piu_canon" != "/" ] || return 1
+    for _piu_p in /proc/[0-9]*; do
+        for _piu_link in "$_piu_p/cwd" "$_piu_p/root"; do
+            _piu_val=$(readlink "$_piu_link" 2>/dev/null) || continue
+            case "$_piu_val" in
+                "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
+            esac
+        done
+        if [ -r "$_piu_p/maps" ]; then
+            if grep -q -F -e "$_piu_canon/" "$_piu_p/maps" 2>/dev/null; then return 0; fi
+        fi
+        if [ -d "$_piu_p/fd" ]; then
+            for _piu_fd in "$_piu_p/fd"/*; do
+                _piu_val=$(readlink "$_piu_fd" 2>/dev/null) || continue
+                case "$_piu_val" in
+                    "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
+                esac
+            done
+        fi
+    done
+    if [ -r /proc/mounts ]; then
+        while IFS= read -r _piu_line; do
+            _piu_mp=$(printf '%s' "$_piu_line" | awk '{print $2; exit}')
+            case "$_piu_mp" in
+                "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
+            esac
+        done < /proc/mounts
+    fi
+    return 1
 }
 
 # --- classify inventory candidates (read-only) ----------------------------------
@@ -397,6 +534,11 @@ classify() {
         [ -d "$path" ] || continue
         class=retain
         case "$path" in
+        /gnu|/gnu/store|/gnu/store/*)
+            # Host-managed Guix store (read-only mount on the shared device).
+            # Observed for territorial accounting only; never reclaimed.
+            class=retain-host-managed
+            ;;
         */.lake)
             # Build cache (e.g. Lean .lake). Never quarantine a live or recently
             # touched cache: it may be reused by an in-flight or upcoming build.
@@ -434,6 +576,29 @@ classify() {
                 class=quarantine-candidate
             elif [ "$age" -ge 7 ]; then
                 class=monitor
+            fi
+            ;;
+        esac
+        # Act 12.4(d): no artifact is quarantine-classified unless a recorded
+        # liveness/ownership check clears it. A referenced path is retain-live.
+        if [ "$class" = "quarantine-candidate" ]; then
+            if path_in_use "$path"; then
+                class=retain-live
+                log_append "$jstate/actions.log" "$ts liveness-gate path=$path result=in-use"
+            else
+                log_append "$jstate/actions.log" "$ts liveness-gate path=$path result=clear"
+            fi
+        fi
+        # For build caches, the parent worktree's processes matter too: a live
+        # agent working in the worktree regenerates the cache on demand.
+        case "$path" in
+        */.lake)
+            if [ "$class" = "quarantine-candidate" ]; then
+                parent=${path%/.lake}
+                if path_in_use "$parent"; then
+                    class=retain-live
+                    log_append "$jstate/actions.log" "$ts liveness-gate path=$path parent=$parent result=in-use"
+                fi
             fi
             ;;
         esac
@@ -482,6 +647,75 @@ quarantine() {
     fi
     log_append "$jstate/actions.log" "$ts quarantine end"
     printf 'janitor: quarantine complete (dir=%s)\n' "$quarantine_dir"
+    return 0
+}
+
+# --- stage transient runtime scratch reversibly (quarantine, not deletion) ------
+scratch_quarantine() {
+    scratch=$jstate/scratch.tsv
+    [ -f "$scratch" ] || { echo "janitor: no scratch observations" >&2; return 1; }
+    [ "$reclaim_enabled" -eq 1 ] || {
+        log_append "$jstate/actions.log" "$ts scratch-quarantine deferred reclaim_enabled=$reclaim_enabled"
+        printf 'janitor: scratch-quarantine deferred (reclaim_enabled=%s)\n' "$reclaim_enabled"
+        return 0
+    }
+    verdict=$(tail -n 1 "$scratch" | cut -f8)
+    [ "$verdict" = "quarantine-eligible" ] || {
+        log_append "$jstate/actions.log" "$ts scratch-quarantine deferred verdict=$verdict"
+        printf 'janitor: scratch-quarantine deferred (verdict=%s)\n' "$verdict"
+        return 0
+    }
+    log_append "$jstate/actions.log" "$ts scratch-quarantine begin"
+    # Re-verify liveness with one /proc pass: build no open list here; instead the
+    # move loop skips any file still referenced, so staging never breaks a run.
+    stage=$quarantine_dir/scratch-$(date -u +%Y%m%d%H%M%S)
+    [ -d "$quarantine_dir" ] || mkdir -p "$quarantine_dir"
+    mkdir -p "$stage"
+    n=0
+    kb=0
+    for f in /tmp/.bcf*; do
+        [ -f "$f" ] || continue
+        fm=$(stat -c %Y "$f" 2>/dev/null || printf '0')
+        is_num "$fm" || fm=0
+        age=$((now - fm))
+        [ "$age" -ge "$min_age" ] || continue
+        # Skip any file a live process still maps or holds open.
+        referenced=0
+        for _sq_p in /proc/[0-9]*; do
+            if [ -r "$_sq_p/maps" ]; then
+                if grep -q -F -e "$f" "$_sq_p/maps" 2>/dev/null; then referenced=1; break; fi
+            fi
+            if [ -d "$_sq_p/fd" ]; then
+                for _sq_fd in "$_sq_p/fd"/*; do
+                    _sq_val=$(readlink "$_sq_fd" 2>/dev/null) || continue
+                    if [ "$_sq_val" = "$f" ]; then referenced=1; break; fi
+                done
+            fi
+            [ "$referenced" -eq 1 ] && break
+        done
+        [ "$referenced" -eq 1 ] && continue
+        if mv "$f" "$stage/" 2>/dev/null; then
+            n=$((n + 1))
+            fkb=$(du -k "$f" 2>/dev/null | awk 'NR==1{print $1; exit}')
+            is_num "$fkb" || fkb=0
+            kb=$((kb + fkb))
+        fi
+    done
+    if [ "$n" -eq 0 ]; then
+        rmdir "$stage" 2>/dev/null || true
+        log_append "$jstate/actions.log" "$ts scratch-quarantine end staged=0 (all scratch young or referenced)"
+        printf 'janitor: scratch-quarantine: no eligible files to stage\n'
+        return 0
+    fi
+    log_append "$jstate/actions.log" "$ts scratch-quarantine end staged=$n size_kb=$kb dest=$stage"
+    qlog=$jstate/quarantined.tsv
+    if [ ! -f "$qlog" ]; then
+        printf 'ts\tsrc\tdest\tsize_kb\tquarantined_at\n' > "$qlog"
+    fi
+    printf '%s\t/tmp/.bcf*\t%s\t%s\t%s\n' "$ts" "$stage" "$kb" "$now" >> "$qlog"
+    rotate "$qlog"
+    printf 'janitor: scratch-quarantine staged %s files (%s KB) at %s (grace=%ss, then reclaim-quarantined)\n' \
+        "$n" "$kb" "$stage" "$quarantine_grace"
     return 0
 }
 
@@ -566,6 +800,14 @@ case "$mode" in
             printf 'top growers (KB):\n'
             head -n 11 "$jstate/growth.tsv"
         fi
+        if [ -f "$jstate/territorial.tsv" ]; then
+            printf 'territorial (last inventory): device_used_kb box_visible_kb outside_box_kb\n'
+            tail -n 2 "$jstate/territorial.tsv"
+        fi
+        if [ -f "$jstate/scratch.tsv" ]; then
+            printf 'scratch batch (last inventory):\n'
+            tail -n 2 "$jstate/scratch.tsv"
+        fi
         if [ -d "$quarantine_dir" ]; then
             qn=$(find "$quarantine_dir" -mindepth 1 -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
             qsz=$(du -sk "$quarantine_dir" 2>/dev/null | awk 'NR==1{print $1; exit}')
@@ -596,5 +838,9 @@ case "$mode" in
     reclaim-quarantined)
         compute
         reclaim_quarantined
+        ;;
+    scratch-quarantine)
+        compute
+        scratch_quarantine
         ;;
 esac
