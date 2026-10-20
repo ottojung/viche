@@ -199,4 +199,31 @@ dl_mtime=$(stat -c %Y "$qbox/dead-parent/.lake")
 /bin/sh "$town/government/janitor.sh" classify
 awk -F'\t' 'NR>1 && $3=="'"$qbox"'/dead-parent/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'quarantine-candidate'
 
+# 12. Concurrency lock: a held lock makes a second mutating run skip cleanly
+#     instead of interleaving appends (the 2026-10-20 duplicate-inventory race).
+mkdir -p "$state/janitor/lock"
+/bin/sh "$town/government/janitor.sh" classify >/dev/null 2>&1
+# The stale lock (empty, old) is reclaimed rather than blocking forever.
+touch -d '1 hour ago' "$state/janitor/lock"
+/bin/sh "$town/government/janitor.sh" classify >/dev/null 2>&1
+[ ! -d "$state/janitor/lock" ] || { echo "lock not released"; exit 1; }
+grep -q 'lock-stale removed' "$state/janitor/actions.log"
+
+# 13. Territorial accounting (Act 12.2, #298/#299): box_visible_kb sums distinct
+#     top-level paths only. A nested .lake row is NOT double-counted, so the
+#     total stays below the device rather than inflating past it.
+ibox=$d/ibox
+mkdir -p "$ibox/parent/.lake" "$ibox/plain"
+printf 'aaaaaaaaaa\n' > "$ibox/parent/f"
+printf 'bbbbbbbbbb\n' > "$ibox/parent/.lake/f"
+printf 'cccccccccc\n' > "$ibox/plain/f"
+printf 'inventory_min_kb=1\n' >> "$town/government/janitor.conf"
+JANITOR_ROOTS=$ibox JANITOR_FILE_ROOTS=$ibox \
+    /bin/sh "$town/government/janitor.sh" inventory
+parent_kb=$(du -sk "$ibox/parent" | awk 'NR==1{print $1}')
+plain_kb=$(du -sk "$ibox/plain" | awk 'NR==1{print $1}')
+want=$((parent_kb + plain_kb))
+got=$(awk -F'\t' 'NR==2{print $7}' "$state/janitor/territorial.tsv")
+[ "$got" = "$want" ] || { echo "territorial box_visible got=$got want=$want"; exit 1; }
+
 printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, and gates quarantine on a recorded Act 12.4(d) liveness check\n'

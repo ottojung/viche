@@ -79,10 +79,16 @@ reclaim_enabled=$(confval reclaim_enabled 0)
 inventory_min_kb=$(confval inventory_min_kb 102400)
 quarantine_dir=$(confval quarantine_dir "$state/quarantine")
 quarantine_grace=$(confval quarantine_grace_seconds 604800)
+lock_stale=$(confval lock_stale_seconds 900)
+# Inventory roots (Act 12.2 whole-box jurisdiction). Overridable for hermetic
+# tests; the defaults cover the writable territory plus the observed-only
+# host-managed Guix store.
+inv_roots=${JANITOR_ROOTS:-/workspace /home/lubko /var/lib/lubko/wd /tmp /gnu}
+inv_file_roots=${JANITOR_FILE_ROOTS:-/workspace /home/lubko /var/lib/lubko/wd /tmp}
 
 for n in "$warn_pct" "$high_pct" "$crit_pct" "$observe_interval" "$reclaim_interval" \
          "$min_age" "$max_log_bytes" "$safe_reclaim" "$reclaim_enabled" \
-         "$inventory_min_kb" "$quarantine_grace"; do
+         "$inventory_min_kb" "$quarantine_grace" "$lock_stale"; do
     if ! is_num "$n"; then
         echo "janitor: invalid numeric policy value in $conf: $n" >&2
         exit 2
@@ -359,7 +365,7 @@ inventory() {
     # Act 12.2: jurisdiction covers the entire box. /tmp (bind-mounted writable
     # territory) and /gnu (host-managed Guix store, observed-only) were previously
     # missed; /tmp/opencode is subsumed by /tmp.
-    for root in /workspace /home/lubko /var/lib/lubko/wd /tmp /gnu; do
+    for root in $inv_roots; do
         [ -d "$root" ] || continue
         find "$root" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while IFS= read -r d; do
             record_inv_dir "$d"
@@ -372,7 +378,7 @@ inventory() {
     done
     # Large individual files at the roots: a single 500 MB file would otherwise be
     # invisible to the office, which previously inventoried directories only.
-    for root in /workspace /home/lubko /var/lib/lubko/wd /tmp; do
+    for root in $inv_file_roots; do
         [ -d "$root" ] || continue
         find "$root" -maxdepth 1 -mindepth 1 -type f -size +"${inventory_min_kb}"k 2>/dev/null | while IFS= read -r f; do
             record_inv_dir "$f"
@@ -459,11 +465,18 @@ inventory() {
     # visibility (host system, other containers). Observation only; the office
     # never acts on outside-box usage. Row sizes are threshold-filtered
     # (>= inventory_min_kb), so small directories are not counted here.
+    #
+    # box_visible_kb sums distinct TOP-LEVEL paths only: a nested build-cache row
+    # (…/.lake) is already included in its parent worktree's du, so counting it
+    # again double-counts; and a duplicated row (e.g. from a concurrent run)
+    # would too. Either defect inflates box_visible_kb past the device and forces
+    # outside_box_kb to 0 (observed 2026-10-20: 270.9 GB "visible" on a 186.2
+    # GB-used device). Dedupe by path and exclude nested .lake rows.
     terr=$jstate/territorial.tsv
     printf 'ts\thost\tdevice\tdevice_size_kb\tdevice_used_kb\tdevice_avail_kb\tbox_visible_kb\toutside_box_kb\n' > "$terr"
     box_kb=0
     if [ -s "$inv" ]; then
-        box_kb=$(awk -F'\t' 'NR>1 {s+=$4} END {printf "%d", s+0}' "$inv")
+        box_kb=$(awk -F'\t' 'NR>1 && $3 !~ /\/\.lake$/ && !seen[$3]++ {s+=$4} END {printf "%d", s+0}' "$inv")
         is_num "$box_kb" || box_kb=0
     fi
     dev_size=$(df_field "$probe" 2)
@@ -748,6 +761,44 @@ reclaim_quarantined() {
     printf 'janitor: reclaim-quarantined complete\n'
     return 0
 }
+
+# --- concurrency lock ----------------------------------------------------------
+# One writer per state dir. Two janitor cycles running at once (observed
+# 2026-10-20: two inventory passes 41s apart) share $jstate/tmp/inventory.tsv
+# and interleave their appends, producing a corrupt inventory (282 rows for 186
+# paths) that inflates the territorial accounting. mkdir is the POSIX-atomic
+# primitive; a lock older than lock_stale seconds is presumed dead and reclaimed.
+# Read-only modes (report/status) never lock.
+lock_dir=$jstate/lock
+acquire_lock() {
+    _tries=0
+    while :; do
+        if mkdir "$lock_dir" 2>/dev/null; then
+            printf '%s\n' "$$" > "$lock_dir/pid" 2>/dev/null || true
+            trap 'rm -rf "$lock_dir"' EXIT HUP INT TERM
+            return 0
+        fi
+        _lmt=$(stat -c %Y "$lock_dir" 2>/dev/null || printf '0')
+        is_num "$_lmt" || _lmt=0
+        if [ "$_lmt" -gt 0 ] && [ $((now - _lmt)) -ge "$lock_stale" ]; then
+            log_append "$jstate/actions.log" "$ts lock-stale removed age_s=$((now - _lmt)) dir=$lock_dir"
+            rm -rf "$lock_dir" 2>/dev/null || true
+            continue
+        fi
+        _tries=$((_tries + 1))
+        [ "$_tries" -lt 3 ] || return 1
+        sleep 2
+    done
+}
+case "$mode" in
+    report|status) : ;;
+    *)
+        if ! acquire_lock; then
+            printf 'janitor: another janitor run holds %s; skipping %s\n' "$lock_dir" "$mode" >&2
+            exit 0
+        fi
+        ;;
+esac
 
 # --- modes ---------------------------------------------------------------------
 case "$mode" in
