@@ -27,6 +27,20 @@ researchers, all model `opencode-go/longcat-2.5-preview-free` variant `low`,
 no backend errors. Target met. Fronts are pairwise distinct and disjoint from
 the two pre-existing agents.
 
+## Replenishment note (transient provider failure)
+
+During the pass the pre-existing `jail` agent (succinct strategy/adversary
+certificates) dropped from `--running` with a transient backend error
+(`upstream_endpoint_unavailable`, `transient: true`, `automatic_retry_safe:
+true`) and no saved work in its worktree. This is an infrastructure failure, not
+a mathematical result. A fresh agent `RcprMJ2rvXMoNJzpKyJ2bc-precision` was
+dispatched on the same worktree with a sharpened, distinct brief
+(certificate-checker completeness/limitation characterization). The `jail`
+session subsequently recovered and is running again, so the pool temporarily
+holds 6 SoringP1 researchers; five is a target, not a cap. The two certificate
+fronts are adjacent but distinct: constructing certificates vs. characterizing
+the completeness of the polynomial-time checker.
+
 ## Janitor Office reform — issues #298/#299 (verified delivered, merged, operating)
 
 `government/janitor.sh` on main (via 1b7bbaa, merged 0a9eeee) verified this pass:
