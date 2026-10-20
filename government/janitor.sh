@@ -21,6 +21,9 @@
 #   reclaim-quarantined remove quarantined items past their grace period; destructive
 #   scratch-quarantine   stage aged, unreferenced /tmp runtime scratch for the
 #                        grace+reclaim pipeline (never deletes directly)
+#   reclaim-idle-caches  delete verifiably idle, regenerable .lake build caches
+#                        (no live process, idle >= idle_cache_seconds, worktree
+#                        clean and fully pushed); auto-run by cycle at high/critical
 #
 # Safety: this script never removes unverified content, never writes outside
 # $VICHE_STATE_ROOT, and never touches records/, government/, constitution/, the
@@ -30,7 +33,7 @@ set -eu
 
 usage() {
     cat >&2 <<'EOF'
-Usage: janitor.sh <observe|reclaim|cycle|report|status> [--dry-run]
+Usage: janitor.sh <observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined|scratch-quarantine|reclaim-idle-caches> [--dry-run]
 EOF
 }
 
@@ -40,7 +43,7 @@ mode=${1:-}
 dry_run=0
 if [ "${2:-}" = "--dry-run" ]; then dry_run=1; fi
 case "$mode" in
-    observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined|scratch-quarantine) : ;;
+    observe|reclaim|cycle|report|status|inventory|classify|quarantine|reclaim-quarantined|scratch-quarantine|reclaim-idle-caches) : ;;
     *) usage; exit 2 ;;
 esac
 
@@ -87,10 +90,17 @@ inv_roots=${JANITOR_ROOTS:-/workspace /home/lubko /var/lib/lubko/wd /tmp /gnu}
 inv_file_roots=${JANITOR_FILE_ROOTS:-/workspace /home/lubko /var/lib/lubko/wd /tmp}
 # Runtime scratch directory holding the node/opencode .bcf* bytecode files.
 scratch_dir=${JANITOR_SCRATCH_DIR:-/tmp}
+# Liveness-aware idle build-cache reclamation: a regenerable .lake cache is
+# reclaimable only when no live process references it or its worktree, it has
+# been idle for idle_cache_seconds, and its worktree is a clean, fully-pushed
+# git worktree. Deleting a .lake loses only build time, never data.
+idle_cache_seconds=$(confval idle_cache_seconds 21600)
+idle_cache_enabled=$(confval idle_cache_enabled 1)
 
 for n in "$warn_pct" "$high_pct" "$crit_pct" "$observe_interval" "$reclaim_interval" \
          "$min_age" "$max_log_bytes" "$safe_reclaim" "$reclaim_enabled" \
-         "$inventory_min_kb" "$quarantine_grace" "$lock_stale"; do
+         "$inventory_min_kb" "$quarantine_grace" "$lock_stale" \
+         "$idle_cache_seconds" "$idle_cache_enabled"; do
     if ! is_num "$n"; then
         echo "janitor: invalid numeric policy value in $conf: $n" >&2
         exit 2
@@ -769,6 +779,79 @@ reclaim_quarantined() {
     return 0
 }
 
+# --- reclaim idle regenerable build caches --------------------------------------
+reclaim_idle_caches() {
+    # Act 12.3(2)/12.4: delete regenerable build caches (.lake) that are
+    # verifiably idle. Deleting a .lake loses only build time, never data
+    # (recovery: cd <worktree> && lake update && lake exe cache get && lake
+    # build). This is the liveness-aware rule the 2026-10-20 idle-cache record
+    # recommended, replacing the age>=30d gate that never fires on the fast
+    # research cadence. Gated by reclaim_enabled (Act 12.7) and idle_cache_enabled;
+    # per cache it requires: no live process references the cache or its worktree
+    # (path_in_use), idle for >= idle_cache_seconds, and a git worktree with no
+    # unpushed commits and no uncommitted changes.
+    inv=$jstate/inventory.tsv
+    if [ ! -f "$inv" ]; then
+        log_append "$jstate/actions.log" "$ts idle-cache-reclaim skip reason=no-inventory"
+        printf 'janitor: idle-cache reclaim skipped (no inventory yet)\n'
+        return 0
+    fi
+    if [ "$reclaim_enabled" -ne 1 ] || [ "$idle_cache_enabled" -ne 1 ]; then
+        log_append "$jstate/actions.log" "$ts idle-cache-reclaim deferred reclaim_enabled=$reclaim_enabled idle_cache_enabled=$idle_cache_enabled"
+        printf 'janitor: idle-cache reclaim deferred (reclaim_enabled=%s idle_cache_enabled=%s)\n' \
+            "$reclaim_enabled" "$idle_cache_enabled"
+        return 0
+    fi
+    log_append "$jstate/actions.log" "$ts idle-cache-reclaim begin idle_s=$idle_cache_seconds dry_run=$dry_run"
+    acc=$jstate/tmp/idle-cache.freed
+    : > "$acc"
+    tail -n +2 "$inv" 2>/dev/null | while IFS="$(printf '\t')" read -r _ts _host path _size _mtime _age _is_git _uncommitted _unpushed _class; do
+        case "$path" in */.lake) : ;; *) continue ;; esac
+        [ -d "$path" ] || continue
+        parent=${path%/.lake}
+        m=$(stat -c %Y "$path" 2>/dev/null || printf '0')
+        is_num "$m" || m=0
+        idle=$((now - m))
+        [ "$idle" -ge "$idle_cache_seconds" ] || continue
+        if path_in_use "$path" || path_in_use "$parent"; then
+            log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=in-use"
+            continue
+        fi
+        if ! git -C "$parent" rev-parse --git-dir >/dev/null 2>&1; then
+            log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=not-git-worktree"
+            continue
+        fi
+        up=$(timeout 15 git -C "$parent" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
+        is_num "$up" || up=0
+        if [ "$up" -gt 0 ]; then
+            log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=unpushed commits=$up"
+            continue
+        fi
+        dirty=$(git -C "$parent" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+        is_num "$dirty" || dirty=0
+        if [ "$dirty" -gt 0 ]; then
+            log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=dirty files=$dirty"
+            continue
+        fi
+        sz=$(du -sk "$path" 2>/dev/null | awk 'NR==1{print $1; exit}')
+        is_num "$sz" || sz=0
+        if [ "$dry_run" -eq 1 ]; then
+            log_append "$jstate/actions.log" "$ts idle-cache dry-run path=$path size_kb=$sz idle_s=$idle"
+            printf '%s\t%s\n' "$path" "$sz" >> "$acc"
+        elif rm -rf "$path" 2>/dev/null; then
+            log_append "$jstate/actions.log" "$ts idle-cache reclaimed path=$path size_kb=$sz idle_s=$idle recovery=lake-update-cache-get-build"
+            printf '%s\t%s\n' "$path" "$sz" >> "$acc"
+        fi
+    done
+    n=$(wc -l < "$acc" 2>/dev/null | tr -d ' ')
+    kb=$(awk -F'\t' '{s+=$2} END{printf "%d", s+0}' "$acc" 2>/dev/null)
+    is_num "$n" || n=0
+    is_num "$kb" || kb=0
+    log_append "$jstate/actions.log" "$ts idle-cache-reclaim end count=$n freed_kb=$kb dry_run=$dry_run"
+    printf 'janitor: idle-cache reclaim %s item(s), %s KB (dry_run=%s)\n' "$n" "$kb" "$dry_run"
+    return 0
+}
+
 # --- concurrency lock ----------------------------------------------------------
 # One writer per state dir. Two janitor cycles running at once (observed
 # 2026-10-20: two inventory passes 41s apart) share $jstate/tmp/inventory.tsv
@@ -839,6 +922,14 @@ case "$mode" in
         if [ "$reclaim_enabled" -eq 1 ]; then
             reclaim_quarantined
         fi
+        # Act 12.3(2) prevention: under real pressure (high/critical), reclaim
+        # verifiably idle regenerable build caches rather than waiting for the
+        # conservative age>=30d gate. The per-cache evidence gates inside
+        # reclaim_idle_caches keep this safe.
+        if [ "$reclaim_enabled" -eq 1 ] && [ "$idle_cache_enabled" -eq 1 ] \
+           && [ "$(severity "$level")" -ge 2 ]; then
+            reclaim_idle_caches
+        fi
         ;;
     report)
         if [ -f "$jstate/status" ]; then
@@ -900,5 +991,9 @@ case "$mode" in
     scratch-quarantine)
         compute
         scratch_quarantine
+        ;;
+    reclaim-idle-caches)
+        compute
+        reclaim_idle_caches
         ;;
 esac

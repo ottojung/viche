@@ -244,4 +244,45 @@ verdict=$(tail -n 1 "$state/janitor/scratch.tsv" | cut -f9)
 [ -f "$sdir/.bcfnew" ] || { echo "fresh scratch wrongly staged"; exit 1; }
 unset JANITOR_SCRATCH_DIR
 
+# 15. Idle regenerable build-cache reclamation: a clean, fully-pushed worktree
+#     whose .lake is idle is reclaimed (dry-run first), while a worktree with
+#     unpushed commits is retained. Deleting a .lake loses only build time.
+origin=$d/origin.git
+git init -q --bare "$origin"
+wt1=$d/wt-clean
+git init -q "$wt1"
+git -C "$wt1" config user.email t@t
+git -C "$wt1" config user.name t
+printf '.lake/\n' > "$wt1/.gitignore"
+printf 'x\n' > "$wt1/f"
+git -C "$wt1" add .gitignore f
+git -C "$wt1" commit -qm init
+git -C "$wt1" remote add origin "$origin"
+git -C "$wt1" push -q -u origin HEAD
+mkdir -p "$wt1/.lake"
+printf 'olean\n' > "$wt1/.lake/olean"
+touch -d '2 days ago' "$wt1/.lake"
+wt2=$d/wt-unpushed
+git init -q "$wt2"
+git -C "$wt2" config user.email t@t
+git -C "$wt2" config user.name t
+printf 'y\n' > "$wt2/f"
+git -C "$wt2" add f
+git -C "$wt2" commit -qm init
+mkdir -p "$wt2/.lake"
+printf 'olean\n' > "$wt2/.lake/olean"
+touch -d '2 days ago' "$wt2/.lake"
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1\t1\t2\t1\t0\t0\t\n' "$host" "$wt1/.lake"
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1\t1\t2\t1\t0\t0\t\n' "$host" "$wt2/.lake"
+} > "$state/janitor/inventory.tsv"
+/bin/sh "$town/government/janitor.sh" reclaim-idle-caches --dry-run
+[ -d "$wt1/.lake" ] || { echo "dry-run removed an idle cache"; exit 1; }
+/bin/sh "$town/government/janitor.sh" reclaim-idle-caches
+[ ! -d "$wt1/.lake" ] || { echo "idle clean cache not reclaimed"; exit 1; }
+[ -d "$wt2/.lake" ] || { echo "unpushed-worktree cache wrongly reclaimed"; exit 1; }
+grep -q 'idle-cache reclaimed' "$state/janitor/actions.log"
+grep -q 'idle-cache skip.*reason=unpushed' "$state/janitor/actions.log"
+
 printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, and gates quarantine on a recorded Act 12.4(d) liveness check\n'
