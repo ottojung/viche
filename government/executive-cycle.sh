@@ -7,7 +7,7 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 charter=${VICHE_CONSTITUTION:?founder-owned charter required}
 [ -f "$state/inaugurated" ] || exit 0
-id=c1e00002
+id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
 # Act 19 §3.2: the durable handoff queue at $town/records/handoffs/ is the
 # dispatch's single input. Read it FIRST, before any failure-prone work

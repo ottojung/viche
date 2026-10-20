@@ -19,7 +19,10 @@ if [ "$board_ok" = true ]; then
 fi
 
 agent_ok=true
-meta=$(antonina agent status --id c1a00002 --json 2>"$root/agent-error.log") || agent_ok=false
+exec_id=$(/bin/sh "$town/government/appointments.sh" resolve executive 2>"$root/agent-error.log") || agent_ok=false
+if [ "$agent_ok" = true ]; then
+    meta=$(antonina agent status --id "$exec_id" --json 2>"$root/agent-error.log") || agent_ok=false
+fi
 mode=unknown
 reason=unknown
 age=-1

@@ -39,6 +39,8 @@ printf 'running\n' > "$d/mock/status"
 PATH="$d/bin:$PATH"
 MOCK_DIR="$d/mock"
 VICHE_TOWNHALL_ID=302
+mkdir -p "$d/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$d/town/government/appointments.sh"
 VICHE_TOWN_ROOT="$d/town"
 VICHE_SEATS_ROOT="$d/seats"
 VICHE_STATE_ROOT="$d/state"

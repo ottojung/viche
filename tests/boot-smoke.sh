@@ -42,16 +42,20 @@ while [ "$#" -gt 0 ]; do
         *) echo "Unexpected Antonina argument $1" >&2; exit 92 ;;
     esac
 done
-[ -n "$id" ] || exit 93
+[ "$action" = new ] || [ -n "$id" ] || exit 93
 case "$action" in
     status)
         [ -f "$MOCK_STATE/$id" ] || exit 3
         printf '%s\n' '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}'
         ;;
     new)
+        n=0
+        [ ! -f "$MOCK_STATE/created" ] || n=$(wc -l < "$MOCK_STATE/created")
+        id="generated-$((n+1))"
         [ ! -f "$MOCK_STATE/$id" ] || exit 4
         touch "$MOCK_STATE/$id"
         printf '%s\n' "$id" >> "$MOCK_STATE/created"
+        printf '%s\n' "$id"
         ;;
     run)
         [ -f "$MOCK_STATE/$id" ] || exit 5
@@ -104,7 +108,8 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
-[ -f "$scratch/mock/c1e00011" ]
+centre=$(awk -F '\t' '$1=="innovation-centre" {print $2}' "$scratch/state/appointments/appointments.tsv")
+[ -n "$centre" ] && [ -f "$scratch/mock/$centre" ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
 # A summons wakes legislative seats and must NOT suppress the independent Executive.

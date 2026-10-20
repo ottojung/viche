@@ -10,7 +10,7 @@ mkdir -p "$root"
 if [ "${VICHE_AUDIT_CHECKS:-1}" = 1 ]; then
   python3 "$town/government/audit-accountability.py" check > "$root/random-check.log" || exit 1
 fi
-id=c1e00008
+id=$(/bin/sh "$town/government/appointments.sh" ensure judiciary)
 [ -s "$charter" ] && [ -d "$seats/branches/judiciary" ] || exit 1
 [ -f "$root/observations.tsv" ] || exit 0
 # The Judiciary has its own durable officer; parliamentary summons never gate it.

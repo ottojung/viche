@@ -99,6 +99,7 @@ seat=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}/$clerk
 charter=${VICHE_CONSTITUTION_DIR:-/var/lib/lubko/from-host/viche-constitution}/CONSTITUTION.md
 [ -s "$charter" ] || exit 1
 body=$(jq -rs 'sort_by(.createdAt)|map("Founder instruction "+(.id//"?")+" on issue #"+(.issueNumber//"?")+":\n"+(.body//""))|join("\n\n")' "$@")
+clerk=$(/bin/sh "$town/government/appointments.sh" ensure "$clerk")
 mode=$(antonina agent status --id "$clerk" --json | jq -er '.state')
 # Founder instructions remain pending while a failed Clerk is cooling down.
 # Do not bypass the same liveness gate used by ordinary sittings.

@@ -28,6 +28,8 @@ MOCK
 chmod +x "$d/bin/antonina"
 PATH="$d/bin:$PATH"
 MOCK_ROOT="$d/mock"
+mkdir -p "$d/town/government"
+cp "$repo/tests/appointment-id-stub.sh" "$d/town/government/appointments.sh"
 VICHE_TOWN_ROOT="$d/town"
 VICHE_SEATS_ROOT="$d/seats"
 VICHE_STATE_ROOT="$d/state"

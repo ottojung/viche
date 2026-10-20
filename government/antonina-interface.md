@@ -63,8 +63,8 @@ antonina agent list --running --page 1 --limit 100 --json |
 
 ## Agents — MUTATING: use only when dispatching authorized work
 
-- `antonina agent new --id <ID> --cwd <ABSOLUTE_WORKTREE> --title <TITLE>`
-  creates an **idle** managed agent. A new agent does not begin research until run.
+- `antonina agent new --cwd <ABSOLUTE_WORKTREE> --title <TITLE>`
+  creates an **idle** managed agent and prints its generated ID. Agent new --id is unsupported. Keep appointees in the runtime appointments.tsv using government/appointments.sh ensure|resolve|replace KEY. A new agent does not begin research until run.
 - `antonina agent run --id <ID> --cwd <ABSOLUTE_WORKTREE> --prompt <TEXT> --detach`
   sends work. Every invocation must use the intended `--cwd`; it is **not**
   inherited from the shell. Create separate worktrees for independent writers.

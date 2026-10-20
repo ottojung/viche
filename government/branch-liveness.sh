@@ -10,15 +10,15 @@ mkdir -p "$root"
 umask 077
 case "$branch" in
   legislature)
-    id=$(sed -n '1s/[[:space:]].*//p' "$town/government/seats.tsv")
+    key=$(sed -n '1s/[[:space:]].*//p' "$town/government/seats.tsv")
     program=clerk-liveness.sh
     duty=constitutional_sitting ;;
   executive)
-    id=c1e00002
+    key=executive
     program=executive-cycle.sh
     duty=independent_delivery ;;
   judiciary)
-    id=c1e00008
+    key=judiciary
     program=audit-cycle.sh
     duty=independent_randomized_review ;;
   *) echo "Unknown branch: $branch" >&2; exit 2 ;;
@@ -29,6 +29,10 @@ cycle_ok=false
 bootstrap_ok=true
 if [ "$branch" != legislature ]; then
   /bin/sh "$town/government/branch-bootstrap.sh" "$branch" > "$root/$branch-bootstrap.log" 2>&1 || bootstrap_ok=false
+fi
+id=
+if [ "$bootstrap_ok" = true ]; then
+  id=$(/bin/sh "$town/government/appointments.sh" ensure "$key") || bootstrap_ok=false
 fi
 if [ "$bootstrap_ok" = true ] && [ -n "$id" ] && [ -s "$town/government/$program" ]; then
   if /bin/sh "$town/government/$program" > "$root/$branch-cycle.log" 2>&1; then
@@ -77,10 +81,10 @@ fi
 # An agent that is idle between sessions is ready, not proven productive.
 receipt=$(mktemp "$root/$branch.XXXXXX")
 jq -n --arg branch "$branch" --arg id "$id" --arg duty "$duty" \
-  --arg state "$agent_state" --arg readiness "$readiness" \
+  --arg key "$key" --arg state "$agent_state" --arg readiness "$readiness" \
   --arg model "$model" --arg variant "$variant" \
   --argjson at "$now" --argjson cycle_ok "$cycle_ok" \
-  '{branch:$branch,seat:$id,duty:$duty,observed_at:$at,
+  '{branch:$branch,seat:$key,agent_id:$id,duty:$duty,observed_at:$at,
     readiness:$readiness,agent_state:$state,cycle_accepted:$cycle_ok,
     model:$model,variant:$variant,
     caveat:"readiness_not_proof_of_agent_progress_or_completed_work"}' > "$receipt"

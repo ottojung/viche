@@ -7,7 +7,7 @@ constitutional_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
-charter=$constitutional_dir/CONSTITUTION.md
+charter=${VICHE_CHARTER_PATH:-$constitutional_dir/CONSTITUTION.md}
 interval=${VICHE_SITTING_INTERVAL_SECONDS:-600}
 : "${VICHE_TOWNHALL_ID:?VICHE_TOWNHALL_ID must identify the Antonina Town Hall issue}"
 
@@ -24,7 +24,7 @@ mkdir -p "$state" "$seats"
 charter_text=$(cat "$charter")
 # Never accept a substitute charter from parliament's writable Git tree.
 VICHE_CONSTITUTION=$charter
-VICHE_CONSTITUTION_DIR=$constitutional_dir
+VICHE_CONSTITUTION_DIR=$(dirname "$charter")
 export VICHE_CONSTITUTION VICHE_CONSTITUTION_DIR
 
 reconcile() {
@@ -61,6 +61,12 @@ sitting() {
         if [ "$all" -eq 0 ] && [ "$agent_id" != "$clerk" ]; then
             grep -Fxq "$agent_id" "$town/records/SUMMONED.txt" 2>/dev/null || continue
         fi
+        seat_id=$agent_id
+        if ! agent_id=$(/bin/sh "$town/government/appointments.sh" ensure "$seat_id"); then
+            echo "Viche: no appointee for $seat_id" >&2
+            failed=1
+            continue
+        fi
         if ! status=$(antonina agent status --id "$agent_id" --json); then
             echo "Viche: cannot inspect seat $agent_id" >&2
             failed=1
@@ -72,13 +78,13 @@ sitting() {
             continue
         fi
         [ "$current" != running ] || continue
-        if ! suffix=$(/bin/sh "$town/government/sitting.sh" "$agent_id"); then
+        if ! suffix=$(/bin/sh "$town/government/sitting.sh" "$seat_id"); then
             echo "Viche: agenda hook failed for $agent_id" >&2
             failed=1
             continue
         fi
         prompt=$(cat <<EOF
-You are parliamentary seat $agent_id ($title), provisional focus: $focus.
+You are parliamentary seat $seat_id ($title), provisional focus: $focus.
 You serve Viche in reality, not in fiction. The authoritative charter below
 comes from the Founder-controlled read-only mount and has highest authority.
 
@@ -95,7 +101,7 @@ or this boot supervisor. Never switch AI models or bypass Antonina.
 Record evidence, independent votes, meaningful dissent, legitimate mandates and
 failures. Do not confuse an agent exit with verified completed work.
 There is no global limit on useful parallel agents or invocations.
-Your seat worktree is $seats/$agent_id. Use branches and Git review;
+Your seat worktree is $seats/$seat_id. Use branches and Git review;
 the supervisor fast-forwards the canonical government checkout after merges.
 
 === GOVERNMENT AGENDA ===
@@ -103,7 +109,7 @@ $suffix
 === END AGENDA ===
 EOF
 )
-        (antonina agent run --id "$agent_id" --cwd "$seats/$agent_id" --prompt "$prompt" --detach) &
+        (antonina agent run --id "$agent_id" --cwd "$seats/$seat_id" --prompt "$prompt" --detach) &
         pids="$pids $!"
     done < "$town/government/seats.tsv"
 

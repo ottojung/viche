@@ -6,7 +6,6 @@ town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 charter=${VICHE_CONSTITUTION:?Founder-controlled Constitution required}
-id=c1e00011
 cwd=$seats/branches/innovation-centre
 root=$state/legislature/innovation-centre
 mkdir -p "$root"
@@ -21,6 +20,7 @@ case "$now:$interval" in *[!0-9:]*|:*|*:) exit 2;; esac
 [ -f "$state/inaugurated" ] || exit 0
 /bin/sh "$town/government/branch-bootstrap.sh" innovation-centre \
     > "$root/bootstrap.log" 2>&1 || { echo 'Innovation Centre bootstrap failed' >&2; exit 1; }
+id=$(/bin/sh "$town/government/appointments.sh" ensure innovation-centre)
 status=$(antonina agent status --id "$id" --json)
 mode=$(printf '%s\n' "$status" | jq -r '.state // "unknown"')
 model=$(printf '%s\n' "$status" | jq -r '.model // "unknown"')

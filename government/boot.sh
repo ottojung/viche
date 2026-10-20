@@ -14,15 +14,15 @@ git -C "$town" rev-parse --is-inside-work-tree >/dev/null
 ids=$(mktemp)
 trap 'rm -f "$ids"' EXIT HUP INT TERM
 tab=$(printf '\t')
-while IFS="$tab" read -r agent_id title focus; do
-    [ -n "$agent_id" ] || continue
-    case "$agent_id" in
-        *[!0123456789abcdef]*|'') echo "Invalid seat ID: $agent_id" >&2; exit 1 ;;
+while IFS="$tab" read -r seat_id title focus; do
+    [ -n "$seat_id" ] || continue
+    case "$seat_id" in
+        *[!0123456789abcdef]*|'') echo "Invalid seat ID: $seat_id" >&2; exit 1 ;;
     esac
     [ -n "$title" ] && [ -n "$focus" ] || {
-        echo "Incomplete seat: $agent_id" >&2; exit 1;
+        echo "Incomplete seat: $seat_id" >&2; exit 1;
     }
-    printf '%s\n' "$agent_id" >> "$ids"
+    printf '%s\n' "$seat_id" >> "$ids"
 done < "$town/government/seats.tsv"
 
 [ -s "$ids" ] || { echo "No parliamentary seats" >&2; exit 1; }
@@ -30,9 +30,9 @@ unique=$(sort -u "$ids" | wc -l)
 total=$(wc -l < "$ids")
 [ "$unique" -eq "$total" ] || { echo "Duplicate seat IDs" >&2; exit 1; }
 
-while IFS="$tab" read -r agent_id title focus; do
-    [ -n "$agent_id" ] || continue
-    seat_dir=$seats/$agent_id
+while IFS="$tab" read -r seat_id title focus; do
+    [ -n "$seat_id" ] || continue
+    seat_dir=$seats/$seat_id
     if [ ! -f "$seat_dir/.git" ] && [ ! -d "$seat_dir/.git" ]; then
         if [ -d "$seat_dir" ] && [ -n "$(ls -A "$seat_dir")" ]; then
             echo "Refusing to replace seat directory: $seat_dir" >&2
@@ -40,14 +40,12 @@ while IFS="$tab" read -r agent_id title focus; do
         fi
         git -C "$town" worktree add --detach "$seat_dir" HEAD
     fi
-    if ! antonina agent status --id "$agent_id" --json >/dev/null 2>&1; then
-        antonina agent new --id "$agent_id" --cwd "$seat_dir" --title "Viche: $title"
-    fi
+    /bin/sh "$town/government/appointments.sh" ensure "$seat_id" >/dev/null
     # All seats have durable, independently recoverable sessions; don't let a
     # failed provider continuation permanently remove a future voter.
     if [ -f "$town/government/seat-liveness.sh" ]; then
-        /bin/sh "$town/government/seat-liveness.sh" "$agent_id" ||
-            echo "Viche: seat $agent_id recovery failed" >&2
+        /bin/sh "$town/government/seat-liveness.sh" "$seat_id" ||
+            echo "Viche: seat $seat_id recovery failed" >&2
     fi
 done < "$town/government/seats.tsv"
 

@@ -1,6 +1,6 @@
 # The Ten Founding Seats
 
-This document is descriptive; `government/seats.tsv` is the machine-readable roster. Antonina agent identities are persistent hexadecimal IDs, not a claim that agents are distinct model personalities.
+This document is descriptive; `government/seats.tsv` is the machine-readable roster. The IDs in seats.tsv are legal seat keys, not Antonina agent identities. A durable state/appointments/appointments.tsv roster binds each key to an opaque generated agent ID. A deleted or failed agent is replaced without affecting ballots, summons, or mandates.
 
 The ten provisional perspectives include the clerk, executive liaison, resource steward, research advocate, skeptic, continuity member, constitutional member, auditor, institutional innovator, and quality advocate. All have equal votes, and each is expected to take all relevant evidence seriously, independently form an initial judgment, then engage other members and report dissent.
 
