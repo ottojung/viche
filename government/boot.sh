@@ -66,15 +66,6 @@ if [ -f "$town/government/janitor.sh" ]; then
     /bin/sh "$town/government/janitor.sh" cycle || echo "Viche: janitor cycle failed" >&2
 fi
 
-# SoringP1 (#301) research-pool oversight: read-only measurement of the live
-# phoebe-dev research pool each cycle (standing Executive duty). Never
-# fabricates or auto-launches research; replenishment is operator-registry
-# gated. Non-fatal so it can never block reconciliation.
-if [ -f "$town/government/soringp1-oversight.sh" ]; then
-    /bin/sh "$town/government/soringp1-oversight.sh" report >/dev/null 2>&1 ||
-        echo "Viche: SoringP1 pool oversight report failed" >&2
-fi
-
 # Independent Executive: no parliamentary summons required.
 if [ -f "$town/government/branch-liveness.sh" ]; then
     /bin/sh "$town/government/branch-liveness.sh" executive ||
