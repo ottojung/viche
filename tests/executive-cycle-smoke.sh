@@ -4,11 +4,13 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" "$scratch/seats/branches/executive" "$scratch/state"
+mkdir -p "$scratch/bin" "$scratch/town/government/prompts" "$scratch/town/records/handoffs" "$scratch/seats/branches/executive" "$scratch/state"
 printf 'c1a00001\tClerk\tintake\nc1a00002\tMember\tvoting\n' > "$scratch/town/government/seats.tsv"
 printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
+cp "$repo/government/handoff-queue.sh" "$repo/government/handoff-queue.py" "$scratch/town/government/"
+cp "$repo"/government/prompts/*.txt "$scratch/town/government/prompts/"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu

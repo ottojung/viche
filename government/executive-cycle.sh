@@ -9,8 +9,12 @@ charter=${VICHE_CONSTITUTION:?founder-owned charter required}
 [ -f "$state/inaugurated" ] || exit 0
 id=c1e00002
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
-# This non-voting Executive office is independent of parliamentary summons.
-eligible=$(python3 "$town/government/eligible-work.py") || exit 1
+# Act 19 §3.2: read the handoff queue FIRST. A read failure aborts the cycle
+# (no generic dispatch). Open handoffs suppress the generic prompt entirely.
+open_handoffs=$(/bin/sh "$town/government/handoff-queue.sh" open executive) || {
+  echo "Viche: handoff queue read failed; no dispatch this cycle" >&2
+  exit 1
+}
 status=$(antonina agent status --id "$id" --json)
 current=$(printf "%s\n" "$status" | jq -r ".state")
 case "$current" in
@@ -27,26 +31,24 @@ if [ "$model" != opencode-go/longcat-2.5-preview-free ] || [ "$variant" != low ]
 fi
 cwd=$seats/branches/executive
 [ -d "$cwd" ] && [ -s "$charter" ] || exit 1
-prompt=$(cat <<EOF
-You are Viche executive liaison. This is independent executive delivery,
-NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
-=== AUTHORITATIVE CONSTITUTION ===
-$(cat "$charter")
-=== END AUTHORITATIVE CONSTITUTION ===
-Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
-Follow the current operational agenda at $town/government/executive-agenda.md.
-Verified issue assignments, independent of the target registry:
-$eligible
-Act on every eligible issue by constructive work. SoringP1 #301 is explicitly assigned. Read descriptions/comments; do not treat empty target registry as no work.
-A phoebe-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to phoebe-dev. Require verified passing CI when applicable (a green run, not a claim).
-Maintain durable issue ownership, dependencies, completed work and blockers.
-Verify current issue comments, agents and PRs before assigning; avoid duplicates.
-Prioritize tested merged deliverables, not ceremonial discussion or agent counts.
-Parallelize constructive independent work without numerical worker limits.
-Use only the constitutionally approved model with Antonina.
-Your worktree is $cwd.
-EOF
-)
+promptfile=$(mktemp)
+cat "$town/government/prompts/exec-head.txt" >> "$promptfile"
+cat "$charter" >> "$promptfile"
+if [ -n "$open_handoffs" ]; then
+  # Act 19 §3.2.3: open handoffs only; the generic prompt is NOT run.
+  cat "$town/government/prompts/exec-handoff-tail.txt" >> "$promptfile"
+  printf '%s\n' "$open_handoffs" >> "$promptfile"
+  printf 'Use only the constitutionally approved model with Antonina.\n' >> "$promptfile"
+  printf 'Your worktree is %s.\n' "$cwd" >> "$promptfile"
+else
+  eligible=$(python3 "$town/government/eligible-work.py") || exit 1
+  cat "$town/government/prompts/exec-generic-tail.txt" >> "$promptfile"
+  printf '%s\n' "$eligible" >> "$promptfile"
+  cat "$town/government/prompts/exec-generic-static.txt" >> "$promptfile"
+  printf 'Your worktree is %s.\n' "$cwd" >> "$promptfile"
+fi
+prompt=$(cat "$promptfile")
+rm -f "$promptfile"
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"

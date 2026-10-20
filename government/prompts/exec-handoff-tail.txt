@@ -1,0 +1,3 @@
+=== END AUTHORITATIVE CONSTITUTION ===
+You have an OPEN durable handoff (Act 19 §3.2). Honour it; do not run the
+generic eligible-issue cycle. The handoff is the single source of truth:

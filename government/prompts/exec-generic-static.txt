@@ -1,0 +1,7 @@
+Act on every eligible issue by constructive work. SoringP1 #301 is explicitly assigned. Read descriptions/comments; do not treat empty target registry as no work.
+A phoebe-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to phoebe-dev. Require verified passing CI when applicable (a green run, not a claim).
+Maintain durable issue ownership, dependencies, completed work and blockers.
+Verify current issue comments, agents and PRs before assigning; avoid duplicates.
+Prioritize tested merged deliverables, not ceremonial discussion or agent counts.
+Parallelize constructive independent work without numerical worker limits.
+Use only the constitutionally approved model with Antonina.

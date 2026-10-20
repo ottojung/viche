@@ -6,10 +6,12 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-mkdir -p "$scratch/bin" "$scratch/town/government" "$scratch/town/records" \
+mkdir -p "$scratch/bin" "$scratch/town/government/prompts" "$scratch/town/records/handoffs" \
     "$scratch/seats/b2000002" "$scratch/state" "$scratch/mock"
 printf 'a1000001\tClerk\tintake\nb2000002\tExecutive\tdelivery\n' > "$scratch/town/government/seats.tsv"
-cp "$repo/government/seat-liveness.sh" "$scratch/town/government/seat-liveness.sh"
+cp "$repo/government/seat-liveness.sh" "$repo/government/office-recovery.sh" "$scratch/town/government/"
+cp "$repo/government/handoff-queue.sh" "$repo/government/handoff-queue.py" "$scratch/town/government/"
+cp "$repo"/government/prompts/*.txt "$scratch/town/government/prompts/"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 printf 'Founder charter fixture\n' > "$scratch/charter"
 touch "$scratch/state/inaugurated"
@@ -42,10 +44,14 @@ VICHE_STATE_ROOT="$scratch/state"
 VICHE_CONSTITUTION="$scratch/charter"
 export PATH MOCK_ROOT VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 
-# A failed executive must not dispatch and must attempt exactly one bounded reset.
+# A failed executive must not dispatch; Act 19 §3.1 resets only at the
+# 3-consecutive-failure threshold, and the cooldown bounds repeat resets.
 /bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null || true
 /bin/sh "$repo/government/seat-liveness.sh" b2000002
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ ! -e "$MOCK_ROOT/dispatches" ]
+[ ! -e "$MOCK_ROOT/recovery" ]
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 2 ]
 
 # While the cooldown is unexpired, a repeated failure cannot reset again.
@@ -55,10 +61,12 @@ printf '{"state":"failed","backend_error":{"classification":"upstream_endpoint_u
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 2 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]
 
-# Once the cooldown expires, recovery is attempted exactly once more, never more.
-printf '0\n' > "$scratch/state/liveness/last-reset-b2000002"
+# Once the cooldown expires, 3 fresh failures allow one more reset, never more.
+printf '0\n' > "$scratch/state/office-recovery/last-reset-b2000002"
 printf '{"state":"failed","backend_error":{"classification":"upstream_endpoint_unavailable"}}\n' > "$MOCK_ROOT/status.json"
 /bin/sh "$repo/government/executive-cycle.sh" 2>/dev/null || true
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
+/bin/sh "$repo/government/seat-liveness.sh" b2000002
 /bin/sh "$repo/government/seat-liveness.sh" b2000002
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 4 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]

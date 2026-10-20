@@ -1,6 +1,9 @@
 #!/bin/sh
 # Recover a terminally failed Clerk while retaining all work and evidence.
-# The only model remains the one configured by Antonina's constitutional boot.
+# Act 19 §3.1: failure-count-based reset (3 consecutive transient failures in a
+# 30-min window, 1800 s cooldown, progress guard), decidable from the failure
+# record rather than the transient state. Permanent failures are surfaced, not
+# reset. The only model remains the one configured by Antonina's constitutional boot.
 set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
@@ -9,6 +12,7 @@ mkdir -p "$state"
 umask 077
 id=$(head -n 1 "$town/government/seats.tsv" | cut -f1)
 [ -n "$id" ] || exit 1
+. "$town/government/office-recovery.sh"
 metadata=$(antonina agent status --id "$id" --json)
 kind=$(printf '%s\n' "$metadata" | jq -r '.state')
 reason=$(printf '%s\n' "$metadata" | jq -r '.backend_error.classification // ""')
@@ -24,20 +28,14 @@ if [ "${1:-}" = --gate ]; then
   exit 0
 fi
 [ "$kind" = failed ] || exit 0
-[ "$reason" = upstream_endpoint_unavailable ] || exit 0
-now=$(date +%s)
-last=0
-[ ! -s "$state/last-reset" ] || last=$(cat "$state/last-reset")
-case "$last" in ''|*[!0-9]*) last=0;; esac
-[ $((now-last)) -ge 1800 ] || exit 0
-[ -d "$seats/$id" ] || exit 1
-snapshot=$(mktemp -d "$state/recovery-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
-printf '%s\n' "$metadata" > "$snapshot/agent-status.json"
-antonina agent log --id "$id" --lines 200 > "$snapshot/agent-log-tail.txt" 2>&1 || :
-git -C "$seats/$id" status --short > "$snapshot/worktree-status.txt"
-git -C "$seats/$id" rev-parse HEAD > "$snapshot/worktree-head.txt"
-# Persist the attempted recovery before any destructive agent-metadata operation.
-printf '%s\n' "$now" > "$state/last-reset"
-antonina agent delete --id "$id"
-antonina agent new --id "$id" --cwd "$seats/$id" --title 'Viche: Clerk'
-printf '%s session_reset=endpoint_unavailable evidence=%s\n' "$(date -u +%FT%TZ)" "$snapshot" >> "$state/recoveries.log"
+# Act 19 §3.1: record the failure; reset only on the failure-count threshold.
+or_record clerk "$reason" || true
+if [ "$(or_classify "$reason")" = permanent ]; then
+  echo "Viche: Clerk permanent failure ($reason); surfaced, not reset" >&2
+  exit 0
+fi
+if or_should_reset clerk "$seats/c1a00001"; then
+  echo "Viche: Clerk reached failure threshold; resetting" >&2
+  or_reset clerk c1a00001 "Clerk" "$seats/c1a00001" >/dev/null
+fi
+exit 0

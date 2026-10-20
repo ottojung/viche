@@ -1,0 +1,4 @@
+=== END AUTHORITATIVE CONSTITUTION ===
+Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
+Follow the current operational agenda at /var/lib/lubko/wd/viche/government/executive-agenda.md.
+Verified issue assignments, independent of the target registry:
