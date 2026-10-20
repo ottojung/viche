@@ -259,6 +259,14 @@ git -C "$wt1" add .gitignore f
 git -C "$wt1" commit -qm init
 git -C "$wt1" remote add origin "$origin"
 git -C "$wt1" push -q -u origin HEAD
+# An unrelated unpushed branch in the same repo (branches are shared across
+# linked worktrees) must NOT block reclaiming this worktree's pushed cache.
+wt1br=$(git -C "$wt1" symbolic-ref --short HEAD)
+git -C "$wt1" checkout -q -b sidebranch
+printf 'side\n' > "$wt1/side"
+git -C "$wt1" add side
+git -C "$wt1" commit -qm side
+git -C "$wt1" checkout -q "$wt1br"
 mkdir -p "$wt1/.lake"
 printf 'olean\n' > "$wt1/.lake/olean"
 touch -d '2 days ago' "$wt1/.lake"

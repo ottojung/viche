@@ -821,7 +821,17 @@ reclaim_idle_caches() {
             log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=not-git-worktree"
             continue
         fi
-        up=$(timeout 15 git -C "$parent" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')
+        # HEAD only (this worktree's own branch), NOT --branches: branch refs are
+        # shared across a repository's linked worktrees, so --branches would let
+        # an unrelated worktree's unpushed commit block reclaiming this cache and
+        # silently disable the valve. If the repo has no remote-tracking refs at
+        # all, `--not --remotes` is empty and cannot confirm the work is saved, so
+        # treat it as unpushed (conservative).
+        if git -C "$parent" for-each-ref --format='%(refname)' refs/remotes 2>/dev/null | grep -q .; then
+            up=$(timeout 15 git -C "$parent" log --oneline --not --remotes 2>/dev/null | wc -l | tr -d ' ')
+        else
+            up=1
+        fi
         is_num "$up" || up=0
         if [ "$up" -gt 0 ]; then
             log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=unpushed commits=$up"
