@@ -226,4 +226,22 @@ want=$((parent_kb + plain_kb))
 got=$(awk -F'\t' 'NR==2{print $7}' "$state/janitor/territorial.tsv")
 [ "$got" = "$want" ] || { echo "territorial box_visible got=$got want=$want"; exit 1; }
 
+# 14. Runtime scratch eligibility keys on the OLDEST file, and the batch-level
+#     live flag no longer blocks staging: an aged file is staged while a fresh
+#     one is left in place (per-file age/reference checks keep it safe).
+sdir=$d/scratch
+mkdir -p "$sdir"
+printf 'old\n' > "$sdir/.bcfold"
+printf 'new\n' > "$sdir/.bcfnew"
+touch -d '2 days ago' "$sdir/.bcfold"
+export JANITOR_SCRATCH_DIR=$sdir
+JANITOR_ROOTS=$ibox JANITOR_FILE_ROOTS=$ibox \
+    /bin/sh "$town/government/janitor.sh" inventory
+verdict=$(tail -n 1 "$state/janitor/scratch.tsv" | cut -f9)
+[ "$verdict" = "quarantine-eligible" ] || { echo "scratch verdict=$verdict"; exit 1; }
+/bin/sh "$town/government/janitor.sh" scratch-quarantine
+[ ! -f "$sdir/.bcfold" ] || { echo "aged scratch not staged"; exit 1; }
+[ -f "$sdir/.bcfnew" ] || { echo "fresh scratch wrongly staged"; exit 1; }
+unset JANITOR_SCRATCH_DIR
+
 printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, and gates quarantine on a recorded Act 12.4(d) liveness check\n'
