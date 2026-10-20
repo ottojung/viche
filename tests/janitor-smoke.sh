@@ -285,4 +285,30 @@ touch -d '2 days ago' "$wt2/.lake"
 grep -q 'idle-cache reclaimed' "$state/janitor/actions.log"
 grep -q 'idle-cache skip.*reason=unpushed' "$state/janitor/actions.log"
 
-printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, and gates quarantine on a recorded Act 12.4(d) liveness check\n'
+# 16. cycle auto-triggers idle-cache reclamation under disk pressure
+#     (integration of the prevention path, using the critical mock df from 5).
+wt3=$d/wt-cycle
+origin3=$d/origin3.git
+git init -q --bare "$origin3"
+git init -q "$wt3"
+git -C "$wt3" config user.email t@t
+git -C "$wt3" config user.name t
+printf '.lake/\n' > "$wt3/.gitignore"
+printf 'z\n' > "$wt3/f"
+git -C "$wt3" add .gitignore f
+git -C "$wt3" commit -qm init
+git -C "$wt3" remote add origin "$origin3"
+git -C "$wt3" push -q -u origin HEAD
+mkdir -p "$wt3/.lake"
+printf 'olean\n' > "$wt3/.lake/olean"
+touch -d '2 days ago' "$wt3/.lake"
+{
+    printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
+    printf '2026-01-01T00:00:00Z\t%s\t%s\t1\t1\t2\t1\t0\t0\t\n' "$host" "$wt3/.lake"
+} > "$state/janitor/inventory.tsv"
+date +%s > "$state/janitor/last-inventory"
+/bin/sh "$town/government/janitor.sh" cycle
+[ ! -d "$wt3/.lake" ] || { echo "cycle did not reclaim an idle cache under pressure"; exit 1; }
+grep -q 'idle-cache reclaimed' "$state/janitor/actions.log"
+
+printf 'Viche: janitor observes metrics, reclaims only aged owned files, protects durable state, defers when disabled, responds to critical capacity, reclaims only quarantined items past grace, classifies build caches by liveness, retains live build toolchains, gates quarantine on a recorded Act 12.4(d) liveness check, and reclaims idle regenerable build caches under pressure\n'
