@@ -4,12 +4,5 @@
 # B1 (Act 18) — ENACTED + DEPLOYED (M-020 delivered). Summons cleared.
 # Pending: M-013 (Kawun residual C) + K1 locked-surface authorization await the Founder's one-line decision.
 # IC4 (board #315 Canonical Checkout Integrity Act) — Act 16 §1 gate NOT met (external non-seat red-team, O12); non-sponsor Viche-seat re-red-team required. Summoned c1a00004 (Research advocate). NOT vote-eligible.
-# IC2 (board #310 Detector Calibration Act) — Act 16 §1 gate SATISFIED (Viche-seat re-red-team c1a0000b, verbatim §11 + sponsor §12); PUBLISHED FOR VOTE 2026-10-19. Ballot batch summoned (quorum 6, required 6): c1a00002/c1a00003/c1a00006/c1a00007/c1a00009/c1a0000a/c1a0000b. Instructions records/ballots/DETECTOR-CALIBRATION-ACT-VOTE.md. c1a00005 left free for the #314 re-red-team; c1a00004 on #315.
+# IC2 (board #310 Detector Calibration Act) — ENACTED as Act 20 (7-0-0, 2026-10-20). Summons cleared.
 c1a00004
-c1a00002
-c1a00003
-c1a00006
-c1a00007
-c1a00009
-c1a0000a
-c1a0000b
