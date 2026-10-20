@@ -25,6 +25,10 @@ case "$1 $2" in
    *) echo "Required scope/authority missing from prompt" >&2; exit 1;; esac
   case "$*" in *"seriously investigate EXISTING software"*"Do NOT assume existing software must be adopted"*) : ;;
    *) echo "Missing balanced existing-software evaluation guidance" >&2; exit 1;; esac
+  case "$*" in *"HIGHEST EXPECTED MARGINAL RETURN ON INVESTMENT"* ) : ;;
+   *) echo "Missing high-return Founder priority" >&2; exit 1;; esac
+  case "$*" in *"Opportunity cost matters"* ) : ;;
+   *) echo "Missing marginal-benefit baseline" >&2; exit 1;; esac
   printf 'sent\n' >> "$DISPATCHES" ;;
  *) echo "Unexpected mock: $*" >&2; exit 1 ;;
 esac
@@ -46,6 +50,8 @@ cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-
 # Standing written mandate must agree with the dispatch prompt.
 grep -Fq "Existing-software evaluation (Founder guidance)" "$scratch/town/government/INNOVATION-CENTRE.md"
 grep -Fq "neither mandatory nor presumptively superior" "$scratch/town/government/INNOVATION-CENTRE.md"
+grep -Fq "Highest-marginal-return focus (Founder guidance)" "$scratch/town/government/INNOVATION-CENTRE.md"
+grep -Fq "opportunity cost" "$scratch/town/government/INNOVATION-CENTRE.md"
 /bin/sh "$repo/government/innovation-centre-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 1 ]
 jq -e '.legislative_branch==true and .voting_seat==false and .separate_summons==true and .readiness=="dispatched"' "$scratch/state/legislature/innovation-centre/health.json" >/dev/null
