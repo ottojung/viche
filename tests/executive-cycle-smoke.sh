@@ -16,7 +16,7 @@ set -eu
 case "$1 $2" in
   "board list")
     [ "${BOARD_DOWN:-no}" != yes ] || exit 3
-    echo '[{"number":301,"title":"SoringP1"}]' ;;
+    echo '[{"number":"301","title":"SoringP1"},{"number":"opaque-id-xyz","title":"Second issue"}]' ;;
   "board show")
     echo '{"body":"All agent execution and development work must happen on phoebe-dev.","messages":[]}' ;;
   "agent status")
@@ -46,7 +46,7 @@ test ! -e "$OUTPUT"
 touch "$scratch/state/inaugurated"
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 1
-jq -e '.count==1 and .eligible[0].number==301' "$scratch/state/branches/eligible-issues.json" >/dev/null
+jq -e '.count==2 and .eligible[0].number=="301" and .eligible[1].number=="opaque-id-xyz"' "$scratch/state/branches/eligible-issues.json" >/dev/null
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2
 MODE=running
