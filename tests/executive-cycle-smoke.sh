@@ -37,6 +37,8 @@ VICHE_CONSTITUTION=$scratch/charter
 MODE=idle MODEL=opencode-go/longcat-2.5-preview-free
 OUTPUT=$scratch/dispatched
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT
+grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
+grep -Fq "government/antonina-interface.md" "$repo/government/executive-agenda.md"
 sh "$repo/government/executive-cycle.sh"
 test ! -e "$OUTPUT"
 touch "$scratch/state/inaugurated"
