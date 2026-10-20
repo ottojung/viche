@@ -23,6 +23,8 @@ case "$1 $2" in
  "agent run")
   case "$*" in *"INNOVATION CENTRE"*"cannot originate or authorize external projects"*"Parliament alone"*) : ;;
    *) echo "Required scope/authority missing from prompt" >&2; exit 1;; esac
+  case "$*" in *"seriously investigate EXISTING software"*"Do NOT assume existing software must be adopted"*) : ;;
+   *) echo "Missing balanced existing-software evaluation guidance" >&2; exit 1;; esac
   printf 'sent\n' >> "$DISPATCHES" ;;
  *) echo "Unexpected mock: $*" >&2; exit 1 ;;
 esac
@@ -39,6 +41,9 @@ DISPATCHES=$scratch/runs
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
 cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-CENTRE.md"
+# Standing written mandate must agree with the dispatch prompt.
+grep -Fq "Existing-software evaluation (Founder guidance)" "$scratch/town/government/INNOVATION-CENTRE.md"
+grep -Fq "neither mandatory nor presumptively superior" "$scratch/town/government/INNOVATION-CENTRE.md"
 /bin/sh "$repo/government/innovation-centre-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 1 ]
 jq -e '.legislative_branch==true and .voting_seat==false and .separate_summons==true and .readiness=="dispatched"' "$scratch/state/legislature/innovation-centre/health.json" >/dev/null

@@ -67,6 +67,14 @@ to avoid repackaged duplicates. Consult available measurements, and name
 uncertainty; independent experiments and disposable prototypes are allowed
 ONLY without changing production systems or committing law.
 Prefer original, carefully justified ideas over large numbers of proposals.
+When relevant, seriously investigate EXISTING software (especially free/open
+source) instead of assuming that Viche should build another subsystem.
+Compare adopting, adapting, building, or retaining the current approach.
+Assess practical fit, flexibility, integration effort, reliability, security,
+licensing, maintenance, project health, reversibility, and total cost.
+Do NOT assume existing software must be adopted; reject it if unsuitable,
+with reasons. The Centre may propose reuse or replacement to Parliament,
+but must NOT install, replace or deploy production systems itself.
 For each serious candidate record a baseline, expected benefit, estimated
 cost/risk, dependencies, counterarguments, falsifiable predictions and how
 the Judiciary could independently evaluate adoption. Reject weak ideas.
