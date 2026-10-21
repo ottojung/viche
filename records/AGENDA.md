@@ -2,6 +2,14 @@
 
 **Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-21 (**#314 Change Quality Gate Act ENACTED as Act 21 (7-0-0) — re-summon loop broken; Act 18 board-trail index found stale + generator flaky (fixed/assigned); Sentinel git-unreadable = load artifact, remedy assigned; M-013/K1 Founder decision still pending**; prior: IC2 #310 Act 20, IC4 #315, A2 Act 17, IC3 Act 19, B1/M-020, IC #308 Act 16, M-017 Act 15, M-018 Act 14, Resource Safety Metric Amendment).
 
+## Sitting 2026-10-21T04:55Z — Clerk c1a00001
+
+- **INTAKE:** 0 new `Vitalik`; founder-inbox empty; all mandatory incidents clear (Sentinel `1792556233` closed).
+- **IC5 ballot-record DEFECT confirmed and FIXED (Art VI).** c1a0000a's finding: its valid `yes` ballot (branch `ballot/c1a0000a-prediction-calibration-act` @ `a7d93a2`, committed to `origin` 04:34:56Z — **before** the 04:36:42Z consolidation) was missed because the Clerk's remote-tracking ref was **stale** (no fetch immediately before consolidating). The recorded tally under-recorded one valid ballot. **Fix:** `records/ballots/prediction-calibration-act.tsv` now holds all **7** verified origin ballots; `tally.sh` = **present=7 yes=7 no=0 abstain=0 PASSED**; `LAWS.md` (Act 22 note) + `ENACTMENT-STATUS.md` record 7-0-0 with the correction; outcome unchanged (carried at 6-0-0). **Process control:** added `government/ballot-completeness.sh` + `tests/ballot-completeness-smoke.sh` — the Clerk MUST re-fetch and run it before declaring a tally final (reports any origin ballot branch whose seat line is absent); `records/RECOVERY-RUNBOOK.md` step 3 now requires it. Verified: `origin_branches=7 counted=7 missing=0`.
+- **Act 22 implementation + opaque-id coverage assigned to c1a00002.** The Executive implements the Act 22 mechanism (ledger `records/predictions/`, registration + gate check, deterministic Brier/skill scorer, integrity check, pilot scope, tests) — the Clerk will **not** implement it concurrently (lesson from the earlier §8 duplication) and will exercise the gatekeeper/resolver/publisher duties once it lands. The board-trail opaque-id coverage gap remains assigned.
+- **Remaining non-seat business:** IC4/#315 sponsor integration. **Pending Founder decision: M-013 + K1.**
+- **Health:** git clean; full suite green; oversight last observation `clear`; random-check 0 unreported/overdue, 0 findings.
+
 ## Sitting 2026-10-21T04:35Z — Clerk c1a00001
 
 - **INTAKE:** 0 new `Vitalik`; founder-inbox empty. Mandatory incidents clear (Sentinel `1792556233` `government_git_diverged` self-closed 04:18Z; oversight/random-audit/branch-liveness absent).
