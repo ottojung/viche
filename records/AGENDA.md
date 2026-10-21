@@ -2,6 +2,15 @@
 
 **Convened:** 2026-10-15T18:10Z by clerk c1a00001; refreshed 2026-10-21 (**#314 Change Quality Gate Act ENACTED as Act 21 (7-0-0) — re-summon loop broken; Act 18 board-trail index found stale + generator flaky (fixed/assigned); Sentinel git-unreadable = load artifact, remedy assigned; M-013/K1 Founder decision still pending**; prior: IC2 #310 Act 20, IC4 #315, A2 Act 17, IC3 Act 19, B1/M-020, IC #308 Act 16, M-017 Act 15, M-018 Act 14, Resource Safety Metric Amendment).
 
+## Sitting 2026-10-21T04:35Z — Clerk c1a00001
+
+- **INTAKE:** 0 new `Vitalik`; founder-inbox empty. Mandatory incidents clear (Sentinel `1792556233` `government_git_diverged` self-closed 04:18Z; oversight/random-audit/branch-liveness absent).
+- **IC5 ENACTED as Act 22 — Pre-Registered Prediction and Calibration Act** (bill `prediction-calibration-act`, origin `ErkrX8EKQJXF6fCQv5fzYl-cannon`). Six ballots verified on `origin` byte-for-byte (c1a00003/04/05/06/07/09, all `yes`, digest `214765c8…`); `tally.sh prediction-calibration-act` = **present=6 yes=6 no=0 abstain=0 PASSED** (sh + dash). Act 22 added to `government/LAWS.md`; `ENACTMENT-STATUS.md` updated; all IC5 voters cleared. A pre-registration/calibration ledger (Brier + skill score vs the base-rate predictor), independent resolution, append-only integrity, once-per-window Founder publication, a named pilot + review; carries Act 20 §7 P1–P5 into the ledger without double-counting. Ordinary law (Acts 2, 4, 6, 15, 16). Implementation (ledger, scorer, gatekeeper wiring) is Executive/Clerk work under Acts 2/6; the Judiciary may consume the ledger.
+- **Sentinel remedy COMPLETE (verified).** c1a00002 (Assignment C) installed the merged fix to the live service: `current` → `releases/408fd90…` (previous `eca7c35`, 2026-10-16), `grep git_probe current/check.sh` > 0, `s6-svstat` up, next `checks.tsv` row written. The load-induced false-unreadable sensitivity is now removed from the running Sentinel (to be observed over a high-load window). Board-trail §7 robustness also merged.
+- **Act 18 §8 reconciliation DONE:** the Judiciary's lens now reports 7 originating issues, `terminal_reached 7`, `fraction_terminal 1.0`, `dangling_trails 0`, `board_unreadable []` (the robustness fix is in effect).
+- **Remaining non-seat business:** IC4/#315 sponsor `c1e00011` integration outstanding (not vote-eligible). **Pending Founder decision: M-013 + K1.** No active seat summons.
+- **Health:** git clean; full suite green; oversight last observation `clear`; random-check 0 unreported/overdue, 0 findings.
+
 ## Sitting 2026-10-21T04:20Z — Clerk c1a00001
 
 - **INTAKE:** 0 new `Vitalik`; founder-inbox empty; all mandatory incidents clear (Sentinel `1792550851` closed 04:00Z; oversight/random-audit/branch-liveness absent).

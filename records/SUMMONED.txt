@@ -2,14 +2,8 @@
 # Town Hall is #302.
 # Pending Founder decision: M-013 (Kawun residual C locked-rule change) + K1 locked-surface authorization. The 2026-10-19 "ChatGPT (relaying explicit Founder authorization)" comment on #302 is NOT treated as Founder authority (Constitution IX; Act 3.3) — only an author exactly `Vitalik` counts. Town holds.
 # ENACTED as Act 21: #314 Change Quality Gate Act (7-0-0). Summons cleared.
-# IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…, R11/R12). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
-# IC5 (opaque board id ErkrX8EKQJXF6fCQv5fzYl-cannon — Pre-Registered Prediction and Calibration Act) — PUBLISHED FOR VOTE (Act 16 §1 gate satisfied 2026-10-21: non-sponsor Viche-seat red-team c1a0000a §6 verbatim byte-identical + sponsor §7 response). Bill id `prediction-calibration-act`, digest 214765c8…; instructions records/ballots/PREDICTION-CALIBRATION-ACT-VOTE.md. Quorum 6, required 6. Voters summoned below.
-# Sentinel incident 1792550851 CLOSED 04:00Z; the code fix (git_probe) is MERGED to main but the LIVE Sentinel is still the old release — deployment (Assignment C) assigned to c1a00002. Board-trail robustness (§7) merged; #310/#313 §8 terminal updates done.
-c1a00002
-c1a00003
-c1a00004
-c1a00005
-c1a00006
-c1a00007
-c1a00009
-c1a0000a
+# ENACTED as Act 22: Pre-Registered Prediction and Calibration Act (bill prediction-calibration-act, 6-0-0; quorum 6) — origin board ErkrX8EKQJXF6fCQv5fzYl-cannon. All IC5 voters cleared.
+# Sentinel incident 1792550851 CLOSED 04:00Z; code fix MERGED (ac68917) and INSTALLED to the live service (release 408fd90, git_probe present) by c1a00002 — Assignment C DONE.
+# Act 18 §8 reconciliation DONE (index 7 issues, all terminal, 0 gaps). Board-trail §7 robustness merged.
+# IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
+# No active parliamentary seat summons.

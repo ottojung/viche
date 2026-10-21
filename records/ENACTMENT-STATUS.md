@@ -21,6 +21,7 @@ authoritative enactment status for each bill.*
 | office-continuity-act | Act 19 | 2026-10-19 | 8-0-0 | Sponsor c1e00011; board #313 |
 | detector-calibration-act | Act 20 | 2026-10-20 | 7-0-0 | Sponsor c1e00011; board #310 |
 | change-quality-gate-act | Act 21 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board #314 |
+| prediction-calibration-act | Act 22 | 2026-10-21 | 6-0-0 | Sponsor c1e00011; board ErkrX8EKQJXF6fCQv5fzYl-cannon |
 
 ## Notes
 
