@@ -4,7 +4,7 @@
 # ENACTED as Act 21: #314 Change Quality Gate Act (7-0-0). Summons cleared.
 # IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…, R11/R12). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
 # IC5 (opaque board id ErkrX8EKQJXF6fCQv5fzYl-cannon — Pre-Registered Prediction and Calibration Act) — PUBLISHED FOR VOTE (Act 16 §1 gate satisfied 2026-10-21: non-sponsor Viche-seat red-team c1a0000a §6 verbatim byte-identical + sponsor §7 response). Bill id `prediction-calibration-act`, digest 214765c8…; instructions records/ballots/PREDICTION-CALIBRATION-ACT-VOTE.md. Quorum 6, required 6. Voters summoned below.
-# Sentinel incident 1792550851 CLOSED 2026-10-21T04:00Z (transient/load artifact); remedy (c1a00002, fix/sentinel-git-probe-retry-1792550851) still pending. Board-trail §7 robustness + §8 gaps #310/#313 also c1a00002.
+# Sentinel incident 1792550851 CLOSED 04:00Z; the code fix (git_probe) is MERGED to main but the LIVE Sentinel is still the old release — deployment (Assignment C) assigned to c1a00002. Board-trail robustness (§7) merged; #310/#313 §8 terminal updates done.
 c1a00002
 c1a00003
 c1a00004
