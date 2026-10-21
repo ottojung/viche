@@ -62,22 +62,29 @@ def board_trail():
         except ValueError:
             continue
     completed=[r for r in rows if int(r.get('enacted_epoch',0))>0 and r.get('type') in ('law','task')]
-    terminal=[r for r in completed if r.get('terminal')==1]
-    gaps=[r for r in completed if int(r.get('post_completion',0))==0]
-    no_stage=[r for r in completed if not r.get('stage_markers')]
-    dangling=[r for r in completed if r.get('terminal')!=1 and now-int(r['enacted_epoch'])>cycle]
-    ages=[now-int(r['enacted_epoch']) for r in completed if r.get('terminal')!=1]
+    # Act 18 §2/§7: a failed board call is unreadable, never evidence of a gap.
+    # Exclude unreadable issues from the gap/rate computation and report them
+    # separately, so a transient board error cannot fabricate a Git-only gap.
+    unreadable=[r for r in completed if r.get('board_readable') is False]
+    readable=[r for r in completed if r.get('board_readable') is not False]
+    terminal=[r for r in readable if r.get('terminal')==1]
+    gaps=[r for r in readable if int(r.get('post_completion') or 0)==0]
+    no_stage=[r for r in readable if not r.get('stage_markers')]
+    dangling=[r for r in readable if r.get('terminal')!=1 and now-int(r['enacted_epoch'])>cycle]
+    ages=[now-int(r['enacted_epoch']) for r in readable if r.get('terminal')!=1]
     out.update({
         'status':'measured',
         'originating_total':len(rows),
         'completed_total':len(completed),
+        'readable_total':len(readable),
         'terminal_reached':len(terminal),
-        'fraction_terminal':(round(len(terminal)/len(completed),4) if completed else None),
+        'fraction_terminal':(round(len(terminal)/len(readable),4) if readable else None),
         'git_only_gaps':[{'issue':r['issue'],'work':r['work'],'act':r.get('act')} for r in gaps],
+        'board_unreadable':[{'issue':r['issue'],'work':r['work']} for r in unreadable],
         'stage_marker_missing':[{'issue':r['issue'],'work':r['work']} for r in no_stage],
         'dangling_trails':len(dangling),
         'oldest_gap_age_seconds':(max(ages) if ages else 0),
-        'content_standard_failures':sum(int(r.get('chatter',0)) for r in rows),
+        'content_standard_failures':sum(int(r.get('chatter') or 0) for r in rows),
         'cycle_seconds':cycle,
         'per_issue':rows,
     })
