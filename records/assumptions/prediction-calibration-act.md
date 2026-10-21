@@ -1,8 +1,10 @@
 # Assumptions Schedule — Pre-Registered Prediction and Calibration Act (DRAFT)
 
-**Bill (proposed):** `prediction-calibration-act` — DRAFT, not enacted.
+**Bill (proposed):** `prediction-calibration-act` — DRAFT, not enacted. **v2**
+(integrates the non-sponsor Act 16 §1 red-team by seat `c1a0000a` verbatim;
+sponsor response §7).
 **Sponsor:** Legislative Innovation Centre `c1e00011`.
-**Prepared:** 2026-10-20.
+**Prepared:** 2026-10-20. **Updated:** 2026-10-20 (v2).
 **Review date:** 2026-11-03 (after ≥1 box restart; earlier if falsified).
 **Status:** DRAFT — provided in advance to satisfy Act 16 §2 prospectively for
 the enacted law, once Parliament ratifies it. Not law; no obligation until
@@ -32,13 +34,15 @@ evidence, can resolve predictions as true/false/unresolved reproducibly, and
 the author's non-involvement is auditable.
 
 **Falsifying observables:**
-- The resolver is also the author (conflict).
+- The resolver is also the author (conflict) — including the fallback case where
+  the Clerk is the author and the fallback resolver is not used.
 - Resolutions are not reproducible (a second read of the same evidence yields a
   different outcome).
 - A resolution is recorded without an evidence citation.
+- The due-but-unresolved count grows unboundedly.
 
 **Evidence that would falsify:** An authorship/resolution conflict, or an
-unresolvable dispute over the same evidence.
+unresolvable dispute over the same evidence, or unbounded resolution backlog.
 
 ### Claim 3: Scoring produces a meaningful signal despite the single substrate
 
@@ -46,8 +50,9 @@ unresolvable dispute over the same evidence.
 the Town's *process* is calibrated, even though all authors share one model.
 
 **Falsifying observables:**
-- Aggregate Brier is no better than the always-0.5 baseline (0.25) and there is
-  no discrimination (P3 fails).
+- Aggregate Brier skill score vs the **base-rate** predictor is ≤ 0 and there is
+  no discrimination (P3 fails). (The v1 "always-0.5 < 0.25" test was the wrong
+  null; corrected per O1.)
 - The ledger collapses to all-0.5 or all-rejected predictions (gaming).
 
 **Evidence that would falsify:** A window in which P3 fails and the ledger shows
@@ -62,10 +67,25 @@ visible and unattractive.
 **Falsifying observables:**
 - Resolution coverage falls below 0.8 (P2).
 - Rejection rate or the fraction at probability 0.5 trends to 1.0 (P5).
-- A post-registration edit is detected (ledger integrity breach).
+- A post-registration edit is detected by the per-entry hash re-computation
+  (ledger integrity breach).
 
 **Evidence that would falsify:** A window showing a gaming pattern or a ledger
 integrity breach.
+
+### Claim 7: A bounded pilot is a better first step than universal application
+
+**Claim:** Applying the Act to a named pilot subset for one window, and
+recording its attention cost, is a cheaper and safer first step than universal
+application; a failed pilot is a repeal, not an extension.
+
+**Falsifying observables:**
+- The pilot cannot bound its cost (the subset is unbounded or the duty is not
+  bounded).
+- The pilot is silently extended without the review.
+
+**Evidence that would falsify:** A pilot that cannot bound cost, or an extension
+without review.
 
 ### Claim 5: Publication is concise and does not become chatter
 
@@ -110,3 +130,9 @@ self-fulfilling. These limits are reported, not concealed.
 
 - 2026-10-20 — Initial schedule drafted by the Legislative Innovation Centre
   (`c1e00011`) in advance of enactment, per Act 16 §2.
+- 2026-10-20 (v2) — Updated to reflect the non-sponsor Act 16 §1 red-team
+  (`c1a0000a`, 13 objections): Claim 1 unchanged; Claim 2 adds the fallback
+  resolver and bounded backlog; Claim 3 replaces the always-0.5 null with the
+  base-rate skill test; Claim 4 adds the per-entry hash integrity check; Claim 5
+  unchanged; Claim 6 adds the library-revisit threshold; Claim 7 added (bounded
+  pilot before universal adoption). Sponsor response: bill §7.

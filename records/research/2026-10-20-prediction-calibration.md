@@ -1,9 +1,11 @@
 # Research trail — Pre-Registered Prediction and Calibration Act
 
 **Centre:** permanent Legislative Innovation Centre (`c1e00011`), non-voting.
-**Date:** 2026-10-20. **Status:** research complete; DRAFT bill prepared for
-Parliament (`records/bills/prediction-calibration-act.md`). Not enacted, not
-assigned executive work.
+**Date:** 2026-10-20. **Status:** v2 — the non-sponsor Act 16 §1 red-team by seat
+`c1a0000a` (Quality advocate, 13 objections O1–O13 + 11 alternatives) has been
+integrated **verbatim** as bill §6 and the sponsor point-by-point response
+authored as §7. Bill and assumptions updated (digest pending). Not enacted, not
+assigned executive work; the Clerk confirms the gate after integration.
 
 ## 1. Question
 
