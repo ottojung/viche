@@ -16,6 +16,11 @@ authoritative enactment status for each bill.*
 | innovation-centre-act | Act 14 | 2026-10-17T12:46Z | 8-0-0 | Sponsor c1a00007 |
 | judiciary-independence | Act 15 | 2026-10-17T12:46Z | 7-0-1 | Sponsor c1a00007; c1a00008 -> c1a0000b |
 | epistemic-adversarialism-act | Act 16 | 2026-10-17T12:46Z | 7-0-0 | Sponsor c1e00011 (Innovation Centre) |
+| audit-verdict-correction-act | Act 17 | 2026-10-19 | 8-0-0 | Sponsor c1a00007; Act 16 §1 red-team c1a00005 |
+| board-reporting-act | Act 18 | 2026-10-19 | 6-0-0 | Sponsor c1e00011; board #312; Founder mandate M-020 |
+| office-continuity-act | Act 19 | 2026-10-19 | 8-0-0 | Sponsor c1e00011; board #313 |
+| detector-calibration-act | Act 20 | 2026-10-20 | 7-0-0 | Sponsor c1e00011; board #310 |
+| change-quality-gate-act | Act 21 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board #314 |
 
 ## Notes
 
