@@ -13,7 +13,56 @@ umask 077
 exec 9>"$state/check.lock"
 flock -n 9 || exit 0
 signals=
-add() { signals=${signals:+$signals,}$1; }
+add() { case ",$signals," in *",$1,"*) :;; *) signals=${signals:+$signals,}$1;; esac; }
+# Read-only Git probe with bounded retry/backoff. A transient timeout (exit 124
+# from `timeout`) is retried after a short backoff; a genuine Git error is not
+# retried (it will not heal on its own). On success sets GIT_PROBE_OUT to stdout
+# and GIT_PROBE_STATUS=ok, and returns 0. On persistent failure (all attempts
+# exhausted) returns 1 with GIT_PROBE_STATUS=timeout|error and GIT_PROBE_OUT
+# empty. GIT_PROBE_SAW_TIMEOUT is 1 if any attempt timed out, so a slow-but-
+# healthy repo is distinguishable from a genuine failure.
+#
+# This removes a measurement-sensitivity artifact: under high load a read-only
+# Git call can exceed the per-attempt timeout, which the old code reported as
+# `government_git_unreadable` (a false alarm). Detection is NOT weakened: a
+# persistent failure still emits government_git_unreadable /
+# government_git_refs_unavailable, plus a distinct `government_git_probe_timeout`
+# signal so a timeout is distinguishable from a genuine Git error.
+git_probe() {
+    attempts_max=${VICHE_SENTINEL_GIT_PROBE_ATTEMPTS:-3}
+    timeout_s=${VICHE_SENTINEL_GIT_PROBE_TIMEOUT:-12}
+    backoff_s=${VICHE_SENTINEL_GIT_PROBE_BACKOFF:-1}
+    case "$attempts_max" in ''|*[!0-9]*) attempts_max=3;; esac
+    [ "$attempts_max" -ge 1 ] || attempts_max=1
+    case "$timeout_s" in ''|*[!0-9]*) timeout_s=12;; esac
+    [ "$timeout_s" -ge 1 ] || timeout_s=1
+    case "$backoff_s" in ''|*[!0-9]*) backoff_s=1;; esac
+    [ "$backoff_s" -ge 0 ] || backoff_s=0
+    GIT_PROBE_ATTEMPTS=0
+    GIT_PROBE_SAW_TIMEOUT=0
+    GIT_PROBE_STATUS=error
+    GIT_PROBE_OUT=
+    while [ "$GIT_PROBE_ATTEMPTS" -lt "$attempts_max" ]; do
+        GIT_PROBE_ATTEMPTS=$((GIT_PROBE_ATTEMPTS+1))
+        rc=0
+        GIT_PROBE_OUT=$(timeout "$timeout_s" "$@" 2>/dev/null) || rc=$?
+        if [ "$rc" -eq 0 ]; then
+            GIT_PROBE_STATUS=ok
+            return 0
+        fi
+        if [ "$rc" -eq 124 ]; then
+            GIT_PROBE_STATUS=timeout
+            GIT_PROBE_SAW_TIMEOUT=1
+            if [ "$GIT_PROBE_ATTEMPTS" -lt "$attempts_max" ]; then
+                sleep "$backoff_s"
+            fi
+        else
+            GIT_PROBE_STATUS=error
+            break
+        fi
+    done
+    return 1
+}
 service=unknown
 if live=$(timeout 12 s6-svstat "$svc" 2>/dev/null); then
     case "$live" in 'up (pid '*) service=up;; *) service=down; add government_service_down;; esac
@@ -23,11 +72,18 @@ ahead=-1; behind=-1
 if [ ! -d "$town/.git" ]; then
     git_status=missing; add government_checkout_missing
 else
-    if conflicts=$(timeout 12 git -C "$town" ls-files -u 2>/dev/null); then
-        if [ -n "$conflicts" ]; then git_status=conflicted; add government_git_conflict; fi
-    else git_status=unreadable; add government_git_unreadable; fi
+    if git_probe git -C "$town" ls-files -u; then
+        if [ -n "$GIT_PROBE_OUT" ]; then git_status=conflicted; add government_git_conflict; fi
+        if [ "$GIT_PROBE_SAW_TIMEOUT" -eq 1 ]; then
+            echo "Sentinel: git status probe recovered after $GIT_PROBE_ATTEMPTS attempt(s); transient slowness, not unreadable" >&2
+        fi
+    else
+        git_status=unreadable; add government_git_unreadable
+        if [ "$GIT_PROBE_STATUS" = timeout ]; then add government_git_probe_timeout; fi
+    fi
     if [ -f "$town/.git/MERGE_HEAD" ]; then add government_merge_incomplete; fi
-    if counts=$(timeout 12 git -C "$town" rev-list --left-right --count HEAD...refs/remotes/origin/main 2>/dev/null); then
+    if git_probe git -C "$town" rev-list --left-right --count HEAD...refs/remotes/origin/main; then
+        counts=$GIT_PROBE_OUT
         ahead=$(printf '%s\n' "$counts" | awk '{print $1}')
         behind=$(printf '%s\n' "$counts" | awk '{print $2}')
         case "$ahead:$behind" in *[!0-9:]*|'':*) add government_git_refs_invalid;; *)
@@ -35,7 +91,13 @@ else
             elif [ "$ahead" -gt 0 ]; then add government_unpublished_main
             elif [ "$behind" -gt 0 ]; then add government_update_pending; fi
         ;; esac
-    else add government_git_refs_unavailable; fi
+        if [ "$GIT_PROBE_SAW_TIMEOUT" -eq 1 ]; then
+            echo "Sentinel: git refs probe recovered after $GIT_PROBE_ATTEMPTS attempt(s); transient slowness, not unavailable" >&2
+        fi
+    else
+        add government_git_refs_unavailable
+        if [ "$GIT_PROBE_STATUS" = timeout ]; then add government_git_probe_timeout; fi
+    fi
 fi
 setup_age=-1
 if [ -s "$govstamp" ]; then
