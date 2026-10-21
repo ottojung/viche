@@ -13,9 +13,13 @@ git_only_gap is true when the underlying work is enacted/completed in Git while
 the originating issue lacks a terminal board update — the defect class Act 18 §2
 names, decidable from Git and the board alone.
 
-The board scan is best-effort: if the board is unreachable the index is still
-produced from the curated mapping, with git_only_gap computed from Git-only
-evidence and the title left blank. POSIX-friendly; no third-party deps.
+The board scan is best-effort but must not fabricate a gap: each `board show`
+call is retried a bounded number of times, and a persistent failure is recorded
+as `board_readable: false` with `git_only_gap: false` — a failed board call is
+NOT evidence of a missing terminal update (the false-signal class the Sentinel
+`timeout 12` artifact and the Act 13 over-deferral belong to). The title is left
+blank and the index is still produced from the curated mapping. POSIX-friendly;
+no third-party deps.
 """
 import json
 import os
@@ -74,24 +78,49 @@ def read(path):
         return ""
 
 
-def board_invoke(*args):
-    done = subprocess.run(("antonina", "board", *args), capture_output=True,
-                          text=True, timeout=35)
-    if done.returncode:
-        raise RuntimeError(done.stderr[-160:])
-    return json.loads(done.stdout)
-
-
-def board_title(num):
+def env_int(name, default):
     try:
-        issue = board_invoke("show", "--id", str(num), "--page", "1", "--json")
-        return issue.get("title", "") or ""
-    except Exception:
-        return ""
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value >= 1 else default
 
 
-def board_terminal_state(num):
-    """Return the DECLARED terminal state of an originating issue, or None.
+def board_invoke(*args):
+    """Run a read-only board command, retrying a bounded number of times.
+
+    A transient board/network error (nonzero exit, timeout, or unparsable
+    output) is retried with a short backoff; only after every attempt fails does
+    it raise. This keeps a single transient failure from becoming a false
+    `git_only_gap` (Act 18 §2/§7)."""
+    attempts = env_int("VICHE_BOARD_TRAIL_RETRIES", 3)
+    backoff = env_int("VICHE_BOARD_TRAIL_BACKOFF", 1)
+    last = None
+    for attempt in range(1, attempts + 1):
+        try:
+            done = subprocess.run(("antonina", "board", *args),
+                                  capture_output=True, text=True, timeout=35)
+            if done.returncode:
+                raise RuntimeError(done.stderr[-160:])
+            return json.loads(done.stdout)
+        except Exception as err:
+            last = err
+            if attempt < attempts:
+                time.sleep(backoff)
+    raise last
+
+
+def fetch_issue(num):
+    """Return the board issue object, or raise if unreadable after retries."""
+    return board_invoke("show", "--id", str(num), "--page", "1", "--json")
+
+
+def issue_title(issue):
+    return (issue.get("title", "") or "") if issue is not None else ""
+
+
+def issue_terminal_state(issue):
+    """Return the DECLARED terminal state of an issue object, or None.
 
     Act 18 §3.3/§3.4: a terminal update carries a stage marker AND a declared
     terminal state — a terminal token in a declaration position, not a
@@ -99,10 +128,9 @@ def board_terminal_state(num):
     updates (Act 18 §3.3.4). Inline-code and quoted spans are stripped first so
     a comment that merely QUOTES a declaration (or the classifier's own test
     fixture) cannot false-positive. Mirrors the §5 lens exactly (same rules) so
-    §5 and §7 agree."""
-    try:
-        issue = board_invoke("show", "--id", str(num), "--page", "1", "--json")
-    except Exception:
+    §5 and §7 agree. A None issue (board unreadable) is handled by the caller,
+    which records board_readable=false rather than a gap."""
+    if issue is None:
         return None
     for msg in issue.get("messages") or []:
         body = msg.get("body") or ""
@@ -175,11 +203,19 @@ def build_index():
     for num in sorted(by_issue):
         work_list = by_issue[num]
         enacted = any(w["type"] == "law" and w["enacted_epoch"] > 0 for w in work_list)
-        title = board_title(num)
-        declared = board_terminal_state(num)
+        try:
+            issue = fetch_issue(num)
+            board_readable = True
+        except Exception:
+            issue = None
+            board_readable = False
+        title = issue_title(issue)
+        declared = issue_terminal_state(issue)
         has_terminal = declared is not None
         # git_only_gap: work enacted/completed in Git but no terminal board update.
-        git_only_gap = enacted and not has_terminal
+        # Only decidable when the board was read: a failed board call MUST NOT
+        # fabricate a gap (Act 18 §2/§7).
+        git_only_gap = enacted and board_readable and not has_terminal
         stage = "enactment" if enacted else "proposal"
         if enacted and has_terminal:
             terminal = declared
@@ -196,6 +232,7 @@ def build_index():
             "owning_office": owning_office(work_list[0]),
             "stage": stage,
             "terminal_status": terminal,
+            "board_readable": board_readable,
             "git_only_gap": git_only_gap,
             "transition_history": [
                 {"transition": "enacted" if (w["type"] == "law" and w["enacted_epoch"] > 0) else "proposed",

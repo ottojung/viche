@@ -92,6 +92,13 @@ if [ -f "$town/government/branch-health.sh" ]; then
     /bin/sh "$town/government/branch-health.sh" ||
         echo "Viche: independent branch readiness incident recorded" >&2
 fi
+# Act 18 §7: the Executive maintains the generated board-trail index; refresh it
+# each measurement window (throttled, non-fatal) so the Founder-visible status
+# map cannot silently go stale. Runs before the §5 lens that consumes it.
+if [ -f "$town/government/board-trail-refresh.sh" ]; then
+    /bin/sh "$town/government/board-trail-refresh.sh" ||
+        echo "Viche: board-trail refresh failed" >&2
+fi
 if [ -f "$town/government/judiciary-measurements.py" ]; then
     python3 "$town/government/judiciary-measurements.py" ||
         echo "Viche: Judiciary self-measurement unavailable" >&2
