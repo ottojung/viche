@@ -7,7 +7,9 @@ Act 18 §5 lens input), NOT from parsing bill/LAWS prose (which mis-maps: bills
 cite other issues as examples). For each originating issue the generator emits
 one entry — issue, title, work, owning_office, stage, terminal_status,
 git_only_gap — using that mapping plus the Antonina board's terminal-update
-check.
+check. Issue ids may be opaque strings (not only numeric); they are parsed as
+strings and ordered deterministically (numeric ascending, then opaque
+lexically), so an opaque-id originating issue is not silently dropped.
 
 git_only_gap is true when the underlying work is enacted/completed in Git while
 the originating issue lacks a terminal board update — the defect class Act 18 §2
@@ -145,9 +147,33 @@ def issue_terminal_state(issue):
     return None
 
 
+def parse_issue(raw):
+    """Return an originating issue id as an int when it is all digits (keeping
+    the existing numeric JSON form), else the opaque string id unchanged.
+
+    Antonina issue ids may be opaque strings (e.g.
+    `ErkrX8EKQJXF6fCQv5fzYl-cannon`); a numeric-only parser silently dropped
+    them from the Act 18 §5/§7 universe."""
+    raw = raw.strip()
+    if raw.isdigit():
+        return int(raw)
+    return raw
+
+
+def issue_sort_key(issue):
+    """Deterministic order: numeric issues ascending by value, then opaque
+    string ids lexically, so the generated index is stable across runs."""
+    if isinstance(issue, int):
+        return (0, issue, "")
+    if str(issue).isdigit():
+        return (0, int(issue), "")
+    return (1, 0, str(issue))
+
+
 def parse_originating():
     """Return list of {issue, work_id, act, enacted_epoch, type} from the
-    curated mapping file. Skips comments/blank/header rows."""
+    curated mapping file. Accepts opaque-string issue ids, not only numeric.
+    Skips comments/blank/header rows and rows with an empty issue id."""
     rows = []
     for line in read(ORIGINATING).splitlines():
         line = line.rstrip("\n")
@@ -156,9 +182,8 @@ def parse_originating():
         cols = line.split("\t")
         if len(cols) < 5 or cols[0].strip() == "issue":
             continue
-        try:
-            issue = int(cols[0])
-        except ValueError:
+        issue = parse_issue(cols[0])
+        if issue == "":
             continue
         rows.append({
             "issue": issue,
@@ -200,7 +225,7 @@ def build_index():
         by_issue.setdefault(row["issue"], []).append(row)
 
     entries = []
-    for num in sorted(by_issue):
+    for num in sorted(by_issue, key=issue_sort_key):
         work_list = by_issue[num]
         enacted = any(w["type"] == "law" and w["enacted_epoch"] > 0 for w in work_list)
         try:
