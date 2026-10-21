@@ -18,9 +18,9 @@ retroactive change.
 The Town is **failing quality** in W1 if **any** of the following is observed:
 
 - **F-Q1 — unresolved finding.** At any deterministic `government/audit-accountability.py check`
-  in W1, an oversight `finding` against a `phoebe-dev`-assigned issue or a claimed delivery
+  in W1, an oversight `finding` against a `billy-dev`-assigned issue or a claimed delivery
   remains unresolved (not corrected with independent corrective evidence).
-- **F-Q2 — false delivery.** A claimed delivery for a `phoebe-dev`-assigned issue is
+- **F-Q2 — false delivery.** A claimed delivery for a `billy-dev`-assigned issue is
   independently shown false: the delivered artifact is absent on the authoritative branch, or
   was reverted, without a recorded authorizing intent.
 - **F-Q3 — assumptions gap.** A law enacted ≥7 days before W1 close lacks an Act 16 §2
@@ -37,7 +37,7 @@ The Town is **failing timeliness** in W1 if **any** of the following is observed
 - **F-T2 — Founder intake latency.** A Town Hall comment authored exactly `Vitalik` waits
   **> 6 h** for Clerk intake acknowledgement (no `founder-inbox/ack/<event-key>` receipt)
   during W1.
-- **F-T3 — executive stall on eligible work.** An eligible `phoebe-dev` issue receives no
+- **F-T3 — executive stall on eligible work.** An eligible `billy-dev` issue receives no
   executive activity for **> 24 h** while the executive office reports `ready`.
 
 ## 3. Attention economy (Act 8 / Act 9)

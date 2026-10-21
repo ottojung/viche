@@ -4,7 +4,7 @@
 
 Start of pass: 2 SoringP1 researchers running (jail = succinct strategy/adversary
 certificates; costal = true uniform exact algorithm improvements). Dispatched 3
-distinct unary-only researchers on phoebe-dev to reach the five-agent target,
+distinct unary-only researchers on billy-dev to reach the five-agent target,
 each with one falsifiable objective, non-goals, assumptions, evidence
 expectations and a #301 reporting duty:
 

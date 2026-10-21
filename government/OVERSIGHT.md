@@ -35,7 +35,7 @@ selection weight; items not inspected recently are weighted more heavily.
 Every ordinary six-hour Audit Member cycle selects at most four deep cases:
 **two independently chosen open issues**, **one closed claim**, and **one
 government decision**. The Auditor independently checks whether the open
-issues are assigned to `phoebe-dev` from their bodies and current Founder
+issues are assigned to `billy-dev` from their bodies and current Founder
 communications, then inspects neglect only if eligible. A random unassigned
 issue is NOT a violation. Sample selection does not use the executive's list.
 
@@ -63,7 +63,7 @@ selective neglect hard to conceal without replaying all substantive work.
 ## Execution host and continuous integration
 
 The Founder clarified in Viche Town Hall #302 on 2026-10-16 that assignment of
-productive work to \`phoebe-dev\` constrains **Viche/Antonina agents' execution
+productive work to \`billy-dev\` constrains **Viche/Antonina agents' execution
 host**, not GitHub Actions' independent test runners. CI on GitHub-hosted runners
 (including compilation, test execution, Lean kernel replay and proof checks) is
 permitted and desirable. Auditors should not falsely call this out-of-host agent

@@ -2,7 +2,7 @@
 
 ## Standing duty: SoringP1 pool (met)
 
-Antonina reports **5** live SoringP1 researchers on phoebe-dev (target met):
+Antonina reports **5** live SoringP1 researchers on billy-dev (target met):
 exact adaptive sorting certificates in NP; lookahead-density referee
 (forced-action, still verifying); binomial-tree best comparison imbalance;
 uniform tournament hook-length extensions; uniform noninformation lower-bound
@@ -28,5 +28,5 @@ required; no unsafe reclamation.
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - No Clerk work; no pending Founder messages; no open handoffs.

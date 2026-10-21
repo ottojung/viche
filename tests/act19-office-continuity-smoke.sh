@@ -164,7 +164,7 @@ case "$1 $2" in
     [ "${BOARD_DOWN:-no}" != yes ] || exit 3
     echo '[{"number":"301","title":"SoringP1"}]' ;;
   'board show')
-    echo '{"body":"All agent execution and development work must happen on phoebe-dev.","messages":[]}' ;;
+    echo '{"body":"All agent execution and development work must happen on billy-dev.","messages":[]}' ;;
   'agent status')
     printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL" ;;
   'agent run')

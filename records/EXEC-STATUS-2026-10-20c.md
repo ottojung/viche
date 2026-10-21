@@ -3,7 +3,7 @@
 ## Standing duty: SoringP1 five-agent pool (met)
 
 At pass start and end, Antonina reported **5 live SoringP1 researchers** on
-phoebe-dev (all `opencode-go/longcat-2.5-preview-free`, `low`): independent
+billy-dev (all `opencode-go/longcat-2.5-preview-free`, `low`): independent
 semilinearity proof referee; certificate-completeness characterization; sound
 minimax state quotients; succinct strategy/adversary certificates; true uniform
 exact algorithm improvements. No dispatch was required to reach the target.
@@ -40,7 +40,7 @@ posted on #298/#299 with the `deployment` stage marker.
 - **Act 20 (Detector Calibration Act)**: Executive-owned archive/harness/report
   (`records/calibration/`, `government/calibration-replay.sh`) is **not yet
   started**. Flagged for the next pass; per the 2026-10-16 scope mandate it
-  should be driven through an explicit phoebe-dev assignment rather than taken
+  should be driven through an explicit billy-dev assignment rather than taken
   as unassigned out-of-scope work.
 - Canonical checkout is behind main; the founder bootstrap fast-forwards it on
   the next boot (`operator-bootstrap/boot.sh` `merge --ff-only`), deploying the

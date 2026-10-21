@@ -2,7 +2,7 @@
 
 ## Standing duty: SoringP1 pool (met)
 
-Antonina reports **5–6** live SoringP1 researchers on phoebe-dev (target met):
+Antonina reports **5–6** live SoringP1 researchers on billy-dev (target met):
 depth-fifteen lookahead certificate auditor; uniform tournament hook-length
 extensions; n=12 invariant (forced-action, still running); 2026 parallel minimax
 algorithm transfer; true uniform exact algorithm improvements. The forced-action
@@ -27,7 +27,7 @@ required; no unsafe reclamation.
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - The n=12 invariant agent has posted its plan but shown ~20 min without activity
   (possible reasoning loop); no result yet.
 - No Clerk work; no pending Founder messages; no open handoffs.

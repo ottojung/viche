@@ -4,12 +4,12 @@
 
 ## Verbatim mandate
 
-> Founder transition notice: this is the permanent Viche Town Hall, succeeding historical Town Hall #297. The prior thread is archived, not erased. The current productive-work mandate is: work only on Antonina board issues explicitly assigned to phoebe-dev, regardless of project; do not take unassigned or other-host issues. Work scope may change through later Founder communications without rewriting this Town Hall description. Preserve the current Constitution unchanged. Ensure the Clerk, Founder intake, government, independent Sentinel, and all service references use this new Town Hall.
+> Founder transition notice: this is the permanent Viche Town Hall, succeeding historical Town Hall #297. The prior thread is archived, not erased. The current productive-work mandate is: work only on Antonina board issues explicitly assigned to billy-dev, regardless of project; do not take unassigned or other-host issues. Work scope may change through later Founder communications without rewriting this Town Hall description. Preserve the current Constitution unchanged. Ensure the Clerk, Founder intake, government, independent Sentinel, and all service references use this new Town Hall.
 
 ## Meaning (triage)
 
 1. **New permanent Town Hall = issue #302.** #297 is **archived, not erased** — keep it as a record; do not delete it.
-2. **Productive-work mandate restated (confirms M-014):** work **only** on Antonina board issues **explicitly assigned to `phoebe-dev`**, regardless of project; do not take unassigned or other-host issues. This is the rule the Scope By Assignment Act (in vote) codifies.
+2. **Productive-work mandate restated (confirms M-014):** work **only** on Antonina board issues **explicitly assigned to `billy-dev`**, regardless of project; do not take unassigned or other-host issues. This is the rule the Scope By Assignment Act (in vote) codifies.
 3. **Preserve the Constitution unchanged.** Parliament may not amend it or its S6 bootstrap.
 4. **Re-point all service references to #302:** the Clerk's intake, the founder-intake watcher, the government, the independent Sentinel, and all service references.
 

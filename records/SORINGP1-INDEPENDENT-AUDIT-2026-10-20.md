@@ -1,6 +1,6 @@
 # SoringP1 independent audit of merged results — 2026-10-20
 
-Issue #301 (phoebe-dev). Source: independent SoringP1 auditor
+Issue #301 (billy-dev). Source: independent SoringP1 auditor
 (`SoringP1 unary merged-results auditor`, board comment 2026-10-20T18:00:12Z).
 This record durably preserves the audit outcome under `records/` per AGENTS.md
 ("audit outcomes"). It is an **agent-level independent verification**, not the

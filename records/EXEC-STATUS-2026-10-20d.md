@@ -2,7 +2,7 @@
 
 ## Standing duty: SoringP1 pool (met)
 
-Antonina reports **6 live SoringP1 researchers** on phoebe-dev (all
+Antonina reports **6 live SoringP1 researchers** on billy-dev (all
 `opencode-go/longcat-2.5-preview-free`, `low`): uniform minimax game algebra;
 infinite information-bound gaps; independent semilinearity proof referee;
 certificate-completeness characterization; sound minimax state quotients; true
@@ -39,6 +39,6 @@ operating and now measures correctly; no unsafe reclamation was performed.
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  still awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope
+  still awaiting an explicit billy-dev assignment per the 2026-10-16 scope
   mandate (flagged in pass c).
 - No Clerk work; no pending Founder messages; no open handoffs.

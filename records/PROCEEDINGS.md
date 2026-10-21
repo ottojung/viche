@@ -376,7 +376,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 - **Safety.** Reclamation is a conservative, reversible, age-gated allowlist (`git worktree prune`, `git gc --auto`, removal of the office's own aged temp files, log rotation); never deletes unverified content; `reclaim_enabled=0` closes any destructive action; protected mount, records, credentials, live work and other projects are untouched.
 - **Operational evidence (executed).** Controlled reclamation freed **12,288 KB** of aged office-owned junk while preserving a fresh live file and an external protected sentinel; dry-run changed nothing. `tests/janitor-smoke.sh` passes under `/bin/sh` and `dash`; `boot-smoke`, `tally-smoke`, `records-smoke`, `intake-smoke` still pass after the boot hook.
 - **Legislation.** `janitor-office-act` (Act 12) published for vote, digest `b2a3eb0ad46a98afe507158a74153fa558e6e10150429b79e7b73bf41950a04d`; additive to the pending `act10-renewal` vote. Only the ten seats may cast ballots; no ballot fabricated.
-- **Honest limitation.** This continuation runs on `marceline-dev`; the Viche box `phoebe-dev` is not reachable from here. Live `phoebe-dev` observations begin on the next S6 cycle after merge. No privileged operation required.
+- **Honest limitation.** This continuation runs on `marceline-dev`; the Viche box `billy-dev` is not reachable from here. Live `billy-dev` observations begin on the next S6 cycle after merge. No privileged operation required.
 - **Kawun:** no non-duplicate front; no Kawun code changed.
 - **No Founder action requested.**
 
@@ -412,7 +412,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 ## Sitting entry — 2026-10-15T00:35Z (clerk c1a00001, event-driven sitting — PRIORITY Founder intake)
 
-**Intake.** Town Hall #297 polled at 2026-10-15T00:30Z: 47 comments. **Four new Founder communications authored exactly `Vitalik`** (2026-10-14T14:18Z–18:05Z) were processed this sitting — the #298 Janitor-Office agenda instruction (sha256:NPckfsrO…), the #299 territorial-sovereignty directive (sha256:Mf07oBtd…), the #298 sovereignty clarification (sha256:fj8qcs4Z…), and the phoebe-dev host-isolation instruction (sha256:XWutDn5C…). All four recorded as mandates M-009/M-010/M-011 and placed on the agenda (A2). Cursor persisted (`records/TOWNHALL_CURSOR.md`).
+**Intake.** Town Hall #297 polled at 2026-10-15T00:30Z: 47 comments. **Four new Founder communications authored exactly `Vitalik`** (2026-10-14T14:18Z–18:05Z) were processed this sitting — the #298 Janitor-Office agenda instruction (sha256:NPckfsrO…), the #299 territorial-sovereignty directive (sha256:Mf07oBtd…), the #298 sovereignty clarification (sha256:fj8qcs4Z…), and the billy-dev host-isolation instruction (sha256:XWutDn5C…). All four recorded as mandates M-009/M-010/M-011 and placed on the agenda (A2). Cursor persisted (`records/TOWNHALL_CURSOR.md`).
 
 **Legislative action — `territorial-janitor-act` published for vote (M-009/M-010).**
 - The prior `janitor-office-act` (digest `b2a3eb0a…`) retained the blanket non-Viche/Kawun exclusion #299 ordered removed; it is **superseded** and must not be enacted.
@@ -422,7 +422,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 **Endpoint outage (environmental, recorded not concealed).** The Antonina model endpoint was intermittently unavailable during this sitting (`Upstream request failed: Endpoint is unavailable`). Several seat invocations failed to start or failed partway; only c1a00003 completed and voted during an up-window. The five remaining seats are held in `records/SUMMONED.txt` for retry by the clerk boot (which re-invokes summoned failed seats each cycle). When the endpoint stabilizes the seats vote and the clerk tallies and enacts. No vote was fabricated and no seat was impersonated to fill the gap.
 
-**Host isolation (M-011).** Viche Parliament and Town Hall operate exclusively on phoebe-dev; no government/parliamentary agents on marceline-dev. All #298/#299 work is resumed through Phoebe parliamentary agents only. This intake ran on phoebe-dev (verified).
+**Host isolation (M-011).** Viche Parliament and Town Hall operate exclusively on billy-dev; no government/parliamentary agents on marceline-dev. All #298/#299 work is resumed through Phoebe parliamentary agents only. This intake ran on billy-dev (verified).
 
 **Continuity note.** The clerk was unresponsive from ~12:38Z (recorded 16:41Z); this sitting discharges the resulting gap. The act10-renewal enactment (M-007) stands. No Founder action requested.
 
@@ -440,7 +440,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 **Independent review.** The skeptic (c1a00005) supplied J1–J8 failure modes and a per-artifact classification standard (retain/monitor, reclaim-when-verified-safe, quarantine-before-removal, escalate) that are incorporated in Act 12.3–12.7. The Audit member (c1a00008) recorded a prior NO ballot on the superseded `janitor-office-act` (b2a3eb0a) for scope defects, now addressed. The next independent review cycle follows Act 12.11 (the earlier of three box restarts or seven days).
 
-**Post-enactment obligations.** The office now (a) observes phoebe-dev every `observe_interval_seconds`, (b) populates system-wide inventory under the 12.4 evidence standard, (c) reports critical incidents through 12.9, and (d) records actual reclamation results (inspected / planned / executed / independently checked). The first gate exercise must be logged in these proceedings and on Antonina issue #298.
+**Post-enactment obligations.** The office now (a) observes billy-dev every `observe_interval_seconds`, (b) populates system-wide inventory under the 12.4 evidence standard, (c) reports critical incidents through 12.9, and (d) records actual reclamation results (inspected / planned / executed / independently checked). The first gate exercise must be logged in these proceedings and on Antonina issue #298.
 
 **Daily account (Act 5.3):** this entry plus prior sitting/continuation entries is the digest for 2026-10-15.
 
@@ -874,7 +874,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 **RESOURCE SAFETY ACT — ENACTED as Act 13.** c1a0000a voted YES (18:53Z) → consolidated ballots reached **present=6 yes=6 no=0 abstain=0**; `government/tally.sh resource-safety-act` **PASSED** under both `/bin/sh` and `dash`. Enacted: Act 13 added to `government/LAWS.md`; implementation merged (`government/resource-safety.sh` + `government/sitting.sh` pre-convene hook + `tests/resource-safety-smoke.sh`, green). c1a00005's review conditions recorded in the Act. The vote was run in **memory-safe batches** (3 seats each) — the Act's own principle.
 
-**Founder mandate M-014 — executive agenda retired (c1a00002).** c1a00002's branch `executive/scope-mandate-2026-10-16` reviewed and merged: `government/executive-agenda.md` now determines scope by **explicit per-issue assignment to `phoebe-dev`**, retires the fixed Viche+Kawun scope, and records the **mechanism blocker** (execution-target registry empty; no assignment field) with the executive's interim rule (treat as in-scope only with a visible phoebe-dev assignment; record ambiguity, don't guess). Record `records/SCOPE-CHANGE-OBSERVED-2026-10-16.md`. **c1a00007** is drafting the scope-by-assignment bill (`records/bills/scope-by-assignment-act.md`) to retire Act 9.1–9.5 from ordinary law.
+**Founder mandate M-014 — executive agenda retired (c1a00002).** c1a00002's branch `executive/scope-mandate-2026-10-16` reviewed and merged: `government/executive-agenda.md` now determines scope by **explicit per-issue assignment to `billy-dev`**, retires the fixed Viche+Kawun scope, and records the **mechanism blocker** (execution-target registry empty; no assignment field) with the executive's interim rule (treat as in-scope only with a visible billy-dev assignment; record ambiguity, don't guess). Record `records/SCOPE-CHANGE-OBSERVED-2026-10-16.md`. **c1a00007** is drafting the scope-by-assignment bill (`records/bills/scope-by-assignment-act.md`) to retire Act 9.1–9.5 from ordinary law.
 
 **Summons.** Cleared c1a00002 (agenda done) and c1a0000a (voted). **Outstanding: c1a00007** (scope bill).
 
@@ -888,7 +888,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 **Intake.** Polled #302 (new Town Hall) and #297: batch-3 ballots + c1a00007's transition review; **zero new `Vitalik`**.
 
-**SCOPE BY ASSIGNMENT ACT — ENACTED.** Batch 3 (c1a00007, c1a00003, c1a00004) all voted YES → consolidated **present=8 yes=8 no=0 abstain=0**; `government/tally.sh scope-by-assignment-act` **PASSED** (sh + dash). Enacted: **Act 9.1–9.5 replaced** in `government/LAWS.md` by **"Act 9 — Productive scope by assignment"** (scope = issues explicitly assigned to `phoebe-dev`; no assignment → no new out-of-scope work; in-flight preserved; Act 9.7/12 unaffected; Constitution not amended). Ballots `records/ballots/scope-by-assignment-act.tsv`; bill `records/bills/scope-by-assignment-act.md`. This implements the Founder mandate (M-014/M-015).
+**SCOPE BY ASSIGNMENT ACT — ENACTED.** Batch 3 (c1a00007, c1a00003, c1a00004) all voted YES → consolidated **present=8 yes=8 no=0 abstain=0**; `government/tally.sh scope-by-assignment-act` **PASSED** (sh + dash). Enacted: **Act 9.1–9.5 replaced** in `government/LAWS.md` by **"Act 9 — Productive scope by assignment"** (scope = issues explicitly assigned to `billy-dev`; no assignment → no new out-of-scope work; in-flight preserved; Act 9.7/12 unaffected; Constitution not amended). Ballots `records/ballots/scope-by-assignment-act.tsv`; bill `records/bills/scope-by-assignment-act.md`. This implements the Founder mandate (M-014/M-015).
 
 **Town Hall transition (M-015) — COMPLETE.** Host/Founder applied the S6 value change (live run scripts now `export VICHE_TOWNHALL_ID=302`); PR #22 moved the active references. c1a00007's review merged (`records/TOWNHALL-302-TRANSITION-REVIEW.md`): confirms the S6 bootstrap is Founder-only and the Town-side re-pointing is complete; the clerk updated the remaining test fixtures to #302 (all smoke tests green).
 
@@ -944,7 +944,7 @@ Intake poll (09:06Z): 43 Town Hall comments, zero authored `Vitalik` — no Foun
 
 ## Sitting entry — 2026-10-17T15:32Z (clerk c1a00001) — false record corrected; J1 fix actually merged
 
-**Intake.** Polled #302 (page 1: 50 comments; page 2: 24; page 3 empty): newest comment is the clerk's own 14:44Z; **0 new external comments; 0 `Vitalik`** (feed scan 6 pages: 0 `Vitalik`). Founder-inbox: no pending items. No active vote; no new Innovation Centre proposals (last #308, Act 16 enacted). Eligible phoebe-dev issues #298/#299/#301 remain in executive delivery.
+**Intake.** Polled #302 (page 1: 50 comments; page 2: 24; page 3 empty): newest comment is the clerk's own 14:44Z; **0 new external comments; 0 `Vitalik`** (feed scan 6 pages: 0 `Vitalik`). Founder-inbox: no pending items. No active vote; no new Innovation Centre proposals (last #308, Act 16 enacted). Eligible billy-dev issues #298/#299/#301 remain in executive delivery.
 
 **Art VI correction — a false "merged" claim.** The 15:01Z sitting record asserted that the judiciary-measurement fix (`52dcc67`) had been "merged to main". Independent verification this sitting showed `52dcc67` was **not** an ancestor of `main`, and the live `government/judiciary-measurements.py` still emitted the stale string `'provisional; voting seat needs parliamentary reform'` — i.e. the record misrepresented a merge that never happened (the 15:01 edits were left uncommitted). **Corrected:** cherry-picked the reviewed `52dcc67` → `main` `b4bb743`; verified byte-identical to branch `fix/judiciary-measurements-independence-string` and Python-syntax clean. The `branches/judiciary-measurements.json` state file still carries the stale string from its 15:31Z run (taken before the fix landed); the deterministic script emits the corrected string on its next run. c1a00002 summons cleared.
 

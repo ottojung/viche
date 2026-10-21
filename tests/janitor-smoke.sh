@@ -106,7 +106,7 @@ printf 'x\n' > "$box/aged-work/.lake/f"
 touch -d '2 days ago' "$box/live-work/.lake" "$box/live-work"
 touch -d '40 days ago' "$box/aged-work/.lake" "$box/aged-work"
 now=$(date -u +%s)
-host=phoebe-dev
+host=billy-dev
 live_mtime=$(stat -c %Y "$box/live-work/.lake")
 aged_mtime=$(stat -c %Y "$box/aged-work/.lake")
 live_age=$(( (now - live_mtime) / 86400 ))

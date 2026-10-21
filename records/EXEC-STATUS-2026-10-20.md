@@ -5,7 +5,7 @@
 Start of pass: 1 SoringP1 researcher running (b05). Dispatched 4 distinct unary
 researchers (a1310 exact-value frontier S(13); a1311 decomposition recurrences;
 a1312 pebble-game FO^k attack; a1313 adversary certificates for S(n) > k) on
-phoebe-dev worktrees, each with a precise question, non-goals, disk-safety
+billy-dev worktrees, each with a precise question, non-goals, disk-safety
 instructions and #301 reporting duty. b05 then completed (steered into the
 Founder's structural-compression direction; finished without a board-worthy
 result — no relay). Replenished with a1314 (Stober–Weiss backward search with

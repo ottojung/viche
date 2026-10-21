@@ -2,7 +2,7 @@
 
 ## Standing duty: SoringP1 pool (met, exceeded)
 
-Antonina reports **8** live SoringP1 researchers on phoebe-dev (target 5).
+Antonina reports **8** live SoringP1 researchers on billy-dev (target 5).
 The n=12 invariant agent (`JsVKj4Bp…`) has posted its plan but stalled
 (~39 min without activity — likely a reasoning loop); with the pool well above
 target it was left running rather than churned. Other fronts are active
@@ -26,5 +26,5 @@ passes.
 ## Storage / other
 
 Disk: **warn, 86% used, ~32 GB free**. Act 20 (Detector Calibration Act)
-Executive artifacts remain undelivered pending an explicit phoebe-dev assignment.
+Executive artifacts remain undelivered pending an explicit billy-dev assignment.
 No Clerk work; no pending Founder messages; no open handoffs.

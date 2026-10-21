@@ -15,7 +15,7 @@ Verified: after 04:25 the **only** SoringP1-agent post was the exact-data audit
 (04:43); neither agent posted. This is the "exit ≠ completion" pattern — a
 successful process exit is not substantive completion.
 
-**Recovery.** Dispatched three distinct unary-only fronts on phoebe-dev; all
+**Recovery.** Dispatched three distinct unary-only fronts on billy-dev; all
 verified `state=running`, `opencode-go/longcat-2.5-preview-free`, variant `low`,
 no backend error:
 - `jsBhCMSaNTnG0D3GpVXdel-defeat` — **Lean 4 kernel proof** of strict

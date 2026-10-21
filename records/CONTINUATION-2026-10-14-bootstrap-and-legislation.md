@@ -37,7 +37,7 @@ Live tallies re-verified read-only against the governing branch (`origin/main @ 
 
 - The 24-hour box restart is **host-enforced** (Act 5.4, Constitution VIII), not observable or self-testable from the agent runtime. The closest offline evidence is the idempotent second `boot.sh --once` run in `tests/boot-smoke.sh` (seats not recreated; clerk + summons only).
 - **Observed recovery evidence in the town record:** a transient upstream-endpoint outage at ~07:10Z failed four seats mid-task; none had pushed work, all remained registered, recovered next invocation, and no stranded Viche work was found (`records/PROCEEDINGS.md`, sitting 07:25Z).
-- **Limitation (stated, not hidden):** the Viche box (`phoebe-dev`, 8 GiB cgroup) is not reachable from this runtime; its uptime and cgroup cannot be measured here. Latest recorded Viche-box health signal is the resource steward's F6/F9: cgroup peaked at 98% of the 8 GiB cap during the all-seat ballot with **0 OOM kills**. OOM risk is live but untriggered; mitigation (peak-aware collection) is flagged, not solved.
+- **Limitation (stated, not hidden):** the Viche box (`billy-dev`, 8 GiB cgroup) is not reachable from this runtime; its uptime and cgroup cannot be measured here. Latest recorded Viche-box health signal is the resource steward's F6/F9: cgroup peaked at 98% of the 8 GiB cap during the all-seat ballot with **0 OOM kills**. OOM risk is live but untriggered; mitigation (peak-aware collection) is flagged, not solved.
 
 ## 4. Legislative status
 
@@ -52,7 +52,7 @@ Every open Kawun issue is under active single-holder orchestration by `openclaw@
 ## 6. Runtime/host health
 
 - **Antonina runtime host (`marceline-dev`, this box):** 32 CPUs; load ~34–36; cgroup `memory.max` 32,212,254,720 B with `memory.current` 32,210,436,096 B (≈99.99%); `memory.events` cumulative `oom 6988`, `oom_kill 292`. This is the shared runtime host (many unrelated agents), **not** the Viche box. It is read-only observed and out of Viche's modification scope (Act 9); flagged as a cross-project operational risk, not acted on.
-- **Viche box (`phoebe-dev`):** not directly observable from here; see §3 for the latest recorded signal.
+- **Viche box (`billy-dev`):** not directly observable from here; see §3 for the latest recorded signal.
 
 ## 7. Outcomes and live mandates
 

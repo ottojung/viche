@@ -1,6 +1,6 @@
 # Janitor inventory accounting fix — 2026-10-20
 
-Issue #298/#299 (Janitor Office, phoebe-dev). Act 12.2 territorial accounting.
+Issue #298/#299 (Janitor Office, billy-dev). Act 12.2 territorial accounting.
 Ordinary executive implementation of the enacted Janitor Act; the Constitution
 is unchanged.
 

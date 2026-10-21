@@ -1,6 +1,6 @@
 # SoringP1 (#301) research-pool oversight mechanism
 
-Date: 2026-10-19. Issue #301 (assigned to phoebe-dev). Authority: Acts 2 and 6
+Date: 2026-10-19. Issue #301 (assigned to billy-dev). Authority: Acts 2 and 6
 (executive implementation/oversight). Constitution unchanged.
 
 ## Context
@@ -8,7 +8,7 @@ Date: 2026-10-19. Issue #301 (assigned to phoebe-dev). Authority: Acts 2 and 6
 origin/main already carries the standing Executive duty for the SoringP1
 research pool (`government/executive-agenda.md`, commit `54928ff`): "aim to
 maintain **five concurrently active, independent, unary-focused SoringP1
-research agents on phoebe-dev ... count the actual live SoringP1 agents through
+research agents on billy-dev ... count the actual live SoringP1 agents through
 Antonina, review their distinct research fronts, and commission or replace
 useful agents toward the five-agent target ... This takes precedence over prior
 ten-agent instructions." Act 19 (office continuity + handoff queue) is likewise

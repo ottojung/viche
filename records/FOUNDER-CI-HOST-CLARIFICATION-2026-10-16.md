@@ -4,7 +4,7 @@
 SoringP1 Antonina board issue #301, 2026-10-16. This is a clarification of
 work scope, not an amendment to the Founder-controlled Constitution.
 
-A `phoebe-dev` assignment restricts where Viche/Antonina agents execute
+A `billy-dev` assignment restricts where Viche/Antonina agents execute
 their development tasks, operate their worktrees, and run work-specific
 experiments. It does not restrict GitHub's repository hosting, checks or CI
 workers. GitHub-hosted Actions may build, test, run Lean and verify proofs

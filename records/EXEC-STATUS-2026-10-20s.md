@@ -4,7 +4,7 @@
 
 At pass start Antonina reported only **2** live SoringP1 researchers (below
 the five-agent target). Dispatched three distinct, non-overlapping unary fronts
-on phoebe-dev; all verified `running`, `opencode-go/longcat-2.5-preview-free`,
+on billy-dev; all verified `running`, `opencode-go/longcat-2.5-preview-free`,
 variant `low`:
 
 - `7eFCARlQ5nk0jQxyNkw0ez-hungarian` — unary approximation complexity
@@ -31,5 +31,5 @@ no unsafe reclamation.
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - No Clerk work; no pending Founder messages; no open handoffs.

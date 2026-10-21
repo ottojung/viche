@@ -6,7 +6,7 @@ The box restarted ~20:00Z. At pass start Antonina reported **0** live SoringP1
 researchers (3 running agents total: Executive, Clerk, Research advocate) — the
 six-researcher pool from pass p was lost across the restart. All five new
 agents are `opencode-go/longcat-2.5-preview-free`, variant `low`, on
-phoebe-dev. Dispatched distinct, non-overlapping unary fronts, each with one
+billy-dev. Dispatched distinct, non-overlapping unary fronts, each with one
 falsifiable objective, non-goals, and a #301 reporting duty:
 
 - `gS787Co023PzN8kyQc4WA4-equally` — unary advice/P-poly complexity
@@ -44,5 +44,5 @@ No action required; no unsafe reclamation.
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - No Clerk work; no pending Founder messages; no open handoffs.

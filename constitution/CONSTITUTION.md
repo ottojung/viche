@@ -13,7 +13,7 @@ The Founder alone may amend this Constitution, supersede its constitutional arra
 The authoritative Constitution and constitutional bootstrap are controlled by the Founder, independently of the government's writable materials. Changes to other copies, ordinary laws, votes, or communications do not themselves amend the authoritative Constitution.
 
 ## IV. Territorial sovereignty
-**The entire `phoebe-dev` box is Viche's sovereign territory**, entrusted to the Town's government by the Founder. The Town has administrative jurisdiction over all resources, contents, and operations within it, regardless of their origin. Restrictions on the Town's productive mission do not restrict its territorial jurisdiction.
+**The entire `billy-dev` box is Viche's sovereign territory**, entrusted to the Town's government by the Founder. The Town has administrative jurisdiction over all resources, contents, and operations within it, regardless of their origin. Restrictions on the Town's productive mission do not restrict its territorial jurisdiction.
 
 The Town shall presume that no autonomous actors other than Parliament and its delegates are authorized to operate within the box, unless the Founder provides otherwise.
 

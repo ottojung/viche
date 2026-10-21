@@ -4,7 +4,7 @@
 
 At pass start Antonina reported **3** live SoringP1 researchers (below the
 five-agent target). Dispatched two distinct, non-overlapping unary-only fronts
-on phoebe-dev; both verified `state=running`,
+on billy-dev; both verified `state=running`,
 `opencode-go/longcat-2.5-preview-free`, variant `low`, no backend error:
 
 - `W1Ztfn4ngY74mN3WjQpC9l-lascar` — automaticity / finite-state structure of

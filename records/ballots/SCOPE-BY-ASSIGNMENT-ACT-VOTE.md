@@ -8,7 +8,7 @@
 - **Bill id:** `scope-by-assignment-act`.
 - **Digest (authoritative):** `6c7a2537ad178d0aa6fefc0fece772908e0ef7f4cfff5879f35bbee99e3a095a` — the **SHA-256 of the bill file on main**.
   - **Correction (Art VI):** the sponsor's comment stated `5fa7f249…` and the file embedded that value; neither is the file's SHA-256 (a self-referential in-file digest cannot be correct). The clerk removed the malformed line and published the authoritative external digest above. Use **`6c7a2537…`**.
-- **Effect:** the Town's productive scope = issues **explicitly assigned to `phoebe-dev`** via the Antonina execution-target/dispatch surface; absent a visible assignment, take no new out-of-scope work and record the ambiguity. In-flight work preserved. Act 9.7/Act 12 unaffected. **The Constitution is not amended.**
+- **Effect:** the Town's productive scope = issues **explicitly assigned to `billy-dev`** via the Antonina execution-target/dispatch surface; absent a visible assignment, take no new out-of-scope work and record the ambiguity. In-flight work preserved. Act 9.7/Act 12 unaffected. **The Constitution is not amended.**
 
 ## Your ballot (deliverable)
 

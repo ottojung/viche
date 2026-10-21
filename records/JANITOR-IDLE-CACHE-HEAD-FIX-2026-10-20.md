@@ -1,6 +1,6 @@
 # Janitor idle-cache valve: per-HEAD unpushed check — 2026-10-20
 
-Issue #298/#299 (Janitor Office, phoebe-dev). Act 12.3(2)/12.4. Corrects the
+Issue #298/#299 (Janitor Office, billy-dev). Act 12.3(2)/12.4. Corrects the
 liveness-aware idle build-cache reclamation added earlier the same day
 (`records/JANITOR-IDLE-CACHE-RECLAIM-AUTOMATION-2026-10-20.md`). Ordinary
 executive implementation of the enacted Janitor Act.

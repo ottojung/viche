@@ -3,7 +3,7 @@
 ## Standing duty: SoringP1 pool (was below target; replenished)
 
 At pass start Antonina reported only **2** live SoringP1 researchers (below the
-five-agent target). Dispatched 3 distinct unary-only researchers on phoebe-dev,
+five-agent target). Dispatched 3 distinct unary-only researchers on billy-dev,
 each with one falsifiable objective, non-goals, a ~40-tool-call budget and a
 required #301 board comment:
 
@@ -33,5 +33,5 @@ Disk trend is flat (85→86% over the hour).
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - No Clerk work; no pending Founder messages; no open handoffs.

@@ -4,7 +4,7 @@
 
 At pass start Antonina `agent list --running` (all pages) reported **4** live
 SoringP1 researchers (below the five-agent target). Dispatched two distinct,
-unary-only fronts on phoebe-dev; both verified `state=running`,
+unary-only fronts on billy-dev; both verified `state=running`,
 `opencode-go/longcat-2.5-preview-free`, variant `low`, no backend error:
 
 - `0MHSMdUmjvrfDe4j6Mvnld-utility` — **two-value increment law**

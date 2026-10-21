@@ -38,7 +38,7 @@ ordinary priority/mandate change; it does not amend the Constitution (III, IX).*
 5. **No duplication.** Avoid duplicate agents; report verified results and actual
    research progress on #301; progress is judged by insight, not Lean-commit count.
 6. **Host/model unchanged.** All SoringP1 Viche agent execution and local builds
-   stay on **phoebe-dev**; GitHub-hosted CI remains permitted (M-016). The pinned
+   stay on **billy-dev**; GitHub-hosted CI remains permitted (M-016). The pinned
    free model (`opencode-go/longcat-2.5-preview-free`, variant `low`) is unchanged.
    **Do not amend the Constitution.**
 
@@ -46,7 +46,7 @@ ordinary priority/mandate change; it does not amend the Constitution (III, IX).*
 
 - Supersedes the **routine Lean milestone schedule** (the A-series cadence) as the
   executive's SoringP1 priority. Act 9 (scope by assignment) is unchanged; #301
-  remains explicitly assigned to `phoebe-dev`.
+  remains explicitly assigned to `billy-dev`.
 
 ## Owner and next action (triage)
 

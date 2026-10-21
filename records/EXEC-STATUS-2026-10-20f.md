@@ -2,7 +2,7 @@
 
 ## Standing duty: SoringP1 pool (met, exceeded)
 
-Antonina reports **7 live SoringP1 researchers** on phoebe-dev (all
+Antonina reports **7 live SoringP1 researchers** on billy-dev (all
 `opencode-go/longcat-2.5-preview-free`, `low`): uniform noninformation
 lower-bound invariant; 2026 parallel minimax algorithm transfer; uniform minimax
 game algebra; infinite information-bound gaps; certificate-completeness
@@ -24,7 +24,7 @@ explicit mode. Merged `05ee140`; all Viche tests green. No behaviour change.
 
 - **Act 20 (Detector Calibration Act)**: enacted ordinary law names the
   Executive as owner of the archive/harness/report, but its originating issue
-  #310 is not assigned to phoebe-dev and the Founder's 2026-10-16 scope mandate
+  #310 is not assigned to billy-dev and the Founder's 2026-10-16 scope mandate
   restricts new work to explicitly-assigned issues; the #310 body still reads
   "NOT ASSIGNED EXECUTIVE WORK" (stale pre-enactment text). Continued to hold it
   pending an explicit assignment rather than start out-of-scope work.

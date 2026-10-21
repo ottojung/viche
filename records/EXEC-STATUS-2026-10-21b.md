@@ -4,7 +4,7 @@
 
 Antonina `agent list --running` (all pages, registry readable): **5** live
 SoringP1 researchers, all `opencode-go/longcat-2.5-preview-free`, variant
-`low`, on phoebe-dev:
+`low`, on billy-dev:
 
 - `W1Ztfn4ngY74mN3WjQpC9l-lascar` — automaticity of `S(n)` (dispatched pass v)
 - `I6janimImjqjiAjGORS6ap-officers` — self-reducibility / search-vs-decision

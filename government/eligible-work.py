@@ -16,12 +16,12 @@ def invoke(*args):
 def explicit(text):
     normalized = re.sub(r"\s+", " ", text.lower()) if isinstance(text, str) else ""
     pats = (
-        r"(?:execution|dispatch|assignment|target)\s+(?:host|target|machine|server)\s*[:=]\s*phoebe-dev",
-        r"(?:assign(?:ed|ment)?|route(?:d)?|dispatch(?:ed)?)\s+(?:\S+\s+){0,9}(?:to|on)\s+phoebe-dev",
-        r"(?:agent|worker)(?:\s+\S+){0,13}\s+(?:must|shall|only|exclusively)(?:\s+\S+){0,12}\s+(?:on|at)\s+phoebe-dev",
-        r"(?:agent|worker)\s+execution(?:\s+\S+){0,14}\s+(?:on|at)\s+phoebe-dev",
-        r"phoebe-dev\s+only",
-        r"only\s+(?:on|at)\s+phoebe-dev",
+        r"(?:execution|dispatch|assignment|target)\s+(?:host|target|machine|server)\s*[:=]\s*billy-dev",
+        r"(?:assign(?:ed|ment)?|route(?:d)?|dispatch(?:ed)?)\s+(?:\S+\s+){0,9}(?:to|on)\s+billy-dev",
+        r"(?:agent|worker)(?:\s+\S+){0,13}\s+(?:must|shall|only|exclusively)(?:\s+\S+){0,12}\s+(?:on|at)\s+billy-dev",
+        r"(?:agent|worker)\s+execution(?:\s+\S+){0,14}\s+(?:on|at)\s+billy-dev",
+        r"billy-dev\s+only",
+        r"only\s+(?:on|at)\s+billy-dev",
     )
     return any(re.search(p, normalized.replace(chr(96), "")) for p in pats)
 
@@ -57,7 +57,7 @@ def main():
             "permanent public conversation" in body.lower()
             and "town hall" in row.get("title", "").lower()):
             items.append({"number": row["number"], "title": row.get("title", "")})
-    result = {"host": "phoebe-dev", "eligible": items, "count": len(items),
+    result = {"host": "billy-dev", "eligible": items, "count": len(items),
               "complete": True, "source": "board_description_and_founder_comments"}
     target = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state")) / "branches/eligible-issues.json"
     target.parent.mkdir(parents=True, exist_ok=True)

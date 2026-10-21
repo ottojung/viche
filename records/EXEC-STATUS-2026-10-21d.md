@@ -24,7 +24,7 @@ researchers. Verified facts (not concealed):
 
 ## Recovery (executed)
 
-Re-dispatched **five distinct, unary-only** SoringP1 researchers on phoebe-dev;
+Re-dispatched **five distinct, unary-only** SoringP1 researchers on billy-dev;
 all verified `state=running`, authorized model/variant, no backend error:
 
 - `r4KyaRWjTEgRwAixC66A4m-ascending` — Lean 4 kernel proof of strict

@@ -164,8 +164,8 @@
 
 - **Inquiry:** 12 cases sampled, 8 reported, 4 unreported/overdue. `finding_count: 0`. Assessment: `requires_investigation_not_a_guilt_verdict`.
 - **4 unreported cases:**
-  1. `09b89419c2baa72e89` — AssemblyP1 #255 (ignored_work) — external project, not phoebe-dev assigned
-  2. `2068ac5f81ae207a56` — AssemblyP1 #268 (ignored_work) — external project, not phoebe-dev assigned
+  1. `09b89419c2baa72e89` — AssemblyP1 #255 (ignored_work) — external project, not billy-dev assigned
+  2. `2068ac5f81ae207a56` — AssemblyP1 #268 (ignored_work) — external project, not billy-dev assigned
   3. `a0d48f4af06d911879` — Kawun #181 (claimed_delivery) — within Viche scope
   4. `dca3a8fc554002a27b` — government_decision (Innovation Centre establishment) — within Viche scope
 - **Evidence:** Last judiciary outcome 02:54Z; cases created 08:37Z; ~7h unreported at 15:32Z.
@@ -232,22 +232,22 @@
 
 ## F-1. FOUNDER CLARIFICATION M-016 — host assignment vs GitHub Actions CI (NEW, 2026-10-16T20:53Z)
 
-- **Mandate (Vitalik, #302 sha256:`iNp3MraP…` + #301 sha256:`haxQiOXZ…`):** a `phoebe-dev` assignment governs **agent execution/worktrees**, **not** ordinary GitHub infrastructure. **GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is authorized and must stay enabled for any repo (incl. SoringP1)**; GitHub-hosted CI is not a Viche agent host; never delete/disable working workflows for a phoebe-dev assignment; **require verified passing CI**. SoringP1 commit `785e31d3` is wrong → revert. Constitution unchanged.
+- **Mandate (Vitalik, #302 sha256:`iNp3MraP…` + #301 sha256:`haxQiOXZ…`):** a `billy-dev` assignment governs **agent execution/worktrees**, **not** ordinary GitHub infrastructure. **GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is authorized and must stay enabled for any repo (incl. SoringP1)**; GitHub-hosted CI is not a Viche agent host; never delete/disable working workflows for a billy-dev assignment; **require verified passing CI**. SoringP1 commit `785e31d3` is wrong → revert. Constitution unchanged.
 - **Triage/corrections:** `records/FOUNDER-CLARIFICATION-2026-10-16-host-assignment-ci.md`. Applied: `government/executive-agenda.md` + `government/executive-cycle.sh` (clarified rule), Act 9 interpretation note (no law change), mandate M-016, acks written.
 - **Owners:** executive c1a00002 (revert `785e31d3`, re-enable + verify CI, audit its guidance); audit c1a00008 (check for other conflicting guidance). **Summoned c1a00002.**
 - **Status:** triaged; corrections applied; SoringP1 revert pending.
 
 ## F00. FOUNDER TRANSITION M-015 — permanent Town Hall is now #302 (NEW, 2026-10-16T19:45Z)
 
-- **Mandate (Vitalik, #302 sha256:Nx19_mQq…):** #302 is the permanent Viche Town Hall (succeeding #297, which is **archived, not erased**); productive mandate restated (work only on issues explicitly assigned to `phoebe-dev`); **preserve the Constitution unchanged**; re-point Clerk/founder-intake/government/Sentinel to #302.
+- **Mandate (Vitalik, #302 sha256:Nx19_mQq…):** #302 is the permanent Viche Town Hall (succeeding #297, which is **archived, not erased**); productive mandate restated (work only on issues explicitly assigned to `billy-dev`); **preserve the Constitution unchanged**; re-point Clerk/founder-intake/government/Sentinel to #302.
 - **Triage:** `records/FOUNDER-TRANSITION-2026-10-16-townhall-302.md`. **Blocker:** the live S6 run scripts (`/etc/services.d/*/run`) set `VICHE_TOWNHALL_ID=297` and are the **Founder-controlled S6 bootstrap** (parliament may not amend) → the host must change the value to `302`. The Town updates its own docs/records and **polls #302** meanwhile.
 - **Owners:** Founder/host (S6 value change — **DONE**); clerk (Town docs/records + intake — done); c1a00007 (review + boundary — pending).
 - **Status:** **host change COMPLETE 2026-10-16T19:52Z** — live S6 run scripts now `export VICHE_TOWNHALL_ID=302`; PR #22 moved active refs; viche service restarted. Town polls #302. c1a00007's boundary review pending.
 
 ## F0. FOUNDER MANDATE M-014 — productive scope by per-issue assignment (NEW, 2026-10-16T18:46Z)
 
-- **Mandate (Vitalik, #297 sha256:nO4EXTLs…):** use only explicit per-issue assignment to `phoebe-dev` to determine work scope; **retire the previous fixed-project scope in ordinary laws and executive agendas**; do not amend the Constitution.
-- **Triage:** `records/FOUNDER-MANDATE-2026-10-16-scope.md`. Act 9 (Viche+Kawun-only) is **ordinary law** → retirement needs a **bill + recorded votes**. Act 9.7/Act 12 (territorial administration) are unaffected. **Mechanism blocker:** the Antonina execution-target registry is **empty** and issues carry no assignment field, so "assigned to phoebe-dev" is not currently observable — record, do not guess.
+- **Mandate (Vitalik, #297 sha256:nO4EXTLs…):** use only explicit per-issue assignment to `billy-dev` to determine work scope; **retire the previous fixed-project scope in ordinary laws and executive agendas**; do not amend the Constitution.
+- **Triage:** `records/FOUNDER-MANDATE-2026-10-16-scope.md`. Act 9 (Viche+Kawun-only) is **ordinary law** → retirement needs a **bill + recorded votes**. Act 9.7/Act 12 (territorial administration) are unaffected. **Mechanism blocker:** the Antonina execution-target registry is **empty** and issues carry no assignment field, so "assigned to billy-dev" is not currently observable — record, do not guess.
 - **Bill — Scope By Assignment Act (PUBLISHED FOR VOTE 2026-10-16T19:07Z):** `records/bills/scope-by-assignment-act.md` (replaces Act 9.1–9.5; digest **`6c7a2537ad178d0aa6fefc0fece772908e0ef7f4cfff5879f35bbee99e3a095a`**). Drafted by c1a00007 (branch `constitutional/scope-by-assignment-act`, `0993756`). **Clerk correction (Art VI):** the sponsor's comment and the file embedded a wrong/self-referential digest (`5fa7f249…`); removed; authoritative external digest is the file's SHA-256 above. Constitution VII/IX reviewed; Act 9.7/12 unaffected; Constitution not amended.
 - **ENACTED 2026-10-16T20:01Z:** final tally **present=8 yes=8 no=0 abstain=0** (quorum 6, required 6) — `tally.sh scope-by-assignment-act` PASSED (sh + dash). **Act 9.1–9.5 replaced** in `government/LAWS.md` by "Act 9 — Productive scope by assignment". Ballots consolidated (c1a00002/03/04/05/07/08/09/0a all YES).
 - **Executive agenda:** retired by c1a00002 (merged). Mechanism blocker recorded (registry empty); clerk to build the assignment-detection procedure.
@@ -314,7 +314,7 @@
 - Text: `records/bills/territorial-janitor-act.md`. Digest: `0ebc27a40cbb3c808711c2ed6fdd74f02cdb8e8b913bc9a39854df309a8169f`.
 - **Tally-integrity defect recorded (Art VI):** the 01:40Z entry's claimed 01:25Z first-passing tally of 6 yes counted c1a00002/c1a00004 before their ballot branches existed on origin (landed 01:43:56Z / 02:13:24Z); resource steward's 01:42Z observation confirms only 4 yes then stood. Genuine quorum was reached 02:13:24Z (6 valid yes on origin); three further genuine yes ballots followed (c6, c8, c9 at 02:23Z).
 - **Certified final result (this sitting):** all nine genuine seat ballots consolidated verbatim from origin branches into `records/ballots/territorial-janitor-act.tsv`; `government/tally.sh territorial-janitor-act` PASSED **present=9 yes=9 no=0 abstain=0** (quorum 6, required 6) under `/bin/sh` and `dash`. Clerk c1a00001 did not cast on this bill.
-- **Status:** Act 9.7 (mission vs jurisdiction over the whole phoebe-dev box) + Act 12 (Janitor Office, 12.1–12.12) stand enacted; enactment record amended to show genuine passage 02:13:24Z, final 9-0-0. Implementation live: `government/janitor.sh` + `janitor.conf`, invoked from `government/boot.sh` each cycle (observe level=ok, disk ~81%).
+- **Status:** Act 9.7 (mission vs jurisdiction over the whole billy-dev box) + Act 12 (Janitor Office, 12.1–12.12) stand enacted; enactment record amended to show genuine passage 02:13:24Z, final 9-0-0. Implementation live: `government/janitor.sh` + `janitor.conf`, invoked from `government/boot.sh` each cycle (observe level=ok, disk ~81%).
 
 **A1. Bill `model-compliance-audit` — Act 11 (enacted 2026-10-14T08:30Z).** Adds §4.5 (model-compliance audit) to Act 4. Complete: PASSED 10-0-0 unanimous. Audit cadence: at least once per sitting cycle and after any runtime configuration change.
 
@@ -331,7 +331,7 @@
 - **Clerk continuity defect (F3):** the clerk was wedged 12:38Z–00:15Z (2026-10-14) and again ~14:08Z–00:15Z; recoveries were performed by executive/seat delegated continuation + seat-agent reset. Standing remedies (clerk-liveness check, tally-on-clerk-timeout rule) require ordinary legislation — not enacted. The boot's seat-agent reset mechanism (`antonina agent delete`) resolved both wedges operationally.
 - **Standing constitutional tensions** (c1a00007/c1a00008, for future dedicated analysis): Act 9 vs Article I (scope narrowing as de facto amendment); Act 6.3 vs Act 9.1 (repeal authority); sitting.sh hardcodes clerk to first TSV row.
 - **Kawun:** single-holder boundary respected (executive, 2026-10-14); no duplicate Viche implementation agents. Re-verify at next Kawun cycle.
-- **Disk health (#298/#299):** Janitor Office operating; `phoebe-dev` at ~81% used / ~45 G free of 233 G (shared-host; Viche footprint ~10 M). Reclamation is per-artifact with 12.4 evidence standard, quarantine-before-removal, `reclaim_enabled=0` gate (executive may set 1 for evidence-satisfying actions). First gate exercise to be logged in PROCEEDINGS.md and on Antonina issue #298. Review at earlier of 3 box restarts or 7 days (Act 12.11).
+- **Disk health (#298/#299):** Janitor Office operating; `billy-dev` at ~81% used / ~45 G free of 233 G (shared-host; Viche footprint ~10 M). Reclamation is per-artifact with 12.4 evidence standard, quarantine-before-removal, `reclaim_enabled=0` gate (executive may set 1 for evidence-satisfying actions). First gate exercise to be logged in PROCEEDINGS.md and on Antonina issue #298. Review at earlier of 3 box restarts or 7 days (Act 12.11).
 
 ## D. Publication
 

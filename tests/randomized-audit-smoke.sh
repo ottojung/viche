@@ -18,7 +18,7 @@ case "$1 $2" in
     *) echo '[]' ;;
   esac ;;
 "board show")
-  echo '{"body":"Execution host: phoebe-dev. Independent task.","messages":[{"author":"Vitalik","body":"Carry out assigned work."}]}' ;;
+  echo '{"body":"Execution host: billy-dev. Independent task.","messages":[{"author":"Vitalik","body":"Carry out assigned work."}]}' ;;
 "agent list")
   echo '{"agents":[{"id":"c1e00008"}],"unreadable":0}' ;;
 "agent status")

@@ -91,7 +91,7 @@ antonina agent list --running --page 1 --limit 100 --json |
   print Node warnings to stderr; keep stderr separate, but do not discard
   CLI failures or parse truncated `head -c` output.
 - For SoringP1 #301: standing target five independent unary researchers on
-  phoebe-dev; independently choose worthwhile fronts and dispatch before
+  billy-dev; independently choose worthwhile fronts and dispatch before
   unrelated monitoring work. Never require a registry or standalone refill task.
 
 This contract describes interface behavior, not policy precedence. Follow the

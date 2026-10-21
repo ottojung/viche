@@ -3,7 +3,7 @@
 ## Standing duty: SoringP1 pool (was 4; replenished toward target)
 
 At pass start Antonina reported **4** live SoringP1 researchers. Dispatched one
-distinct unary front on phoebe-dev; verified `running`,
+distinct unary front on billy-dev; verified `running`,
 `opencode-go/longcat-2.5-preview-free`, variant `low`:
 
 - `57lH4A8pMNXcDEMBcbRaXa-warnings` — unary multiway-comparison model fidelity
@@ -20,5 +20,5 @@ Live status: level=warn, 87% used, ~30.7 GB free, inodes 33% on
 ## Not done / flagged
 
 - Act 20 (Detector Calibration Act) Executive artifacts remain undelivered;
-  awaiting an explicit phoebe-dev assignment per the 2026-10-16 scope mandate.
+  awaiting an explicit billy-dev assignment per the 2026-10-16 scope mandate.
 - No Clerk work; no pending Founder messages; no open handoffs.

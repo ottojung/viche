@@ -10,7 +10,7 @@
 
 The Founder instructed the parliament (Antonina issue #298) to **design, legislate, establish, and actually operate** a continuing Janitor Office for disk health and clutter prevention. The instruction names the concrete risks: disk-space exhaustion, filesystem clutter, abandoned temporary files, obsolete build artifacts, duplicate caches, abandoned worktrees and excess logs.
 
-Measured facts on the Viche operating box (`phoebe-dev`), from the resource steward's baseline `records/RESOURCE-2026-10-14.md`:
+Measured facts on the Viche operating box (`billy-dev`), from the resource steward's baseline `records/RESOURCE-2026-10-14.md`:
 
 - Host filesystem: **171 G used of 233 G = 78%, ~50 G free** — a shared-host condition, not a Viche condition.
 - Viche's own footprint is **~3 MB** (town repo ~1.2 MB, ten seat worktrees ~2.2 MB, state < 4 KB). The largest single consumers (`opencode.db` ~14 G, `snapshot` ~579 M) belong to *all* projects and are outside Viche's deletion authority (Founding Act 9.4).
