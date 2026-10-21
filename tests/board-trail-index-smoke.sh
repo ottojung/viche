@@ -10,7 +10,16 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 town=$scratch/town
 mkdir -p "$town/government" "$town/records/board-trail" "$town/records/bills" "$scratch/bin"
 cp "$repo/government/board-trail-index.py" "$town/government/"
-cp "$repo/records/board-trail/originating.tsv" "$town/records/board-trail/"
+# Hermetic fixture mapping (NOT the live records file): the live
+# records/board-trail/originating.tsv changes as new originating issues appear,
+# so coupling this test to it makes a legitimate records update break the full
+# suite (observed 2026-10-21: adding #313/#314 broke this test on main).
+printf 'issue\twork_id\tact\tenacted_epoch\ttype\n' > "$town/records/board-trail/originating.tsv"
+printf '303\tjudiciary-independence\t15\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
+printf '307\tinnovation-centre-act\t14\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
+printf '308\tepistemic-adversarialism-act\t16\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
+printf '312\tboard-reporting-act\t18\t1792400760\tlaw\n' >> "$town/records/board-trail/originating.tsv"
+printf '310\tdetector-calibration-act\t-\t0\tdraft\n' >> "$town/records/board-trail/originating.tsv"
 cp "$repo/government/LAWS.md" "$town/government/"
 cp "$repo"/records/bills/judiciary-independence.md "$repo"/records/bills/board-reporting-act.md "$town/records/bills/"
 
