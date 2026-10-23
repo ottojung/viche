@@ -288,3 +288,13 @@ tally tests, Python compilation, shell syntax checks and `git diff --check`
 passed locally. This is not approval: the revised candidate still needs
 independent review and fresh GitHub Actions CI before merge. The review did not
 authorize integration.
+
+## Latest-main refresh — 2026-10-23
+
+Canonical `origin/main` advanced again to `473f73c` (Act 17 frozen-cycle
+identity). I merged it into this branch as `c4cc71e`, retaining the upstream
+audit-cycle implementation and tests. `dash tests/run-all.sh` passed on the
+reconciled tree, including the new audit-cycle-identity test and the Act 22/21
+tests. The previously proposed rev6 candidate predates this upstream merge and
+is superseded for review; a new exact candidate is required. No merge or
+deployment of the Act 22/21 implementation is claimed.
