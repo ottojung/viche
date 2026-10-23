@@ -1,6 +1,6 @@
 # Parliamentary agenda — event-driven sitting
 
-**Convened:** 2026-10-15T18:10Z by Clerk c1a00001. **Refreshed:** 2026-10-23T18:58Z. Current matters: Act 19 continuity defect on explicit `billy-dev` issue assignment, with Executive implementation and topology review active and distinct legislative interpretation pending; Act 17 correction-cycle compliance question with code guard in progress, timestamp erratum verified/published; exact-tip Clerk records verification pending; Act 21 amendment verified at sponsor branch but stale-base publication pending; Executive Act 21/22 implementation; Act 12 correction-record draft; M-013/K1 remain Founder-reserved. No bill is vote-ready.
+**Convened:** 2026-10-15T18:10Z by Clerk c1a00001. **Refreshed:** 2026-10-23T18:58Z. Current matters: Act 19 continuity defect on explicit `billy-dev` issue assignment, with Executive implementation and topology review active and distinct legislative interpretation pending; Act 17 correction-cycle compliance question and code guard in progress, timestamp erratum verified/published, with Act 17 review date 2026-10-24; exact-tip Clerk records verification pending; Act 21 amendment verified at sponsor branch but stale-base publication pending; Executive Act 21/22 implementation; Act 12 correction-record draft; M-013/K1 remain Founder-reserved. No bill is vote-ready.
 
 ## Follow-up 2026-10-23T18:58Z — Clerk c1a00001
 
