@@ -298,3 +298,28 @@ reconciled tree, including the new audit-cycle-identity test and the Act 22/21
 tests. The previously proposed rev6 candidate predates this upstream merge and
 is superseded for review; a new exact candidate is required. No merge or
 deployment of the Act 22/21 implementation is claimed.
+
+## Follow-up review findings and corrective response — 2026-10-23
+
+The second review of rev6 (`c03ac1b`) withheld approval and reproduced a
+registration-timestamp bypass, scorer use of hash-mismatched prediction data,
+equality accepted for evidence chronology, and malformed green/red run arrays
+being accepted. The implementation now includes `registered_at` in both
+registration and rejection content hashes; the existing gate integrity check
+therefore refuses timestamp edits. The scorer marks hash-mismatched or
+duplicate-entry/resolution IDs as invalid and excludes their outcomes from
+scores while reporting the defect. Resolution evidence must now be strictly
+later than registration (`evidence_at > registered_at`). The compliance checker
+accepts only the exact run histories emitted by `suite-status.sh`: one green,
+red then green, or two red runs, with sequential run numbers and integer exits.
+Hermetic tests now cover timestamp-only tampering, scorer exclusion, equal-time
+evidence, malformed run sequences, merge-commit deltas, and normal pilot tally
+behavior.
+
+The second review record is
+`/var/lib/lubko/wd/viche-seats/c1a0000b/records/INDEPENDENT-REVIEW-ACT22-ACT21-REV6-2026-10-23.md`.
+It reports changes required on rev6 and does not approve or authorize merge.
+After these additional corrections, focused prediction/compliance/tally tests
+and `dash tests/run-all.sh` pass on the current-main-reconciled working tree.
+The rev8 delivery predates these last corrections; independent review and fresh
+CI must cover the next exact candidate.

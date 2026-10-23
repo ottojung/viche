@@ -42,14 +42,16 @@ def content_hash(entry: dict) -> str:
     if entry.get("kind") == "rejection":
         canon = {"kind": "rejection", "bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
-                 "author": entry.get("author", ""), "reason": entry.get("reason", "")}
+                 "author": entry.get("author", ""), "reason": entry.get("reason", ""),
+                 "registered_at": entry.get("registered_at")}
     else:
         canon = {"bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
-                 "probability": entry.get("probability"),
-                 "resolution_date": entry.get("resolution_date", ""),
-                 "evidence_source": entry.get("evidence_source", ""),
-                 "author": entry.get("author", "")}
+                  "probability": entry.get("probability"),
+                  "resolution_date": entry.get("resolution_date", ""),
+                  "evidence_source": entry.get("evidence_source", ""),
+                 "author": entry.get("author", ""),
+                 "registered_at": entry.get("registered_at")}
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
     return "sha256:" + hashlib.sha256(blob).hexdigest()
 
@@ -84,15 +86,20 @@ def main() -> int:
 
     defects = []
     seen = set()
+    invalid_entry_ids = set()
     for e in entries:
         if e.get("id") in seen:
             defects.append({"id": e.get("id"), "defect": "duplicate_entry_id"})
+            invalid_entry_ids.add(e.get("id"))
         seen.add(e.get("id"))
         if e.get("content_hash") != content_hash(e):
             defects.append({"id": e.get("id"), "defect": "content_hash_mismatch"})
+            invalid_entry_ids.add(e.get("id"))
+    duplicate_resolution_ids = set()
     for eid in set(r.get("id") for r in resolutions):
         if sum(r.get("id") == eid for r in resolutions) > 1:
             defects.append({"id": eid, "defect": "duplicate_resolution"})
+            duplicate_resolution_ids.add(eid)
 
     registered = [e for e in entries if e.get("kind") == "registration" and e.get("status") == "registered"]
     rejected = [e for e in entries if e.get("kind") == "rejection"]
@@ -100,6 +107,8 @@ def main() -> int:
     scored, unresolved, due, due_unresolved = [], [], [], []
     scored_ids, unresolved_ids = set(), set()
     for e in registered:
+        if e.get("id") in invalid_entry_ids or e.get("id") in duplicate_resolution_ids:
+            continue
         r = res_by_id.get(e.get("id"))
         rd = str(e.get("resolution_date", ""))
         try:
@@ -135,8 +144,8 @@ def main() -> int:
         elif r.get("outcome") in ("true", "false"):
             try:
                 evidence_at = int(r.get("evidence_at"))
-                if evidence_at < int(e.get("registered_at", 0)):
-                    raise ValueError("outcome_evidence_precedes_registration")
+                if evidence_at <= int(e.get("registered_at", 0)):
+                    raise ValueError("outcome_evidence_not_after_registration")
                 if evidence_at > resolved_at:
                     raise ValueError("outcome_evidence_after_resolution")
                 scored.append((e, r))

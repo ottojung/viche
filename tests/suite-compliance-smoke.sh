@@ -35,7 +35,7 @@ git -C "$tmp" merge --ff-only -q merge-candidate
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
 # Matching identity fields without a generated successful run are not evidence.
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000}\n' \
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0},{"run":2,"result":"red","exit":1}]}\n' \
     "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-malformed.json"
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
@@ -52,10 +52,16 @@ git -C "$tmp" checkout -qb red-merge main
 git -C "$tmp" merge --no-ff -q -m 'merge red candidate' red-code
 red_commit=$(git -C "$tmp" rev-parse HEAD)
 red_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1001,"runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1}]}\n' \
-    "$red_commit" "$red_tree" > "$VICHE_STATE_ROOT/delivery/verified-red-$red_commit.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1001,"runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1},{"run":3,"result":"green","exit":0}]}\n' \
+    "$red_commit" "$red_tree" > "$VICHE_STATE_ROOT/delivery/verified-malformed-red.json"
 git -C "$tmp" checkout -q main
 git -C "$tmp" merge --ff-only -q red-merge
+# A red/red/green sequence is neither a valid flaky-red resolution nor a
+# red-main receipt, and cannot create a violation.
+out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
+printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["violations"]==0; assert x["main_red_episodes"]==0'
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1002,"runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1}]}\n' \
+    "$red_commit" "$red_tree" > "$VICHE_STATE_ROOT/delivery/verified-red-$red_commit.json"
 printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1}]}\n' \
     "$red_commit" "$red_tree" > "$tmp/records/suite-status.json"
 git -C "$tmp" add . && git -C "$tmp" commit -qm red-record

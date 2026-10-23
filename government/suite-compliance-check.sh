@@ -26,20 +26,22 @@ def recorded_result(data, expected_suite):
     runs=data.get('runs')
     if not isinstance(runs,list):
         return None
+    if any(not isinstance(run,dict) or run.get('run')!=i+1
+           or not isinstance(run.get('exit'),int)
+           for i,run in enumerate(runs)):
+        return None
     if data.get('result')=='green':
-        return ('green' if any(isinstance(run,dict)
-                              and run.get('result')=='green'
-                              and run.get('exit')==0 for run in runs) else None)
-    if data.get('result')=='red':
-        consecutive=0
-        for run in runs:
-            if (isinstance(run,dict) and run.get('result')=='red'
-                    and isinstance(run.get('exit'),int) and run['exit']!=0):
-                consecutive+=1
-                if consecutive>=2:
-                    return 'red'
-            else:
-                consecutive=0
+        if (len(runs)==1 and runs[0].get('result')=='green'
+                and runs[0].get('exit')==0):
+            return 'green'
+        if (len(runs)==2 and runs[0].get('result')=='red'
+                and runs[0].get('exit')!=0 and runs[1].get('result')=='green'
+                and runs[1].get('exit')==0):
+            return 'green'
+    if (data.get('result')=='red' and len(runs)==2
+            and all(run.get('result')=='red' and run.get('exit')!=0
+                    for run in runs)):
+        return 'red'
     return None
 try:
     main=git('rev-parse','--verify','main')

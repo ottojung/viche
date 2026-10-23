@@ -96,14 +96,16 @@ def content_hash(entry: dict) -> str:
     if entry.get("kind") == "rejection":
         canon = {"kind": "rejection", "bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
-                 "author": entry.get("author", ""), "reason": entry.get("reason", "")}
+                 "author": entry.get("author", ""), "reason": entry.get("reason", ""),
+                 "registered_at": entry.get("registered_at")}
     else:
         canon = {"bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
-                 "probability": entry.get("probability"),
-                 "resolution_date": entry.get("resolution_date", ""),
-                 "evidence_source": entry.get("evidence_source", ""),
-                 "author": entry.get("author", "")}
+                  "probability": entry.get("probability"),
+                  "resolution_date": entry.get("resolution_date", ""),
+                  "evidence_source": entry.get("evidence_source", ""),
+                 "author": entry.get("author", ""),
+                 "registered_at": entry.get("registered_at")}
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
     return "sha256:" + hashlib.sha256(blob).hexdigest()
 
@@ -123,7 +125,8 @@ def cmd_register(a) -> int:
         entry = {"id": next_id(data, a.bill, "rejection"), "kind": "rejection",
                  "bill_id": a.bill, "proposition": a.proposition, "author": a.author,
                  "reason": "no named evidence source", "status": "rejected",
-                 "registered_at": now_epoch(), "registered_iso": iso(now_epoch())}
+                 "registered_at": now_epoch()}
+        entry["registered_iso"] = iso(entry["registered_at"])
         entry["content_hash"] = content_hash(entry)
         data["entries"].append(entry)
         save(path, data)
@@ -206,8 +209,8 @@ def cmd_resolve(a) -> int:
             print("predict-ledger: scored resolution requires --evidence-at EPOCH",
                   file=sys.stderr)
             return 2
-        if evidence_at < int(target.get("registered_at", 0)):
-            print("predict-ledger: outcome evidence predates registration",
+        if evidence_at <= int(target.get("registered_at", 0)):
+            print("predict-ledger: outcome evidence must follow registration",
                   file=sys.stderr)
             return 2
         if evidence_at > resolved_at:
@@ -271,8 +274,8 @@ def cmd_verify(a) -> int:
             if r.get("outcome") in ("true", "false"):
                 try:
                     evidence_at = int(r.get("evidence_at"))
-                    if evidence_at < int(target.get("registered_at", 0)):
-                        defects.append({"id": r.get("id"), "defect": "outcome_evidence_precedes_registration"})
+                    if evidence_at <= int(target.get("registered_at", 0)):
+                        defects.append({"id": r.get("id"), "defect": "outcome_evidence_not_after_registration"})
                     if evidence_at > int(r.get("resolved_at", 0)):
                         defects.append({"id": r.get("id"), "defect": "outcome_evidence_after_resolution"})
                 except (TypeError, ValueError):

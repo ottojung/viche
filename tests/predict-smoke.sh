@@ -64,6 +64,11 @@ if VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" \
     echo 'outcome evidence dated before registration was accepted' >&2; exit 1
 fi
 if VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" \
+    resolve --id bill-registration-1 --outcome true --resolver clerk \
+    --evidence fixture#same-time --evidence-at 90 >/dev/null 2>&1; then
+    echo 'outcome evidence at registration time was treated as later' >&2; exit 1
+fi
+if VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" \
     resolve --id bill-registration-1 --outcome unresolved --resolver clerk \
     --reason 'source unavailable' >/dev/null 2>&1; then
     echo 'unresolved result without evidence citation was accepted' >&2; exit 1
@@ -102,6 +107,40 @@ assert x['counts']['unresolved']==1
 assert x['counts']['resolved_scored']==2
 PY
 python3 "$root/government/predict-ledger.py" verify >/dev/null
+# The registration time is hash-bound; changing only it cannot make a late
+# prediction appear pre-registered to the ballot gate.
+timestamp_tamper=$tmp/timestamp-tamper.json
+cp "$tmp/ledger.json" "$timestamp_tamper"
+python3 - "$timestamp_tamper" <<'PY'
+import json,sys
+p=sys.argv[1]; x=json.load(open(p)); x['entries'][0]['registered_at']=99
+open(p,'w').write(json.dumps(x))
+PY
+if VICHE_PREDICT_LEDGER=$timestamp_tamper python3 "$root/government/predict-ledger.py" verify >/dev/null 2>&1; then
+    echo 'registration timestamp tamper escaped integrity verification' >&2; exit 1
+fi
+if VICHE_PREDICT_LEDGER=$timestamp_tamper /bin/sh "$root/government/predict-gate.sh" --all --at 100 bill >/dev/null 2>&1; then
+    echo 'gate accepted tampered registration timestamps' >&2; exit 1
+fi
+# A scorer detects tampering and excludes the compromised prediction.
+scorer_tamper=$tmp/scorer-tamper.json
+cp "$tmp/ledger.json" "$scorer_tamper"
+python3 - "$scorer_tamper" <<'PY'
+import json,sys
+p=sys.argv[1]; x=json.load(open(p))
+next(e for e in x['entries'] if e.get('kind')=='registration')['probability']=.01
+open(p,'w').write(json.dumps(x))
+PY
+VICHE_PREDICT_LEDGER=$scorer_tamper \
+VICHE_PREDICT_CALIBRATION=$tmp/tampered-calibration.json \
+    python3 "$root/government/predict-scorer.py" --now 90001 >/dev/null
+python3 - "$tmp/tampered-calibration.json" <<'PY'
+import json,sys
+x=json.load(open(sys.argv[1]))
+assert not x['integrity']['clean']
+assert x['counts']['resolved_scored']==1
+assert [r['id'] for r in x['brier']['per_prediction']]==['bill-registration-2']
+PY
 python3 - "$tmp/ledger.json" <<'PY'
 import json,sys
 p=sys.argv[1]; x=json.load(open(p)); x['entries'][0]['proposition']='tampered'; open(p,'w').write(json.dumps(x))
