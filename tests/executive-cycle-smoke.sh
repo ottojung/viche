@@ -61,5 +61,5 @@ MODEL=test-provider/example
 BOARD_DOWN=yes
 export MODE MODEL BOARD_DOWN
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
-test "$(wc -l < "$OUTPUT")" -eq 2
+test "$(wc -l < "$OUTPUT")" -eq 3
 echo 'Independent Executive dispatch and fail-closed assignment smoke passed'
