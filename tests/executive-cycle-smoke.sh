@@ -9,6 +9,8 @@ printf 'c1a00001\tClerk\tintake\nc1a00002\tMember\tvoting\n' > "$scratch/town/go
 printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
+cp "$repo/government/research-frontier-status.py" "$scratch/town/government/research-frontier-status.py"
+printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"succeeded","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
 cat > "$scratch/bin/antonina" <<'MOCK'
@@ -25,6 +27,7 @@ case "$1 $2" in
   "agent run")
     case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
     case "$*" in *"SoringP1"*"research-plan.md"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"depleted_after_empty_curation"*) : ;; *) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac
@@ -39,7 +42,8 @@ VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/charter
 MODE=idle MODEL=test-provider/example
 OUTPUT=$scratch/dispatched
-export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT
+SORING_FRONTIER_STATE=$scratch/frontier.json
+export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT SORING_FRONTIER_STATE
 grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
 grep -Fq "government/antonina-interface.md" "$repo/government/executive-agenda.md"
 sh "$repo/government/executive-cycle.sh"
