@@ -25,14 +25,14 @@ case "$1 $2" in
   'agent delete') echo delete >> "$MOCK_ROOT/recovery" ;;
   'agent new')
     echo new >> "$MOCK_ROOT/recovery"
-    printf '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}\n' > "$MOCK_ROOT/status.json"
+    printf '{"state":"idle","model":"example-provider/model-a","variant":"low"}\n' > "$MOCK_ROOT/status.json"
     ;;
   *) exit 9 ;;
 esac
 MOCK
 chmod +x "$d/bin/antonina"
 set_status() {
-  printf '{"state":"%s","model":"opencode-go/longcat-2.5-preview-free","variant":"low","backend_error":{"classification":"%s","transient":%s}}\n' \
+  printf '{"state":"%s","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"%s","transient":%s}}\n' \
     "$1" "${2:-upstream_endpoint_unavailable}" "${3:-true}" > "$d/mock/status.json"
 }
 wt=$d/seats/branches/executive
@@ -182,7 +182,7 @@ VICHE_TOWN_ROOT="$d2/town"
 VICHE_SEATS_ROOT="$d2/seats"
 VICHE_STATE_ROOT="$d2/state"
 VICHE_CONSTITUTION="$d2/charter"
-MODE=idle MODEL=opencode-go/longcat-2.5-preview-free
+MODE=idle MODEL=example-provider/model-a
 OUTPUT="$d2/dispatched"
 PROMPT_FILE="$d2/prompt"
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT PROMPT_FILE

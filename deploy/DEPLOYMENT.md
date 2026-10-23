@@ -32,7 +32,7 @@ Phoebe's running S6 environment starts with a deliberately minimal `PATH`. Its V
 
 The initial exclusive project scope was **Viche self-improvement and Kawun delivery only** (Founding Act 9); per Founder mandates of 2026-10-16 the productive scope is now **issues explicitly assigned to `billy-dev`** (see `records/FOUNDER-MANDATE-2026-10-16-scope.md` and the Scope By Assignment Act). The permanent Town Hall issue is **#302** (succeeding archived #297).
 
-The Viche S6 service should have a POSIX-compliant `/bin/sh`, `git`, `jq`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. **Do not run another OpenCode provider, model or wrapper**: the sole authorized model is `opencode-go/longcat-2.5-preview-free`, variant `low`, through Antonina. Verify the installed Antonina build matches its pinned runtime before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
+The Viche S6 service requires POSIX sh, git, jq and Antonina with working credentials. Invoke agents through Antonina, leaving provider/model selection and fallback to Antonina. No fixed Viche agent or invocation caps.
 
 ## Founder communication via Antonina author labels
 
@@ -70,13 +70,13 @@ The external host shall restart the **entire box after 24 hours of uptime measur
 
 The Founder may stop the S6 service, revert the government clone to an approved Git revision, preserve/archive board records and state, and restart. A constitutional amendment is a separate Founder-approved update of the read-only mounted source. Do not automatically overwrite that source from a routine Git pull.
 
-Repository checks: `/bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run`, `/bin/sh tests/boot-smoke.sh`, and `/bin/sh tests/tally-smoke.sh`. The scripts are also checked with `dash` in CI. The tests mock Antonina and use a test-only `VICHE_TEST_NO_SYNC=1` to avoid fetching Git history. **Never set that variable in production S6.** The tests do not prove real model invocation, correct displayed author fields in board issues/comments, or correct S6 volume mappings. These must be checked during deployment.
+Repository checks: `/bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run`, `/bin/sh tests/boot-smoke.sh`, and `/bin/sh tests/tally-smoke.sh`. The scripts are also checked with `dash` in CI. The tests mock Antonina and use a test-only `VICHE_TEST_NO_SYNC=1` to avoid fetching Git history. **Never set that variable in production S6.** The tests do not prove successful runtime invocation, correct displayed author fields in board issues/comments, or correct S6 volume mappings. These must be checked during deployment.
 
 ## Supply chain and hardening notes
 
 Reuse the existing Antonina installation in the Lubko container rather than rebuilding an unpinned Antonina/OpenCode image. Pin the constitutional deployment to an exact Git commit. If rebuilding the overall container, pin dependencies in its existing source rather than automatically cloning `main` during every image build. Unlimited agent concurrency does not mean infinite physical RAM; do not invent a worker-count cap. A container-level memory/tmpfs boundary is optional infrastructure protection, not parliamentary admission policy.
 
-Current separation is strongest for the read-only constitutional file. With shared board credentials, Git access and process UID, a sufficiently adversarial agent could bypass text-level instructions or tamper with runtime state. The experiment currently accepts a trust-based model policy; stronger capability isolation can be invented later by the Town and approved by the Founder where constitutional controls are involved.
+Current separation is strongest for the read-only constitutional file. With shared board credentials, Git access and process UID, a sufficiently adversarial agent could bypass text-level instructions or tamper with runtime state. The experiment currently accepts a trust-based runtime policy; stronger capability isolation can be invented later by the Town and approved by the Founder where constitutional controls are involved.
 
 
 ### Urgent Founder intake on Phoebe

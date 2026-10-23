@@ -22,7 +22,7 @@ case "$1 $2" in
 "agent list")
   echo '{"agents":[{"id":"c1e00008"}],"unreadable":0}' ;;
 "agent status")
-  echo '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}' ;;
+  echo '{"state":"idle","model":"example-provider/model-a","variant":"low"}' ;;
 "agent new")
   printf "generated-audit-agent-1\n" ;;
 "agent run")

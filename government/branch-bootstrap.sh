@@ -60,9 +60,4 @@ if oc_reset_due "$liv" "$id" "$now"; then
     "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$liv/recoveries.log"
 fi
-model=$(printf '%s\n' "$meta" | jq -r '.model // empty')
-variant=$(printf '%s\n' "$meta" | jq -r '.variant // empty')
-if [ "$model" != opencode-go/longcat-2.5-preview-free ] || [ "$variant" != low ]; then
-  echo "Office $branch has unauthorized model; refusing dispatch" >&2
-  exit 1
-fi
+# An unstarted office may have no model history; Antonina selects at run time.

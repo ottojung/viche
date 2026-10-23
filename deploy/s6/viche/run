@@ -5,6 +5,6 @@
 export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
 export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
 export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
-# Town Hall ID is configured in Phoebe's persistent service definition.
+# Town Hall ID is configured in the host's persistent service definition.
 : "${VICHE_TOWNHALL_ID:?Set Town Hall issue number in S6 environment}"
 exec /bin/sh /var/lib/lubko/from-host/viche-constitution/boot.sh

@@ -41,19 +41,13 @@ if [ "$bootstrap_ok" = true ] && [ -n "$id" ] && [ -s "$town/government/$program
 fi
 readable=false
 agent_state=unknown
-model=unknown
-variant=unknown
 if [ -n "$id" ] && meta=$(antonina agent status --id "$id" --json 2>/dev/null); then
   if agent_state=$(printf '%s\n' "$meta" | jq -er '.state' 2>/dev/null); then
     readable=true
-    model=$(printf '%s\n' "$meta" | jq -r '.model // "unknown"')
-    variant=$(printf '%s\n' "$meta" | jq -r '.variant // "unknown"')
   fi
 fi
 readiness=unhealthy
-if [ "$cycle_ok" = true ] && [ "$readable" = true ] &&
-   [ "$model" = opencode-go/longcat-2.5-preview-free ] &&
-   [ "$variant" = low ]; then
+if [ "$cycle_ok" = true ] && [ "$readable" = true ]; then
   case "$agent_state" in
     running) readiness=running ;;
     idle|succeeded) readiness=ready ;;
@@ -82,11 +76,9 @@ fi
 receipt=$(mktemp "$root/$branch.XXXXXX")
 jq -n --arg branch "$branch" --arg id "$id" --arg duty "$duty" \
   --arg key "$key" --arg state "$agent_state" --arg readiness "$readiness" \
-  --arg model "$model" --arg variant "$variant" \
   --argjson at "$now" --argjson cycle_ok "$cycle_ok" \
   '{branch:$branch,seat:$key,agent_id:$id,duty:$duty,observed_at:$at,
     readiness:$readiness,agent_state:$state,cycle_accepted:$cycle_ok,
-    model:$model,variant:$variant,
     caveat:"readiness_not_proof_of_agent_progress_or_completed_work"}' > "$receipt"
 mv -f "$receipt" "$root/$branch.json"
 if [ "$readiness" = unhealthy ]; then

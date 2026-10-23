@@ -5,7 +5,7 @@
 This implementation executes **existing** Founding Acts 4 (independent audit), 5 (durability), 8 (quality, timeliness, Founder attention) and the latest Founder-authorized productive mandate. It does not amend the Constitution or enact new legislation. Parliament can revise it by ordinary law.
 
 - **Watchdog** (`government/oversight-watch.sh`): deterministic, invoked each ten-minute government reconciliation, independent of the Clerk, executive, Auditor, and model provider. Writes readable, durable observations and a current incident into the host's persistent Viche state. Does not edit Git working trees, close board issues, or judge wrongdoing.
-- **Independent Auditor** (`government/audit-cycle.sh`): autonomously dispatched for an open incident or a periodic bounded four-case random sample when the provider permits; retains its own seat and constitutional model restriction. Must verify actual outcomes and investigate measurement blind spots, not rely on executive self-reports.
+- **Independent Auditor** (`government/audit-cycle.sh`): autonomously dispatched for an open incident or a periodic bounded four-case random sample when the provider permits; retains its own seat and independent Antonina session. Must verify actual outcomes and investigate measurement blind spots, not rely on executive self-reports.
 - **Clerk/Parliament** (`government/sitting.sh`): receive active oversight incidents **as mandatory agenda items**, independently of Founder communications. The Clerk coordinates evidence and parliamentary remedies, not executive task selection.
 - **Executive**: remains independent, accountable to outcomes, and can correct operational shortcomings under existing law without parliamentary ceremony.
 

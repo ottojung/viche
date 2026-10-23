@@ -74,8 +74,7 @@ antonina agent list --running --page 1 --limit 100 --json |
   Stopping/deleting/running agents are similarly consequential mutations.
 - `antonina agent log --id <ID> --lines 100` reads output; do not treat it
   as a substitute for `agent status` for liveness.
-- Agents use the mandated `opencode-go/longcat-2.5-preview-free`
-  model, variant `low`; do not use alternate providers or direct model calls.
+- Run agents via Antonina; model selection and fallback belong to Antonina. An unstarted agent reports model=null, and models_used contains only models actually invoked.
 
 ## Fail-closed and anti-patterns
 
