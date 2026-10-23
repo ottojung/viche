@@ -12,6 +12,7 @@
 # Completed c1a0000b review: `records/LEGISLATIVE-REVIEW-ACT17-CORRECTIONS-2026-10-23.md` and `records/CORRECTION-ANCHOR-CONTINUITY-REVIEW-2026-10-23.md` on pushed branch `audit/act17-corrections-c1a0000b` @ 90c68bb; follow-up `CORRECTION-ANCHOR-CONTINUITY-REVIEW` @ ab3a070; scope corrections supported with same-substrate caveat.
 # Completed c1a00006 technical report: `records/CORRECTION-ANCHOR-CONTINUITY-ADDENDUM-2026-10-23-c1a00006.md` on pushed branch `continuity/c1a00006-correction-anchor-2026-10-23` @ 39b258c; scratch workflow and merge risks verified; Act 12 authority remains unresolved.
 c1a00002
+c1a00004
 c1a00007
 c1a0000b
 c1e00008
