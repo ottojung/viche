@@ -99,6 +99,32 @@ if [ "$publish" != true ]; then
     echo 'Not pushed; verification alone is not review or enactment.'
     exit 0
 fi
+# Preflight the actual canonical checkout BEFORE pushing. Source-of-truth
+# state can contain locally generated reports and untracked audit records even
+# though the Git target branch is clean. A fast-forward would refuse these
+# overlapping files AFTER our push, leaving main published but undeployed.
+# Never delete, overwrite, or stash unreviewed canonical evidence to force it.
+canonical_head=$(git -C "$repo" rev-parse HEAD)
+[ "$canonical_head" = "$base" ] ||
+    { echo 'Canonical checkout is not at fetched main; reconcile before publish' >&2; exit 1; }
+changed=$(git -C "$repo" diff --name-only "$base" "$candidate")
+while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    if { [ -e "$repo/$path" ] || [ -L "$repo/$path" ]; } &&
+       ! git -C "$repo" ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+        echo "Canonical untracked evidence overlaps the approved merge: $path" >&2
+        echo 'Preserve and reconcile this evidence independently before publishing.' >&2
+        exit 1
+    fi
+    if ! git -C "$repo" diff --quiet -- "$path" ||
+       ! git -C "$repo" diff --cached --quiet -- "$path"; then
+        echo "Canonical tracked local edits overlap the approved merge: $path" >&2
+        exit 1
+    fi
+done <<EOF
+$changed
+EOF
+
 # Caller must separately establish reviewer identity and legal scope; capture
 # the attestation in durable host state without altering the verified tree.
 printf '%s\t%s\t%s\t%s\t%s\t%s\n' \

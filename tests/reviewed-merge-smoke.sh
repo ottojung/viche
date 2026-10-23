@@ -51,6 +51,18 @@ grep -q 'CHECKED exact merge' "$tmp/review.txt"
 test "$(git -C "$town" rev-parse HEAD)" = "$base"
 test ! -f "$town/records/judiciary.md"
 
+# A canonical untracked report colliding with the approved commit must be
+# protected BEFORE publishing main; preserving it is more important than speed.
+printf 'unreviewed canonical evidence\n' > "$town/records/judiciary.md"
+if run delivery/audit-fixture --publish --verified-by clerk --reviewed-by judiciary \
+    --evidence 'fixture:collision' > "$tmp/collision.log" 2>&1; then
+  echo 'Published over untracked canonical evidence' >&2; exit 1
+fi
+test "$(cat "$town/records/judiciary.md")" = 'unreviewed canonical evidence'
+test "$(git -C "$remote" rev-parse refs/heads/main)" = "$base"
+test ! -s "$state/delivery/review-authorizations.tsv"
+rm "$town/records/judiciary.md"
+
 run delivery/audit-fixture --publish --verified-by clerk --reviewed-by judiciary \
   --evidence 'fixture:independent-check' > "$tmp/review.txt"
 grep -q 'PUBLISHED signed candidate' "$tmp/review.txt"
