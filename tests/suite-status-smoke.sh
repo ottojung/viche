@@ -1,60 +1,97 @@
 #!/bin/sh
-# Act 21 §3 — suite-status generator smoke test (hermetic; POSIX /bin/sh).
-# Proves: a green suite records green; two consecutive reds record red; a
-# red-then-green (flaky) run records green (the §1 flaky-red policy); and the
-# recorded commit/tree match. No board or network access.
+# Act 21 exact-revision verifier: hermetic POSIX smoke test.
 set -eu
-
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
-trap 'rm -rf "$scratch"' EXIT
-
+trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 town=$scratch/town
 mkdir -p "$town/government" "$town/records" "$town/tests"
 cp "$repo/government/suite-status.sh" "$town/government/"
+git -C "$town" init -q -b main
+git -C "$town" config user.email fixture@example.invalid
+git -C "$town" config user.name Fixture
+git -C "$town" config commit.gpgsign false
 
-git -C "$town" init -q
-git -C "$town" -c user.email=t@t -c user.name=t add -A
-git -C "$town" -c user.email=t@t -c user.name=t commit -qm init
-
-printf '#!/bin/sh\nexit 0\n' > "$town/tests/green.sh"
-printf '#!/bin/sh\necho boom; exit 1\n' > "$town/tests/red.sh"
-cat > "$town/tests/flaky.sh" <<'EOF'
+cat > "$town/tests/green.sh" <<'EOF'
 #!/bin/sh
-n=$(cat tests/flaky.count 2>/dev/null || echo 0)
-n=$((n + 1))
-echo "$n" > tests/flaky.count
-[ "$n" -ge 2 ] && exit 0
+exit 0
+EOF
+cat > "$town/tests/red.sh" <<'EOF'
+#!/bin/sh
+echo boom
 exit 1
 EOF
+cat > "$town/tests/flaky.sh" <<'EOF'
+#!/bin/sh
+n=$(cat "$SUITE_STATUS_SMOKE_COUNTER" 2>/dev/null || echo 0)
+n=$((n + 1))
+printf '%s\n' "$n" > "$SUITE_STATUS_SMOKE_COUNTER"
+[ "$n" -ge 2 ]
+EOF
+SUITE_STATUS_SMOKE_COUNTER=$scratch/flaky.count
+export SUITE_STATUS_SMOKE_COUNTER
+git -C "$town" add -A
+git -C "$town" commit -qm 'committed gate and fixtures'
 
 run() {
-    VICHE_TOWN_ROOT=$town /bin/sh "$town/government/suite-status.sh" "$@"
+  VICHE_TOWN_ROOT=$town /bin/sh "$town/government/suite-status.sh" "$@"
 }
-result() {
-    sed -n 's/.*"result": "\([a-z]*\)".*/\1/p' "$town/records/suite-status.json"
+check_result() {
+  jq -e --arg expected "$1" '.result == $expected' "$town/records/suite-status.json" >/dev/null
 }
 
-# green -> green, commit/tree recorded
 run --suite tests/green.sh >/dev/null
-[ "$(result)" = green ] || { echo "FAIL: expected green"; exit 1; }
-grep -q "\"commit\": \"$(git -C "$town" rev-parse HEAD)\"" "$town/records/suite-status.json" || { echo "FAIL: commit"; exit 1; }
-grep -q "\"tree\": \"$(git -C "$town" rev-parse HEAD^{tree})\"" "$town/records/suite-status.json" || { echo "FAIL: tree"; exit 1; }
+check_result green
+jq -e --arg commit "$(git -C "$town" rev-parse HEAD)" \
+  --arg tree "$(git -C "$town" rev-parse HEAD^{tree})" \
+  '.commit==$commit and .tree==$tree' "$town/records/suite-status.json" >/dev/null
 
-# two consecutive reds -> red (exit 1), incident true
-if run --suite tests/red.sh >/dev/null 2>&1; then echo "FAIL: red must exit non-zero"; exit 1; fi
-[ "$(result)" = red ] || { echo "FAIL: expected red"; exit 1; }
-grep -q '"incident": true' "$town/records/suite-status.json" || { echo "FAIL: incident"; exit 1; }
+if run --suite tests/red.sh >/dev/null 2>&1; then
+  echo "FAIL: committed red suite must block" >&2; exit 1
+fi
+check_result red
+jq -e '.incident == true and (.runs|length)==2' "$town/records/suite-status.json" >/dev/null
 
-# flaky (red then green) -> green (flaky-red policy: not a permanent block)
-rm -f "$town/tests/flaky.count"
 run --suite tests/flaky.sh >/dev/null
-[ "$(result)" = green ] || { echo "FAIL: expected green (flaky)"; exit 1; }
-grep -q '"run":1,"result":"red"' "$town/records/suite-status.json" || { echo "FAIL: run1 red"; exit 1; }
-grep -q '"run":2,"result":"green"' "$town/records/suite-status.json" || { echo "FAIL: run2 green"; exit 1; }
+check_result green
+jq -e '.runs|map(.result)==["red","green"]' "$town/records/suite-status.json" >/dev/null
 
-# CI reconciliation: disagree -> incident
 run --suite tests/green.sh --ci red >/dev/null
-grep -q '"ci_reconciliation": "disagree"' "$town/records/suite-status.json" || { echo "FAIL: ci disagree"; exit 1; }
+jq -e '.ci_reconciliation=="disagree" and .incident==true' "$town/records/suite-status.json" >/dev/null
 
-echo "suite-status smoke passed"
+# Important regression: HEAD vs --commit vs dirty worktree must never mix.
+printf '#!/bin/sh\nexit 0\n' > "$town/tests/probe.sh"
+git -C "$town" add tests/probe.sh
+git -C "$town" commit -qm 'green revision'
+good=$(git -C "$town" rev-parse HEAD)
+printf '#!/bin/sh\necho intentional-failure; exit 1\n' > "$town/tests/probe.sh"
+git -C "$town" add tests/probe.sh
+git -C "$town" commit -qm 'red revision'
+bad=$(git -C "$town" rev-parse HEAD)
+
+# Deliberately fool the old implementation: current working file green,
+# specified revision red. The updated verifier must report the red commit.
+printf '#!/bin/sh\nexit 0\n' > "$town/tests/probe.sh"
+if run --suite tests/probe.sh --commit "$bad" >/dev/null 2>&1; then
+  echo "FAIL: dirty current checkout masqueraded as red commit" >&2; exit 1
+fi
+check_result red
+jq -e --arg sha "$bad" --arg tree "$(git -C "$town" rev-parse "$bad^{tree}")" \
+  '.commit==$sha and .tree==$tree' "$town/records/suite-status.json" >/dev/null
+
+# Conversely, verifying an older green commit remains green despite HEAD red.
+run --suite tests/probe.sh --commit "$good" >/dev/null
+check_result green
+jq -e --arg sha "$good" '.commit==$sha' "$town/records/suite-status.json" >/dev/null
+
+# Invalid suites and suites absent at the target revision must fail closed.
+if run --suite tests/../government/suite-status.sh >/dev/null 2>&1; then
+  echo "FAIL: accepted traversal" >&2; exit 1
+fi
+if run --suite tests/probe.sh --commit HEAD~2 >/dev/null 2>&1; then
+  echo "FAIL: accepted test absent from verified commit" >&2; exit 1
+fi
+
+test "$(git -C "$town" worktree list --porcelain | grep -c '^worktree ')" -eq 1
+test "$(git -C "$town" status --porcelain -- tests/probe.sh)" = ' M tests/probe.sh'
+echo 'Exact-commit quality-gate, flaky-red and isolation smoke passed'

@@ -52,6 +52,11 @@ EOF
 )
 else
   eligible=$(python3 "$town/government/eligible-work.py") || exit 1
+  # Local Git inventory is read-only and never blocks research dispatch.
+  delivery=$(python3 "$town/government/delivery-candidates.py" --brief) || {
+    echo "Viche: delivery candidate inventory unavailable" >&2
+    delivery="inventory unavailable; inspect Git worktrees before inferring no work"
+  }
   prompt=$(cat <<EOF
 You are Viche executive liaison. This is independent executive delivery,
 NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
@@ -64,6 +69,11 @@ Standing Founder priority: Continue SoringP1 until the final theorems for S(n)/S
 Follow the current operational agenda at $town/government/executive-agenda.md.
 Verified issue assignments, independent of the target registry:
 $eligible
+
+REVIEWABLE WORKTREE INVENTORY (facts, not authority to merge):
+$delivery
+
+Before repeating a stale integration blocker, inspect $town/government/DELIVERY.md. Clean, substantive signed branches can be published with propose-delivery.sh to origin/delivery/NAME for an automatically requested GitHub PR. This bridge opens a PR but NEVER merges or enacts a law. Require Clerk or duly delegated exact-commit local verification under Act 21, an independent second reviewer for Clerk-authored records, and enacted parliamentary authority for bills and ballots. Follow CI and explicitly verify final integration on main. Avoid flooding PRs with policy-only or unreviewed draft work.
 Act on every eligible issue by constructive work. SoringP1 #301 is explicitly assigned. Read descriptions/comments; do not treat empty target registry as no work.
 A billy-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to billy-dev. Require verified passing CI when applicable (a green run, not a claim).
 Maintain durable issue ownership, dependencies, completed work and blockers.
