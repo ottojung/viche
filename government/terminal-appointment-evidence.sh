@@ -29,7 +29,7 @@ jq -cn --arg key "$key" --arg id "$id" --arg cwd "$cwd" \
   '{at:$at, office:$key, agent_id:$id, cwd:$cwd, state:$m[0].state,
     finished_at:($m[0].finished_at//null), prompts:($m[0].prompts//null),
     failure_class:($m[0].backend_error.classification//null),
-    transient:($m[0].backend_error.transient//null),
+    transient:($m[0].backend_error.transient),
     automatic_retry_safe:($m[0].backend_error.automatic_retry_safe),
     evidence:("terminal-evidence/" + $id)}' > "$tmp/event.json"
 mv "$tmp" "$dest"

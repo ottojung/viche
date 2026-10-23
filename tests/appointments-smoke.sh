@@ -20,6 +20,8 @@ elif [ "$1" = agent ] && [ "$2" = status ]; then
   status=$(cat "$MOCK/$id")
   if [ "$status" = failed ]; then
     printf '{"state":"failed","finished_at":1792775220.5,"prompts":2,"backend_error":{"classification":"upstream_endpoint_unavailable","transient":true,"automatic_retry_safe":false}}\n'
+  elif [ "$status" = failed-permanent ]; then
+    printf '{"state":"failed","finished_at":1792775230.25,"prompts":3,"backend_error":{"classification":"invalid_api_key","transient":false,"automatic_retry_safe":false}}\n'
   else
     printf '{"state":"%s","model":null,"variant":"low"}\n' "$status"
   fi
@@ -64,6 +66,15 @@ y=$(/bin/sh "$script" replace a1)
 [ "$y" = fresh-4 ] || exit 1
 e=$(/bin/sh "$script" ensure executive)
 [ "$e" = fresh-5 ] || exit 1
+# A confirmed nontransient terminal failure must retain false, not be erased
+# into null by jq's alternative operator (false // null is null).
+printf failed-permanent > "$MOCK/$e"
+f=$(/bin/sh "$script" ensure executive)
+[ "$f" = fresh-6 ] || exit 1
+jq -e '.state=="failed" and .failure_class=="invalid_api_key" and
+        .transient==false and .automatic_retry_safe==false and
+        .prompts==3 and .finished_at==1792775230.25' \
+  "$tmp/state/appointments/terminal-evidence/fresh-5/event.json" >/dev/null
 [ "$(wc -l < "$tmp/state/appointments/appointments.tsv")" -eq 2 ] || exit 1
 # No secret powers granted by supplying an unknown role key.
 if /bin/sh "$script" ensure a2 >/dev/null 2>&1; then exit 1; fi
