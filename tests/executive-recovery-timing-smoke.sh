@@ -16,6 +16,7 @@ cp "$repo/government/office-continuity.sh" "$scratch/town/government/office-cont
 cp "$repo/government/executive-cycle.sh" "$scratch/town/government/executive-cycle.sh"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
+cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
 printf 'Founder charter fixture\n' > "$scratch/charter"
 touch "$scratch/state/inaugurated"
 printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"

@@ -59,7 +59,10 @@ concrete, current assignment in $town/records/summons/SEAT_ID.md describing
 its expected deliverable, supporting evidence and relevant branch/issue.
 Refresh or remove these assignment files as business changes; remove resolved
 IDs from SUMMONED.txt. Do not leave members guessing among historical tasks.
-Solicit individual ballots, check quorum with government/tally.sh,
+Before publishing any bill for ballots, run government/predict-gate.sh BILL_ID
+for bills in the Act 22 pilot subset and give the registered predictions to the
+non-sponsor red-teamer. A refusal means the bill is not vote-eligible. Then
+solicit individual ballots, check quorum with government/tally.sh,
 and record hearings, evidence, dissent, and real progress. Do not fabricate votes
 or bother the Founder about routine decisions the government can resolve.
 EOF

@@ -1,0 +1,11 @@
+{
+  "instrument": "Act 20 §7",
+  "note": "Review checkpoints carried into the Act 22 ledger (Act 22 §9); they are review checkpoints for Act 20's central claim, not Brier predictions, and are reported in a separate block so the two instruments do not double-count.",
+  "checkpoints": [
+    {"id": "P1", "label": "at least one instrument fails a known answer (detector test P1a)", "evidence_source": "records/calibration/report.json", "registered": false},
+    {"id": "P2", "label": "aggregate measured FP > 0 and TP < 1.0 over a non-trivial archive", "evidence_source": "records/calibration/report.json", "registered": false},
+    {"id": "P3", "label": "a material rate change is detected after an instrument change (drift)", "evidence_source": "records/calibration/report.json", "registered": false},
+    {"id": "P4", "label": "the archive grows >=1 verified case per measurement window", "evidence_source": "records/calibration/report.json", "registered": false},
+    {"id": "P5", "label": "the report->measurement interface is delivered", "evidence_source": "government/judiciary-measurements.py", "registered": false}
+  ]
+}

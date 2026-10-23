@@ -10,6 +10,7 @@ printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
+cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
@@ -46,6 +47,7 @@ test ! -e "$OUTPUT"
 touch "$scratch/state/inaugurated"
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 1
+test -s "$scratch/town/records/predictions/calibration.json"
 jq -e '.count==2 and .eligible[0].number=="301" and .eligible[1].number=="opaque-id-xyz"' "$scratch/state/branches/eligible-issues.json" >/dev/null
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2

@@ -97,7 +97,21 @@ try:
 except (OSError,ValueError,TypeError):
     institutional_outcomes={'telemetry':'unavailable','not_a_clean_result':True}
 
-payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'institutional_outcomes':institutional_outcomes, 'board_trail':board_trail()}
+def suite_compliance():
+    script=town/'government/suite-compliance-check.sh'
+    if not script.exists():
+        return {'status':'unreadable','reason':'suite compliance check absent'}
+    try:
+        done=subprocess.run(['/bin/sh',str(script),str(town)],capture_output=True,text=True,timeout=60)
+        data=json.loads(done.stdout)
+        if done.returncode:
+            return {'status':'unreadable','reason':done.stderr.strip()[-200:]}
+        return data
+    except (subprocess.TimeoutExpired,OSError,ValueError) as err:
+        return {'status':'unreadable','reason':str(err)[:200]}
+
+
+payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'institutional_outcomes':institutional_outcomes, 'board_trail':board_trail(), 'suite_compliance':suite_compliance()}
 p=root/'branches/judiciary-measurements.json'
 p.parent.mkdir(parents=True,exist_ok=True)
 tmp=p.with_suffix('.json.tmp')
