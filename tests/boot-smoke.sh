@@ -86,10 +86,11 @@ export RESOURCE_SAFETY_CGROUP_DIR VICHE_AUDIT_CHECKS VICHE_AUDIT_SELECTION VICHE
 VICHE_TOWN_ROOT=$town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
+VICHE_SENTINEL_STATE=$scratch/sentinel
 VICHE_TEST_NO_SYNC=1
 VICHE_TOWNHALL_ID=999
 export MOCK_STATE PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT
-export VICHE_STATE_ROOT VICHE_TEST_NO_SYNC VICHE_TOWNHALL_ID
+export VICHE_STATE_ROOT VICHE_SENTINEL_STATE VICHE_TEST_NO_SYNC VICHE_TOWNHALL_ID
 
 # Periodic broad audit is separately tested. Suppress its timer in bootstrap smoke.
 mkdir -p "$scratch/state/oversight"
@@ -105,6 +106,19 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+2)) ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
+python3 - "$scratch/state/branches/judiciary-measurements.json" "$scratch/state/branches" <<'PY'
+import hashlib, json, pathlib, sys
+report=json.loads(pathlib.Path(sys.argv[1]).read_text())
+block=report['suite_compliance']
+assert 'per_change' not in block
+detail=pathlib.Path(block['details_ref'])
+assert detail.is_file() and str(detail).startswith(sys.argv[2])
+blob=detail.read_bytes()
+assert hashlib.sha256(blob).hexdigest()==block['details_sha256']
+detail_data=json.loads(blob)
+assert len(detail_data['per_change'])==block['per_change_count']
+assert len(detail_data['changes_reaching_main_red'])==block['red_change_count']
+PY
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
 centre=$(awk -F '\t' '$1=="innovation-centre" {print $2}' "$scratch/state/appointments/appointments.tsv")

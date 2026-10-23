@@ -8,7 +8,7 @@ POSIX /bin/sh (government/board-trail-check.sh); this file aggregates its facts
 into the durable measurement report. The same-model / measurement-reliability
 limitation is reported, not hidden.
 """
-import json, os, shutil, subprocess, time
+import hashlib, json, os, shutil, subprocess, time
 from pathlib import Path
 
 root=Path(os.environ.get('VICHE_STATE_ROOT','/var/lib/lubko/wd/viche-state'))
@@ -106,6 +106,25 @@ def suite_compliance():
         data=json.loads(done.stdout)
         if done.returncode:
             return {'status':'unreadable','reason':done.stderr.strip()[-200:]}
+        # The full per-change audit can be large. Preserve it as a durable,
+        # separately addressable detail record; keep this prompt-facing summary
+        # bounded so the Clerk's next boot dispatch remains within argv limits.
+        per_change=data.pop('per_change',None)
+        if per_change is not None:
+            red_changes=data.pop('changes_reaching_main_red',[])
+            detail=root/'branches'/('suite-compliance-%d.json' % now)
+            full={'observed_at':now,'summary':data,
+                  'changes_reaching_main_red':red_changes,'per_change':per_change}
+            blob=(json.dumps(full,
+                             sort_keys=True,indent=2)+'\n').encode()
+            detail.parent.mkdir(parents=True,exist_ok=True)
+            tmp=detail.with_suffix('.json.tmp')
+            tmp.write_bytes(blob)
+            tmp.replace(detail)
+            data['per_change_count']=len(per_change)
+            data['red_change_count']=len(red_changes)
+            data['details_ref']=str(detail)
+            data['details_sha256']=hashlib.sha256(blob).hexdigest()
         return data
     except (subprocess.TimeoutExpired,OSError,ValueError) as err:
         return {'status':'unreadable','reason':str(err)[:200]}
