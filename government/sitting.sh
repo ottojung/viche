@@ -34,6 +34,10 @@ GitHub-hosted CI builds, tests and Lean verification; do not disable those
 workflows to enforce an agent execution-host assignment.
 Executive discovery, issue prioritization and delivery belong to the independent
 executive office under Act 2. The Clerk is not its task scheduler.
+Read descriptive institutional outcomes at
+/var/lib/lubko/wd/viche-state/institutional-outcomes/latest.json.
+These distinguish agent exits, main merges and independent verification.
+Treat trends as questions for inquiry, never as mandatory output quotas.
 Read the independent Judiciary's latest measurements at
 ${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/judiciary-measurements.json
 and any pending case findings before setting the parliamentary agenda.

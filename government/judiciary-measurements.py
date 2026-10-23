@@ -91,7 +91,13 @@ def board_trail():
     return out
 
 
-payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'board_trail':board_trail()}
+try:
+    institutional_outcomes=json.loads(
+        (root/'institutional-outcomes/latest.json').read_text())
+except (OSError,ValueError,TypeError):
+    institutional_outcomes={'telemetry':'unavailable','not_a_clean_result':True}
+
+payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'institutional_outcomes':institutional_outcomes, 'board_trail':board_trail()}
 p=root/'branches/judiciary-measurements.json'
 p.parent.mkdir(parents=True,exist_ok=True)
 tmp=p.with_suffix('.json.tmp')
