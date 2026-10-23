@@ -11,6 +11,9 @@ assert gate < solicit, 'Act 22 pre-ballot gate must precede ballot solicitation 
 PY
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' 0
+git -C "$scratch" init -q
+git -C "$scratch" config user.name test
+git -C "$scratch" config user.email test@example.invalid
 mkdir -p "$scratch/government" "$scratch/records/bills" "$scratch/records/ballots"
 cp "$root/government/seats.tsv" "$scratch/government/seats.tsv"
 cp "$root/government/voting.conf" "$scratch/government/voting.conf"
@@ -36,6 +39,11 @@ while IFS="$tab" read -r seat title focus; do
     printf '%s\tyes\t%s\n' "$seat" "$digest"
 done < "$scratch/government/seats.tsv" > "$scratch/records/ballots/test-1.tsv"
 VICHE_TOWN_ROOT=$scratch; export VICHE_TOWN_ROOT
+if /bin/sh "$root/government/tally.sh" test-1 >/dev/null 2>&1; then
+    echo "Untracked post-registration ballot file bypassed the Act 22 time gate" >&2
+    exit 1
+fi
+git -C "$scratch" add . && git -C "$scratch" commit -qm 'publish registered pilot ballot'
 /bin/sh "$root/government/tally.sh" test-1 | grep -Fx 'PASSED'
 # The tally cannot silently bypass Act 22 when the gate executable is absent.
 mv "$scratch/government/predict-gate.sh" "$scratch/government/predict-gate.missing"

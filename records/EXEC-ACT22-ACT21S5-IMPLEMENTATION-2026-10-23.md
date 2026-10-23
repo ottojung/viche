@@ -323,3 +323,24 @@ After these additional corrections, focused prediction/compliance/tally tests
 and `dash tests/run-all.sh` pass on the current-main-reconciled working tree.
 The rev8 delivery predates these last corrections; independent review and fresh
 CI must cover the next exact candidate.
+
+## Rev9 independent review response — 2026-10-23
+
+Audit seat `c1a0000b` reviewed rev9 (`80d9a74`) and found two remaining edge
+cases: tally could substitute the current clock for an existing untracked ballot
+file, and the suite checker accepted Python booleans as integer run fields while
+not requiring the generator's output digest. The gate now refuses an existing
+ballot file lacking a trustworthy Git add timestamp; the tally fixture first
+proves an untracked ballot is refused, then commits it with a timestamp later
+than registration and proves the pilot-listed tally passes. The checker now
+requires exact integer run numbers/exits (not booleans), valid 64-hex output
+digests, and exact run-sequence shapes. Added a boolean-run negative fixture.
+
+The review's coverage-denominator observation is retained as an explicit
+measurement interpretation: integrity-corrupt registrations remain in the
+registered denominator, while invalid outcomes are excluded from the score and
+resolved numerator, so reported coverage reflects the lost usable record. The
+Clerk-owned production pilot list remains unpopulated here; only the hermetic
+pilot tally is exercised. Focused tests and the full local suite pass after these
+corrections. The current draft needs fresh review, publication, and GitHub CI on
+its exact commit; merge and deployment remain outstanding.

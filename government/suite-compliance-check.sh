@@ -7,7 +7,7 @@ set -eu
 repo=${1:-${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 python3 - "$repo" "$state" <<'PY'
-import json, subprocess, sys
+import json, re, subprocess, sys
 repo,state=sys.argv[1:]
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
@@ -26,9 +26,12 @@ def recorded_result(data, expected_suite):
     runs=data.get('runs')
     if not isinstance(runs,list):
         return None
-    if any(not isinstance(run,dict) or run.get('run')!=i+1
-           or not isinstance(run.get('exit'),int)
-           for i,run in enumerate(runs)):
+    def valid_run(run, number):
+        return (isinstance(run,dict) and type(run.get('run')) is int
+                and run.get('run')==number and type(run.get('exit')) is int
+                and run.get('result') in ('green','red')
+                and re.fullmatch(r'[0-9a-f]{64}',str(run.get('output_sha256',''))) is not None)
+    if any(not valid_run(run,i+1) for i,run in enumerate(runs)):
         return None
     if data.get('result')=='green':
         if (len(runs)==1 and runs[0].get('result')=='green'

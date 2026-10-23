@@ -65,7 +65,12 @@ if [ -n "$at" ]; then
     ballot_ts=$at
 elif [ -f "$town/records/ballots/$id.tsv" ]; then
     ballot_ts=$(git -C "$town" log --diff-filter=A --format=%ct -- "records/ballots/$id.tsv" 2>/dev/null | awk 'NR==1 { print; exit }')
-    case "$ballot_ts" in ''|*[!0-9]*) ballot_ts=$(date +%s) ;; esac
+    case "$ballot_ts" in
+        ''|*[!0-9]*)
+            echo "predict-gate: REFUSE $id — existing ballot file has no trustworthy Git timestamp" >&2
+            exit 1
+            ;;
+    esac
 else
     ballot_ts=$(date +%s)
 fi

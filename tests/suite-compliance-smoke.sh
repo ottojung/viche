@@ -7,6 +7,7 @@ git -C "$tmp" init -q -b main
 git -C "$tmp" config user.name test
 git -C "$tmp" config user.email test@example.invalid
 mkdir -p "$tmp/government" "$tmp/tests" "$tmp/records"
+run_hash=$(printf 'fixture output\n' | sha256sum | cut -d ' ' -f1)
 export VICHE_STATE_ROOT=$tmp/state
 mkdir -p "$VICHE_STATE_ROOT/delivery"
 printf 'fixture\n' > "$tmp/government/base"
@@ -16,7 +17,7 @@ base=$(git -C "$tmp" rev-parse HEAD)
 # precedes the change but its tree necessarily differs from the resulting tree.
 main_base=$(git -C "$tmp" rev-parse HEAD)
 base_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","runs":[{"run":1,"result":"green","exit":0}]}\n' "$main_base" "$base_tree" > "$tmp/records/suite-status.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"}]}\n' "$main_base" "$base_tree" "$run_hash" > "$tmp/records/suite-status.json"
 git -C "$tmp" add . && git -C "$tmp" commit -qm green-record
 # Construct a realistic merge commit: the receipt must name the final merged
 # commit/tree, not merely its feature-branch parent.
@@ -27,20 +28,25 @@ git -C "$tmp" checkout -qb merge-candidate main
 git -C "$tmp" merge --no-ff -q -m 'merge candidate' code-change
 green_change=$(git -C "$tmp" rev-parse HEAD)
 green_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/records-smoke.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0}]}\n' \
-    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-wrong-suite.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/records-smoke.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"}]}\n' \
+    "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-wrong-suite.json"
 git -C "$tmp" checkout -q main
 git -C "$tmp" merge --ff-only -q merge-candidate
 # A green record for the wrong suite does not satisfy the code-change gate.
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
 # Matching identity fields without a generated successful run are not evidence.
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0},{"run":2,"result":"red","exit":1}]}\n' \
-    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-malformed.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"},{"run":2,"result":"red","exit":1,"output_sha256":"%s"}]}\n' \
+    "$green_change" "$green_tree" "$run_hash" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-malformed.json"
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0}]}\n' \
-    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"}]}\n' \
+    "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
+# JSON booleans are not valid integer run IDs/exits in suite-status evidence.
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":true,"result":"green","exit":false,"output_sha256":"%s"}]}\n' \
+    "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-bool.json"
+out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
+printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==1'
 # A main change with no matching prior verification is unreadable.
 printf 'unverified\n' > "$tmp/tests/unverified"
 git -C "$tmp" add . && git -C "$tmp" commit -qm unverified-change
@@ -52,18 +58,18 @@ git -C "$tmp" checkout -qb red-merge main
 git -C "$tmp" merge --no-ff -q -m 'merge red candidate' red-code
 red_commit=$(git -C "$tmp" rev-parse HEAD)
 red_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1001,"runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1},{"run":3,"result":"green","exit":0}]}\n' \
-    "$red_commit" "$red_tree" > "$VICHE_STATE_ROOT/delivery/verified-malformed-red.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1001,"runs":[{"run":1,"result":"red","exit":1,"output_sha256":"%s"},{"run":2,"result":"red","exit":1,"output_sha256":"%s"},{"run":3,"result":"green","exit":0,"output_sha256":"%s"}]}\n' \
+    "$red_commit" "$red_tree" "$run_hash" "$run_hash" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-malformed-red.json"
 git -C "$tmp" checkout -q main
 git -C "$tmp" merge --ff-only -q red-merge
 # A red/red/green sequence is neither a valid flaky-red resolution nor a
 # red-main receipt, and cannot create a violation.
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["violations"]==0; assert x["main_red_episodes"]==0'
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1002,"runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1}]}\n' \
-    "$red_commit" "$red_tree" > "$VICHE_STATE_ROOT/delivery/verified-red-$red_commit.json"
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","runs":[{"run":1,"result":"red","exit":1},{"run":2,"result":"red","exit":1}]}\n' \
-    "$red_commit" "$red_tree" > "$tmp/records/suite-status.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","recorded_at":1002,"runs":[{"run":1,"result":"red","exit":1,"output_sha256":"%s"},{"run":2,"result":"red","exit":1,"output_sha256":"%s"}]}\n' \
+    "$red_commit" "$red_tree" "$run_hash" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-red-$red_commit.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"red","commit":"%s","tree":"%s","runs":[{"run":1,"result":"red","exit":1,"output_sha256":"%s"},{"run":2,"result":"red","exit":1,"output_sha256":"%s"}]}\n' \
+    "$red_commit" "$red_tree" "$run_hash" "$run_hash" > "$tmp/records/suite-status.json"
 git -C "$tmp" add . && git -C "$tmp" commit -qm red-record
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["status"]=="measured"; assert x["compliant"]==1; assert x["unreadable"]>0; assert x["main_red_episodes"]==1; assert x["violations"]==1'
