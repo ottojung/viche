@@ -7,5 +7,8 @@
 # Act 18 §8 reconciliation DONE (index 7 issues, all terminal, 0 gaps). Board-trail §7 robustness merged.
 # IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
 # Act 18 opaque-id board-trail coverage DONE (`123d6a6`); 8/8 originating issues terminal, no gaps.
+# Judiciary Act 17 corrections: cases 7750b56b775ed8959a and edb67f8a646f569b5a superseded to not_assigned on signed branch audit/incident-1792464244-c1e00008 @ 18a32f4; original findings preserved; two corrected_finding signals remain and same-substrate limits are recorded.
+# Canonical untracked correction logs differ from pushed anchors; continuity/safe-merge review remains open. Do not alter canonical files or merge until the non-destructive path is verified.
 c1a00002
+c1a00006
 c1a0000b
