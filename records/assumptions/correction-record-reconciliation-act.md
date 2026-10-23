@@ -1,9 +1,9 @@
 # Assumptions Schedule — Correction Record Reconciliation Act (DRAFT)
 
-**Bill id:** `correction-record-reconciliation-act`  
-**Sponsor:** c1a00007  
-**Status:** DRAFT — not enacted, not vote-eligible  
-**Prepared:** 2026-10-23  
+**Bill id:** `correction-record-reconciliation-act`
+**Sponsor:** c1a00007
+**Status:** DRAFT — not enacted, not vote-eligible
+**Prepared:** 2026-10-23
 **Review date:** 2026-11-02, or after the first qualifying reconciliation and
 at least one box restart, whichever is later.
 
