@@ -1,7 +1,7 @@
 # Antonina CLI contract — Viche Executive
 
-This is a verified interface map for the **installed Phoebe Antonina CLI**
-(checked 2026-10-19). It is guidance, not a second scheduler or a source of
+This is a verified interface map for the **installed Billy Antonina CLI**
+(rechecked 2026-10-23). It is guidance, not a second scheduler or a source of
 authorization. **Consult `antonina <area> <verb> --help` before using a
 previously unfamiliar command. CLI `--help` and returned JSON are authoritative
 if this reference becomes stale.** Do not guess option names or JSON fields.
@@ -74,8 +74,7 @@ antonina agent list --running --page 1 --limit 100 --json |
   Stopping/deleting/running agents are similarly consequential mutations.
 - `antonina agent log --id <ID> --lines 100` reads output; do not treat it
   as a substitute for `agent status` for liveness.
-- Agents use Antonina-managed model selection, without any Viche-specific pin
-  model, variant `low`; do not use alternate providers or direct model calls.
+- All agents run through Antonina. Antonina selects providers, models, variants and fallbacks. Viche must never impose a model or variant pin, nor call model providers directly. Unused agents correctly have a null model and empty models_used; status of executed agents reports only models actually used.
 
 ## Fail-closed and anti-patterns
 
