@@ -31,7 +31,7 @@ jq -cn --arg key "$key" --arg id "$id" --arg cwd "$cwd" \
     failure_class:($m[0].backend_error.classification//null),
     transient:($m[0].backend_error.transient//null),
     automatic_retry_safe:($m[0].backend_error.automatic_retry_safe),
-    evidence:"terminal-evidence/" + $id}' > "$tmp/event.json"
+    evidence:("terminal-evidence/" + $id)}' > "$tmp/event.json"
 mv "$tmp" "$dest"
 trap - EXIT HUP INT TERM
 cat "$dest/event.json" >> "$root/terminal-events.jsonl"
