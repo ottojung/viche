@@ -1,6 +1,9 @@
 #!/bin/sh
 # The S6 supervisor has a minimal PATH. Initialize Guix and user tools.
 . /home/lubko/.profile
+# Founder-directed throughput: frequently retry useful offices and sittings.
+# The old host configuration waited 3600 seconds between cycles.
+export VICHE_SITTING_INTERVAL_SECONDS=${VICHE_SITTING_INTERVAL_SECONDS:-180}
 # S6 invokes the founder-controlled bootstrap directly.
 export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
 export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats

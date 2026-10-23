@@ -54,6 +54,13 @@ if [ "$action" = resolve ]; then
   printf '%s\n' "$old"
   exit 0
 fi
+# An old Git branch may carry a retired model or scope restriction.
+# Refresh only idle appointees, not worktrees of currently running agents.
+if [ -s "$town/AGENTS.md" ] && { [ -f "$cwd/.git" ] || [ -d "$cwd/.git" ]; } &&
+   { [ "$live" != true ] || [ "$status" != running ]; }; then
+  /bin/sh "$town/government/policy-sync.sh" "$cwd" ||
+    { echo "Cannot dispatch $key: stale instructions could not be repaired" >&2; exit 1; }
+fi
 if [ "$live" = true ] && [ "$action" = ensure ]; then
   printf '%s\n' "$old"
   exit 0
