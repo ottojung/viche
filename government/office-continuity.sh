@@ -53,6 +53,31 @@ oc_record_failure() {
   return 0
 }
 
+# Before a lawful threshold reset, require the existing invocation to be
+# quiescent so two live agents cannot edit the same seat worktree. Stop only
+# when the current observed invocation is running; preserve evidence first.
+oc_quiesce_for_reset() {
+  oc_reset_id=$1
+  oc_stop_meta=$(antonina agent status --id "$oc_reset_id" --json) || return 1
+  oc_stop_state=$(printf '%s\n' "$oc_stop_meta" | jq -er '.state') || return 1
+  case "$oc_stop_state" in
+    running)
+      antonina agent stop --id "$oc_reset_id" >&2 || return 1
+      oc_stop_try=0
+      while [ "$oc_stop_try" -lt 8 ]; do
+        oc_stop_meta=$(antonina agent status --id "$oc_reset_id" --json) || return 1
+        oc_stop_state=$(printf '%s\n' "$oc_stop_meta" | jq -er '.state') || return 1
+        case "$oc_stop_state" in stopped|killed|failed) return 0 ;; esac
+        oc_stop_try=$((oc_stop_try+1))
+        sleep 1
+      done
+      echo "Viche: $oc_reset_id did not quiesce; keeping current appointment" >&2
+      return 1 ;;
+    idle|succeeded|stopped|killed|failed) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # Decide from the failure record alone (§3.1.5) whether a bounded reset is due:
 # at least oc_threshold failures inside oc_window, cooldown expired. The
 # currently-observed agent state is irrelevant to this decision.

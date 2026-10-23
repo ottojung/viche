@@ -40,7 +40,7 @@ finished=$(printf '%s\n' "$meta" | jq -r '.finished_at // ""')
 if [ "$mode" = failed ]; then
   if oc_is_transient "$reason" "$tflag"; then
     unsafe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == false then "yes" else "no" end')
-    retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == false then "no" else "yes" end')
+    retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     oc_record_failure "$liv" "$branch" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$cwd" || exit 1
     [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$liv" "$branch" "$id" "$invocation"
   else
@@ -60,8 +60,9 @@ if [ "$reset_due" = true ]; then
   printf '%s\n' "$meta" > "$snapshot/status.json"
   antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
   git -C "$cwd" status --short > "$snapshot/worktree.txt"
-  printf '%s\n' "$now" > "$liv/last-reset-$branch"
+  oc_quiesce_for_reset "$id" || exit 1
   id=$(/bin/sh "$town/government/appointments.sh" replace "$branch" "$id")
+  printf '%s\n' "$now" > "$liv/last-reset-$branch"
   meta=$(antonina agent status --id "$id" --json)
   oc_clear_failures "$liv" "$branch"
   printf '%s branch=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \

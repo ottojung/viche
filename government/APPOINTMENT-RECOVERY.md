@@ -36,8 +36,11 @@ for 30-minute window arithmetic. Merely polling a failed invocation multiple
 times cannot satisfy Act 19's **three distinct transient failures** threshold.
 Actual Git commits since the earlier failure break the consecutive streak.
 After threshold and cooldown, the supervisor snapshots evidence and performs
-exactly **one** explicit replacement, preserving the occupied worktree and
-current handoff queue.
+exactly **one** compare-and-swap replacement. If the old front has resumed
+running, it must first be stopped and observed quiescent; an unsuccessful
+stop leaves the old appointment in place and does **not** start cooldown.
+This prevents two live agents writing one seat worktree. Existing dirty
+worktrees and the durable handoff queue are preserved.
 
 A *new*, independently specified prompt may be dispatched following a failed
 front only when Antonina explicitly marks the preceding failure both

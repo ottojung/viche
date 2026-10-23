@@ -60,6 +60,12 @@ if [ "$action" = replace ] && [ -n "$expected" ] && [ "$old" != "$expected" ]; t
   echo "Viche: stale recovery appointment $expected for $key; actual is $old" >&2
   exit 1
 fi
+# Never register two live workers for the same worktree. A threshold reset of
+# an oscillating, currently running agent must quiesce it first.
+if [ "$action" = replace ] && [ "${status:-}" = running ]; then
+  echo "Viche: running appointee $old must be stopped before replacement" >&2
+  exit 1
+fi
 if [ "$action" = resolve ]; then
   [ -n "$old" ] || { echo "no appointment for $key" >&2; exit 1; }
   printf '%s\n' "$old"

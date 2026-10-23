@@ -24,7 +24,7 @@ invocation=$(printf '%s\n' "$metadata" | jq -r '.invocation_id // .run_id // .fi
 finished=$(printf '%s\n' "$metadata" | jq -r '.finished_at // ""')
 if [ "$kind" = failed ]; then
   if oc_is_transient "$reason" "$tflag"; then
-    retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == false then "no" else "yes" end')
+    retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     oc_record_failure "$state" "$seat_id" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$seats/$seat_id"
     [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$state" "$seat_id" "$id" "$invocation"
   else
@@ -46,8 +46,9 @@ if [ "$reset_due" = true ]; then
   git -C "$seats/$seat_id" status --short > "$snapshot/worktree-status.txt"
   git -C "$seats/$seat_id" rev-parse HEAD > "$snapshot/worktree-head.txt"
   # Persist the attempted recovery before any destructive agent-metadata operation.
-  printf '%s\n' "$now" > "$state/last-reset-$seat_id"
+  oc_quiesce_for_reset "$id" || exit 1
   id=$(/bin/sh "$town/government/appointments.sh" replace "$seat_id" "$id")
+  printf '%s\n' "$now" > "$state/last-reset-$seat_id"
   oc_clear_failures "$state" "$seat_id"
   printf '%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
     "$(date -u +%FT%TZ)" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \

@@ -30,7 +30,22 @@ case "$1 $2" in
     id="id-$n"
     printf '{"state":"idle","model":null,"variant":null}\n' > "$MOCK_ROOT/$id.json"
     printf '%s\n' "$id" ;;
-  'agent log') printf 'captured log\n' ;;
+  'agent log')
+    # Oscillating agent may have restarted running after its terminal event
+    # but before the threshold reset; quiesce it before replacing.
+    id=$4
+    if [ "${MOCK_REVIVE_ON_LOG:-}" = "$id" ] && [ -s "$MOCK_ROOT/$id.json" ] &&
+       [ "$(jq -r .state "$MOCK_ROOT/$id.json")" = failed ]; then
+      jq '.state="running"' "$MOCK_ROOT/$id.json" > "$MOCK_ROOT/$id.next"
+      mv "$MOCK_ROOT/$id.next" "$MOCK_ROOT/$id.json"
+    fi
+    printf 'captured log\n' ;;
+  'agent stop')
+    id=$4
+    printf '%s\n' "$id" >> "$MOCK_ROOT/stops"
+    if [ "${MOCK_STOP_FAIL:-}" = yes ]; then exit 3; fi
+    jq '.state="stopped"' "$MOCK_ROOT/$id.json" > "$MOCK_ROOT/$id.next"
+    mv "$MOCK_ROOT/$id.next" "$MOCK_ROOT/$id.json" ;;
   'agent run') printf 'run\n' >> "$MOCK_ROOT/runs"; printf '%s\n' "$*" >> "$MOCK_ROOT/run-args" ;;
   *) echo "unexpected Antonina call: $*" >&2; exit 9 ;;
 esac
@@ -84,7 +99,9 @@ run_branch
 id3=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id3" = "$id2"
 set_status failed "$((base+2))" run-3 upstream_endpoint_unavailable true true "$id3"
-run_branch
+MOCK_REVIVE_ON_LOG=$id3 run_branch
+test "$(grep -c -Fx "$id3" "$MOCK_ROOT/stops")" -eq 1 ||
+  { echo 'Running appointee was not stopped exactly once before reset' >&2; exit 1; }
 id4=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id4" != "$id3"
 # A concurrent supervisor still holding the old agent identity must NOT
@@ -98,6 +115,18 @@ test "$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve executive)
 test "$(cat "$MOCK_ROOT/next")" -eq 1 || { echo 'Multiple replacements for one Act19 threshold event' >&2; exit 1; }
 test "$(wc -l < "$VICHE_STATE_ROOT/liveness/recoveries.log")" -eq 1
 test "$(wc -l < "$ledger")" -eq 3
+# A failed stop may not begin reset cooldown or replace a live appointee.
+oc_quiesce_for_reset_test_id=$id4
+set_status running "$((base+5))" run-running idle false true "$oc_quiesce_for_reset_test_id"
+. "$repo/government/office-continuity.sh"
+if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
+  echo 'Failed quiescence incorrectly reported success' >&2; exit 1
+fi
+test "$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve executive)" = "$id4"
+test "$(jq -r .state "$MOCK_ROOT/$id4.json")" = running
+# Stop directly to restore a benign terminal state for subsequent fixtures.
+oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"
+test "$(jq -r .state "$MOCK_ROOT/$id4.json")" = stopped
 test "$(awk -F '\t' '$1=="executive" {n++} END {print n+0}' "$registry")" -eq 1
 
 # latest durable handoff and dirty worktree survive replacement; no duplicate
