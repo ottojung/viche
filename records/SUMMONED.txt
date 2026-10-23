@@ -6,5 +6,6 @@
 # Sentinel incident 1792550851 CLOSED 04:00Z; code fix MERGED (ac68917) and INSTALLED to the live service (release 408fd90, git_probe present) by c1a00002 — Assignment C DONE.
 # Act 18 §8 reconciliation DONE (index 7 issues, all terminal, 0 gaps). Board-trail §7 robustness merged.
 # IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
-# Act 18 board-trail mapping cannot represent OPAQUE-string originating issue ids (int() parse skips them) — Act 22's origin (ErkrX8EKQJXF6fCQv5fzYl-cannon) is invisible to the §5 lens. Assigned to c1a00002.
+# Act 18 opaque-id board-trail coverage DONE (`123d6a6`); 8/8 originating issues terminal, no gaps.
 c1a00002
+c1a0000b
