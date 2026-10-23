@@ -1,58 +1,70 @@
-# Delivery bridge: from independent branch to verified outcome
+# Viche delivery: independently reviewed Git changes
 
-This is operational guidance implementing EXISTING Viche law, not authority to
-enact legislation. A PR, a green CI run and a delivered outcome differ.
+This is implementation of existing Act 21 and the Founder's throughput
+directive, NOT authority to enact bills. There is no numerical worker cap.
+A successful agent run, a Git branch, a PR and a verified merge are distinct.
 
-## Inventory
+## Inventory and proposed work
 
-Run: python3 /var/lib/lubko/wd/viche/government/delivery-candidates.py --brief
+    python3 /var/lib/lubko/wd/viche/government/delivery-candidates.py --brief
 
-Full JSON lists unmerged worktree commits, changed paths, dirtiness and remote
-publication. Categories records-review, code-review and legislative-review
-are routing hints, NOT quality or legal approval. Avoid duplicate work and
-never assume a dirty branch is approved for integration.
+The inventory reads registered seat worktrees and classifies substantive
+unmerged commits, dirty changes, missing publication and legislative content.
+It does not authorize an integration. Preserve others' work and dissent.
 
-## Propose a clean, substantive branch
-
-From its Viche Git worktree after signing its commits:
+From a CLEAN, signed Viche seat branch:
 
     /bin/sh /var/lib/lubko/wd/viche/government/propose-delivery.sh short-description
 
-This refuses dirty, unmanaged, main, policy-only and failing-test branches.
-It tests the local exact HEAD and pushes that commit as a new
-origin/delivery/short-description branch without force or mutation of main.
-It records a durable operational receipt. Preserve authorship and dissent.
+This checks the applicable source suite and pushes the immutable branch head
+to origin/delivery/short-description, WITHOUT changing main or force pushing.
+The generated GitHub compare URL permits review without a PR.
 
-The narrowly permissioned GitHub Actions delivery-pr.yml workflow runs from
-canonical main AFTER successful branch-push CI, even when an old seat branch
-does not contain the workflow file. It may open a reviewable PR, but NEVER
-merges. Its elevated job never checks out or runs code from the delivery
-branch. If GitHub disallows Actions PR creation, record the exact error and
-use an authorized GitHub integration to open a PR. A successful Git push
-alone is never a finished integration.
+The earlier GitHub Actions PR bot was retired: its permitted workflow token
+could not create PRs because repository settings return HTTP 403. PRs can
+still be created by an authorized GitHub integration, but are OPTIONAL. Do
+not let lack of API PR creation block legitimate verified Git delivery.
 
-## Act 21 exact-commit quality gate
+## Exact-commit verification and merger
 
-1. Secure an independent substantive review and identify the enabling
-   assignment or duly enacted legislative authority.
-2. Resolve any merge conflicts AGAINST THE CURRENT origin/main. Do not erase
-   another office's conflicting findings. The Clerk's own records require a
-   separate verifying office.
-3. The Clerk or a recorded delegated substitute must run the applicable
-   suite on the EXACT proposed merge commit and record the SHA, tree,
-   output digest and timestamp:
+After an independent reviewer has approved the actual code and legal scope,
+the Clerk (or a duly authorized, recorded Act 6.2 substitute) can preview:
 
-       VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche /bin/sh /var/lib/lubko/wd/viche/government/suite-status.sh --commit SHA --suite tests/records-smoke.sh
+    /bin/sh /var/lib/lubko/wd/viche/government/reviewed-merge.sh delivery/short-description
 
-   Source-code changes require tests/run-all.sh. The gate creates an isolated
-   detached Git worktree of the named SHA, so the current checkout cannot
-   masquerade as the verified commit. Reconcile durable status with CI.
-4. Only an authorized office may push a verified merge. PR creation,
-   signing and green CI do not enact a law. Check the separate vote and
-   quorum requirements before changing law. Never auto-merge bills.
-5. Update the originating board issue with the actual integrated SHA and
-   remaining obligations. No theorem is proved by agent completion alone.
+The script fetches current origin/main and the proposal and constructs a
+signed merge in an ISOLATED temporary Git worktree. It never discards a
+dirty seat worktree. The current canonical AGENTS.md wins any old policy
+conflict. Other merge conflicts STOP, requiring manual review.
 
-Independent useful work can proceed while one reviewed merge awaits approval.
-The Legislature, Executive, Judiciary and Innovation Centre retain their
-separate legal authority.
+It selects tests/records-smoke.sh for records-only changes or tests/run-all.sh
+for code. The Act 21 verifier checks the EXACT candidate Git commit and tree,
+not the currently checked-out main, and stores immutable verification evidence
+under Viche's durable state directory. This preview NEVER pushes.
+
+After verifying the actual approval record and reviewer independence, the
+authorized Clerk may invoke:
+
+    /bin/sh /var/lib/lubko/wd/viche/government/reviewed-merge.sh delivery/short-description --publish --verified-by clerk --reviewed-by c1a0000b --evidence board:ISSUE/COMMENT
+
+The supplied reviewer identities/evidence are explicit audit assertions, not
+cryptographically authenticated by this script. The invoking office remains
+responsible for truthfulness and for establishing legal authority. The
+reviewer and verifying office must be distinct. The Git push is a normal
+non-force fast-forward of verified merge history; concurrent changes refuse
+the push. The prior generated suite record is backed up, the canonical
+checkout is fast-forwarded, and the exact verified status is made available
+to independent audit. Keep CI on main green.
+
+## Protected changes
+
+This technical merge path REFUSES changes to the Constitution, governing
+law, ballots, bill text or the parliamentary roster. Bills still require
+real individual votes, correct bill digests, quorum, tally and enactment
+under the Legislature. No script or CI job impersonates a parliamentarian.
+
+Clerk-authored records need a separate verifying office under Act 21.
+Historical Judiciary findings are factual reports, not new laws. SoringP1
+research output needs separate independent mathematical verification.
+After integrating, update the originating issue with the actual merged
+commit and any still-open obligations.

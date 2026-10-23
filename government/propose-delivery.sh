@@ -1,6 +1,6 @@
 #!/bin/sh
-# Agents may propose signed, locally-tested work for independent PR review
-# without API credentials. The GitHub workflow opens a PR only.
+# Agents publish signed, locally-tested branches for independent review
+# without GitHub API tokens or PR creation permissions.
 # This script NEVER merges, enacts laws, edits ballots or changes the charter.
 set -eu
 [ "$#" -eq 1 ] || { echo 'Usage: propose-delivery.sh SHORT-SLUG' >&2; exit 2; }
@@ -55,3 +55,5 @@ printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
     >> "$state/delivery/proposals.tsv"
 printf 'Proposed %s at %s with green %s. Review and merge are separate legal steps.\n' \
     "$target" "$head" "$suite"
+printf 'Review comparison: https://github.com/ottojung/viche/compare/main...delivery/%s\n' "$slug"
+printf 'After independent approval, use government/reviewed-merge.sh; a PR is optional, not required.\n'

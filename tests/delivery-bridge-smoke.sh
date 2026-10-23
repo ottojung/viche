@@ -70,6 +70,6 @@ if (cd "$policy" && VICHE_TOWN_ROOT=$town VICHE_STATE_ROOT=$state \
   echo 'Policy-only changes were proposed' >&2; exit 1
 fi
 
-grep -q 'pull-requests: write' "$repo/.github/workflows/delivery-pr.yml"
-grep -q 'delivery/' "$repo/.github/workflows/delivery-pr.yml"
-echo 'Delivery candidate inventory and guarded PR publication smoke passed'
+test -s "$repo/government/reviewed-merge.sh"
+test ! -e "$repo/.github/workflows/delivery-pr.yml"
+echo 'Delivery candidate inventory and guarded Git publication smoke passed'
