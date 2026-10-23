@@ -6,12 +6,24 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
+if [ -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$seat" ]; then
+  echo "Viche: unsafe seat invocation, preserve work for review" >&2
+  exit 1
+fi
 if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
     /bin/sh "$town/government/clerk-liveness.sh" --gate || {
         echo "Viche: Clerk sitting deferred until endpoint retry cooldown" >&2
         exit 1
     }
 fi
+appointed=$(/bin/sh "$town/government/appointments.sh" resolve "$seat") || exit 1
+status=$(antonina agent status --id "$appointed" --json) || exit 1
+mode=$(printf '%s\n' "$status" | jq -r '.state')
+if [ "$mode" = failed ]; then
+  retry_safe=$(printf '%s\n' "$status" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
+  [ "$retry_safe" = yes ] || { echo "Viche: seat $seat failed without retry-safe evidence" >&2; exit 1; }
+fi
+case "$mode" in stopped|killed) exit 1;; esac
 # Resource Safety Act: defer convening when cgroup headroom is below the floor.
 # A memory-safety gate, not a worker cap (Constitution VII); the boot defers the
 # seat on non-zero exit, the same mechanism as the clerk-liveness gate.

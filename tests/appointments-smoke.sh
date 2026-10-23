@@ -47,14 +47,16 @@ if /bin/sh "$script" resolve a1 >/dev/null 2>&1; then echo 'resolve invented mis
 if /bin/sh "$script" ensure a1 >/dev/null 2>&1; then echo 'unreadable agent was replaced' >&2; exit 1; fi
 [ ! -d "$tmp/state/appointments/terminal-evidence/fresh-1" ]
 [ "$(awk -F '\t' '$1=="a1"{print $2}' "$tmp/state/appointments/appointments.tsv")" = fresh-1 ]
-# Only a CONFIRMED stopped status permits replacement.
+# Even confirmed stopped stays assigned until explicit supervisor replacement.
 printf stopped > "$MOCK/$a"
-c=$(/bin/sh "$script" ensure a1)
+[ "$(/bin/sh "$script" ensure a1)" = fresh-1 ]
+c=$(/bin/sh "$script" replace a1)
 [ "$c" = fresh-2 ] || exit 1
 jq -e '.state=="stopped" and .agent_id=="fresh-1"' \
   "$tmp/state/appointments/terminal-evidence/fresh-1/event.json" >/dev/null
 printf failed > "$MOCK/$c"
-x=$(/bin/sh "$script" ensure a1)
+[ "$(/bin/sh "$script" ensure a1)" = fresh-2 ]
+x=$(/bin/sh "$script" replace a1)
 [ "$x" = fresh-3 ] || exit 1
 # Preserve the real failed status, no duplicate observation of this invocation.
 jq -e '.state=="failed" and .agent_id=="fresh-2" and .office=="a1" and
@@ -83,7 +85,8 @@ e=$(/bin/sh "$script" ensure executive)
 # A confirmed nontransient terminal failure must retain false, not be erased
 # into null by jq's alternative operator (false // null is null).
 printf failed-permanent > "$MOCK/$e"
-f=$(/bin/sh "$script" ensure executive)
+[ "$(/bin/sh "$script" ensure executive)" = fresh-5 ]
+f=$(/bin/sh "$script" replace executive)
 [ "$f" = fresh-6 ] || exit 1
 jq -e '.state=="failed" and .failure_class=="invalid_api_key" and
         .transient==false and .automatic_retry_safe==false and

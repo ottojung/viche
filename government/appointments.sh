@@ -1,8 +1,11 @@
 #!/bin/sh
 # Map durable logical seat/office keys to disposable Antonina agent IDs.
 set -eu
-[ "$#" -eq 2 ] || { echo 'Usage: appointments.sh ensure|resolve|replace KEY' >&2; exit 2; }
+{ [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$1" = replace ]; }; } ||
+  { echo 'Usage: appointments.sh ensure|resolve|replace KEY [EXPECTED_ID]' >&2; exit 2; }
 action=$1 key=$2
+expected=${3:-}
+case "$expected" in ''|*[!a-zA-Z0-9_-]*) [ -z "$expected" ] || exit 2;; esac
 case "$action" in ensure|resolve|replace) :;; *) exit 2;; esac
 case "$key" in ''|*[!a-zA-Z0-9_-]*) exit 2;; esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -53,8 +56,18 @@ if [ -n "$old" ]; then
   status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
   case "$status" in running|idle|succeeded) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
 fi
+if [ "$action" = replace ] && [ -n "$expected" ] && [ "$old" != "$expected" ]; then
+  echo "Viche: stale recovery appointment $expected for $key; actual is $old" >&2
+  exit 1
+fi
 if [ "$action" = resolve ]; then
-  [ "$live" = true ] || { echo "no live appointment for $key" >&2; exit 1; }
+  [ -n "$old" ] || { echo "no appointment for $key" >&2; exit 1; }
+  printf '%s\n' "$old"
+  exit 0
+fi
+if [ "$action" = ensure ] && [ -n "$old" ]; then
+  # Terminal agents remain assigned until per-office supervisor records the
+  # failure and explicitly replaces at the legally required threshold.
   printf '%s\n' "$old"
   exit 0
 fi

@@ -25,21 +25,31 @@ oc_is_transient() {
   return 1
 }
 
-# Append one observed transient failure to the durable per-office record.
-# Line format: "<unixtime> <classification> <worktree-head-sha>".
+# Record a terminal invocation once, independently of its disposable agent ID.
+# Event identity is (agent ID, finished_at, invocation id when supplied). This
+# makes repeated polling idempotent while preserving separate runs of one agent.
+# Line format: "<finished_at> <agent-id> <invocation-id> <classification> <head>".
 # Progress guard (§3.1.2): a durable commit since the previous failure breaks
 # the consecutive streak, so the record is truncated before appending.
 oc_record_failure() {
-  # $1 liveness dir, $2 agent id, $3 classification, $4 now, $5 workdir
+  # $1 liveness dir, $2 office key, $3 agent id, $4 invocation identity,
+  # $5 classification, $6 finished_at, $7 retry-safe (yes/no), $8 now,
+  # $9 workdir
   mkdir -p "$1/failures" || return 1
-  oc_log=$1/failures/$2
-  oc_sha=$(git -C "$5" rev-parse HEAD 2>/dev/null || printf -- -)
-  oc_last=$(tail -n 1 "$oc_log" 2>/dev/null || true)
-  case "$oc_last" in
-    *" $oc_sha") : ;;
-    *) [ -z "$oc_last" ] || : > "$oc_log" ;;
-  esac
-  printf '%s %s %s\n' "$4" "$3" "$oc_sha" >> "$oc_log"
+  oc_log=$1/failures/events.tsv
+  oc_sha=$(git -C "$9" rev-parse HEAD 2>/dev/null || printf -- -)
+  if [ -n "$4" ]; then oc_event=$4; elif [ -n "$6" ]; then oc_event=$6; else return 1; fi
+  if [ -n "$6" ]; then oc_finished=$6; else return 1; fi
+  case "$oc_event" in ''|*[!a-zA-Z0-9_.:-]*) return 1;; esac
+  # Antonina's finished_at is often fractional UNIX seconds. Preserve the
+  # exact invocation identity, but use integer seconds for the window math.
+  printf '%s\n' "$oc_finished" | grep -Eq '^[0-9]+(\.[0-9]+)?$' || return 1
+  oc_finished_seconds=${oc_finished%%.*}
+  if [ -s "$oc_log" ] && awk -F '\t' -v office="$2" -v id="$3" -v inv="$oc_event" \
+      '$2==office && $3==id && $4==inv {found=1} END {exit !found}' "$oc_log"; then
+    return 0
+  fi
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$oc_finished_seconds" "$2" "$3" "$oc_event" "$5" "$7" "$oc_sha" >> "$oc_log"
   return 0
 }
 
@@ -47,20 +57,29 @@ oc_record_failure() {
 # at least oc_threshold failures inside oc_window, cooldown expired. The
 # currently-observed agent state is irrelevant to this decision.
 oc_reset_due() {
-  # $1 liveness dir, $2 agent id, $3 now; returns 0 when a reset is due
-  oc_log=$1/failures/$2
+  # $1 liveness dir, $2 office key, $3 now; returns 0 when a reset is due
+  oc_log=$1/failures/events.tsv
   [ -s "$oc_log" ] || return 1
   oc_count=0
-  while read -r oc_ts oc_cls oc_sha; do
-    case "$oc_ts" in ''|*[!0-9]*) continue ;; esac
-    if [ $((oc_ts + oc_window)) -gt "$3" ]; then
+  oc_now_sha=
+  if [ -n "${oc_worktree:-}" ]; then
+    oc_now_sha=$(git -C "$oc_worktree" rev-parse HEAD 2>/dev/null || true)
+  fi
+  while IFS="$(printf '\t')" read -r oc_finished oc_office oc_agent oc_inv oc_cls oc_safe oc_sha; do
+    case "$oc_finished" in ''|*[!0-9]*) continue ;; esac
+    [ "$oc_office" = "$2" ] || continue
+    if [ -n "$oc_now_sha" ] && [ "$oc_sha" != "$oc_now_sha" ]; then
+      oc_count=0
+      continue
+    fi
+    if [ $((oc_finished + oc_window)) -gt "$3" ]; then
       oc_count=$((oc_count + 1))
     fi
   done < "$oc_log"
   [ "$oc_count" -ge "$oc_threshold" ] || return 1
   oc_last=0
   if [ -s "$1/last-reset-$2" ]; then
-    oc_last=$(cat "$1/last-reset-$2")
+  oc_last=$(cat "$1/last-reset-$2")
     case "$oc_last" in ''|*[!0-9]*) oc_last=0 ;; esac
   fi
   [ $((oc_last + oc_cooldown)) -le "$3" ] || return 1
@@ -70,9 +89,18 @@ oc_reset_due() {
 # Clear the consecutive-failure record after a reset so the next streak starts
 # at zero. History remains auditable in recoveries.log and the incident log.
 oc_clear_failures() {
-  # $1 liveness dir, $2 agent id
-  : > "$1/failures/$2" 2>/dev/null || true
+  # History is append/deduplicated evidence. A reset starts a new window by
+  # age and progress guard; never truncate the event ledger here.
   return 0
+}
+
+# Mark an unsafe failed invocation as requiring explicit handoff review before
+# any new session can dispatch work. The durable intent remains open in the
+# handoff queue; this marker prevents an automatic duplicate side effect.
+oc_mark_unsafe_hold() {
+  # $1 liveness dir, $2 office key, $3 agent id, $4 invocation
+  mkdir -p "$1/unsafe-holds"
+  printf '%s\t%s\t%s\n' "$2" "$3" "$4" >> "$1/unsafe-holds/$2"
 }
 
 # Surface a permanent failure (expired credential, invalid configuration)
