@@ -5,6 +5,7 @@ Auditor submissions are claims with evidence references, not independently verif
 facts. The controller never declares an issue solved from agent completion alone.
 """
 import argparse
+import fcntl
 import re
 import json
 import os
@@ -35,6 +36,24 @@ def records_dir():
     return Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche")) / "records" / "oversight" / "corrections"
 
 
+def correction_trail(case_id):
+    path = records_dir() / f"{case_id}.jsonl"
+    if not path.exists():
+        return []
+    rows = []
+    for number, line in enumerate(path.read_text().splitlines(), 1):
+        try:
+            row = json.loads(line)
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"authoritative correction trail is malformed at line {number}") from exc
+        if not isinstance(row, dict):
+            raise ValueError(f"authoritative correction trail row {number} is not an object")
+        if row.get("correction") and row.get("case_id") != case_id:
+            raise ValueError(f"authoritative correction trail case mismatch at line {number}")
+        rows.append(row)
+    return rows
+
+
 def append_correction(case_id, record):
     # Append-only: never overwrite or rewrite a committed entry (Act 17 §2.2, §2.7).
     d = records_dir()
@@ -42,6 +61,47 @@ def append_correction(case_id, record):
     with open(d / f"{case_id}.jsonl", "a") as fh:
         fh.write(json.dumps(record, sort_keys=True) + "\n")
     return d / f"{case_id}.jsonl"
+
+
+def valid_cycle_token(token):
+    return isinstance(token, str) and re.fullmatch(r"[0-9a-f]{32}", token) is not None
+
+
+def used_cycle_tokens(prior, case_id):
+    """Read only explicit identities; legacy rows are deliberately unclassified."""
+    tokens = set()
+    for item in prior.get("history", []):
+        if item.get("correction") and valid_cycle_token(item.get("cycle_id")):
+            tokens.add(item["cycle_id"])
+    for item in correction_trail(case_id):
+        if item.get("correction"):
+            token = item.get("cycle_id")
+            if not valid_cycle_token(token):
+                raise ValueError("authoritative correction trail has a correction without a valid cycle_id")
+            tokens.add(token)
+    return tokens
+
+
+def current_cycle_token():
+    state = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state")) / "oversight"
+    path = state / "current-audit-cycle"
+    try:
+        token = path.read_text().strip()
+    except OSError:
+        return ""
+    if not valid_cycle_token(token):
+        return ""
+    # Cross-check active identity against the durable dispatch ledger. An
+    # environment value alone is not proof that audit-cycle.sh dispatched it.
+    ledger = state / "audit-cycle-identities.tsv"
+    try:
+        entries = [line.split("\t", 1)[1] for line in ledger.read_text().splitlines()
+                   if "\t" in line]
+    except OSError:
+        return ""
+    if entries.count(token) != 1:
+        return ""
+    return token
 
 
 def report(args):
@@ -70,6 +130,14 @@ def report(args):
                 pending = h
         if pending is None:
             raise ValueError("no pending correction to confirm")
+        pending_cycle = pending.get("cycle_id")
+        trail = correction_trail(args.case)
+        matching = [row for row in trail if row.get("correction")
+                    and row.get("cycle_id") == pending_cycle]
+        if not valid_cycle_token(pending_cycle) or len(matching) != 1 or matching[0].get("confirmed") is not False:
+            raise ValueError("pending correction is not bound to a valid authoritative trail entry")
+        if args.cycle_id and args.cycle_id != pending.get("cycle_id"):
+            raise ValueError("confirmation cycle_id does not match pending correction")
         pending["confirmed"] = True
         pending["confirmed_at"] = now
         pending["confirm_evidence_ref"] = args.evidence
@@ -79,6 +147,7 @@ def report(args):
             "correction": True, "supersedes": pending["supersedes"],
             "reason_code": pending.get("reason_code", ""),
             "why_stronger": pending.get("why_stronger", ""),
+            "cycle_id": pending_cycle,
             "confirmed": True, "phase": "second_procedural_pass_not_independent",
         })
         prior["verdict"] = pending["verdict"]
@@ -86,6 +155,11 @@ def report(args):
         prior["evidence_ref"] = pending["evidence_ref"]
         prior["details"] = pending.get("details", prior.get("details", ""))
         prior["correction_pending"] = False
+        prior.pop("correction_cycle_id", None)
+        if pending["verdict"] == "finding":
+            prior.pop("corrected_from_finding", None)
+        else:
+            prior["corrected_from_finding"] = True
         if pending["supersedes"] == "finding" and pending["verdict"] != "finding":
             prior["corrected_from_finding"] = True
         atomic(path, prior)
@@ -96,10 +170,17 @@ def report(args):
         # File a superseding verdict (Act 17 §2.1-2.2, §2.5-2.6).
         if prior is None:
             raise ValueError("no prior verdict; file an ordinary verdict first")
+        if not valid_cycle_token(args.cycle_id):
+            raise ValueError("correction requires a valid current audit cycle token")
+        current_cycle = current_cycle_token()
+        if not current_cycle or args.cycle_id != current_cycle:
+            raise ValueError("cycle_id is not the current audit dispatch token")
         if not args.supersedes or args.supersedes != prior["verdict"]:
             raise ValueError("correction must state the verdict it supersedes")
         if prior.get("correction_pending"):
             raise ValueError("one correction per case per cycle (finality)")
+        if args.cycle_id in used_cycle_tokens(prior, args.case):
+            raise ValueError("one correction per case per cycle (cycle_id already used)")
         if args.evidence == prior.get("evidence_ref"):
             raise ValueError("correction evidence must be distinct from the original reference")
         if not args.why_stronger or not args.why_stronger.strip():
@@ -120,16 +201,20 @@ def report(args):
             "reason_code": args.reason_code, "why_stronger": args.why_stronger[:1000],
             "details": args.details[:1000], "confirmed": False,
             "phase": "correction_filed",
+            "cycle_id": args.cycle_id,
         }
         append_correction(args.case, rec)
         hist = prior.get("history", [])
         hist.append(rec)
         prior["history"] = hist
         prior["correction_pending"] = True
+        prior["correction_cycle_id"] = args.cycle_id
         atomic(path, prior)
         print(json.dumps(prior))
         return
 
+    if prior and any(item.get("correction") for item in prior.get("history", [])):
+        raise ValueError("outcome changes after a correction require the correction workflow")
     if prior and prior["verdict"] != "finding":
         raise ValueError("case already has a final verdict")
     if args.verdict == "verified_fixed" and (not prior or prior["verdict"] != "finding"):
@@ -239,13 +324,15 @@ def main():
     p.add_argument("--details", default="")
     p.add_argument("--correction", action="store_true",
                    help="file a superseding verdict (Act 17); requires --supersedes, "
-                        "--why_stronger, --reason_code, --auditor")
+                         "--why_stronger, --reason_code, --auditor, --cycle-id")
     p.add_argument("--confirm", action="store_true",
                    help="second procedural pass confirming a pending correction (Act 17 §2.4)")
     p.add_argument("--supersedes", default="")
     p.add_argument("--why_stronger", default="")
     p.add_argument("--reason_code", default="")
     p.add_argument("--auditor", default="")
+    p.add_argument("--cycle-id", dest="cycle_id", default="",
+                   help="durable audit-dispatch cycle identity (corrections only)")
     args = p.parse_args()
     if args.action == "report":
         if args.correction and args.confirm:
@@ -255,7 +342,16 @@ def main():
                 raise ValueError("case is required")
         elif not args.case or not args.verdict:
             raise ValueError("case and verdict are required")
-        report(args)
+        # Correctness of the cycle cap requires an exclusive per-case
+        # read/check/append/cache transaction. Two Judiciary CLI invocations
+        # must not both pass the one-per-cycle check concurrently.
+        if not re.fullmatch(r"[0-9a-f]{18}", args.case):
+            raise ValueError("invalid audit case identifier")
+        lockdir = base() / "case-locks"
+        lockdir.mkdir(parents=True, exist_ok=True)
+        with (lockdir / f"{args.case}.lock").open("a+") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            report(args)
     else:
         check(args)
 
