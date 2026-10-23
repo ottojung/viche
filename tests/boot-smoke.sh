@@ -46,7 +46,7 @@ done
 case "$action" in
     status)
         [ -f "$MOCK_STATE/$id" ] || exit 3
-        printf '%s\n' '{"state":"idle","model":"test-provider/example","variant":"low"}'
+        printf '%s\n' '{"state":"idle","model":null,"variant":"low"}'
         ;;
     new)
         n=0
