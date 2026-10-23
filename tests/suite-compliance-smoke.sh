@@ -40,11 +40,13 @@ printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh",
     "$green_change" "$green_tree" "$run_hash" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-malformed.json"
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"}]}\n' \
-    "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
 # JSON booleans are not valid integer run IDs/exits in suite-status evidence.
 printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":true,"result":"green","exit":false,"output_sha256":"%s"}]}\n' \
     "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-bool.json"
+out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
+printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000,"runs":[{"run":1,"result":"green","exit":0,"output_sha256":"%s"}]}\n' \
+    "$green_change" "$green_tree" "$run_hash" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==1'
 # A main change with no matching prior verification is unreadable.

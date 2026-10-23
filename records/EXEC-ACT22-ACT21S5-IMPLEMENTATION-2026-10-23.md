@@ -344,3 +344,23 @@ Clerk-owned production pilot list remains unpopulated here; only the hermetic
 pilot tally is exercised. Focused tests and the full local suite pass after these
 corrections. The current draft needs fresh review, publication, and GitHub CI on
 its exact commit; merge and deployment remain outstanding.
+
+## Rev10 reviewer response — 2026-10-23
+
+The independent review of rev9 (`80d9a74`) is recorded in the audit seat at
+`records/INDEPENDENT-REVIEW-ACT22-ACT21-REV9-2026-10-23.md`; it withheld
+approval and reproduced two additional issues: the untracked-ballot timestamp
+fallback and boolean run-field acceptance. Rev10 changes the gate to refuse an
+existing ballot file without a Git add timestamp. The tally fixture now proves
+that an untracked ballot is refused, then commits it and proves the
+pilot-listed tally succeeds with two earlier predictions. The Judiciary checker
+now requires actual integer run/exit values and a valid output SHA-256; the
+fixture asserts malformed boolean fields are rejected. The production pilot
+list remains a Clerk operational choice and is not exercised by this Executive.
+
+After rev10 fixes, focused prediction, suite-compliance, and tally tests and the
+full `dash tests/run-all.sh` pass locally. Rev10 is published as
+`delivery/act22-act21s5-rev10` at `b7bce18258eafc8d2e93252aa5c44734bebad20f`;
+GitHub Actions was still running at last check. A fresh independent review of
+rev10, completed CI, authorized merge, installed Judiciary metrics, and the
+Clerk's real pilot selection/exercise remain outstanding.
