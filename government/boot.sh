@@ -83,6 +83,12 @@ if [ -f "$town/government/oversight-watch.sh" ]; then
     /bin/sh "$town/government/oversight-watch.sh" ||
         echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
 fi
+# Read-only institutional feedback: never gates autonomous branches.
+if [ -f "$town/government/outcome-metrics.py" ]; then
+    python3 "$town/government/outcome-metrics.py" ||
+        echo "Viche: outcome feedback unavailable; do not infer success" >&2
+fi
+
 # Independent Judiciary: evidence and adjudication, not executive delivery,
 # proposing bills, or modifying its own measurement rules.
 if [ -f "$town/government/branch-liveness.sh" ]; then
