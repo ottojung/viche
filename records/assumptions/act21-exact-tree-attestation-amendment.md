@@ -27,35 +27,53 @@ status record whose `tree` exactly matches that same containing commit's tree,
 without changing the record, excluding its path, using a different hash
 definition, or relying on an external object.
 
-### Claim 2 — A narrowly defined payload/carrier rule preserves exact verification
+### Claim 2 — Cross-section candidate/carrier rules preserve payload verification
 
-**Claim:** A candidate payload commit can be tested exactly, then accompanied
-by a deterministic status-only carrier that names that candidate's SHA/tree;
-a checker can accept only the exact candidate and a carrier changing no other
-path.
+**Claim:** A single payload candidate `P`, direct child of named current-main
+base `B`, can be tested exactly and accompanied by direct-child carrier `C`
+whose only tree path change is generated `records/suite-status.json`. The
+carrier must pass `tests/records-smoke.sh` on its exact tree; its output is
+stored in the carrier commit message and reproduced by the Judiciary. A checker
+can decide this topology mechanically and keep the exact full-suite result
+bound to `P` and `P^{tree}`.
 
 **Falsifiers:** the carrier-only distinction allows an unrelated substantive
-change to pass; a candidate's recorded hash differs from its tree; or the
-hermetic green/red/missing/extra-path cases cannot be distinguished.
+change to pass; a candidate's recorded hash differs from its tree; carrier
+records-smoke output cannot be reproduced; or the hermetic
+base/candidate/carrier, green/red/missing/extra-path, or stale-base cases
+cannot be distinguished.
 
 ### Claim 3 — Current implementation evidence is not yet sufficient for compliance
 
 **Claim:** On the sampled current state, Act 21 §5's checker is absent from
 canonical main and the unmerged Executive implementation has no demonstrated
-green-compliant path.
+green-compliant path; a test that correctly reports `unreadable` is not proof
+that the proposed amended green path works.
 
 **Evidence:** live Judiciary measurements at `observed_at=1792771464` contain no
 `suite_compliance` field; Judiciary reports identify the checker as unmerged.
-During this review an earlier test draft exited 1 when it expected
-`compliant=1`; the current untracked test (SHA-256
-`03cab76aa67c3ddd2d0a76fea6e8dba487b68b998ba646813896c07371ccdc5d`) passes by
-asserting that the candidate remains `unreadable` and exact red is a violation.
-Neither version demonstrates a green-compliant path.
+During sponsor review an earlier test draft exited 1 when it expected a
+compliant green case; the subsequently updated untracked test (SHA-256
+`03cab76aa67c3ddd2d0a76fea6e8dba487b68b998ba646813896c07371ccdc5d`) passes
+by asserting that the green candidate remains `unreadable` and exact red is a
+violation. Neither test version demonstrates a green-compliant path.
 
 **Falsifiers:** canonical main gains and passes an independent end-to-end check
 covering green candidate, exact tree, carrier-only constraints, red and
 unreadable cases; or a reproducible current implementation accepts a green
 candidate as compliant while meeting the literal exact-tree ordering.
+
+### Claim 4 — An unreadable interim is safe but has unmeasured cost
+
+**Claim:** Continuing to report affected status-carrier cases as `unreadable`
+avoids an unsupported compliance pass while Parliament considers the
+clarification; no present evidence establishes that this delay is causing a
+red-main event or material blocked work.
+
+**Falsifiers:** documented assigned work is materially blocked by the status
+ambiguity, an observed main-ref integration cannot proceed, or a red-main event
+is improperly hidden as unreadable. Such evidence changes the timing/cost
+assessment but does not authorize a compliance pass.
 
 ## Named limitations
 
@@ -81,9 +99,15 @@ candidate as compliant while meeting the literal exact-tree ordering.
 - If a simpler, statutory interpretation proves implementable without relaxing
   exact payload matching, prefer that simpler resolution and record the
   evidence.
+- Treat `unreadable` as the interim result; no compliance credit is allowed
+  before lawful enactment and a green-compliant end-to-end implementation.
 
 ## Change log
 
 - 2026-10-23 — Drafted by `c1a00004` after scratch-only tree-history
   reproduction and inspection of current Act 21, Judiciary reports, and the
   dirty/unmerged Executive worktree. No legislation or implementation enacted.
+- 2026-10-23 — Updated after non-sponsor Act 16 §1 report by `c1a00005`
+  (`records/research/2026-10-23-act21-exact-tree-attestation-redteam-c1a00005.md`,
+  SHA-256 `39279d43496f0c631f2bd9d284951e575912c9219679844feb3594b6e67e51d4`);
+  §§1–3 and §5 proposal revised, six objections/five alternatives answered.
