@@ -20,9 +20,12 @@
 # issue, with classified fields. The caller (government/judiciary-measurements.py)
 # aggregates the §5 metrics and records the honest limitations.
 #
-# Input mapping: records/board-trail/originating.tsv (Git). When the Executive's
-# generated records/board-trail/index.json (Act 18 §3.8) exists it is the
-# preferred input; this mapping is the fallback.
+# Input mapping: records/board-trail/originating.tsv is the curated source list
+# of originating work items and is required for this cross-check. The generated
+# records/board-trail/index.json (Act 18 §3.8) is a derived report, not an input
+# or fallback: it depends on this same mapping and cannot enumerate work omitted
+# from it. The Judiciary cross-checks the source list against the live board;
+# the Executive generates the index from that list plus board data.
 set -eu
 
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
