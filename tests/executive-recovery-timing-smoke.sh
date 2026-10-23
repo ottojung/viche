@@ -18,7 +18,7 @@ cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.p
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 printf 'Founder charter fixture\n' > "$scratch/charter"
 touch "$scratch/state/inaugurated"
-printf '{"state":"failed","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
+printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
@@ -29,7 +29,7 @@ case "$1 $2" in
   'agent delete') echo delete >> "$MOCK_ROOT/recovery" ;;
   'agent new')
     echo new >> "$MOCK_ROOT/recovery"
-    printf '{"state":"idle","model":"example-provider/model-a","variant":"low"}\n' > "$MOCK_ROOT/status.json"
+    printf '{"state":"idle","model":"test-provider/example","variant":"low"}\n' > "$MOCK_ROOT/status.json"
     ;;
   'board list') echo '[]' ;;
   'board show') echo '{"body":"","messages":[]}' ;;
@@ -59,23 +59,23 @@ failures=$scratch/state/liveness/failures/c1e00002
 
 # Three consecutive transient failures fire exactly one bounded reset, even
 # though the oscillating agent is observed "running" between failures.
-printf '{"state":"running","model":"example-provider/model-a","variant":"low"}\n' > "$scratch/mock/status.json"
+printf '{"state":"running","model":"test-provider/example","variant":"low"}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 [ ! -e "$MOCK_ROOT/recovery" ]
-printf '{"state":"failed","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
+printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 [ "$(wc -l < "$failures")" -eq 2 ]
-printf '{"state":"running","model":"example-provider/model-a","variant":"low"}\n' > "$scratch/mock/status.json"
+printf '{"state":"running","model":"test-provider/example","variant":"low"}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 [ ! -e "$MOCK_ROOT/recovery" ]
-printf '{"state":"failed","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
+printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 2 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]
 [ "$(wc -l < "$failures")" -eq 0 ]
 
 # While the cooldown is unexpired, three more failures cannot reset again.
-printf '{"state":"failed","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
+printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
@@ -86,7 +86,7 @@ printf '{"state":"failed","model":"example-provider/model-a","variant":"low","ba
 # Once the cooldown expires, the third consecutive failure resets exactly once
 # more, never more.
 printf '0\n' > "$scratch/state/liveness/last-reset-c1e00002"
-printf '{"state":"failed","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
+printf '{"state":"failed","model":"test-provider/example","variant":"low","backend_error":{"classification":"upstream_endpoint_unavailable","transient":true}}\n' > "$scratch/mock/status.json"
 /bin/sh "$scratch/town/government/branch-bootstrap.sh" executive
 [ "$(wc -l < "$MOCK_ROOT/recovery")" -eq 4 ]
 [ ! -e "$MOCK_ROOT/dispatches" ]

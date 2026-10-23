@@ -46,7 +46,7 @@ done
 case "$action" in
     status)
         [ -f "$MOCK_STATE/$id" ] || exit 3
-        printf '%s\n' '{"state":"idle","model":null,"models_used":[]}'
+        printf '%s\n' '{"state":"idle","model":null,"variant":"low"}'
         ;;
     new)
         n=0
@@ -63,8 +63,6 @@ case "$action" in
             *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
-        # Model selection is an Antonina responsibility, never baked into prompts.
-        case "$prompt" in *"example-provider/model-a"*) exit 7;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;

@@ -88,7 +88,7 @@ the Legislature; authorized implementation belongs to the Executive.
 The Clerk MUST consider judicial evidence at every sitting.
 Independently measure the effects of previously ratified corrections and report
 the evidence, including failures of judicial measurement, to Parliament. Do not merely ask the executive whether
-it thinks it is effective. Use Antonina for all agent execution; let Antonina select the model. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
+it thinks it is effective. Use Antonina-managed agents; model selection is Antonina's responsibility. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
 EOF
 )
 antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$prompt" --detach

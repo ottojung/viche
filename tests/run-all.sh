@@ -6,10 +6,11 @@ cd "$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)"
 echo 'Checking shell syntax and constitutional roster'
 /bin/sh -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run deploy/s6/viche-intake/run
 dash -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run
-# Old model pins must not return in current operational code or documentation.
-legacy_model=$(printf '%s%s' long cat)
-if grep -R -i -l "${legacy_model}" constitution government deploy README.md; then
-  echo 'Obsolete hard-coded model restriction' >&2; exit 1
+! grep -Fiq 'sole permitted AI model' constitution/CONSTITUTION.md
+# The founder removed Viche's model pin. Guard against accidental reintroduction
+# anywhere in current law, source, scripts or operational documentation.
+if grep -RiE 'longcat|opencode-go/longcat' AGENTS.md README.md constitution government deploy; then
+  echo 'Viche model pin regression in active policy/code' >&2; exit 1
 fi
 test -s government/seats.tsv
 awk -F '\t' 'NF != 3 || $1 !~ /^[0-9a-f]+$/ { exit 1 }' government/seats.tsv

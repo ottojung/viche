@@ -47,7 +47,7 @@ EXEC_STATE=failed
 ERROR=upstream_endpoint_unavailable
 LAST=19500
 AUDIT_STATE=idle
-MODEL=example-provider/model-a
+MODEL=test-provider/example
 VARIANT=low
 DISPATCHES=$scratch/dispatches
 NOTICES=$scratch/notices
@@ -81,11 +81,11 @@ printf '%s\n' c1a00008 > "$scratch/town/records/SUMMONED.txt"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 
 : > "$scratch/town/records/SUMMONED.txt"
-MODEL=another-provider/another-model
+MODEL=other-provider/other-model
 export MODEL
 /bin/sh "$repo/government/audit-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
-MODEL=example-provider/model-a
+MODEL=test-provider/example
 EXEC_STATE=idle
 MOCK_BOARD='[]'
 export MODEL EXEC_STATE MOCK_BOARD

@@ -60,4 +60,5 @@ if oc_reset_due "$liv" "$id" "$now"; then
     "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$liv/recoveries.log"
 fi
-# An unstarted office may have no model history; Antonina selects at run time.
+# Antonina owns model selection; freshly created agents have no model history.
+# Do not gate readiness on a previously used model or a default variant.

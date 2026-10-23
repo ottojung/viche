@@ -29,7 +29,7 @@ esac
 MOCK
 chmod +x "$d/bin/antonina"
 set_status() {
-  printf '{"state":"%s","model":"example-provider/model-a","backend_error":{"classification":"%s","transient":%s}}\n' \
+  printf '{"state":"%s","model":"test-provider/example","backend_error":{"classification":"%s","transient":%s}}\n' \
     "$1" "$2" "$3" > "$d/mock/status"
 }
 PATH="$d/bin:$PATH"

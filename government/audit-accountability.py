@@ -58,7 +58,7 @@ def report(args):
     now = int(os.environ.get("VICHE_OVERSIGHT_NOW", time.time()))
 
     if args.confirm:
-        # Second procedural pass (Act 17 §2.4): same office and potentially correlated bias.
+        # Second procedural pass (Act 17 §2.4): same office, same pinned model.
         # Explicitly NOT independent verification (Constitution X single substrate).
         if prior is None:
             raise ValueError("no prior outcome to confirm against")
@@ -210,8 +210,10 @@ def check(args):
                 signals.append({"type": "agent_status_unavailable", "agent_id": agent_id})
                 continue
             metadata = json.loads(p.stdout)
-            # Antonina dynamically selects models. An unused agent reports null,
-            # and model changes are not violations. Retain unreadable-status checks.
+            # Model choice belongs to Antonina. An idle agent with no model
+            # history is normal; avoid inventing a compliance incident.
+            if metadata.get("state") not in ("idle", "running", "succeeded", "failed", "stopped", "killed"):
+                signals.append({"type": "agent_state_unrecognized", "agent_id": agent_id})
     except Exception as e:
         signals.append({"type": "agent_inventory_unavailable", "detail": str(e)[:180]})
     evidence = {"at": now, "cases_total": len(cases), "cases_unreported_overdue": overdue,

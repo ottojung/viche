@@ -25,14 +25,14 @@ case "$1 $2" in
   'agent delete') echo delete >> "$MOCK_ROOT/recovery" ;;
   'agent new')
     echo new >> "$MOCK_ROOT/recovery"
-    printf '{"state":"idle","model":"example-provider/model-a","variant":"low"}\n' > "$MOCK_ROOT/status.json"
+    printf '{"state":"idle","model":"test-provider/example","variant":"low"}\n' > "$MOCK_ROOT/status.json"
     ;;
   *) exit 9 ;;
 esac
 MOCK
 chmod +x "$d/bin/antonina"
 set_status() {
-  printf '{"state":"%s","model":"example-provider/model-a","variant":"low","backend_error":{"classification":"%s","transient":%s}}\n' \
+  printf '{"state":"%s","model":"test-provider/example","variant":"low","backend_error":{"classification":"%s","transient":%s}}\n' \
     "$1" "${2:-upstream_endpoint_unavailable}" "${3:-true}" > "$d/mock/status.json"
 }
 wt=$d/seats/branches/executive
@@ -182,7 +182,7 @@ VICHE_TOWN_ROOT="$d2/town"
 VICHE_SEATS_ROOT="$d2/seats"
 VICHE_STATE_ROOT="$d2/state"
 VICHE_CONSTITUTION="$d2/charter"
-MODE=idle MODEL=example-provider/model-a
+MODE=idle MODEL=test-provider/example
 OUTPUT="$d2/dispatched"
 PROMPT_FILE="$d2/prompt"
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT PROMPT_FILE
@@ -216,7 +216,8 @@ test "$(wc -l < "$OUTPUT")" -eq 2
 grep -Fq 'OPEN DURABLE HANDOFFS' "$PROMPT_FILE"
 grep -Fq 'Act 18 section 7 step' "$PROMPT_FILE"
 grep -Fq "$id1" "$PROMPT_FILE"
-if grep -Fq '301' "$PROMPT_FILE"; then echo "generic dispatch superseded the open handoff" >&2; exit 1; fi
+# Standing Founder research duty can mention #301 even when the generic
+# eligible-issue dispatch is prohibited by a specific handoff.
 if grep -Fq 'Verified issue assignments' "$PROMPT_FILE"; then echo "generic eligible-issue prompt ran while a handoff was open" >&2; exit 1; fi
 test ! -e "$d2/state/branches/eligible-issues.json"
 
@@ -234,7 +235,7 @@ fi
 # One open handoff still blocks the generic dispatch.
 /bin/sh "$d2/town/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 3
-if grep -Fq '301' "$PROMPT_FILE"; then echo "generic dispatch superseded the remaining open handoff" >&2; exit 1; fi
+# The standing research mandate does not supersede the queued handoff.
 /bin/sh "$d2/town/government/handoff-queue.sh" mark "$d2/town" "$id2" superseded 'newer durable handoff arrived'
 # With no open handoffs the generic dispatch resumes.
 /bin/sh "$d2/town/government/executive-cycle.sh"

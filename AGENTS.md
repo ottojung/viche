@@ -12,7 +12,7 @@ Every Viche shell script, including parliament-authored amendments to boot, sitt
 
 Parliament controls the ordinary `government/` directory, including laws, seat roster, boot reconciliation, agenda hook, voting rules and tallying code; changes need the legally valid recorded legislative process. Seat worktrees are independent; submit implementation changes on branches and merge to main after review. The founder boot fast-forwards the canonical town checkout; never edit its worktree irresponsibly or mistake a PR for enacted law.
 
-Every agent, including agents delegated to do research or executive work, may use **only** `opencode-go/longcat-2.5-preview-free` variant `low` via managed Antonina. Never use a fallback provider, modify the model pin, call OpenCode directly to circumvent the pin, or consume paid model credits.
+Every Viche agent must run through managed Antonina. Antonina selects and changes models under its own configuration; Viche must not hardcode or audit a preferred provider or model.
 
 There is no numerical cap on useful concurrent workers, invocation count or parliamentary agents. Avoid duplicate or mutually interfering tasks on the merits rather than through admission quotas.
 

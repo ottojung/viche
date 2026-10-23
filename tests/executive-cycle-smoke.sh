@@ -23,7 +23,7 @@ case "$1 $2" in
     printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL" ;;
   "agent run")
     case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"fewer than five"*"scope registry"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"SoringP1"*"research-plan.md"*) : ;; *) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac
@@ -36,7 +36,7 @@ VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/charter
-MODE=idle MODEL=example-provider/model-a
+MODE=idle MODEL=test-provider/example
 OUTPUT=$scratch/dispatched
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT
 grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
@@ -54,10 +54,10 @@ sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2
 MODE=failed
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
-MODE=idle MODEL=another-provider/another-model
+MODE=idle MODEL=other-provider/other-model
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 3
-MODEL=example-provider/model-a
+MODEL=test-provider/example
 BOARD_DOWN=yes
 export MODE MODEL BOARD_DOWN
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi

@@ -18,7 +18,7 @@ elif [ "$1" = agent ] && [ "$2" = status ]; then
   id=$4
   [ -f "$MOCK/$id" ] || exit 1
   status=$(cat "$MOCK/$id")
-  printf '{"state":"%s","model":null,"models_used":[]}\n' "$status"
+  printf '{"state":"%s","model":null,"variant":"low"}\n' "$status"
 else
   echo 'unexpected mocked command' >&2; exit 7
 fi

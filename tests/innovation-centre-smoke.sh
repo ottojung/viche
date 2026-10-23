@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hermetic: autonomous legislative office, cadence and health inquiry.
+# Hermetic: autonomous legislative office, cadence, model-neutrality, health inquiry.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
@@ -7,7 +7,7 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 mkdir -p "$scratch/town/government" "$scratch/town/records" "$scratch/bin" "$scratch/state/branches"
 printf 'c1a00001\tClerk\tlegislature\n' > "$scratch/town/government/seats.tsv"
 printf '%s\n' c1e00011 > "$scratch/town/records/SUMMONED.txt"
-printf 'Founder test constitution\n' > "$scratch/constitution"
+printf 'Founder test constitution, model neutral\n' > "$scratch/constitution"
 touch "$scratch/state/inaugurated"
 cat > "$scratch/town/government/branch-bootstrap.sh" <<'BOOT'
 #!/bin/sh
@@ -42,7 +42,7 @@ VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/constitution
 VICHE_INNOVATION_NOW=1000
-MODE=idle MODEL=example-provider/model-a VARIANT=low ACTIVITY=1000
+MODE=idle MODEL=test-provider/example VARIANT=low ACTIVITY=1000
 DISPATCHES=$scratch/runs
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
@@ -68,7 +68,7 @@ VICHE_INNOVATION_NOW=23000
 export VICHE_INNOVATION_NOW
 /bin/sh "$repo/government/innovation-centre-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
-MODEL=another-provider/another-model
+MODEL=other-provider/other-model
 export MODEL
 /bin/sh "$repo/government/innovation-centre-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
