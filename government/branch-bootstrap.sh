@@ -35,9 +35,14 @@ now=$(date +%s)
 mode=$(printf '%s\n' "$meta" | jq -r '.state')
 reason=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // ""')
 tflag=$(printf '%s\n' "$meta" | jq -r '.backend_error.transient // false')
+invocation=$(printf '%s\n' "$meta" | jq -r '.invocation_id // .run_id // .finished_at // ""')
+finished=$(printf '%s\n' "$meta" | jq -r '.finished_at // ""')
 if [ "$mode" = failed ]; then
   if oc_is_transient "$reason" "$tflag"; then
-    oc_record_failure "$liv" "$id" "$reason" "$now" "$cwd"
+    unsafe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == false then "yes" else "no" end')
+    retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
+    oc_record_failure "$liv" "$branch" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$cwd" || exit 1
+    [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$liv" "$branch" "$id" "$invocation"
   else
     oc_surface_permanent "$liv" "$id" "$reason"
   fi
@@ -47,18 +52,25 @@ oc_commit_age_signal "$liv" "$id" "$cwd" "$now"
 # and does not depend on the currently-observed state. An oscillating agent
 # (failed -> re-dispatched -> running) is reset once it accumulates the
 # threshold of consecutive transient failures inside the window.
-if oc_reset_due "$liv" "$id" "$now"; then
+oc_worktree=$cwd
+reset_due=false
+if oc_reset_due "$liv" "$branch" "$now"; then reset_due=true; fi
+if [ "$reset_due" = true ]; then
   snapshot=$(mktemp -d "$liv/branch-$id-recovery-XXXXXX")
   printf '%s\n' "$meta" > "$snapshot/status.json"
   antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
   git -C "$cwd" status --short > "$snapshot/worktree.txt"
-  printf '%s\n' "$now" > "$liv/last-reset-$id"
-  id=$(/bin/sh "$town/government/appointments.sh" replace "$branch")
+  oc_quiesce_for_reset "$id" || exit 1
+  id=$(/bin/sh "$town/government/appointments.sh" replace "$branch" "$id")
+  printf '%s\n' "$now" > "$liv/last-reset-$branch"
   meta=$(antonina agent status --id "$id" --json)
-  oc_clear_failures "$liv" "$id"
+  oc_clear_failures "$liv" "$branch"
   printf '%s branch=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
     "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$liv/recoveries.log"
+  reset_due=true
+  # The single replacement above completed this reset. Never create a
+  # second appointment for the same threshold event.
 fi
-# Antonina owns model selection; freshly created agents have no model history.
-# Do not gate readiness on a previously used model or a default variant.
+# Antonina selects the provider/model/variant under its own current policy.
+# Appointment validity is determined by the managed agent state, not a pin.

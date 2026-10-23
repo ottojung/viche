@@ -40,7 +40,6 @@ while IFS="$tab" read -r seat_id title focus; do
         fi
         git -C "$town" worktree add --detach "$seat_dir" HEAD
     fi
-    /bin/sh "$town/government/appointments.sh" ensure "$seat_id" >/dev/null
     # All seats have durable, independently recoverable sessions; don't let a
     # failed provider continuation permanently remove a future voter.
     if [ -f "$town/government/seat-liveness.sh" ]; then

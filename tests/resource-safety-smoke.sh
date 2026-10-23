@@ -70,6 +70,20 @@ rm -f "$cgroup/memory.max" "$cgroup/memory.current" "$cgroup/memory.stat"
 [ "$(wc -l < "$state/resource-safety/deferrals.log")" -eq "$before" ]
 
 # 6. sitting.sh invokes the guard and defers on low headroom (integration).
+# Under the real constitutional boot an appointed agent exists. Model that
+# benign idle managed agent here so this test measures resource safety only.
+mkdir -p "$d/bin"
+cat > "$town/government/appointments.sh" <<'APPOINTMENT'
+#!/bin/sh
+printf 'fixture-agent\n'
+APPOINTMENT
+cat > "$d/bin/antonina" <<'ANTONINA'
+#!/bin/sh
+[ "$1" = agent ] && [ "$2" = status ] || exit 1
+printf '{"state":"idle"}\n'
+ANTONINA
+chmod +x "$d/bin/antonina" "$town/government/appointments.sh"
+PATH="$d/bin:$PATH"; export PATH
 set_cgroup "$MAX" 6979321856            # headroom 1.5 GiB
 if /bin/sh "$town/government/sitting.sh" c1a00003 >/dev/null 2>&1; then
     echo "Viche: FAIL - sitting.sh did not defer on low headroom" >&2; exit 1
