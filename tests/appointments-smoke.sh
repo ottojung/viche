@@ -44,10 +44,14 @@ r=$(/bin/sh "$script" resolve a1)
 [ "$r" = "$a" ] || exit 1
 rm "$MOCK/$a"
 if /bin/sh "$script" resolve a1 >/dev/null 2>&1; then echo 'resolve invented missing agent' >&2; exit 1; fi
+if /bin/sh "$script" ensure a1 >/dev/null 2>&1; then echo 'unreadable agent was replaced' >&2; exit 1; fi
+[ ! -d "$tmp/state/appointments/terminal-evidence/fresh-1" ]
+[ "$(awk -F '\t' '$1=="a1"{print $2}' "$tmp/state/appointments/appointments.tsv")" = fresh-1 ]
+# Only a CONFIRMED stopped status permits replacement.
+printf stopped > "$MOCK/$a"
 c=$(/bin/sh "$script" ensure a1)
 [ "$c" = fresh-2 ] || exit 1
-# A deleted prior appointment is preserved as UNREADABLE, not falsely failed.
-jq -e '.state=="unreadable" and .agent_id=="fresh-1"' \
+jq -e '.state=="stopped" and .agent_id=="fresh-1"' \
   "$tmp/state/appointments/terminal-evidence/fresh-1/event.json" >/dev/null
 printf failed > "$MOCK/$c"
 x=$(/bin/sh "$script" ensure a1)
@@ -59,6 +63,16 @@ jq -e '.state=="failed" and .agent_id=="fresh-2" and .office=="a1" and
        .transient==true and .automatic_retry_safe==false' \
   "$tmp/state/appointments/terminal-evidence/fresh-2/event.json" >/dev/null
 [ -s "$tmp/state/appointments/terminal-evidence/fresh-2/status.json" ]
+# The mock has no 'agent log'; this MUST be explicitly marked unavailable,
+# not masquerade as a successfully captured log. Worktree is not Git either.
+jq -e '.log_captured==false and .worktree_status_captured==false and
+       .worktree_head_captured==false' \
+  "$tmp/state/appointments/terminal-evidence/fresh-2/event.json" >/dev/null
+[ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 2 ]
+# Recovery after a crash between primary evidence publication and index append:
+sed -i '/"agent_id":"fresh-2"/d' "$tmp/state/appointments/terminal-events.jsonl"
+[ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 1 ]
+/bin/sh "$town/government/terminal-appointment-evidence.sh" a1 fresh-2 "$tmp/seats/a1" </dev/null
 [ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 2 ]
 [ "$(/bin/sh "$script" ensure a1)" = fresh-3 ]
 [ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 2 ]

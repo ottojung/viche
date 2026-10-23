@@ -18,10 +18,15 @@ lock. It captures once per departed agent ID:
   `$VICHE_STATE_ROOT/appointments/terminal-evidence/AGENT_ID/event.json`
   and an append-only `terminal-events.jsonl` convenience index.
 
-Unreachable IDs are explicitly classified as **unreadable**, not counted as
-verified transient failures. Private state is mode 0700/0600. A snapshot
-must be persisted before the registry changes; failures block replacement
-rather than erase evidence.
+If the old agent's status cannot be read, replacement is **refused** rather
+than guessing it has died and creating a second live agent in the same seat.
+Confirmed `failed`, `stopped` and `killed` states permit evidence capture.
+Unavailable log, Git HEAD or worktree-status diagnostics are explicitly
+marked unavailable in the structured event (not silently called successful),
+with ten-second command timeouts and a 128 KiB log excerpt bound. The primary
+per-ID snapshot is authoritative; an interrupted index append is repaired on
+its next idempotent invocation. Private state uses umask 077. A snapshot must
+be persisted before the registry changes; failures block replacement.
 
 **Important limitation:** This safeguard is observational, not an Act 19
 compliance claim. The existing `appointments.sh ensure` still selects a new

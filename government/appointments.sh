@@ -44,10 +44,14 @@ fi
 live=false
 if [ -n "$old" ]; then
   case "$old" in *[!a-zA-Z0-9_-]*|'') echo 'invalid stored ID' >&2; exit 1;; esac
-  if meta=$(antonina agent status --id "$old" --json 2>/dev/null); then
-    status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
-    case "$status" in running|idle|succeeded) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
+  if ! meta=$(antonina agent status --id "$old" --json 2>/dev/null); then
+    # A transient status-query failure is NOT evidence of a dead agent.
+    # Replacing it could create a second live agent on the same worktree.
+    echo "Viche: status of appointed agent $old is unreadable; refuse replacement until a terminal status is proven" >&2
+    exit 1
   fi
+  status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
+  case "$status" in running|idle|succeeded) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
 fi
 if [ "$action" = resolve ]; then
   [ "$live" = true ] || { echo "no live appointment for $key" >&2; exit 1; }
