@@ -61,4 +61,14 @@ jq -e '.board_trail.completed_total==6 and .board_trail.terminal_reached==2 and 
 jq -e '(.board_trail.git_only_gaps|length)==1 and .board_trail.git_only_gaps[0].issue=="102"' "$report" >/dev/null
 jq -e '.board_trail.dangling_trails==4 and .board_trail.content_standard_failures==1' "$report" >/dev/null
 jq -e '.no_proposals==true and .measurement_reliability=="not_established"' "$report" >/dev/null
+
+# §5 reads originating.tsv as its cross-check input even when the generated
+# §7 index exists. Ensure the generated artifact does not silently replace the
+# curated mapping (the index generator itself depends on that mapping).
+printf '%s\n' '{"issues":[{"issue":"999","terminal_status":"verification:confirmed"}]}' \
+    > "$scratch/town/records/board-trail/index.json"
+sh "$scratch/town/government/board-trail-check.sh" > "$scratch/rows-with-index"
+[ "$(wc -l < "$scratch/rows-with-index")" -eq 7 ]
+jq -e 'select(.issue=="100") | .terminal==1' "$scratch/rows-with-index" >/dev/null
+
 echo 'Board-trail completeness lens smoke passed'
