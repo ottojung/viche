@@ -9,6 +9,20 @@ printf 'c1a00001\tClerk\tintake\nc1a00002\tExecutive\tdelivery\nc1a00004\tResear
 printf '%s\n' 'UNIQUE ACT 10 CGROUP ASSIGNMENT' > "$scratch/records/summons/c1a00004.md"
 VICHE_TOWN_ROOT=$scratch
 VICHE_TOWNHALL_ID=302
+# Constitutional boot normally appoints seats before rendering a sitting.
+# Model benign managed statuses so the summons assertions test routing only.
+mkdir -p "$scratch/bin"
+cat > "$scratch/government/appointments.sh" <<'APPOINTMENT'
+#!/bin/sh
+printf 'fixture-seat\n'
+APPOINTMENT
+cat > "$scratch/bin/antonina" <<'ANTONINA'
+#!/bin/sh
+[ "$1" = agent ] && [ "$2" = status ] || exit 1
+printf '{"state":"idle"}\n'
+ANTONINA
+chmod +x "$scratch/government/appointments.sh" "$scratch/bin/antonina"
+PATH="$scratch/bin:$PATH"; export PATH
 export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID
 
 printf '%s\n' 'UNIQUE LIVE KAWUN EXECUTIVE ASSIGNMENT' > "$scratch/records/summons/c1a00002.md"

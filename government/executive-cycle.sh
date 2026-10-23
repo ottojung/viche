@@ -16,6 +16,10 @@ python3 "$town/government/predict-scorer.py" || {
 }
 id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
+if [ -s "$state/liveness/unsafe-holds/executive" ]; then
+  echo "Viche: unsafe Executive failed invocation is on durable hold" >&2
+  exit 1
+fi
 # Act 19 §3.2: the durable handoff queue at $town/records/handoffs/ is the
 # dispatch's single input. Read it FIRST, before any failure-prone work
 # (board fetch, agent status). If the script fails before this read, no
@@ -27,7 +31,10 @@ status=$(antonina agent status --id "$id" --json)
 current=$(printf "%s\n" "$status" | jq -r ".state")
 case "$current" in
   running) exit 0 ;;
-  failed) echo "Independent Executive failed; branch recovery required" >&2; exit 1 ;;
+  failed)
+    retry_safe=$(printf '%s\n' "$status" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
+    [ "$retry_safe" = yes ] || { echo "Viche: failed Executive not provably retry-safe" >&2; exit 1; }
+    ;;
   idle|succeeded) : ;;
   *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
 esac
