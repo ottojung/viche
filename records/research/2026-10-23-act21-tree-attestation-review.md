@@ -63,7 +63,7 @@ falsified.
    dirty and unmerged on `exec/act22-act21s5-2026-10-22`, HEAD
    `a399503e449517a820a543b4dbae9e30a4525e3e`. Its implementation note
    `records/EXEC-ACT22-ACT21S5-IMPLEMENTATION-2026-10-23.md` (SHA-256
-   `a313c99c0f81bc03931a25613571cb0603ea3ade64bb944c0a4b650b8e10d4`) says the
+   `123eaf3cad23c0513a543480a6a74bfe115f88bcc751ac33fcfdd3b07fd5730b`) says the
    green-path reconstruction is blocked by the records/tree ordering, and
    correctly says not to treat the checker as compliant. No Executive files
    were changed.
@@ -72,14 +72,18 @@ falsified.
    `9c61c1bbda1df4dd9b1ea483677ad2bd139a0ce1`, SHA-256
    `f50ec8feaa52a3f2116caba85160c041d6f18bd4fd1f3adc9e27e6723a980889`)
    reports the suite-compliance
-   checker only in the dirty Executive worktree, and notes the fixture omitted
-   the required green-before-change path. In this review I ran
-   `sh tests/suite-compliance-smoke.sh` in the actual Executive worktree: exit
-   **1**. The trace shows its JSON had `compliant=0`; the test's required
-   `any(status == compliant)` assertion failed. The earlier Judiciary report
-   that the smoke test passed is therefore stale or based on a different draft;
-   this current rerun is the controlling result. It does detect a red record,
-   but that does not establish the green case.
+   checker only in the dirty Executive worktree. During this review the
+   Executive worktree changed concurrently: an initial run of its then-current
+   smoke test exited **1** because it required at least one `compliant` row while
+   the checker returned `compliant=0`. The current untracked test
+   `tests/suite-compliance-smoke.sh` (SHA-256
+   `03cab76aa67c3ddd2d0a76fea6e8dba487b68b998ba646813896c07371ccdc5d`)
+   now exits **0** and explicitly asserts that the green candidate remains
+   `unreadable`, the exact red record is a violation, and no compliant result
+   is claimed. This is an honest limitation test, not a green-path solution.
+   The initial failure and current passing limitation test are both consistent
+   with the implementation note: exact green compliance remains blocked. No
+   Executive files were changed by this review.
 6. The same Judiciary current-sample report says no checker or
    `suite_compliance` field exists on canonical `origin/main` at its sampled
    revision, and explicitly withholds delivery credit for the unmerged draft.

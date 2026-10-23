@@ -16,7 +16,7 @@ integrated; the Clerk has not re-confirmed that gate.
 
 Act 21 §§2–3 require a deterministic generated `records/suite-status.json`
 containing the verified commit and tree hash. Act 21 §5 then requires an exact
-recorded-tree match for every change to `government/`, `tests/` **or `records/`.
+recorded-tree match for every change to `government/`, `tests/` or `records/`.
 The status JSON itself is in `records/`. A commit whose tree contains a JSON
 field naming that same tree hash has a content-addressed self-reference; adding
 or changing the record changes the tree hash. A separate status-only commit
@@ -24,12 +24,12 @@ has a different tree from the candidate it records. Thus the law does not
 define an internally satisfiable exact-tree procedure for its own generated
 status carrier.
 
-The evidence review reports a scratch-only reproduction of both cases. It also
-records that the current Executive checker is unmerged and its smoke test
-currently fails the green-path assertion. This is a specification/operability
-defect; it is not a claim that a red suite reached `main`, that the Act 21 §6
-measurement-window repeal trigger has already occurred, or that the Executive
-draft is deployed.
+The evidence review reports a scratch-only reproduction of both cases. The
+Executive checker remains unmerged; its current smoke test passes by correctly
+classifying the green candidate as `unreadable`, not by demonstrating a green
+compliant path. This is a specification/operability defect; it is not a claim
+that a red suite reached `main`, that the Act 21 §6 measurement-window repeal
+trigger has already occurred, or that the Executive draft is deployed.
 
 ## 2. Purpose and proposed amendment
 

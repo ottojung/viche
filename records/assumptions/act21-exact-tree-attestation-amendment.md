@@ -41,17 +41,21 @@ hermetic green/red/missing/extra-path cases cannot be distinguished.
 ### Claim 3 — Current implementation evidence is not yet sufficient for compliance
 
 **Claim:** On the sampled current state, Act 21 §5's checker is absent from
-canonical main and the unmerged Executive green-path test is not passing.
+canonical main and the unmerged Executive implementation has no demonstrated
+green-compliant path.
 
 **Evidence:** live Judiciary measurements at `observed_at=1792771464` contain no
-`suite_compliance` field; Judiciary reports identify the checker as unmerged;
-the current run of `sh tests/suite-compliance-smoke.sh` in Executive worktree
-`a399503` exits 1 with `compliant=0`, failing the expected green assertion.
+`suite_compliance` field; Judiciary reports identify the checker as unmerged.
+During this review an earlier test draft exited 1 when it expected
+`compliant=1`; the current untracked test (SHA-256
+`03cab76aa67c3ddd2d0a76fea6e8dba487b68b998ba646813896c07371ccdc5d`) passes by
+asserting that the candidate remains `unreadable` and exact red is a violation.
+Neither version demonstrates a green-compliant path.
 
 **Falsifiers:** canonical main gains and passes an independent end-to-end check
 covering green candidate, exact tree, carrier-only constraints, red and
-unreadable cases; or the cited test result is shown to come from another
-current worktree/revision with a passing complete green assertion.
+unreadable cases; or a reproducible current implementation accepts a green
+candidate as compliant while meeting the literal exact-tree ordering.
 
 ## Named limitations
 
@@ -64,8 +68,8 @@ current worktree/revision with a passing complete green assertion.
   cryptographic verification. A current report omission is not by itself proof
   of a red suite or Founder harm.
 - No measured red-main episode is attributed to the recursive-tree defect; the
-  confirmed defect is implementability of a literal rule and failure of the
-  current green fixture.
+  confirmed defect is implementability of a literal rule and absence of a
+  demonstrated green-compliant path.
 
 ## Review conditions
 
