@@ -61,7 +61,14 @@ fi
 # non-fatal so it can never block seat reconciliation. Authority and safeguards:
 # records/bills/janitor-office-act.md (Act 12); observation is within Act 4.2.
 if [ -f "$town/government/janitor.sh" ]; then
-    /bin/sh "$town/government/janitor.sh" cycle || echo "Viche: janitor cycle failed" >&2
+    # A whole-box inventory can take minutes. It has its own exclusive lock;
+    # never block legislative, executive or judicial dispatch behind it.
+    janitor_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/janitor
+    mkdir -p "$janitor_state"
+    (
+        /bin/sh "$town/government/janitor.sh" cycle ||
+            echo "Viche: janitor cycle failed; see janitor action log" >&2
+    ) >> "$janitor_state/boot-cycle.log" 2>&1 < /dev/null &
 fi
 
 # Independent Executive: no parliamentary summons required.
