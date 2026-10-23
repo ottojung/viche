@@ -92,6 +92,29 @@ Your worktree is $cwd.
 EOF
 )
 fi
+# Read-only, bounded frontier evidence. This cannot replace the Executive's
+# independent live-agent/board checks, and does not authorize generic work
+# outside explicit open Act19 handoffs or host-scoped Founder assignments.
+frontier='{"status":"unavailable","action":"inspect live frontier and research issues"}'
+if [ -f "$town/government/research-frontier-status.py" ]; then
+  frontier=$(python3 "$town/government/research-frontier-status.py" 2>/dev/null) ||
+    frontier='{"status":"unavailable","action":"investigate diagnostic failure"}'
+fi
+prompt=$(cat <<EOF
+$prompt
+
+=== SORINGP1 RESEARCH FRONTIER — READ-ONLY DIAGNOSTIC ===
+$frontier
+=== END FRONTIER DIAGNOSTIC ===
+If status is depleted_after_empty_curation, the curator's empty response is NOT
+proof that final research is complete. Examine genuinely distinct untried
+questions from the latest theorem obligations, primary literature and failed
+approaches; commission only useful falsifiable research and independently
+check existing claimed results. Do not invent fronts to meet a worker count.
+Verify the actual Antonina agent list before dispatch; ledger states are not
+live availability. Follow any open durable Act19 handoffs before generic work.
+EOF
+)
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"
