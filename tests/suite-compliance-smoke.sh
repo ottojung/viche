@@ -24,10 +24,15 @@ printf 'changed\n' > "$tmp/government/base"
 git -C "$tmp" add . && git -C "$tmp" commit -qm candidate
 green_change=$(git -C "$tmp" rev-parse HEAD)
 green_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000}\n' \
-    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/records-smoke.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000}\n' \
+    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-wrong-suite.json"
 git -C "$tmp" checkout -q main
 git -C "$tmp" merge --ff-only -q main-candidate
+# A green record for the wrong suite does not satisfy the code-change gate.
+out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
+printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["compliant"]==0; assert x["unreadable"]>0'
+printf '{"generated_by":"government/suite-status.sh","suite":"tests/run-all.sh","result":"green","commit":"%s","tree":"%s","recorded_at":1000}\n' \
+    "$green_change" "$green_tree" > "$VICHE_STATE_ROOT/delivery/verified-$green_change.json"
 # A main change with no matching prior verification is unreadable.
 printf 'unverified\n' > "$tmp/tests/unverified"
 git -C "$tmp" add . && git -C "$tmp" commit -qm unverified-change
@@ -36,7 +41,7 @@ printf 'red\n' > "$tmp/tests/red"
 git -C "$tmp" add . && git -C "$tmp" commit -qm red-change
 red_commit=$(git -C "$tmp" rev-parse HEAD)
 red_tree=$(git -C "$tmp" rev-parse HEAD^{tree})
-printf '{"result":"red","commit":"%s","tree":"%s"}\n' "$red_commit" "$red_tree" > "$tmp/records/suite-status.json"
+printf '{"result":"red","suite":"tests/run-all.sh","commit":"%s","tree":"%s"}\n' "$red_commit" "$red_tree" > "$tmp/records/suite-status.json"
 git -C "$tmp" add . && git -C "$tmp" commit -qm red-record
 out=$(/bin/sh "$root/government/suite-compliance-check.sh" "$tmp")
 printf '%s' "$out" | python3 -c 'import json,sys;x=json.load(sys.stdin); assert x["status"]=="measured"; assert x["compliant"]==1; assert x["unreadable"]>0; assert x["main_red_episodes"]==1; assert x["violations"]==1'

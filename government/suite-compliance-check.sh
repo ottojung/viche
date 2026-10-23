@@ -47,6 +47,9 @@ try:
         paths=[p for p in paths if p.startswith(('government/','tests/','records/'))]
         if not paths:
             continue
+        expected_suite=('tests/records-smoke.sh'
+                        if all(p.startswith('records/') for p in paths)
+                        else 'tests/run-all.sh')
         tree=git('rev-parse',commit+'^{tree}')
         # Require the record commit to precede the main change. The record must
         # name that exact commit and its tree; a matching parent is insufficient
@@ -54,6 +57,8 @@ try:
         prior=[]
         for rc,r,source in records:
             if r.get('result') not in ('green','red') or r.get('tree') != tree:
+                continue
+            if r.get('suite') != expected_suite:
                 continue
             candidate=r.get('commit','')
             try:
@@ -75,7 +80,8 @@ try:
         elif greens:
             status='compliant'; reason='preceding green record for exact commit/tree ('+','.join(sorted(set(source for _,_,source in greens)))+')'
         elif any(r.get('result')=='red' and r.get('commit')==commit
-                 and r.get('tree')==tree for _,r,_source in records):
+                 and r.get('tree')==tree and r.get('suite')==expected_suite
+                 for _,r,_source in records):
             status='violation'; reason='red suite recorded for exact commit/tree (after change)'
         else:
             status='unreadable'; reason='no preceding exact-commit/tree suite record'
