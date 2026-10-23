@@ -12,6 +12,9 @@ mkdir -p "$scratch/bin" "$scratch/state/oversight/random/cases" \
     "$scratch/seats/branches/judiciary"
 printf 'authoritative fixture\n' > "$scratch/charter"
 : > "$scratch/town/records/SUMMONED.txt"
+git -C "$scratch/town" init -q -b main
+git -C "$scratch/town" -c user.name=Fixture -c user.email=fixture@example.invalid \
+  commit --allow-empty -qm 'initial Git state: no effective corrections yet'
 CASE=0123456789abcdef01
 TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 printf '{"case_id":"%s","population":"ignored_work","id":"301","at":2000000000}\n' \
@@ -73,6 +76,13 @@ jq -e --arg c "$CASE" '.verdict' "$scratch/state/oversight/random/outcomes/$CASE
 
 # 5. Second procedural pass (same office/model — NOT independent) confirms it.
 python3 "$CTRL" report --case "$CASE" --confirm --evidence "second procedural replay" >/dev/null
+python3 "$CTRL" check > "$scratch/check"
+jq -e --arg c "$CASE" '.signals[]|select(.type=="correction_not_effective" and .case_id==$c)' "$scratch/check" >/dev/null
+# Only a committed Git version, not a writable state-dir cache or untracked
+# file, makes that first confirmed correction legally effective.
+git -C "$scratch/town" add records/oversight/corrections/"$CASE".jsonl
+git -C "$scratch/town" -c user.name=Fixture -c user.email=fixture@example.invalid \
+  commit -qm 'anchor first confirmed correction'
 grep -q '"phase": "second_procedural_pass_not_independent"' "$trail"
 grep -q '"confirmed": true' "$trail"
 [ "$(jq -r .verdict "$scratch/state/oversight/random/outcomes/$CASE.json")" = finding ]
@@ -94,6 +104,14 @@ python3 "$CTRL" report --case "$CASE" --verdict not_assigned \
     --supersedes finding --auditor c1e00008 --reason_code retracted_on_stronger_evidence \
     --why_stronger "new replay shows the original finding was a false positive" >/dev/null
 python3 "$CTRL" report --case "$CASE" --confirm --evidence "procedural retraction replay" >/dev/null
+# This uncommitted retraction is a false-positive corrected_finding signal
+# unless check() derives its effective state from Git HEAD instead of cache.
+python3 "$CTRL" check > "$scratch/check"
+jq -e --arg c "$CASE" '.signals[]|select(.type=="correction_not_effective" and .case_id==$c)' "$scratch/check" >/dev/null
+jq -e --arg c "$CASE" '.signals[]|select(.type=="unresolved_finding" and .case_id==$c)' "$scratch/check" >/dev/null
+git -C "$scratch/town" add records/oversight/corrections/"$CASE".jsonl
+git -C "$scratch/town" -c user.name=Fixture -c user.email=fixture@example.invalid \
+  commit -qm 'anchor second confirmed correction'
 python3 "$CTRL" check > "$scratch/check"
 jq -e '[.signals[].type]|index("corrected_finding")' "$scratch/check" >/dev/null
 if jq -e '[.signals[].type]|index("unresolved_finding")' "$scratch/check" >/dev/null; then
@@ -408,4 +426,31 @@ if ! { [ "$a" -eq 0 ] && [ "$b" -ne 0 ]; } &&
   exit 1
 fi
 [ "$(wc -l < "$scratch/town/records/oversight/corrections/$RACE_CASE.jsonl")" -eq 1 ]
+# Historical failure: a state cache advertises corrected_finding but its
+# two correction rows were never Git anchored. Act17 §2.2 keeps the original
+# finding operative. Do not create an imaginary independent confirmation.
+UNANCHORED=787878787878787878
+printf '{"case_id":"%s","population":"ignored_work","id":"999","at":2000000000}\n' \
+  "$UNANCHORED" > "$scratch/state/oversight/random/cases/$UNANCHORED.json"
+printf '{"case_id":"%s","verdict":"not_assigned","at":2000000000,"evidence_ref":"cached unanchored retraction","corrected_from_finding":true,"correction_pending":false,"history":[{"correction":true,"confirmed":true,"supersedes":"finding","verdict":"not_assigned"}]}\n' \
+  "$UNANCHORED" > "$scratch/state/oversight/random/outcomes/$UNANCHORED.json"
+python3 "$CTRL" check > "$scratch/check"
+jq -e --arg c "$UNANCHORED" '.signals[]|select(.type=="correction_not_effective" and .case_id==$c)' "$scratch/check" >/dev/null
+jq -e --arg c "$UNANCHORED" '.signals[]|select(.type=="unresolved_finding" and .case_id==$c)' "$scratch/check" >/dev/null
+if jq -e --arg c "$UNANCHORED" '.signals[]|select(.type=="corrected_finding" and .case_id==$c)' "$scratch/check" >/dev/null; then
+  echo 'Uncommitted cache falsely corrected an unresolved finding' >&2; exit 1
+fi
+# Exact historical failure pattern: original inconclusive -> (unanchored)
+# finding -> (unanchored) not_assigned. Both invalid corrections cannot
+# generate corrected_finding or turn the original inconclusive into finding.
+TWO_STEP=898989898989898989
+printf '{"case_id":"%s","population":"ignored_work","id":"998","at":2000000000}\n' \
+ "$TWO_STEP" > "$scratch/state/oversight/random/cases/$TWO_STEP.json"
+printf '{"case_id":"%s","verdict":"not_assigned","at":2000000000,"evidence_ref":"cached second retraction","corrected_from_finding":true,"history":[{"correction":true,"confirmed":true,"supersedes":"inconclusive","verdict":"finding"},{"correction":true,"confirmed":true,"supersedes":"finding","verdict":"not_assigned"}]}\n' \
+ "$TWO_STEP" > "$scratch/state/oversight/random/outcomes/$TWO_STEP.json"
+python3 "$CTRL" check > "$scratch/check"
+jq -e --arg c "$TWO_STEP" '.signals[]|select(.type=="correction_not_effective" and .case_id==$c)' "$scratch/check" >/dev/null
+if jq -e --arg c "$TWO_STEP" '.signals[]|select((.type=="corrected_finding" or .type=="unresolved_finding") and .case_id==$c)' "$scratch/check" >/dev/null; then
+ echo 'Unanchored two-step history changed original inconclusive verdict' >&2;exit 1
+fi
 echo 'Act 17 audit correction smoke passed'

@@ -54,6 +54,48 @@ def correction_trail(case_id):
     return rows
 
 
+def committed_confirmed_correction(case_id):
+    """Only rows committed in HEAD are effective under Act17 §2.2.
+
+    This NEVER reads untracked or modified worktree bytes as legal authority.
+    Fail closed on malformed committed rows, duplicate cycles or unpaired
+    confirmations. Returns the latest confirmed FILING (not its procedural
+    confirmation reference), or None when no correction has taken effect.
+    """
+    town = os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche")
+    rel = f"records/oversight/corrections/{case_id}.jsonl"
+    p = subprocess.run(["git", "-C", town, "show", f"HEAD:{rel}"],
+                       capture_output=True, text=True, timeout=15)
+    if p.returncode:
+        return None
+    pending = {}
+    confirmed = set()
+    effective = None
+    for idx, line in enumerate(p.stdout.splitlines(), 1):
+        try:
+            row = json.loads(line)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"committed correction row {idx} malformed") from exc
+        if not isinstance(row, dict) or row.get("case_id") != case_id or row.get("correction") is not True:
+            raise ValueError(f"committed correction row {idx} wrong case or type")
+        token = row.get("cycle_id")
+        if not valid_cycle_token(token):
+            raise ValueError(f"committed correction row {idx} missing valid cycle identity")
+        if row.get("confirmed") is False:
+            if token in pending or token in confirmed:
+                raise ValueError("more than one correction filing in committed cycle")
+            pending[token] = row
+        elif row.get("confirmed") is True:
+            filed = pending.get(token)
+            if filed is None or token in confirmed or filed.get("verdict") != row.get("verdict"):
+                raise ValueError("orphan or mismatched committed correction confirmation")
+            confirmed.add(token)
+            effective = filed
+        else:
+            raise ValueError(f"committed correction row {idx} lacks confirmed status")
+    return effective
+
+
 def append_correction(case_id, record):
     # Append-only: never overwrite or rewrite a committed entry (Act 17 §2.2, §2.7).
     d = records_dir()
@@ -194,6 +236,11 @@ def report(args):
         held = [h.get("verdict") for h in prior.get("history", [])]
         if args.verdict in held:
             raise ValueError("bare re-flip: target verdict already held by this case")
+        # Preserve the original verdict and evidence for a Git-unanchored
+        # correction's effective-state fallback and future independent audit.
+        prior.setdefault("original_verdict", prior.get("verdict"))
+        prior.setdefault("original_evidence_ref", prior.get("evidence_ref"))
+        prior.setdefault("original_at", prior.get("at"))
         rec = {
             "at": now, "case_id": args.case, "verdict": args.verdict,
             "evidence_ref": args.evidence, "auditor": args.auditor,
@@ -267,17 +314,57 @@ def check(args):
             overdue += 1
             signals.append({"type": "unreported_sample", "case_id": case["case_id"]})
         if verdict is not None:
+            # State-dir verdicts are a derived cache, NOT the legal correction
+            # trail. A confirmed procedural recheck does not make a correction
+            # effective until Git HEAD contains its filed+confirmed rows.
+            effective = verdict.get("verdict")
+            effective_ref = verdict.get("evidence_ref")
+            effective_at = verdict.get("at", now)
+            corrected_from_finding = bool(verdict.get("corrected_from_finding"))
+            history = [h for h in verdict.get("history", [])
+                       if isinstance(h, dict) and h.get("correction")]
+            if history:
+                original = verdict.get("original_verdict", history[0].get("supersedes"))
+                anchored = None
+                try:
+                    anchored = committed_confirmed_correction(case["case_id"])
+                except (ValueError, OSError, subprocess.TimeoutExpired) as exc:
+                    signals.append({"type": "correction_anchor_invalid",
+                                    "case_id": case["case_id"], "detail": str(exc)[:180]})
+                if anchored is None:
+                    effective = original if original in (
+                        "finding", "verified", "not_assigned", "inconclusive", "verified_fixed") else None
+                    effective_ref = verdict.get("original_evidence_ref")
+                    effective_at = verdict.get("original_at", effective_at)
+                    corrected_from_finding = False
+                    signals.append({"type": "correction_not_effective",
+                                    "case_id": case["case_id"],
+                                    "reason": "no valid confirmed correction committed in Git HEAD"})
+                else:
+                    effective = anchored.get("verdict")
+                    effective_ref = anchored.get("evidence_ref")
+                    effective_at = anchored.get("at", effective_at)
+                    corrected_from_finding = (
+                        effective != "finding" and
+                        (original == "finding" or
+                         any(h.get("supersedes") == "finding" for h in history)))
+                    if effective != verdict.get("verdict"):
+                        signals.append({"type": "correction_not_effective",
+                                        "case_id": case["case_id"],
+                                        "reason": "state cache ahead of committed correction"})
             if verdict.get("correction_pending"):
                 signals.append({"type": "correction_pending", "case_id": case["case_id"]})
-            if verdict["verdict"] == "finding":
+            if effective == "finding":
                 subject = f"{case['population']}:{case['id']}"
                 findings[subject] = findings.get(subject, 0) + 1
                 signals.append({"type": "unresolved_finding", "case_id": case["case_id"],
-                                "evidence_ref": verdict["evidence_ref"]})
-            elif verdict.get("corrected_from_finding"):
+                                "evidence_ref": effective_ref,
+                                "caveat": "source_not_independently_verified"})
+            elif corrected_from_finding:
                 signals.append({"type": "corrected_finding", "case_id": case["case_id"],
-                                "evidence_ref": verdict["evidence_ref"]})
-            if verdict["verdict"] == "inconclusive" and now - verdict["at"] > deadline:
+                                "evidence_ref": effective_ref,
+                                "git_anchored": True})
+            if effective == "inconclusive" and now - effective_at > deadline:
                 signals.append({"type": "unresolved_inconclusive", "case_id": case["case_id"]})
     for subject, count in findings.items():
         if count >= 2:

@@ -18,7 +18,14 @@ even after its earlier correction has been confirmed. A per-case file lock
 serializes reads and append/cache updates between concurrent CLI processes.
 A missing, malformed or legacy correction identity fails closed without
 backdating or silently assigning an invented cycle. Confirmation is a
-procedural second pass, not independent verification.
+procedural second pass, not independent verification. The monitoring check
+reads **committed Git HEAD** for each cached correction and never treats an
+untracked or modified working-tree correction log as legally effective. If
+there is no valid committed confirmed correction, the original verdict stays
+effective (where recoverable), and a distinct `correction_not_effective` or
+`correction_anchor_invalid` signal exposes the mismatch. Old original evidence
+references may be unavailable in legacy cache rows; the signal explicitly
+marks them uncertain instead of manufacturing corroboration.
 
 If the detached audit launch returns an error after token preparation, the
 dispatch time remains recorded; an immediate retry is refused because the
