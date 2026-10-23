@@ -19,9 +19,13 @@ gatekeeper (§2), the independent resolver (§3) and the publisher (§5).
    --probability 0.7 --resolution-date 2026-11-03 --evidence SOURCE --author SEAT`
   A registration with no `--evidence` is rejected and the rejection recorded
   (§3.1, anti-vagueness signal §3.6).
-- **Resolve** (Clerk; the author may not resolve — fallback `c1a0000b`, §3.2):
+- **Resolve** (Clerk at/after due date; the author may not resolve — fallback
+  `c1a0000b`, §3.2):
   `python3 government/predict-ledger.py resolve --id ENTRY --outcome true|false|unresolved \
-   --resolver SEAT --evidence CITATION [--reason TEXT]`
+   --resolver SEAT --evidence CITATION [--evidence-at EPOCH] [--reason TEXT]`
+  Scored outcomes require the evidence timestamp, which must not precede
+  registration or follow resolution. `unresolved` requires a citation and a
+  reason; it is covered but not scored.
 - **Verify** (integrity; runnable by the Judiciary each window, §3.5/§12):
   `python3 government/predict-ledger.py verify`
 - **Score** (derived `calibration.json`, §3.3):

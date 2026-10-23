@@ -24,13 +24,14 @@ Usage:
       --resolution-date DATE --evidence SOURCE --author SEAT [--cites ENTRY_ID]
   predict-ledger.py reject   --bill ID --proposition TEXT --author SEAT --reason TEXT
   predict-ledger.py resolve  --id ENTRY_ID --outcome true|false|unresolved \
-      --resolver SEAT --evidence CITATION [--reason TEXT]
+      --resolver SEAT --evidence CITATION [--evidence-at EPOCH] [--reason TEXT]
   predict-ledger.py verify
   predict-ledger.py show
 
 Exit: register/resolve 0 ok, 1 rejected/refused; verify 0 clean, 1 defect(s).
 """
 import argparse
+import datetime
 import hashlib
 import json
 import os
@@ -63,6 +64,12 @@ def now_epoch() -> int:
 
 def iso(epoch: int) -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(epoch))
+
+
+def date_epoch(value: str) -> int:
+    day = datetime.datetime.strptime(value, "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc)
+    return int(day.timestamp())
 
 
 def load(path: Path) -> dict:
@@ -130,12 +137,22 @@ def cmd_register(a) -> int:
     if not (0.0 < p < 1.0):
         print("predict-ledger: probability must be in (0,1)", file=sys.stderr)
         return 2
+    try:
+        due_at = date_epoch(a.resolution_date)
+    except (TypeError, ValueError):
+        print("predict-ledger: resolution date must be YYYY-MM-DD", file=sys.stderr)
+        return 2
+    registered_at = now_epoch()
+    if registered_at >= due_at:
+        print("predict-ledger: registration must precede its resolution date",
+              file=sys.stderr)
+        return 1
     entry = {"id": next_id(data, a.bill, "registration"), "kind": "registration",
              "bill_id": a.bill, "proposition": a.proposition, "probability": p,
              "resolution_date": a.resolution_date, "evidence_source": a.evidence,
              "author": a.author, "self_reference": bool(a.self_reference),
-             "status": "registered", "registered_at": now_epoch(),
-             "registered_iso": iso(now_epoch())}
+              "status": "registered", "registered_at": registered_at,
+              "registered_iso": iso(registered_at)}
     if a.cites:
         entry["cites"] = a.cites
     entry["content_hash"] = content_hash(entry)
@@ -164,16 +181,42 @@ def cmd_resolve(a) -> int:
     if any(r.get("id") == a.id for r in data["resolutions"]):
         print("predict-ledger: already resolved: %s" % a.id, file=sys.stderr)
         return 1
+    if not (a.evidence or "").strip():
+        print("predict-ledger: every resolution requires an evidence citation",
+              file=sys.stderr)
+        return 2
     if a.outcome == "unresolved" and not (a.reason or "").strip():
         print("predict-ledger: unresolved requires a reason", file=sys.stderr)
         return 2
-    if a.outcome in ("true", "false") and not (a.evidence or "").strip():
-        print("predict-ledger: a scored resolution requires an evidence citation",
-              file=sys.stderr)
+    try:
+        due_at = date_epoch(target.get("resolution_date", ""))
+    except (TypeError, ValueError):
+        print("predict-ledger: invalid registered resolution date", file=sys.stderr)
         return 2
     resolved_at = now_epoch()
+    if resolved_at < due_at:
+        print("predict-ledger: REFUSED — prediction is not due until %s"
+              % target.get("resolution_date"), file=sys.stderr)
+        return 2
+    evidence_at = None
+    if a.outcome in ("true", "false"):
+        try:
+            evidence_at = int(a.evidence_at)
+        except (TypeError, ValueError):
+            print("predict-ledger: scored resolution requires --evidence-at EPOCH",
+                  file=sys.stderr)
+            return 2
+        if evidence_at < int(target.get("registered_at", 0)):
+            print("predict-ledger: outcome evidence predates registration",
+                  file=sys.stderr)
+            return 2
+        if evidence_at > resolved_at:
+            print("predict-ledger: outcome evidence timestamp is in the future",
+                  file=sys.stderr)
+            return 2
     res = {"id": a.id, "outcome": a.outcome, "resolver": a.resolver,
-           "evidence_citation": a.evidence or "", "resolved_at": now_epoch(),
+           "evidence_citation": a.evidence, "evidence_at": evidence_at,
+           "resolved_at": resolved_at,
            "resolved_iso": iso(resolved_at)}
     if a.reason:
         res["reason"] = a.reason
@@ -199,6 +242,16 @@ def cmd_verify(a) -> int:
         if e.get("content_hash") != want:
             defects.append({"id": eid, "defect": "content_hash_mismatch",
                             "recorded": e.get("content_hash"), "recomputed": want})
+        if e.get("kind") == "registration":
+            if not str(e.get("evidence_source", "")).strip():
+                defects.append({"id": eid, "defect": "missing_evidence_source"})
+            try:
+                if not (0.0 < float(e.get("probability")) < 1.0):
+                    raise ValueError
+                date_epoch(e.get("resolution_date", ""))
+                int(e.get("registered_at"))
+            except (TypeError, ValueError):
+                defects.append({"id": eid, "defect": "invalid_registration_fields"})
     known = {e.get("id"): e for e in data["entries"] if e.get("kind") == "registration"}
     for r in data["resolutions"]:
         if r.get("defect"):
@@ -210,6 +263,25 @@ def cmd_verify(a) -> int:
             defects.append({"id": r.get("id"), "defect": "author_self_resolved"})
         elif int(r.get("resolved_at", 0)) < int(target.get("registered_at", 0)):
             defects.append({"id": r.get("id"), "defect": "resolution_timestamp_precedes_registration"})
+        else:
+            if not (r.get("evidence_citation") or "").strip():
+                defects.append({"id": r.get("id"), "defect": "missing_resolution_evidence"})
+            if r.get("outcome") == "unresolved" and not (r.get("reason") or "").strip():
+                defects.append({"id": r.get("id"), "defect": "unresolved_without_reason"})
+            if r.get("outcome") in ("true", "false"):
+                try:
+                    evidence_at = int(r.get("evidence_at"))
+                    if evidence_at < int(target.get("registered_at", 0)):
+                        defects.append({"id": r.get("id"), "defect": "outcome_evidence_precedes_registration"})
+                    if evidence_at > int(r.get("resolved_at", 0)):
+                        defects.append({"id": r.get("id"), "defect": "outcome_evidence_after_resolution"})
+                except (TypeError, ValueError):
+                    defects.append({"id": r.get("id"), "defect": "missing_outcome_evidence_timestamp"})
+            try:
+                if int(r.get("resolved_at", 0)) < date_epoch(target.get("resolution_date", "")):
+                    defects.append({"id": r.get("id"), "defect": "resolution_before_due_date"})
+            except (TypeError, ValueError):
+                defects.append({"id": r.get("id"), "defect": "invalid_resolution_date"})
     resolution_ids = [r.get("id") for r in data["resolutions"]]
     for eid in set(resolution_ids):
         if resolution_ids.count(eid) > 1:
@@ -257,6 +329,8 @@ def main() -> int:
     s.add_argument("--outcome", required=True, choices=["true", "false", "unresolved"])
     s.add_argument("--resolver", required=True)
     s.add_argument("--evidence", default="")
+    s.add_argument("--evidence-at", default=None,
+                   help="outcome evidence timestamp (Unix epoch); required for true/false")
     s.add_argument("--reason", default="")
     s.set_defaults(fn=cmd_resolve)
 

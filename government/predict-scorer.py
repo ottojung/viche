@@ -16,6 +16,7 @@ Usage: predict-scorer.py [--now EPOCH]
 Exit 0 on success (defects are reported in the output, not by exit code).
 """
 import argparse
+import datetime
 import hashlib
 import json
 import math
@@ -57,6 +58,11 @@ def mean(xs):
     return (sum(xs) / len(xs)) if xs else None
 
 
+def due_epoch(value):
+    return int(datetime.datetime.strptime(value, "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc).timestamp())
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--now", type=int, default=None)
@@ -92,23 +98,54 @@ def main() -> int:
     rejected = [e for e in entries if e.get("kind") == "rejection"]
 
     scored, unresolved, due, due_unresolved = [], [], [], []
+    scored_ids, unresolved_ids = set(), set()
     for e in registered:
         r = res_by_id.get(e.get("id"))
         rd = str(e.get("resolution_date", ""))
-        if rd and rd <= time.strftime("%Y-%m-%d", time.gmtime(now)):
+        try:
+            is_due = due_epoch(rd) <= now
+        except (TypeError, ValueError):
+            defects.append({"id": e.get("id"), "defect": "invalid_resolution_date"})
+            continue
+        if not (e.get("evidence_source") or "").strip():
+            defects.append({"id": e.get("id"), "defect": "missing_evidence_source"})
+            continue
+        if is_due:
             due.append(e)
         if r is None:
-            if rd and rd <= time.strftime("%Y-%m-%d", time.gmtime(now)):
+            if is_due:
                 due_unresolved.append(e.get("id"))
+            continue
+        resolved_at = int(r.get("resolved_at", 0))
+        if resolved_at < due_epoch(rd):
+            defects.append({"id": e.get("id"), "defect": "resolution_before_due_date"})
             continue
         if r.get("resolver") == e.get("author"):
             defects.append({"id": e.get("id"), "defect": "author_self_resolved"})
-        elif int(r.get("resolved_at", 0)) < int(e.get("registered_at", 0)):
+        elif resolved_at < int(e.get("registered_at", 0)):
             defects.append({"id": e.get("id"), "defect": "resolution_timestamp_precedes_registration"})
+        elif not (r.get("evidence_citation") or "").strip():
+            defects.append({"id": e.get("id"), "defect": "missing_resolution_evidence"})
         elif r.get("outcome") == "unresolved":
-            unresolved.append(e)
+            if not (r.get("reason") or "").strip():
+                defects.append({"id": e.get("id"), "defect": "unresolved_without_reason"})
+            else:
+                unresolved.append(e)
+                unresolved_ids.add(e.get("id"))
         elif r.get("outcome") in ("true", "false"):
-            scored.append((e, r))
+            try:
+                evidence_at = int(r.get("evidence_at"))
+                if evidence_at < int(e.get("registered_at", 0)):
+                    raise ValueError("outcome_evidence_precedes_registration")
+                if evidence_at > resolved_at:
+                    raise ValueError("outcome_evidence_after_resolution")
+                scored.append((e, r))
+                scored_ids.add(e.get("id"))
+            except (TypeError, ValueError) as err:
+                reason = str(err) or "missing_outcome_evidence_timestamp"
+                defects.append({"id": e.get("id"), "defect": reason})
+        else:
+            defects.append({"id": e.get("id"), "defect": "invalid_resolution_outcome"})
 
     n_scored = len(scored)
     outcomes = [1.0 if r.get("outcome") == "true" else 0.0 for _, r in scored]
@@ -162,9 +199,9 @@ def main() -> int:
         if r is None:
             if e.get("resolution_date", "") <= time.strftime("%Y-%m-%d", time.gmtime(now)):
                 d["due_unresolved"] += 1
-        elif r.get("outcome") == "unresolved":
+        elif e.get("id") in unresolved_ids:
             d["unresolved"] += 1
-        elif r.get("outcome") in ("true", "false"):
+        elif e.get("id") in scored_ids:
             d["scored"].append((e, r))
 
     def score_group(group):

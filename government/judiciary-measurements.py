@@ -112,9 +112,12 @@ def suite_compliance():
         per_change=data.pop('per_change',None)
         if per_change is not None:
             red_changes=data.pop('changes_reaching_main_red',[])
+            red_unknown=data.pop('red_chronology_unresolved_changes',[])
             detail=root/'branches'/('suite-compliance-%d.json' % now)
             full={'observed_at':now,'summary':data,
-                  'changes_reaching_main_red':red_changes,'per_change':per_change}
+                  'changes_reaching_main_red':red_changes,
+                  'red_chronology_unresolved_changes':red_unknown,
+                  'per_change':per_change}
             blob=(json.dumps(full,
                              sort_keys=True,indent=2)+'\n').encode()
             detail.parent.mkdir(parents=True,exist_ok=True)
@@ -123,6 +126,7 @@ def suite_compliance():
             tmp.replace(detail)
             data['per_change_count']=len(per_change)
             data['red_change_count']=len(red_changes)
+            data['red_chronology_unresolved_count']=len(red_unknown)
             data['details_ref']=str(detail)
             data['details_sha256']=hashlib.sha256(blob).hexdigest()
         return data

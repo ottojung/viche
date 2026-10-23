@@ -8,10 +8,15 @@ export VICHE_PREDICT_LEDGER=$tmp/ledger.json
 export VICHE_PREDICT_CALIBRATION=$tmp/calibration.json
 mkdir -p "$tmp/records/predictions"
 printf 'bill\n' > "$tmp/records/predictions/pilot.tsv"
+if VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register \
+    --bill no-source --proposition 'No evidence' --probability .5 \
+    --resolution-date 1970-01-02 --author seat >/dev/null 2>&1; then
+    echo 'registration without a named evidence source unexpectedly passed' >&2; exit 1
+fi
 if /bin/sh "$root/government/predict-gate.sh" --all --at 100 bill >/dev/null 2>&1; then
     echo 'gate unexpectedly passed without registration' >&2; exit 1
 fi
-VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill --proposition 'Will event occur?' --probability .8 --resolution-date 2026-12-01 --evidence fixture --author seat
+VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill --proposition 'Will event occur?' --probability .8 --resolution-date 1970-01-02 --evidence fixture --author seat
 # Act 22 §2 registration requires 2–5 predictions; one must not clear the gate.
 if /bin/sh "$root/government/predict-gate.sh" --all --at 100 bill >/dev/null 2>&1; then
     echo 'gate accepted only one prediction (Act 22 requires 2–5)' >&2; exit 1
@@ -23,7 +28,7 @@ fi
 if /bin/sh "$root/government/predict-gate.sh" --all --at 89 bill >/dev/null 2>&1; then
     echo 'gate accepted a prediction registered after the ballot timestamp' >&2; exit 1
 fi
-VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill --proposition 'Will the second event occur?' --probability .2 --resolution-date 2026-12-01 --evidence fixture2 --author seat2 >/dev/null
+VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill --proposition 'Will the second event occur?' --probability .2 --resolution-date 1970-01-02 --evidence fixture2 --author seat2 >/dev/null
 if ! /bin/sh "$root/government/predict-gate.sh" --all --at 100 bill >/dev/null 2>&1; then
     echo 'gate rejected an earlier prediction for the bill' >&2; exit 1
 fi
@@ -43,9 +48,29 @@ done
 if ! VICHE_PREDICT_LEDGER=$order_ledger /bin/sh "$root/government/predict-gate.sh" --at 100 order-1 >/dev/null 2>&1; then
     echo 'consequential order gate rejected earlier evidence-linked predictions' >&2; exit 1
 fi
-VICHE_PREDICT_NOW=110 python3 "$root/government/predict-ledger.py" resolve --id bill-registration-1 --outcome true --resolver clerk --evidence fixture#1
-VICHE_PREDICT_NOW=110 python3 "$root/government/predict-ledger.py" resolve --id bill-registration-2 --outcome false --resolver clerk --evidence fixture#2
-python3 "$root/government/predict-scorer.py" --now 120 >/dev/null
+future_ledger=$tmp/future-ledger.json
+VICHE_PREDICT_LEDGER=$future_ledger VICHE_PREDICT_NOW=90 \
+    python3 "$root/government/predict-ledger.py" register --bill future \
+    --proposition 'Will the future event occur?' --probability .7 \
+    --resolution-date 2026-12-01 --evidence future-source --author seat >/dev/null
+if VICHE_PREDICT_LEDGER=$future_ledger VICHE_PREDICT_NOW=100 \
+    python3 "$root/government/predict-ledger.py" resolve --id future-registration-1 \
+    --outcome true --resolver clerk --evidence future-source#1 --evidence-at 95 >/dev/null 2>&1; then
+    echo 'prediction resolved before its resolution date' >&2; exit 1
+fi
+if VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" \
+    resolve --id bill-registration-1 --outcome true --resolver clerk \
+    --evidence fixture#early --evidence-at 80 >/dev/null 2>&1; then
+    echo 'outcome evidence dated before registration was accepted' >&2; exit 1
+fi
+if VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" \
+    resolve --id bill-registration-1 --outcome unresolved --resolver clerk \
+    --reason 'source unavailable' >/dev/null 2>&1; then
+    echo 'unresolved result without evidence citation was accepted' >&2; exit 1
+fi
+VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" resolve --id bill-registration-1 --outcome true --resolver clerk --evidence fixture#1 --evidence-at 90000
+VICHE_PREDICT_NOW=90000 python3 "$root/government/predict-ledger.py" resolve --id bill-registration-2 --outcome false --resolver clerk --evidence fixture#2 --evidence-at 90000
+python3 "$root/government/predict-scorer.py" --now 90001 >/dev/null
 python3 - "$tmp/calibration.json" <<'PY'
 import json,sys
 x=json.load(open(sys.argv[1]))
@@ -65,13 +90,16 @@ assert 'reliability' in authors['seat'] and 'discrimination' in authors['seat']
 PY
 # Add a due prediction that remains unresolved: coverage must reflect the
 # unresolved registration, while the score must exclude it.
-VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill2 --proposition 'Will another event occur?' --probability .2 --resolution-date 2026-01-01 --evidence fixture2 --author seat2 >/dev/null
-python3 "$root/government/predict-scorer.py" --now "$(date -d 2026-02-01 +%s)" >/dev/null
+VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill2 --proposition 'Will another event occur?' --probability .2 --resolution-date 1970-01-02 --evidence fixture2 --author seat2 >/dev/null
+VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill3 --proposition 'Will unavailable event occur?' --probability .7 --resolution-date 1970-01-02 --evidence unavailable-source --author seat3 >/dev/null
+VICHE_PREDICT_NOW=90001 python3 "$root/government/predict-ledger.py" resolve --id bill3-registration-1 --outcome unresolved --resolver clerk --evidence unavailable-source#missing --reason 'named source unavailable' >/dev/null
+python3 "$root/government/predict-scorer.py" --now 90001 >/dev/null
 python3 - "$tmp/calibration.json" <<'PY'
 import json,sys
-x=json.load(open(sys.argv[1])); assert abs(x['coverage']-2/3)<1e-3, (x['coverage'],x['counts'])
+x=json.load(open(sys.argv[1])); assert abs(x['coverage']-3/4)<1e-3, (x['coverage'],x['counts'])
 assert x['counts']['due_unresolved']==1, x['counts']
-assert x['counts']['unresolved']==0
+assert x['counts']['unresolved']==1
+assert x['counts']['resolved_scored']==2
 PY
 python3 "$root/government/predict-ledger.py" verify >/dev/null
 python3 - "$tmp/ledger.json" <<'PY'

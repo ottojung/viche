@@ -2,14 +2,31 @@
 # Check parliamentary ballot tally under POSIX sh (no agent or network needed).
 set -eu
 root=$(git rev-parse --show-toplevel)
+python3 - "$root/government/sitting.sh" <<'PY'
+import sys
+text=open(sys.argv[1]).read()
+gate=text.index('Before publishing any bill for ballots, run government/predict-gate.sh BILL_ID')
+solicit=text.index('solicit individual ballots')
+assert gate < solicit, 'Act 22 pre-ballot gate must precede ballot solicitation instruction'
+PY
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' 0
 mkdir -p "$scratch/government" "$scratch/records/bills" "$scratch/records/ballots"
 cp "$root/government/seats.tsv" "$scratch/government/seats.tsv"
 cp "$root/government/voting.conf" "$scratch/government/voting.conf"
 cp "$root/government/predict-gate.sh" "$scratch/government/predict-gate.sh"
+cp "$root/government/predict-ledger.py" "$scratch/government/predict-ledger.py"
 mkdir -p "$scratch/records/predictions"
-printf '# no pilot bills in this fixture\n' > "$scratch/records/predictions/pilot.tsv"
+printf 'test-1\n' > "$scratch/records/predictions/pilot.tsv"
+resolution_date=$(python3 -c 'import datetime; print((datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(days=1)).strftime("%Y-%m-%d"))')
+registration_time=$(($(date +%s)-60))
+for author in seat-a seat-b; do
+    VICHE_TOWN_ROOT=$scratch VICHE_PREDICT_NOW=$registration_time \
+        python3 "$root/government/predict-ledger.py" register --bill test-1 \
+        --proposition "Pilot outcome from $author" --probability 0.6 \
+        --resolution-date "$resolution_date" --evidence "fixture:$author" \
+        --author "$author" >/dev/null
+done
 printf '%s\n' "A proposed statute" > "$scratch/records/bills/test-1.md"
 digest=$(sha256sum "$scratch/records/bills/test-1.md" | cut -d ' ' -f1)
 tab=$(printf '\t')
@@ -33,7 +50,7 @@ if /bin/sh "$root/government/tally.sh" test-1 >/dev/null 2>&1; then
     echo "Missing Act 22 pilot registry bypassed the gate" >&2
     exit 1
 fi
-printf '# no pilot bills in this fixture\n' > "$scratch/records/predictions/pilot.tsv"
+printf 'test-1\n' > "$scratch/records/predictions/pilot.tsv"
 # The exact bill hash is binding: a revision must invalidate every old ballot.
 printf '%s\n' "Unapproved new text" >> "$scratch/records/bills/test-1.md"
 if /bin/sh "$root/government/tally.sh" test-1 >/dev/null 2>&1; then

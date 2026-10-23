@@ -237,3 +237,54 @@ local suite successfully. GitHub Actions workflow run
 `40037823167` was still `in_progress` at last inspection. Independent review,
 authorized merge, canonical deployment, and Clerk operation of Act 22 duties
 remain outstanding; the candidate is not reported as accepted or installed.
+
+## Merge-history audit correction — 2026-10-23
+
+While preparing independent review, I found that the compliance check's
+`git diff-tree` path discovery returned no paths for non-root merge commits by
+default. This would omit the very merge commits used by the delivery process.
+For example, the first-parent main integration `0af8a87` reports no changed
+paths without merge-parent selection, while its first-parent delta contains
+the appointment recovery files. The checker now computes changed paths against
+each commit's first parent, matching its first-parent main traversal. The
+hermetic fixture now uses a real no-FF merge commit and requires a pre-push
+receipt for that exact merge SHA and tree; it also checks wrong-suite,
+missing-record and red outcomes. The focused compliance smoke passes after this
+correction. Full-suite verification and publication of this updated candidate
+are pending.
+
+## Independent review findings and response — 2026-10-23
+
+Audit member `c1a0000b` reviewed exact candidate `86175c7` and recommended
+changes before approval. The reviewer identified: ballot-gate enforcement
+being only post-ballot defense in depth; early/malformed resolution and missing
+outcome-evidence timestamps; weak validation of green run details; red records
+after a main change not proving red-at-merge chronology; an empty operational
+pilot; and the review archive not being a Git worktree for its full-suite
+attempt. Their focused prediction/compliance tests and syntax checks passed; the
+archive-based full-suite attempt stopped at `boot-smoke.sh` because `.git` was
+absent. No independent approval was granted for that candidate.
+
+Corrections in this working revision: ledger registration rejects dates already
+past; resolution refuses before the stated due date, requires a citation and
+reason for `unresolved`, and requires `--evidence-at` for scored outcomes with
+timestamp bounds against registration/resolution. Integrity verification and
+the scorer reject early or malformed resolutions rather than counting them.
+The compliance auditor now requires the suite-status `runs` evidence to contain
+a successful run (and two red runs for red evidence), including for pre-push
+receipts; first-parent path evaluation now observes merge commits; wrong-suite
+and malformed-green fixtures are unreadable. A red run observed only after the
+main change is labeled `red_chronology_unresolved`, not a proven main-red
+episode. Judiciary output preserves those cases separately. The Clerk's sitting
+instructions now prohibit publishing/soliciting/recording ballots before a
+successful Act 22 gate; tally repeats it. Tests assert ordering, and the normal
+tally fixture now has a pilot-listed bill with two valid registrations. The
+production pilot list remains Clerk-owned and empty in this candidate pending
+the Clerk's operational selection; no production bill/order gate exercise is
+claimed.
+
+After these changes `dash tests/run-all.sh`, focused prediction, compliance and
+tally tests, Python compilation, shell syntax checks and `git diff --check`
+passed locally. This is not approval: the revised candidate still needs
+independent review and fresh GitHub Actions CI before merge. The review did not
+authorize integration.
