@@ -83,19 +83,70 @@ grep -q 'level=critical' "$state/janitor/status"
 # 6. reclaim-quarantined removes only items past the grace window (when enabled);
 #    the quarantine dir is state-relative, so the live quarantine is untouched.
 q=$state/quarantine
-mkdir -p "$q/old-item" "$q/new-item"
+mkdir -p "$q/old-item" "$q/new-item" "$d/outside-item"
 printf 'x\n' > "$q/old-item/f"
 printf 'x\n' > "$q/new-item/f"
 now=$(date -u +%s)
+grace=$(sed -n 's/^quarantine_grace_seconds=//p' "$town/government/janitor.conf" | tail -n 1)
+[ -n "$grace" ] || grace=604800
+old_stamp=$((now - grace - 1))
+young_stamp=$((now - grace + 1))
 {
     printf 'ts\tsrc\tdest\tsize_kb\tquarantined_at\n'
-    printf '2026-01-01T00:00:00Z\t/old\t%s/old-item\t1\t1\n' "$q"
-    printf '2026-01-01T00:00:00Z\t/new\t%s/new-item\t1\t%s\n' "$q" "$now"
+    printf '2026-01-01T00:00:00Z\t/old\t%s/old-item\t1\t%s\n' "$q" "$old_stamp"
+    printf '2026-01-01T00:00:00Z\t/new\t%s/new-item\t1\t%s\n' "$q" "$young_stamp"
+    printf '2026-01-01T00:00:00Z\t/outside\t%s/outside-item\t1\t1\n' "$d"
 } > "$state/janitor/quarantined.tsv"
 printf 'safe_reclaim_enabled=1\nreclaim_enabled=1\n' >> "$town/government/janitor.conf"
 /bin/sh "$town/government/janitor.sh" reclaim-quarantined
 [ ! -d "$q/old-item" ]
 [ -d "$q/new-item" ]
+[ -d "$d/outside-item" ]
+grep -q "device_avail_before_kb=.*device_avail_after_kb=.*measured_device_delta_kb=" "$state/janitor/actions.log"
+grep -q 'candidate_du_kb=' "$state/janitor/actions.log"
+
+# A deterministic device probe proves the audit reports the measured available-KB
+# delta independently from candidate du size (the second df sample gains 7 KB).
+mkdir -p "$q/measured-item"
+printf 'candidate data\n' > "$q/measured-item/f"
+now=$(date -u +%s)
+printf '2026-01-01T00:00:00Z\t/measured\t%s/measured-item\t999999\t%s\n' \
+    "$q" "$((now - grace - 1))" >> "$state/janitor/quarantined.tsv"
+cat > "$d/bin/df" <<'MOCK'
+#!/bin/sh
+case "$*" in
+    *-i*) printf 'Filesystem Inodes IUsed IFree IUse%% Mounted on\n/dev/fake 1000 100 900 10%% /\n' ;;
+    *)
+        n=0
+        [ ! -f "$DF_COUNTER" ] || n=$(cat "$DF_COUNTER")
+        n=$((n + 1))
+        printf '%s\n' "$n" > "$DF_COUNTER"
+        if [ "$n" -eq 1 ]; then avail=100; else avail=107; fi
+        printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/fake 1000 900 %s 90%% /\n' "$avail"
+        ;;
+esac
+MOCK
+chmod +x "$d/bin/df"
+export DF_COUNTER=$d/df-counter
+/bin/sh "$town/government/janitor.sh" observe >/dev/null
+/bin/sh "$town/government/janitor.sh" reclaim-quarantined
+[ ! -d "$q/measured-item" ]
+grep -q 'candidate_du_kb=999999.*device_avail_before_kb=100.*device_avail_after_kb=107.*measured_device_delta_kb=7' \
+    "$state/janitor/actions.log"
+# Restore the critical-capacity df fixture for later integration coverage.
+cat > "$d/bin/df" <<'MOCK'
+#!/bin/sh
+inode=0
+for a in "$@"; do [ "$a" = "-i" ] && inode=1; done
+if [ "$inode" = 1 ]; then
+    printf 'Filesystem Inodes IUsed IFree IUse%% Mounted on\n'
+    printf '/dev/fake 1000 100 900 10%% /\n'
+else
+    printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n'
+    printf '/dev/fake 1000000 990000 10000 99%% /\n'
+fi
+MOCK
+unset DF_COUNTER
 
 # 7. build-cache (.lake) classification: a live/recent cache is only monitored;
 #    an aged cache whose parent worktree is also aged is a quarantine candidate.
@@ -232,6 +283,7 @@ got=$(awk -F'\t' 'NR==2{print $7}' "$state/janitor/territorial.tsv")
 sdir=$d/scratch
 mkdir -p "$sdir"
 printf 'old\n' > "$sdir/.bcfold"
+dd if=/dev/zero of="$sdir/.bcfold" bs=1024 count=2 2>/dev/null
 printf 'new\n' > "$sdir/.bcfnew"
 touch -d '2 days ago' "$sdir/.bcfold"
 export JANITOR_SCRATCH_DIR=$sdir
@@ -242,6 +294,8 @@ verdict=$(tail -n 1 "$state/janitor/scratch.tsv" | cut -f9)
 /bin/sh "$town/government/janitor.sh" scratch-quarantine
 [ ! -f "$sdir/.bcfold" ] || { echo "aged scratch not staged"; exit 1; }
 [ -f "$sdir/.bcfnew" ] || { echo "fresh scratch wrongly staged"; exit 1; }
+staged_kb=$(awk -F '\t' 'NR>1 && $3 ~ /scratch-/ {n=$4} END {print n}' "$state/janitor/quarantined.tsv")
+[ "$staged_kb" -gt 0 ] || { echo "staged scratch logical size was not recorded"; exit 1; }
 unset JANITOR_SCRATCH_DIR
 
 # 15. Idle regenerable build-cache reclamation: a clean, fully-pushed worktree

@@ -157,6 +157,29 @@ du_kb() {
     fi
 }
 
+quarantine_path_ok() {
+    # Accept only a direct child of the configured quarantine directory. Canonicalize
+    # both sides to reject traversal, symlink escapes and policy-locality violations.
+    _qpo_path=$1
+    [ -n "$quarantine_dir" ] && [ "$quarantine_dir" != / ] || return 1
+    [ -d "$_qpo_path" ] || return 1
+    _qpo_root=$(readlink -f "$quarantine_dir" 2>/dev/null) || return 1
+    _qpo_dest=$(readlink -f "$_qpo_path" 2>/dev/null) || return 1
+    [ -n "$_qpo_root" ] && [ "$_qpo_root" != / ] || return 1
+    case "$_qpo_dest" in
+        "$_qpo_root"/*) _qpo_rel=${_qpo_dest#"$_qpo_root"/} ;;
+        *) return 1 ;;
+    esac
+    case "$_qpo_rel" in ''|*/*|.|..) return 1 ;; esac
+    return 0
+}
+
+available_kb() {
+    _akb=$(df_field "$probe" 4)
+    is_num "$_akb" || return 1
+    printf '%s' "$_akb"
+}
+
 due() {
     # due <stamp-file> <interval-seconds>
     [ -f "$1" ] || return 0
@@ -724,10 +747,10 @@ scratch_quarantine() {
             [ "$referenced" -eq 1 ] && break
         done
         [ "$referenced" -eq 1 ] && continue
+        fkb=$(du -k "$f" 2>/dev/null | awk 'NR==1{print $1; exit}')
+        is_num "$fkb" || fkb=0
         if mv "$f" "$stage/" 2>/dev/null; then
             n=$((n + 1))
-            fkb=$(du -k "$f" 2>/dev/null | awk 'NR==1{print $1; exit}')
-            is_num "$fkb" || fkb=0
             kb=$((kb + fkb))
         fi
     done
@@ -764,14 +787,33 @@ reclaim_quarantined() {
     freed_kb=0
     tail -n +2 "$qlog" 2>/dev/null | while IFS="$(printf '\t')" read -r ts src dest size qat; do
         [ -n "$dest" ] || continue
-        [ -d "$dest" ] || continue
+        if ! quarantine_path_ok "$dest"; then
+            log_append "$jstate/actions.log" "$ts action=reclaim refused=invalid-quarantine-path dest=$dest"
+            continue
+        fi
         age=$((now - qat))
         [ "$age" -ge "$quarantine_grace" ] || continue
+        if path_in_use "$dest"; then
+            log_append "$jstate/actions.log" "$ts action=reclaim deferred=live dest=$dest size_kb=$size"
+            continue
+        fi
         if [ "$dry_run" -eq 1 ]; then
-            log_append "$jstate/actions.log" "$ts action=reclaim dry-run src=$dest size=$size"
+            log_append "$jstate/actions.log" "$ts action=reclaim dry-run src=$dest candidate_du_kb=$size why=expired-quarantine recoverability=quarantine-copy liveness=clear owner=janitor-quarantine"
         else
-            rm -rf "$dest" 2>/dev/null || true
-            log_append "$jstate/actions.log" "$ts action=reclaim src=$dest size=$size freed=$size"
+            before=$(available_kb 2>/dev/null || printf '')
+            if [ -z "$before" ] || ! quarantine_path_ok "$dest" || path_in_use "$dest"; then
+                log_append "$jstate/actions.log" "$ts action=reclaim deferred=measurement-or-liveness dest=$dest"
+                continue
+            fi
+            if rm -rf "$dest" 2>/dev/null; then
+                after=$(available_kb 2>/dev/null || printf '')
+                if [ -n "$after" ]; then
+                    delta=$((after - before))
+                    log_append "$jstate/actions.log" "$ts action=reclaim executed dest=$dest candidate_du_kb=$size device_avail_before_kb=$before device_avail_after_kb=$after measured_device_delta_kb=$delta why=expired-quarantine recoverability=quarantine-copy liveness=clear owner=janitor-quarantine"
+                else
+                    log_append "$jstate/actions.log" "$ts action=reclaim executed dest=$dest candidate_du_kb=$size device_measurement=unavailable"
+                fi
+            fi
         fi
     done
     log_append "$jstate/actions.log" "$ts reclaim-quarantined end"
@@ -846,19 +888,40 @@ reclaim_idle_caches() {
         sz=$(du -sk "$path" 2>/dev/null | awk 'NR==1{print $1; exit}')
         is_num "$sz" || sz=0
         if [ "$dry_run" -eq 1 ]; then
-            log_append "$jstate/actions.log" "$ts idle-cache dry-run path=$path size_kb=$sz idle_s=$idle"
+            log_append "$jstate/actions.log" "$ts idle-cache dry-run path=$path candidate_du_kb=$sz idle_s=$idle why=regenerable-build-cache recoverability=lake-update-cache-get-build liveness=clear owner=clean-fully-pushed-worktree"
             printf '%s\t%s\n' "$path" "$sz" >> "$acc"
-        elif rm -rf "$path" 2>/dev/null; then
-            log_append "$jstate/actions.log" "$ts idle-cache reclaimed path=$path size_kb=$sz idle_s=$idle recovery=lake-update-cache-get-build"
-            printf '%s\t%s\n' "$path" "$sz" >> "$acc"
+        else
+            before=$(available_kb 2>/dev/null || printf '')
+            # Evidence can stale between the initial checks and destruction. Recheck
+            # liveness, idle age and repository cleanliness immediately before rm.
+            m=$(stat -c %Y "$path" 2>/dev/null || printf '0')
+            is_num "$m" || m=0
+            idle=$((now - m))
+            dirty=$(git -C "$parent" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+            is_num "$dirty" || dirty=1
+            if [ -z "$before" ] || [ "$idle" -lt "$idle_cache_seconds" ] \
+               || path_in_use "$path" || path_in_use "$parent" || [ "$dirty" -gt 0 ]; then
+                log_append "$jstate/actions.log" "$ts idle-cache skip path=$path reason=final-evidence-recheck"
+                continue
+            fi
+            if rm -rf "$path" 2>/dev/null; then
+                after=$(available_kb 2>/dev/null || printf '')
+                if [ -n "$after" ]; then
+                    delta=$((after - before))
+                    log_append "$jstate/actions.log" "$ts idle-cache executed path=$path candidate_du_kb=$sz device_avail_before_kb=$before device_avail_after_kb=$after measured_device_delta_kb=$delta idle_s=$idle why=regenerable-build-cache recovery=lake-update-cache-get-build liveness=clear owner=clean-fully-pushed-worktree"
+                else
+                    log_append "$jstate/actions.log" "$ts idle-cache executed path=$path candidate_du_kb=$sz device_measurement=unavailable"
+                fi
+                printf '%s\t%s\n' "$path" "$sz" >> "$acc"
+            fi
         fi
     done
     n=$(wc -l < "$acc" 2>/dev/null | tr -d ' ')
     kb=$(awk -F'\t' '{s+=$2} END{printf "%d", s+0}' "$acc" 2>/dev/null)
     is_num "$n" || n=0
     is_num "$kb" || kb=0
-    log_append "$jstate/actions.log" "$ts idle-cache-reclaim end count=$n freed_kb=$kb dry_run=$dry_run"
-    printf 'janitor: idle-cache reclaim %s item(s), %s KB (dry_run=%s)\n' "$n" "$kb" "$dry_run"
+    log_append "$jstate/actions.log" "$ts idle-cache-reclaim end count=$n candidate_du_kb=$kb dry_run=$dry_run (device delta recorded per item)"
+    printf 'janitor: idle-cache reclaim %s item(s), candidate_du_kb=%s (device delta recorded per item; dry_run=%s)\n' "$n" "$kb" "$dry_run"
     return 0
 }
 
