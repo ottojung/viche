@@ -23,11 +23,13 @@ It tests the local exact HEAD and pushes that commit as a new
 origin/delivery/short-description branch without force or mutation of main.
 It records a durable operational receipt. Preserve authorship and dissent.
 
-The narrowly permissioned GitHub Actions delivery-pr.yml workflow attempts
-to open a reviewable PR, but does not merge. A regular branch push triggers
-CI independently. If GitHub disallows Actions PR creation, record the exact
-error and use an authorized GitHub integration to open a PR. Do not claim
-that a successful Git push is a finished integration.
+The narrowly permissioned GitHub Actions delivery-pr.yml workflow runs from
+canonical main AFTER successful branch-push CI, even when an old seat branch
+does not contain the workflow file. It may open a reviewable PR, but NEVER
+merges. Its elevated job never checks out or runs code from the delivery
+branch. If GitHub disallows Actions PR creation, record the exact error and
+use an authorized GitHub integration to open a PR. A successful Git push
+alone is never a finished integration.
 
 ## Act 21 exact-commit quality gate
 
