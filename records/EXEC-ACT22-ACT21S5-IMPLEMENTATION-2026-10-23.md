@@ -63,6 +63,23 @@ prediction and Executive-cycle smoke tests assert these paths. The Clerk still
 owns selecting/publishing the pilot IDs and order classifications and using the
 pre-ballot gate; those are operational duties and remain unclaimed here.
 
+## Proposal verification failure and correction
+
+The first signed proposal attempt did not publish because `tests/run-all.sh`
+failed in `boot-smoke.sh`: the Clerk prompt exceeded the host's per-argument
+limit. Reproduction measured the Judiciary prompt payload at roughly 166 KB;
+`suite_compliance` embedded the entire per-change history and red-change list
+into a prompt that includes the Judiciary report. The Judiciary now retains the
+complete check result, red-change list and per-change rows in a separate
+timestamped detail record under `VICHE_STATE_ROOT/branches/`, and emits only
+counts, metrics, detail path and SHA-256 in the prompt-facing report. The boot
+smoke verifies the detail hash/count linkage and limits the live prompt report.
+It also isolates the Sentinel-state path from host state.
+
+After this correction, `dash tests/boot-smoke.sh` and the full
+`sh tests/run-all.sh` passed. The initial proposal failure was a pre-merge
+verification defect; it did not reach `main` and no deployment occurred.
+
 The implementation on this seat branch remains unmerged. Focused revalidation
 passed: `sh tests/predict-smoke.sh`, `sh tests/suite-compliance-smoke.sh`,
 `sh tests/tally-smoke.sh`, shell syntax checks (including `sitting.sh`), Python compilation and
