@@ -33,12 +33,40 @@ evidence='No ordinary incident.'
 [ ! -s "$root/random/incident.json" ] || evidence="$evidence $(cat "$root/random/incident.json")"
 selection='Test-only no sample'
 if [ "${VICHE_AUDIT_SELECTION:-1}" = 1 ]; then
-  if [ "$incident" = yes ] && [ -s "$root/random/latest.json" ]; then
+  # The audit cycle belongs to a FROZEN randomized draw, not each repeat
+  # dispatch. Incident checks may recur every 30 minutes with the SAME draw.
+  # That must not mint additional correction slots for a case.
+  fresh_sample=no
+  if [ -s "$root/random/latest.json" ]; then
+    sample_at=$(jq -r '.at // -1' "$root/random/latest.json")
+    case "$sample_at" in ''|*[!0-9]*) fresh_sample=yes;; *)
+      if [ "$now" -lt "$sample_at" ] || [ $((now-sample_at)) -ge 21600 ]; then fresh_sample=yes; fi ;;
+    esac
+  else fresh_sample=yes
+  fi
+  if [ "$incident" = yes ] && [ "$fresh_sample" = no ]; then
     selection=$(cat "$root/random/latest.json")
   else
     selection=$(python3 "$town/government/audit-selection.py") || exit 1
   fi
 fi
+# Identity is stable for the exact sampled case cohort. Repeated incident
+# dispatches and restarts of the same frozen draw reuse one cycle token.
+# Test-only no-selection mode uses a deterministic six-hour fixture bucket.
+if [ "$selection" = 'Test-only no sample' ]; then
+  cycle_id=$(printf 'test-only:%s\n' "$((now/21600))" | sha256sum | cut -c1-32)
+else
+  cycle_id=$(printf '%s\n' "$selection" | python3 -c '
+import hashlib,json,sys
+v=json.load(sys.stdin)
+if not isinstance(v,dict) or not isinstance(v.get("at"),int) or not isinstance(v.get("cases"),list) or not isinstance(v.get("seed_after_snapshot"),str):
+    raise SystemExit("invalid frozen audit batch")
+payload={"at":v["at"],"seed_after_snapshot":v["seed_after_snapshot"],
+         "cases":[c.get("case_id") for c in v["cases"]]}
+print(hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest()[:32])
+') || exit 1
+fi
+
 prompt=$(cat <<EOF
 You are the independent Viche Judiciary under Act 4, accountable to
 Parliament and the Founder, not to the Executive or Clerk. Your sole role is
@@ -60,6 +88,13 @@ Separate verified evidence, uncertainty, and mere leading indicators.
 $(cat "$charter")
 === END AUTHORITATIVE CONSTITUTION ===
 
+Current audit dispatch cycle ID (include exactly as --cycle-id on every
+--correction command): $cycle_id
+Operational definition: the same frozen sampled batch has one durable
+audit-cycle ID, EVEN IF the Judiciary is summoned again during an incident.
+A later independent sample is a new cycle. This is not a retroactive
+adjudication of historical cycles or the contested PR #32 corrections.
+
 Current deterministic watchdog evidence:
 $evidence
 Randomized audit cases (bounded deep review):
@@ -72,6 +107,8 @@ lawfulness and effect. Submit an evidence-backed verdict for EVERY sampled case
 using $town/government/audit-accountability.py report with --case, --verdict
 (verified, not_assigned, finding, inconclusive) and --evidence. Record a
 finding for neglect or false delivery, not for a mere absence of information.
+For --correction, also supply --cycle-id "$cycle_id". Corrections without this
+current dispatch token, or with a token from another dispatch, are rejected.
 Use verified_fixed with new evidence only for later independent correction.
 
 Inspect the complete, current ordinary laws at $town/government/LAWS.md and
@@ -91,6 +128,22 @@ the evidence, including failures of judicial measurement, to Parliament. Do not 
 it thinks it is effective. Use Antonina-managed agents; model selection is Antonina's responsibility. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
 EOF
 )
-antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$prompt" --detach
+# Publish identity BEFORE launching a detached agent, otherwise a fast agent
+# may correctly report a correction before the CLI has made its token valid.
+# The registered token remains the same across repeated dispatches of a
+# frozen draw. A failed/ambiguous launch is recorded and not replayed
+# immediately, because it may already have started a side-effecting agent.
+umask 077
+if [ ! -f "$root/audit-cycle-identities.tsv" ] ||
+   ! awk -F '\t' -v token="$cycle_id" '$2==token{found=1} END{exit !found}' "$root/audit-cycle-identities.tsv"; then
+  printf '%s\t%s\n' "$now" "$cycle_id" >> "$root/audit-cycle-identities.tsv"
+fi
+printf '%s\n' "$cycle_id" > "$root/current-audit-cycle.tmp"
+mv "$root/current-audit-cycle.tmp" "$root/current-audit-cycle"
 printf '%s\n' "$now" > "$root/last-audit-dispatch"
+if ! antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$prompt" --detach; then
+  printf '%s\t%s\tlaunch_failed_or_ambiguous\n' "$now" "$cycle_id" >> "$root/audit-dispatches.tsv"
+  echo "Judiciary: audit launch failed or ambiguous, preserving cycle identity" >&2
+  exit 1
+fi
 printf '%s\t%s\taccepted_not_verified\n' "$now" "$incident" >> "$root/audit-dispatches.tsv"
