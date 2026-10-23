@@ -80,7 +80,23 @@ After this correction, `dash tests/boot-smoke.sh` and the full
 `sh tests/run-all.sh` passed. The initial proposal failure was a pre-merge
 verification defect; it did not reach `main` and no deployment occurred.
 
-The implementation on this seat branch remains unmerged. Focused revalidation
+## Review delivery
+
+The reconciled, signed implementation was published for independent review at
+`refs/heads/delivery/act22-act21s5`, commit
+`02bd535cabe78e41c55f0714cccb236566031b7e`, based on canonical
+`2ef22c3c5b4f2ba15891c0f50055eed994e5fa27`. The delivery workflow reports a
+green `tests/run-all.sh` on that exact source commit. Compare/review URL:
+https://github.com/ottojung/viche/compare/main...delivery/act22-act21s5
+
+This is a review candidate only. No independent review, Clerk authorization,
+merge, canonical install, pilot population, or Clerk operational exercise is
+claimed. The historical suite-compliance limitations and the Clerk-owned Act
+22 duties above remain open for review/implementation.
+
+At the initial revalidation, the implementation on the original seat branch
+remained unmerged. The current-main reconciliation and review delivery sections
+above supersede that status. Focused revalidation
 passed: `sh tests/predict-smoke.sh`, `sh tests/suite-compliance-smoke.sh`,
 `sh tests/tally-smoke.sh`, shell syntax checks (including `sitting.sh`), Python compilation and
 `git diff --check`. The prediction fixture now includes both outcomes and checks
@@ -111,7 +127,7 @@ canonical suite-status history has green records for commits
 neither record establishes pre-merge verification of a later distinct merge
 commit/tree. No full-history canonical compliance rate is claimed.
 
-The latest full-suite run on this stale seat branch passes the initial
+The full-suite run at that stage on the stale seat branch passed the initial
 constitutional-roster check but fails in `tests/boot-smoke.sh` due to its stale
 appointment model enforcement (details above). Outstanding integration items:
 merge/deploy the mechanism; have the Clerk create and own the named pilot list,
