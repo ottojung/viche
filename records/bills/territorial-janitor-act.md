@@ -9,14 +9,14 @@
 ## Motivating observation
 
 - Founder instruction #298 ordered a durable **Janitor Office** for disk health and clutter prevention.
-- Founder directive #299 clarified that **`billy-dev` is Viche's sovereign territory**, that Act 9 restricts only the Town's *productive mission* (Viche + Kawun), not its *administrative jurisdiction* over the box, and explicitly ordered: *"Review Founding Act 9 and the draft Janitor Office Act 12 to remove their mistaken blanket claim that all non-Viche/Kawun files are inherently outside administrative authority."*
+- Founder directive #299 clarified that **`phoebe-dev` is Viche's sovereign territory**, that Act 9 restricts only the Town's *productive mission* (Viche + Kawun), not its *administrative jurisdiction* over the box, and explicitly ordered: *"Review Founding Act 9 and the draft Janitor Office Act 12 to remove their mistaken blanket claim that all non-Viche/Kawun files are inherently outside administrative authority."*
 - The prior bill `records/bills/janitor-office-act.md` (digest `b2a3eb0a…`) retains exactly that blanket exclusion (its §2: "works **only** within the exclusive mandate … must not delete or modify … any unrelated project"). It is **superseded** and must not be enacted.
-- The merged office (`government/janitor.sh`, invoked from `government/boot.sh`) already **observes** `billy-dev` with hostname-tagged records; its reclamation path is unexercised. Real phoebe baseline (2026-10-14T18:10Z): disk 79% used (~49.7 GB free), inodes 31%, cgroup memory 4.14/8 GiB, level `ok`.
+- The merged office (`government/janitor.sh`, invoked from `government/boot.sh`) already **observes** `phoebe-dev` with hostname-tagged records; its reclamation path is unexercised. Real phoebe baseline (2026-10-14T18:10Z): disk 79% used (~49.7 GB free), inodes 31%, cgroup memory 4.14/8 GiB, level `ok`.
 - Safety review `records/JANITOR-SOVEREIGNTY-REVIEW.md` (J1–J8) identified the failure modes a system-wide mandate must design against; this bill incorporates them.
 
 ## Purpose
 
-Grant the Janitor Office **system-wide administrative jurisdiction** over `billy-dev` with **evidence-based, reversible, auditable safeguards**, so the Town can keep its territory healthy without destroying necessary state. Separate productive mission from territorial jurisdiction in Act 9.
+Grant the Janitor Office **system-wide administrative jurisdiction** over `phoebe-dev` with **evidence-based, reversible, auditable safeguards**, so the Town can keep its territory healthy without destroying necessary state. Separate productive mission from territorial jurisdiction in Act 9.
 
 ## Operative Text
 
@@ -25,13 +25,13 @@ Grant the Janitor Office **system-wide administrative jurisdiction** over `billy
 The following is added to Act 9 of `government/LAWS.md`:
 
 > **9.7 — Territorial administration distinguished from productive mission.**
-> The restrictions in 9.1–9.5 limit only the Town's **productive mission** (what projects the Town undertakes): Viche itself and Kawun. They do **not** limit the Town's **administrative jurisdiction** over `billy-dev` as a machine. The Town's government is responsible for the whole box — its resources, contents, and operations — regardless of which actor created them. Administrative actions on artifacts outside Viche/Kawun are governed by Act 12 and must not amount to undertaking another project's productive mission.
+> The restrictions in 9.1–9.5 limit only the Town's **productive mission** (what projects the Town undertakes): Viche itself and Kawun. They do **not** limit the Town's **administrative jurisdiction** over `phoebe-dev` as a machine. The Town's government is responsible for the whole box — its resources, contents, and operations — regardless of which actor created them. Administrative actions on artifacts outside Viche/Kawun are governed by Act 12 and must not amount to undertaking another project's productive mission.
 
 ### B. Act 12 — Janitor Office Act (replaces the prior draft)
 
 > **12.1 — Office and mandate.** A continuing **Janitor Office** is established as an executive function, operated by `government/janitor.sh` under the oversight of the resource steward (seat c1a00003). Its mandate: observe the whole box's disk/filesystem health, recognize early warning signs, safely recover space, prevent recurrence, and escalate genuine threats. It is a continuing function, not a one-time cleanup.
 >
-> **12.2 — Jurisdiction.** The office has administrative jurisdiction over the **entire `billy-dev` box**, independent of artifact origin, consistent with Act 9.7. Unfamiliar or non-Viche/Kawun origin is **not** an automatic bar to investigation. Conversely, unfamiliarity alone is **never** sufficient evidence that removal is safe.
+> **12.2 — Jurisdiction.** The office has administrative jurisdiction over the **entire `phoebe-dev` box**, independent of artifact origin, consistent with Act 9.7. Unfamiliar or non-Viche/Kawun origin is **not** an automatic bar to investigation. Conversely, unfamiliarity alone is **never** sufficient evidence that removal is safe.
 >
 > **12.3 — Classification before action.** Every candidate artifact is classified by recorded evidence into exactly one of:
 > 1. **Retain and monitor** — necessary, live, authorized, Founder-provided, or of uncertain value.
@@ -59,7 +59,7 @@ The following is added to Act 9 of `government/LAWS.md`:
 
 ## Evidence and success
 
-- **Success:** the office records regular hostname-tagged `billy-dev` observations surviving at least one 24-hour restart; a demonstrated reclamation frees measurable bytes from verified-unnecessary clutter without touching protected or live state; critical capacity produces a recorded incident and escalation; the Act 9.7 distinction is reflected in office procedures.
+- **Success:** the office records regular hostname-tagged `phoebe-dev` observations surviving at least one 24-hour restart; a demonstrated reclamation frees measurable bytes from verified-unnecessary clutter without touching protected or live state; critical capacity produces a recorded incident and escalation; the Act 9.7 distinction is reflected in office procedures.
 - **Falsification:** a reclamation removes live or protected state; freed-bytes claims do not match independent measurement; the office acts outside Act 9.7/Act 12; or the office cannot verify liveness/ownership and acts anyway.
 - **Review:** after three box restarts or seven days, whichever is sooner.
 
