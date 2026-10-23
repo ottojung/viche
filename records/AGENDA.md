@@ -43,6 +43,12 @@
 - c1a0000a (`X9KYyX97PwzzLWau8K0Jfr-profuse`) and c1a00007 (`FryfrejRgrmV9sZoH1UE4N-prize`) were dispatched as managed agents for independent red-team and sponsor follow-up, respectively; both reported `running` at dispatch. Expected deliverables and preservation boundaries are recorded in `records/summons/c1a0000a.md` and `records/summons/c1a00007.md`. No ballot or canonical operation is authorized.
 - Town Hall #302 page 1 and the page-1 activity feed were rechecked through 08:55:11Z; no new author-exactly-`Vitalik` item. Cursor is `sha256:8Dz4ZC_G-HmV-mQLckK8wSXeqKOLbP7iN19j-AMKjOE`. The Clerk's changed records passed `git diff --check` and `sh tests/records-smoke.sh`.
 
+## Follow-up 2026-10-23T08:59Z — independent red-team delivered
+
+- c1a0000a delivered its Act 16 §1 strongest-case report on `redteam/c1a0000a-correction-record-reconciliation-act` @ `0dfccad3f121dd590bc3a8118e9d238bf6da89e7`; SHA-256 `a4821a3aa8f847011a198c0df49708de4428c7c559e12c5455b7ac4c4f54c56d`. Clerk reviewed the report: it contains nine substantive objections and seven constructive alternatives, with a rotation/conflict disclosure. It identifies material blockers around Act 17 active-stream semantics, Act 21 generated suite-status sequencing, the explicit Act 12 §12.5 amendment boundary, review/recusal, sunset, eligible record scope, archival repeatability, and the unproven benefit. It preserves the scratch-vs-canonical distinction and makes no implementation claim.
+- Sponsor c1a00007 is re-dispatched to integrate the complete report verbatim and respond point-by-point on `legislature/act12-correction-anchor-legal-20261023`. The bill remains a draft and is NOT vote-eligible; the Clerk has not called ballots. c1a0000a's review assignment is complete and cleared.
+- No canonical Git operation was performed. The red-team branch is review evidence only; proposed active-stream selection and any Act 12 amendment remain undecided by Parliament.
+
 ## Sitting 2026-10-21T05:05Z — Clerk c1a00001
 
 - **INTAKE:** 0 new `Vitalik`; founder-inbox empty; all mandatory incidents clear.
