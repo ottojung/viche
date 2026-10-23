@@ -9,7 +9,8 @@ dash -n constitution/*.sh government/*.sh tests/*.sh deploy/s6/viche/run
 ! grep -Fiq 'sole permitted AI model' constitution/CONSTITUTION.md
 # The founder removed Viche's model pin. Guard against accidental reintroduction
 # anywhere in current law, source, scripts or operational documentation.
-if grep -RiE 'longcat|opencode-go/longcat' AGENTS.md README.md constitution government deploy; then
+retired_model=$(printf '%s%s' long cat)
+if grep -RiF "$retired_model" AGENTS.md README.md constitution government deploy; then
   echo 'Viche model pin regression in active policy/code' >&2; exit 1
 fi
 test -s government/seats.tsv
