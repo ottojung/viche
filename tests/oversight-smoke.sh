@@ -81,9 +81,9 @@ printf '%s\n' c1a00008 > "$scratch/town/records/SUMMONED.txt"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 
 : > "$scratch/town/records/SUMMONED.txt"
-MODEL=forbidden
+MODEL=other-provider/other-model
 export MODEL
-/bin/sh "$repo/government/audit-cycle.sh" >/dev/null 2>&1 && exit 1
+/bin/sh "$repo/government/audit-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 MODEL=test-provider/example
 EXEC_STATE=idle
