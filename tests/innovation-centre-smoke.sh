@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hermetic: autonomous legislative office, cadence, model pin, health inquiry.
+# Hermetic: autonomous legislative office, cadence, model-neutrality, health inquiry.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
@@ -7,7 +7,7 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 mkdir -p "$scratch/town/government" "$scratch/town/records" "$scratch/bin" "$scratch/state/branches"
 printf 'c1a00001\tClerk\tlegislature\n' > "$scratch/town/government/seats.tsv"
 printf '%s\n' c1e00011 > "$scratch/town/records/SUMMONED.txt"
-printf 'Founder test constitution, no other model allowed\n' > "$scratch/constitution"
+printf 'Founder test constitution, model neutral\n' > "$scratch/constitution"
 touch "$scratch/state/inaugurated"
 cat > "$scratch/town/government/branch-bootstrap.sh" <<'BOOT'
 #!/bin/sh
@@ -68,9 +68,10 @@ VICHE_INNOVATION_NOW=23000
 export VICHE_INNOVATION_NOW
 /bin/sh "$repo/government/innovation-centre-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
-MODEL=forbidden
+MODEL=other-provider/other-model
 export MODEL
-if /bin/sh "$repo/government/innovation-centre-cycle.sh" >/dev/null 2>&1; then exit 1; fi
+/bin/sh "$repo/government/innovation-centre-cycle.sh"
+[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 # Checks are mandatory after inauguration, and must not confuse this office
 # with a fourth branch or parliamentary voting seat.
 for branch in legislature executive judiciary; do
