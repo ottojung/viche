@@ -816,7 +816,7 @@ reclaim_quarantined() {
     if ! exec 3< "$qcopy"; then
         log_append "$jstate/actions.log" "$ts reclaim-quarantined deferred reason=qlog-open-failed"
         rm -f "$qcopy" "$tmp"
-        return 1
+        return 0
     fi
     qheader_read=
     if ! IFS= read -r qheader_read <&3 || [ "$qheader_read" != "$qheader" ]; then
@@ -897,16 +897,18 @@ reclaim_quarantined() {
             fi
             candidate_kb=$(du_kb "$dest")
             is_num "$candidate_kb" || candidate_kb=0
-            if rm -rf "$dest" 2>/dev/null; then
+            rm_status=0
+            rm -rf "$dest" 2>/dev/null || rm_status=$?
+            if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
                 after=$(available_kb 2>/dev/null || printf '')
                 if [ -n "$after" ]; then
                     delta=$((after - before))
-                    log_append "$jstate/actions.log" "$ts action=reclaim executed src=$src dest=$dest candidate_du_kb=$candidate_kb device_avail_before_kb=$before device_avail_after_kb=$after measured_device_delta_kb=$delta why=expired-quarantine recoverability=quarantine-copy liveness=clear owner=janitor-quarantine"
+                    log_append "$jstate/actions.log" "$ts action=reclaim executed src=$src dest=$dest rm_status=$rm_status candidate_du_kb=$candidate_kb device_avail_before_kb=$before device_avail_after_kb=$after measured_device_delta_kb=$delta why=expired-quarantine recoverability=quarantine-copy liveness=clear owner=janitor-quarantine"
                 else
-                    log_append "$jstate/actions.log" "$ts action=reclaim executed src=$src dest=$dest candidate_du_kb=$candidate_kb device_measurement=unavailable"
+                    log_append "$jstate/actions.log" "$ts action=reclaim executed src=$src dest=$dest rm_status=$rm_status candidate_du_kb=$candidate_kb device_measurement=unavailable"
                 fi
             else
-                log_append "$jstate/actions.log" "$ts action=reclaim failed src=$src dest=$dest candidate_du_kb=$candidate_kb"
+                log_append "$jstate/actions.log" "$ts action=reclaim failed src=$src dest=$dest rm_status=$rm_status candidate_du_kb=$candidate_kb path_remains=1"
                 printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             fi
         fi

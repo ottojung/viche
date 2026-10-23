@@ -74,6 +74,8 @@ else
 fi
 MOCK
 chmod +x "$d/bin/df"
+REAL_RM=$(command -v rm)
+export REAL_RM
 PATH="$d/bin:$PATH"
 export PATH
 /bin/sh "$town/government/janitor.sh" cycle
@@ -128,6 +130,35 @@ now=$(date -u +%s)
 printf '2026-01-01T00:00:00Z\t/recreated\t%s/old-item\t1\t%s\n' "$q" "$now" >> "$state/janitor/quarantined.tsv"
 /bin/sh "$town/government/janitor.sh" reclaim-quarantined
 [ -d "$q/old-item" ]
+
+# A command can report failure after removing the whole destination. Retire that
+# completed row too, so a new generation at the same path remains under its grace.
+mkdir -p "$q/rm-nonzero-item"
+printf 'old generation\n' > "$q/rm-nonzero-item/f"
+now=$(date -u +%s)
+printf '2026-01-01T00:00:00Z\t/rm-nonzero\t%s/rm-nonzero-item\t1\t%s\n' \
+    "$q" "$((now - grace - 1))" >> "$state/janitor/quarantined.tsv"
+cat > "$d/bin/rm" <<'MOCK'
+#!/bin/sh
+if [ "${2:-}" = "$RM_FAIL_TARGET" ]; then
+    "$REAL_RM" "$@"
+    exit 1
+fi
+exec "$REAL_RM" "$@"
+MOCK
+chmod +x "$d/bin/rm"
+export RM_FAIL_TARGET=$q/rm-nonzero-item
+/bin/sh "$town/government/janitor.sh" reclaim-quarantined
+[ ! -e "$q/rm-nonzero-item" ]
+grep -q 'action=reclaim executed.*rm_status=1' "$state/janitor/actions.log"
+now=$(date -u +%s)
+mkdir -p "$q/rm-nonzero-item"
+printf 'new generation\n' > "$q/rm-nonzero-item/f"
+printf '2026-01-01T00:00:00Z\t/rm-nonzero-new\t%s/rm-nonzero-item\t1\t%s\n' \
+    "$q" "$now" >> "$state/janitor/quarantined.tsv"
+/bin/sh "$town/government/janitor.sh" reclaim-quarantined
+[ -d "$q/rm-nonzero-item" ]
+unset RM_FAIL_TARGET
 
 # A deterministic device probe proves the audit reports the measured available-KB
 # delta independently from candidate du size (the second df sample gains 7 KB).
