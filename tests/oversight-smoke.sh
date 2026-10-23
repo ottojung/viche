@@ -47,7 +47,7 @@ EXEC_STATE=failed
 ERROR=upstream_endpoint_unavailable
 LAST=19500
 AUDIT_STATE=idle
-MODEL=opencode-go/longcat-2.5-preview-free
+MODEL=test-provider/example
 VARIANT=low
 DISPATCHES=$scratch/dispatches
 NOTICES=$scratch/notices
@@ -85,7 +85,7 @@ MODEL=forbidden
 export MODEL
 /bin/sh "$repo/government/audit-cycle.sh" >/dev/null 2>&1 && exit 1
 [ "$(wc -l < "$DISPATCHES")" -eq 2 ]
-MODEL=opencode-go/longcat-2.5-preview-free
+MODEL=test-provider/example
 EXEC_STATE=idle
 MOCK_BOARD='[]'
 export MODEL EXEC_STATE MOCK_BOARD

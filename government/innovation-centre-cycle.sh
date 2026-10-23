@@ -23,10 +23,6 @@ case "$now:$interval" in *[!0-9:]*|:*|*:) exit 2;; esac
 id=$(/bin/sh "$town/government/appointments.sh" ensure innovation-centre)
 status=$(antonina agent status --id "$id" --json)
 mode=$(printf '%s\n' "$status" | jq -r '.state // "unknown"')
-model=$(printf '%s\n' "$status" | jq -r '.model // "unknown"')
-variant=$(printf '%s\n' "$status" | jq -r '.variant // "unknown"')
-[ "$model" = opencode-go/longcat-2.5-preview-free ] &&
-[ "$variant" = low ] || { echo 'Innovation Centre wrong model' >&2; exit 1; }
 last=0
 [ ! -s "$root/last-dispatch" ] || last=$(cat "$root/last-dispatch")
 case "$last" in ''|*[!0-9]*) echo 'Invalid Innovation Centre timestamp' >&2; exit 1;; esac

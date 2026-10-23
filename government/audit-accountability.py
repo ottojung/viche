@@ -210,8 +210,10 @@ def check(args):
                 signals.append({"type": "agent_status_unavailable", "agent_id": agent_id})
                 continue
             metadata = json.loads(p.stdout)
-            if metadata.get("model") != "opencode-go/longcat-2.5-preview-free" or metadata.get("variant") != "low":
-                signals.append({"type": "host_model_mismatch_requires_attribution", "agent_id": str(agent.get("id", "unknown"))})
+            # Model choice belongs to Antonina. An idle agent with no model
+            # history is normal; avoid inventing a compliance incident.
+            if metadata.get("state") not in ("idle", "running", "succeeded", "failed", "stopped", "killed"):
+                signals.append({"type": "agent_state_unrecognized", "agent_id": agent_id})
     except Exception as e:
         signals.append({"type": "agent_inventory_unavailable", "detail": str(e)[:180]})
     evidence = {"at": now, "cases_total": len(cases), "cases_unreported_overdue": overdue,

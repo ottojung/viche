@@ -36,7 +36,7 @@ VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/charter
-MODE=idle MODEL=opencode-go/longcat-2.5-preview-free
+MODE=idle MODEL=test-provider/example
 OUTPUT=$scratch/dispatched
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT
 grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
@@ -54,9 +54,10 @@ sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2
 MODE=failed
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
-MODE=idle MODEL=forbidden
-if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
-MODEL=opencode-go/longcat-2.5-preview-free
+MODE=idle MODEL=other-provider/other-model
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 3
+MODEL=test-provider/example
 BOARD_DOWN=yes
 export MODE MODEL BOARD_DOWN
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi

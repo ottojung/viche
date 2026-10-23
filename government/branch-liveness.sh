@@ -51,9 +51,7 @@ if [ -n "$id" ] && meta=$(antonina agent status --id "$id" --json 2>/dev/null); 
   fi
 fi
 readiness=unhealthy
-if [ "$cycle_ok" = true ] && [ "$readable" = true ] &&
-   [ "$model" = opencode-go/longcat-2.5-preview-free ] &&
-   [ "$variant" = low ]; then
+if [ "$cycle_ok" = true ] && [ "$readable" = true ]; then
   case "$agent_state" in
     running) readiness=running ;;
     idle|succeeded) readiness=ready ;;

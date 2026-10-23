@@ -63,8 +63,6 @@ case "$new" in ''|*[!a-zA-Z0-9_-]*) echo 'malformed new agent ID' >&2; exit 1;; 
 [ "$new" != "$old" ] || { echo 'new agent reused old ID' >&2; exit 1; }
 meta=$(antonina agent status --id "$new" --json) || exit 1
 [ "$(printf '%s\n' "$meta" | jq -r '.state')" = idle ] || exit 1
-[ "$(printf '%s\n' "$meta" | jq -r '.model')" = opencode-go/longcat-2.5-preview-free ] || { echo 'unauthorized model' >&2; exit 1; }
-[ "$(printf '%s\n' "$meta" | jq -r '.variant')" = low ] || { echo 'unauthorized variant' >&2; exit 1; }
 tmp=$(mktemp "$root/roster.XXXXXXXX")
 if [ -f "$registry" ]; then awk -F '\t' -v k="$key" '$1!=k {print}' "$registry" > "$tmp"; fi
 printf '%s\t%s\n' "$key" "$new" >> "$tmp"

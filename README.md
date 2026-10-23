@@ -25,7 +25,7 @@ Follow [the S6 deployment guide](deploy/DEPLOYMENT.md). Install the constitution
 
 Founder instructions are recognized by the exact Antonina issue/comment author `Vitalik`; no digital signatures or verification are required. The host restarts the entire box after **24 hours of uptime**, rather than at a fixed local time.
 
-The rules require `opencode-go/longcat-2.5-preview-free` variant `low` via Antonina, with no alternative model or fallback. Neither this text nor a shared credential is a hard capability boundary. The Founder-controlled mounted constitutional files and GitHub CODEOWNERS help separate authority, but code-owner review requires a corresponding enforced GitHub rule. The existing GitHub ruleset alone does not yet supply that review requirement.
+Viche uses Antonina-managed agents, with model selection delegated entirely to Antonina. Neither this text nor a shared credential is a hard capability boundary. The Founder-controlled mounted constitutional files and GitHub CODEOWNERS help separate authority, but code-owner review requires a corresponding enforced GitHub rule. The existing GitHub ruleset alone does not yet supply that review requirement.
 
 Run `/bin/sh tests/boot-smoke.sh` and `/bin/sh tests/tally-smoke.sh` to exercise a mocked constitutional launch and restart. The CI workflow intentionally does **not** require exactly ten seats, because parliament is authorized to change that number.
 

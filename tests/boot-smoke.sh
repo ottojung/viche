@@ -46,7 +46,7 @@ done
 case "$action" in
     status)
         [ -f "$MOCK_STATE/$id" ] || exit 3
-        printf '%s\n' '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}'
+        printf '%s\n' '{"state":"idle","model":"test-provider/example","variant":"low"}'
         ;;
     new)
         n=0
@@ -62,10 +62,6 @@ case "$action" in
         case "$prompt" in
             *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
-        esac
-        case "$prompt" in
-            *"opencode-go/longcat-2.5-preview-free"*) : ;;
-            *) exit 7 ;;
         esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac

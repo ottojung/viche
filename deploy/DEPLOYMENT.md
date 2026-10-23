@@ -32,7 +32,7 @@ Phoebe's running S6 environment starts with a deliberately minimal `PATH`. Its V
 
 The initial exclusive project scope was **Viche self-improvement and Kawun delivery only** (Founding Act 9); per Founder mandates of 2026-10-16 the productive scope is now **issues explicitly assigned to `billy-dev`** (see `records/FOUNDER-MANDATE-2026-10-16-scope.md` and the Scope By Assignment Act). The permanent Town Hall issue is **#302** (succeeding archived #297).
 
-The Viche S6 service should have a POSIX-compliant `/bin/sh`, `git`, `jq`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. **Do not run another OpenCode provider, model or wrapper**: the sole authorized model is `opencode-go/longcat-2.5-preview-free`, variant `low`, through Antonina. Verify the installed Antonina build matches its pinned runtime before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
+The Viche S6 service should have a POSIX-compliant `/bin/sh`, `git`, `jq`, and the existing `antonina` CLI, OpenCode runtime and Git/SSH credentials accessible. Run agents only via Antonina; do not pin or validate a Viche-specific provider, model, or variant. Verify Antonina is installed and operational before launch. The S6 and Lubko arrangement provides internet and Git access; verify connectivity and permissions. There are no Viche-specific concurrency, invocation or model fallback caps.
 
 ## Founder communication via Antonina author labels
 

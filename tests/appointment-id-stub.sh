@@ -20,7 +20,7 @@ case "$1" in
       printf 'replacement-requested\nreplacement-recorded\n' >> "$MOCK_ROOT/recovery"
       printf 'replacement-requested\nreplacement-recorded\n' >> "$MOCK_ROOT/actions"
       if [ -f "$MOCK_ROOT/status.json" ]; then
-        printf '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}\n' > "$MOCK_ROOT/status.json"
+        printf '{"state":"idle","model":"test-provider/example","variant":"low"}\n' > "$MOCK_ROOT/status.json"
       fi
       if [ -f "$MOCK_ROOT/status" ]; then
         printf '{"state":"idle"}\n' > "$MOCK_ROOT/status"

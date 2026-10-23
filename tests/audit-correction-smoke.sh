@@ -22,7 +22,7 @@ case "$1 $2" in
 "agent list")
     printf '{"agents":[{"id":"c1e00008"}],"unreadable":0}\n' ;;
 "agent status")
-    printf '{"state":"idle","model":"opencode-go/longcat-2.5-preview-free","variant":"low"}\n' ;;
+    printf '{"state":"idle","model":"test-provider/example","variant":"low"}\n' ;;
 *) echo "unexpected mock call: $*" >&2; exit 90 ;;
 esac
 MOCK

@@ -62,12 +62,12 @@ sitting() {
             grep -Fxq "$agent_id" "$town/records/SUMMONED.txt" 2>/dev/null || continue
         fi
         seat_id=$agent_id
-        if ! agent_id=$(/bin/sh "$town/government/appointments.sh" ensure "$seat_id"); then
+        if ! appointee_id=$(/bin/sh "$town/government/appointments.sh" ensure "$seat_id"); then
             echo "Viche: no appointee for $seat_id" >&2
             failed=1
             continue
         fi
-        if ! status=$(antonina agent status --id "$agent_id" --json); then
+        if ! status=$(antonina agent status --id "$appointee_id" --json); then
             echo "Viche: cannot inspect seat $agent_id" >&2
             failed=1
             continue
@@ -109,7 +109,7 @@ $suffix
 === END AGENDA ===
 EOF
 )
-        (antonina agent run --id "$agent_id" --cwd "$seats/$seat_id" --prompt "$prompt" --detach) &
+        (antonina agent run --id "$appointee_id" --cwd "$seats/$seat_id" --prompt "$prompt" --detach) &
         pids="$pids $!"
     done < "$town/government/seats.tsv"
 
