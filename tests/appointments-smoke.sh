@@ -18,7 +18,11 @@ elif [ "$1" = agent ] && [ "$2" = status ]; then
   id=$4
   [ -f "$MOCK/$id" ] || exit 1
   status=$(cat "$MOCK/$id")
-  printf '{"state":"%s","model":null,"variant":"low"}\n' "$status"
+  if [ "$status" = failed ]; then
+    printf '{"state":"failed","finished_at":1792775220.5,"prompts":2,"backend_error":{"classification":"upstream_endpoint_unavailable","transient":true,"automatic_retry_safe":false}}\n'
+  else
+    printf '{"state":"%s","model":null,"variant":"low"}\n' "$status"
+  fi
 else
   echo 'unexpected mocked command' >&2; exit 7
 fi
@@ -40,9 +44,22 @@ rm "$MOCK/$a"
 if /bin/sh "$script" resolve a1 >/dev/null 2>&1; then echo 'resolve invented missing agent' >&2; exit 1; fi
 c=$(/bin/sh "$script" ensure a1)
 [ "$c" = fresh-2 ] || exit 1
+# A deleted prior appointment is preserved as UNREADABLE, not falsely failed.
+jq -e '.state=="unreadable" and .agent_id=="fresh-1"' \
+  "$tmp/state/appointments/terminal-evidence/fresh-1/event.json" >/dev/null
 printf failed > "$MOCK/$c"
 x=$(/bin/sh "$script" ensure a1)
 [ "$x" = fresh-3 ] || exit 1
+# Preserve the real failed status, no duplicate observation of this invocation.
+jq -e '.state=="failed" and .agent_id=="fresh-2" and .office=="a1" and
+       .finished_at==1792775220.5 and .prompts==2 and
+       .failure_class=="upstream_endpoint_unavailable" and
+       .transient==true and .automatic_retry_safe==false' \
+  "$tmp/state/appointments/terminal-evidence/fresh-2/event.json" >/dev/null
+[ -s "$tmp/state/appointments/terminal-evidence/fresh-2/status.json" ]
+[ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 2 ]
+[ "$(/bin/sh "$script" ensure a1)" = fresh-3 ]
+[ "$(wc -l < "$tmp/state/appointments/terminal-events.jsonl")" -eq 2 ]
 y=$(/bin/sh "$script" replace a1)
 [ "$y" = fresh-4 ] || exit 1
 e=$(/bin/sh "$script" ensure executive)

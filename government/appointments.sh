@@ -54,6 +54,18 @@ if [ "$action" = resolve ]; then
   printf '%s\n' "$old"
   exit 0
 fi
+# The Act 19 supervisors need evidence of real failed invocations. Historically
+# 'ensure' replaced a failed appointee BEFORE they could observe it. Capture
+# exact terminal status, last log and worktree identity BEFORE replacement.
+# Record at most once per disposable agent ID, even across repeated cycles.
+# This does not authorize replay of an unsafe failed prompt or claim that a
+# first-failure replacement met Act 19's reset threshold.
+if [ -n "$old" ] && [ "$live" != true ]; then
+  observed=${meta:-'{"state":"unreadable"}'}
+  printf '%s\n' "$observed" |
+    /bin/sh "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/terminal-appointment-evidence.sh" "$key" "$old" "$cwd" ||
+      { echo "Cannot preserve evidence of departing agent $old" >&2; exit 1; }
+fi
 # An old Git branch may carry a retired model or scope restriction.
 # Refresh only idle appointees, not worktrees of currently running agents.
 if [ -s "$town/AGENTS.md" ] && { [ -f "$cwd/.git" ] || [ -d "$cwd/.git" ]; } &&
