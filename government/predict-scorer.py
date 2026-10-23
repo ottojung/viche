@@ -43,7 +43,8 @@ def content_hash(entry: dict) -> str:
                  "proposition": entry.get("proposition", ""),
                  "author": entry.get("author", ""), "reason": entry.get("reason", "")}
     else:
-        canon = {"proposition": entry.get("proposition", ""),
+        canon = {"bill_id": entry.get("bill_id", ""),
+                 "proposition": entry.get("proposition", ""),
                  "probability": entry.get("probability"),
                  "resolution_date": entry.get("resolution_date", ""),
                  "evidence_source": entry.get("evidence_source", ""),

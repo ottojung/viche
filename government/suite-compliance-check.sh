@@ -1,14 +1,14 @@
 #!/bin/sh
-# Act 21 §5: audit suite-status evidence against first-parent main history.
-# A verification record must precede the change and name the exact resulting
-# commit/tree. The history cannot prove how that information was available
-# before an unmerged commit; fail closed as unreadable where no such evidence
-# exists. Usage: suite-compliance-check.sh [repo]
+# Act 21 §5: audit the exact resulting commit/tree using committed suite-status
+# history and, when available, the immutable pre-push delivery receipts. A
+# historical suite-status record for a commit added to main by that same commit
+# is not pre-change evidence. Usage: suite-compliance-check.sh [repo]
 set -eu
 repo=${1:-${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}}
-python3 - "$repo" <<'PY'
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+python3 - "$repo" "$state" <<'PY'
 import json, subprocess, sys
-repo=sys.argv[1]
+repo,state=sys.argv[1:]
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
 try:
@@ -26,7 +26,20 @@ try:
         # updated the status file; subsequent history snapshots aren't new runs.
         touched=git('diff-tree','--root','--no-commit-id','--name-only','-r',rec_commit).splitlines()
         if 'records/suite-status.json' in touched:
-            records.append((rec_commit,data))
+            records.append((rec_commit,data,'git'))
+    # reviewed-merge.sh stores an immutable receipt before publishing the
+    # candidate. The receipt is outside Git, so it can establish pre-push
+    # ordering only to the extent the host filesystem and writer are trusted.
+    import glob, os
+    for filename in sorted(glob.glob(os.path.join(state,'delivery','verified-*.json'))):
+        try:
+            with open(filename) as f: data=json.load(f)
+            if (data.get('generated_by')=='government/suite-status.sh'
+                    and data.get('suite') in ('tests/run-all.sh','tests/records-smoke.sh')
+                    and isinstance(data.get('recorded_at'),int)):
+                records.append((None,data,'pre-push-receipt'))
+        except (OSError,ValueError):
+            continue
 
     changes=[]
     for i,commit in enumerate(commits):
@@ -39,26 +52,30 @@ try:
         # name that exact commit and its tree; a matching parent is insufficient
         # because it does not verify the resulting merge tree.
         prior=[]
-        for rc,r in records:
+        for rc,r,source in records:
             if r.get('result') not in ('green','red') or r.get('tree') != tree:
                 continue
             candidate=r.get('commit','')
             try:
                 if git('rev-parse','--verify',candidate+'^{tree}') != tree:
                     continue
-                if candidate != commit or positions.get(rc, i) >= i:
+                if candidate != commit:
+                    continue
+                if source=='git' and positions.get(rc, i) >= i:
+                    continue
+                if source=='pre-push-receipt' and r.get('recorded_at',0) <= 0:
                     continue
             except (subprocess.CalledProcessError, OSError):
                 continue
-            prior.append((rc,r))
-        reds=[(rc,r) for rc,r in prior if r.get('result')=='red']
-        greens=[(rc,r) for rc,r in prior if r.get('result')=='green']
+            prior.append((rc,r,source))
+        reds=[(rc,r,source) for rc,r,source in prior if r.get('result')=='red']
+        greens=[(rc,r,source) for rc,r,source in prior if r.get('result')=='green']
         if reds:
             status='violation'; reason='red suite recorded for exact commit/tree'
         elif greens:
-            status='compliant'; reason='preceding green record for exact commit/tree'
+            status='compliant'; reason='preceding green record for exact commit/tree ('+','.join(sorted(set(source for _,_,source in greens)))+')'
         elif any(r.get('result')=='red' and r.get('commit')==commit
-                 and r.get('tree')==tree for _,r in records):
+                 and r.get('tree')==tree for _,r,_source in records):
             status='violation'; reason='red suite recorded for exact commit/tree (after change)'
         else:
             status='unreadable'; reason='no preceding exact-commit/tree suite record'

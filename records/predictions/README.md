@@ -31,8 +31,8 @@ gatekeeper (§2), the independent resolver (§3) and the publisher (§5).
 
 ## Integrity
 
-Each entry carries a content hash of the registered prediction (proposition,
-probability, resolution date, evidence source, author) computed at registration
+Each entry carries a content hash of the registered prediction (bill id,
+proposition, probability, resolution date, evidence source, author) computed at registration
 (§3.5). A correction is a **new** entry citing the original; entries are never
 edited or deleted. `predict-ledger.py verify` and `predict-scorer.py` recompute
 the hash; a mismatch is a recorded defect.

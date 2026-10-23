@@ -2,8 +2,8 @@
 # Act 22 §2 — pre-registration gate (POSIX /bin/sh; no Bash).
 #
 # No bill may reach the Act 16 §1 ballot gate, and no consequential order may
-# take effect, unless the Clerk has recorded >=1 registered, evidence-linked
-# prediction whose registration timestamp precedes the ballot/order timestamp.
+# take effect, unless the Clerk has recorded 2–5 registered, evidence-linked
+# predictions whose registration timestamps precede the ballot/order timestamp.
 # This is the deterministic gate the bill->vote path calls; it reports facts and
 # exits non-zero on a refusal. It does not change quorum or voting rules.
 #
@@ -22,12 +22,13 @@
 #               orders with no ballots/<id>.tsv); default derives it from the
 #               first commit that added records/ballots/ID.tsv, else now
 #
-# Exit: 0 pass (registered prediction precedes the ballot/order, or out of
+# Exit: 0 pass (2–5 valid predictions precede the ballot/order, or out of
 #       pilot scope); 1 refuse (no qualifying prediction); 2 usage error.
 set -eu
 
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 ledger=${VICHE_PREDICT_LEDGER:-$town/records/predictions/ledger.json}
+ledger_tool=$(dirname "$0")/predict-ledger.py
 pilot=$town/records/predictions/pilot.tsv
 
 all=0
@@ -73,10 +74,20 @@ fi
     echo "predict-gate: REFUSE $id — no ledger ($ledger); 0 registered predictions" >&2
     exit 1
 }
+[ -f "$ledger_tool" ] || {
+    echo "predict-gate: REFUSE $id — ledger integrity verifier unavailable" >&2
+    exit 1
+}
+if ! VICHE_TOWN_ROOT="$town" VICHE_PREDICT_LEDGER="$ledger" \
+     python3 "$ledger_tool" verify >/dev/null 2>&1; then
+    echo "predict-gate: REFUSE $id — ledger integrity verification failed" >&2
+    exit 1
+fi
 
 # --- qualifying registered predictions ----------------------------------
-# A qualifying prediction is a registration with a named evidence source and a
-# registration timestamp strictly before the ballot/order timestamp.
+# Qualifying predictions must have valid content hashes (verified above), a
+# named evidence source and a registration timestamp strictly before the
+# ballot/order timestamp. Act 22 §2 requires 2–5 per covered item.
 count=$(jq --arg id "$id" --argjson ts "$ballot_ts" '
     [ .entries[]
       | select(.kind=="registration")
@@ -89,9 +100,9 @@ count=$(jq --arg id "$id" --argjson ts "$ballot_ts" '
 }
 case "$count" in ''|*[!0-9]*) echo "predict-gate: REFUSE $id — ledger unreadable" >&2; exit 1 ;; esac
 
-if [ "$count" -ge 1 ]; then
-    echo "predict-gate: PASS $id — $count registered evidence-linked prediction(s) precede $ballot_ts"
+if [ "$count" -ge 2 ] && [ "$count" -le 5 ]; then
+    echo "predict-gate: PASS $id — $count registered evidence-linked predictions precede $ballot_ts"
     exit 0
 fi
-echo "predict-gate: REFUSE $id — 0 registered evidence-linked predictions precede the ballot/order ($ballot_ts)" >&2
+echo "predict-gate: REFUSE $id — $count registered evidence-linked predictions precede the ballot/order; Act 22 §2 requires 2–5 ($ballot_ts)" >&2
 exit 1

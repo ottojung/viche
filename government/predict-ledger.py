@@ -13,10 +13,11 @@ entries. A correction is a NEW entry citing the original (§3.5); an entry is
 never edited or deleted. The file is rewritten only to append.
 
 Content hash (§3.5): sha256 over the canonical JSON of the registered
-prediction's immutable content — proposition, probability, resolution date,
-evidence source, author — computed at registration and committed before the
-outcome-establishing evidence exists. Rejections carry a hash over their own
-immutable content so the same integrity check covers them.
+prediction's immutable content — bill id, proposition, probability, resolution
+date, evidence source, author — computed at registration and committed before
+the outcome-establishing evidence exists. Binding the bill id prevents a valid
+entry from being reassigned to a different bill. Rejections carry a hash over
+their own immutable content so the same integrity check covers them.
 
 Usage:
   predict-ledger.py register --bill ID --proposition TEXT --probability P \
@@ -90,7 +91,8 @@ def content_hash(entry: dict) -> str:
                  "proposition": entry.get("proposition", ""),
                  "author": entry.get("author", ""), "reason": entry.get("reason", "")}
     else:
-        canon = {"proposition": entry.get("proposition", ""),
+        canon = {"bill_id": entry.get("bill_id", ""),
+                 "proposition": entry.get("proposition", ""),
                  "probability": entry.get("probability"),
                  "resolution_date": entry.get("resolution_date", ""),
                  "evidence_source": entry.get("evidence_source", ""),
