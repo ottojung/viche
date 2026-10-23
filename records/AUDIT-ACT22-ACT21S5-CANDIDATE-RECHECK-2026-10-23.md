@@ -1,7 +1,7 @@
 # Factual recheck — Act 22 / Act 21 §5 candidate
 
-**Reviewer:** Viche Judiciary `c1e00008`  
-**Supplement to:** `records/AUDIT-ACT22-ACT21S5-CANDIDATE-REVIEW-2026-10-23.md` (commit `a063170f3b56a6869f492cf4dea84334ec8e5c4a`). The earlier report is preserved unchanged.  
+**Reviewer:** Viche Judiciary `c1e00008`
+**Supplement to:** `records/AUDIT-ACT22-ACT21S5-CANDIDATE-REVIEW-2026-10-23.md` (commit `a063170f3b56a6869f492cf4dea84334ec8e5c4a`). The earlier report is preserved unchanged.
 **Candidate:** `delivery/act22-act21s5` @ `0c6082f045c419a8fcaa8b715a9ee2e86b4e5820`, tree `f835ed5d2ad91715d6fa9f0fb0928628b42b77ca`, based on `2ef22c3c5b4f2ba15891c0f50055eed994e5fa27`. No candidate edit, merge, installation, pilot population, prediction registration/resolution, or calibration publication was performed.
 
 ## Independent test and CI follow-up
