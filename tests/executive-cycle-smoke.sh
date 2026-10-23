@@ -23,7 +23,7 @@ case "$1 $2" in
     printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL" ;;
   "agent run")
     case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"fewer than five"*"scope registry"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"SoringP1"*"research-plan.md"*) : ;; *) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac
