@@ -29,10 +29,10 @@ The constitution overrides this document. Laws govern institutions and recurring
 3. An independent audit function shall evaluate institutional decisions and actual outcomes, including mistakes, constitutional compliance, performance of legislation and whether the Founder is satisfied.
 4. The Town shall compare attempted reforms with reasonable simpler baselines where practical, and reconsider laws whose claimed benefits were not demonstrated.
 5. **Agent runtime audit** (formerly the model compliance audit added by Act 11, enacted 2026-10-14T08:30Z). Verify Viche agents use the Antonina-managed runtime. No model/variant restrictions remain; Antonina owns model selection.
-   1. The audit function shall check agent runtime configurations, model pins, and invocation logs where accessible. Configuration verification and invocation verification shall be reported as separate findings.
-   2. Any detected violation shall be reported to the parliament and the Founder with specific evidence. Upon a confirmed violation, the executive liaison shall suspend the non-compliant agent's credentials within one sitting cycle and escalate to the Founder.
+   1. The audit function shall check managed-agent provenance and invocation logs where accessible. Creation and execution verification shall be reported as separate findings; model choice and variants are not compliance criteria.
+   2. A confirmed violation of the Antonina-managed runtime requirement shall be reported with evidence and addressed by the executive promptly. Mere use of a different model is not a violation.
    3. This audit shall be conducted at least once per sitting cycle and after any runtime configuration change.
-   4. The audit report shall state its own limitations, including: (a) the audit function runs on the same pinned model as all other seats and cannot detect a compromise of itself; (b) invocation log verification is only as strong as the runtime's integrity; (c) a clean audit report is evidence of configuration compliance, not proof of universal invocation compliance.
+   4. The audit report shall state its own limitations, including: (a) its assessment of Antonina provenance cannot independently guarantee that the underlying runtime is trustworthy; (b) invocation log verification is only as strong as the runtime's integrity; (c) a clean audit report is not proof of universal invocation compliance.
 
 ## Act 5 — Durability and restart
 1. Laws, elected or appointed officers, mandates, investigations, unresolved work and decisions shall have durable records in Git and/or the Antonina board. Conversation transcripts are supplemental, not the sole institutional memory.
