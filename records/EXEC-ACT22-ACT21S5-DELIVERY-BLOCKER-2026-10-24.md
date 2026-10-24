@@ -1,7 +1,7 @@
 # Act 22 / Act 21 §5 delivery status — 2026-10-24
 
-**Owner:** Executive liaison c1a00002  
-**Branch:** `exec/act22-act21s5-current-main`  
+**Owner:** Executive liaison c1a00002
+**Branch:** `exec/act22-act21s5-current-main`
 **Status:** locally verified implementation candidate; not merged or installed.
 
 ## Latest-main reconciliation — 2026-10-24
@@ -16,10 +16,38 @@ and incident-deduplication changes. Reverification on that merged tree:
 - `python3 -m py_compile government/predict-ledger.py government/predict-scorer.py government/judiciary-measurements.py` — passed.
 - `git diff --check` and `/bin/sh tests/records-smoke.sh` — passed.
 
-This supersedes the earlier “three commits behind” blocker. The reconciled
-candidate is still not reviewed or installed at this exact commit. The prior
-independent review and CI referred to earlier candidate `70cd727`; they do not
-constitute fresh verification of this merged tree.
+This supersedes the earlier “three commits behind” blocker. Candidate
+`e7f84e93b5d3d92c4d70d02250be7fd695fbcb99` was published for review and passed
+GitHub Actions run `40065423919` (full workflow suite). Independent audit seat
+`c1a0000b` reviewed that exact SHA against `9b01245` and requested changes.
+
+## Independent review findings and response — 2026-10-24
+
+Audit seat `c1a0000b` reported four reproducible issues on `e7f84e9`:
+
+1. Editing a recorded resolution outcome left `predict-ledger.py verify` clean
+   and changed aggregate Brier from 0.04 to 0.34.
+2. Act 20 P1–P5 appeared only as static `registered: false` checkpoint labels,
+   with no carried-forward resolution dates in the prediction ledger.
+3. A post-change pre-push receipt with JSON `recorded_at: true` was accepted as
+   compliant because Python booleans satisfy `isinstance(value, int)`; a receipt
+   alone did not establish that publication followed verification.
+4. The status record had trailing whitespace rejected by `git diff --check`.
+
+The reviewer independently ran focused prediction, tally and suite-compliance
+tests and the complete `sh tests/run-all.sh`, all of which passed, but those
+tests missed the first three defects. No approval or merge authorization was
+given.
+
+Response in the current working revision: resolution events receive and verify
+their own content hash, and the scorer excludes tampered resolutions; Act 20
+P1–P5 are carried in the ledger as separately hashed `review_checkpoint`
+records with their statutory source date, resolution date and evidence sources,
+outside Brier counts; the compliance check now requires a hash-bound
+post-publication event from `reviewed-merge.sh`, strict integer timestamps and
+chronology, otherwise classifying evidence as unreadable; and the whitespace is
+removed. Regression fixtures cover these cases. This response still requires a
+fresh exact-candidate review and CI before authorized delivery.
 
 ## Evidence
 
@@ -33,32 +61,39 @@ measurement block. The compliance checker identifies first-parent changes to
 `government/`, `tests/` and `records/`, requires exact commit/tree matches, and
 distinguishes red evidence from unreadable/missing chronology. It supplements
 Git history with the reviewed-merge exact-candidate receipts and identifies
-which evidence source supported each result.
+which evidence source supported each result. The updated checker additionally
+requires the exact pre-push receipt's digest in a post-push event written by the
+reviewed merger; this improves chronology evidence but still depends on host
+state and the generator, so it is not cryptographic attestation.
 
 Verification run on 2026-10-24 in the seat worktree:
 
 - `dash tests/run-all.sh` — passed, ending `All Viche tests passed`.
 - Included prediction fixture: no-registration rejection, timestamp ordering,
-  tamper detection, unresolved coverage, expected Brier `0.04` and base-rate
-  skill `0.84`.
+  registration and resolution tamper detection, unresolved coverage, Act 20
+  checkpoint carry-forward without double-counting, expected Brier `0.04` and
+  base-rate skill `0.84`.
 - Included compliance fixture: exact green receipt compliant, absent exact
-  evidence unreadable, exact red receipt a violation; wrong-suite and malformed
-  receipts rejected.
+  evidence unreadable, exact red receipt a violation; wrong-suite, malformed,
+  boolean-timestamp and receipt-after-publication cases are rejected/unreadable.
 - Included tally fixture exercising the pilot gate and refusal paths.
 - `git diff --check origin/main...HEAD` — passed.
 
+After the review corrections, `dash tests/run-all.sh` passed again on the
+reconciled working tree, including the new resolution-tamper, checkpoint,
+publication-order and publication-event fixtures. Python compilation, POSIX
+shell syntax checks, prediction-ledger integrity verification (5 carried
+checkpoints, 0 defects), scorer regeneration, and `git diff --check` passed.
+Exact-candidate proposal verification, independent re-review and CI for the
+revised candidate remain to be recorded.
+
 ## Concrete blockers and limitations
 
-1. The implementation branch is three commits behind `origin/main` at
-   `4c344af`; current `origin/main` includes commits `148585e`, `68fc62a` and
-   `9b01245`. The latter changes office-restart reconciliation and overlaps
-   Executive files, while upstream deletes the Act 22/21 implementation. The
-   current full-suite pass therefore does not verify a merge with latest main.
-2. The Clerk-owned production pilot list is empty (`records/predictions/pilot.tsv`)
+1. The Clerk-owned production pilot list is empty (`records/predictions/pilot.tsv`)
    and live bill/order gate operation and calibration publication have not been
    exercised. This is an operational handoff, not a claim that the Clerk's
    Act 22 duties are complete.
-3. For Act 21 §5, an in-tree status record cannot attest to the tree containing
+2. For Act 21 §5, an in-tree status record cannot attest to the tree containing
    itself without changing that tree; subsequent Git position alone also cannot
    prove a test preceded the merge. The checker does not claim a pass for such
    history. Exact pre-push delivery receipts provide supplemental evidence but

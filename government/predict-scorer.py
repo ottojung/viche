@@ -44,6 +44,10 @@ def content_hash(entry: dict) -> str:
                  "proposition": entry.get("proposition", ""),
                  "author": entry.get("author", ""), "reason": entry.get("reason", ""),
                  "registered_at": entry.get("registered_at")}
+    elif entry.get("kind") == "review_checkpoint":
+        canon = {key: entry.get(key) for key in (
+            "kind", "id", "proposition", "resolution_date", "evidence_source",
+            "author", "source_ref", "source_registered_on", "recorded_at")}
     else:
         canon = {"bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
@@ -52,6 +56,14 @@ def content_hash(entry: dict) -> str:
                   "evidence_source": entry.get("evidence_source", ""),
                  "author": entry.get("author", ""),
                  "registered_at": entry.get("registered_at")}
+    blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(blob).hexdigest()
+
+
+def resolution_hash(resolution: dict) -> str:
+    canon = {key: resolution.get(key) for key in (
+        "id", "outcome", "resolver", "evidence_citation", "evidence_at",
+        "resolved_at", "reason")}
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
     return "sha256:" + hashlib.sha256(blob).hexdigest()
 
@@ -100,6 +112,15 @@ def main() -> int:
         if sum(r.get("id") == eid for r in resolutions) > 1:
             defects.append({"id": eid, "defect": "duplicate_resolution"})
             duplicate_resolution_ids.add(eid)
+    invalid_resolution_ids = set()
+    for r in resolutions:
+        want = resolution_hash(r)
+        if r.get("content_hash") != want:
+            defects.append({"id": r.get("id"),
+                            "defect": "resolution_content_hash_mismatch",
+                            "recorded": r.get("content_hash"),
+                            "recomputed": want})
+            invalid_resolution_ids.add(r.get("id"))
 
     registered = [e for e in entries if e.get("kind") == "registration" and e.get("status") == "registered"]
     rejected = [e for e in entries if e.get("kind") == "rejection"]
@@ -107,7 +128,8 @@ def main() -> int:
     scored, unresolved, due, due_unresolved = [], [], [], []
     scored_ids, unresolved_ids = set(), set()
     for e in registered:
-        if e.get("id") in invalid_entry_ids or e.get("id") in duplicate_resolution_ids:
+        if (e.get("id") in invalid_entry_ids
+                or e.get("id") in duplicate_resolution_ids):
             continue
         r = res_by_id.get(e.get("id"))
         rd = str(e.get("resolution_date", ""))
@@ -121,6 +143,10 @@ def main() -> int:
             continue
         if is_due:
             due.append(e)
+        if e.get("id") in invalid_resolution_ids:
+            if is_due:
+                due_unresolved.append(e.get("id"))
+            continue
         if r is None:
             if is_due:
                 due_unresolved.append(e.get("id"))
@@ -205,7 +231,7 @@ def main() -> int:
                                        "due_unresolved": 0})
         d["registered"] += 1
         r = res_by_id.get(e.get("id"))
-        if r is None:
+        if r is None or e.get("id") in invalid_resolution_ids:
             if e.get("resolution_date", "") <= time.strftime("%Y-%m-%d", time.gmtime(now)):
                 d["due_unresolved"] += 1
         elif e.get("id") in unresolved_ids:
@@ -272,21 +298,36 @@ def main() -> int:
     # resolutions; due-but-not-yet-resolved entries remain uncovered.
     coverage = (len(scored) + len(unresolved)) / len(registered) if registered else None
 
-    # Act 20 §7 P1–P5 review checkpoint (separate block; not Brier-scored).
+    # Act 20 §7 checkpoints live in the ledger as carried-forward statutory
+    # records but are deliberately excluded from Brier scoring.
+    checkpoint_entries = [e for e in entries
+                          if e.get("kind") == "review_checkpoint"]
+    for e in checkpoint_entries:
+        if e.get("content_hash") != content_hash(e):
+            defects.append({"id": e.get("id"),
+                            "defect": "review_checkpoint_content_hash_mismatch"})
+    checkpoint_by_id = {e.get("id"): e for e in checkpoint_entries}
     checkpoints = []
     if rc_p.exists():
         rc = json.loads(rc_p.read_text())
-        checkpoints = rc.get("checkpoints", [])
+        definitions = rc.get("checkpoints", [])
     else:
-        checkpoints = [dict(c) for c in ACT20_CHECKPOINTS]
-    cp_ids = {c.get("id") for c in checkpoints}
-    for e in registered:
-        if e.get("instrument") == "act20-review" and e.get("id") not in cp_ids:
-            r = res_by_id.get(e.get("id"))
-            checkpoints.append({"id": e.get("id"), "label": e.get("proposition", ""),
-                                "evidence_source": e.get("evidence_source", ""),
-                                "registered": True,
-                                "resolution": (r.get("outcome") if r else "unresolved")})
+        definitions = [dict(c) for c in ACT20_CHECKPOINTS]
+    for definition in definitions:
+        e = checkpoint_by_id.get(definition.get("id"))
+        row = dict(definition)
+        row["registered"] = e is not None
+        row["resolution"] = "pending"
+        if e is not None:
+            row.update({"proposition": e.get("proposition"),
+                        "resolution_date": e.get("resolution_date"),
+                        "evidence_source": e.get("evidence_source"),
+                        "author": e.get("author"),
+                        "source_ref": e.get("source_ref"),
+                        "source_registered_on": e.get("source_registered_on")})
+            row["integrity"] = ("clean" if e.get("content_hash") == content_hash(e)
+                                else "defect")
+        checkpoints.append(row)
 
     payload = {
         "schema": SCHEMA, "act": 22, "generated_at": now,

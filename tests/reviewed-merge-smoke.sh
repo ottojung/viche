@@ -71,6 +71,11 @@ test "$(cat "$town/AGENTS.md")" = 'canonical v2'
 test "$(git -C "$town" rev-parse HEAD)" = "$(git -C "$remote" rev-parse refs/heads/main)"
 jq -e '.result=="green" and .incident==false' "$town/records/suite-status.json" >/dev/null
 test -s "$state/delivery/review-authorizations.tsv"
+published=$(git -C "$town" rev-parse HEAD)
+test -s "$state/delivery/published-$published.json"
+jq -e --arg sha "$published" \
+  '.generated_by=="government/reviewed-merge.sh" and .commit==$sha and (.published_at_ns|type)=="number" and (.receipt_sha256|test("^[0-9a-f]{64}$"))' \
+  "$state/delivery/published-$published.json" >/dev/null
 
 # An authorized research branch cannot bypass the legislative law/ballot gate.
 law=$tmp/law

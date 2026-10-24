@@ -93,6 +93,29 @@ assert authors['seat']['baselines']['base_rate']['skill_vs_ledger'] is None
 assert authors['seat']['log_score'] is not None
 assert 'reliability' in authors['seat'] and 'discrimination' in authors['seat']
 PY
+# A resolution is part of the append-only evidence ledger: changing only its
+# outcome must create an integrity defect and the scorer must exclude it.
+resolution_tamper=$tmp/resolution-tamper.json
+cp "$tmp/ledger.json" "$resolution_tamper"
+python3 - "$resolution_tamper" <<'PY'
+import json,sys
+p=sys.argv[1]; x=json.load(open(p)); x['resolutions'][0]['outcome']='false'
+open(p,'w').write(json.dumps(x))
+PY
+if VICHE_PREDICT_LEDGER=$resolution_tamper python3 "$root/government/predict-ledger.py" verify >/dev/null 2>&1; then
+    echo 'resolution outcome tamper escaped integrity verification' >&2; exit 1
+fi
+VICHE_PREDICT_LEDGER=$resolution_tamper \
+VICHE_PREDICT_CALIBRATION=$tmp/resolution-tampered-calibration.json \
+    python3 "$root/government/predict-scorer.py" --now 90001 >/dev/null
+python3 - "$tmp/resolution-tampered-calibration.json" <<'PY'
+import json,sys
+x=json.load(open(sys.argv[1])); assert not x['integrity']['clean']
+assert x['counts']['resolved_scored']==1, x['counts']
+assert x['counts']['due_unresolved']==1, x['counts']
+assert [r['id'] for r in x['brier']['per_prediction']]==['bill-registration-2']
+assert any(d['defect']=='resolution_content_hash_mismatch' for d in x['integrity']['defects'])
+PY
 # Add a due prediction that remains unresolved: coverage must reflect the
 # unresolved registration, while the score must exclude it.
 VICHE_PREDICT_NOW=90 python3 "$root/government/predict-ledger.py" register --bill bill2 --proposition 'Will another event occur?' --probability .2 --resolution-date 1970-01-02 --evidence fixture2 --author seat2 >/dev/null
@@ -105,6 +128,28 @@ x=json.load(open(sys.argv[1])); assert abs(x['coverage']-3/4)<1e-3, (x['coverage
 assert x['counts']['due_unresolved']==1, x['counts']
 assert x['counts']['unresolved']==1
 assert x['counts']['resolved_scored']==2
+PY
+# Act 20 P1–P5 carry-forward records remain a separate checkpoint block, not
+# Brier registrations. No fake probabilities or second registration are added.
+checkpoint_ledger=$tmp/checkpoint-ledger.json
+for checkpoint in P1 P2 P3 P4 P5; do
+    VICHE_PREDICT_LEDGER=$checkpoint_ledger VICHE_PREDICT_NOW=90 \
+        python3 "$root/government/predict-ledger.py" add-review-checkpoint \
+        --id "$checkpoint" --proposition "Statutory checkpoint $checkpoint" \
+        --resolution-date 2026-12-01 --evidence act20-report \
+        --author c1e00011 --source-ref government/LAWS.md#act-20-section-7 \
+        --source-registered-on 2026-10-20 >/dev/null
+done
+VICHE_PREDICT_LEDGER=$checkpoint_ledger \
+VICHE_PREDICT_CALIBRATION=$tmp/checkpoint-calibration.json \
+    python3 "$root/government/predict-scorer.py" --now 100 >/dev/null
+python3 - "$tmp/checkpoint-calibration.json" <<'PY'
+import json,sys
+x=json.load(open(sys.argv[1])); cps=x['review_checkpoint']['checkpoints']
+assert x['counts']['registered']==0, x['counts']
+assert [c['id'] for c in cps]==['P1','P2','P3','P4','P5']
+assert all(c['registered'] and c['resolution']=='pending' for c in cps), cps
+assert all(c['integrity']=='clean' for c in cps), cps
 PY
 python3 "$root/government/predict-ledger.py" verify >/dev/null
 # The registration time is hash-bound; changing only it cannot make a late

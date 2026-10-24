@@ -1,13 +1,14 @@
 #!/bin/sh
 # Act 21 §5: audit the exact resulting commit/tree using committed suite-status
-# history and, when available, the immutable pre-push delivery receipts. A
-# historical suite-status record for a commit added to main by that same commit
-# is not pre-change evidence. Usage: suite-compliance-check.sh [repo]
+# history and the pre-push receipt plus post-push publication event. The event is
+# hash-bound to the receipt and must have a later high-resolution timestamp; a
+# receipt alone is never chronology evidence. A suite-status record committed
+# by the same change is not pre-change evidence. Usage: suite-compliance-check.sh [repo]
 set -eu
 repo=${1:-${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 python3 - "$repo" "$state" <<'PY'
-import json, re, subprocess, sys
+import hashlib, json, os, re, subprocess, sys
 repo,state=sys.argv[1:]
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
@@ -62,17 +63,38 @@ try:
         touched=first_parent_paths(rec_commit)
         if 'records/suite-status.json' in touched:
             records.append((rec_commit,data,'git'))
-    # reviewed-merge.sh stores an immutable receipt before publishing the
-    # candidate. The receipt is outside Git, so it can establish pre-push
-    # ordering only to the extent the host filesystem and writer are trusted.
-    import glob, os
+    # reviewed-merge.sh stores an immutable receipt before publishing and emits
+    # a bound event after a successful push. Both are outside Git; chronology is
+    # therefore only as trustworthy as the delivery host, filesystem and writer.
+    import glob
+    publications={}
+    for filename in sorted(glob.glob(os.path.join(state,'delivery','published-*.json'))):
+        try:
+            with open(filename,'rb') as f: raw=f.read()
+            event=json.loads(raw)
+            if (event.get('generated_by')=='government/reviewed-merge.sh'
+                    and isinstance(event.get('commit'),str)
+                    and type(event.get('published_at_ns')) is int
+                    and re.fullmatch(r'[0-9a-f]{64}',str(event.get('receipt_sha256','')))):
+                publications[event['commit']]=event
+        except (OSError,ValueError):
+            continue
     for filename in sorted(glob.glob(os.path.join(state,'delivery','verified-*.json'))):
         try:
-            with open(filename) as f: data=json.load(f)
+            with open(filename,'rb') as f: raw=f.read()
+            data=json.loads(raw)
             if (data.get('generated_by')=='government/suite-status.sh'
                     and data.get('suite') in ('tests/run-all.sh','tests/records-smoke.sh')
-                    and isinstance(data.get('recorded_at'),int)):
-                records.append((None,data,'pre-push-receipt'))
+                    and type(data.get('recorded_at')) is int):
+                # A pre-push receipt alone cannot establish chronology: it may
+                # have been copied into state after main changed. Require the
+                # post-push event emitted by reviewed-merge.sh, bound to this
+                # exact receipt digest, and strict timestamp ordering.
+                event=publications.get(data.get('commit'))
+                digest=hashlib.sha256(raw).hexdigest()
+                if (event is not None and event.get('receipt_sha256')==digest
+                        and event.get('published_at_ns') > data.get('recorded_at') * 1000000000):
+                    records.append((None,data,'pre-push-receipt'))
         except (OSError,ValueError):
             continue
 
@@ -102,7 +124,7 @@ try:
                     continue
                 if source=='git' and positions.get(rc, i) >= i:
                     continue
-                if source=='pre-push-receipt' and r.get('recorded_at',0) <= 0:
+                if source=='pre-push-receipt' and type(r.get('recorded_at')) is not int:
                     continue
             except (subprocess.CalledProcessError, OSError):
                 continue

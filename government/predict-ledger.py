@@ -12,6 +12,13 @@ Ledger: records/predictions/ledger.json — an append-only list of immutable
 entries. A correction is a NEW entry citing the original (§3.5); an entry is
 never edited or deleted. The file is rewritten only to append.
 
+Resolution records are immutable append-only events too. Their canonical
+content hash binds outcome, resolver, evidence citation/timestamp and the
+resolution timestamp, so an edit cannot silently change a score. Act 20's P1–P5
+are carried as separately hashed review-checkpoint entries, not Brier-scored
+registrations; their provenance, original review date and named evidence source
+are retained in the same ledger.
+
 Content hash (§3.5): sha256 over the canonical JSON of the registered
 prediction's immutable content — bill id, proposition, probability, resolution
 date, evidence source, author — computed at registration and committed before
@@ -98,6 +105,10 @@ def content_hash(entry: dict) -> str:
                  "proposition": entry.get("proposition", ""),
                  "author": entry.get("author", ""), "reason": entry.get("reason", ""),
                  "registered_at": entry.get("registered_at")}
+    elif entry.get("kind") == "review_checkpoint":
+        canon = {key: entry.get(key) for key in (
+            "kind", "id", "proposition", "resolution_date", "evidence_source",
+            "author", "source_ref", "source_registered_on", "recorded_at")}
     else:
         canon = {"bill_id": entry.get("bill_id", ""),
                  "proposition": entry.get("proposition", ""),
@@ -106,6 +117,15 @@ def content_hash(entry: dict) -> str:
                   "evidence_source": entry.get("evidence_source", ""),
                  "author": entry.get("author", ""),
                  "registered_at": entry.get("registered_at")}
+    blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(blob).hexdigest()
+
+
+def resolution_hash(resolution: dict) -> str:
+    """Hash the immutable resolution event separately from its prediction."""
+    canon = {key: resolution.get(key) for key in (
+        "id", "outcome", "resolver", "evidence_citation", "evidence_at",
+        "resolved_at", "reason")}
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":")).encode()
     return "sha256:" + hashlib.sha256(blob).hexdigest()
 
@@ -223,6 +243,7 @@ def cmd_resolve(a) -> int:
            "resolved_iso": iso(resolved_at)}
     if a.reason:
         res["reason"] = a.reason
+    res["content_hash"] = resolution_hash(res)
     if res["resolved_at"] < int(target.get("registered_at", 0)):
         res["defect"] = "resolution_timestamp_precedes_registration"
     data["resolutions"].append(res)
@@ -257,6 +278,10 @@ def cmd_verify(a) -> int:
                 defects.append({"id": eid, "defect": "invalid_registration_fields"})
     known = {e.get("id"): e for e in data["entries"] if e.get("kind") == "registration"}
     for r in data["resolutions"]:
+        want = resolution_hash(r)
+        if r.get("content_hash") != want:
+            defects.append({"id": r.get("id"), "defect": "resolution_content_hash_mismatch",
+                            "recorded": r.get("content_hash"), "recomputed": want})
         if r.get("defect"):
             defects.append({"id": r.get("id"), "defect": r["defect"]})
         target = known.get(r.get("id"))
@@ -337,6 +362,16 @@ def main() -> int:
     s.add_argument("--reason", default="")
     s.set_defaults(fn=cmd_resolve)
 
+    c = sub.add_parser("add-review-checkpoint")
+    c.add_argument("--id", required=True)
+    c.add_argument("--proposition", required=True)
+    c.add_argument("--resolution-date", required=True)
+    c.add_argument("--evidence", required=True)
+    c.add_argument("--author", required=True)
+    c.add_argument("--source-ref", required=True)
+    c.add_argument("--source-registered-on", required=True)
+    c.set_defaults(fn=cmd_add_review_checkpoint)
+
     sub.add_parser("verify").set_defaults(fn=cmd_verify)
     sub.add_parser("show").set_defaults(fn=cmd_show)
 
@@ -355,6 +390,35 @@ def _reject(a) -> int:
     data["entries"].append(entry)
     save(path, data)
     print("predict-ledger: REJECTED %s (%s)" % (entry["id"], a.reason))
+    return 0
+
+
+def cmd_add_review_checkpoint(a) -> int:
+    """Carry a pre-existing statutory checkpoint forward without rescoring it."""
+    path = ledger_path()
+    data = load(path)
+    if any(e.get("kind") == "review_checkpoint" and e.get("id") == a.id
+           for e in data["entries"]):
+        print("predict-ledger: review checkpoint already present: %s" % a.id,
+              file=sys.stderr)
+        return 1
+    try:
+        date_epoch(a.resolution_date)
+        datetime.datetime.strptime(a.source_registered_on, "%Y-%m-%d")
+    except ValueError:
+        print("predict-ledger: checkpoint dates must be YYYY-MM-DD", file=sys.stderr)
+        return 2
+    entry = {"id": a.id, "kind": "review_checkpoint", "instrument": "act20-review",
+             "proposition": a.proposition, "resolution_date": a.resolution_date,
+             "evidence_source": a.evidence, "author": a.author,
+             "source_ref": a.source_ref,
+             "source_registered_on": a.source_registered_on,
+             "recorded_at": now_epoch(), "status": "carried_forward_not_brier_scored"}
+    entry["content_hash"] = content_hash(entry)
+    data["entries"].append(entry)
+    save(path, data)
+    print("predict-ledger: carried review checkpoint %s from %s" %
+          (a.id, a.source_ref))
     return 0
 
 

@@ -35,11 +35,18 @@ gatekeeper (§2), the independent resolver (§3) and the publisher (§5).
 
 ## Integrity
 
-Each entry carries a content hash of the registered prediction (bill id,
-proposition, probability, resolution date, evidence source, author) computed at registration
-(§3.5). A correction is a **new** entry citing the original; entries are never
-edited or deleted. `predict-ledger.py verify` and `predict-scorer.py` recompute
-the hash; a mismatch is a recorded defect.
+Prediction entries carry a content hash computed at registration (§3.5).
+Resolution events also carry a hash over outcome, resolver, evidence citation,
+evidence timestamp and resolution timestamp; changing an outcome without a new
+event is reported as an integrity defect and excluded from scores. Corrections
+are appended as new entries. The hash is tamper-evident, not authentication;
+Git history remains the durable external anchor.
+
+Act 20 §7 P1–P5 are represented in `ledger.json` as
+`kind: review_checkpoint`, with the source law/date and evidence source retained.
+They are shown in a separate report block and are never included in prediction
+counts, Brier scores, or coverage denominators. They are carried forward from
+the Act 20 statutory record, not newly forecast or scored as Act 22 predictions.
 
 ## Honest limits (Act 22 §4)
 

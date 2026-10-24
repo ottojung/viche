@@ -132,6 +132,16 @@ printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
     >> "$state/delivery/review-authorizations.tsv"
 git -C "$cwd" push origin "HEAD:refs/heads/main" ||
     { echo 'Non-fast-forward main; re-review a newly constructed merge' >&2; exit 1; }
+# Append a separate post-publication chronology event for Judiciary review.
+# This durable host record binds the observed publication time to the exact
+# pre-push receipt; a receipt without this event cannot prove it preceded main.
+published_at_ns=$(python3 -c 'import time; print(time.time_ns())')
+receipt_sha=$(sha256sum "$receipt" | cut -d ' ' -f1)
+publication="$state/delivery/published-$candidate.json"
+publication_tmp=$(mktemp "$state/delivery/.published.XXXXXXXX")
+printf '{"generated_by":"government/reviewed-merge.sh","commit":"%s","published_at_ns":%s,"receipt_sha256":"%s"}\n' \
+    "$candidate" "$published_at_ns" "$receipt_sha" > "$publication_tmp"
+mv -f "$publication_tmp" "$publication"
 # Preserve pre-existing generated status; its newest exact receipt is produced
 # by this verifier. No broad git reset or destructive worktree cleanup.
 if [ -f "$repo/records/suite-status.json" ]; then
