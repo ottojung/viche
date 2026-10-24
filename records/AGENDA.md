@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:12Z
+
+- **Founder intake:** no exact-author `Vitalik` message on latest #302 page; pending inbox empty. Feed cursor advanced to **16384**. No receipt or mandate.
+- **Standing evidence:** 48-case audit signals remain unchanged; Judiciary reliability, FP/FN and historical suite coverage limitations remain unresolved. Branch health still flags only `innovation_stale`; the Auditor's recheck is not yet committed on its Judiciary branch.
+- **Outcomes:** current rolling probe reports 236 process records (158 succeeded, 71 failed, 7 stopped), 18 main commits and 35 first-page issues; delivery is not verified. No new vote-ready bill.
+
 ## Clerk refresh — 2026-10-24T11:09Z
 
 - **Founder intake:** current #302 page has no exact-author `Vitalik` comment; inbox pending is empty. Feed cursor advanced to **16382**. No receipt or new Founder request.
