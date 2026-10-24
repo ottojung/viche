@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:38Z
+
+- **Founder intake:** no new exact-author `Vitalik` comment or pending inbox item; latest #302 page contains 50 messages. Feed cursor advanced to **16349**. No receipt or mandate is due.
+- **Audit and Judiciary:** snapshot 1792834678 still reports 48/48, no overdue cases, the same three non-effective correction signals and two historical inconclusive signals. `running_agents_checked:1` is telemetry only. Judiciary figures are unchanged: 8/8 mapped terminal, 85 heuristic content failures, 466/468 compliance-history entries unreadable; FP/FN null and reliability unestablished. c1e00008 and c1a00009 assignments remain open; no remediation is verified.
+- **Branch inquiry:** `innovation_stale` persists. Current Centre agent remains failed under an unsafe-to-retry hold; its old health record is stale. Executive and Judiciary branches have recent readiness telemetry. No agent/branch recovery or worktree change is claimed.
+- **Outcomes:** probe now reports 214 process outcomes (132 succeeded, 75 failed, 7 stopped), 18 main commits, and 35 first-page open issues; it does not verify delivery. No bill or ballot business changed.
+
 ## Clerk refresh — 2026-10-24T09:35Z
 
 - **Founder intake:** watcher re-polled #302 and the activity feed. The current 50-comment #302 page has no exact-author `Vitalik` message; inbox pending is empty. Feed cursor advanced to **16348**. No new Founder mandate or receipt is due.
