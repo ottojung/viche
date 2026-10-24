@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T10:01Z
+
+- **Founder intake:** latest managed scan found no exact-author `Vitalik` comment on #302; inbox remains empty and feed cursor remains **16357**. No acknowledgement is due.
+- **Legislature health follow-up:** the transient `legislature_unhealthy` signal observed at 1792835874 is no longer in the latest branch incident (1792836073). The normal branch record at 1792836070 reports `ready`, `succeeded`, `cycle_accepted:true`; the current Antonina Clerk appointment is again running. This is evidence that the Legislature resumed, not an explanation of the earlier unaccepted cycle or proof of productive delivery. c1a00009 should retain the chronology and note that cause remains unestablished.
+- **Centre remains stale:** only `innovation_stale` remains in branch-health. The Centre agent is still failed at the unsafe-to-retry continuation; its health record remains stale. No hold was cleared, no new appointment created, and no prompt replay occurred.
+- **Other evidence unchanged:** 48-case audit still has three non-effective correction signals and two historic inconclusive signals; the Auditor's recheck is preserved in this branch but not yet on its Judiciary branch. Judiciary metrics remain 85 heuristic content failures and 466/468 suite-history entries unreadable; outcome probe reports 217 records and explicitly does not verify delivery. No vote-ready business.
+
 ## Clerk refresh — 2026-10-24T09:59Z
 
 - **Founder intake:** latest #302 page has no exact-author `Vitalik` comment; pending inbox is empty. Feed cursor advanced to **16357**. No receipt or mandate is due.
