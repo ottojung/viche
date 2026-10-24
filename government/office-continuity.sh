@@ -140,7 +140,7 @@ oc_mark_unsafe_hold() {
 # Durable incident records survive restart without flooding each sitting.
 oc_surface_permanent() {
   # $1 liveness dir, $2 agent id, $3 classification
-  mkdir -p "$1/surfaced" || return 1
+  mkdir -p "$1" || return 1
   case "$2:$3" in *[!a-zA-Z0-9_:-]*|'') return 1;; esac
   if [ -n "$3" ]; then
     oc_kind=permanent_failure
@@ -149,13 +149,17 @@ oc_surface_permanent() {
     oc_kind=unclassified_failure
     oc_class=missing_backend_classification
   fi
-  # mkdir is an atomic claim across concurrent seat supervisors; the
-  # incident is append-only. Never discard earlier archived evidence.
-  if ! mkdir "$1/surfaced/$2-$oc_kind-$oc_class" 2>/dev/null; then
+  # The durable append IS the dedup marker. A crash before appending
+  # must not leave a separate empty marker that suppresses future reports.
+  # Every seat/agent has its own immutable id; repeated observations of that
+  # same incident cannot increment the count. Concurrent record attempts
+  # may append the same line twice, but can never erase or suppress it.
+  oc_record="id=$2 $oc_kind classification=$oc_class surfaced-not-reset"
+  if [ -f "$1/permanent-incidents.log" ] &&
+     grep -Fq "$oc_record" "$1/permanent-incidents.log"; then
     return 0
   fi
-  printf '%s id=%s %s classification=%s surfaced-not-reset\n' \
-    "$(date -u +%FT%TZ)" "$2" "$oc_kind" "$oc_class" >> "$1/permanent-incidents.log"
+  printf '%s %s\n' "$(date -u +%FT%TZ)" "$oc_record" >> "$1/permanent-incidents.log" || return 1
   echo "Viche: $oc_kind id=$2 classification=$oc_class surfaced, not reset (Act 19 §3.1)" >&2
   return 0
 }

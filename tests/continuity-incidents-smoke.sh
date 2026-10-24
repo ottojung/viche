@@ -24,4 +24,10 @@ oc_surface_permanent "$tmp/liveness" agent-2 invalid_api_key
 [ "$(wc -l < "$tmp/liveness/permanent-incidents.log")" -eq 2 ]
 grep -Fq 'permanent_failure classification=invalid_api_key' \
  "$tmp/liveness/permanent-incidents.log"
+# If the append-only incident log is lost before durable publication, no
+# stale auxiliary marker may prevent a later observation from reporting it.
+cp "$tmp/liveness/permanent-incidents.log" "$tmp/previous-log"
+: > "$tmp/liveness/permanent-incidents.log"
+oc_surface_permanent "$tmp/liveness" agent-2 invalid_api_key
+[ "$(wc -l < "$tmp/liveness/permanent-incidents.log")" -eq 1 ]
 echo 'Idempotent holds and honest incident classifications smoke passed'
