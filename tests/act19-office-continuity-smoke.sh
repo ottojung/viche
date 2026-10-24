@@ -17,6 +17,7 @@ printf '%s\n' c1e00002 > "$d2/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$d2/town/government/eligible-work.py"
 cp "$repo/government/executive-cycle.sh" "$d2/town/government/executive-cycle.sh"
 cp "$repo/government/handoff-queue.sh" "$d2/town/government/handoff-queue.sh"
+cp "$repo/government/predict-scorer.py" "$d2/town/government/predict-scorer.py"
 cat > "$d2/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu

@@ -11,6 +11,19 @@ rules=$town/government/voting.conf
 [ -s "$roster" ] && [ -s "$ballots" ] && [ -s "$proposal" ] && [ -f "$rules" ] || {
     echo "Missing roster, ballots, proposed text, or voting rules" >&2; exit 2;
 }
+# Act 22 §2 pre-registration gate: no bill reaches the Act 16 §1 ballot gate
+# (here: the vote/tally path) unless the Clerk has recorded >=1 registered,
+# evidence-linked prediction for it whose registration timestamp precedes the
+# ballot. Pilot-scoped under Act 22 §8: predict-gate.sh passes a bill that is
+# outside the Clerk-owned pilot list. This adds no quorum/voting-rule change.
+[ -f "$town/government/predict-gate.sh" ] || {
+    echo "tally: Act 22 gate unavailable; refusing bill $1" >&2
+    exit 3
+}
+/bin/sh "$town/government/predict-gate.sh" "$1" || {
+    echo "tally: bill $1 refused at the Act 22 pre-registration gate" >&2
+    exit 3
+}
 quorum=$(sed -n 's/^quorum=//p' "$rules")
 required=$(sed -n 's/^ayes=//p' "$rules")
 for n in "$quorum" "$required"; do

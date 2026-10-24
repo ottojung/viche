@@ -10,7 +10,7 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
   "$repo/government/clerk-liveness.sh" "$repo/government/branch-liveness.sh" \
   "$repo/government/executive-cycle.sh" "$repo/government/office-continuity.sh" \
   "$repo/government/terminal-appointment-evidence.sh" "$repo/government/policy-sync.sh" \
-  "$repo/government/seat-liveness.sh" \
+  "$repo/government/seat-liveness.sh" "$repo/government/predict-scorer.py" \
   "$d/town/government/"
 git -C "$d/seats/branches/executive" init -q
 git -C "$d/seats/branches/executive" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm baseline
@@ -163,7 +163,8 @@ test ! -s "$MOCK_ROOT/runs"
 mkdir -p "$d/safe/town/government" "$d/safe/town/records" \
   "$d/safe/seats/branches/executive" "$d/safe/state/appointments"
 cp "$repo/government/appointments.sh" "$repo/government/executive-cycle.sh" \
-  "$repo/government/handoff-queue.sh" "$repo/government/terminal-appointment-evidence.sh" "$d/safe/town/government/"
+  "$repo/government/handoff-queue.sh" "$repo/government/terminal-appointment-evidence.sh" \
+  "$repo/government/predict-scorer.py" "$d/safe/town/government/"
 printf 'c1a00001\tClerk\tintake\n' > "$d/safe/town/government/seats.tsv"
 printf 'executive\tsafe-id\n' > "$d/safe/state/appointments/appointments.tsv"
 printf '{"state":"idle","model":null,"variant":null}\n' > "$MOCK_ROOT/safe-id.json"

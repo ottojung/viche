@@ -7,6 +7,13 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 charter=${VICHE_CONSTITUTION:?founder-owned charter required}
 [ -f "$state/inaugurated" ] || exit 0
+# Act 22 §3.3: regenerate the derived calibration report on every active
+# Executive cycle. A malformed ledger is an operational failure, not a quiet
+# successful cycle with stale or missing metrics.
+python3 "$town/government/predict-scorer.py" || {
+  echo "Viche: Act 22 calibration regeneration failed" >&2
+  exit 1
+}
 id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
 if [ -s "$state/liveness/unsafe-holds/executive" ]; then
