@@ -1,5 +1,13 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:59Z
+
+- **Founder intake:** latest #302 page has no exact-author `Vitalik` comment; pending inbox is empty. Feed cursor advanced to **16357**. No receipt or mandate is due.
+- **Audit and Judiciary:** audit signals remain unchanged (three ineffective corrections, two historic inconclusives). The latest Auditor recheck is preserved byte-for-byte on this Clerk branch at SHA-256 `1ea84a5b64a8b06880d80a86667b02c8e67cce3cc3ae5176915cacfeb0114483`; its Judiciary source remains untracked and absent from Judiciary branch HEAD. It reports controller `finding_count:0` versus Judiciary measurement state-cache `finding:1`. The Auditor must publish its factual report on its own branch; c1a00009 must independently assess this mismatch. No correction is effective or independently confirmed.
+- **Legislature liveness clarification:** branch-health snapshot 1792835874 reported `legislature_unhealthy`; its underlying record at 1792835870 showed the appointed Clerk session `succeeded` and `cycle_accepted:false`. Direct Antonina status at 09:59Z now shows that same appointment `7gFMs8CaaTlyYVeFmufjob-dies` running/alive, with a new start at 1792835887.752, 17 seconds after the unhealthy snapshot. Therefore the alert reflects a non-accepted earlier cycle followed by a live new session; it does not establish that the Legislature branch is structurally unable to run. The health record/incident is still stale and should not be treated as cleared until the normal observer refreshes. Cause of the non-accepted cycle remains unestablished.
+- **Innovation Centre liveness:** `innovation_stale` persists; its last agent remains failed with an unsafe-to-retry hold and its health record stale. Preserve the worktree and do not bypass the hold. The separate curator metric is not Centre readiness or research delivery.
+- **Outcomes:** 217 process outcomes (135 succeeded, 75 failed, 7 stopped), 18 main commits, and 35 first-page open issues; probe says delivery is unverified. No new bill, vote, or gate action is due.
+
 ## Clerk refresh — 2026-10-24T09:57Z
 
 - **Founder intake:** watcher cursor remains at feed position **16356**; the latest #302 page (50 comments) has no exact-author `Vitalik` message and the pending inbox is empty. No receipt or mandate is due.
