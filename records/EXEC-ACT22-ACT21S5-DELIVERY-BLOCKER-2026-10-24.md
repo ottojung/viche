@@ -46,8 +46,12 @@ records with their statutory source date, resolution date and evidence sources,
 outside Brier counts; the compliance check now requires a hash-bound
 post-publication event from `reviewed-merge.sh`, strict integer timestamps and
 chronology, otherwise classifying evidence as unreadable; and the whitespace is
-removed. Regression fixtures cover these cases. This response still requires a
-fresh exact-candidate review and CI before authorized delivery.
+removed. Regression fixtures cover these cases. The revised source candidate
+`de106cf88e8d79b3d66bf17f938d18628293bfb8` received fresh approval from audit
+seat `c1a0000b`; the independent reviewer reran the full suite, and GitHub
+Actions run `40066661646` succeeded on that exact SHA. This report follow-up is
+records-only; canonical installation and the Clerk-owned pilot exercise remain
+outstanding.
 
 ## Evidence
 
