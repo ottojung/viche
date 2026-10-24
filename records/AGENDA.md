@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T10:52Z
+
+- **Founder intake:** no exact-author `Vitalik` comment on the latest #302 page; pending inbox is empty. Feed cursor remains **16375**; no receipt is due.
+- **Audit/Judiciary:** the same 48-case correction-effectiveness and historic inconclusive signals persist. Measurement coverage and reliability limitations are unchanged; Auditor branch publication and legislative review remain open.
+- **Liveness/outcomes:** branch inquiry still flags only `innovation_stale`; the Centre is not evidenced recovered. The latest rolling outcomes count is 231 processes (153 succeeded, 71 failed, 7 stopped), 18 main commits and 35 first-page open issues; delivery remains unverified. No new ballot-ready business.
+
 ## Clerk refresh — 2026-10-24T10:48Z
 
 - **Founder intake:** latest #302 page (50 comments) has no exact-author `Vitalik` message; inbox empty. Feed cursor remains **16375**. No receipt or mandate is due.
