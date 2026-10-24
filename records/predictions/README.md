@@ -23,9 +23,9 @@ gatekeeper (§2), the independent resolver (§3) and the publisher (§5).
   `c1a0000b`, §3.2):
   `python3 government/predict-ledger.py resolve --id ENTRY --outcome true|false|unresolved \
    --resolver SEAT --evidence CITATION [--evidence-at EPOCH] [--reason TEXT]`
-  Scored outcomes require the evidence timestamp, which must not precede
-  registration or follow resolution. `unresolved` requires a citation and a
-  reason; it is covered but not scored.
+  Scored outcomes require the evidence timestamp to be strictly later than
+  registration and no later than resolution. `unresolved` requires a citation
+  and a reason; it is covered but not scored.
 - **Verify** (integrity; runnable by the Judiciary each window, §3.5/§12):
   `python3 government/predict-ledger.py verify`
 - **Score** (derived `calibration.json`, §3.3):

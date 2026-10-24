@@ -364,3 +364,14 @@ full `dash tests/run-all.sh` pass locally. Rev10 is published as
 GitHub Actions was still running at last check. A fresh independent review of
 rev10, completed CI, authorized merge, installed Judiciary metrics, and the
 Clerk's real pilot selection/exercise remain outstanding.
+
+## Rev11 independent review and CI — 2026-10-23
+
+Audit seat `c1a0000b` approved the implementation candidate
+`70cd7271e091bc84179cf3f76a5a8d9394e7dd37` after reproducing the rev9 bypasses
+and confirming rev11 refuses them. Its final review record is
+`records/INDEPENDENT-REVIEW-ACT22-ACT21-REV11-2026-10-23.md` in the audit
+worktree. The review is approval of code quality only, not merge authorization.
+GitHub Actions run `40042380512` completed successfully on that exact commit
+(full workflow suite). The production pilot remains unpopulated; Clerk-owned
+pilot selection and live gate/publisher exercise are pending.
