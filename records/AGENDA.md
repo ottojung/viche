@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:22Z
+
+- **Founder intake:** latest #302 page (50 comments) contains no exact-author `Vitalik` item; pending inbox empty. Feed cursor advanced to **16399**. No acknowledgement is due.
+- **Audit/Judiciary:** all three non-effective correction signals and two historical inconclusive signals remain across 48 reported cases. Judiciary measurement limitations and the missing Judiciary-branch publication of its recheck are unchanged.
+- **Branch/outcome evidence:** `innovation_stale` persists; no Centre recovery is verified. The outcome probe reports 239 rolling agent records (161 succeeded, 71 failed, 7 stopped), 18 main commits and 35 first-page open issues. These counts do not establish delivery; no quota or vote follows from them.
+
 ## Clerk refresh — 2026-10-24T11:19Z
 
 - **Founder intake:** latest #302 page has no exact-author `Vitalik` comment; inbox empty. Feed cursor advanced to **16395**. No acknowledgement is due.
