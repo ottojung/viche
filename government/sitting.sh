@@ -6,12 +6,24 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
+if [ -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$seat" ]; then
+  echo "Viche: unsafe seat invocation, preserve work for review" >&2
+  exit 1
+fi
 if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
     /bin/sh "$town/government/clerk-liveness.sh" --gate || {
         echo "Viche: Clerk sitting deferred until endpoint retry cooldown" >&2
         exit 1
     }
 fi
+appointed=$(/bin/sh "$town/government/appointments.sh" resolve "$seat") || exit 1
+status=$(antonina agent status --id "$appointed" --json) || exit 1
+mode=$(printf '%s\n' "$status" | jq -r '.state')
+if [ "$mode" = failed ]; then
+  retry_safe=$(printf '%s\n' "$status" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
+  [ "$retry_safe" = yes ] || { echo "Viche: seat $seat failed without retry-safe evidence" >&2; exit 1; }
+fi
+case "$mode" in stopped|killed) exit 1;; esac
 # Resource Safety Act: defer convening when cgroup headroom is below the floor.
 # A memory-safety gate, not a worker cap (Constitution VII); the boot defers the
 # seat on non-zero exit, the same mechanism as the clerk-liveness gate.
@@ -34,6 +46,10 @@ GitHub-hosted CI builds, tests and Lean verification; do not disable those
 workflows to enforce an agent execution-host assignment.
 Executive discovery, issue prioritization and delivery belong to the independent
 executive office under Act 2. The Clerk is not its task scheduler.
+Read descriptive institutional outcomes at
+/var/lib/lubko/wd/viche-state/institutional-outcomes/latest.json.
+These distinguish agent exits, main merges and independent verification.
+Treat trends as questions for inquiry, never as mandatory output quotas.
 Read the independent Judiciary's latest measurements at
 ${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/judiciary-measurements.json
 and any pending case findings before setting the parliamentary agenda.
@@ -55,7 +71,12 @@ concrete, current assignment in $town/records/summons/SEAT_ID.md describing
 its expected deliverable, supporting evidence and relevant branch/issue.
 Refresh or remove these assignment files as business changes; remove resolved
 IDs from SUMMONED.txt. Do not leave members guessing among historical tasks.
-Solicit individual ballots, check quorum with government/tally.sh,
+Before publishing any bill for ballots, run government/predict-gate.sh BILL_ID
+for bills in the Act 22 pilot subset and give the registered predictions to the
+non-sponsor red-teamer. Do not publish the ballot request, solicit ballots, or
+record ballots unless that gate exits successfully; a refusal means the bill is
+not vote-eligible. government/tally.sh repeats the gate as defense in depth.
+Then solicit individual ballots, check quorum with government/tally.sh,
 and record hearings, evidence, dissent, and real progress. Do not fabricate votes
 or bother the Founder about routine decisions the government can resolve.
 EOF

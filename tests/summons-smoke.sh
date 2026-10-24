@@ -4,12 +4,27 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-mkdir -p "$scratch/government" "$scratch/records/summons"
+mkdir -p "$scratch/government" "$scratch/records/summons" "$scratch/state"
 printf 'c1a00001\tClerk\tintake\nc1a00002\tExecutive\tdelivery\nc1a00004\tResearch\tmetrics\nc1a00005\tResource\taudit\n' > "$scratch/government/seats.tsv"
 printf '%s\n' 'UNIQUE ACT 10 CGROUP ASSIGNMENT' > "$scratch/records/summons/c1a00004.md"
 VICHE_TOWN_ROOT=$scratch
 VICHE_TOWNHALL_ID=302
-export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID
+VICHE_STATE_ROOT=$scratch/state
+# Constitutional boot normally appoints seats before rendering a sitting.
+# Model benign managed statuses so the summons assertions test routing only.
+mkdir -p "$scratch/bin"
+cat > "$scratch/government/appointments.sh" <<'APPOINTMENT'
+#!/bin/sh
+printf 'fixture-seat\n'
+APPOINTMENT
+cat > "$scratch/bin/antonina" <<'ANTONINA'
+#!/bin/sh
+[ "$1" = agent ] && [ "$2" = status ] || exit 1
+printf '{"state":"idle"}\n'
+ANTONINA
+chmod +x "$scratch/government/appointments.sh" "$scratch/bin/antonina"
+PATH="$scratch/bin:$PATH"; export PATH
+export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID VICHE_STATE_ROOT
 
 printf '%s\n' 'UNIQUE LIVE KAWUN EXECUTIVE ASSIGNMENT' > "$scratch/records/summons/c1a00002.md"
 /bin/sh "$repo/government/sitting.sh" c1a00002 > "$scratch/executive.txt"

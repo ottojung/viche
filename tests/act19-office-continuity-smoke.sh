@@ -1,154 +1,15 @@
 #!/bin/sh
-# Hermetic Act 19 (Office Continuity and Handoff Integrity Act) smoke:
-# failure-count reset regardless of observed state, transient-class coverage,
-# permanent-failure surfacing, progress guard, cooldown, durable handoff queue
-# non-supersession, no-dispatch-on-pre-read-failure, and the commit-age signal.
+# Act19 integration: actually exercise appointments, distinct invocation
+# identities, fractional finished timestamps and legal reset/cooldown.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
+/bin/sh "$repo/tests/appointment-recovery-integration-smoke.sh"
 
-# --- Part 1: failure-count-based office reset (branch-bootstrap, §3.1/§3.3) ---
-d=$(mktemp -d)
-trap 'rm -rf "$d"' EXIT HUP INT TERM
-mkdir -p "$d/bin" "$d/town/government" "$d/seats/branches/executive" "$d/state/liveness" "$d/mock"
-printf 'c1a00001\tClerk\tlegislature\n' > "$d/town/government/seats.tsv"
-cp "$repo/government/branch-bootstrap.sh" "$d/town/government/branch-bootstrap.sh"
-cp "$repo/government/office-continuity.sh" "$d/town/government/office-continuity.sh"
-git -C "$d/seats/branches/executive" init -q
-git -C "$d/seats/branches/executive" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm baseline
-printf 'valuable uncommitted work\n' > "$d/seats/branches/executive/uncommitted.txt"
-cat > "$d/bin/antonina" <<'MOCK'
-#!/bin/sh
-set -eu
-case "$1 $2" in
-  'agent status') cat "$MOCK_ROOT/status.json" ;;
-  'agent log') echo 'Endpoint is unavailable' ;;
-  'agent delete') echo delete >> "$MOCK_ROOT/recovery" ;;
-  'agent new')
-    echo new >> "$MOCK_ROOT/recovery"
-    printf '{"state":"idle","model":"test-provider/example","variant":"low"}\n' > "$MOCK_ROOT/status.json"
-    ;;
-  *) exit 9 ;;
-esac
-MOCK
-chmod +x "$d/bin/antonina"
-set_status() {
-  printf '{"state":"%s","model":"test-provider/example","variant":"low","backend_error":{"classification":"%s","transient":%s}}\n' \
-    "$1" "${2:-upstream_endpoint_unavailable}" "${3:-true}" > "$d/mock/status.json"
-}
-wt=$d/seats/branches/executive
-liv=$d/state/liveness
-log=$liv/failures/c1e00002
-PATH="$d/bin:$PATH"
-MOCK_ROOT="$d/mock"
-mkdir -p "$d/town/government"
-cp "$repo/tests/appointment-id-stub.sh" "$d/town/government/appointments.sh"
-VICHE_TOWN_ROOT="$d/town"
-VICHE_SEATS_ROOT="$d/seats"
-VICHE_STATE_ROOT="$d/state"
-export PATH MOCK_ROOT VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT
-
-run_bootstrap() { /bin/sh "$d/town/government/branch-bootstrap.sh" executive; }
-
-# Below threshold: two observed failures are recorded but do not reset.
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-run_bootstrap
-test "$(wc -l < "$log")" -eq 2
-test ! -e "$d/mock/recovery"
-
-# P1a detector / oscillation: failed->running->failed observations accumulate
-# in the monotonic record; the reset fires on the third consecutive transient
-# failure even though the supervisor keeps seeing "running" in between.
-: > "$log"
-set_status failed;  run_bootstrap
-set_status running; run_bootstrap
-set_status failed;  run_bootstrap
-set_status running; run_bootstrap
-set_status failed;  run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 2
-test "$(wc -l < "$log")" -eq 0
-test "$(find "$liv" -name 'status.json' | wc -l)" -eq 1
-grep -Fq 'session_reset=failure_count threshold=3 window=1800 cooldown=1800' "$liv/recoveries.log"
-test -f "$wt/uncommitted.txt"
-# commit-age signal is emitted while the office has uncommitted work.
-grep -Fq 'commit_age_seconds=' "$liv/commit-age.log"
-grep -Fq "id=c1e00002" "$liv/commit-age.log"
-
-# P1: the reset is decidable from the failure record alone — the agent is
-# observed "running" (healthy-looking) yet the recorded threshold still fires.
-printf '0\n' > "$liv/last-reset-c1e00002"
-now=$(date +%s)
-sha=$(git -C "$wt" rev-parse HEAD)
-for i in 1 2 3; do
-  printf '%s upstream_endpoint_unavailable %s\n' "$now" "$sha" >> "$log"
-done
-set_status running
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 4
-
-# P2: the non-endpoint transient class (2026-10-17 API-key expiry) is covered.
-printf '0\n' > "$liv/last-reset-c1e00002"
-set_status failed unrecognized_backend_failure true
-run_bootstrap
-run_bootstrap
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 6
-
-# Permanent failures are surfaced, never silently reset, never counted.
-incidents_before=0
-if [ -f "$liv/permanent-incidents.log" ]; then
-  incidents_before=$(wc -l < "$liv/permanent-incidents.log")
-fi
-set_status failed invalid_api_key false
-run_bootstrap
-run_bootstrap
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 6
-test "$(wc -l < "$log")" -eq 0
-test "$(wc -l < "$liv/permanent-incidents.log")" -gt "$incidents_before"
-grep -Fq 'permanent_failure classification=invalid_api_key surfaced-not-reset' "$liv/permanent-incidents.log"
-
-# Progress guard: durable work between failures breaks the streak.
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-run_bootstrap
-test "$(wc -l < "$log")" -eq 2
-git -C "$wt" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm 'durable progress'
-printf '0\n' > "$liv/last-reset-c1e00002"
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-test "$(wc -l < "$log")" -eq 1
-test "$(wc -l < "$d/mock/recovery")" -eq 6
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 8
-# A clean worktree (no uncommitted work) stops emitting the signal.
-git -C "$wt" add -A
-git -C "$wt" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm 'all work durable'
-lines_before=$(wc -l < "$liv/commit-age.log")
-set_status running
-run_bootstrap
-test "$(wc -l < "$liv/commit-age.log")" -eq "$lines_before"
-printf 'new uncommitted work\n' > "$wt/later.txt"
-set_status running
-run_bootstrap
-test "$(wc -l < "$liv/commit-age.log")" -gt "$lines_before"
-
-# Cooldown: three more failures cannot reset again inside 1800 s.
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-run_bootstrap
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 8
-printf '0\n' > "$liv/last-reset-c1e00002"
-set_status failed upstream_endpoint_unavailable true
-run_bootstrap
-test "$(wc -l < "$d/mock/recovery")" -eq 10
+# The separate Part 2 tests durable handoff non-supersession in isolation.
+d2=$(mktemp -d)
+trap 'rm -rf "$d2"' EXIT HUP INT TERM
 
 # --- Part 2: durable handoff queue and non-supersession (executive-cycle, §3.2) ---
-d2=$(mktemp -d)
 mkdir -p "$d2/bin" "$d2/town/government" "$d2/town/records" "$d2/seats/branches/executive" "$d2/state"
 printf 'c1a00001\tClerk\tintake\nc1e00002\tExecutive\tdelivery\n' > "$d2/town/government/seats.tsv"
 printf 'Founder charter fixture\n' > "$d2/charter"
@@ -156,6 +17,7 @@ printf '%s\n' c1e00002 > "$d2/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$d2/town/government/eligible-work.py"
 cp "$repo/government/executive-cycle.sh" "$d2/town/government/executive-cycle.sh"
 cp "$repo/government/handoff-queue.sh" "$d2/town/government/handoff-queue.sh"
+cp "$repo/government/predict-scorer.py" "$d2/town/government/predict-scorer.py"
 cat > "$d2/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu

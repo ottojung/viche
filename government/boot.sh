@@ -40,7 +40,6 @@ while IFS="$tab" read -r seat_id title focus; do
         fi
         git -C "$town" worktree add --detach "$seat_dir" HEAD
     fi
-    /bin/sh "$town/government/appointments.sh" ensure "$seat_id" >/dev/null
     # All seats have durable, independently recoverable sessions; don't let a
     # failed provider continuation permanently remove a future voter.
     if [ -f "$town/government/seat-liveness.sh" ]; then
@@ -83,6 +82,18 @@ if [ -f "$town/government/oversight-watch.sh" ]; then
     /bin/sh "$town/government/oversight-watch.sh" ||
         echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
 fi
+# Independent feedback never holds up legislature, executive, or judiciary.
+# Serialize collectors, bound their runtime, and timestamp their evidence.
+if [ -f "$town/government/outcome-metrics.py" ]; then
+    metrics_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/institutional-outcomes
+    mkdir -p "$metrics_state"
+    (
+        flock -n 9 || exit 0
+        timeout 150 python3 "$town/government/outcome-metrics.py" ||
+            echo "Viche: outcome feedback unavailable; do not infer success" >&2
+    ) 9>"$metrics_state/collector.lock"       >>"$metrics_state/collector.log" 2>&1 < /dev/null &
+fi
+
 # Independent Judiciary: evidence and adjudication, not executive delivery,
 # proposing bills, or modifying its own measurement rules.
 if [ -f "$town/government/branch-liveness.sh" ]; then

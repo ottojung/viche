@@ -42,16 +42,45 @@ case "$ci" in
     green|red|unavailable) : ;;
     *) echo "suite-status: invalid --ci value: $ci" >&2; exit 2 ;;
 esac
-[ -f "$town/$suite" ] || { echo "suite-status: suite not found: $town/$suite" >&2; exit 2; }
+case "$suite" in
+    tests/*) : ;;
+    *) echo "suite-status: suite must be a relative tests/ script" >&2; exit 2 ;;
+esac
+case "$suite" in
+    *../*|*/../*|*//*) echo "suite-status: unsafe suite path" >&2; exit 2 ;;
+esac
 
 sha=$(git -C "$town" rev-parse --verify "$commit^{commit}" 2>/dev/null) || {
     echo "suite-status: cannot resolve commit: $commit" >&2; exit 2
 }
 tree=$(git -C "$town" rev-parse --verify "$commit^{tree}")
 
-# Run the suite once; emit "<exit>\t<sha256 of combined output>".
+# Act 21 verifies the EXACT commit. A dirty or newer canonical checkout must
+# never masquerade as the selected revision. Isolate both source and Git index
+# in a temporary detached worktree. This checkout is never pushed or retained.
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/viche-suite.XXXXXXXX") || exit 2
+checkout=$scratch/revision
+cleanup() {
+    if [ -d "$checkout" ]; then
+        git -C "$town" worktree remove --force "$checkout" >/dev/null 2>&1 || :
+    fi
+    rm -rf "$scratch"
+}
+trap 'cleanup' 0
+trap 'exit 130' 1 2 3 15
+git -C "$town" worktree add --quiet --detach "$checkout" "$sha" ||
+    { echo "suite-status: cannot create checkout for $sha" >&2; exit 2; }
+[ -f "$checkout/$suite" ] ||
+    { echo "suite-status: suite missing from verified commit: $sha" >&2; exit 2; }
+[ "$(git -C "$checkout" rev-parse HEAD)" = "$sha" ] ||
+    { echo "suite-status: checkout SHA mismatch" >&2; exit 2; }
+[ "$(git -C "$checkout" rev-parse HEAD^{tree})" = "$tree" ] ||
+    { echo "suite-status: checkout tree mismatch" >&2; exit 2; }
+
+# Run each replay in that immutable source checkout; emit an exit code and an
+# output digest. Flaky-red reruns use the SAME original source revision.
 run_once() {
-    out=$(cd "$town" && /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
+    out=$(cd "$checkout" && VICHE_TOWN_ROOT="$checkout" /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
     hash=$(printf '%s' "$out" | sha256sum | cut -d ' ' -f1)
     printf '%s\t%s\n' "$rc" "$hash"
 }
