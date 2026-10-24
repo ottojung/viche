@@ -106,7 +106,7 @@ id4=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id4" != "$id3"
 # A concurrent supervisor still holding the old agent identity must NOT
 # replace the new appointment after another observer won the reset.
-if /bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" replace executive "$id3" >/dev/null 2>&1; then
+if /bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" replace executive "$id3" concurrency-test stale_supervisor 'stale contender' >/dev/null 2>&1; then
   echo 'Stale supervisor overwrote newly recovered appointment' >&2; exit 1
 fi
 test "$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve executive)" = "$id4"
@@ -115,6 +115,8 @@ test "$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve executive)
 test "$(cat "$MOCK_ROOT/next")" -eq 1 || { echo 'Multiple replacements for one Act19 threshold event' >&2; exit 1; }
 test "$(wc -l < "$VICHE_STATE_ROOT/liveness/recoveries.log")" -eq 1
 test "$(wc -l < "$ledger")" -eq 3
+jq -e --arg prior "$id3" '.caller=="branch-bootstrap" and .trigger=="act19_failure_threshold" and .expected_prior_id==$prior and .reason!=""' \
+  "$VICHE_STATE_ROOT/appointments/replacement-provenance.jsonl" >/dev/null
 # A failed stop may not begin reset cooldown or replace a live appointee.
 oc_quiesce_for_reset_test_id=$id4
 set_status running "$((base+5))" run-running idle false true "$oc_quiesce_for_reset_test_id"
@@ -222,4 +224,6 @@ seat_after=$(/bin/sh "$d/town/government/appointments.sh" resolve c1a00007)
 [ "$seat_after" != "$seat" ] || { echo 'Parliamentary seat did not reset on three distinct failures' >&2; exit 1; }
 [ "$(awk -F '\t' '$1=="c1a00007"{n++} END{print n+0}' "$d/state/appointments/appointments.tsv")" -eq 1 ]
 test "$(grep -c 'seat=c1a00007 session_reset=' "$d/state/liveness/recoveries.log")" -eq 1
+jq -e --arg prior "$seat" '.caller=="seat-liveness" and .trigger=="act19_failure_threshold" and .expected_prior_id==$prior and .reason!=""' \
+  "$d/state/appointments/replacement-provenance.jsonl" >/dev/null
 echo 'appointment recovery integration tests passed'
