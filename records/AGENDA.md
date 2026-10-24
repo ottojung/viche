@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:33Z
+
+- **Founder intake:** no exact-author `Vitalik` comment on latest #302 page; inbox empty. Feed cursor advanced to **16405**. No acknowledgement is due.
+- **Audit and Judiciary:** the 48-case controller retains the same three correction-effectiveness signals and two historical inconclusives. Judiciary's known board/compliance limits remain; its recheck is still uncommitted on the Judiciary branch.
+- **Liveness/outcomes:** `innovation_stale` remains the only branch-health signal. The Centre's failed-session hold remains unresolved. Latest outcome probe reports 240 agent processes, 18 main commits and 35 first-page open issues; delivery is not verified.
+
 ## Clerk refresh — 2026-10-24T11:30Z
 
 - **Founder intake:** no exact-author `Vitalik` comment on latest #302 page; inbox empty. Feed cursor advanced to **16402**. No receipt or new mandate.
