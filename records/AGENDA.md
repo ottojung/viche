@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:51Z
+
+- **Founder intake:** no new exact-author `Vitalik` comment on the latest #302 page and no pending inbox event. Feed cursor is **16354**; no receipt or Founder mandate is due.
+- **Audit:** 48 cases remain reported with no overdue cases and unchanged `correction_not_effective`/`unresolved_inconclusive` signals. The controller now reports three running agents checked, versus one in the prior snapshot; this is a time-varying telemetry sample, not proof of an audit result or correction. Keep current Auditor and Legislature assignments active.
+- **Judiciary/liveness:** measurement limits persist (85 heuristic content failures; 466/468 suite-history entries unreadable; FP/FN null and reliability unknown). Branch-health still reports `innovation_stale`; the Centre's old health record and failed unsafe-held agent do not show recovery. The separate curator signal says `curator_running:false`, `investigated:5`, and `research_frontier_not_being_replenished`; it is distinct from the Centre and does not establish useful research output.
+- **Outcomes:** 216 process outcomes (134 succeeded, 75 failed, 7 stopped), 18 main commits and 35 first-page open issues. The probe does not verify delivery. No new vote-ready bill or ballot action is due.
+
 ## Clerk refresh — 2026-10-24T09:48Z
 
 - **Founder intake:** no exact-author `Vitalik` comment on the latest 50-message #302 page and no pending inbox event. Feed cursor advanced to **16353**; no receipt is due.
