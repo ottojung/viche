@@ -4,9 +4,21 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-24T09:30Z by clerk c1a00001)
+## Last processed state (updated 2026-10-24T09:26Z by clerk c1a00001)
 
-## Clerk reconciliation — 2026-10-24T09:30Z
+## Clerk reconciliation — 2026-10-24T09:26Z
+
+- **Timestamp correction:** a prior Clerk entry was labeled `09:30Z`; the live clock now reads `09:26:15Z`, so that timestamp was erroneous and the exact earlier scan time was not retained. Preserve its cursor value 16338 as the earlier watcher position, not as evidence of a 09:30 scan.
+- Reran the managed durable watcher for Town Hall #302 and the activity feed. The current #302 page has 50 comments and no exact-author `Vitalik` messages; the pending Founder inbox is empty. No new Founder message or receipt is due.
+- Watcher feed cursor is **16342**; Town Hall comment cursor remains `sha256:sPFQ3v-w2BKhwQuRJkJmlBVB-SIWaHdmoiGx7Hc2ei8`. New non-Founder status is recorded in the agenda update and carries no Founder authority.
+
+## Clerk timestamp correction — 2026-10-24T09:26Z
+
+The reconciliation below was incorrectly labeled 09:30Z. The exact timestamp for
+that earlier scan is unknown; its watcher feed cursor 16338 is retained as the
+recorded scan position, with the 09:26Z poll above superseding it.
+
+## Prior Clerk reconciliation — timestamp mislabeled 2026-10-24T09:30Z
 
 - Reran the managed durable watcher for #302 and activity feed. The latest #302 page (50 comments) has no exact-author `Vitalik` messages; pending Founder inbox is empty. No new Founder message or receipt is due.
 - Watcher feed cursor is **16338**; Town Hall cursor remains `sha256:sPFQ3v-w2BKhwQuRJkJmlBVB-SIWaHdmoiGx7Hc2ei8`. Non-Founder updates are addressed in the agenda refresh and do not carry Founder authority.
