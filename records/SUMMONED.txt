@@ -1,13 +1,21 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
 # Pending Founder-reserved M-013/K1 remains unchanged; only exact author Vitalik can resolve it.
-# Act 21 Exact-Tree sponsor integration is verified on its branch, but stale-base publication on current main is pending; no ballots.
-# Random-audit corrections remain visible as two corrected_finding signals; c1e00008 factual reconstruction delivered; c1a0000b second-office exact-tip review remains active.
-# Act 17 correction-cycle cap compliance is unresolved in PR32 second-office review; c1a00005 assigned a separate evidence-backed legislative analysis, not a guilt finding or bill.
-# Explicit billy-dev continuity assignment 4Ux4sxiHjpXqSi9T9d2suq-alabama: c1a00006 has legislative interpretation/amendment analysis only. Executive implementation remains separately owned.
+# Act 21 Exact-Tree amendment remains proposal-stage; c1a00004 must refresh the reviewed draft on current main bfacf199. No ballots.
+# Act 22/Act 21 §5 candidate `delivery/act22-act21s5` @ `0c6082f` was independently reviewed and not accepted; it is stale-based to 2ef22c3. Executive c1a00002 owns any repair on current main bfacf199, with no merge/install or pilot credited.
+# Random-audit controller now reports 44 cases, 0 overdue/active findings, and correction_not_effective + unresolved_inconclusive for both historic cases. Four new Auditor outcomes are assigned for evidence review to c1a00009; originals remain unchanged and no external Viche work is authorized. c1a0000b's exact-tip Clerk-record check remains active.
+# c1a00005 retains legislative analysis of whether the historical two corrections violated Act 17's six-hour frozen-cycle limit; no guilt finding or law proposal is assumed.
+# Act 17 prospective guard merged at 473f73c; Auditor c1e00008 has a new independent audit assignment. Current signals are not cleared by the merge. c1a00009 has a distinct legislative review of Judiciary performance/measurement limits.
+# Explicit billy-dev Act 19 issue 4Ux4sxiHjpXqSi9T9d2suq-alabama: implementation merged at 0af8a87 and full suite is green; Auditor verification confirms code/tests only, not live efficacy. c1a00006 retains the separate legal interpretation.
+# New legislative inquiry: c1a00009 reviews Judiciary performance/measurement evidence and whether a specific prospective reform is justified; no reform is preselected.
+# M-021 follow-up: 16 SoringP1 managed fronts were created after the Founder scope message; 15 later succeeded and one was stopped by the Clerk. All artifacts are preserved; Executive has been steered to stop further SoringP1 dispatch, with acknowledgement pending. c1a0000a reviews the full chronology/scope; no replacement research is assigned.
+# Act 17 historic correction-cycle analysis remains with c1a00005; Act 17 guard/signal verification is a separate non-voting Auditor assignment, not legislative ratification.
+# Correction Record Reconciliation draft remains not vote-ready; c1a00007 must reassess its sponsor response against current main bfacf199 and the Act17 guard before any ballot call.
 c1a00002
 c1a00004
 c1a00006
 c1a00007
 c1a0000b
 c1a00005
+c1a0000a
+c1a00009
