@@ -71,9 +71,24 @@ if [ "$action" = resolve ]; then
   printf '%s\n' "$old"
   exit 0
 fi
+# Constitution VIII requires continuity after the box restarts. A runner
+# physically lost during a positively identified PID1 restart is NOT an
+# Antonina-model transient-error reset under Act19 §3.1. Replace its dead
+# *appointment*, never resume the interrupted prompt or old session.
+# Do not bypass any unsafe prompt hold; those require an independent review.
+restart_orphan=no
+if [ "$action" = ensure ] && [ -n "$old" ] && [ "${status:-}" = failed ] &&
+   [ ! -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$key" ] &&
+   [ -s "$town/government/restart-orphan.sh" ] &&
+   printf '%s\n' "$meta" | /bin/sh "$town/government/restart-orphan.sh"; then
+  restart_orphan=yes
+  expected=$old
+  action=replace
+fi
 if [ "$action" = ensure ] && [ -n "$old" ]; then
-  # Terminal agents remain assigned until per-office supervisor records the
-  # failure and explicitly replaces at the legally required threshold.
+  # Backend failures remain assigned until lawful Act19 recovery or explicit
+  # review. An uncertain process disappearance outside the restart signature
+  # is NOT evidence of a safe automatic retry.
   printf '%s\n' "$old"
   exit 0
 fi
@@ -110,4 +125,14 @@ if [ -f "$registry" ]; then awk -F '\t' -v k="$key" '$1!=k {print}' "$registry" 
 printf '%s\t%s\n' "$key" "$new" >> "$tmp"
 mv -f "$tmp" "$registry"
 printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$key" "${old:--}" "$new" >> "$root/appointments.log"
+if [ "$restart_orphan" = yes ]; then
+  # A discrete audited incarnation handoff, not an Act19 transient reset.
+  # The terminal evidence directory was persisted before the new appointment.
+  jq -cn --arg at "$(date -u +%FT%TZ)" --arg office "$key" \
+    --arg previous "$old" --arg successor "$new" \
+    --arg evidence "terminal-evidence/$old" \
+    '{at:$at,kind:"container_restart_orphan_new_appointment_no_prompt_replay",
+      office:$office,previous:$previous,successor:$successor,
+      evidence:$evidence}' >> "$root/restart-renewals.jsonl"
+fi
 printf '%s\n' "$new"
