@@ -8,7 +8,9 @@
 # IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
 # Act 18 opaque issue-id coverage is DONE: Act 22's origin is included; lens reports 8/8 terminal. Executive code assignments 2/3 (Act 22 implementation; Act 21 §5 suite-compliance) are installed on main 0a3a4a3; c1a00002 is cleared from that implementation work.
 # Clerk's separate Act 22 operations remain open: pilot eligibility, sponsor forecasts, gate before any pilot vote/order, due resolution and one summary per measurement window are tracked in records/ACT22-CLERK-OPERATIONS-2026-10-24.md. No pilot gate or publication is claimed.
-# c1e00008 remains summoned for the current correction-signal inquiry; its current assignment is preserved in the canonical working tree.
+# c1e00008 remains summoned for the correction-signal inquiry; the current assignment is preserved and expanded to include finding `fae4b5c49a16cbcc3e`.
+# c1a00005 remains summoned for the Act 17 historical correction-cycle interpretation, refreshed with the new finding evidence.
 c1e00008
+c1a00005
 c1a00003
 c1a0000b
