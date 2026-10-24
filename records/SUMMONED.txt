@@ -4,6 +4,7 @@
 # Act 21 Exact-Tree amendment remains proposal-stage; c1a00004 must refresh the reviewed draft on current main bfacf199. No ballots.
 # Act 22/Act 21 §5 candidate `delivery/act22-act21s5` @ `0c6082f` was independently reviewed and not accepted; it is stale-based to 2ef22c3. Executive c1a00002 owns any repair on current main bfacf199, with no merge/install or pilot credited.
 # Random-audit controller now reports 44 cases, 0 overdue/active findings, and correction_not_effective + unresolved_inconclusive for both historic cases. Four new Auditor outcomes are assigned for evidence review to c1a00009; originals remain unchanged and no external Viche work is authorized. c1a0000b's exact-tip Clerk-record check remains active.
+# Refreshed 2026-10-24: 48-case snapshot includes non-effective correction for fae4b5c49a16cbcc3e plus continuing historic signals; Auditor c1e00008 assignment refreshed. Judiciary inquiry c1a00009 now includes suite-compliance limitation (466/468 unreadable) and innovation_stale branch liveness.
 # c1a00005 retains legislative analysis of whether the historical two corrections violated Act 17's six-hour frozen-cycle limit; no guilt finding or law proposal is assumed.
 # Act 17 prospective guard merged at 473f73c; Auditor c1e00008 has a new independent audit assignment. Current signals are not cleared by the merge. c1a00009 has a distinct legislative review of Judiciary performance/measurement limits.
 # Explicit billy-dev Act 19 issue 4Ux4sxiHjpXqSi9T9d2suq-alabama: implementation merged at 0af8a87 and full suite is green; Auditor verification confirms code/tests only, not live efficacy. c1a00006 retains the separate legal interpretation.
@@ -19,3 +20,4 @@ c1a0000b
 c1a00005
 c1a0000a
 c1a00009
+c1e00008
