@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:36Z
+
+- **Founder intake:** latest #302 page contains no exact-author `Vitalik` message; inbox empty. Feed cursor advanced to **16406**. No acknowledgement is due.
+- **Audit and Judiciary:** the same correction and inconclusive signals remain across 48 cases. Judiciary limitations remain 85 heuristic content failures, 466/468 suite-history changes unreadable, and unknown FP/FN/reliability; the Auditor recheck is still not committed on its own branch.
+- **Liveness/outcomes:** the only branch-health flag is `innovation_stale`; Centre recovery remains unverified. Current outcome probe reports 240 agent records, 18 main commits and 35 first-page open issues; delivery is not verified.
+
 ## Clerk refresh — 2026-10-24T11:33Z
 
 - **Founder intake:** no exact-author `Vitalik` comment on latest #302 page; inbox empty. Feed cursor advanced to **16405**. No acknowledgement is due.
