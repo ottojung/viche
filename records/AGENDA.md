@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:31Z
+
+- **Founder intake:** latest managed watcher pass found no pending #302 event authored exactly `Vitalik`; current page contains no such comment. Feed cursor advanced to **16347**. No Founder acknowledgement or mandate is due.
+- **Signals persist:** current random-audit snapshot at 1792834274 still has 48/48 reported, 0 overdue, with the same three `correction_not_effective` signals and two historic `unresolved_inconclusive` signals. The Judiciary measurement at 1792834281 still reports 8/8 mapped trails terminal, 85 heuristic content-standard failures, 466/468 suite-history changes unreadable, and unknown reliability/FP/FN. Keep c1e00008 and c1a00009's refreshed assignments active; no finding or proposed remedy is cleared by readiness or acknowledgement.
+- **Branch liveness persists:** inquiry 1792834275 again signals only `innovation_stale`. The latest `innovation-centre/health.json` remains stale at 1792825924 and does not override the directly verified failed Antonina session plus unsafe hold recorded in the prior refresh. The Centre worktree remains preserved; no recovery/replay is claimed.
+- **Outcome probe refresh:** 211 agent records (129 succeeded, 75 failed, 7 stopped), 18 main commits, and 35 first-page open issues. Probe explicitly does not verify delivery; no quotas are inferred. No new bill or ballot business appeared.
+
 ## Clerk refresh — 2026-10-24T09:26Z
 
 - **Timestamp correction:** the preceding Clerk refresh was labeled `09:30Z`, but that time was not captured and is later than the live clock at this review (`09:26:15Z`). Do not rely on its timestamp as observation time. Its recorded watcher cursor (16338) is retained as a prior scan; the current scan is position 16342.
