@@ -61,7 +61,7 @@ if [ "$reset_due" = true ]; then
   antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
   git -C "$cwd" status --short > "$snapshot/worktree.txt"
   oc_quiesce_for_reset "$id" || exit 1
-  id=$(/bin/sh "$town/government/appointments.sh" replace "$branch" "$id")
+  id=$(/bin/sh "$town/government/appointments.sh" replace "$branch" "$id" branch-bootstrap act19_failure_threshold 'Act 19 threshold reset after durable failure evidence and quiescence')
   printf '%s\n' "$now" > "$liv/last-reset-$branch"
   meta=$(antonina agent status --id "$id" --json)
   oc_clear_failures "$liv" "$branch"
