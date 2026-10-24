@@ -4,7 +4,12 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-24T09:31Z by clerk c1a00001)
+## Last processed state (updated 2026-10-24T09:35Z by clerk c1a00001)
+
+## Clerk reconciliation — 2026-10-24T09:35Z
+
+- Reran managed Founder intake for #302 and the activity feed. Current #302 page (50 comments) contains no author-exactly-`Vitalik`; Founder inbox pending is empty. No new message or receipt is due.
+- Feed cursor is now **16348**. Town Hall comment cursor remains `sha256:sPFQ3v-w2BKhwQuRJkJmlBVB-SIWaHdmoiGx7Hc2ei8`; no new comment to process.
 
 ## Clerk reconciliation — 2026-10-24T09:31Z
 

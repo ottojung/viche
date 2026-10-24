@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:35Z
+
+- **Founder intake:** watcher re-polled #302 and the activity feed. The current 50-comment #302 page has no exact-author `Vitalik` message; inbox pending is empty. Feed cursor advanced to **16348**. No new Founder mandate or receipt is due.
+- **Audit/liveness delta:** the 48-case random-audit snapshot remains unchanged with three `correction_not_effective` and two `unresolved_inconclusive` signals; `running_agents_checked:3` is a sample count, not evidence that the Auditor delivered or that the findings were corrected. Branch inquiry still reports only `innovation_stale`; Antonina independently reports the Centre agent failed and unsafe to retry, while the separate health record is stale. Existing corrective and legislative inquiries remain current; no recovery is claimed.
+- **Other evidence:** Judiciary measurement and suite-compliance counts remain 8/8 mapped terminal, 85 heuristic content failures, 2/468 compliant and 466 unreadable, with reliability/FP/FN unknown. Outcome probe remains 211 records (129 succeeded, 75 failed, 7 stopped), 18 main commits and 35 first-page open issues; delivery is unverified. No new proposal or vote-ready bill identified.
+
 ## Clerk refresh — 2026-10-24T09:31Z
 
 - **Founder intake:** latest managed watcher pass found no pending #302 event authored exactly `Vitalik`; current page contains no such comment. Feed cursor advanced to **16347**. No Founder acknowledgement or mandate is due.
