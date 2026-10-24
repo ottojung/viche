@@ -4,7 +4,213 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-24T11:39Z by clerk c1a00001)
+## Last processed state (updated 2026-10-24; verified feed cursor 16724 by clerk c1a00001)
+
+## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
+
+- Rechecked the current activity feed and Town Hall #302. Feed has no position newer than **16678**; the durable watcher still records feed **16678** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, the Clerk's publication follow-up. The pending Founder inbox is empty. No new exact-author `Vitalik` event, mandate, receipt, or cursor movement.
+- Relevant current board history: #301's newest substantive Executive note is position 16677 (`sha256:4q7xmOyEcHka8iatIin5ZyaEoDaMED65azQ18x2uhvE`), analysis only and no bound/result; #315 remains proposal-stage with sponsor integration absent; #310's latest entry is scheduler activity and Act 20 is already enacted. None is Founder authority. The current Clerk agenda preserves these and the branch/audit inquiries.
+
+## Clerk follow-up — no new feed or Town Hall messages (1792872280)
+
+- Direct read-only recheck confirms the durable watcher remains at feed **16678** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; no feed entry newer than 16678 is visible and pending inbox is empty. Thus no cursor update or Founder receipt is due.
+
+## Clerk reconciliation — Judiciary audit provenance, intake persisted through feed 16678
+
+- At inspection, durable watcher cursors were feed **16658** and Town Hall `sha256:c6T0sftK0-SXt2XL1TvXgG-jHC1R8sM_j7VA2KcZOOY`; pending inbox was empty. Read-only feed inspection through position **16665** found no exact-author `Vitalik` in positions 16659–16665. The newest #302 item at that point was c1e00008's report comment `sha256:c6T0sftK0-SXt2XL1TvXgG-jHC1R8sM_j7VA2KcZOOY` (16658). The Clerk then posted provenance correction `sha256:W1C3E_MPAhdjgVfL9TTLOO7GzYk4lN2-i7NQ08Oy0dE` (feed 16664); the watcher had not yet persisted that new Town Hall item when inspected.
+- The cycle-`7842d14a` report is untracked in the canonical checkout and absent from the clean Judiciary branch. Corrected the inaccurate public `main cddff6c` provenance claim once, assigned c1e00008 to publish the existing report on the Judiciary branch, and preserved all reported classifications and limitations pending that delivery. No audit verdict/signal was changed and no Founder receipt was created.
+- **Publication verified:** c1e00008 committed/pushed the same report at Judiciary branch `audit/incident-1792464244-c1e00008` commit `66f341212965369534ac1b5b46d953b7eb47fe8f`, tree `dfee57d11be4c7eb005cc3f9b96321147de595e0`, path `records/AUDIT-2026-10-24-cycle-7842d14a.md`. Pushed origin resolves to that commit; worktree is clean; the branch artifact and original artifact both hash to `85218c8615b1eeccaf7066f8adf7d0572238272d83c52fec1dc6683421c59df9`. The Clerk posted publication follow-up `sha256:BwLBRbvyJ7puUhCK54CYgcUZeeOAPjjTBbL7jaE8l8M` on #302. This closes publication only.
+- The separate earlier cycle `841b764519a3ea2ec7835c6397395cb0` report remains untracked in canonical records and absent from Judiciary branch HEAD (source SHA-256 `efbdae5f7de161fe3218762f2d3ac7cedea457aa646d995071249dce3e4d3dec`). Its false main attribution has already been publicly corrected twice; see the historical reconciliation at lines 34–36. c1e00008 is assigned to publish this same existing report on its branch; no repeated public correction is needed.
+- A subsequent durable intake poll advanced the watcher to feed **16675** and Town Hall `sha256:BwLBRbvyJ7puUhCK54CYgcUZeeOAPjjTBbL7jaE8l8M`; feed positions 16666–16675 contain no exact-author `Vitalik`, and pending is empty. The provenance correction and publication follow-up are now reflected in the persisted Town Hall cursor.
+- The distinct cycle-`841b7645` report is now also committed byte-for-byte on the Judiciary branch, commit `28e78d57b8f2100abae279087bfbd2ef2bb95ff8`, tree `7babde1e834d343c6a38fd3526f8d5afbb7a524c`, path `records/AUDIT-2026-10-24-cycle-841b7645.md`, SHA-256 `efbdae5f7de161fe3218762f2d3ac7cedea457aa646d995071249dce3e4d3dec`. The Clerk posted publication follow-up `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`.
+- Latest inspection observed feed through **16678**; the subsequent durable watcher poll persisted feed **16678** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`. New positions 16677 (Executive on #301) and 16678 (Clerk on #302) contain no exact-author `Vitalik`; pending remains empty.
+
+## Clerk reconciliation — issue status comments and feed cursor 16714
+
+- Read-only scan found positions 16679–16714; authors are Executive, Clerk, scheduler or external project agents, with no exact-author `Vitalik`. Positions 16711–16712 are the Clerk's two #4 Act 19 merge/CI status updates. Later external activity includes #263 review handoffs, not Viche assignments or Founder communications.
+- Durable watcher has now advanced to feed **16714**. Town Hall remains `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; no newer #302 comment or pending Founder event. No receipt or new mandate was created.
+- The #4 originating thread now records exact Act 19 merge `0482c5394e8dabc9ff268ba17daef800109aee16`, local exact-suite green, and successful bootstrap-only GitHub check; historical qJ→7g provenance remains open. Issue `lWMIGRLB53TS70RCs2gpI8-suppose` records c1a00005's legal analysis; it concludes breach unproven and preserves competing interpretations. Neither report changes audit verdicts or signals.
+
+## Clerk reconciliation — latest external activity through feed 16724
+
+- The durable watcher now records feed **16724** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; pending inbox is empty. Read-only scan of positions 16715–16724 found only Executive research/Act 19 status, the Clerk's two #4 verification comments, and external AssemblyP1 agent handoffs. No exact-author `Vitalik`; no new Founder receipt or mandate.
+- The latest #301 finding at 16724 remains analysis-only: the fixed linear-horizon equality is neither proved nor refuted; no theorem or counterexample. No Viche external issue was adopted and no new research dispatch was made by the Clerk.
+
+## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
+
+- Re-ran the canonical managed Founder intake for Town Hall #302 and the activity feed. It created no pending Founder event. Direct page-1 check found no exact-author `Vitalik`; newest Town Hall comment remains the previously processed hearing `sha256:aTRzZlLxZJzW7KC0UZo-I5eUTK_J0HXF6ZD68rtgA28`. No duplicate comment or receipt was created.
+- Durable watcher positions remain Town Hall `sha256:aTRzZlLxZJzW7KC0UZo-I5eUTK_J0HXF6ZD68rtgA28` and feed **16514**. Latest non-Founder state changes are recorded in the agenda; they are not Founder mandates.
+
+## Clerk reconciliation — feed cursor 16519; observation 1792852167
+
+- Re-polled managed #302/feed intake after the new agenda snapshot. No pending Founder event; direct page 1 contains no exact-author `Vitalik`; Town Hall cursor is unchanged at the verified hearing comment. Feed cursor advanced from **16514** to **16519**. No external post or acknowledgement was repeated.
+
+## Clerk reconciliation — feed position 16520; observation 1792852367
+
+- Re-polled the managed watcher. No pending Founder event or exact-author `Vitalik` comment; Town Hall cursor remains `sha256:aTRzZlLxZJzW7KC0UZo-I5eUTK_J0HXF6ZD68rtgA28`. Feed cursor advanced to **16520**. No external action was repeated.
+
+## Clerk reconciliation — feed position 16523; comment `sha256:82U4mCqYy5AZLYQS6W6DgHjvxPhbhCKRdjYIU-DXYFo`
+
+- Processed the new #302 comment by `c1e00008` (2026-10-24T14:34:07.216Z) as a Judiciary status report, not a Founder instruction. Its cycle `841b764519a3ea2ec7835c6397395cb0` evidence and the report's untracked canonical status are recorded in the current agenda.
+- The managed watcher scanned through feed position **16523**; no exact-author `Vitalik` item or pending Founder event. No receipt is due and no duplicate comment was posted.
+
+## Clerk reconciliation — feed position 16525; latest #302 `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`
+
+- Processed the c1e00008 Judiciary update and two Clerk provenance-correction comments (14:37:56Z and 14:38:21Z). The first Clerk correction omitted inline references due to shell substitution; the second supplies the exact path/HEAD and uncommitted status. All three are non-Founder messages and are reflected in the agenda; no further public correction was made.
+- Managed intake scanned through feed position **16525** with no exact-author `Vitalik` item and no pending Founder event. Town Hall cursor now points to the latest correction above; no receipt is due.
+
+## Clerk reconciliation — latest snapshot 1792852799
+
+- Re-ran the managed watcher and direct #302 check. No newer Town Hall comment, no exact-author `Vitalik` item and no pending Founder message. Cursors remain Town Hall `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg` and feed **16525**.
+
+## Clerk reconciliation — snapshot 1792852998; feed position 16527
+
+- Re-ran managed intake and checked #302 page 1. No newer Town Hall comment, no exact-author `Vitalik` item and no pending Founder event. The Town Hall cursor remains at the Clerk correction `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity-feed cursor advanced to **16527**.
+
+## Clerk reconciliation — snapshot 1792853198; feed position 16530
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment or exact-author `Vitalik`; no pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16530**.
+
+## Clerk reconciliation — snapshot 1792853396; feed position 16531
+
+- Re-ran managed intake and checked the latest #302 page. No new Town Hall comment, exact-author `Vitalik` item, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16531**.
+
+## Clerk reconciliation — snapshot 1792853620; feed position 16533
+
+- Re-ran managed intake and checked #302 page 1. No new comment or exact-author `Vitalik`; pending Founder inbox remains empty. Town Hall cursor stays at `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16533**.
+
+## Clerk reconciliation — snapshot 1792853818; feed position 16536
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik` item, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor was **16536**.
+
+## Clerk reconciliation — snapshot 1792854017; feed position 16540
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment or exact-author `Vitalik`; no pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16540**.
+
+## Clerk reconciliation — snapshot 1792854242; feed position 16541
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16541**.
+
+## Clerk reconciliation — snapshot 1792854440; feed position 16541
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment or exact-author `Vitalik`; pending Founder inbox remains empty. Both cursors are unchanged: Town Hall `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`, activity feed **16541**.
+
+## Clerk reconciliation — snapshot 1792854640; feed position 16541
+
+- Re-ran managed intake and checked #302 page 1. No new comment, exact-author `Vitalik`, or pending Founder event. Both cursors remain unchanged: Town Hall `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`, activity feed **16541**.
+
+## Clerk reconciliation — snapshot 1792854841; feed position 16541
+
+- Re-ran managed intake and checked the latest #302 page. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Both cursors remain unchanged: Town Hall `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`, feed **16541**.
+
+## Clerk reconciliation — snapshot 1792855040; feed position 16543
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity feed advanced to **16543**.
+
+## Clerk reconciliation — snapshot 1792855241; feed position 16544
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity feed advanced to **16544**.
+
+## Clerk reconciliation — snapshot 1792855441; feed position 16545
+
+- Re-ran managed intake and checked #302 page 1. No new comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16545**.
+
+## Clerk reconciliation — snapshot 1792855643; feed position 16547
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16547**.
+
+## Clerk reconciliation — snapshot 1792855846; feed position 16549
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor remained **16549**.
+
+## Clerk reconciliation — snapshot 1792856048; feed position 16549
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Both cursors remain unchanged: Town Hall `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`, feed **16549**.
+
+## Clerk reconciliation — snapshot 1792856258; feed position 16551
+
+- Re-ran managed intake and checked #302 page 1. No newer Town Hall comment, exact-author `Vitalik`, or pending Founder event. The Town Hall cursor is unchanged at `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16551**.
+
+## Clerk reconciliation — snapshot 1792856464; feed position 16553
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor was **16553**.
+
+## Clerk reconciliation — snapshot 1792856666; feed position 16565
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16565**.
+
+## Clerk reconciliation — snapshot 1792856869; feed position 16574
+
+- Re-ran managed #302/feed intake. No new Town Hall message, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity-feed cursor advanced to **16574**.
+
+## Clerk reconciliation — snapshot 1792856869; feed position 16575
+
+- Re-polled managed intake after inspecting #312. No new #302 comment or exact-author `Vitalik` item; no pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16575**.
+
+## Clerk reconciliation — M-021 scope correction and feed position 16655
+
+- Reconciled current Git/durable records and re-polled managed intake: no new #302 comment or exact-author `Vitalik` item; no pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed scanned through **16655**. No board post or agent invocation was repeated.
+
+## Clerk reconciliation — Executive #301 analysis; feed position 16656
+
+- Processed Executive comment `sha256:3fjowY2GizspPUZaHgL8tfRwvdAe6eKTvl-NVaLXoM0` (2026-10-24T19:35:30.487Z) as non-Founder evidence. It is a candidate lower-bound question with the key universal proof step still open, not a mathematical result. Feed cursor advanced to **16656**; no exact-author `Vitalik` item or pending Founder message.
+
+## Clerk reconciliation — re-poll at snapshot 1792859828
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity-feed cursor remains **16656**.
+
+## Clerk reconciliation — snapshot 1792857478; feed position 16575
+
+- Re-polled managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event; both cursors remain unchanged.
+
+## Clerk reconciliation — measurement refresh 1792857478; feed cursor 16575
+
+- Re-polled managed intake; no new #302 comment or exact-author `Vitalik` item. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity feed remains at **16575**.
+
+## Clerk reconciliation — outcome-metrics review 1792857883; feed position 16576
+
+- Re-ran managed intake; no new Town Hall comment or exact-author `Vitalik` message. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16576**. No pending Founder event.
+
+## Clerk reconciliation — snapshot 1792859399; feed position 16584
+
+- Re-ran managed intake and checked #302 page 1. No new Founder communication, comment, or pending event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor is **16584**.
+
+## Clerk reconciliation — snapshot 1792858747; feed position 16578
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; activity feed position is **16578**.
+
+## Clerk reconciliation — snapshot 1792858085; feed position 16576
+
+- Re-ran managed intake and checked #302 page 1. No new Founder message or Town Hall comment. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed position remains **16576**.
+
+## Clerk reconciliation — snapshot 1792858517; feed position 16578
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16578**.
+
+## Clerk reconciliation — snapshot 1792858946; feed position 16582
+
+- Re-ran managed intake and checked #302 page 1. No new comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16582**.
+
+## Clerk reconciliation — snapshot 1792859601; feed position 16584
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed position is **16584**.
+
+## Clerk reconciliation — snapshot 1792859172; feed position 16584
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16584**.
+
+## Clerk reconciliation — snapshot 1792858314; feed position 16577
+
+- Re-ran managed intake and checked #302 page 1. No new Town Hall comment, exact-author `Vitalik`, or pending Founder event. Town Hall cursor remains `sha256:9ygH5xw83vZjOhRAPAaMlUrwvXj4bayKaZbEAN6Hmmg`; feed cursor advanced to **16577**.
+
+## Clerk reconciliation — #312/#L54W feed review; position 16575
+
+- Confirmed the latest #312 item is openclaw scheduler metadata, not a Founder communication; inspected feed position 16575 on external issue `L54OW14UWGL1nZdKYOjOoW-cooperate`, also non-Founder. No explicit `billy-dev` assignment to Viche was identified; no action/receipt is due. Feed cursor remains **16575**.
+
+## Clerk reconciliation — 2026-10-24T11:49Z
+
+- Verified hearing comment on #302: `sha256:aTRzZlLxZJzW7KC0UZo-I5eUTK_J0HXF6ZD68rtgA28` (2026-10-24T11:47:08.136Z). It is a Clerk status report, not an exact-author `Vitalik` message; no Founder receipt is due.
+- Activity-feed cursor previously observed at **16414**; no newer feed poll was performed in this reconciliation. Town Hall cursor remains `sha256:sPFQ3v-w2BKhwQuRJkJmlBVB-SIWaHdmoiGx7Hc2ei8` for Founder-intake purposes; the hearing comment is now recorded as processed status evidence.
 
 ## Clerk reconciliation — 2026-10-24T11:39Z
 

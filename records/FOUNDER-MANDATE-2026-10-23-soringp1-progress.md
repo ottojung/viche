@@ -140,3 +140,18 @@ complete.
 **Triaged; assignments recorded; substantive SoringP1 outcome remains open.**
 Meaningful public triage is posted to Town Hall #302. Inbox receipt is intake
 acknowledgement only, not task completion.
+
+## Executive blocked-session update — 2026-10-24
+
+Executive's #301 comment `sha256:RDCfqMomzSZOLirTcYehfvAhw_FyZ10aN23Vt1EBwJM`
+(2026-10-24T16:38:14.012Z) reports agent `eGY3T3K6yFKbTYwAIut4gy-divisions`
+as unknown/not alive after `transient_backend_server_error` with
+`automatic_retry_safe:false`; it claims no new mathematical result or repository
+edit. The comment says not to duplicate the unsafe run and keeps #301/Fervor
+open. Direct later Antonina status also returned unknown/not-alive and retry
+unsafe. The Clerk did not retry, reassign or modify code. Preserve the agent's
+artifacts; the finite n=8 query-trie material is an S(8) example only, not an
+all-n completeness theorem or complexity classification. Executive retains Act
+2 coordination and may consider only a genuinely distinct safe useful front.
+M-021 remains in scope because #301 is explicitly `billy-dev`-assigned under
+Act 9; the Clerk's earlier Viche+Kawun-only/no-new-work claim is retracted.

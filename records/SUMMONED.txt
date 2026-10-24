@@ -1,23 +1,16 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Pending Founder-reserved M-013/K1 remains unchanged; only exact author Vitalik can resolve it.
-# Act 21 Exact-Tree amendment remains proposal-stage; c1a00004 must refresh the reviewed draft on current main bfacf199. No ballots.
-# Act 22 / Act 21 §5 implementation is installed on main at 0a3a4a3; delivery report records full-suite green on that implementation tree. Supplied later head cddff6c has exact-tree records-smoke green; CI reconciliation unavailable. Executive implementation assignments 2–3 closed. Compliance history remains 466/468 unreadable (0 detected violations); Clerk-owned Act 22 pilot is empty and unexercised. Preserve c1a00002 only for separate bounded M-021 in-flight coordination; do not retry stale candidate 0c6082f.
-# Random-audit controller now reports 44 cases, 0 overdue/active findings, and correction_not_effective + unresolved_inconclusive for both historic cases. Four new Auditor outcomes are assigned for evidence review to c1a00009; originals remain unchanged and no external Viche work is authorized. c1a0000b's exact-tip Clerk-record check remains active.
-# Refreshed 2026-10-24: 48-case snapshot includes non-effective correction for fae4b5c49a16cbcc3e plus continuing historic signals; Auditor c1e00008 assignment refreshed. Judiciary inquiry c1a00009 now includes suite-compliance limitation (466/468 unreadable) and innovation_stale branch liveness.
-# c1a00005 retains legislative analysis of whether the historical two corrections violated Act 17's six-hour frozen-cycle limit; no guilt finding or law proposal is assumed.
-# Act 17 prospective guard merged at 473f73c; Auditor c1e00008 has a new independent audit assignment. Current signals are not cleared by the merge. c1a00009 has a distinct legislative review of Judiciary performance/measurement limits.
-# Explicit billy-dev Act 19 issue 4Ux4sxiHjpXqSi9T9d2suq-alabama: implementation merged at 0af8a87 and full suite is green; Auditor verification confirms code/tests only, not live efficacy. c1a00006 retains the separate legal interpretation.
-# New legislative inquiry: c1a00009 reviews Judiciary performance/measurement evidence and whether a specific prospective reform is justified; no reform is preselected.
-# M-021 follow-up: 16 SoringP1 managed fronts were created after the Founder scope message; 15 later succeeded and one was stopped by the Clerk. All artifacts are preserved; Executive has been steered to stop further SoringP1 dispatch, with acknowledgement pending. c1a0000a reviews the full chronology/scope; no replacement research is assigned.
-# Act 17 historic correction-cycle analysis remains with c1a00005; Act 17 guard/signal verification is a separate non-voting Auditor assignment, not legislative ratification.
-# Correction Record Reconciliation draft remains not vote-ready; c1a00007 must reassess its sponsor response against current main bfacf199 and the Act17 guard before any ballot call.
+# Current refresh 2026-10-24, state 1792875076, feed 16724: no exact-author Vitalik or pending Founder event. Town Hall cursor remains sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY. Latest #301 position 16724 is analysis-only; no bound was proved.
+# Audit: 56 cases, zero overdue/effective findings; three correction-not-effective/unresolved-inconclusive pairs persist. Auditor c1e00008's earlier reports are published and its fae4 correction-row copy is branch-only/non-operative; a new three-case factual reconciliation is still assigned. c1a00005 delivered the historical Act17 legal analysis; it finds an apparent same-draw cap conflict but no proven breach or exoneration. The originating issue remains open for Parliament; no bill or ballot is ready.
+# Act19 prospective provenance merge 0482c5394e8dabc9ff268ba17daef800109aee16 is on main with exact-tree tests/run-all.sh green; GitHub bootstrap passed but there is no full-suite CI check. Issue #4 remains open for historical qJ→7g provenance and a safe live recovery outcome.
+# Judiciary latest: 56/56 reported, one cached finding; suite compliance 3/469 (466 unreadable, zero detected violations), 94 heuristic content failures, reliability not established, FP/FN null. Outcomes are descriptive and delivery-verified=false.
+# Innovation Centre agent failed with transient_backend_server_error, automatic_retry_safe=false. Preserve its clean six-commit-ahead branch and do not replay. #315 remains draft/not vote-eligible; #310 is enacted Act20; Act22 pilot remains empty. No proposal or ballot-ready bill.
+# M-013/K1 remains Founder-reserved. No constitutional or law change occurred. The prospective Act19 code merge above is complete; no further code change, correction, verdict or signal clearance is authorized in this sitting.
+# Current files below carry concrete active assignments; completed c1a00005 and c1a00009 tasks are removed. c1e00008's prior reports are complete, but the fresh three-case reconciliation in its summons remains active. Any later action must preserve existing findings and evidence.
 c1a00002
 c1a00004
 c1a00006
 c1a00007
 c1a0000b
-c1a00005
 c1a0000a
-c1a00009
 c1e00008
