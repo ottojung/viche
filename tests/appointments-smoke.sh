@@ -6,6 +6,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 mkdir -p "$tmp/bin" "$tmp/town/government" "$tmp/seats/a1" "$tmp/seats/branches/executive" "$tmp/state" "$tmp/mock"
 printf 'a1\tClerk\tFounder intake\n' > "$tmp/town/government/seats.tsv"
+cp "$town/government/restart-orphan.sh" "$tmp/town/government/restart-orphan.sh"
 cat > "$tmp/bin/antonina" <<'EOF'
 #!/bin/sh
 set -eu
@@ -22,6 +23,14 @@ elif [ "$1" = agent ] && [ "$2" = status ]; then
     printf '{"state":"failed","finished_at":1792775220.5,"prompts":2,"backend_error":{"classification":"upstream_endpoint_unavailable","transient":true,"automatic_retry_safe":false}}\n'
   elif [ "$status" = failed-permanent ]; then
     printf '{"state":"failed","finished_at":1792775230.25,"prompts":3,"backend_error":{"classification":"invalid_api_key","transient":false,"automatic_retry_safe":false}}\n'
+  elif [ "$status" = failed-restart ]; then
+    printf '{"state":"failed","alive":false,"started_at":1999999990,"finished_at":2000000000.5,"last_error":"runner/model process disappeared without a captured exit status","backend_error":null,"exit_code":null,"exit_signal":null,"steers_pending":0,"next_steer":null}\n'
+  elif [ "$status" = failed-restart-late ]; then
+    printf '{"state":"failed","alive":false,"started_at":2000000001,"finished_at":2000000002,"last_error":"runner/model process disappeared without a captured exit status","backend_error":null,"exit_code":null,"exit_signal":null}\n'
+  elif [ "$status" = failed-restart-with-error ]; then
+    printf '{"state":"failed","alive":false,"started_at":1999999990,"finished_at":2000000000.5,"last_error":"runner/model process disappeared without a captured exit status","backend_error":{"classification":"invalid_api_key","transient":false},"exit_code":null,"exit_signal":null}\n'
+  elif [ "$status" = failed-restart-with-steer ]; then
+    printf '{"state":"failed","alive":false,"started_at":1999999990,"finished_at":2000000000.5,"last_error":"runner/model process disappeared without a captured exit status","backend_error":null,"exit_code":null,"exit_signal":null,"steers_pending":1}\n'
   else
     printf '{"state":"%s","model":null,"variant":"low"}\n' "$status"
   fi
@@ -35,6 +44,9 @@ export VICHE_TOWN_ROOT=$tmp/town
 export VICHE_SEATS_ROOT=$tmp/seats
 export VICHE_STATE_ROOT=$tmp/state
 PATH=$tmp/bin:$PATH; export PATH
+# PID1 birth override is only honored inside test-only government fixtures.
+VICHE_TEST_NO_SYNC=1 VICHE_TEST_PID1_BIRTH=2000000000
+export VICHE_TEST_NO_SYNC VICHE_TEST_PID1_BIRTH
 script=$town/government/appointments.sh
 a=$(/bin/sh "$script" ensure a1)
 [ "$a" = fresh-1 ] || exit 1
@@ -93,6 +105,40 @@ jq -e '.state=="failed" and .failure_class=="invalid_api_key" and
         .prompts==3 and .finished_at==1792775230.25' \
   "$tmp/state/appointments/terminal-evidence/fresh-5/event.json" >/dev/null
 [ "$(wc -l < "$tmp/state/appointments/appointments.tsv")" -eq 2 ] || exit 1
+# A verified container-restart orphan is a new independent appointment, NOT
+# a first-failure Act19 transient reset or continuation of the previous prompt.
+printf failed-restart > "$MOCK/$f"
+g=$(/bin/sh "$script" ensure executive)
+[ "$g" = fresh-7 ] || { echo 'Restart orphan did not renew' >&2; exit 1; }
+jq -e '.state=="failed" and .agent_id=="fresh-6" and .failure_class==null' \
+  "$tmp/state/appointments/terminal-evidence/fresh-6/event.json" >/dev/null
+jq -e '.kind=="container_restart_orphan_new_appointment_no_prompt_replay" and
+       .previous=="fresh-6" and .successor=="fresh-7"' \
+  "$tmp/state/appointments/restart-renewals.jsonl" >/dev/null
+[ "$(/bin/sh "$script" ensure executive)" = "$g" ]
+[ "$(wc -l < "$tmp/state/appointments/restart-renewals.jsonl")" -eq 1 ]
+# An unrelated failure that happened after this incarnation began must NOT
+# be mistaken for an orphan, even if the error text was identical.
+printf failed-restart-late > "$MOCK/$g"
+[ "$(/bin/sh "$script" ensure executive)" = "$g" ]
+h=$(/bin/sh "$script" replace executive "$g")
+[ "$h" = fresh-8 ]
+# A backend error is not a missing-container-process error.
+printf failed-restart-with-error > "$MOCK/$h"
+[ "$(/bin/sh "$script" ensure executive)" = "$h" ]
+i=$(/bin/sh "$script" replace executive "$h")
+[ "$i" = fresh-9 ]
+# Pending steers require explicit review; do not discard their intent.
+printf failed-restart-with-steer > "$MOCK/$i"
+[ "$(/bin/sh "$script" ensure executive)" = "$i" ]
+j=$(/bin/sh "$script" replace executive "$i")
+[ "$j" = fresh-10 ]
+# Even true container orphans may not bypass an explicit unsafe hold.
+mkdir -p "$tmp/state/liveness/unsafe-holds"
+printf 'executive\told-id\tunsafe\n' > "$tmp/state/liveness/unsafe-holds/executive"
+printf failed-restart > "$MOCK/$j"
+[ "$(/bin/sh "$script" ensure executive)" = "$j" ]
+[ "$(wc -l < "$tmp/state/appointments/restart-renewals.jsonl")" -eq 1 ]
 # No secret powers granted by supplying an unknown role key.
 if /bin/sh "$script" ensure a2 >/dev/null 2>&1; then exit 1; fi
 printf 'a1\tbad-1\na1\tbad-2\n' > "$tmp/state/appointments/appointments.tsv"
