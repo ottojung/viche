@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T09:45Z
+
+- **Founder intake:** latest #302 page (50 comments) has no exact-author `Vitalik` message; pending inbox is empty. Feed cursor advanced to **16351**; no receipt is due.
+- **Audit:** snapshot 1792835076 still reports the same three `correction_not_effective` signals and two historical `unresolved_inconclusive` signals. It checked two running agents; this count is not evidence of correction or audit completion.
+- **Judiciary / liveness:** measurements remain 8/8 mapped terminal, 85 heuristic content failures, 466/468 compliance history unreadable, FP/FN null, reliability unknown. The independent outcome probe's `signals_for_inquiry_not_verdicts` is now empty, but the separate mandatory branch-health inquiry still flags `innovation_stale`. Centre `health.json` remains old (1792825924); its Antonina agent is failed under the durable unsafe hold. Do not conflate the running SoringP1 research curator or branch readiness with Centre recovery or useful innovation.
+- **Outcomes:** latest 24-hour probe shows 215 agent records (133 succeeded, 75 failed, 7 stopped), 18 main commits, and 35 first-page open issues; delivery remains unverified. No new bill, ballot, or corrective result is evidenced.
+
 ## Clerk refresh — 2026-10-24T09:41Z
 
 - **Founder intake:** no exact-author `Vitalik` item on the latest #302 page and no pending inbox event; feed cursor is **16350**. No receipt or new mandate is due.
