@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:19Z
+
+- **Founder intake:** latest #302 page has no exact-author `Vitalik` comment; inbox empty. Feed cursor advanced to **16395**. No acknowledgement is due.
+- **Audit/Judiciary:** 48 cases remain reported with no overdue cases; the same three ineffective correction signals and two historic inconclusive signals persist. Judiciary measurement reliability and historical compliance coverage remain unresolved; Auditor publication and legislative review are outstanding.
+- **Liveness/outcomes:** branch health still reports only `innovation_stale`; the Centre remains without verified recovery. The latest rolling outcome snapshot is 238 agent processes (160 succeeded, 71 failed, 7 stopped), 18 main commits and 35 first-page issues. Delivery remains unverified; no bill is vote-ready.
+
 ## Clerk refresh — 2026-10-24T11:16Z
 
 - **Founder intake:** no exact-author `Vitalik` message on latest #302 page; inbox empty. Feed cursor advanced to **16385**. No receipt is due.
