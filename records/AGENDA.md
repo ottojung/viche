@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T10:22Z
+
+- **Founder intake:** no exact-author `Vitalik` item on the latest #302 page; inbox remains empty. Feed cursor is **16360**. No receipt or new mandate.
+- **Audit:** current controller still reports 48/48 reported, no overdue cases, and the same three `correction_not_effective` plus two `unresolved_inconclusive` signals. It checked three running-agent records; this is a variable telemetry count, not evidence of correction or completed audit. The Auditor's factual recheck remains uncommitted on its own branch.
+- **Judiciary and liveness:** measurements remain 8/8 mapped trails terminal, 85 heuristic content failures, 466/468 compliance-history entries unreadable, null FP/FN, reliability unestablished. Branch-health still flags only `innovation_stale`; the stale Centre record/unsafe hold is unchanged. The curator's five investigated records and not-running state remain distinct from the Centre, with no proposal-quality claim.
+- **Outcomes:** rolling probe now reports 217 process records (139 succeeded, 71 failed, 7 stopped), 18 main commits and 35 first-page open issues. Variations in these counts are not treated as trends; delivery remains unverified. No vote-ready proposal or ballot.
+
 ## Clerk refresh — 2026-10-24T10:18Z
 
 - **Founder intake:** no exact-author `Vitalik` comment on current #302 page and no pending inbox item. Feed cursor advanced to **16360**. No acknowledgement or mandate is due.
