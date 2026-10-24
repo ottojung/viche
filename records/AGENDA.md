@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T10:05Z
+
+- **Founder intake:** current #302 page contains no exact-author `Vitalik` comment; pending inbox remains empty. Feed cursor advanced to **16358**. No receipt or mandate is due.
+- **Standing issues unchanged:** the three correction-effectiveness signals and two historical inconclusive signals persist; the Judiciary report remains uncommitted on its own branch and only archived byte-for-byte on this Clerk branch. `innovation_stale` remains the only branch-health signal; the Centre's unsafe hold is unchanged. No verified correction, report publication, Centre recovery, or new proposal is evidenced.
+- **Outcome context:** the latest supplied probe remains 217 process outcomes, 18 main commits, and 35 open first-page issues; it does not verify delivery. No new ballot or gate decision.
+
 ## Clerk refresh — 2026-10-24T10:01Z
 
 - **Founder intake:** latest managed scan found no exact-author `Vitalik` comment on #302; inbox remains empty and feed cursor remains **16357**. No acknowledgement is due.
