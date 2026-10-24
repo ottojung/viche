@@ -124,17 +124,43 @@ oc_clear_failures() {
 # handoff queue; this marker prevents an automatic duplicate side effect.
 oc_mark_unsafe_hold() {
   # $1 liveness dir, $2 office key, $3 agent id, $4 invocation
-  mkdir -p "$1/unsafe-holds"
-  printf '%s\t%s\t%s\n' "$2" "$3" "$4" >> "$1/unsafe-holds/$2"
+  mkdir -p "$1/unsafe-holds" || return 1
+  oc_hold_file=$1/unsafe-holds/$2
+  oc_hold_line=$(printf '%s\t%s\t%s' "$2" "$3" "$4")
+  # Repeated 3-minute observations are not new invocations; the same
+  # unsafe hold must be recorded ONCE, not 158 times or once per sitting.
+  if [ -s "$oc_hold_file" ] && grep -Fxq "$oc_hold_line" "$oc_hold_file"; then
+    return 0
+  fi
+  printf '%s\n' "$oc_hold_line" >> "$oc_hold_file"
 }
 
-# Surface a permanent failure (expired credential, invalid configuration)
-# instead of resetting it (§3.1.3). Durable: survives the 24 h restart.
+# Surface a permanent or UNCLASSIFIED failure exactly once per agent and
+# classification. An absent backend_error is NOT evidence of permanence.
+# Durable incident records survive restart without flooding each sitting.
 oc_surface_permanent() {
   # $1 liveness dir, $2 agent id, $3 classification
-  printf '%s id=%s permanent_failure classification=%s surfaced-not-reset\n' \
-    "$(date -u +%FT%TZ)" "$2" "$3" >> "$1/permanent-incidents.log"
-  echo "Viche: permanent failure id=$2 classification=$3 surfaced, not reset (Act 19 §3.1)" >&2
+  mkdir -p "$1" || return 1
+  case "$2:$3" in *[!a-zA-Z0-9_:-]*|'') return 1;; esac
+  if [ -n "$3" ]; then
+    oc_kind=permanent_failure
+    oc_class=$3
+  else
+    oc_kind=unclassified_failure
+    oc_class=missing_backend_classification
+  fi
+  # The durable append IS the dedup marker. A crash before appending
+  # must not leave a separate empty marker that suppresses future reports.
+  # Every seat/agent has its own immutable id; repeated observations of that
+  # same incident cannot increment the count. Concurrent record attempts
+  # may append the same line twice, but can never erase or suppress it.
+  oc_record="id=$2 $oc_kind classification=$oc_class surfaced-not-reset"
+  if [ -f "$1/permanent-incidents.log" ] &&
+     grep -Fq "$oc_record" "$1/permanent-incidents.log"; then
+    return 0
+  fi
+  printf '%s %s\n' "$(date -u +%FT%TZ)" "$oc_record" >> "$1/permanent-incidents.log" || return 1
+  echo "Viche: $oc_kind id=$2 classification=$oc_class surfaced, not reset (Act 19 §3.1)" >&2
   return 0
 }
 
