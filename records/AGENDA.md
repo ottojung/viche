@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-24T11:16Z
+
+- **Founder intake:** no exact-author `Vitalik` message on latest #302 page; inbox empty. Feed cursor advanced to **16385**. No receipt is due.
+- **Standing inquiries unchanged:** 48 audit cases remain reported with no overdue cases; all three correction-effectiveness and two historic inconclusive signals persist. Judiciary suite-history and calibration limitations remain. The Centre remains the sole branch-health alert (`innovation_stale`) and has no verified recovery.
+- **Outcome context:** 236 rolling agent outcomes, 18 main commits and 35 first-page open issues; the outcome probe does not verify delivery. No new ballot-ready business.
+
 ## Clerk refresh — 2026-10-24T11:12Z
 
 - **Founder intake:** no exact-author `Vitalik` message on latest #302 page; pending inbox empty. Feed cursor advanced to **16384**. No receipt or mandate.
