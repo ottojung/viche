@@ -44,3 +44,14 @@ claimed here.
 ledger, current draft eligibility and measurement status; no forecasts were
 authored, no pilot IDs/orders were listed, no gate was run on a live action, and
 no pilot expense or decision-useful signal is claimed.
+
+## Assignment preservation
+
+The canonical worktree's prior Clerk-local c1e00008 assignment was preserved
+byte-for-byte before reconciliation at
+`records/summons/archive/c1e00008-clerk-local-assignment-2026-10-24.md`
+(SHA-256 `a64157467de1e6e2f26e5a8fc012ac8e8b43971823e7a9886350aeae0a9f2639`).
+The active `records/summons/c1e00008.md` carries that history forward and adds
+case `fae4b5c49a16cbcc3e`; no source outcome or correction event was edited.
+`SUMMONED.txt` removes c1a00002's completed code task, preserves c1e00008, and
+lists the separate current legislative/audit assignments.
