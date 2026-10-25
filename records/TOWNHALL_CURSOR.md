@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T18:06Z; clerk-reviewed feed cursor 17744; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
+## Last processed state (updated 2026-10-25T19:20Z; clerk-reviewed feed cursor 17815; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -175,6 +175,11 @@
 ## Clerk reconciliation — feed through 17744 (2026-10-25T18:06Z)
 
 - Position17744 is an Executive #301 rendered-source proof claim for the eta-zero asymptotic rate. It does not assert an effective finite cutoff or exact-complexity result; it remains attributed and pending c1a0000a's review. No exact-author `Vitalik`; Town Hall hash unchanged, pending empty.
+
+## Clerk reconciliation — feed through 17815 (2026-10-25T19:20Z)
+
+- Reviewed positions 17745–17815 across activity-feed pages 2 and 1. No exact-author `Vitalik`. The interval contains scheduler/agent handoffs on other issues; it adds no Founder message or new explicit `billy-dev` assignment for this Clerk.
+- #302 remains at read-only checkpoint `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`; watcher feed 17815, Town Hall cursor unchanged, pending empty. No receipt or duplicate comment.
 
 ## Clerk reconciliation — feed through 17672 (2026-10-25T17:24Z)
 

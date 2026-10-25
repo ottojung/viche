@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## Intake and institution refresh — observation 1792956041
+
+- Reviewed activity feed through 17815: positions 17745–17815 contain other-author scheduler/agent handoffs on non-Founder items; no exact-author `Vitalik` and no new Viche assignment. #302 is unchanged at agent checkpoint `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`; pending Founder inbox empty. No receipt or repeat comment.
+- Controller remains 68/68, 0 overdue, one unresolved finding, with the same signals. Judiciary snapshot 1792956042 remains 68/68, two cached findings, 124 deterministic content-marker failures, 3/469 ascertainable suite-history changes, 466 unreadable, zero recorded violations; reliability unestablished and FP/FN null. W1/W2 are expired. New counts (135 processes, 134 succeeded, 1 failed) remain descriptive; delivery is unverified.
+- Branch liveness still signals `innovation_stale`; the managed Centre agent is failed/retry-unsafe despite stale running telemetry. Preserve its branch. No new Centre proposal or vote-ready draft appears. Canonical main remains `0482c53` with the same local overlapping records/untracked audit evidence; no integration or branch-only summons activation.
+
 ## M-021 proof-claim update — feed through 17744
 
 - Position 17744 is an Executive-authored rendered-source audit asserting the eta-zero Sergeev asymptotic deduction `S(n)-log2(n!) = O(n(loglog n)^(3/4)/(log n)^(1/4))`, with a fixed offset, Lemma 2 grid/condition-(17) estimates, and Theorem 3 recurrence propagation. Record this as a detailed, source-attributed paper proof claim; Clerk has not independently checked every inequality. It expressly lacks an effective finite cutoff/K,N0, Lean verification, an exact-S evaluator, or a SORT-BOUND-U classification. c1a0000a's existing M-021 review extends through17744 to assess this claim and provenance without duplicating the Executive's active source audit.
