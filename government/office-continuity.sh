@@ -49,6 +49,21 @@ oc_record_failure() {
       '$2==office && $3==id && $4==inv {found=1} END {exit !found}' "$oc_log"; then
     return 0
   fi
+  # A head transition is durable progress even if a later checkout returns to
+  # an earlier commit. Advance the per-office streak watermark before the new
+  # event so pre-progress rows can never be counted again.
+  oc_head_marker=$1/last-head-$2
+  oc_previous_head=
+  if [ -s "$oc_head_marker" ]; then
+    oc_previous_head=$(cat "$oc_head_marker")
+  elif [ -s "$oc_log" ]; then
+    oc_previous_head=$(awk -F '\t' -v office="$2" '$2==office {head=$7} END {print head}' "$oc_log")
+  fi
+  if [ "$oc_sha" != - ] && [ -n "$oc_previous_head" ] && [ "$oc_previous_head" != "$oc_sha" ]; then
+    oc_count=$(wc -l < "$oc_log")
+    printf '%s\n' "$oc_count" > "$1/reset-sequence-$2"
+  fi
+  if [ "$oc_sha" != - ]; then printf '%s\n' "$oc_sha" > "$oc_head_marker"; fi
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$oc_finished_seconds" "$2" "$3" "$oc_event" "$5" "$7" "$oc_sha" >> "$oc_log"
   return 0
 }
@@ -86,17 +101,22 @@ oc_reset_due() {
   oc_log=$1/failures/events.tsv
   [ -s "$oc_log" ] || return 1
   oc_count=0
+  oc_after=0
+  if [ -s "$1/reset-sequence-$2" ]; then
+    oc_after=$(cat "$1/reset-sequence-$2")
+    case "$oc_after" in ''|*[!0-9]*) oc_after=0;; esac
+  fi
   oc_now_sha=
   if [ -n "${oc_worktree:-}" ]; then
     oc_now_sha=$(git -C "$oc_worktree" rev-parse HEAD 2>/dev/null || true)
   fi
+  oc_line=0
   while IFS="$(printf '\t')" read -r oc_finished oc_office oc_agent oc_inv oc_cls oc_safe oc_sha; do
+    oc_line=$((oc_line+1))
+    [ "$oc_line" -gt "$oc_after" ] || continue
     case "$oc_finished" in ''|*[!0-9]*) continue ;; esac
     [ "$oc_office" = "$2" ] || continue
-    if [ -n "$oc_now_sha" ] && [ "$oc_sha" != "$oc_now_sha" ]; then
-      oc_count=0
-      continue
-    fi
+    if [ -n "$oc_now_sha" ] && [ "$oc_sha" != "$oc_now_sha" ]; then continue; fi
     if [ $((oc_finished + oc_window)) -gt "$3" ]; then
       oc_count=$((oc_count + 1))
     fi
@@ -114,8 +134,13 @@ oc_reset_due() {
 # Clear the consecutive-failure record after a reset so the next streak starts
 # at zero. History remains auditable in recoveries.log and the incident log.
 oc_clear_failures() {
-  # History is append/deduplicated evidence. A reset starts a new window by
-  # age and progress guard; never truncate the event ledger here.
+  # Keep the append-only history and establish the next per-office streak
+  # boundary at the event ledger's current end.
+  mkdir -p "$1/failures" || return 1
+  oc_log=$1/failures/events.tsv
+  oc_count=0
+  [ ! -f "$oc_log" ] || oc_count=$(wc -l < "$oc_log")
+  printf '%s\n' "$oc_count" > "$1/reset-sequence-$2"
   return 0
 }
 
