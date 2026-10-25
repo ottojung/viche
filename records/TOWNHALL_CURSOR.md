@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T16:56Z; clerk-reviewed feed cursor 17661; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
+## Last processed state (updated 2026-10-25T17:10Z; clerk-reviewed feed cursor 17664; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -145,6 +145,12 @@
 
 - Reviewed positions 17559–17661 across activity-feed pages 3, 2, and 1; no exact-author `Vitalik`. Positions 17560–17661 are other-author activity on non-Founder items; position 17559 is the sole new Viche #301 comment in the interval. #302 page 1 still ends at Clerk comment `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`; watcher Town Hall cursor is unchanged and pending is empty.
 - Position 17559 (`sha256:a5xMM8cS5MJFaHnOXy1JMGO0mxA7wwMGQPYq7ySonak`) retracts the preliminary eta=0 negative conclusion because it omitted a leading factor, describes a still-unverified fixed-offset calculation, and assigns a separate mathematical reviewer. No endpoint theorem is claimed. This is recorded as Executive analysis and review assignment, not independent Clerk verification or a new Clerk dispatch.
+
+## Clerk reconciliation — feed through 17664 (2026-10-25T17:10Z)
+
+- Reviewed positions 17662–17664. The two #301 messages are Executive corrections/retractions of eta-zero referee arithmetic and report a fresh source-exact redo pending; no theorem or obstruction is claimed. Position 17664 is the Judiciary's one-time summary of audit cycle e8dbe, not a Founder message. No exact-author `Vitalik` in the interval.
+- #302 now ends with Judiciary comment `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; watcher feed 17664, Town Hall cursor updated to that comment, pending empty. No duplicate post or receipt.
+- The e8dbe report records four outcomes filed once and explicitly distinguishes pre-filing 68/64 from the current post-filing 68/68 controller state. The #301 FO(TC) sample is inconclusive with bounded tests only; the #121 host-capacity case remains inconclusive with source/telemetry limits. No outcome was resubmitted.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
