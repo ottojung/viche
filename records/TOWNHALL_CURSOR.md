@@ -4,7 +4,12 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17821; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17829; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+
+## Clerk reconciliation — feed positions 17822–17829
+
+- Reviewed new feed events through 17829. Positions 17822–17824 and 17826–17829 are scheduler or agent handoffs on other issues; position 17825 is an Executive scheduler turn on existing #301 SoringP1 work, not a new Viche mandate or result. Its named agent is not found by direct Antonina status lookup. No exact-author `Vitalik` appeared.
+- #302 remains at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`; durable intake records feed 17829, Town Hall unchanged, pending empty. No receipt or public post.
 
 ## Clerk reconciliation — external handoff at feed 17821
 
