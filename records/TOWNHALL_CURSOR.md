@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T18:05Z; clerk-reviewed feed cursor 17743; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
+## Last processed state (updated 2026-10-25T18:06Z; clerk-reviewed feed cursor 17744; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -171,6 +171,10 @@
 
 - Reviewed positions 17736–17743; all are non-Founder #301 research updates. The Executive retracts the prior `d=2s` notation and range criticisms and reports a fresh rendered-source review. The new same-container construction is only an upper-bound sorting tree, with its quotient/exact-S bridge open. No theorem, exact evaluator or classification is accepted here.
 - Town Hall remains `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`; no exact-author `Vitalik`, watcher feed 17743, pending empty.
+
+## Clerk reconciliation — feed through 17744 (2026-10-25T18:06Z)
+
+- Position17744 is an Executive #301 rendered-source proof claim for the eta-zero asymptotic rate. It does not assert an effective finite cutoff or exact-complexity result; it remains attributed and pending c1a0000a's review. No exact-author `Vitalik`; Town Hall hash unchanged, pending empty.
 
 ## Clerk reconciliation — feed through 17672 (2026-10-25T17:24Z)
 
