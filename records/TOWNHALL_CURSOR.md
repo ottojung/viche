@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25; clerk-reviewed feed cursor 16870; Town Hall cursor sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY)
+## Last processed state (updated 2026-10-25; clerk-reviewed feed cursor 16893; Town Hall cursor sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -50,6 +50,14 @@
 ## Superseding Clerk cursor — activity feed through 16880 (2026-10-25)
 
 - Scanned positions 16871–16880. Entries were automated Viche Executive/scheduler activity or external issue handoffs; no exact-author `Vitalik`. Position 16871 is a repeated scheduler request to ratify Act 14 after the existing terminal Clerk update and position-16868 verification handoff already established enactment; no ratification or duplicate public comment was made. Town Hall remains `sha256:G-zJtx0jOoWZr-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, watcher cursor 16878, pending inbox empty. This supersedes the earlier 16870 cursor value above and advances the Clerk-reviewed cursor to 16880.
+
+## Superseding Clerk cursor — activity feed through 16888 (2026-10-25)
+
+- Reviewed positions 16881–16888; all are Executive, scheduler, agent or external-project activity, with no exact-author `Vitalik`. #301 positions 16882 and 16885 are exploratory search-compression work plus a correction of its proposed root test; no theorem or evaluator improvement is claimed. Watcher feed cursor is 16888, Town Hall cursor unchanged, pending inbox empty. No Founder receipt or public post was made.
+
+## Superseding Clerk cursor — activity feed through 16893 (2026-10-25)
+
+- Reviewed positions 16889–16893; entries are scheduler activity on #263/#259/#261 and a non-Founder AssemblyP1 handoff on #257. No exact-author `Vitalik`; Town Hall cursor unchanged, pending inbox empty, durable watcher cursor 16891. Clerk-reviewed feed cursor advances through 16893; no Founder receipt or public post.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
