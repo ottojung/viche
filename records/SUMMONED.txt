@@ -1,6 +1,6 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Current refresh 2026-10-25, snapshot 1792888822, feed read through 16893: no exact-author Vitalik or pending Founder event. Town Hall remains sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY.
+# Current refresh 2026-10-25, snapshot 1792889047, feed read through 16899: no exact-author Vitalik or pending Founder event. Town Hall remains sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY.
 # Audit: 56 cases, zero overdue/effective findings; all three correction-not-effective/unresolved-inconclusive pairs persist. Auditor c1e00008 completed the three-case review and fae4 follow-up; its byte-identical fae4 correction-row copy remains branch-only/non-operative. No Auditor-verified effective fix exists; preserve findings/signals. c1a00005 delivered the historical Act17 legal analysis; apparent same-draw cap conflict, no proven breach or exoneration; issue remains open for Parliament.
 # Act19 prospective provenance merge 0482c5394e8dabc9ff268ba17daef800109aee16 is on main with exact-tree tests/run-all.sh green; GitHub bootstrap passed but there is no full-suite CI check. Issue #4 remains open for historical qJ→7g provenance and a live recovery outcome.
 # Judiciary: 56/56 reported, one cached finding; suite compliance 3/469 (466 unreadable, zero detected violations), 97 heuristic content failures, reliability not established, FP/FN null. Outcomes report 150 exits, 5 main commits and delivery-verified=false; descriptive only.

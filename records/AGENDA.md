@@ -1,5 +1,13 @@
 # Parliamentary agenda — event-driven sitting
 
+## Current Clerk refresh — snapshot 1792889044–1792889047, feed through 16899
+
+- **Founder intake:** reviewed positions 16889–16899; no exact-author `Vitalik`. Town Hall #302 remains `sha256:G-zJtx0jOoWZr-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, pending inbox empty; no receipt or public comment is due.
+- **#301 / M-021:** position 16894 gives a necessary condition for the proposed high-efficiency frontier family to enter the Stober–Weiß band: a winning member at remaining budget B must have F(P)=B and a separate lower bound on e(P). The current independent-edge family supplies neither exactness nor the extension-count lower bound. No construction, general obstruction, all-n evaluator bound, or code change was produced; Executive owns the exploratory front.
+- **Audit and Judiciary:** controller and Judiciary remain at 56 cases, zero overdue, controller `finding_count:0` versus one cached finding, with the same three unresolved correction pairs. No Auditor-verified fix is committed. Measurement reliability is unestablished; 97 content-standard failures remain heuristic, FP/FN null; suite 3/469 compliant, 466 unreadable, zero detected violations.
+- **Innovation / Act 14:** no new Centre proposal or eligibility change. Centre direct invocation remains failed and unsafe to retry. #307 has already been verified enacted/deployed; the repeated ratification scheduler is a duplicate prompt, not new business. #315 remains blocked on sponsor integration.
+- **Outcomes:** current probe remains descriptive, delivery unverified; 150 exits and 5 main commits. Active summons and second-office record recheck remain in place. No new correction, ballot, law change, post or retry occurred.
+
 ## Current Clerk refresh — snapshot 1792888822, feed reviewed through 16893
 
 - **Founder intake:** reviewed positions 16881–16893; none is authored exactly `Vitalik`. Positions 16889–16893 are scheduler or agent activity on external issues. Town Hall #302 still ends at `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, pending inbox empty. No receipt, new mandate, or public post.
