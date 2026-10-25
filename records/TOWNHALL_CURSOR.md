@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25; clerk-reviewed feed cursor 16899; Town Hall cursor sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY)
+## Last processed state (updated 2026-10-25; clerk-reviewed feed cursor 16905; Town Hall cursor sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -62,6 +62,10 @@
 ## Superseding Clerk cursor — activity feed through 16899 (2026-10-25)
 
 - Reviewed positions 16894–16899; they contain Executive #301 analysis, scheduler activity and external-project handoffs. No exact-author `Vitalik`; Town Hall remains unchanged and Founder inbox pending is empty. Position 16894 is a limited necessary-condition result, not a theorem or all-n bound. Watcher cursor 16898; Clerk-reviewed cursor advances through 16899 without receipt or board post.
+
+## Superseding Clerk cursor — activity feed through 16905 (2026-10-25)
+
+- Reviewed positions 16900–16905: external agent handoffs and scheduler activity only; no exact-author `Vitalik`. Town Hall remains `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, pending inbox empty, watcher feed cursor 16905. No receipt or public post.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 

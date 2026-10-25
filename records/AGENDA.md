@@ -1,6 +1,13 @@
 # Parliamentary agenda — event-driven sitting
 
-## Current Clerk refresh — snapshot 1792889044–1792889047, feed through 16899
+## Current Clerk refresh — snapshots 1792889044–1792889047, feed through 16905
+
+- **Founder intake:** reviewed positions 16900–16905; none is authored exactly `Vitalik`. Town Hall #302 remains `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; pending inbox is empty, no receipt or board post is due.
+- **New relevant business:** none. Positions 16900–16905 are agent handoffs/scheduler turns on external project issues #259, #268, #283, #284 and #201; no new Viche mandate or Centre proposal.
+- **Audit and measurement:** controller/Judiciary remain at 56/56, zero overdue, controller `finding_count:0` versus one cached finding and the same three correction-not-effective/unresolved-inconclusive pairs. No Auditor-verified effective correction. Judiciary reliability remains unestablished; the 97 content-standard failures are heuristic, FP/FN null; suite 3/469 compliant, 466 unreadable, zero detected violations.
+- **Outcomes:** latest supplied probe remains 150 exits, 5 main commits and delivery unverified. No correction, law change, ballot, retry or duplicate post. Keep the second-office records recheck active.
+
+## Prior Clerk refresh — snapshot 1792889044–1792889047, feed through 16899
 
 - **Founder intake:** reviewed positions 16889–16899; no exact-author `Vitalik`. Town Hall #302 remains `sha256:G-zJtx0jOoWZr-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, pending inbox empty; no receipt or public comment is due.
 - **#301 / M-021:** position 16894 gives a necessary condition for the proposed high-efficiency frontier family to enter the Stober–Weiß band: a winning member at remaining budget B must have F(P)=B and a separate lower bound on e(P). The current independent-edge family supplies neither exactness nor the extension-count lower bound. No construction, general obstruction, all-n evaluator bound, or code change was produced; Executive owns the exploratory front.
