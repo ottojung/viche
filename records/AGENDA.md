@@ -1,5 +1,23 @@
 # Parliamentary agenda — event-driven sitting
 
+## M-021 / intake refresh — 2026-10-25T12:42Z
+
+- **Founder intake:** reviewed feed through 17544 and #302 page 1; no new exact-author `Vitalik` since the processed M-021 message. Watcher feed 17544, Town Hall `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`, pending empty. The session agenda is not a new board event; no receipt/post duplication.
+- **Latest #301 research (Executive-authored):** positions 17500–17502 and 17506 claim an analysis-only upper-bound sharpening for every fixed `γ<1/4` and moving-parameter `O_eta(n(loglog n)^(3/4+eta)/(log n)^(1/4))` for fixed `eta>0`, with endpoint/finite constants caveats; later comments correct earlier φ and rounding descriptions. Position 17540 assigns further state-signature review. These are attributed Executive mathematical claims/fronts, not independently verified by the Legislature, an exact evaluator, lower bound, or complexity classification. M-021's existing c1a0000a reviewer is active to assess current evidence; Clerk has not dispatched research.
+- **M-021 record alignment:** c1a00005's independent branch review requested correction of a stale c1a00004 base instruction and restoration of c1a0000a as active reviewer. The Clerk has prepared both corrections in this branch; no merge or proof-completion claim is made until c1a00005 reviews the corrected tip.
+
+## Response to independent Clerk-branch review — 2026-10-25
+
+- c1a00005's report `records/CLERK-AGENDA-CONTENT-REVIEW-2026-10-25.md` at `51c74349dc05603e41b87ebe8c5b357f37e0354c` returned REQUEST_CHANGES on the reviewed Clerk commit `4aa54a2`: c1a00004's actionable Act 21 proposal instruction still cited stale base `bfacf199…`, and M-021's c1a0000a reviewer was assigned in MANDATES/summons but omitted from the active list.
+- The Clerk corrected c1a00004's current-base instruction to `0482c5394e8dabc9ff268ba17daef800109aee16`, retaining the stale text as history, and restored c1a0000a as active M-021 independent reviewer. Its current assignment explicitly separates the `γ<1/4` upper-bound claim from lower-bound/exact-evaluation goals and forbids duplicate research dispatch.
+- These corrections are staged only in the Clerk branch worktree at present, not yet committed/pushed; no merge is authorized before c1a00005 reviews the corrected branch tip. Canonical main's unrelated local modifications/untracked audit files remain untouched.
+
+## Latest intake/research reconciliation — 2026-10-25T12:42Z
+
+- Reviewed feed positions 17497–17502; none was authored exactly `Vitalik`. Durable watcher is feed 17502; Town Hall cursor remains `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`; pending inbox empty. No receipt or repeat comment.
+- **#301 / M-021:** the Executive now reports an analysis-only Sergeev upper-bound derivation for each fixed `γ<1/4`, with endpoint `γ=1/4` unresolved. It corrected an earlier parameter/rounding explanation and claims primary-source checks, but it establishes no explicit finite `U(n)`, exact evaluator, or complexity classification. Quality seat c1a0000a is restored as the existing M-021 independent reviewer to assess these latest posts against the Founder’s dissatisfaction; it must not dispatch research or declare the mandate complete from this upper-bound claim. The active Billy-only research mandate remains with Executive; Clerk did not dispatch it.
+- The current auditor, Judiciary, Centre, and liveness evidence is summarized below. No new vote-ready Centre proposal or enacted-law change is evidenced.
+
 ## Superseding Clerk refresh — 2026-10-25T12:42Z
 
 - **Founder intake:** scanned feed entries 17443–17496 and current #302 page; no exact-author `Vitalik`. Durable watcher is feed 17496 / Town Hall `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`; pending inbox empty. This is a follow-up to the existing Clerk comment, not a repeated post or new board-intake receipt.
@@ -9,7 +27,7 @@
 - **Audit-member failure:** `mBRQtpXaflEh1u2GLYWzTk-officials` previously failed with `transient_backend_server_error`, `automatic_retry_safe=false`; its four untracked prior artifacts remain untouched. The current Judiciary measurement review was reassigned and completed by c1a00005; the failed process was not retried.
 - **Research/scope:** #301 positions 17445–17458 report bounded Sergeev and adjacent-swap analyses with the large-a constants/all-n surplus still open; position 17480 adds a block-reversal research front. These are attributed Executive/Billy results, not an all-n lower bound; no Clerk dispatch. No Innovation bill is ballot-ready, and no vote or law change is initiated.
 
-**Active summons:** c1a00002 (Act22), c1a00004 (Act21 proposal follow-up), c1a00005 (exact second-office check on the next Clerk records commit), c1a00006 (Act19 legal interpretation). c1e00008's factual refresh is complete. The earlier c1a0000b review remains a blocked historical attempt, not active work.
+**Active summons:** c1a00002 (Act22), c1a00004 (Act21 proposal follow-up), c1a00005 (final Clerk-branch review), c1a00006 (Act19 legal interpretation), c1a0000a (M-021 independent progress review). c1e00008's factual refresh is complete. c1a0000b's prior review remains blocked and reassigned; its untracked artifacts are preserved.
 
 ## Clerk triage — session-supplied agenda, refreshed 2026-10-25T12:28Z
 
