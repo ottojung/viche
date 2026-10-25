@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Superseding feed/integration update — 2026-10-25T13:30Z
+
+- **Intake:** reviewed through feed 17555 and re-polled #302; no exact-author `Vitalik`, pending inbox empty, latest #302 comment unchanged at `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`.
+- **New #301 evidence:** position 17553 says the source audit did not establish a canonical Markov counterexample or polynomial state bound; it identifies under-specified interval/container choices and proposes testing a deterministic cost-preserving realization. This is an Executive-reported obstacle, not a general no-go or exact-S result. Extend c1a0000a's review to this position; do not dispatch research.
+- **Independent review:** c1a00005 also APPROVED Clerk commit `6ba805737afb38e32aeab7d024c3ef6dd9e25c41` (tree `154d66a4c35ac458c25a1b8b89346ee1d260eaf2`) in `records/CLERK-AGENDA-CONTENT-REVIEW-SECOND-FOLLOWUP-2026-10-25.md`, review branch commit `8412826`. Exact-tip records-smoke and diff-check passed.
+- **Integration blocker:** canonical `/var/lib/lubko/wd/viche` has concurrent edits to `records/AGENDA.md`, `SUMMONED.txt`, `TOWNHALL_CURSOR.md`, and `records/summons/c1e00008.md`, plus untracked audit/correction/handoff evidence. These paths overlap this reviewed branch. Preserve the canonical evidence; do not publish/fast-forward through it until its owner has reconciled the local changes. Clerk branch remains pushed; new summons are not active in canonical yet.
+
 ## Superseding Clerk refresh — 2026-10-25T13:24Z
 
 - **Founder intake:** re-polled #302 and the activity feed through 17552. No exact-author `Vitalik`; pending inbox empty. Latest #302 comment remains `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`. No new acknowledgement or public post is due. Watcher Town Hall cursor unchanged.

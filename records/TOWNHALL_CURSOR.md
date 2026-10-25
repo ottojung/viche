@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T13:24Z; clerk-reviewed feed cursor 17552; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
+## Last processed state (updated 2026-10-25T13:30Z; clerk-reviewed feed cursor 17555; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -128,6 +128,10 @@
 
 - Reviewed positions 17545–17552 and re-polled #302 page 1 (latest comment remains `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`). No exact-author `Vitalik`; watcher feed 17552, Town Hall cursor unchanged, pending empty.
 - Positions 17550 and 17552 are Executive-authored #301/linked Fervor technical claims about quasi-polynomial evaluation for a specified FO(TC) syntax; position 17551 describes a running deterministic tie-breaking/container-identity probe. These do not establish a uniform polynomial-size exact-budget compiler, unrestricted class membership, or task completion. They are recorded as claims, not Clerk-verified proofs; no duplicate research dispatch.
+
+## Clerk reconciliation — feed through 17555 (2026-10-25T13:30Z)
+
+- Reviewed positions 17553–17555. Position 17553 is an Executive #301 update reporting that the source audit found no canonical Markov counterexample or polynomial state bound; deterministic realization and container-future comparison remain open. Positions 17554–17555 are external #284 handoffs, not Viche or Founder business. No exact-author `Vitalik`; watcher feed 17555, Town Hall cursor unchanged, pending empty.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
