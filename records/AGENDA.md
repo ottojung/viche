@@ -1,5 +1,10 @@
 # Parliamentary agenda — event-driven sitting
 
+## #301 follow-up — feed through 17672
+
+- Position 17672 (OpenCode research) reports a deterministically tie-broken realization of the Sergeev Theorem 3 sorting tree with source-level asymptotic accounting. It claims an upper-bound sorter of height `log2(n!)+O(n log^{-1/5} n)`, not height `S(n)` or exact-optimal completeness. Its proposed polynomial signature quotient is explicitly unproved; the naive full-state count is only a warning, not an impossibility result. No NP or SORT-BOUND-U classification follows. Extend c1a0000a's existing M-021 review to this report and keep the exact-optimal/compiler obligation open; no Clerk research dispatch.
+- Intake is now reviewed through 17672. The post is not Founder-authored; #302 still ends at Judiciary comment `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`, pending inbox empty. No repeat post or receipt.
+
 ## #301 research follow-up — feed through 17671
 
 - Reviewed positions 17669–17671; none is Founder-authored. Position 17669 says the specific root-replay path-storage proposal does not improve its time exponent or remove its stack bound; it is a limitation of that scheme, not a general lower bound. Position 17670 says the cited Theorem 3 asymptotic does not yield an effective numerical constant/cutoff or finite computable `U(n)` without additional quantified constants. That does not itself refute the asymptotic rate claimed at 17667–68. Position 17671 gives a one-ply extension-count invariant and finite `n=5,6` examples; it does not establish the `n=12` gap or an all-n obstruction.

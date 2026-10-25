@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T17:18Z; clerk-reviewed feed cursor 17671; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
+## Last processed state (updated 2026-10-25T17:24Z; clerk-reviewed feed cursor 17672; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -161,6 +161,11 @@
 
 - Reviewed positions 17669–17671. They are research comments on #301 (authors `OpenCode research`/`research`), not Founder messages. The three bounded claims concern the specific DFS replay scheme, effective constants/cutoff for Theorem 3, and a one-ply invariant with finite witnesses; none establishes a general impossibility or exact-S result.
 - Feed cursor 17671; Town Hall remains `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`, whose latest message is the Judiciary's cycle summary at17664. No exact-author `Vitalik`; pending empty.
+
+## Clerk reconciliation — feed through 17672 (2026-10-25T17:24Z)
+
+- Position 17672 is OpenCode research's source-based deterministic realization of a Sergeev Theorem 3 sorting tree. It claims an upper bound for that sorter only; its polynomial signature quotient is explicitly open, and it does not establish height S(n), exact-optimal completeness, or class membership. Record as attributed research pending c1a0000a's progress review, not as proof completion.
+- No exact-author `Vitalik`; #302 tail remains Judiciary comment `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; watcher feed 17672, Town Hall hash unchanged, pending empty.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
