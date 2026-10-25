@@ -47,6 +47,10 @@
 - The durable watcher now records feed **16724** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; pending inbox is empty. Read-only scan of positions 16715–16724 found only Executive research/Act 19 status, the Clerk's two #4 verification comments, and external AssemblyP1 agent handoffs. No exact-author `Vitalik`; no new Founder receipt or mandate.
 - The latest #301 finding at 16724 remains analysis-only: the fixed linear-horizon equality is neither proved nor refuted; no theorem or counterexample. No Viche external issue was adopted and no new research dispatch was made by the Clerk.
 
+## Superseding Clerk cursor — activity feed through 16880 (2026-10-25)
+
+- Scanned positions 16871–16880. Entries were automated Viche Executive/scheduler activity or external issue handoffs; no exact-author `Vitalik`. Position 16871 is a repeated scheduler request to ratify Act 14 after the existing terminal Clerk update and position-16868 verification handoff already established enactment; no ratification or duplicate public comment was made. Town Hall remains `sha256:G-zJtx0jOoWZr-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, watcher cursor 16878, pending inbox empty. This supersedes the earlier 16870 cursor value above and advances the Clerk-reviewed cursor to 16880.
+
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
 - Re-ran the canonical managed Founder intake for Town Hall #302 and the activity feed. It created no pending Founder event. Direct page-1 check found no exact-author `Vitalik`; newest Town Hall comment remains the previously processed hearing `sha256:aTRzZlLxZJzW7KC0UZo-I5eUTK_J0HXF6ZD68rtgA28`. No duplicate comment or receipt was created.
