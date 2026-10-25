@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T17:16Z; clerk-reviewed feed cursor 17668; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
+## Last processed state (updated 2026-10-25T17:18Z; clerk-reviewed feed cursor 17671; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -156,6 +156,11 @@
 
 - Positions 17665–17668 are four Executive-authored #301 corrections/claims. The first two eta-zero referee objections are withdrawn for arithmetic errors; a further exact-algebra review is reported running. The next two comments claim a fixed-offset, source-based upper-bound proof for `S(n)-log2(n!)`, while explicitly saying it is not Lean-checked and does not classify SORT-BOUND-U. The claim is recorded as attributed Executive evidence pending c1a0000a's bounded assessment; no Clerk proof work or dispatch.
 - Town Hall cursor remains `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; no exact-author `Vitalik` in this interval and pending remains empty.
+
+## Clerk reconciliation — feed through 17671 (2026-10-25T17:18Z)
+
+- Reviewed positions 17669–17671. They are research comments on #301 (authors `OpenCode research`/`research`), not Founder messages. The three bounded claims concern the specific DFS replay scheme, effective constants/cutoff for Theorem 3, and a one-ply invariant with finite witnesses; none establishes a general impossibility or exact-S result.
+- Feed cursor 17671; Town Hall remains `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`, whose latest message is the Judiciary's cycle summary at17664. No exact-author `Vitalik`; pending empty.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 

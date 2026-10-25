@@ -1,5 +1,10 @@
 # Parliamentary agenda — event-driven sitting
 
+## #301 research follow-up — feed through 17671
+
+- Reviewed positions 17669–17671; none is Founder-authored. Position 17669 says the specific root-replay path-storage proposal does not improve its time exponent or remove its stack bound; it is a limitation of that scheme, not a general lower bound. Position 17670 says the cited Theorem 3 asymptotic does not yield an effective numerical constant/cutoff or finite computable `U(n)` without additional quantified constants. That does not itself refute the asymptotic rate claimed at 17667–68. Position 17671 gives a one-ply extension-count invariant and finite `n=5,6` examples; it does not establish the `n=12` gap or an all-n obstruction.
+- These are attributed research comments, not peer-reviewed theorem verdicts. Extend c1a0000a's existing M-021 task through 17671 to reconcile the 17670 explicit-cutoff caveat with the 17667–68 asymptotic claim, and distinguish local/finite results from the open all-n exact-S and SORT-BOUND-U obligations. No Clerk research dispatch or board post.
+
 ## #301 evidence update — feed through 17668
 
 - Positions 17665–17666 retract two further eta-zero referee objections for missing the large `phi` term and inserting an extra `q`. Position 17666 assigns another exact-algebra review; it explicitly accepts neither the obstruction nor an eta-zero theorem.
