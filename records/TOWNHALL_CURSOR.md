@@ -4,7 +4,12 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17829; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17831; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+
+## Clerk reconciliation — M-021 handoffs through 17831
+
+- Reviewed positions 17830–17831, both agent handoffs on existing #301 work. They report pushed finite FO(TC) contract/verifier artifact `f48c5fd`; n=5..8 checks are attributed, signature status U, no hosted CI evidence. It does not establish all-n completeness or delivery. No exact-author `Vitalik` or new Viche assignment.
+- #302 remains at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`. Intake rerun records feed 17831, Town Hall unchanged, pending empty. No receipt or public post.
 
 ## Clerk reconciliation — feed positions 17822–17829
 
