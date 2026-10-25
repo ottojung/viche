@@ -1,5 +1,13 @@
 # Parliamentary agenda — event-driven sitting
 
+## Recovery reconciliation — 2026-10-25T16:56Z
+
+- **Effects checked:** Clerk branch `clerk/agenda-2026-10-23` remains clean at `bb7e11f`; remote matches. c1a00005's fifth follow-up APPROVE report exists at review commit `392b071`. No later Clerk commit or Antonina post is present. Canonical main remains `0482c53`; its pre-existing overlapping record edits and untracked audit/correction artifacts are still present and untouched, so this branch remains unintegrated and its new summons are not yet activated there.
+- **Founder intake:** read the unreviewed feed interval 17559–17661 across pages 3→2→1 and re-read #302 page 1. No entry in the interval is exact-author `Vitalik`; Town Hall still ends with Clerk comment `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`. Watcher cursor is 17661, Town Hall cursor unchanged, pending empty. No receipt or duplicate post.
+- **Latest #301:** position 17559 corrects the eta=0 endpoint probe: the preliminary negative argument omitted factor `a` and is explicitly not credited; the revised fixed-offset asymptotic is still unverified, with independent audit assigned to `X1qEvHdr1qzcQueeaq1U9m-punctured`. No endpoint theorem claimed. Extend c1a0000a's existing review through 17559; the Executive retains the mathematical fronts, with no Clerk dispatch.
+- **Audit/measurement refresh:** controller at 1792935761 remains 64/64, 0 overdue, one unresolved finding, with the same five signaled cases (three correction-not-effective/inconclusive pairs, source-limited #14 finding, and #62 inconclusive). Judiciary at 1792935762 remains 64/64 with two cached findings; suite history 3/469 compliant, 466 unreadable, 0 recorded violations; 111 marker failures, reliability unestablished, FP/FN null. W1/W2 expired Oct20, so current figures are descriptive. No verdict/correction/signal changed.
+- **Other status:** Innovation liveness remains `innovation_stale`; managed Centre agent is failed/retry-unsafe despite stale running telemetry, and its clean six-commit branch remains preserved. No new Centre proposal or vote-ready bill is shown. Outcomes (117 process records, delivery verification false) are descriptive only.
+
 ## New #301 intake — 2026-10-25T13:38Z
 
 - **Founder intake:** watcher/feed reviewed through 17558. No exact-author `Vitalik`, pending inbox empty, Town Hall unchanged at `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`.

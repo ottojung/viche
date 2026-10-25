@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T13:38Z; clerk-reviewed feed cursor 17558; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
+## Last processed state (updated 2026-10-25T16:56Z; clerk-reviewed feed cursor 17661; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -140,6 +140,11 @@
 ## Clerk reconciliation — feed through 17558 (2026-10-25T13:38Z)
 
 - Positions 17557–17558 are Executive-authored #301 updates: five analysis-only fronts reported running, followed by a distinct endpoint-rate proof front. The prior endpoint attempt is explicitly withdrawn because it omitted a leading factor; no rate theorem is claimed. These reports add current owner/overlap status for c1a0000a's M-021 review, not Clerk research. No exact-author `Vitalik`; watcher feed 17558, Town Hall cursor unchanged, pending empty.
+
+## Recovery Clerk reconciliation — feed through 17661 (2026-10-25T16:56Z)
+
+- Reviewed positions 17559–17661 across activity-feed pages 3, 2, and 1; no exact-author `Vitalik`. Positions 17560–17661 are other-author activity on non-Founder items; position 17559 is the sole new Viche #301 comment in the interval. #302 page 1 still ends at Clerk comment `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`; watcher Town Hall cursor is unchanged and pending is empty.
+- Position 17559 (`sha256:a5xMM8cS5MJFaHnOXy1JMGO0mxA7wwMGQPYq7ySonak`) retracts the preliminary eta=0 negative conclusion because it omitted a leading factor, describes a still-unverified fixed-offset calculation, and assigns a separate mathematical reviewer. No endpoint theorem is claimed. This is recorded as Executive analysis and review assignment, not independent Clerk verification or a new Clerk dispatch.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
