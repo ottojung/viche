@@ -1,5 +1,10 @@
 # Parliamentary agenda — event-driven sitting
 
+## Current intake update — 2026-10-25T13:32Z
+
+- Feed reviewed through 17556: positions 17553–17555 were reviewed as noted below; position 17556 is an Executive #301 update assigning a managed mathematical review of the moving-parameter Sergeev deduction. It is reported running on Billy, analysis-only; the claimed rate remains source-based and pending that review, not a kernel-checked theorem. No exact-author `Vitalik`, pending Founder inbox empty, Town Hall unchanged.
+- c1a00005 APPROVED Clerk commit `7f67a7509558f537ac61d4ff365c0dd025e51e37` (tree `05ca92830833af01c63148adfef086ce93834e66`) in third follow-up report at review branch commit `b51db7c`; exact-tip records-smoke and diff-check passed. Its integration remains blocked by canonical overlapping local changes and untracked evidence, which are preserved. Extend c1a0000a's existing review through 17556; do not launch a duplicate mathematical review.
+
 ## Superseding feed/integration update — 2026-10-25T13:30Z
 
 - **Intake:** reviewed through feed 17555 and re-polled #302; no exact-author `Vitalik`, pending inbox empty, latest #302 comment unchanged at `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`.
