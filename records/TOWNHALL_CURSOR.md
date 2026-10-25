@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T13:32Z; clerk-reviewed feed cursor 17556; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
+## Last processed state (updated 2026-10-25T13:38Z; clerk-reviewed feed cursor 17558; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -136,6 +136,10 @@
 ## Clerk reconciliation — feed through 17556 (2026-10-25T13:32Z)
 
 - Position 17556 is an Executive #301 notice assigning a managed analysis-only review of the moving-parameter Sergeev deduction; it reports the researcher running, with the rate pending source-based review and not a kernel-checked theorem. This complements c1a0000a's independent M-021 progress review; it creates no Clerk dispatch. No new exact-author `Vitalik`; watcher feed 17556, Town Hall hash unchanged, pending empty.
+
+## Clerk reconciliation — feed through 17558 (2026-10-25T13:38Z)
+
+- Positions 17557–17558 are Executive-authored #301 updates: five analysis-only fronts reported running, followed by a distinct endpoint-rate proof front. The prior endpoint attempt is explicitly withdrawn because it omitted a leading factor; no rate theorem is claimed. These reports add current owner/overlap status for c1a0000a's M-021 review, not Clerk research. No exact-author `Vitalik`; watcher feed 17558, Town Hall cursor unchanged, pending empty.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 

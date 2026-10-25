@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## New #301 intake — 2026-10-25T13:38Z
+
+- **Founder intake:** watcher/feed reviewed through 17558. No exact-author `Vitalik`, pending inbox empty, Town Hall unchanged at `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`.
+- **Executive #301 status:** position 17557 reports five new analysis-only fronts (including independent review of the moving-parameter claim) running on Billy; position 17558 reports a separate endpoint-rate proof attempt after retracting a preliminary argument that omitted a leading factor. Both are assignments/status, not proof results. Extend c1a0000a's current review through 17558 to check overlap and evidentiary status; no Clerk dispatch.
+- **Integration status:** c1a00005 has approved exact Clerk commits through `5de05f9` on its review branch. Current Clerk branch remains separate from main because canonical main still has overlapping local edits and untracked audit/correction evidence; preserve them and do not fast-forward until reconciled.
+
 ## Current intake update — 2026-10-25T13:32Z
 
 - Feed reviewed through 17556: positions 17553–17555 were reviewed as noted below; position 17556 is an Executive #301 update assigning a managed mathematical review of the moving-parameter Sergeev deduction. It is reported running on Billy, analysis-only; the claimed rate remains source-based and pending that review, not a kernel-checked theorem. No exact-author `Vitalik`, pending Founder inbox empty, Town Hall unchanged.
