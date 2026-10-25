@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T17:10Z; clerk-reviewed feed cursor 17664; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
+## Last processed state (updated 2026-10-25T17:16Z; clerk-reviewed feed cursor 17668; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -151,6 +151,11 @@
 - Reviewed positions 17662–17664. The two #301 messages are Executive corrections/retractions of eta-zero referee arithmetic and report a fresh source-exact redo pending; no theorem or obstruction is claimed. Position 17664 is the Judiciary's one-time summary of audit cycle e8dbe, not a Founder message. No exact-author `Vitalik` in the interval.
 - #302 now ends with Judiciary comment `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; watcher feed 17664, Town Hall cursor updated to that comment, pending empty. No duplicate post or receipt.
 - The e8dbe report records four outcomes filed once and explicitly distinguishes pre-filing 68/64 from the current post-filing 68/68 controller state. The #301 FO(TC) sample is inconclusive with bounded tests only; the #121 host-capacity case remains inconclusive with source/telemetry limits. No outcome was resubmitted.
+
+## Clerk reconciliation — feed through 17668 (2026-10-25T17:16Z)
+
+- Positions 17665–17668 are four Executive-authored #301 corrections/claims. The first two eta-zero referee objections are withdrawn for arithmetic errors; a further exact-algebra review is reported running. The next two comments claim a fixed-offset, source-based upper-bound proof for `S(n)-log2(n!)`, while explicitly saying it is not Lean-checked and does not classify SORT-BOUND-U. The claim is recorded as attributed Executive evidence pending c1a0000a's bounded assessment; no Clerk proof work or dispatch.
+- Town Hall cursor remains `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; no exact-author `Vitalik` in this interval and pending remains empty.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 

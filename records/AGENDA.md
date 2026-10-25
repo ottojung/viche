@@ -1,5 +1,11 @@
 # Parliamentary agenda — event-driven sitting
 
+## #301 evidence update — feed through 17668
+
+- Positions 17665–17666 retract two further eta-zero referee objections for missing the large `phi` term and inserting an extra `q`. Position 17666 assigns another exact-algebra review; it explicitly accepts neither the obstruction nor an eta-zero theorem.
+- Positions 17667–17668 now claim a source-based paper-level deduction `S(n)-log2(n!) = O(n (loglog n)^(3/4)/(log n)^(1/4))` by choosing a fixed parameter offset and propagating through Theorem 3. The Executive reports exact-formula review and states this is not Lean-checked; no exact evaluator or SORT-BOUND-U classification follows. This is a substantial attributed upper-bound claim, not Clerk-verified theorem completion. c1a0000a's M-021 review is extended through 17668 to verify the report/provenance, assess what changes for the Founder-facing progress claim, and preserve remaining obligations without duplicating the Executive's exact-algebra red-team.
+- Intake through 17668 has no exact-author `Vitalik`; #302 tail and pending state are unchanged since the Judiciary summary at 17664. No new post, receipt, outcome, or ballot.
+
 ## Latest intake and audit refresh — 2026-10-25T17:10Z
 
 - **Founder intake:** feed reviewed through 17664; the new interval 17662–17664 contains Executive comments on #301 and one Judiciary audit summary on #302. None is authored exactly `Vitalik`. Current Town Hall tail is Judiciary comment `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`; watcher feed 17664, pending empty. No duplicate post or Founder receipt.
