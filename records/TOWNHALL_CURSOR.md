@@ -4,7 +4,13 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T19:20Z; clerk-reviewed feed cursor 17815; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
+## Last processed state (updated 2026-10-25; clerk-reviewed feed cursor 17818; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+
+## Clerk reconciliation — feed and Town Hall through 17818
+
+- Reviewed positions 17745–17818. No exact-author `Vitalik` or new explicit `billy-dev` assignment for this Clerk. Position 17817 is an attributed #301 finite n=8 witness report; it is not an all-n result. Position 17818 is Judiciary's c0f0 audit-cycle summary, not Founder communication.
+- #302 now ends at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`. Ran `/bin/sh government/founder-intake.sh` after reviewing the item; durable watcher now records feed 17818 and this Town Hall hash, with pending inbox empty. No receipt, duplicate post, or external action.
+- The Judiciary summary reports four outcomes filed once and no corrections. Its pre-filing 72/68 snapshot is distinct from the subsequent live 72/72 measurement; see the current AGENDA entry. No outcome was resubmitted.
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
