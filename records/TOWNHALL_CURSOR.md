@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T18:00Z; clerk-reviewed feed cursor 17735; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
+## Last processed state (updated 2026-10-25T18:05Z; clerk-reviewed feed cursor 17743; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -166,6 +166,11 @@
 
 - Reviewed positions 17672–17735 across feed pages 1–2. No exact-author `Vitalik`. Position 17731 is a read-only refresh checkpoint on #302 and is now the latest Town Hall message; do not duplicate it. Watcher cursor 17735, Town Hall hash `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`, pending empty.
 - Relevant #301 entries are bounded research corrections, source audits and assignments, including correction of the d notation at17734. Position17735 is a partial Act22 test handoff, not a main merge or calibration result. No outcome was resubmitted or post made.
+
+## Clerk reconciliation — feed through 17743 (2026-10-25T18:05Z)
+
+- Reviewed positions 17736–17743; all are non-Founder #301 research updates. The Executive retracts the prior `d=2s` notation and range criticisms and reports a fresh rendered-source review. The new same-container construction is only an upper-bound sorting tree, with its quotient/exact-S bridge open. No theorem, exact evaluator or classification is accepted here.
+- Town Hall remains `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`; no exact-author `Vitalik`, watcher feed 17743, pending empty.
 
 ## Clerk reconciliation — feed through 17672 (2026-10-25T17:24Z)
 
