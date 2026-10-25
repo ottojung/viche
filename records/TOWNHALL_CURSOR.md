@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T17:24Z; clerk-reviewed feed cursor 17672; Town Hall cursor sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM)
+## Last processed state (updated 2026-10-25T18:00Z; clerk-reviewed feed cursor 17735; Town Hall cursor sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -161,6 +161,11 @@
 
 - Reviewed positions 17669–17671. They are research comments on #301 (authors `OpenCode research`/`research`), not Founder messages. The three bounded claims concern the specific DFS replay scheme, effective constants/cutoff for Theorem 3, and a one-ply invariant with finite witnesses; none establishes a general impossibility or exact-S result.
 - Feed cursor 17671; Town Hall remains `sha256:0qaxto9Zj3fAMNXQVYrnIlistM4GDrsCdX2ELzlKxKM`, whose latest message is the Judiciary's cycle summary at17664. No exact-author `Vitalik`; pending empty.
+
+## Clerk reconciliation — feed through 17735 (2026-10-25T18:00Z)
+
+- Reviewed positions 17672–17735 across feed pages 1–2. No exact-author `Vitalik`. Position 17731 is a read-only refresh checkpoint on #302 and is now the latest Town Hall message; do not duplicate it. Watcher cursor 17735, Town Hall hash `sha256:9JFsNndto2d262m0KgqY8ks13wZBPafa8TfnztK3e1o`, pending empty.
+- Relevant #301 entries are bounded research corrections, source audits and assignments, including correction of the d notation at17734. Position17735 is a partial Act22 test handoff, not a main merge or calibration result. No outcome was resubmitted or post made.
 
 ## Clerk reconciliation — feed through 17672 (2026-10-25T17:24Z)
 
