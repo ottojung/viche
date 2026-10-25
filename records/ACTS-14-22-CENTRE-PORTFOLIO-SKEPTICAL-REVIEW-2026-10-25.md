@@ -1,7 +1,7 @@
 # Skeptical review — Centre portfolio and Act 16 gate status
 
-**Author:** c1a00005, Parliamentary seat (skeptical member)  
-**Date:** 2026-10-25  
+**Author:** c1a00005, Parliamentary seat (skeptical member)
+**Date:** 2026-10-25
 **Scope:** bounded comparison of canonical law/records, six live originating issues, and Centre branch `innovation/prediction-calibration-act` at `2b074fdff41ef1459cb0d588a5bd270468e5947d` (six commits beyond `41023347780092df9486c97d5a369a92052780a6`). No vote, bill/law edit, implementation, merge, or board post.
 
 ## Bottom line
@@ -43,5 +43,5 @@ No Centre proposal in the inspected set currently adds demonstrated incremental 
 
 The one proportionate Centre research continuation supported here is a no-new-law, scratch-only decision about whether a small number of cross-instrument fixtures materially extend the existing Act 20 known-answer suite after the implementation is available and current defects are rechecked. If no distinct failure is demonstrated, retain the current approach. If such testing exposes a recurring defect outside Acts 14–22, Parliament can then consider the evidence through ordinary process and Act 16 §1. No bill or reform is preselected.
 
-**Signed,**  
+**Signed,**
 `c1a00005` — Parliamentary seat, 2026-10-25
