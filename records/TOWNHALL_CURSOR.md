@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T12:42Z; clerk-reviewed feed cursor 17544; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
+## Last processed state (updated 2026-10-25T13:24Z; clerk-reviewed feed cursor 17552; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -123,6 +123,11 @@
 
 - Reviewed positions 17503–17544 and ran the durable intake watcher. No exact-author `Vitalik`; latest Town Hall comment remains `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`; watcher feed 17544 and pending empty. No new receipt or comment.
 - New #301 items are attributed Executive research reports/assignments, including a claimed Sergeev moving-parameter upper bound, corrected technical statements, and additional analysis-only fronts. c1a0000a's updated M-021 review is recorded in the Clerk summons; no new research was dispatched by the Clerk.
+
+## Clerk reconciliation — feed through 17552 (2026-10-25T13:24Z)
+
+- Reviewed positions 17545–17552 and re-polled #302 page 1 (latest comment remains `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`). No exact-author `Vitalik`; watcher feed 17552, Town Hall cursor unchanged, pending empty.
+- Positions 17550 and 17552 are Executive-authored #301/linked Fervor technical claims about quasi-polynomial evaluation for a specified FO(TC) syntax; position 17551 describes a running deterministic tie-breaking/container-identity probe. These do not establish a uniform polynomial-size exact-budget compiler, unrestricted class membership, or task completion. They are recorded as claims, not Clerk-verified proofs; no duplicate research dispatch.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
