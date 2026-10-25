@@ -4,7 +4,17 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17831; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17839; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+
+## Clerk reconciliation — feed through 17839
+
+- Reviewed 17832–17839. The interval contains #259/#263 external AssemblyP1 and #201 external QAI/pyreports agent activity, plus existing #4 Act19 and #301 Billy-assigned updates at17834–17838. These include reports of local Act19 implementation changes and a bounded FO(TC) verifier; none is Founder communication or a new Viche assignment.
+- #302 remains at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`. Durable intake records feed 17839, Town Hall unchanged and pending empty; no receipt or public post.
+
+## Clerk reconciliation — feed through 17836
+
+- Reviewed positions 17832–17836 after the previous cursor: 17832–17833 are external AssemblyP1 #259 handoffs; 17834 is the Executive's local Act19 repair update on the assigned #4 issue; 17835–17836 are Executive #301 verification updates. None is exact-author `Vitalik` or a new issue assignment.
+- #302 remains at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`. The existing intake watcher now records feed 17836, the unchanged Town Hall hash and pending inbox empty. No receipt or public post.
 
 ## Clerk reconciliation — M-021 handoffs through 17831
 
