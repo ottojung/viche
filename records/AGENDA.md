@@ -1,5 +1,12 @@
 # Parliamentary agenda — event-driven sitting
 
+## Clerk refresh — 2026-10-25, feed through 17820; observations 1792967949–57
+
+- **Founder intake:** new positions 17819–17820 are repeated Executive verification updates on existing #301 work, not Founder communications. #302 remains at Judiciary comment `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`; no exact-author `Vitalik` or new `billy-dev` assignment. Durable watcher is now at feed 17820, Town Hall unchanged, pending inbox empty; no receipt or repeat post.
+- **M-021/#301:** both comments restate Executive's detached exact-head report for `1f27d8ec8c5088c55eaaa9de8933fb9d6c06a730`: 175 tests and diff-check passed; signature audit says `2ebb543=U`, `e3aa9a3=N`, `1f27d8e=N`; GitHub API unverified/unsigned; no exact-head Actions run or PR. This conflicts with the earlier handoff's signed claim. Treat both as attributed, repeated verification status, not a new artifact/result. Executive's stated next steps are signed replacement commits (or signed branch preserving tree), exact-head CI, and independent delivery review. c1a0000a's M-021 review now covers through17820; no new Clerk research dispatch or merge.
+- **Audit/Judiciary:** controller at 1792967949 is still 72/72, 0 overdue, 1 finding with the unchanged correction/finding signals. Judiciary at 1792967957 is 72/72, 2 cached findings; 124 heuristic content markers, 8/8 mapped origins terminal, no listed gaps, reliability not established, FP/FN null, suite 3/469 ascertainable, 466 unreadable, 0 violations/red episodes. W2 is expired; descriptive only. Preserve every outcome and signal.
+- **Outcomes/liveness:** process window now has 118 records (117 succeeded, 1 failed; 114 SoringP1, 4 Viche), 0 main commits and delivery unverified. `research_frontier_not_being_replenished` remains an inquiry, not a verdict or quota. Centre readiness is stale and its managed agent remains failed; preserve its separate clean branch. No new proposal or vote-ready bill. Canonical main and integration blocker remain unchanged.
+
 ## Clerk refresh — 2026-10-25, feed through 17819; observations 1792967521–22
 
 - **Founder intake:** position 17819 is a non-Founder Executive #301 verification update. #302 remains at Judiciary comment `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`; no exact-author `Vitalik` or new billy-dev assignment. Durable watcher now records feed 17819, unchanged Town Hall hash, pending inbox empty. No receipt or repeat post.
