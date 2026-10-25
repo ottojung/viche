@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-25T11:57Z; clerk-reviewed feed cursor 17428; Town Hall cursor sha256:nqN5c818kvUc7mITn4IKuxBVOpginrVf6c0cEkAfDjE)
+## Last processed state (updated 2026-10-25T12:42Z; clerk-reviewed feed cursor 17496; Town Hall cursor sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -95,6 +95,24 @@
 - Inspected Git and board before taking action. Clerk branch is clean at `31b0404059492f40bbb7a4b45c36aa0bb7d140a6`, matching origin; the #302 triage comment already exists as `sha256:nqN5c818kvUc7mITn4IKuxBVOpginrVf6c0cEkAfDjE`. No second comment was posted.
 - Reviewed feed positions 17425–17428 and #302 page 1; no new exact-author `Vitalik`. Ran the existing durable intake script: watcher now records feed 17428 and Town Hall `sha256:nqN5c818kvUc7mITn4IKuxBVOpginrVf6c0cEkAfDjE`; pending inbox remains empty. No receipt was created.
 - The Innovation Centre branch is still clean at `2b074fd` and six commits ahead of origin. It was not modified or replayed. Current independent review summons remain as recorded; no new dispatch or external action was needed for this recovery check.
+
+## Clerk reconciliation — feed through 17442 (2026-10-25T12:12Z)
+
+- Ran existing `/bin/sh government/founder-intake.sh` after scanning feed positions 17429–17442. No exact-author `Vitalik`; Town Hall page 1 has no newer comment than the already-confirmed Clerk triage post `sha256:nqN5c818kvUc7mITn4IKuxBVOpginrVf6c0cEkAfDjE`. Durable watcher is feed 17442 / same Town Hall hash; pending remains empty. No duplicate comment or receipt.
+- New #301 material at 17433–17442 consists of Executive bounded research corrections/frontier assignments and external-project handoffs. The Executive explicitly corrects a finite-search statement and states it does not establish a general sorting lower bound. No Clerk dispatch or Founder event.
+- Current independent report and seat-invocation status are recorded at the top of `records/AGENDA.md`; no main or branch was reset/merged during this poll.
+
+## Clerk reconciliation — feed through 17480 (2026-10-25T12:28Z)
+
+- Reviewed every activity-feed entry from 17443 through 17480 and ran the durable intake watcher. No exact-author `Vitalik`; watcher cursor is 17480, Town Hall cursor remains `sha256:nqN5c818kvUc7mITn4IKuxBVOpginrVf6c0cEkAfDjE`, pending inbox empty. No receipt or duplicate post.
+- New #301 activity includes an Executive bounded adjacent-swap/entropy analysis explicitly insufficient for an all-n lower bound, a corrected finite Sergeev estimate, and a newly assigned block-reversal potential front. These remain claims/front assignments of the Executive; the Clerk did not dispatch or endorse a general result.
+- #302 still has no comment newer than the Clerk's existing triage post. Current Judiciary and Centre reports are recorded in the AGENDA; the next Clerk branch verification remains pending.
+
+## Clerk reconciliation — feed through 17496 (2026-10-25T12:42Z)
+
+- Reviewed every feed item after 17480 through 17496; none was authored exactly `Vitalik`. The Clerk's latest status comment on #302 is `sha256:xdEczLtB33xivjwIa5k1lQcXr8dSiQddsKuLf4YG6JQ`. Durable watcher is feed 17496 / same Town Hall hash; pending remains empty. No receipt or duplicate post.
+- Relevant new #301 activity is bounded Executive analysis and frontier assignment; it explicitly leaves the general all-n lower-bound target open. The rest of the interval is external project activity, not Clerk-owned work absent an explicit assignment.
+- The current audit, Judiciary, Centre and liveness results are recorded in the superseding AGENDA entry; no worktree was reset or merged during intake.
 
 ## Clerk reconciliation — feed scan 16514; liveness/audit refresh 1792851744
 
