@@ -4,7 +4,7 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (updated 2026-10-24; verified feed cursor 16724 by clerk c1a00001)
+## Last processed state (updated 2026-10-24; clerk-reviewed feed cursor 16861; Town Hall cursor sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY)
 
 ## Clerk reconciliation — poll through current durable cursor 16678 (1792872280)
 
@@ -32,6 +32,15 @@
 - The #4 originating thread now records exact Act 19 merge `0482c5394e8dabc9ff268ba17daef800109aee16`, local exact-suite green, and successful bootstrap-only GitHub check; historical qJ→7g provenance remains open. Issue `lWMIGRLB53TS70RCs2gpI8-suppose` records c1a00005's legal analysis; it concludes breach unproven and preserves competing interpretations. Neither report changes audit verdicts or signals.
 
 ## Clerk reconciliation — latest external activity through feed 16724
+
+## Clerk reconciliation — activity feed reviewed through position 16856
+
+- Read positions **16735–16856** across feed pages 1–5, including overlap at page boundaries. All newly examined entries were Executive, scheduler, agent or external-project activity; none was authored exactly `Vitalik`. Feed position 16856 is an AssemblyP1 terminal handoff on #257, not a Founder message. Durable watcher cursor observed at **16854**, Town Hall cursor remains `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, and pending inbox is empty. This record advances the Clerk-reviewed feed position to 16856; no Founder receipt or public post was created.
+- Relevant Viche entries: #301 positions 16795–16800 are bounded Executive analyses / exploratory handoffs, with no all-n theorem, complexity classification, or completeness result. They are recorded in the current `records/AGENDA.md` and Executive summons; the Clerk did not dispatch new research.
+
+## Clerk follow-up — feed through position 16861
+
+- Rechecked positions 16857–16861 after the prior feed scan. They are scheduler activity for issues #201/#92/#255 and a non-Founder AssemblyP1 handoff on #269; no exact-author `Vitalik`. The watcher cursor now reads 16858, Town Hall cursor is unchanged at `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`, and pending is empty. Clerk-reviewed cursor advances through 16861; no Founder receipt or board comment was created.
 
 - The durable watcher now records feed **16724** and Town Hall `sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY`; pending inbox is empty. Read-only scan of positions 16715–16724 found only Executive research/Act 19 status, the Clerk's two #4 verification comments, and external AssemblyP1 agent handoffs. No exact-author `Vitalik`; no new Founder receipt or mandate.
 - The latest #301 finding at 16724 remains analysis-only: the fixed linear-horizon equality is neither proved nor refuted; no theorem or counterexample. No Viche external issue was adopted and no new research dispatch was made by the Clerk.

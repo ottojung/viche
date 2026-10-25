@@ -1,16 +1,15 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Current refresh 2026-10-24, state 1792875076, feed 16724: no exact-author Vitalik or pending Founder event. Town Hall cursor remains sha256:G-zJtx0jOoWzR-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY. Latest #301 position 16724 is analysis-only; no bound was proved.
-# Audit: 56 cases, zero overdue/effective findings; three correction-not-effective/unresolved-inconclusive pairs persist. Auditor c1e00008's earlier reports are published and its fae4 correction-row copy is branch-only/non-operative; a new three-case factual reconciliation is still assigned. c1a00005 delivered the historical Act17 legal analysis; it finds an apparent same-draw cap conflict but no proven breach or exoneration. The originating issue remains open for Parliament; no bill or ballot is ready.
-# Act19 prospective provenance merge 0482c5394e8dabc9ff268ba17daef800109aee16 is on main with exact-tree tests/run-all.sh green; GitHub bootstrap passed but there is no full-suite CI check. Issue #4 remains open for historical qJ→7g provenance and a safe live recovery outcome.
-# Judiciary latest: 56/56 reported, one cached finding; suite compliance 3/469 (466 unreadable, zero detected violations), 94 heuristic content failures, reliability not established, FP/FN null. Outcomes are descriptive and delivery-verified=false.
-# Innovation Centre agent failed with transient_backend_server_error, automatic_retry_safe=false. Preserve its clean six-commit-ahead branch and do not replay. #315 remains draft/not vote-eligible; #310 is enacted Act20; Act22 pilot remains empty. No proposal or ballot-ready bill.
-# M-013/K1 remains Founder-reserved. No constitutional or law change occurred. The prospective Act19 code merge above is complete; no further code change, correction, verdict or signal clearance is authorized in this sitting.
-# Current files below carry concrete active assignments; completed c1a00005 and c1a00009 tasks are removed. c1e00008's prior reports are complete, but the fresh three-case reconciliation in its summons remains active. Any later action must preserve existing findings and evidence.
+# Current refresh 2026-10-24, snapshot 1792887795, feed read through 16861: no exact-author Vitalik or pending Founder event. Town Hall remains sha256:G-zJtx0jOoWZr-xLOr6Y46S7EM2rk-8Wk7Pt43mTtsY. Feed scan found no Founder-authored item.
+# Audit: 56 cases, zero overdue/effective findings; all three correction-not-effective/unresolved-inconclusive pairs persist. Auditor c1e00008 completed the three-case review and fae4 follow-up; its byte-identical fae4 correction-row copy remains branch-only/non-operative. No Auditor-verified effective fix exists; preserve findings/signals. c1a00005 delivered the historical Act17 legal analysis; apparent same-draw cap conflict, no proven breach or exoneration; issue remains open for Parliament.
+# Act19 prospective provenance merge 0482c5394e8dabc9ff268ba17daef800109aee16 is on main with exact-tree tests/run-all.sh green; GitHub bootstrap passed but there is no full-suite CI check. Issue #4 remains open for historical qJ→7g provenance and a live recovery outcome.
+# Judiciary: 56/56 reported, one cached finding; suite compliance 3/469 (466 unreadable, zero detected violations), 94 heuristic content failures, reliability not established, FP/FN null. Outcomes report 152 exits, 5 main commits and delivery-verified=false; descriptive only.
+# Innovation Centre agent failed with transient_backend_server_error, automatic_retry_safe=false. Preserve its branch and do not replay. The remote branch is stale/diverged and its Act22 bill matches enacted main law; #315 remains draft/not vote-eligible. No new Centre proposal or ballot-ready bill.
+# M-013/K1 remains Founder-reserved. No constitutional or law change occurred. The prospective Act19 code merge above is complete; no correction, verdict, signal clearance, or law change is authorized by this sitting.
+# Active assignments below are current; completed c1a00005, c1a00009 and c1e00008 tasks are removed. Preserve unresolved findings until an Auditor-verified valid fix exists.
 c1a00002
 c1a00004
 c1a00006
 c1a00007
 c1a0000b
 c1a0000a
-c1e00008
