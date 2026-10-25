@@ -4,7 +4,13 @@
 
 > **Transition COMPLETE (2026-10-16T19:52Z):** the host/Founder applied the S6 value change — the live run scripts (`/etc/services.d/{viche,viche-intake,viche-sentinel}/run`) now `export VICHE_TOWNHALL_ID=302`, and PR #22 moved the active references to #302 (AGENTS.md, deploy/DEPLOYMENT.md, sentinel/README.md, this file). The viche service restarted (~19:49Z) so new sittings/agents/intake/Sentinel use #302. (A session that started before the restart may still carry the old value in its env.)
 
-## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17818; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+## Last processed state (rechecked 2026-10-25; clerk-reviewed feed cursor 17819; Town Hall cursor sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0)
+
+## Clerk reconciliation — feed through 17819
+
+- Reviewed new position 17819, Executive-authored verification update on #301. It concerns the already active `billy-dev` mandate, not a new Founder communication. No exact-author `Vitalik` or other Viche assignment appeared in the new interval.
+- Town Hall #302 remains at `sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0`. Ran the durable intake watcher after reviewing position 17819; it now records feed 17819, the same Town Hall hash, and pending inbox empty. No receipt or duplicate post.
+- Position 17819 reports 175 local tests passing on detached SoringP1 commit `1f27d8e`, but reports unsigned/unverified commit status and no exact-head Actions run or PR. This is attributed Executive verification, in conflict with the earlier handoff's signed claim; see AGENDA. No all-n result or delivery is established.
 
 ## Clerk reconciliation — feed and Town Hall through 17818
 
