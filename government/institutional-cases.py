@@ -56,8 +56,17 @@ def collect():
     # its terminal continuity record remains an independently observable case.
     for office in ("executive", "judiciary", "innovation-centre", "c1a00001"):
         receipt = read(ROOT / ("continuity/reconciliation-" + office + ".json"))
-        if receipt.get("state") == "preparing":
-            signals.add("continuity_incomplete_" + office)
+        if receipt.get("state") in ("preparing", "awaiting_reconciliation"):
+            verified = read(ROOT / ("continuity/verified-" + office + ".json"))
+            valid = (receipt.get("state") == "awaiting_reconciliation"
+                and verified.get("previous_agent") == receipt.get("previous_agent")
+                and verified.get("successor_agent") == receipt.get("successor_agent")
+                and verified.get("verified_by") == "judiciary"
+                and verified.get("verification_scope") == "external_effect_reconciled"
+                and isinstance(verified.get("evidence_ref"), str)
+                and bool(verified["evidence_ref"].strip()))
+            if not valid:
+                signals.add("continuity_unverified_" + office)
     return now, signals
 
 
@@ -77,7 +86,7 @@ def reconcile():
     existing = sorted(STORE.glob("*.json"))
     names = set(signals) | {p.stem for p in existing}
     for signal in sorted(names):
-        if not signal.replace("_", "").isalnum():
+        if not signal.replace("_", "").replace("-", "").isalnum():
             continue
         path = STORE / (signal + ".json")
         case = read(path)

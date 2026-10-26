@@ -110,6 +110,14 @@ $cases
 These are health observations, NOT verdicts or legislative authorizations.
 Independently investigate persistent cases, cite evidence and report to
 Parliament. Do not propose, enact or implement policy from Judiciary.
+For continuity_unverified OFFICE, independently inspect the old terminal
+evidence at state/appointments/terminal-evidence/ID, preserved Git/board
+effects and actual new agent progress. Only if those are demonstrably reconciled
+write state/continuity/verified-OFFICE.json with verified_by "judiciary",
+verification_scope "external_effect_reconciled", previous_agent and
+successor_agent exactly from its reconciliation receipt, and a specific
+independent evidence_ref. A successful agent exit is NOT sufficient.
+If uncertain, retain the open case and report why.
 Randomized audit cases (bounded deep review):
 $selection
 
