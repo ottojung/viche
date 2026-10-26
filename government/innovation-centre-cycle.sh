@@ -110,6 +110,11 @@ Read prior proposals before creating another; no quota or ceremonial reports.
 Your independent research worktree is $cwd. Deliver genuinely new insight.
 EOF
 )
+      recovery=
+      if [ -f "$town/government/terminal-continuity.sh" ]; then
+        recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction innovation-centre) || exit 1
+      fi
+      prompt=$(printf '%s\n\n%s\n' "$prompt" "$recovery")
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach \
         > "$root/dispatch.log" 2>&1 ||
         { echo 'Innovation Centre dispatch failed' >&2; exit 1; }

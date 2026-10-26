@@ -122,6 +122,26 @@ Verify the actual Antonina agent list before dispatch; ledger states are not
 live availability. Follow any open durable Act19 handoffs before generic work.
 EOF
 )
+cases='{"open_cases":[]}'
+if [ -f "$town/government/institutional-cases.py" ]; then
+  cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
+fi
+recovery=
+if [ -f "$town/government/terminal-continuity.sh" ]; then
+  recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction executive) || exit 1
+fi
+prompt=$(cat <<EOF
+$prompt
+$recovery
+=== MANDATORY INSTITUTIONAL CORRECTIVE CASES ===
+$cases
+=== END CORRECTIVE CASES ===
+Prioritize Town continuity and correcting confirmed institutional failures.
+Implement permitted operational repairs without legislative delay; request
+Parliament's vote for changes that alter law. Keep Judiciary independent.
+Never close cases merely by dispatching, commenting or merging.
+EOF
+)
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"
