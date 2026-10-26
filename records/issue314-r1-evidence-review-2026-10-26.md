@@ -100,3 +100,38 @@ artifacts, not a claim that newest board comments were independently read.
 Next distinct source is the immutable host journal or terminal transcript for
 the Clerk session around 09:55–10:00Z on 2026-10-19, plus an independently
 timestamped main-ref update record for `bca67da`.
+
+## Continuation: GitHub Actions check-run source
+
+Read-only verification on 2026-10-26 queried the GitHub REST API, a distinct
+immutable source from the previously inspected Actions run index and
+source-controlled proceedings. The exact R1 commit is
+`28fcdd7d4e4307002861d6a0da111287d91ced19`, with tree
+`01e53fced304821922713c9f5974c5ca10f13d55` and commit timestamp
+`2026-10-19T09:49:31Z`.
+
+- `GET /repos/ottojung/viche/commits/28fcdd7d4e4307002861d6a0da111287d91ced19/check-runs`
+  returned one bootstrap check run, whose head SHA equals R1. It completed at
+  `2026-10-19T09:49:47Z` with conclusion `failure`.
+- The workflow-run record
+  `GET /repos/ottojung/viche/actions/runs/39232949149` identifies the push
+  event on `main`, repeats the exact head SHA and tree, and records completion
+  at `09:49:47Z`. Its jobs endpoint shows “Run all tests” completed with
+  `failure` at `09:49:45Z`.
+- The run's artifacts endpoint returned `total_count: 0`.
+
+This confirms an exact-tree **post-commit** red result. Its chronology does
+not establish a pre-promotion green result, nor prove that the commit was
+promoted while red: promotion precedes completion of this run. It is
+consistent with AGENDA §R1's contemporaneous failure report, but says nothing
+about whether a green local run preceded the push. Another tree's test result
+cannot establish R1's pre-promotion status.
+
+Bounded-source gaps: no Actions artifact was retained for this run; the public
+issue-comments API returned HTTP 403 in this environment, and `gh` is not
+installed, so newest board comments could not be independently read here.
+Classification remains **pre-promotion status unreadable**; do not infer
+either a pre-promotion pass or a violation from the failed post-push check.
+Next useful evidence, if available, is a timestamped local test transcript or
+host journal for the authoring session before `09:49:31Z`, not another query of
+the same post-push check.
