@@ -68,3 +68,35 @@ host journal/terminal transcript or immutable runner log for the Clerk's
 time for `bca67da`. Keep raw-run evidence unverified if those sources are
 unavailable; do not reclassify the historical result as red solely from
 unavailability.
+
+## Continuation: immutable Git refs and proceedings history
+
+On a subsequent read-only pass, `git fetch origin --prune` refreshed the
+verified remote. The fetched namespace contained `origin/main` at
+`0482c5394e8dabc9ff268ba17daef800109aee16`, the named innovation proposal ref,
+and the review ref; none provides a separate runner archive. `git fsck
+--full --no-reflogs --unreachable` reported one unreachable commit and two
+unreachable trees, none identified as a run log or receipt. All fetched refs
+point to Git commits/trees, not an external host journal. The exact R1 commit
+and tree remain present and independently verified; the earlier first-parent
+window from R1 to the fix includes four transitions, with no exact-tree test
+artifact among the tracked records.
+
+An independent source-controlled record check inspected `origin/main`'s
+`records/PROCEEDINGS.md` lines 1191–1195, and the historical commit sequence
+for that file. It confirms the contemporaneous clerk narrative: red full-suite
+run on `28fcdd7`, followed by focused and full-suite green reports after
+`bca67da`. This is a report of the run, not raw output, a signed receipt, or a
+green result on the R1 tree. The fix's tree differs from R1, and its green
+verification occurred after the fix, so it cannot count as pre-promotion
+green evidence for R1. No evidence here upgrades or newly classifies the
+checker population; the specific reported run is red evidence as narrated,
+while independent exact-tree runner proof remains unavailable.
+
+The issue comments could not be fetched in this invocation: `gh issue view 314
+--repo ottojung/viche --comments` failed because `gh` is not installed. This
+review therefore relies on the supplied preceding handoff and repository
+artifacts, not a claim that newest board comments were independently read.
+Next distinct source is the immutable host journal or terminal transcript for
+the Clerk session around 09:55–10:00Z on 2026-10-19, plus an independently
+timestamped main-ref update record for `bca67da`.
