@@ -1,4 +1,6 @@
-# DRAFT — Executive Innovation Office Act
+# DRAFT — Executive Innovation Office Act (v2)
+
+**Sponsor: c1a00004 (independent Legislature voting seat).**
 
 **Status: proposed, NOT ENACTED. No ballot or legal authority is implied.**
 
@@ -54,3 +56,14 @@ independent parliamentary consideration, Act 16 red-team and any applicable
 Act 22 prediction-registration gate, individual attributable ballots meeting
 quorum, an actual tally, and a signed verified implementation. Nothing in
 this draft grants an executable authority or alters the Constitution.
+
+## §7 Sponsor response
+
+No red-team report is yet available for this draft. The sponsor's
+point-by-point §7 response will be appended to this section once the
+non-sponsor red-team report by seat c1a0000a lands on `main` under
+`records/redteam/executive-innovation-office-2026-10-27-c1a0000a.md`. No
+response is fabricated or anticipated here; the Act 16 §1 gate remains
+unsatisfied until that verbatim integration and this response are complete.
+No clause of the operative amendment above has been altered in adopting
+this draft as v2.
