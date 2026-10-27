@@ -5,7 +5,7 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
-mkdir -p "$d/bin" "$d/town/government" "$d/seats" "$d/state" "$d/mock"
+mkdir -p "$d/bin" "$d/home" "$d/town/government" "$d/seats" "$d/state" "$d/mock"
 git init -q "$d/town"
 git -C "$d/town" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm start
 cp "$repo/government/RECOVERY-STEWARD.md" "$d/town/government/"
@@ -41,6 +41,23 @@ chmod +x "$d/bin/antonina" "$d/town/government/appointments.sh"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"
 export VICHE_TOWN_ROOT="$d/town" VICHE_SEATS_ROOT="$d/seats"
 export VICHE_STATE_ROOT="$d/state" VICHE_CONSTITUTION="$d/charter"
+# Exercise the service's actual profile/strict-mode prefix. Both errexit and
+# nounset must remain disabled while the login profile initializes.
+export HOME="$d/home"
+awk '
+  /^export VICHE_TOWNHALL_ID=/ { exit }
+  /^\. \/home\/lubko\/\.profile$/ { print ". \"$HOME/.profile\""; next }
+  { print }
+' "$repo/government/recovery-steward-service.sh" > "$d/service-init.sh"
+# A profile may reference variables that are absent from the supervisor env.
+printf ': "$PROFILE_OPTIONAL"\nexport PROFILE_LOADED=yes\n' > "$HOME/.profile"
+unset PROFILE_OPTIONAL PROFILE_LOADED
+sh "$d/service-init.sh"
+# A non-final failed profile command must not abort before later setup runs.
+printf 'false\nexport PROFILE_LOADED=yes\n' > "$HOME/.profile"
+unset PROFILE_LOADED
+printf 'test "$PROFILE_LOADED" = yes\n' >> "$d/service-init.sh"
+sh "$d/service-init.sh"
 sh "$repo/government/recovery-steward-cycle.sh"
 test "$(cat "$d/mock/registry")" = new-agent
 test "$(wc -l < "$d/mock/replacements")" -eq 1
