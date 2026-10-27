@@ -113,8 +113,27 @@ def board_invoke(*args):
 
 
 def fetch_issue(num):
-    """Return the board issue object, or raise if unreadable after retries."""
-    return board_invoke("show", "--id", str(num), "--page", "1", "--json")
+    """Return the issue with all comment pages, or raise if any page is unreadable.
+
+    The board-trail lens scans every page. The generated Founder-facing index
+    must use the same complete history: a terminal update can fall beyond page
+    one on a high-traffic originating issue, and treating a partial read as
+    complete creates a false Git-only gap.
+    """
+    first = board_invoke("show", "--id", str(num), "--page", "1", "--json")
+    issue = dict(first)
+    messages = list(first.get("messages") or [])
+    page = 1
+    while len(first.get("messages") or []) >= 50:
+        page += 1
+        next_page = board_invoke("show", "--id", str(num), "--page", str(page), "--json")
+        page_messages = list(next_page.get("messages") or [])
+        messages.extend(page_messages)
+        first = next_page
+        if len(page_messages) < 50:
+            break
+    issue["messages"] = messages
+    return issue
 
 
 def issue_title(issue):
