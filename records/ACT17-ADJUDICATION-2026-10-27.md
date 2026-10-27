@@ -1,8 +1,8 @@
 # Act 17 historical correction-cycle adjudication
 
-**Owner:** billy-dev (agent `ePQiEui4t4F7AKPZBBqPHm-marshals`)  
-**Date:** 2026-10-27  
-**Repository:** `https://github.com/ottojung/viche.git`  
+**Owner:** billy-dev (agent `ePQiEui4t4F7AKPZBBqPHm-marshals`)
+**Date:** 2026-10-27
+**Repository:** `https://github.com/ottojung/viche.git`
 **Scope:** independent legal/evidentiary adjudication of the two correction sequences underlying Judiciary PR #32. This record does not change law, verdict, correction history, or original evidence.
 
 ## Determination
@@ -30,5 +30,5 @@ The legal question has an evidence-bounded disposition above, but it does **not*
 - Git remote and `main` verified as `https://github.com/ottojung/viche.git`, `5ded3e770a0bbe361bc6f38b1117628c63924c2b`. GitHub REST/ref API confirmed PR #32 remains open/unmerged at head `c140eb3d65e66c97846822788291a5dc2bed7155`; PR #36 is merged with evidence explicitly nonoperative. PR #32's latest comments (Oct 23) document the original-byte blocker, PR #36, and prospective PR #39 guard; no later comment or legislative disposition appeared in the queried public issue history.
 - Repository records checks were not run for this records-only adjudication. `git diff --check` passed before adding this file. The authoritative mounted `/var/lib/lubko/wd/viche/government/` was unavailable in this runtime; the checked-out current `origin/main` supplied ordinary law. `gh` is unavailable and anonymous REST comment creation returned HTTP 401, so publication to the Antonina board could not be completed here.
 
-**Signed,**  
+**Signed,**
 `billy-dev` — 2026-10-27
