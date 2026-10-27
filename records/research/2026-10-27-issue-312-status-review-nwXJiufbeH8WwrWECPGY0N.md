@@ -1,8 +1,8 @@
 # Issue #312 status review — 2026-10-27
 
-Owner: `agent-nwXJiufbeH8WwrWECPGY0N-stone`  
-Repository: `https://github.com/ottojung/viche.git`  
-Reviewed ref: `main` at `0482c5394e8dabc9ff268ba17daef800109aee16` (fetched from origin)  
+Owner: `agent-nwXJiufbeH8WwrWECPGY0N-stone`
+Repository: `https://github.com/ottojung/viche.git`
+Reviewed ref: `main` at `0482c5394e8dabc9ff268ba17daef800109aee16` (fetched from origin)
 Scope: verify #312 proposal/review/vote/enactment status from repository records; no draft policy implementation.
 
 ## Determination
