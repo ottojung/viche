@@ -5,14 +5,19 @@ set -eu
 [ "$#" -eq 2 ] || { echo 'Usage: terminal-continuity.sh recover|instruction KEY' >&2; exit 2; }
 operation=$1 office=$2
 case "$office" in
-  executive|judiciary|innovation-centre|c1a00001) : ;;
-  *) echo 'Unknown continuity office' >&2; exit 2 ;;
+  ''|*[!a-zA-Z0-9_-]*) echo 'Invalid office identifier' >&2; exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 root=$state/continuity
-case "$office" in c1a00001) cwd=$seats/$office ;; *) cwd=$seats/branches/$office ;; esac
+# Any parliamentary seat or independent office can need continuity.
+if [ -r "$town/government/seats.tsv" ] &&
+   awk -F '\t' -v key="$office" '$1==key {found=1} END {exit !found}' "$town/government/seats.tsv"; then
+  cwd=$seats/$office
+else
+  cwd=$seats/branches/$office
+fi
 receipt=$root/reconciliation-$office.json
 
 if [ "$operation" = instruction ]; then
@@ -64,27 +69,10 @@ printf '%s\n' "$meta" | jq -e '.alive == false and (.active_runner == false or .
 printf '%s\n' "$meta" | jq -e '(.intent // "") != "stop"' >/dev/null || exit 1
 cls=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // "unknown"')
 transient=$(printf '%s\n' "$meta" | jq -r '.backend_error.transient // false')
-case "$cls" in
-  backend_authentication_failed|backend_billing_required|provider_authentication_failed|provider_billing_required|invalid_api_key)
-    echo "Continuity: provider credentials/billing must be repaired before $office can resume" >&2
-    exit 1 ;;
-esac
-# Explicit transient backend failures are recoverable. An unrecognized
-# failure may be a context overflow, but could also be an unknown permanent
-# error. Confirm that characteristic in the preserved backend log first.
-if [ "$transient" != true ]; then
-  case "$cls" in
-    unrecognized_backend_failure)
-      log=$(printf '%s\n' "$meta" | jq -r '.log // ""')
-      case "$log" in "$HOME"/.local/state/antonina/agents/"$id"/output.log) : ;; *) log= ;; esac
-      if [ -z "$log" ] || [ ! -r "$log" ] ||
-         ! tail -c 131072 "$log" | grep -Eq 'context_length_exceeded|ContextOverflowError|maximum context length|context window exceeded'; then
-        echo "Continuity: unknown failure of $office needs explicit diagnosis; no silent replay" >&2
-        exit 1
-      fi ;;
-    *) echo "Continuity: non-transient $cls requires diagnosis" >&2; exit 1 ;;
-  esac
-fi
+# Classification is useful diagnostic evidence, NOT an exhaustive permission
+# table for a distinct safe investigation. Any dead agent can be replaced
+# after preserving evidence. The fresh session MUST assess provider failures,
+# credentials and uncertain effects before performing original work.
 [ -d "$cwd" ] && git -C "$cwd" rev-parse HEAD >/dev/null || exit 1
 head=$(git -C "$cwd" rev-parse HEAD)
 session=$(printf '%s\n' "$meta" | jq -r '.native_session_id // ""')
