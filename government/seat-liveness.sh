@@ -25,6 +25,12 @@ if [ "$mode" != failed ]; then
 fi
 if ! oc_is_transient "$reason" "$tflag"; then
   oc_surface_permanent "$root" "$id" "$reason"
+  # Permanent for the old invocation does not imply that a completely new
+  # investigator must be prohibited from diagnosing or repairing the cause.
+  # Do not replay the original request.
+  if [ -f "$town/government/terminal-continuity.sh" ]; then
+    /bin/sh "$town/government/terminal-continuity.sh" recover "$seat_id"
+  fi
   exit 0
 fi
 retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
@@ -32,7 +38,14 @@ oc_record_failure "$root" "$seat_id" "$id" "$invocation" "$reason" "$finished" "
 [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$root" "$seat_id" "$id" "$invocation"
 oc_commit_age_signal "$root" "$id" "$seats/$seat_id" "$now"
 oc_worktree=$seats/$seat_id
-oc_reset_due "$root" "$seat_id" "$now" || exit 0
+if ! oc_reset_due "$root" "$seat_id" "$now"; then
+  # The ordinary Act19 threshold covers oscillations, not a dead runner.
+  # A terminal old session must not freeze a seat until three failures.
+  if [ -f "$town/government/terminal-continuity.sh" ]; then
+    /bin/sh "$town/government/terminal-continuity.sh" recover "$seat_id"
+  fi
+  exit 0
+fi
 umask 077
 seat="$seats/$seat_id"
 [ -d "$seat" ] || exit 1

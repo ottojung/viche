@@ -22,7 +22,15 @@ case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, indepen
 # broad audits at least once every six hours when there is no incident.
 incident=no
 cadence=21600
-if [ -s "$root/incident.json" ] || [ -s "$root/random/incident.json" ]; then incident=yes; cadence=1800; fi
+cases='{"open_cases":[]}'
+if [ -f "$town/government/institutional-cases.py" ]; then
+  cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
+fi
+if [ -s "$root/incident.json" ] || [ -s "$root/random/incident.json" ] ||
+   [ "$(printf '%s\n' "$cases" | jq -r '.open_cases|length')" -gt 0 ]; then
+  incident=yes
+  cadence=1800
+fi
 last=0
 if [ -s "$root/last-audit-dispatch" ]; then last=$(cat "$root/last-audit-dispatch"); fi
 case "$last" in ''|*[!0-9]*) last=0;; esac
@@ -97,6 +105,19 @@ adjudication of historical cycles or the contested PR #32 corrections.
 
 Current deterministic watchdog evidence:
 $evidence
+MANDATORY CROSS-BRANCH CORRECTIVE CASES:
+$cases
+These are health observations, NOT verdicts or legislative authorizations.
+Independently investigate persistent cases, cite evidence and report to
+Parliament. Do not propose, enact or implement policy from Judiciary.
+For continuity_unverified OFFICE, independently inspect the old terminal
+evidence at state/appointments/terminal-evidence/ID, preserved Git/board
+effects and actual new agent progress. Only if those are demonstrably reconciled
+write state/continuity/verified-OFFICE.json with verified_by "judiciary",
+verification_scope "external_effect_reconciled", previous_agent and
+successor_agent exactly from its reconciliation receipt, and a specific
+independent evidence_ref. A successful agent exit is NOT sufficient.
+If uncertain, retain the open case and report why.
 Randomized audit cases (bounded deep review):
 $selection
 
@@ -128,6 +149,11 @@ the evidence, including failures of judicial measurement, to Parliament. Do not 
 it thinks it is effective. Use Antonina-managed agents; model selection is Antonina's responsibility. Never perform unrelated projects. This is a judicial evidence review, not a legislative vote.
 EOF
 )
+recovery=
+if [ -f "$town/government/terminal-continuity.sh" ]; then
+  recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction judiciary) || exit 1
+fi
+prompt=$(printf '%s\n\n%s\n' "$prompt" "$recovery")
 # Publish identity BEFORE launching a detached agent, otherwise a fast agent
 # may correctly report a correction before the CLI has made its token valid.
 # The registered token remains the same across repeated dispatches of a

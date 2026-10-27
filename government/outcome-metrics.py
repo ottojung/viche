@@ -70,7 +70,11 @@ def branches():
                        age_seconds=max(0,NOW-int(x['observed_at']))
                        if isinstance(x,dict) and isinstance(x.get('observed_at'),(float,int))
                        else None)
-    ic=js(STATE/'legislature/innovation-centre/health.json')
+    laws=(TOWN/'government/LAWS.md').read_text() if (TOWN/'government/LAWS.md').exists() else ''
+    import re
+    moved=bool(re.search(r'^## Act \d+ — Executive Innovation Office Act \(enacted ',laws,re.M))
+    path=('executive/innovation-office/health.json' if moved else 'legislature/innovation-centre/health.json')
+    ic=js(STATE/path)
     result['innovation_centre']=dict(telemetry='available' if isinstance(ic,dict) else 'missing',
                                     readiness=ic.get('readiness') if isinstance(ic,dict) else None,
                                     age_seconds=max(0,NOW-int(ic['observed_at']))

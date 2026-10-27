@@ -119,14 +119,19 @@ fi
 # Institutionally generated legislative input; never represented as a law.
 if [ "$seat" = "$clerk" ]; then
     innovation=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/legislature/innovation-centre
+    innovation_header="AUTONOMOUS LEGISLATIVE INNOVATION CENTRE STATUS"
+    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+        innovation=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/executive/innovation-office
+        innovation_header="EXECUTIVE INNOVATION OFFICE STATUS (not legislative business)"
+    fi
     if [ -s "$innovation/health.json" ]; then
         cat <<EOF
-=== AUTONOMOUS LEGISLATIVE INNOVATION CENTRE STATUS ===
+=== $innovation_header ===
 $(cat "$innovation/health.json")
-=== END INNOVATION CENTRE STATUS ===
-The Centre is an independent non-voting legislative research office.
-Inspect its proposals on the board, scrutinize evidence, and arrange
-lawful parliamentary deliberation. Do not equate activity with originality.
+=== END INNOVATION STATUS ===
+After lawful transfer the office is controlled by Executive; Parliament may
+consider its evidence but does not summon or manage that unit. Only Parliament
+may enact legislation. Agent activity never proves valuable innovation.
 EOF
     fi
 fi
@@ -187,6 +192,25 @@ EOF
     fi
 fi
 
+# Every restored seat receives its prior terminal-evidence reconciliation
+# instructions. This is a fresh task, never a replay of uncertain old tools.
+if [ -f "$town/government/terminal-continuity.sh" ]; then
+    /bin/sh "$town/government/terminal-continuity.sh" instruction "$seat"
+fi
+# Persistent cases survive transient watchdog clears and remain on the agenda.
+if [ "$seat" = "$clerk" ] && [ -f "$town/government/institutional-cases.py" ]; then
+    cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
+    cat <<EOF
+=== OPEN INSTITUTIONAL CORRECTIVE OBLIGATIONS ===
+$cases
+=== END CORRECTIVE OBLIGATIONS ===
+Preserve identity across sittings. Judiciary independently measures;
+Parliament authorizes changes to ordinary law when needed; Executive
+implements authorized repairs. Case closure requires disappearance of the
+failure confirmed by repeated deterministic observation, not an agent exit.
+EOF
+fi
+
 # Judiciary evidence is legislative input even without a judicial incident.
 if [ "$seat" = "$clerk" ]; then
     report=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/branches/judiciary-measurements.json
@@ -207,6 +231,8 @@ EOF
 $(cat "$incident")
 === END BRANCH LIVENESS INQUIRY ===
 Investigate which branch cannot run and preserve the independent branches.
+Preserve each durable institutional case and its independent judicial evidence;
+authorize only lawful action and verify its effect before closure.
 EOF
     fi
 fi

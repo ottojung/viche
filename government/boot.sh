@@ -76,6 +76,12 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
         echo "Viche: Executive liveness investigation required" >&2
 fi
 
+# The innovation office is an Executive unit ONLY after parliamentary enactment.
+if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+    /bin/sh "$town/government/executive-innovation-cycle.sh" ||
+        echo "Viche: Executive Innovation Office needs recovery" >&2
+fi
+
 # Deterministic oversight continues even when every AI session is unavailable.
 # Failure of telemetry/auditing must not prevent unrelated reconciliation.
 if [ -f "$town/government/oversight-watch.sh" ]; then
@@ -100,15 +106,21 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
     /bin/sh "$town/government/branch-liveness.sh" judiciary ||
         echo "Viche: Judiciary liveness investigation required" >&2
 fi
-# Autonomous legislative Innovation Centre (not a fourth branch or voting seat).
-# Its dispatch and recovery do not depend on the Clerk or parliamentary summons.
-if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
-    /bin/sh "$town/government/innovation-centre-cycle.sh" ||
-        echo "Viche: legislative Innovation Centre failed; investigate" >&2
+# Run the historic legislative Centre ONLY until lawful transfer.
+if ! grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+    if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
+        /bin/sh "$town/government/innovation-centre-cycle.sh" ||
+            echo "Viche: legislative Innovation Centre failed; investigate" >&2
+    fi
 fi
 if [ -f "$town/government/branch-health.sh" ]; then
     /bin/sh "$town/government/branch-health.sh" ||
         echo "Viche: independent branch readiness incident recorded" >&2
+fi
+# Durable independent case routing persists even if every branch model fails.
+if [ -f "$town/government/institutional-cases.py" ]; then
+    python3 "$town/government/institutional-cases.py" reconcile ||
+        echo "Viche: corrective-case recording failed; investigate" >&2
 fi
 # Act 18 §7: the Executive maintains the generated board-trail index; refresh it
 # each measurement window (throttled, non-fatal) so the Founder-visible status

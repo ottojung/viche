@@ -33,7 +33,12 @@ if [ -z "$cwd" ]; then
   case "$key" in
     executive) title=Executive;;
     judiciary) title=Judiciary;;
-    innovation-centre) title='Legislative Innovation Centre';;
+    innovation-centre)
+      title='Legislative Innovation Centre'
+      if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+        title='Executive Innovation Office'
+      fi ;;
+    recovery-steward) title='Institutional Recovery Steward';;
     *) echo "unknown seat or office $key" >&2; exit 2;;
   esac
   cwd=$seats/branches/$key

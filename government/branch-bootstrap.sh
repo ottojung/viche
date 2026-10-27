@@ -69,8 +69,18 @@ if [ "$reset_due" = true ]; then
     "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$liv/recoveries.log"
   reset_due=true
-  # The single replacement above completed this reset. Never create a
-  # second appointment for the same threshold event.
+  # The single replacement above completed this reset.
+fi
+# A single terminal failure with unsafe literal replay can NEVER reach the
+# three-failure oscillation threshold. Constitution VIII separately requires
+# renewed institutional continuity: replace the DEAD appointment and give a
+# fresh agent a reconciliation instruction (never reuse the old model turn).
+# Retain Act 19's existing counter/threshold for still-recoverable oscillations.
+if [ "$reset_due" != true ] && [ "$mode" = failed ] &&
+   [ -f "$town/government/terminal-continuity.sh" ]; then
+  /bin/sh "$town/government/terminal-continuity.sh" recover "$branch" || exit 1
+  id=$(/bin/sh "$town/government/appointments.sh" resolve "$branch")
+  meta=$(antonina agent status --id "$id" --json)
 fi
 # Antonina selects the provider/model/variant under its own current policy.
 # Appointment validity is determined by the managed agent state, not a pin.

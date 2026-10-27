@@ -32,14 +32,22 @@ done
 # Mandatory legislative sub-institution. It is not a fourth government branch.
 if [ -f "$state/inaugurated" ]; then
   innovation=$state/legislature/innovation-centre/health.json
+  mode=legislative
+  town=$(printenv VICHE_TOWN_ROOT || printf '%s\n' /var/lib/lubko/wd/viche)
+  if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+    innovation=$state/executive/innovation-office/health.json
+    mode=executive
+  fi
   if [ ! -s "$innovation" ]; then
     signals="${signals}${signals:+,}innovation_missing"
   else
-    valid=$(jq -r 'if .office=="innovation-centre" and .legislative_branch==true and
-       .voting_seat==false and .separate_summons==true and
-       (.observed_at|type=="number") and (.last_dispatch_at|type=="number") and
-       (.readiness=="running" or .readiness=="ready" or .readiness=="dispatched")
-       then "yes" else "no" end' "$innovation" 2>/dev/null) || valid=no
+    valid=$(jq -r --arg mode "$mode" '
+      if .office=="innovation-centre" and .voting_seat==false and
+         (($mode=="executive" and .executive_office==true and .legislative_branch==false and .controlled_by=="executive")
+           or ($mode=="legislative" and .legislative_branch==true and .separate_summons==true)) and
+         (.observed_at|type=="number") and (.last_dispatch_at|type=="number") and
+         (.readiness=="running" or .readiness=="ready" or .readiness=="dispatched")
+      then "yes" else "no" end' "$innovation" 2>/dev/null) || valid=no
     if [ "$valid" != yes ]; then
       signals="${signals}${signals:+,}innovation_unhealthy"
     else
