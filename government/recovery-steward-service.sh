@@ -3,6 +3,7 @@
 # This service only keeps a general-purpose AI recovery investigator available.
 set -eu
 . /home/lubko/.profile
+export VICHE_TOWNHALL_ID=302
 export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
 export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
 export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
