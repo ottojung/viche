@@ -1,8 +1,8 @@
 #!/bin/sh
 # Independent of Viche's parliamentary/executive/judicial cycle.
 # This service only keeps a general-purpose AI recovery investigator available.
-set -eu
 . /home/lubko/.profile
+set -eu
 export VICHE_TOWNHALL_ID=302
 export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
 export VICHE_SEATS_ROOT=/var/lib/lubko/wd/viche-seats
