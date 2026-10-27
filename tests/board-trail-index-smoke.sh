@@ -18,6 +18,7 @@ printf 'issue\twork_id\tact\tenacted_epoch\ttype\n' > "$town/records/board-trail
 printf '303\tjudiciary-independence\t15\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
 printf '307\tinnovation-centre-act\t14\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
 printf '308\tepistemic-adversarialism-act\t16\t1792241160\tlaw\n' >> "$town/records/board-trail/originating.tsv"
+printf '309\toversized-history\t18\t1792400760\tlaw\n' >> "$town/records/board-trail/originating.tsv"
 printf '312\tboard-reporting-act\t18\t1792400760\tlaw\n' >> "$town/records/board-trail/originating.tsv"
 printf '310\tdetector-calibration-act\t-\t0\tdraft\n' >> "$town/records/board-trail/originating.tsv"
 cp "$repo/government/LAWS.md" "$town/government/"
@@ -40,6 +41,7 @@ case "$1 $2" in
     *"307"*) printf '{"title":"Innovation Centre","messages":[{"author":"Viche Clerk","body":"TERMINAL UPDATE — verification:confirmed. Stage marker: verification. Evidence: records/bills/innovation-centre-act.md"}]}' ;;
     *"308"*"--page 1"*) python3 -c 'import json,sys; json.dump({"title":"Epistemic Adversarialism","messages":[{"author":"agent","body":"ordinary comment %d" % i} for i in range(50)]},sys.stdout)' ;;
     *"308"*) echo 'mock page 2 unavailable' >&2; exit 90 ;;
+    *"309"*) page=1; prev=; for arg do [ "$prev" = "--page" ] && page=$arg; prev=$arg; done; printf '%s\n' "$page" >> "$SCRATCH/309-pages"; python3 -c 'import json,sys; json.dump({"title":"Long history","messages":[{"author":"agent","body":"x"*2048} for _ in range(50)]},sys.stdout)' ;;
     *"310"*) printf '{"title":"Detector Calibration Act","messages":[]}' ;;
     *"312"*) printf '{"title":"Board Reporting Act","messages":[{"author":"c1e00002","body":"Stage marker: verification. Terminal state verification:confirmed. Evidence records/ballots/board-reporting-act.tsv"}]}' ;;
     *) printf '{"title":"unknown","messages":[]}' ;;
@@ -48,6 +50,7 @@ case "$1 $2" in
 esac
 MOCK
 chmod +x "$scratch/bin/antonina"
+export SCRATCH=$scratch
 PATH="$scratch/bin:$PATH"
 VICHE_TOWN_ROOT="$town" VICHE_STATE_ROOT="$scratch/state" VICHE_BOARD_TRAIL_RETRIES=1 python3 "$town/government/board-trail-index.py" >/dev/null
 
@@ -67,6 +70,10 @@ jq -e '.issues[] | select(.issue==307) | .git_only_gap==false and .terminal_stat
 # If any page is unreadable, do not infer a missing terminal update from the
 # partial history; the issue is explicitly marked unreadable instead.
 jq -e '.issues[] | select(.issue==308) | .board_readable==false and .git_only_gap==false' "$idx" >/dev/null
+# A full page 20 is an incomplete scan, not proof of a terminal gap; the index
+# generator must stop at the shared bounded history limit and fail closed.
+jq -e '.issues[] | select(.issue==309) | .board_readable==false and .git_only_gap==false' "$idx" >/dev/null
+[ "$(wc -l < "$scratch/309-pages")" -eq 20 ]
 # #312 has a terminal verification update -> not a gap, terminal confirmed.
 jq -e '.issues[] | select(.issue==312) | .git_only_gap==false and .terminal_status=="verification:confirmed"' "$idx" >/dev/null
 # Owning office: legislative items are Clerk-owned.

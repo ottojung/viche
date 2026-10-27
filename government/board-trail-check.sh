@@ -28,6 +28,7 @@ set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 map=$town/records/board-trail/originating.tsv
 sep=$(printf '\t')
+max_pages=20
 if [ ! -f "$map" ]; then
     echo "board-trail-check: no cross-check mapping at $map" >&2
     exit 1
@@ -58,7 +59,7 @@ board_show() {
 }
 
 while IFS="$sep" read -r issue work act epoch type; do
-    case "$issue" in ''|'#'*) continue ;; esac
+    case "$issue" in ''|'#'*|issue) continue ;; esac
     case "$epoch" in ''|*[!0-9]*) epoch=0 ;; esac
     page=1
     all='[]'
@@ -69,11 +70,18 @@ while IFS="$sep" read -r issue work act epoch type; do
             break
         fi
         msgs=$(printf '%s' "$data" | jq -c '.messages // []')
-        all=$(jq -n --argjson a "$all" --argjson b "$msgs" '$a + $b')
         n=$(printf '%s' "$msgs" | jq 'length')
+        if [ "$n" -ge 50 ] && [ "$page" -ge "$max_pages" ]; then
+            # A full final allowed page means more history may exist. Treat the
+            # scan as incomplete rather than silently declaring a terminal gap.
+            readable=0
+            break
+        fi
+        # Keep page arrays on stdin: passing accumulated histories as jq argv
+        # eventually exceeds ARG_MAX on high-volume originating issues.
+        all=$(printf '%s\n%s\n' "$all" "$msgs" | jq -s -c '.[0] + .[1]')
         [ "$n" -lt 50 ] && break
         page=$((page + 1))
-        [ "$page" -gt 20 ] && break
     done
     if [ "$readable" -eq 0 ]; then
         echo "board-trail-check: board unreadable for #$issue; recorded as unreadable, not a gap" >&2
