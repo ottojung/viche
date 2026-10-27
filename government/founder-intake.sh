@@ -112,7 +112,9 @@ charter_text=$(cat "$charter")
 prompt=$(cat <<EOF
 PRIORITY FOUNDER INTAKE. These independently retrieved messages are authored exactly Vitalik:
 $body
-Immediately read full linked issues, record a durable actionable mandate with owner and next action, and summon/delegate the appropriate Viche parliamentarians. Preserve existing in-flight work, avoid duplicate workers, and follow the existing Viche+Kawun exclusive scope. After publicly recording meaningful triage (not just reading), write an empty receipt file in $q/ack for every processed key:$keys. Missing receipts cause automatic retry in 10 minutes. The authoritative founder-controlled Constitution is reproduced below and has highest authority; parliament may NOT amend it or its S6 bootstrap. Use the required free model through Antonina only. Do not enact laws without actual votes.
+Before triage, read each full linked issue and the current $town/AGENTS.md and $town/government/LAWS.md. Follow their current assignment rules: initiate or delegate productive work only for issues explicitly assigned to billy-dev through the Antonina execution-target/dispatch surface; an issue title alone is not an assignment. Preserve existing in-flight work and handoffs. Record a durable actionable mandate with an owner and next step, and convene or delegate only as appropriate to that assignment. Antonina controls provider and model selection; do not request, prescribe, or assume any model, variant, or provider.
+
+After publicly recording meaningful triage (not just reading), write an empty receipt file in $q/ack for every processed key:$keys. Missing receipts cause automatic retry in 10 minutes. The authoritative founder-controlled Constitution is reproduced below and has highest authority; parliament may NOT amend it or its S6 bootstrap. Do not enact laws without actual votes.
 
 === AUTHORITATIVE CONSTITUTION ===
 $charter_text
