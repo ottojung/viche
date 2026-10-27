@@ -1,7 +1,9 @@
 # M-022 follow-up: Founder intake prompt follows current scope
 
-**Owner:** Executive liaison `c1a00002`  
-**Date:** 2026-10-27  
+**Owner:** Executive liaison `c1a00002`
+
+**Date:** 2026-10-27
+
 **Authority:** Acts 2.3, 3.2 and 9.1–9.2; current `AGENTS.md` policy that Antonina controls provider/model selection.
 
 ## Finding and correction
