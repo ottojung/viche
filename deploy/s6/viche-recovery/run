@@ -1,0 +1,4 @@
+#!/bin/sh
+# Durable S6 service for independent general-purpose recovery agent.
+# Only scheduling/availability live here: all repair decisions are AI work.
+exec /bin/sh /var/lib/lubko/wd/viche/government/recovery-steward-service.sh

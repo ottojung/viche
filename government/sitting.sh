@@ -192,8 +192,9 @@ EOF
     fi
 fi
 
-# A restored Clerk's fresh session must reconcile evidence, never replay old tools.
-if [ "$seat" = "$clerk" ] && [ -f "$town/government/terminal-continuity.sh" ]; then
+# Every restored seat receives its prior terminal-evidence reconciliation
+# instructions. This is a fresh task, never a replay of uncertain old tools.
+if [ -f "$town/government/terminal-continuity.sh" ]; then
     /bin/sh "$town/government/terminal-continuity.sh" instruction "$seat"
 fi
 # Persistent cases survive transient watchdog clears and remain on the agenda.
