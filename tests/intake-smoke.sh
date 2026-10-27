@@ -26,6 +26,14 @@ case "$1 $2" in
 'agent run')
   if [ "${MOCK_FAIL:-0}" = 1 ]; then exit 9; fi
   printf '%s\n' "$*" >> "$MOCK_DIR/prompts"
+  while [ "$#" -gt 0 ]; do
+    if [ "$1" = --prompt ]; then
+      shift
+      printf '%s\n' "$1" > "$MOCK_DIR/last-prompt"
+      break
+    fi
+    shift
+  done
   printf '1\n' >> "$MOCK_DIR/calls"
   ;;
 *) echo "Unexpected mock Antonina call: $*" >&2; exit 9;;
@@ -49,6 +57,17 @@ export PATH MOCK_DIR VICHE_TOWNHALL_ID VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_ST
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 1 ]
 grep -q -- '--steer' "$d/mock/prompts"
+grep -Fq "current $d/town/AGENTS.md and $d/town/government/LAWS.md" "$d/mock/last-prompt"
+grep -Fq 'initiate or delegate productive work only for issues explicitly assigned to billy-dev through the Antonina execution-target/dispatch surface' "$d/mock/last-prompt"
+grep -Fq 'an issue title alone is not an assignment' "$d/mock/last-prompt"
+grep -Fq 'Preserve existing in-flight work and handoffs' "$d/mock/last-prompt"
+grep -Fq 'Antonina controls provider and model selection' "$d/mock/last-prompt"
+if grep -Fq 'Viche+Kawun exclusive scope' "$d/mock/last-prompt" ||
+   grep -Fq 'free model' "$d/mock/last-prompt" ||
+   grep -Fq 'model pin' "$d/mock/last-prompt"; then
+  echo 'Stale project or model restriction remains in Founder-intake prompt' >&2; exit 1
+fi
+[ "$(find "$d/state/founder-inbox/ack" -type f | wc -l)" -eq 0 ]
 [ "$(find "$d/state/founder-inbox/sent" -name '*.json' | wc -l)" -eq 1 ]
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 1 ]
