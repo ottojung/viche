@@ -30,7 +30,7 @@ case "$1 $2" in
   'agent status')
     case "$4" in
       old-agent) echo '{"state":"failed","alive":false,"backend_error":{"classification":"unknown","transient":false,"automatic_retry_safe":false}}' ;;
-      new-agent) echo '{"state":"idle","alive":false}' ;;
+      new-agent) echo '{"state":"clearexit","alive":false}' ;;
       *) exit 2 ;;
     esac ;;
   'agent run') printf '%s\n' "$@" >>"$MOCK_ROOT/runs" ;;
@@ -68,4 +68,10 @@ test -d "$d/seats/branches/recovery-steward"
 sh "$repo/government/recovery-steward-cycle.sh"
 test "$(wc -l < "$d/mock/replacements")" -eq 1
 test "$(grep -cx 'agent' "$d/mock/runs")" -eq 1
+# Finished healthy session gets the next independent recovery cycle without
+# replacing the appointment or replaying a prior invocation.
+rm "$d/state/recovery-steward/last-dispatch"
+sh "$repo/government/recovery-steward-cycle.sh"
+test "$(wc -l < "$d/mock/replacements")" -eq 1
+test "$(grep -cx 'agent' "$d/mock/runs")" -eq 2
 echo 'Recovery steward fresh-session and non-replay smoke passed'

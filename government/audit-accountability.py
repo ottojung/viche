@@ -384,7 +384,7 @@ def check(args):
             metadata = json.loads(p.stdout)
             # Model choice belongs to Antonina. An idle agent with no model
             # history is normal; avoid inventing a compliance incident.
-            if metadata.get("state") not in ("idle", "running", "succeeded", "failed", "stopped", "killed"):
+            if metadata.get("state") not in ("idle", "running", "clearexit", "failed", "stopped", "killed"):
                 signals.append({"type": "agent_state_unrecognized", "agent_id": agent_id})
     except Exception as e:
         signals.append({"type": "agent_inventory_unavailable", "detail": str(e)[:180]})

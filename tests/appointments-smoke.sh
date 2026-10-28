@@ -54,6 +54,11 @@ b=$(/bin/sh "$script" ensure a1)
 [ "$a" = "$b" ] || exit 1
 r=$(/bin/sh "$script" resolve a1)
 [ "$r" = "$a" ] || exit 1
+# A clean exit is reusable, not an unknown state or a failed appointment.
+printf clearexit > "$MOCK/$a"
+[ "$(/bin/sh "$script" ensure a1)" = "$a" ]
+[ "$(/bin/sh "$script" resolve a1)" = "$a" ]
+test "$(cat "$MOCK/counter")" -eq 1
 rm "$MOCK/$a"
 if /bin/sh "$script" resolve a1 >/dev/null 2>&1; then echo 'resolve invented missing agent' >&2; exit 1; fi
 if /bin/sh "$script" ensure a1 >/dev/null 2>&1; then echo 'unreadable agent was replaced' >&2; exit 1; fi

@@ -35,7 +35,7 @@ case "$current" in
     retry_safe=$(printf '%s\n' "$status" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     [ "$retry_safe" = yes ] || { echo "Viche: failed Executive not provably retry-safe" >&2; exit 1; }
     ;;
-  idle|succeeded) : ;;
+  idle|clearexit) : ;;
   *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
 esac
 cwd=$seats/branches/executive

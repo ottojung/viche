@@ -11,7 +11,7 @@ printf 'not-json\n' > "$d/frontier.json"
 SORING_FRONTIER_STATE=$d/frontier.json python3 "$script" |
   jq -e '.status=="unavailable"' >/dev/null
 cat > "$d/frontier.json" <<'JSON'
-{"version":1,"curator":{"exit_state":"succeeded","added":0,"last_finished_at":1000},
+{"version":1,"curator":{"exit_state":"clearexit","added":0,"last_finished_at":1000},
  "fronts":[
  {"id":"first","status":"investigated","finding_unverified":"No new theorem"},
  {"id":"second","status":"blocked","finding_unverified":"No final text; audit needed"}

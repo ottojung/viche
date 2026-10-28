@@ -21,7 +21,7 @@ last=0
 case "$last" in ''|*[!0-9]*) exit 1;; esac
 case "$mode" in
   running) readiness=running;;
-  idle|succeeded)
+  idle|clearexit)
     readiness=ready
     if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
       orders='No specific Executive order: research high-return Viche improvements.'

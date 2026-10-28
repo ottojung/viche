@@ -45,7 +45,7 @@ antonina board list --state open --page 1 --json |
   `state`, `title`, `cwd`, `prompts`, `last_activity_at` etc.
   Here `--limit` **is** supported. Page numbers start at 1; continue while
   a full page is returned, or otherwise if the response indicates more data.
-  Filters: `--running`, `--finished`, `--succeeded`,
+  Filters: `--running`, `--finished`, `--clearexit`,
   `--failed`, `--stopped`, `--killed`. Inspect `unreadable`:
   do not interpret an unreadable registry as zero work.
 - `antonina agent status --id <ID> --json` → object with `state`,
