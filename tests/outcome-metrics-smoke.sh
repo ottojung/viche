@@ -8,7 +8,7 @@ cat > "$tmp/bin/antonina" <<'EOF'
 #!/bin/sh
 case "$*" in
   "agent list --finished --page 1 --limit 500 --json")
-    printf '%s\n' '{"agents":[{"title":"Viche: Clerk","state":"succeeded","finished_at":1792774800},{"title":"SoringP1 proof attempt","state":"failed","finished_at":1792774800}],"unreadable":[]}' ;;
+    printf '%s\n' '{"agents":[{"title":"Viche: Clerk","state":"clearexit","finished_at":1792774800},{"title":"SoringP1 proof attempt","state":"failed","finished_at":1792774800}],"unreadable":[]}' ;;
   "board list --state open --page 1 --json")
     printf '%s\n' '[{"title":"Viche: unfinished mandate"},{"title":"SoringP1: theorem remains open"}]' ;;
   *) echo "unexpected test call: $*" >&2; exit 2 ;;
@@ -25,7 +25,7 @@ python3 - "$tmp/state/institutional-outcomes/latest.json" <<'PY'
 import json,sys
 x=json.load(open(sys.argv[1]))
 assert x['agents']['total']==2,x['agents']
-assert x['agents']['by_process_outcome']=={'failed':1,'succeeded':1}
+assert x['agents']['by_process_outcome']=={'failed':1,'clearexit':1}
 assert x['agents']['caveat'].find('NOT prove')>=0
 assert x['board']['open_by_project']=={'Viche':1,'SoringP1':1}
 assert x['branches']['legislature']['readiness']=='running'

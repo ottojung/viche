@@ -10,7 +10,7 @@ printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 cp "$repo/government/research-frontier-status.py" "$scratch/town/government/research-frontier-status.py"
-printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"succeeded","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
+printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"clearexit","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
 cat > "$scratch/bin/antonina" <<'MOCK'

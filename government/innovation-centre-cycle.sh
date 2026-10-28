@@ -29,7 +29,7 @@ case "$last" in ''|*[!0-9]*) echo 'Invalid Innovation Centre timestamp' >&2; exi
 dispatched=false
 case "$mode" in
   running) readiness=running ;;
-  idle|succeeded)
+  idle|clearexit)
     readiness=ready
     if [ "$last" -eq 0 ] || [ "$now" -lt "$last" ] || [ $((now-last)) -ge "$interval" ]; then
       prompt=$(cat <<EOF

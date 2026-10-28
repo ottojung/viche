@@ -16,7 +16,7 @@ id=$(/bin/sh "$town/government/appointments.sh" ensure judiciary)
 # The Judiciary has its own durable officer; parliamentary summons never gate it.
 meta=$(antonina agent status --id "$id" --json)
 kind=$(printf '%s\n' "$meta" | jq -r '.state')
-case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1;; idle|succeeded) :;; *) exit 1;; esac
+case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1;; idle|clearexit) :;; *) exit 1;; esac
 
 # Investigate an incident at least every half hour; also run independent
 # broad audits at least once every six hours when there is no incident.

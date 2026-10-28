@@ -69,7 +69,7 @@ if [ -n "$old" ]; then
     exit 1
   fi
   status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
-  case "$status" in running|idle|succeeded) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
+  case "$status" in running|idle|clearexit) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
 fi
 if [ "$action" = replace ] && [ -n "$expected" ] && [ "$old" != "$expected" ]; then
   echo "Viche: stale recovery appointment $expected for $key; actual is $old" >&2

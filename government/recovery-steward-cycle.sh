@@ -26,7 +26,7 @@ case "$mode" in
       { echo 'Cannot duplicate active runner' >&2; exit 1; }
     id=$(/bin/sh "$town/government/appointments.sh" replace recovery-steward "$id" recovery-steward terminal_new_session 'Fresh recovery investigator after terminal failure; no prompt or tool replay')
     fresh=yes ;;
-  idle|succeeded) : ;;
+  idle|clearexit) : ;;
   *) echo "Unrecognized recovery runner state: $mode" >&2; exit 1 ;;
 esac
 now=$(date +%s)

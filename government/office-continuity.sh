@@ -88,7 +88,7 @@ oc_quiesce_for_reset() {
       done
       echo "Viche: $oc_reset_id did not quiesce; keeping current appointment" >&2
       return 1 ;;
-    idle|succeeded|stopped|killed|failed) return 0 ;;
+    idle|clearexit|stopped|killed|failed) return 0 ;;
     *) return 1 ;;
   esac
 }
