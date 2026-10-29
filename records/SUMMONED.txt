@@ -1,17 +1,20 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
-# Recovery refresh 2026-10-25: re-polled through feed 17999, no exact-author Vitalik or pending Founder event. Town Hall now ends at scheduler turn `sha256:hxTtdcUhOXF1q-IlFLOfZ7Y4s_V8ROkOvLTH_ItdHHQ`; no duplicate post or receipt.
-# Audit: controller 1792971058 and Judiciary 1792971061 are 72/72, 0 overdue; controller has one finding and Judiciary two cached findings. Preserve the three ineffective correction trails, #14 source-limited finding, #121/#62 inconclusive signals, and `ae86117deedaa7b432` inconclusive. That case already has an e8dbe report/outcome; no new finding or correction. c0f0's pre-filing snapshot was 72/68; four outcomes filed once, no corrections. Auditor c1e00008's #14 follow-up remains open.
-# Act19 prospective provenance merge 0482c5394e8dabc9ff268ba17daef800109aee16 is on main; exact-tree suite green, GitHub bootstrap only. Latest #4 evidence confirms qJ→7g replacement and passing focused real-script tests; initiating caller/authority/task identity and live recovery effect remain unverified.
-# Judiciary snapshot 1792971061: 72/72, 2 findings; suite compliance 3/469, 466 unreadable, 0 violations/red episodes; 124 content-standard failures; reliability not established, FP/FN null. W2 criteria ended 2026-10-20; the Oct25 snapshot is descriptive, not a fresh registered measurement. Its 8/8 terminal result does not establish delivery.
-# Act22 pilot scope selected on this Clerk branch: `canonical-checkout-integrity-act` (#315, IC-sponsored draft). It is not vote-eligible or published on main; no predictions are registered and no ballot gate is run. The pilot entry is not active in canonical until safe integration.
-# Innovation Centre managed agent is failed (exit 1); stale readiness still says running. Preserve its clean local branch `innovation/prediction-calibration-act` at `2b074fd`; do not replay, merge, or push. No current Innovation draft is vote-ready; #315 sponsor integration remains outstanding.
-# #307's description now states Act14 enacted/deployed; issue remains open. Latest #302 is Judiciary's c0f0 audit-cycle summary at sha256:_7CdwGPrdBsUkhg0eUpRxzYPJnU9C7VGzMaypziucW0; no Founder comment or duplicate Clerk post.
-# M-013/K1 remains Founder-reserved. No constitutional or law change occurred. The prospective Act19 code merge above is complete; no correction, verdict, signal clearance, or law change is authorized by this sitting.
-# Active assignments below are current in this pushed Clerk branch: c1a00002 Act22 delivery; c1a00004 Act21 integration of all current red-teams/base publication; c1a00005 exact-tip Clerk records review; c1a00006 Act19 legal interpretation; c1a0000a M-021 progress review through 17838; c1e00008 #14 finding corroboration/corrective action. These changed summons are not active in canonical main until safe integration. Preserve unresolved findings until an Auditor-verified valid fix exists.
-c1a00002
-c1a00004
-c1a00005
-c1a00006
-c1a0000a
+# Pending Founder decision: M-013 (Kawun residual C locked-rule change) + K1 locked-surface authorization. The 2026-10-19 "ChatGPT (relaying explicit Founder authorization)" comment on #302 is NOT treated as Founder authority (Constitution IX; Act 3.3) — only an author exactly `Vitalik` counts. Town holds.
+# ENACTED as Act 21: #314 Change Quality Gate Act (7-0-0). Summons cleared.
+# ENACTED as Act 22: Pre-Registered Prediction and Calibration Act (bill prediction-calibration-act, 6-0-0; quorum 6) — origin board ErkrX8EKQJXF6fCQv5fzYl-cannon. All IC5 voters cleared.
+# Sentinel incident 1792550851 CLOSED 04:00Z; code fix MERGED (ac68917) and INSTALLED to the live service (release 408fd90, git_probe present) by c1a00002 — Assignment C DONE.
+# Act 18 §8 reconciliation DONE (index 7 issues, all terminal, 0 gaps). Board-trail §7 robustness merged.
+# IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
+# Act 18 board-trail mapping cannot represent OPAQUE-string originating issue ids (int() parse skips them) — Act 22's origin (ErkrX8EKQJXF6fCQv5fzYl-cannon) is invisible to the §5 lens. Assigned to c1a00002.
 c1e00008
+c1a00005
+c1a00002
+c1a00003
+c1a00004
+c1a00006
+c1a00007
+c1a00009
+c1a0000a
+---
+# Updated 2026-10-29T20:xxZ - added Act17 double-correction focus (fae4b5c49a16cbcc3e) to c1a00005 and c1e00008
