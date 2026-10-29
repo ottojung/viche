@@ -9,6 +9,7 @@ seats=$scratch/seats
 state=$scratch/state
 mkdir -p "$town/government" "$seats/branches" "$state" "$scratch/bin" "$scratch/mock"
 cp "$repo/government/agentic-office.sh" "$town/government/"
+cp "$repo/government/handoff-queue.sh" "$town/government/"
 cp "$repo/government/AGENTIC-OPERATIONS.md" "$town/government/"
 printf '%s\n' 'FOUNDER-ONLY-CHARTER-MARKER' > "$scratch/charter"
 printf '%s\n' '# Ordinary enacted laws' > "$town/government/LAWS.md"
@@ -62,11 +63,19 @@ VICHE_TOWNHALL_ID=302
 PATH=$scratch/bin:$PATH
 export MOCK_STATE VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION VICHE_TOWNHALL_ID PATH
 
+mkdir -p "$town/records/handoffs"
+cat > "$town/records/handoffs/H-test.txt" <<'HANDOFF'
+id: H-test
+status: open
+created: 2026-10-29T12:00:00Z
+work: Recover exact stalled Founder work before new duties
+HANDOFF
 printf 'idle\n' > "$MOCK_STATE/mode"
 /bin/sh "$repo/government/boot.sh"
 [ "$(wc -l < "$MOCK_STATE/runs")" -eq 3 ]
 for office in executive judiciary innovation-centre; do
     grep -Fq 'FOUNDER-ONLY-CHARTER-MARKER' "$MOCK_STATE/fixture-$office.prompt"
+    grep -Fq 'Recover exact stalled Founder work' "$MOCK_STATE/fixture-$office.prompt"
     grep -Fq "$state/office-journals/$office.md" "$MOCK_STATE/fixture-$office.prompt"
 done
 grep -Fq 'operating under legislature authority' "$MOCK_STATE/fixture-innovation-centre.prompt"
@@ -98,6 +107,7 @@ printf 'legal work\n' > "$town/records/AGENDA.md"
 /bin/sh "$repo/government/sitting.sh" c1a00001 > "$scratch/clerk.prompt"
 grep -Fq 'parliamentary seat c1a00001' "$scratch/clerk.prompt"
 grep -Fq 'Read the Town Hall' "$scratch/clerk.prompt"
+grep -Fq 'Recover exact stalled Founder work' "$scratch/clerk.prompt"
 grep -Fq "$state/office-journals/c1a00001.md" "$scratch/clerk.prompt"
 printf 'failed\n' > "$MOCK_STATE/mode"
 if /bin/sh "$repo/government/sitting.sh" c1a00001 > /dev/null 2>&1; then

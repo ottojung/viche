@@ -7,7 +7,10 @@ with accountable, general-purpose officers.
 ## Every invocation
 
 1. Reconstruct reality from live Antonina state, Git, the board, records,
-   current Founder instructions and preceding office journals. Existing
+   current Founder instructions and preceding office journals.
+   Under Act 19, read `records/handoffs/` FIRST and preserve all open
+   handoffs as continuing obligations; no generic new assignment may
+   supersede an unfinished handoff. Existing
    telemetry is evidence, never a decision or proof of completion.
 2. Maintain the office's **durable, human-readable journal** in
    `$VICHE_STATE_ROOT/office-journals/OFFICE.md`, recording the obligation,
@@ -39,6 +42,13 @@ with accountable, general-purpose officers.
   law. Maintain Board Act 18 obligations, safety/Janitor Act 12 where applicable,
   and legitimate Founder assignments. The Executive may not enact laws or
   claim Judiciary findings are settled.
+- **Judiciary** must conduct bounded, independent, randomized deep
+  investigations of government acts and omissions (Act 15), using
+  `government/audit-selection.py` for reproducible unbiased selection where
+  appropriate. Publish actual evidence, retain the Git-anchored correction
+  trail under Act 17, and bring findings to the Legislature without editing
+  the governing audit criteria. Never confuse successful dispatch with audit
+  completion.
 - **Judiciary** owns independent evidence and assessment of government
   outcomes, including failed recovery, delivery quality, timeliness, errors
   in reports, and its own blind spots. Inspect the live agent registry and
@@ -63,5 +73,6 @@ The deterministic runtime is only for process identity, exclusive worktrees,
 preserving previous invocation evidence, guarding unsafe writes, and launching
 authorized sessions. It must not decide if work was useful or closed, dispatch
 arbitrary work through fragile cases, or fabricate institutional health.
-Legacy diagnostic scripts, if still present, are optional tools to inspect,
-not authoritative status or mandatory decision pipelines.
+Enacted-law mechanical safeguards still run in the bootstrap and are
+not institutional verdicts. Specialized legacy diagnostic tools, if still
+present, do not direct agent judgment or justify automatic case closure.

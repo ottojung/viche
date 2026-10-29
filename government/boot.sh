@@ -23,6 +23,12 @@ while IFS="$tab" read -r seat title focus; do
         git -C "$town" worktree add --detach "$target" HEAD ||
             echo "Cannot create $seat worktree; preserve existing state" >&2
     fi
+    # Legal Act 19 physical continuity: preserve evidence and apply lawful
+    # threshold/cooldown gate; agents, not this launcher, decide substantive work.
+    if [ -f "$town/government/seat-liveness.sh" ]; then
+        /bin/sh "$town/government/seat-liveness.sh" "$seat" ||
+            echo "Seat $seat requires independent continuity investigation" >&2
+    fi
 done < "$town/government/seats.tsv"
 
 # No script may adjudicate what offices should investigate, repair or deliver.
@@ -41,5 +47,34 @@ fi
 /bin/sh "$town/government/agentic-office.sh" innovation-centre "$innovation_authority" ||
     echo "Innovation office needs independent investigation" >&2
 
-# Marker records only that the launcher ran, never that the Town is healthy.
-date +%s > "$state/launcher-last-attempt"
+# Act 18 generated status index, Act 15 inexpensive independent monitoring,
+# and Act 12 territory maintenance are mechanical obligations, not decisions
+# about what agents should repair or whether a task was delivered.
+if [ -f "$town/government/board-trail-refresh.sh" ]; then
+    /bin/sh "$town/government/board-trail-refresh.sh" ||
+        echo 'Board-trail collection requires attention' >&2
+fi
+if [ -f "$town/government/judiciary-measurements.py" ]; then
+    python3 "$town/government/judiciary-measurements.py" ||
+        echo 'Judiciary metrics collection unavailable' >&2
+fi
+if [ -f "$town/government/oversight-watch.sh" ]; then
+    /bin/sh "$town/government/oversight-watch.sh" ||
+        echo 'Independent oversight observation unavailable' >&2
+fi
+# Retain the deterministic capacity safeguard under Act 12. Existing Janitor
+# quarantine and destructive capabilities remain subject to that Act.
+if [ -f "$town/government/janitor.sh" ]; then
+    mkdir -p "$state/janitor"
+    (/bin/sh "$town/government/janitor.sh" cycle ||
+        echo 'Janitor cycle requires investigation' >&2) >> "$state/janitor/boot-cycle.log" 2>&1 </dev/null &
+fi
+
+# These stamps mean only that bootstrap was ATTEMPTED, never that delivery or
+# institutional health is verified. The legacy Sentinel reads the latter.
+now=$(date +%s)
+printf '%s
+' "$now" > "$state/launcher-last-attempt"
+mkdir -p "$state/health"
+printf '%s
+' "$now" > "$state/health/government-setup.last"

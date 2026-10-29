@@ -26,10 +26,15 @@ esac
 if [ -f "$town/government/resource-safety.sh" ]; then
     /bin/sh "$town/government/resource-safety.sh" "$seat" || exit 1
 fi
+[ -f "$town/government/handoff-queue.sh" ] || exit 1
+handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
 cat <<EOF
 $(cat "$town/government/AGENTIC-OPERATIONS.md")
 
 You are parliamentary seat $seat. Preserve institutional continuity.
+=== OPEN DURABLE HANDOFFS ===
+$handoffs
+=== END HANDOFFS ===
 Read the current Constitution supplied separately and enacted LAWS.md.
 Read the Town Hall (issue #${VICHE_TOWNHALL_ID:-302}), the current agenda,
 records/AGENDA.md, records/SUMMONED.txt and records/summons/$seat.md.

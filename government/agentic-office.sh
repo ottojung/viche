@@ -45,6 +45,11 @@ if [ -f "$town/government/resource-safety.sh" ]; then
     /bin/sh "$town/government/resource-safety.sh" "$office" || exit 1
 fi
 
+# Act 19: preserve the actual durable handoff queue in each dispatch.
+# Fail closed on a queue read failure, never silently supersede pending work.
+[ -f "$town/government/handoff-queue.sh" ] || exit 1
+handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
+
 # Each invocation is a fresh assessment, not a continuation or a replay recipe.
 # The journal is an agent-owned obligation ledger, not a scripted health assertion.
 prompt=$(cat <<EOF
@@ -55,6 +60,9 @@ $(cat "$charter")
 You are the $title, operating under $authority authority.
 $(cat "$town/government/AGENTIC-OPERATIONS.md")
 
+=== OPEN DURABLE HANDOFFS: MUST BE RECONCILED BEFORE NEW ASSIGNMENTS ===
+$handoffs
+=== END OPEN HANDOFFS ===
 Your independent responsibility: $office.
 Current ordinary laws: $town/government/LAWS.md.
 Your worktree: $cwd.

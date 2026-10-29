@@ -2,7 +2,8 @@
 
 The Founder-controlled constitutional bootstrap remains the owner of
 parliamentary sittings and the Founder charter. Ordinary government bootstrap
-only ensures that independent office agents can run.
+keeps independent office agents available and preserves inexpensive mechanical
+checks required by enacted law. These checks are not judgments of delivery.
 
 `government/boot.sh` dispatches the Executive, Judiciary and lawful
 Innovation Centre through `government/agentic-office.sh`. This generic
@@ -28,8 +29,9 @@ the disappearance of a telemetry signal.
 
 Tools for deterministic physical safety, tallying, evidence authentication,
 and legal audit checks remain available and should be used when the law or
-evidence requires them. Removed cycle/health/metrics scripts must not be
-reintroduced as a new shadow government.
+evidence requires them. Specialized cycle/metrics scripts are not authorities over agent judgment;
+interim physical checks required under current law remain enabled until
+Parliament lawfully revises those requirements.
 
 The Legislative Innovation Centre stays legislative until Parliament passes
 the Executive Innovation Office Act. Its routing must follow actual enacted

@@ -16,6 +16,7 @@ mkdir -p "$town/government" "$state" "$cgroup"
 cp "$root/government/resource-safety.sh" "$town/government/resource-safety.sh"
 cp "$root/government/sitting.sh" "$town/government/sitting.sh"
 cp "$root/government/AGENTIC-OPERATIONS.md" "$town/government/AGENTIC-OPERATIONS.md"
+cp "$root/government/handoff-queue.sh" "$town/government/handoff-queue.sh"
 cp "$root/government/seats.tsv" "$town/government/seats.tsv"
 
 export VICHE_TOWN_ROOT=$town
