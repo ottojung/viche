@@ -77,6 +77,7 @@ for office in executive judiciary innovation-centre; do
     grep -Fq 'FOUNDER-ONLY-CHARTER-MARKER' "$MOCK_STATE/fixture-$office.prompt"
     grep -Fq 'Recover exact stalled Founder work' "$MOCK_STATE/fixture-$office.prompt"
     grep -Fq "$state/office-journals/$office.md" "$MOCK_STATE/fixture-$office.prompt"
+    grep -Fq "$state/institutional-cases/index.json" "$MOCK_STATE/fixture-$office.prompt"
 done
 grep -Fq 'operating under legislature authority' "$MOCK_STATE/fixture-innovation-centre.prompt"
 grep -Fq 'Your independent responsibility: judiciary' "$MOCK_STATE/fixture-judiciary.prompt"

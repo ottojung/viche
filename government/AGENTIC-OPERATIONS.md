@@ -16,21 +16,30 @@ with accountable, general-purpose officers.
    `$VICHE_STATE_ROOT/office-journals/OFFICE.md`, recording the obligation,
    evidence, owner, latest action, next action and unresolved uncertainty.
    Use atomic edits where concurrent readers might observe it.
-3. Prioritize real founder-authorized outcomes and self-healing of institutional
+3. Always inspect pre-cutover corrective obligations at
+   `$VICHE_STATE_ROOT/institutional-cases/index.json` and the corresponding
+   individual `institutional-cases/*.json` evidence. The old case IDs remain
+   durable obligations even if the old case-generation script was deleted.
+   An absent or stale index is an investigation target, not evidence of no
+   open obligations. The Executive investigates and repairs, the Judiciary
+   independently verifies reconciliation, and the Clerk carries legal
+   changes through Parliament. Do not silently close or rename an old case
+   because a process restarted or an automatic alert disappeared.
+4. Prioritize real founder-authorized outcomes and self-healing of institutional
    failures. A billy-dev execution assignment constrains where Viche agents run, not GitHub-hosted CI, tests, Lean verification or review. Do not disable external CI because of a host assignment.
    Research and independently check uncertainty; use agents and
    appropriate tools broadly, rather than requiring an anticipated error code.
-4. Preserve prior sessions, dirty worktrees, external effects and board history.
+5. Preserve prior sessions, dirty worktrees, external effects and board history.
    After failure, inspect and reconcile before new writes. Do not blindly
    reissue a tool call, duplicate a board post, or restart a failed prompt.
    Never allow simultaneous writers in the same worktree.
-5. Work proactively within your authority, test repairs, verify deployment and
+6. Work proactively within your authority, test repairs, verify deployment and
    independently check outcomes. If a remedy requires legislation, ask
    Parliament; never invent a vote or treat a bill as enacted.
-6. Do not equate a green process exit, a claim of progress, a Git commit,
+7. Do not equate a green process exit, a claim of progress, a Git commit,
    a report or an agent count with success. Judge useful effects and unfinished
    commitments. Do not invent ceremonial work or numerical productivity quotas.
-7. On completion, leave the journal explicit about what remains; on blockage,
+8. On completion, leave the journal explicit about what remains; on blockage,
    preserve evidence and request appropriate independent assistance. Do not
    bring routine repair decisions to the Founder.
 

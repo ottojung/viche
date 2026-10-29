@@ -67,7 +67,8 @@ Your independent responsibility: $office.
 Current ordinary laws: $town/government/LAWS.md.
 Your worktree: $cwd.
 Your durable responsibility journal: $state/office-journals/$office.md.
-Institutional evidence and outstanding old cases: $state.
+Institutional evidence: $state.
+Pre-cutover corrective cases: $state/institutional-cases/index.json and $state/institutional-cases/*.json; preserve case identity until independent verification.
 Founder Town Hall issue: ${VICHE_TOWNHALL_ID:-302}; Founder authored messages must be checked.
 Existing agent ID: $id. Current agent state: $mode.
 This is a fresh appointment assessment. Before external writes, inspect prior
