@@ -7,6 +7,6 @@
 # Act 18 §8 reconciliation DONE (index 7 issues, all terminal, 0 gaps). Board-trail §7 robustness merged.
 # IC4 (board #315 Canonical Checkout Integrity Act) — seat re-red-team delivered+amended (c1a00004, sha256 989338bc…). Act 16 §1 gate NOT met until sponsor c1e00011 integrates verbatim + writes the §7 response. Sponsor integration outstanding (non-seat). NOT vote-eligible.
 # Act 18 board-trail mapping cannot represent OPAQUE-string originating issue ids (int() parse skips them) — Act 22's origin (ErkrX8EKQJXF6fCQv5fzYl-cannon) is invisible to the §5 lens. Assigned to c1a00002.
-c1a00002
 c1e00008
 c1a00005
+c1a00002

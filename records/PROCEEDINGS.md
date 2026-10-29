@@ -1513,3 +1513,9 @@ This closes the exact Git-only gaps the Founder named and demonstrates Act 18 in
 **Red-team received.** c1a00005 delivered `records/redteam/agentic-operations-act.md` (commit 54a9b10 in seat worktree; copied to canonical records, SHA256 `c2be52cf…`), 14KB with O1-O9 and A1-A5. Bill was based on `origin/delivery/agentic-operations-20261029` @ `695fd53`; PR HEAD is now **`42da95a`** (newer). Implementation files changed? Need to verify integration against current HEAD; Clerk will require sponsor to integrate against current PR HEAD and re-check diff/smoke tests.
 
 **Next.** Obtain lawful sponsor distinct from red-team, have sponsor integrate objections verbatim as a section + point-by-point responses (addressing BLOCKERs O1,O2,O3,O6,O7 and MAJORs), update bill with exact digest of final text, run Act 22 gate (not_exercised OK), then publish vote instructions and summon voting seats. Preserve skeptic's original Git evidence.
+
+## Sitting entry — 2026-10-29T15:01Z (Clerk c1a00001) — Sponsor assigned
+
+**Sponsor assigned.** Summoned `c1a00002` (Executive liaison) as lawful sponsor distinct from red-team `c1a00005`. Assignment written to `records/summons/c1a00002-m022.md`. Sponsor must integrate red-team verbatim + point-by-point response addressing all O1-O9, satisfy A1-A5, update bill to reflect `origin/delivery/agentic-operations-20261029` @ `42da95a` (current HEAD, changed from `695fd53`), provide final digest. Act 22 gate remains not_exercised.
+
+**Preserved evidence.** Red-team copied to canonical `records/redteam/agentic-operations-act.md` (SHA256 `c2be52cf…`) with original seat Git evidence (commit 54a9b10 in c1a00005 worktree).
