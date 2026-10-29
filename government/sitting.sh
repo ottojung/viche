@@ -8,6 +8,20 @@ town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 [ -s "$town/government/AGENTIC-OPERATIONS.md" ] || exit 1
+# The protected constitutional bootstrap may call this for a terminal seat.
+# Refuse uncertain reuse; only a reconciled, independently appointed successor
+# may receive a fresh prompt. This is a safety invariant, not case diagnosis.
+id=$(/bin/sh "$town/government/appointments.sh" resolve "$seat") || exit 1
+meta=$(antonina agent status --id "$id" --json) || exit 1
+mode=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
+case "$mode" in
+    idle|clearexit) : ;;
+    running) echo "Seat $seat became active; refusing duplicate dispatch" >&2; exit 1 ;;
+    failed|stopped|killed)
+        echo "Seat $seat has terminal invocation $id; preserve effects for a fresh investigator" >&2
+        exit 1 ;;
+    *) echo "Seat $seat status unknown; refuse unsafe dispatch" >&2; exit 1 ;;
+esac
 # A small deterministic physical safety gate is appropriate, not policy judgment.
 if [ -f "$town/government/resource-safety.sh" ]; then
     /bin/sh "$town/government/resource-safety.sh" "$seat" || exit 1

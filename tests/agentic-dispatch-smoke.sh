@@ -19,7 +19,7 @@ done
 mkdir -p "$seats/c1a00001/.git"
 cat > "$town/government/appointments.sh" <<'APPOINT'
 #!/bin/sh
-[ "$1" = ensure ] || exit 2
+case "$1" in ensure|resolve) : ;; *) exit 2 ;; esac
 printf 'fixture-%s\n' "$2"
 APPOINT
 chmod +x "$town/government/appointments.sh"
@@ -99,4 +99,14 @@ printf 'legal work\n' > "$town/records/AGENDA.md"
 grep -Fq 'parliamentary seat c1a00001' "$scratch/clerk.prompt"
 grep -Fq 'Read the Town Hall' "$scratch/clerk.prompt"
 grep -Fq "$state/office-journals/c1a00001.md" "$scratch/clerk.prompt"
+printf 'failed\n' > "$MOCK_STATE/mode"
+if /bin/sh "$repo/government/sitting.sh" c1a00001 > /dev/null 2>&1; then
+    echo 'Failed parliamentary seat was unsafely redispatched' >&2
+    exit 1
+fi
+printf 'running\n' > "$MOCK_STATE/mode"
+if /bin/sh "$repo/government/sitting.sh" c1a00001 > /dev/null 2>&1; then
+    echo 'Running parliamentary seat was dispatched twice' >&2
+    exit 1
+fi
 echo 'Agentic dispatch smoke passed'
