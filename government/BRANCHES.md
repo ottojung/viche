@@ -1,34 +1,36 @@
-# Three branches of Viche — operational separation
+# Branch operation after the agentic cutover
 
-The Constitution remains unchanged. This provisional implementation exercises existing Act 2 (Executive), Act 4 (independent auditing), and Act 5 (durable reconciliation). It is NOT an enacted change to the parliamentary electorate or voting law.
+The Founder-controlled constitutional bootstrap remains the owner of
+parliamentary sittings and the Founder charter. Ordinary government bootstrap
+only ensures that independent office agents can run.
 
-- **Legislature:** Clerk and voting Parliament; it alone proposes, debates, and ratifies changes to institutions, laws, audit methods, and measurement systems. The protected constitutional boot still runs its sittings.
-- **Executive:** Executes authorized laws and performs constructive work on board issues assigned to billy-dev. It implements ratified measurement improvements, but does not determine the Judiciary's findings.
-- **Judiciary:** Independent evidence and measurement (independent officer c1e00008, separate from former Audit Member c1a00008). Samples government decisions, omissions and claimed delivery; reports reliable findings and uncertainty to the Legislature, including evidence about its OWN coverage, delays, false-positive uncertainty and methodological limitations. It does NOT propose, sponsor, ratify, implement or silently change improvements to itself or other institutions.
+`government/boot.sh` dispatches the Executive, Judiciary and lawful
+Innovation Centre through `government/agentic-office.sh`. This generic
+launcher is strictly about availability and protected process identity.
+It never evaluates delivery, votes, institutional cases or outcome quality.
 
-The Judiciary has its own non-voting agent c1e00008. The historical parliamentary Audit Member seat c1a00008 still retains a founding parliamentary vote under unamended Act 1. Reforming the historical voting seat title and parliamentary electorate needs a legislative act; see the proposed `records/bills/judiciary-independence.md`. Until ratification we explicitly describe the judiciary as **provisional**, not fully independent.
+The Clerk and Parliament receive the same responsibility-oriented guidance
+from `government/sitting.sh`; it preserves the enacted resource-safety guard
+and the Act 22 pre-ballot prediction requirement. Jurisdiction and voting are
+set by the Constitution and the enacted laws, not by the launcher.
 
-## Liveness contract
+Each office keeps a freeform, durable journal under
+`viche-state/office-journals/`. Existing forensic evidence under
+`viche-state/continuity/`, previous Antonina invocations, historical audits,
+and board records must remain inspectable. The Recovery Steward is supervised
+independently of the Town's parliamentary launcher and investigates
+unrecognized failures, not scripted exceptions.
 
-`government/boot.sh` reconciles legislature, executive, judiciary **separately**. Each gets a durable record at `${VICHE_STATE_ROOT}/branches/{legislature,executive,judiciary}.json`, with a permitted model, readable agent state and whether its branch cycle ran. Failed/unknown sessions yield `unhealthy`, never silent success. `branch-health.sh` flags missing, stale and unhealthy records in a durable incident that the Clerk must address. Failure of one branch never prevents another from being checked. The Judiciary's bounded deep audit can sleep when no cases are due; readiness is NOT proof of productive work.
+**What is not health:** a process being alive, `clearexit`, a launcher
+timestamp, an agent count, a log, or a Git commit. The Judiciary checks claims
+and actual effects independently. Pending investigations are not closed by
+the disappearance of a telemetry signal.
 
-The independent `judiciary-measurements.py` writes observational facts to `branches/judiciary-measurements.json`, injected into the Clerk's agenda. Its unknown false-positive and false-negative rates are NULL, never invented. Only Legislature may propose and ratify measurement changes; only the duly authorized Executive may implement them. The Judiciary may investigate and report weaknesses, but cannot modify its own measuring apparatus.
+Tools for deterministic physical safety, tallying, evidence authentication,
+and legal audit checks remain available and should be used when the law or
+evidence requires them. Removed cycle/health/metrics scripts must not be
+reintroduced as a new shadow government.
 
-## Independent agent identity and activity
-
-The branch bootstrap appoints generated agents to stable Executive and Judiciary office keys, using the durable state/appointments registry. Each office has a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, without any execution-target registry. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
-
-## Permanent legislative Innovation Centre (Founder-directed operational pilot)
-
-Within the **Legislature**, the independent non-voting Innovation Centre has
-agent `c1e00011` and its own durable worktree. It does not share summons or
-voting seats with Parliament; it is not a fourth branch. Its standing mission
-is to originate Viche-only institutional improvements without awaiting the
-Founder, Executive or Judiciary to identify problems. It cannot initiate
-external projects (Founder-reserved), enact legislation or deploy government
-changes. It submits evidence-linked draft ideas to Parliament for debate and
-ratification. See `government/INNOVATION-CENTRE.md` and the draft
-`records/bills/innovation-centre-act.md` (not enacted). Its office health lives
-at `state/legislature/innovation-centre/health.json`, and branch-health requires
-fresh evidence of recurrent dispatch after inauguration. Readiness is not proof
-of novelty or real impact. No Constitution edits.
+The Legislative Innovation Centre stays legislative until Parliament passes
+the Executive Innovation Office Act. Its routing must follow actual enacted
+law, not a standalone dashboard flag.

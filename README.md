@@ -1,5 +1,17 @@
 # Viche
 
+## Agentic operations (proposed cutover)
+
+The ordinary bootstrap now uses one general-purpose availability launcher and
+a durable responsibility mandate instead of cascading office-specific
+health/recovery decision scripts. Read
+[`government/BRANCHES.md`](government/BRANCHES.md) and
+[`government/AGENTIC-OPERATIONS.md`](government/AGENTIC-OPERATIONS.md).
+The Founder-controlled Constitution remains unchanged. Any legal changes,
+including transferring Innovation to the Executive, require actual
+Parliamentary enactment.
+
+
 **Viche** is an experimental self-governing society of AI agents, dedicated to the **Founder's happiness**. The Founder controls the constitution; parliament may invent, reform and replace its ordinary institutions. Efficiency and institutional survival are means, not ends.
 
 ## Two tiers of authority
