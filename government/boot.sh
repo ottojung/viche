@@ -1,140 +1,80 @@
 #!/bin/sh
-# Parliament-editable seat reconciliation; invoked by the protected S6 boot.
-# No separate scheduler or direct model calls.
+# Operational bootstrap: keep authorized offices available; leave judgment to agents.
+# The Founder-controlled constitutional bootstrap continues to own Parliament.
 set -eu
-
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+mkdir -p "$seats/branches" "$state"
 [ -s "$town/government/LAWS.md" ] || exit 1
 [ -s "$town/government/seats.tsv" ] || exit 1
-command -v antonina >/dev/null 2>&1
-mkdir -p "$seats"
-git -C "$town" rev-parse --is-inside-work-tree >/dev/null
+[ -s "${VICHE_CONSTITUTION:-/var/lib/lubko/from-host/viche-constitution/CONSTITUTION.md}" ] || exit 1
 
-ids=$(mktemp)
-trap 'rm -f "$ids"' EXIT HUP INT TERM
+# Worktree creation is substrate work, not a decision about what Parliament does.
 tab=$(printf '\t')
-while IFS="$tab" read -r seat_id title focus; do
-    [ -n "$seat_id" ] || continue
-    case "$seat_id" in
-        *[!0123456789abcdef]*|'') echo "Invalid seat ID: $seat_id" >&2; exit 1 ;;
-    esac
-    [ -n "$title" ] && [ -n "$focus" ] || {
-        echo "Incomplete seat: $seat_id" >&2; exit 1;
-    }
-    printf '%s\n' "$seat_id" >> "$ids"
-done < "$town/government/seats.tsv"
-
-[ -s "$ids" ] || { echo "No parliamentary seats" >&2; exit 1; }
-unique=$(sort -u "$ids" | wc -l)
-total=$(wc -l < "$ids")
-[ "$unique" -eq "$total" ] || { echo "Duplicate seat IDs" >&2; exit 1; }
-
-while IFS="$tab" read -r seat_id title focus; do
-    [ -n "$seat_id" ] || continue
-    seat_dir=$seats/$seat_id
-    if [ ! -f "$seat_dir/.git" ] && [ ! -d "$seat_dir/.git" ]; then
-        if [ -d "$seat_dir" ] && [ -n "$(ls -A "$seat_dir")" ]; then
-            echo "Refusing to replace seat directory: $seat_dir" >&2
-            exit 1
+while IFS="$tab" read -r seat title focus; do
+    [ -n "$seat" ] || continue
+    target=$seats/$seat
+    if [ ! -f "$target/.git" ] && [ ! -d "$target/.git" ]; then
+        if [ -e "$target" ] && [ -n "$(ls -A "$target")" ]; then
+            echo "Occupied parliamentary worktree: $target" >&2
+            continue
         fi
-        git -C "$town" worktree add --detach "$seat_dir" HEAD
+        git -C "$town" worktree add --detach "$target" HEAD ||
+            echo "Cannot create $seat worktree; preserve existing state" >&2
     fi
-    # All seats have durable, independently recoverable sessions; don't let a
-    # failed provider continuation permanently remove a future voter.
+    # Legal Act 19 physical continuity: preserve evidence and apply lawful
+    # threshold/cooldown gate; agents, not this launcher, decide substantive work.
     if [ -f "$town/government/seat-liveness.sh" ]; then
-        /bin/sh "$town/government/seat-liveness.sh" "$seat_id" ||
-            echo "Viche: seat $seat_id recovery failed" >&2
+        /bin/sh "$town/government/seat-liveness.sh" "$seat" ||
+            echo "Seat $seat requires independent continuity investigation" >&2
     fi
 done < "$town/government/seats.tsv"
 
-# Three independent branches: readiness is checked separately and durably.
-# The protected constitutional boot still owns parliamentary sittings.
-# A branch failure never suppresses another branch's reconciliation.
-if [ -f "$town/government/branch-liveness.sh" ]; then
-    /bin/sh "$town/government/branch-liveness.sh" legislature ||
-        echo "Viche: Legislature liveness investigation required" >&2
-fi
+# No script may adjudicate what offices should investigate, repair or deliver.
+# Each role keeps its own journal; the independent Recovery Steward handles
+# uncertain terminal invocations without replaying their tools or messages.
+for office in executive judiciary; do
+    /bin/sh "$town/government/agentic-office.sh" "$office" ||
+        echo "Office $office needs general-purpose recovery" >&2
+done
 
-# Janitor Office: observe disk health each cycle; safe reclamation is self-throttled and
-# non-fatal so it can never block seat reconciliation. Authority and safeguards:
-# records/bills/janitor-office-act.md (Act 12); observation is within Act 4.2.
-if [ -f "$town/government/janitor.sh" ]; then
-    # A whole-box inventory can take minutes. It has its own exclusive lock;
-    # never block legislative, executive or judicial dispatch behind it.
-    janitor_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/janitor
-    mkdir -p "$janitor_state"
-    (
-        /bin/sh "$town/government/janitor.sh" cycle ||
-            echo "Viche: janitor cycle failed; see janitor action log" >&2
-    ) >> "$janitor_state/boot-cycle.log" 2>&1 < /dev/null &
-fi
-
-# Independent Executive: no parliamentary summons required.
-if [ -f "$town/government/branch-liveness.sh" ]; then
-    /bin/sh "$town/government/branch-liveness.sh" executive ||
-        echo "Viche: Executive liveness investigation required" >&2
-fi
-
-# The innovation office is an Executive unit ONLY after parliamentary enactment.
 if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
-    /bin/sh "$town/government/executive-innovation-cycle.sh" ||
-        echo "Viche: Executive Innovation Office needs recovery" >&2
+    innovation_authority=executive
+else
+    innovation_authority=legislature
 fi
+/bin/sh "$town/government/agentic-office.sh" innovation-centre "$innovation_authority" ||
+    echo "Innovation office needs independent investigation" >&2
 
-# Deterministic oversight continues even when every AI session is unavailable.
-# Failure of telemetry/auditing must not prevent unrelated reconciliation.
-if [ -f "$town/government/oversight-watch.sh" ]; then
-    /bin/sh "$town/government/oversight-watch.sh" ||
-        echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
-fi
-# Independent feedback never holds up legislature, executive, or judiciary.
-# Serialize collectors, bound their runtime, and timestamp their evidence.
-if [ -f "$town/government/outcome-metrics.py" ]; then
-    metrics_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/institutional-outcomes
-    mkdir -p "$metrics_state"
-    (
-        flock -n 9 || exit 0
-        timeout 150 python3 "$town/government/outcome-metrics.py" ||
-            echo "Viche: outcome feedback unavailable; do not infer success" >&2
-    ) 9>"$metrics_state/collector.lock"       >>"$metrics_state/collector.log" 2>&1 < /dev/null &
-fi
-
-# Independent Judiciary: evidence and adjudication, not executive delivery,
-# proposing bills, or modifying its own measurement rules.
-if [ -f "$town/government/branch-liveness.sh" ]; then
-    /bin/sh "$town/government/branch-liveness.sh" judiciary ||
-        echo "Viche: Judiciary liveness investigation required" >&2
-fi
-# Run the historic legislative Centre ONLY until lawful transfer.
-if ! grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
-    if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
-        /bin/sh "$town/government/innovation-centre-cycle.sh" ||
-            echo "Viche: legislative Innovation Centre failed; investigate" >&2
-    fi
-fi
-if [ -f "$town/government/branch-health.sh" ]; then
-    /bin/sh "$town/government/branch-health.sh" ||
-        echo "Viche: independent branch readiness incident recorded" >&2
-fi
-# Durable independent case routing persists even if every branch model fails.
-if [ -f "$town/government/institutional-cases.py" ]; then
-    python3 "$town/government/institutional-cases.py" reconcile ||
-        echo "Viche: corrective-case recording failed; investigate" >&2
-fi
-# Act 18 §7: the Executive maintains the generated board-trail index; refresh it
-# each measurement window (throttled, non-fatal) so the Founder-visible status
-# map cannot silently go stale. Runs before the §5 lens that consumes it.
+# Act 18 generated status index, Act 15 inexpensive independent monitoring,
+# and Act 12 territory maintenance are mechanical obligations, not decisions
+# about what agents should repair or whether a task was delivered.
 if [ -f "$town/government/board-trail-refresh.sh" ]; then
     /bin/sh "$town/government/board-trail-refresh.sh" ||
-        echo "Viche: board-trail refresh failed" >&2
+        echo 'Board-trail collection requires attention' >&2
 fi
 if [ -f "$town/government/judiciary-measurements.py" ]; then
     python3 "$town/government/judiciary-measurements.py" ||
-        echo "Viche: Judiciary self-measurement unavailable" >&2
+        echo 'Judiciary metrics collection unavailable' >&2
+fi
+if [ -f "$town/government/oversight-watch.sh" ]; then
+    /bin/sh "$town/government/oversight-watch.sh" ||
+        echo 'Independent oversight observation unavailable' >&2
+fi
+# Retain the deterministic capacity safeguard under Act 12. Existing Janitor
+# quarantine and destructive capabilities remain subject to that Act.
+if [ -f "$town/government/janitor.sh" ]; then
+    mkdir -p "$state/janitor"
+    (/bin/sh "$town/government/janitor.sh" cycle ||
+        echo 'Janitor cycle requires investigation' >&2) >> "$state/janitor/boot-cycle.log" 2>&1 </dev/null &
 fi
 
-# Government setup completed; not proof of delivery.
-state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/health
-mkdir -p "$state"
-date +%s > "$state/government-setup.last"
+# These stamps mean only that bootstrap was ATTEMPTED, never that delivery or
+# institutional health is verified. The legacy Sentinel reads the latter.
+now=$(date +%s)
+printf '%s
+' "$now" > "$state/launcher-last-attempt"
+mkdir -p "$state/health"
+printf '%s
+' "$now" > "$state/health/government-setup.last"

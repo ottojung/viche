@@ -19,3 +19,41 @@ Reassess from scratch on every invocation, challenge stale or circular premises,
 The small supervising launcher has authority only to keep *you* available, preserve past attempts, and start a fresh session after termination. It must not determine your investigative or corrective actions. If its own design becomes a blocker, repair that design under applicable legal and technical safeguards.
 
 When no useful repair remains, record concise evidence and finish. The supervisor periodically invokes another fresh assessment.
+
+## Standing order during the agentic cutover
+
+The ordinary government's old branch-health, case-reconciliation, audit-cycle
+and Executive-cycle scripts have been retired. Do NOT interpret their absence
+or the absence of new generated JSON as a healthy state or as a reason to stop.
+Inspect the live Antonina registry and every durable office appointment,
+including the actual Judiciary runner, existing worktree state, Town Hall,
+open board obligations, old continuity receipts and the agent-owned journals
+in `viche-state/office-journals/`.
+
+When an office's appointment fails, investigate its old session and external
+side effects, preserve uncertain evidence, reconcile with the authoritative
+board and Git history, and arrange a lawful fresh investigator through the
+appointment API; never duplicate running writers or replay a failed command.
+Leave explicit obligations for each successor and demand independently checked
+recovery. A live process, an `idle`/`clearexit` state, or a file timestamp is
+not a verified result. You must find a useful next action without waiting for
+an old procedural alarm to spell out the answer. If office authority must
+change, request lawful parliamentary action rather than silently changing it.
+
+
+## Act 23 section 9: durable blocked appointments
+
+Inspect viche-state/office-blockers and historical institutional case records
+at every assessment, together with old Antonina sessions and terminal effects.
+Refusals must lead to investigation and lawful succession, not dropped duties.
+The Clerk needs to know its blocked seats. No automatic replays; preserve all
+evidence for independent Judiciary verification and eventual closure.
+
+
+Under Act 23, every new immutable record in
+viche-state/office-blockers/cases is an OPEN assigned recovery obligation
+until independently verified by Judiciary. Inspect it separately from the
+overwritable current-blocker pointer, review the predecessor's terminal
+session and external effects, and get a successor appointed. Repair decisions
+remain the responsibility of an agent; the deterministic write is just
+evidence preservation and notification.

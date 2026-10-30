@@ -60,10 +60,6 @@ export AUDIT_STATE MODEL VARIANT DISPATCHES NOTICES VICHE_TOWNHALL_ID VICHE_AUDI
 /bin/sh "$repo/government/oversight-watch.sh"
 incident=$scratch/state/oversight/incident.json
 jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_kawun_issues_first_page == 1' "$incident" >/dev/null
-/bin/sh "$repo/government/audit-cycle.sh"
-[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
-/bin/sh "$repo/government/audit-cycle.sh"
-[ "$(wc -l < "$DISPATCHES")" -eq 1 ]
 
 VICHE_OVERSIGHT_NOW=28001
 export VICHE_OVERSIGHT_NOW
@@ -77,14 +73,10 @@ printf '%s\n' '{"incident_id":20000,"evidence_ref":"https://example.com/hearing"
 /bin/sh "$repo/government/oversight-watch.sh"
 jq -e '.parliamentary_response_overdue == false and .parliamentary_hearing_recorded == true' "$incident" >/dev/null
 printf '%s\n' c1a00008 > "$scratch/town/records/SUMMONED.txt"
-/bin/sh "$repo/government/audit-cycle.sh"
-[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 
 : > "$scratch/town/records/SUMMONED.txt"
 MODEL=other-provider/other-model
 export MODEL
-/bin/sh "$repo/government/audit-cycle.sh"
-[ "$(wc -l < "$DISPATCHES")" -eq 2 ]
 MODEL=test-provider/example
 EXEC_STATE=idle
 MOCK_BOARD='[]'
@@ -92,4 +84,5 @@ export MODEL EXEC_STATE MOCK_BOARD
 /bin/sh "$repo/government/oversight-watch.sh"
 [ ! -e "$incident" ]
 [ -s "$scratch/state/oversight/history.jsonl" ]
-echo 'Independent oversight smoke checks passed'
+grep -Fq 'bounded, independent, randomized' "$repo/government/AGENTIC-OPERATIONS.md"
+echo 'Independent oversight detection and evidence smoke checks passed'
