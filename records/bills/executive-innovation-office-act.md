@@ -13,6 +13,8 @@ records an instruction received by the operator in ChatGPT (operator message),
 Board issue: `s2SvtsxOuLhoFeYC0Yw0Cn-surrounds`. Clerk should record and verify
 the actual communication according to the town's Founder-intake rules.
 
+**Digest (current):** `647449cc77cfd9281d9b26348ef3084cbd93ba1f777feef9855aa060fe1e8b7c`
+
 ## Operative amendment to Act 14
 
 1. **Transfer.** Act 14 §1 is amended: the existing permanent, non-voting
