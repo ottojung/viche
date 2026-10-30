@@ -96,6 +96,8 @@ printf 'failed\n' > "$MOCK_STATE/mode"
 [ ! -s "$MOCK_STATE/runs" ]
 grep -Fq 'Recovery Steward must reconcile' "$scratch/failed.log"
 [ -s "$state/office-blockers/executive" ]
+[ -s "$state/office-blockers/cases/office-executive--agent-fixture-executive" ]
+grep -Fq 'independent_verifier=Judiciary' "$state/office-blockers/cases/office-executive--agent-fixture-executive"
 grep -Fq 'Recovery_Steward_reconcile_before_successor' "$state/office-blockers/executive"
 
 # The Innovation Centre transfer needs an enacted law, not a Founder wish alone.
@@ -118,6 +120,8 @@ if /bin/sh "$repo/government/sitting.sh" c1a00001 > /dev/null 2>&1; then
     exit 1
 fi
 [ -s "$state/office-blockers/c1a00001" ]
+[ -s "$state/office-blockers/cases/seat-c1a00001--agent-fixture-c1a00001" ]
+grep -Fq 'state=open' "$state/office-blockers/cases/seat-c1a00001--agent-fixture-c1a00001"
 grep -Fq 'Clerk_and_Recovery_Steward_reconcile_before_successor' "$state/office-blockers/c1a00001"
 printf 'idle\n' > "$MOCK_STATE/mode"
 /bin/sh "$repo/government/sitting.sh" c1a00001 > "$scratch/blocked.prompt"

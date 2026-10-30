@@ -48,3 +48,12 @@ at every assessment, together with old Antonina sessions and terminal effects.
 Refusals must lead to investigation and lawful succession, not dropped duties.
 The Clerk needs to know its blocked seats. No automatic replays; preserve all
 evidence for independent Judiciary verification and eventual closure.
+
+
+Under Act 23, every new immutable record in
+viche-state/office-blockers/cases is an OPEN assigned recovery obligation
+until independently verified by Judiciary. Inspect it separately from the
+overwritable current-blocker pointer, review the predecessor's terminal
+session and external effects, and get a successor appointed. Repair decisions
+remain the responsibility of an agent; the deterministic write is just
+evidence preservation and notification.

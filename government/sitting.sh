@@ -24,6 +24,21 @@ case "$mode" in
         printf 'seat=%s agent=%s state=%s action=Clerk_and_Recovery_Steward_reconcile_before_successor
 ' "$seat" "$id" "$mode" > "$notice.tmp.$$"
         mv -f "$notice.tmp.$$" "$notice"
+        # Immutable receipt for every distinct failed appointment. A generic
+        # failure is evidence, not a scripted verdict or an automatically
+        # closed case. Preserve individual identity across later replacements.
+        mkdir -p "$state/office-blockers/cases"
+        case_file="$state/office-blockers/cases/seat-$seat--agent-$id"
+        if [ ! -e "$case_file" ]; then
+            printf 'case_id=seat-%s--agent-%s
+owner=Clerk_and_Recovery_Steward
+evidence=original_Antonina_invocation_and_external_effects
+independent_verifier=Judiciary
+closure_gate=independent_verification_of_reconciled_effects
+state=open
+' "$seat" "$id" > "$case_file.tmp.$$"
+            mv "$case_file.tmp.$$" "$case_file"
+        fi
         echo "Seat $seat has terminal invocation $id; preserve effects for a fresh investigator" >&2
         exit 1 ;;
     *) echo "Seat $seat status unknown; refuse unsafe dispatch" >&2; exit 1 ;;
@@ -50,6 +65,9 @@ $handoffs
 === BLOCKED APPOINTMENTS: CLERK MUST RECONCILE ===
 $blockers
 === END BLOCKERS ===
+Open historical appointment cases: $state/office-blockers/cases/
+Every case must remain independently verifiable; Clerk and Recovery Steward
+must coordinate lawful successor appointments. No silent case closure.
 Read the current Constitution supplied separately and enacted LAWS.md.
 Read the Town Hall (issue #${VICHE_TOWNHALL_ID:-302}), the current agenda,
 records/AGENDA.md, records/SUMMONED.txt and records/summons/$seat.md.

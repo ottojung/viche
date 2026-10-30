@@ -40,6 +40,18 @@ case "$mode" in
         printf 'office=%s agent=%s state=%s action=Recovery_Steward_reconcile_before_successor
 ' "$office" "$id" "$mode" > "$notice.tmp.$$"
         mv -f "$notice.tmp.$$" "$notice"
+        mkdir -p "$state/office-blockers/cases"
+        case_file="$state/office-blockers/cases/office-$office--agent-$id"
+        if [ ! -e "$case_file" ]; then
+            printf 'case_id=office-%s--agent-%s
+owner=Executive_and_Recovery_Steward
+evidence=original_Antonina_invocation_and_external_effects
+independent_verifier=Judiciary
+closure_gate=independent_verification_of_reconciled_effects
+state=open
+' "$office" "$id" > "$case_file.tmp.$$"
+            mv "$case_file.tmp.$$" "$case_file"
+        fi
         echo "$title has terminal appointee $id ($mode); Recovery Steward must reconcile and replace, never replay" >&2
         exit 1 ;;
     *) echo "Unrecognized agent state $mode; keep evidence" >&2; exit 1 ;;
@@ -74,6 +86,11 @@ Your worktree: $cwd.
 Your durable responsibility journal: $state/office-journals/$office.md.
 Institutional evidence: $state.
 Pre-cutover corrective cases: $state/institutional-cases/index.json and $state/institutional-cases/*.json; preserve case identity until independent verification.
+Live blocked appointments: $state/office-blockers/
+Durable individualized new cases: $state/office-blockers/cases/
+Before assigning unrelated work, investigate every pending appointment
+blocker and hand off unresolved cases to the independent Recovery Steward.
+Do not erase or mark these records closed based on a clean agent exit.
 Founder Town Hall issue: ${VICHE_TOWNHALL_ID:-302}; Founder authored messages must be checked.
 Existing agent ID: $id. Current agent state: $mode.
 This is a fresh appointment assessment. Before external writes, inspect prior

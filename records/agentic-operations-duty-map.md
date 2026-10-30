@@ -18,3 +18,15 @@ resolved. Each entry must be independently checked against original law.
 Mechanical identity, permission, physical-resource, audit integrity, tally,
 board index and oversight tools remain when required. Agent reasoning owns
 open-ended decisions, not shell-based process success heuristics.
+
+
+## Enforcement note for statutory reviewers
+
+A new terminal appointment is never merely an ephemeral stderr line:
+government/sitting.sh and government/agentic-office.sh create one
+individually named immutable open-case receipt per appointment under
+viche-state/office-blockers/cases and a current-blocker notification to the
+Clerk / Recovery Steward. The replacement agent must reconcile the original
+effect, the Judiciary must independently verify, and no runtime mechanism
+silently closes the record. Periodic Act 15 audit omissions themselves
+remain reportable open findings, not automatically inferred healthy states.

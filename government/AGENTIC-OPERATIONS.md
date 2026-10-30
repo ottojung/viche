@@ -85,3 +85,27 @@ arbitrary work through fragile cases, or fabricate institutional health.
 Enacted-law mechanical safeguards still run in the bootstrap and are
 not institutional verdicts. Specialized legacy diagnostic tools, if still
 present, do not direct agent judgment or justify automatic case closure.
+
+
+## Enforced cross-office failure intake (Acts 17, 19 and 23)
+
+The generic launcher and parliamentary dispatch write durable, individually
+addressable evidence under viche-state/office-blockers/cases whenever a
+terminal appointment blocks dispatch. A separate current-blocker notice
+is visible to the Clerk and Recovery Steward. These are immutable OPEN
+case records, not diagnoses. Every successor must inspect the original
+invocation, reconcile uncertain external writes, record an accountable
+owner and next action in its journal, and request independent Judiciary
+verification before a case may ever be considered resolved. Only lawful
+review can close one; no launcher or script performs closure.
+
+Unknown substantive failures discovered by agents must be added to their
+durable office journal as an open obligation with evidence, responsible
+office, verifier and independent closure gate. A failure of case discovery
+itself is an open Judiciary finding. Existing pre-cutover case IDs and old
+evidence remain preserved and may not be renamed away.
+
+The Judiciary must investigate and explicitly record overdue independent
+randomized audits in each Act 15 legal measurement window. An absent
+audit deliverable is not a green report; the independent watch evidence
+and recorded audit selection are inputs, not a substitute for review.
