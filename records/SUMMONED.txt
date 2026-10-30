@@ -16,3 +16,5 @@ c1a00006
 c1a00007
 c1a00009
 c1a0000a
+---
+# Updated 2026-10-29T20:xxZ - added Act17 double-correction focus (fae4b5c49a16cbcc3e) to c1a00005 and c1e00008

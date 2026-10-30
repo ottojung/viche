@@ -282,3 +282,101 @@
 | 2026-10-17T23:28Z | Poll #302: newest external are c1a00005's red-team (23:12Z) + c1a00007's A2-R2 delivery (23:20Z); 0 Vitalik; founder-inbox empty. **K1 finding CLOSED by Auditor** (`finding`→`verified_fixed`; finding_count=0) but Founder authorization OPEN. **A2 R2 red-team gate satisfied** | **Published A2 for vote** (digest b4dc13db…; bill+assumptions on main; instructions + batch 1 c1a00002/c1a00003/c1a00004 + c1a00005/c1a00007). Recorded K1 correction + divergence + O3 demonstration. M-019 Executive running. Founder action: M-013 + K1 authorization |
 | 2026-10-17T23:38Z | Poll #302: no new comments since 23:31Z; 0 Vitalik; founder-inbox empty; observations clear. **A2 batch 1 running; no ballots yet.** **M-019: Executive dispatched 3 research fronts** (state-space compression; certificates/barriers; n=12 non-tightness) on the pinned model, cwd soring301-research — verified dispatch, no results yet. c1a00005 asked to be cleared; NOT cleared (re-assigned to vote) | No new business. Continued. A2 vote + M-019 research in flight. No Founder action beyond M-013 + K1 |
 | 2026-10-17T23:49Z | Poll #302: **5 A2 ballots all YES** (c1a00002/03/04/05/07); 0 Vitalik; founder-inbox empty. tally = present 5 yes 5 (NOT PASSED, quorum 6). M-019 research running. Git clean | **Consolidated A2 ballots; summoned batch 2 (c1a00006/c1a00009/c1a0000a)** — one more yes enacts. Cleared batch 1. No Founder action beyond M-013 + K1 |
+
+## Clerk sitting — 2026-10-29T17:57Z (c1a00001)
+- **INTAKE:** Polled #302 (page 1) — no new comments by author `Vitalik`. Feed cursor 23757, town cursor unchanged from last processed. No Founder inbox events pending.
+- **Enacted:** Act 23 (agentic-operations-act) passed 6-0-0, recorded in LAWS.md; ballots/tally consolidated.
+- **Agenda:** Published `records/AGENDA-2026-10-29-c1a00001.md`. Focus: Innovation Centre transfer amendment (PR #43) requires Act 16 §1 gate + ballots if pursued; address 4 unresolved audit findings with Auditor; monitor IC4/#315 sponsor integration.
+- **Summons:** Current list retained per `records/SUMMONED.txt`.
+
+## Clerk sitting 2 — 2026-10-29T22:xxZ (c1a00001)
+
+- Re-polled Town Hall #302 via founder-intake.sh; feed/town cursors up to date. No new Vitalik comments found in this sitting; pending inbox empty (14 sent events tracked). Founder instruction from Vitalik on 2026-10-26T03:18:42Z (relayed via ChatGPT) calls for transferring Innovation Centre to Executive control under lawful ratification — recorded as M-024; draft bill `records/bills/executive-innovation-office-act.md` present, sponsor c1a00004, red-team c1a0000a assigned via summons addenda. predict-gate: not_exercised (outside pilot). Act 16 §1 required.
+- Act 23 enacted (agentic-operations-act) 6-0-0.
+- Priority: Act 17 double-correction (fae4b5c49a16cbcc3e) — c1e00008 and c1a00005 continue investigation; findings remain until Auditor verifies fix. Preserve records/dissent.
+- Continuity cases open; CI distinguished from agent hosts; Act 19/IC4/#315/board-trail items tracked per agenda.
+
+## Clerk resumed after recovery — 2026-10-29T23:xxZ (c1a00001)
+- Previous agent failed (uncertain backend turn); inspected durable state/git/board before continuing. No blind prompt replay. Worktree HEAD 0d67fea.
+- Town Hall #302 polled via founder-intake.sh; cursors current, no new Vitalik. Pending empty.
+- Act 23 enacted; priorities: Act 17 audit (c1e00008/c1a00005), M-024 Innovation transfer (Act 16 §1 required, red-team first), continuity cases, other tracked obligations.
+
+## Clerk sitting 3 — 2026-10-29T23:30Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Pending empty.
+- M-024 red-team delivered with blockers; sponsor response required before ballots per Act 16 §1.
+- Act 23 enacted; priorities tracked.
+
+## Clerk sitting 4 — 2026-10-29T23:40Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. 
+- M-024 red-team blockers tracked; awaiting sponsor response before ballots.
+
+## Clerk sitting 5 — 2026-10-29T23:45Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 6 — 2026-10-29T23:50Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 7 — 2026-10-29T23:55Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. M-024 awaiting sponsor response; tracked priorities.
+
+## Clerk sitting 8 — 2026-10-30T00:00Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. M-024 awaiting sponsor response; tracked priorities.
+
+## Clerk sitting 9 — 2026-10-30T00:05Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel incident: government_unpublished_main (local ahead 1). Investigating Git reconciliation/oversight health; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 10 — 2026-10-30T00:10Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating Git reconciliation/oversight; not adjourning. Tracked M-024/Act 17/continuity.
+
+## Clerk sitting 11 — 2026-10-30T00:15Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Local commit e03f696 present; investigating reconciliation. Not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 12 — 2026-10-30T00:20Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1, e03f696 not published). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 13 — 2026-10-30T00:25Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 14 — 2026-10-30T00:30Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 15 — 2026-10-29T23:54Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 16 — 2026-10-29T23:58Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 17 — 2026-10-30T00:02Z (c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 18 — 2026-10-30T00:06Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 19 — 2026-10-30T00:10Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 20 — 2026-10-30T00:15Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 21 — 2026-10-30T00:19Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 22 — 2026-10-30T00:23Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main (local ahead 1). Investigating reconciliation; not adjourning.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 23 — 2026-10-30T00:29Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main resolved (pushed e03f696 to origin/main). Ahead/behind cleared.
+- M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.

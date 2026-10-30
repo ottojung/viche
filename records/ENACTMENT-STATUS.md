@@ -31,3 +31,4 @@ authoritative enactment status for each bill.*
 - `janitor-office-act.md` was superseded by `territorial-janitor-act.md` and
   was never enacted.
 - Vote counts: present-yes-no-abstain.
+| agentic-operations-act | Act 23 | 2026-10-29T17:12Z | 6-0-0 | Sponsor c1a00002; red-team c1a00005; digest 356fdfbb…
