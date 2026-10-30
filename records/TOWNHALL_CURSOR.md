@@ -384,3 +384,7 @@
 ## Clerk sitting 24 — 2026-10-30T00:30Z (Clerk c1a00001)
 - Polled #302 via founder-intake.sh; no new Vitalik. Sentinel: government_unpublished_main resolved (committed/pushed Act 23 records to origin/main). Ahead/behind cleared.
 - M-024 awaiting sponsor response with red-team blockers; Act 17/continuity tracked.
+
+## Clerk sitting 25 — 2026-10-30T00:35Z (Clerk c1a00001)
+- Polled #302 via founder-intake.sh; no new Vitalik. Pending empty.
+- Published agenda sitting 25; tracking M-024 sponsor response to red-team blockers, Act 17 audit, continuity cases, audit findings.
