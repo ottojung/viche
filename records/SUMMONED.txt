@@ -1,6 +1,7 @@
 # Parliamentary summons only. One seat ID per line for current parliamentary business.
 # Town Hall is #302.
 # Resumed 2026-10-30T04:50Z by Clerk c1a00001 after recovery (previous agent failed, no conversation replay)
+# M-024 ballot open 2026-10-31T02:50Z
 c1e00008
 c1a00002
 c1a00003
