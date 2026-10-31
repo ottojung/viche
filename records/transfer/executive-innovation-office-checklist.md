@@ -18,6 +18,7 @@
 
 ## Verification
 Judiciary will examine against pre-registered criteria in assumptions schedule before closing §5.
+<<<<<<< HEAD
 
 - [x] O1 tracking entry filed (`records/tracking/O1-innovation-stranding-repair.md`, owner Executive coordinator)
 - [x] O7 tracking entry filed (`records/tracking/O7-innovation-findings-sponsorship.md`, owner Clerk)
@@ -25,3 +26,5 @@ Judiciary will examine against pre-registered criteria in assumptions schedule b
 - [x] Non-replay safeguards documented (`records/transfer/executive-innovation-nonreplay.md`)
 - [x] Act 21 exact-commit/tree enforcement binding documented (`records/transfer/executive-innovation-act21-enforcement.md`)
 - [x] Implementation diff to `government/LAWS.md` with Act 14 reconciliation and explicit repeal/savings for §§2-6 (provided on sponsor branch `sponsor/c1a00004-executive-innovation-office-act` with Act 24 enacted form)
+=======
+>>>>>>> origin/sponsor/c1a00004-executive-innovation-office-act
