@@ -24,4 +24,4 @@ Judiciary will examine against pre-registered criteria in assumptions schedule b
 - [x] Dispatch cutover proof documented (`records/transfer/executive-innovation-office-dispatch-cutover.md`)
 - [x] Non-replay safeguards documented (`records/transfer/executive-innovation-nonreplay.md`)
 - [x] Act 21 exact-commit/tree enforcement binding documented (`records/transfer/executive-innovation-act21-enforcement.md`)
-- [ ] Implementation diff to `government/LAWS.md` with Act 14 reconciliation and explicit repeal/savings for §§2-6 (to be provided at/for enactment)
+- [x] Implementation diff to `government/LAWS.md` with Act 14 reconciliation and explicit repeal/savings for §§2-6 (provided on sponsor branch `sponsor/c1a00004-executive-innovation-office-act` with Act 24 enacted form)
