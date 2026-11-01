@@ -438,3 +438,9 @@
 - Sentinel: government_unpublished_main re-flagged (local ahead 1 behind 0); health inquiry required, not delivery verdict.
 - Random audit: 5 findings + repeated case open, need evidence-backed corrective action with independent verification (including Act 17 cycle-identity).
 - No new Founder messages. Active summons to c1e00008 and c1a00002 remain.
+
+## Sitting 122 — update (2026-11-01T19:XXZ late)
+- continuity_unverified_c1a00001: obs 8, clear 0, last_seen 1793555679 — open; >=2 independent healthy observations required for closure.
+- Sentinel: government_unpublished_main re-flagged (local ahead 1 behind 0); health inquiry required.
+- Random audit: 5 findings + repeated case open; require evidence-backed corrective action with independent verification (Act 17 cycle-identity).
+- No new Founder messages. Summons active to c1e00008, c1a00002. Tracking.
