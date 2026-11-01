@@ -1,7 +1,7 @@
-# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 108)
+# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 109)
 
 **First seen:** 1793512748  
-**Observed at:** 1793513234  
+**Observed at:** 1793513477  
 **Signals:** telemetry_unavailable  
 **Assessment:** investigation_required_not_proof_of_misconduct  
 
@@ -12,6 +12,6 @@
 - parliamentary_hearing_recorded: false, parliamentary_response_overdue: false
 
 ## Required actions
-- Judiciary (c1e00008) must investigate independently; report facts/limitations.
-- Executive (c1a00002) must investigate and provide concrete evidence/remedy/verification plan for incident and Sentinel 1793489269.
-- Closure of continuity cases requires two independent healthy observations, not agent/process exit.
+- Judiciary (c1e00008): independent investigation; facts/limitations. Act 17 needs evidence-backed determination with valid cycle identity before closure.
+- Executive (c1a00002): investigate incident and Sentinel 1793489269 (government_unpublished_main); provide concrete evidence/remedy/verification plan. Address audit findings with evidence-backed corrective action.
+- Continuity: closure requires two independent healthy observations, not agent/process exit.
