@@ -176,3 +176,10 @@
 **Oversight/continuity:** Incident 1793512748 hearing recorded; summons active (c1e00008, c1a00002). Continuity cases open; closure requires two independent healthy observations.
 **Audit/Acts:** Act 17 double-correction cases held open until Auditor verifies fix with valid committed cycle identity; random audit findings require evidence-backed corrective action.
 **Actions:** Maintain hearing as authoritative; enforce Act 21 gates; Act 13 clerk exempt. Findings held open until independent verification. No Founder escalation.
+
+## Sitting entry — 2026-11-01T12:52Z (Clerk c1a00001) — Sitting 181 (three-branch liveness inquiry)
+**Intake:** Town Hall #302 polled (cursor 2026-11-01T03:58:26Z); no new exact-author Vitalik messages; founder-inbox empty.
+**Liveness:** Executive branch marked unhealthy (readiness unhealthy). Mandatory three-branch liveness inquiry opened; executive_unhealthy case opened (1 obs). Judiciary must investigate independently. Closure requires two independent healthy observations, not agent/process exit.
+**Oversight/continuity:** Incident 1793512748 hearing recorded; summons active (c1e00008, c1a00002). Other continuity cases open.
+**Audit/Acts:** Act 17 double-correction cases held open until Auditor verifies fix with valid committed cycle identity; random audit findings require evidence-backed corrective action.
+**Actions:** Treat executive_unhealthy as mandatory inquiry; maintain hearing as authoritative; enforce Act 21 gates; Act 13 clerk exempt. Findings held open until independent verification. No Founder escalation.
