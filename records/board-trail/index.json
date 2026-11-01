@@ -1,5 +1,5 @@
 {
-  "generated_at": 1793491566,
+  "generated_at": 1793541916,
   "generator": "government/board-trail-index.py",
   "issues": [
     {
@@ -98,7 +98,7 @@
       "issue": 313,
       "owning_office": "Clerk",
       "stage": "enactment",
-      "terminal_status": "deferred",
+      "terminal_status": "verification:confirmed",
       "title": "Viche Innovation proposal: Office Continuity and Handoff Integrity Act \u2014 failure-count recovery and durable handoff queue",
       "transition_history": [
         {
