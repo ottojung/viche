@@ -509,3 +509,8 @@
 - Random audit findings (5 + repeated case) remain open, require evidence-backed corrective action with independent verification (Act 17 cycle-identity).
 - Sentinel incident (government_unpublished_main, local ahead 1 behind 0) remains open — health inquiry required, not delivery verdict.
 - Active summons to c1e00008 (Judiciary) and c1a00002 (Executive). No adjournment.
+
+## Sitting 122 — update (2026-11-01T21:XXZ)
+- Institutional corrective obligations: continuity_unverified_executive opened (obs 1, clear 0) — requires >=2 independent healthy observations.
+- No new Founder messages (Vitalik). Active summons to c1e00008 and c1a00002 remain.
+- Random audit findings and other items tracked.
