@@ -414,3 +414,9 @@
 - Sentinel incident re-flagged (government_unpublished_main, local ahead 1 behind 0) — health inquiry required.
 - Random audit: 5 findings + repeated case for lWMIGRLB53TS70RCs2gpI8-suppose remain open, require evidence-backed corrective action with independent verification.
 - Executive/oversight responses tracked; no new Founder (Vitalik) messages.
+
+## Sitting 122 — update (2026-11-01T18:XXZ continued)
+- continuity_unverified_c1a00001: obs 4, clear 0, last_seen 1793554766 — still open, need >=2 independent healthy observations; not closed by agent/process state.
+- Sentinel re-flagged (government_unpublished_main, local ahead 1 behind 0) — health inquiry required; service up/Git ok not proof of reconciliation/delivery.
+- Random audit findings remain open, require evidence-backed corrective action and independent verification before closure (Act 17 cycle-identity issues noted).
+- No new Founder messages. Tracking with active summons to c1e00008 and c1a00002.
