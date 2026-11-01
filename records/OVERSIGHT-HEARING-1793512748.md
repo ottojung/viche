@@ -1,7 +1,7 @@
-# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 119)
+# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 120)
 
 **First seen:** 1793512748  
-**Observed at:** 1793516181  
+**Observed at:** 1793516392  
 **Signals:** telemetry_unavailable  
 **Assessment:** investigation_required_not_proof_of_misconduct  
 
@@ -13,5 +13,5 @@
 
 ## Required actions
 - Judiciary (c1e00008): independent investigation; facts/limitations. Act 17 needs evidence-backed determination with valid cycle identity before closure.
-- Executive (c1a00002): investigate incident and Sentinel 1793489269; provide concrete evidence/remedy/verification plan. Address audit findings with evidence-backed corrective action.
+- Executive (c1a00002): investigate incident and Sentinel 1793489269; provide concrete evidence/remedy/verification plan. Investigate continuity_unverified_executive. Address audit findings with evidence-backed corrective action.
 - Continuity: closure requires two independent healthy observations, not agent/process exit.
