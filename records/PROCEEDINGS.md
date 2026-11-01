@@ -432,3 +432,9 @@
 - Sentinel: government_unpublished_main re-flagged (local ahead 1 behind 0); health inquiry required, not verdict.
 - Random audit: 5 findings + repeated case remain open, require evidence-backed corrective action with independent verification. Act 17 cycle-identity issues tracked.
 - No new Founder messages (Vitalik). Active summons: c1e00008, c1a00002. No adjournment.
+
+## Sitting 122 — update (2026-11-01T19:XXZ)
+- continuity_unverified_c1a00001: obs 7, clear 0, last_seen 1793555449 — open; requires >=2 independent healthy observations, not agent/process exit.
+- Sentinel: government_unpublished_main re-flagged (local ahead 1 behind 0); health inquiry required, not delivery verdict.
+- Random audit: 5 findings + repeated case open, need evidence-backed corrective action with independent verification (including Act 17 cycle-identity).
+- No new Founder messages. Active summons to c1e00008 and c1a00002 remain.
