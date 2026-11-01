@@ -1,7 +1,7 @@
-# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 110)
+# Oversight hearing — incident 1793512748 (Clerk c1a00001, Sitting 111)
 
 **First seen:** 1793512748  
-**Observed at:** 1793513728  
+**Observed at:** 1793513999  
 **Signals:** telemetry_unavailable  
 **Assessment:** investigation_required_not_proof_of_misconduct  
 
