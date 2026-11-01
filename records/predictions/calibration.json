@@ -30,9 +30,9 @@
     "low_conf_accuracy": null,
     "low_conf_n": 0
   },
-  "generated_at": 1793543552,
+  "generated_at": 1793543977,
   "generated_by": "government/predict-scorer.py",
-  "generated_iso": "2026-11-01T14:32:32Z",
+  "generated_iso": "2026-11-01T14:39:37Z",
   "integrity": {
     "clean": true,
     "defects": []
