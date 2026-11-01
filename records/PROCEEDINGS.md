@@ -503,3 +503,9 @@
 - Institutional corrective obligations now empty per latest agenda (continuity_unverified_c1a00001 still open but cases list empty in this snapshot) — track actual case state.
 - continuity_unverified_c1a00001: obs 16, clear_observations 1, last_seen 1793557520 — open; requires >=2 independent healthy observations, not agent/process exit.
 - No new Founder messages (Vitalik). Active summons to c1e00008, c1a00002 remain. Random audit findings and Sentinel incident remain open.
+
+## Sitting 122 — update (2026-11-01T21:XXZ)
+- No new Founder messages (Vitalik). Institutional corrective obligations empty in latest snapshot; continuity_unverified_c1a00001 remains open (obs 16, clear_observations 1, needs >=2 independent healthy observations).
+- Random audit findings (5 + repeated case) remain open, require evidence-backed corrective action with independent verification (Act 17 cycle-identity).
+- Sentinel incident (government_unpublished_main, local ahead 1 behind 0) remains open — health inquiry required, not delivery verdict.
+- Active summons to c1e00008 (Judiciary) and c1a00002 (Executive). No adjournment.
