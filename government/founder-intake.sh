@@ -121,6 +121,9 @@ $charter_text
 === END AUTHORITATIVE CONSTITUTION ===
 EOF
 )
+policy_file="$town/government/AGENT-REPORTING-POLICY.md"
+[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 if [ "$mode" = running ]; then
   accepted=0
   antonina agent run --id "$clerk" --cwd "$seat" --prompt "$prompt" --steer --detach && accepted=1

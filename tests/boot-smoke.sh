@@ -63,6 +63,8 @@ case "$action" in
             *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
+        # Every newly launched Town agent must receive the Founder reporting rule.
+        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
@@ -101,6 +103,13 @@ date +%s > "$scratch/state/oversight/last-audit-dispatch"
 mkdir -p "$scratch/state/janitor"
 date +%s > "$scratch/state/janitor/last-observe"
 date +%s > "$scratch/state/janitor/last-inventory"
+# Monitoring snapshots exist in a correctly initialized town. A missing
+# snapshot is now an incident rather than evidence of a healthy bootstrap.
+now=$(date +%s)
+mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases" "$scratch/state/branches"
+printf '{"observed_at":%s}\n' "$now" > "$scratch/state/institutional-outcomes/latest.json"
+printf '{"observed_at":%s,"count":0}\n' "$now" > "$scratch/state/institutional-cases/index.json"
+printf '{"observed_at":%s}\n' "$now" > "$scratch/state/branches/judiciary-measurements.json"
 seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
 /bin/sh "$town/constitution/boot.sh" --once

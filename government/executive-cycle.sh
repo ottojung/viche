@@ -142,6 +142,9 @@ Parliament's vote for changes that alter law. Keep Judiciary independent.
 Never close cases merely by dispatching, commenting or merging.
 EOF
 )
+policy_file="$town/government/AGENT-REPORTING-POLICY.md"
+[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"
