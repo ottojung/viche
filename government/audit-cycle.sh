@@ -139,6 +139,9 @@ a dated correction/addendum referencing the exact prior report, explaining
 which conclusions were unsupported. Preserve the original historical record.
 Review a meaningful sample of other generic dispositions; independently check
 evidence where feasible, otherwise retract verification claims explicitly.
+This is a ONE-TIME corrective review, not an instruction to repeat it every
+cycle: once evidence-backed addenda are filed, revisit only on new substantive
+evidence or an independently identified error.
 Do this as independent judicial fact-finding without changing law or your own
 measurement machinery. Stop stamping routine Executive status updates.
 
