@@ -84,6 +84,12 @@ for observation in "outcomes:$state/institutional-outcomes/latest.json" "institu
     signals="${signals}${signals:+,}${evidence_name}_stale"
   fi
 done
+# Unreviewed agent impediments are unresolved adverse evidence.
+mailbox_dir="$state/oversight/judiciary-mailbox/inbox"
+if [ -d "$mailbox_dir" ] &&
+   [ -n "$(find "$mailbox_dir" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null)" ]; then
+  signals="${signals}${signals:+,}judiciary_mailbox_pending"
+fi
 printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"
 if [ -z "$signals" ]; then
   if [ -s "$root/incident.json" ]; then

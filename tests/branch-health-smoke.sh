@@ -17,6 +17,15 @@ printf '{"observed_at":1000}\n' > "$scratch/institutional-outcomes/latest.json"
 printf '{"observed_at":1000,"count":0}\n' > "$scratch/institutional-cases/index.json"
 printf '{"observed_at":1000}\n' > "$scratch/branches/judiciary-measurements.json"
 sh "$repo/government/branch-health.sh"
+# Mailbox reports must be visible as unresolved health evidence.
+mkdir -p "$scratch/oversight/judiciary-mailbox/inbox"
+echo "blocked" > "$scratch/oversight/judiciary-mailbox/inbox/test.md"
+sh "$repo/government/branch-health.sh" >/dev/null 2>&1 && exit 1
+jq -e '.signals|index("judiciary_mailbox_pending")' "$scratch/branches/incident.json" >/dev/null
+VICHE_CASE_NOW=1000 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.owner=="judiciary" and .state=="open"' "$scratch/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
+rm "$scratch/oversight/judiciary-mailbox/inbox/test.md"
+sh "$repo/government/branch-health.sh"
 # Remove the outcome evidence without changing agent readiness: fail closed.
 rm "$scratch/institutional-outcomes/latest.json"
 sh "$repo/government/branch-health.sh" >/dev/null 2>&1 && exit 1

@@ -72,6 +72,8 @@ def collect():
 
 def owner(signal):
     # The law already authorizes operational continuity under Acts 2/5.
+    if signal == "judiciary_mailbox_pending":
+        return "judiciary"
     # Changing the offices or statutes requires actual parliamentary action.
     if signal.startswith("innovation_") or signal.startswith("continuity_"):
         return "executive"
