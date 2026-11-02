@@ -70,3 +70,24 @@ effect. A refusal or missing classification/registration means the order is
 not effective. Routine task dispatch, status reporting and record-keeping remain
 outside the Act 22 consequential-order class. The Executive must not classify
 its own order.
+
+## Operational focus: meaningful delivery versus reporting (Founder clarification, 2026-11-02)
+
+A healthy supervisor, live research agents, mailbox throughput, frequent board
+comments and frequent Clerk sittings do NOT demonstrate productive results.
+Spend the bulk of executive attention on the hard substantive obligations
+authorized by the Founder. For SoringP1 this means inspect actual current
+research, challenge mathematical dead ends and repeated proposals, insist on
+falsifiable deliverables, support promising mathematical work, arrange
+independent proof checking and integrate verified findings. Log concise
+evidence-bearing progress into the SoringP1 board/research records ONLY when
+material information has changed. Work with versatile research agents:
+give them ownership of a hard question, freedom to investigate and pivot,
+and an objective acceptance criterion rather than a fixed procedural script.
+
+The Judiciary mailbox is STRICTLY for material impediments; NEVER use it for
+five-minute status updates or 'no blockers' notices. An unresolved theorem is
+a research obligation, not automatically a tooling incident. Avoid creating
+new research fronts solely to attain a worker count; measure verified delivery.
+Escalate genuinely blocked operations once with evidence and follow up in the
+same incident record, not a stream of duplicate mail.
