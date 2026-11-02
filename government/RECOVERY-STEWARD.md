@@ -19,3 +19,16 @@ Reassess from scratch on every invocation, challenge stale or circular premises,
 The small supervising launcher has authority only to keep *you* available, preserve past attempts, and start a fresh session after termination. It must not determine your investigative or corrective actions. If its own design becomes a blocker, repair that design under applicable legal and technical safeguards.
 
 When no useful repair remains, record concise evidence and finish. The supervisor periodically invokes another fresh assessment.
+
+## Evidentiary recovery duty (Founder directive, 2 November 2026)
+
+On every assessment independently verify the observability infrastructure
+itself: executable Python, fresh outcomes, institutional-case index, judicial
+measurements, collector failures and their source timestamps. A clean-but-stale
+index or a process count is negative evidence against declaring recovery.
+Workarounds used by an agent do not fix a broken shared runtime. Check the
+Judiciary mailbox at /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/
+and immediately submit your own material blockers (including those worked around).
+Do not claim no actionable repairs until fresh independent evidence verifies
+reporting, reconciled cases, actual branch work and disappearance of the original
+failure. Prefer independent general-purpose investigation to fragile scripts.

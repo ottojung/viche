@@ -7,6 +7,8 @@ root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/oversight
 charter=${VICHE_CONSTITUTION:?authoritative Founder charter required}
 now=${VICHE_OVERSIGHT_NOW:-$(date +%s)}
 mkdir -p "$root"
+mailbox="$root/judiciary-mailbox"
+mkdir -p "$mailbox/inbox" "$mailbox/reviewed"
 if [ "${VICHE_AUDIT_CHECKS:-1}" = 1 ]; then
   python3 "$town/government/audit-accountability.py" check > "$root/random-check.log" || exit 1
 fi
@@ -27,6 +29,7 @@ if [ -f "$town/government/institutional-cases.py" ]; then
   cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
 fi
 if [ -s "$root/incident.json" ] || [ -s "$root/random/incident.json" ] ||
+   [ -n "$(find "$mailbox/inbox" -maxdepth 1 -type f -print -quit)" ] ||
    [ "$(printf '%s\n' "$cases" | jq -r '.open_cases|length')" -gt 0 ]; then
   incident=yes
   cadence=1800
@@ -110,6 +113,13 @@ $cases
 These are health observations, NOT verdicts or legislative authorizations.
 Independently investigate persistent cases, cite evidence and report to
 Parliament. Do not propose, enact or implement policy from Judiciary.
+
+Judiciary blocker mailbox: $mailbox/inbox. Independently investigate every
+pending report using logs, live service state and actual evidence of delivery.
+Missing positive evidence counts AGAINST claiming success, not as proof of
+misconduct. Record a durable disposition before moving any report to
+$mailbox/reviewed; preserve originals, uncertainties and unresolved cases.
+Escalate operational repairs to Executive, legal questions to Parliament.
 For continuity_unverified OFFICE, independently inspect the old terminal
 evidence at state/appointments/terminal-evidence/ID, preserved Git/board
 effects and actual new agent progress. Only if those are demonstrably reconciled
