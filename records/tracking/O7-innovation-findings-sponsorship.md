@@ -16,3 +16,6 @@ Loss of summons-free legislative intake acknowledged; conversion of Office findi
 
 ## Notes
 Track uptake (findings reviewed/sponsored within window), not just output.
+
+## Clerk update (2026-11-03T16:42:00Z)
+- Office is Executive-controlled (Act 24); findings may be reported to Parliament. No mechanism yet formalized in durable records for tracking findings -> sponsorship. Will establish review cadence/log when Office reports findings; until then, monitoring.
