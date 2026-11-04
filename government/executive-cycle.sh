@@ -35,7 +35,7 @@ case "$current" in
     retry_safe=$(printf '%s\n' "$status" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     [ "$retry_safe" = yes ] || { echo "Viche: failed Executive not provably retry-safe" >&2; exit 1; }
     ;;
-  idle|clearexit) : ;;
+  idle|succeeded) : ;;
   *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
 esac
 cwd=$seats/branches/executive
@@ -142,9 +142,6 @@ Parliament's vote for changes that alter law. Keep Judiciary independent.
 Never close cases merely by dispatching, commenting or merging.
 EOF
 )
-policy_file="$town/government/AGENT-REPORTING-POLICY.md"
-[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
-prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"

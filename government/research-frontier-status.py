@@ -35,10 +35,7 @@ def snapshot(path, now=None):
         curator = {}
     remaining = counts["ready"] + counts["running"] + counts["launching"]
     curating = bool(curator.get("agent_id"))
-    # The research ledger may retain historical exit_state values recorded
-    # before Antonina renamed succeeded to clearexit. Only the ledger needs
-    # historical interpretation; current Antonina statuses use clearexit.
-    empty_curation = (curator.get("exit_state") in ("clearexit", "succeeded")
+    empty_curation = (curator.get("exit_state") == "succeeded"
                       and curator.get("added") == 0)
     incomplete = [
         f["id"] for f in fronts

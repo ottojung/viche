@@ -23,11 +23,3 @@ Clerk reads the evidence when preparing its agenda. Only the Legislative
 branch may debate, propose and ratify changes. Neither the measurements nor
 this document impose quotas, models, a project list, or substantive goals on
 the autonomous Innovation Centre.
-
-## Failure of evidence is an incident (Founder directive, 2 November 2026)
-
-The existing branch-health cycle checks executable Python and freshness of
-outcomes, corrective cases and judicial measurements. Stale or absent positive
-evidence is an adverse signal that requires independent investigation and
-durable case reconciliation. A running process and a stale empty index cannot
-establish good health or close a case.

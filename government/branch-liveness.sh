@@ -75,7 +75,7 @@ readiness=unhealthy
 if [ "$cycle_ok" = true ] && [ "$readable" = true ]; then
   case "$agent_state" in
     running) readiness=running ;;
-    idle|clearexit) readiness=ready ;;
+    idle|succeeded) readiness=ready ;;
     *) readiness=unhealthy ;;
   esac
 fi

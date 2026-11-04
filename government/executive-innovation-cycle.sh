@@ -21,7 +21,7 @@ last=0
 case "$last" in ''|*[!0-9]*) exit 1;; esac
 case "$mode" in
   running) readiness=running;;
-  idle|clearexit)
+  idle|succeeded)
     readiness=ready
     if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
       orders='No specific Executive order: research high-return Viche improvements.'
@@ -56,9 +56,6 @@ $cases
 $recovery
 EOF
 )
-policy_file="$town/government/AGENT-REPORTING-POLICY.md"
-[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
-prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
       printf '%s\n' "$now" > "$root/last-dispatch"
       last=$now

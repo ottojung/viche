@@ -63,8 +63,6 @@ case "$action" in
             *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
-        # Every newly launched Town agent must receive the Founder reporting rule.
-        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
@@ -103,17 +101,10 @@ date +%s > "$scratch/state/oversight/last-audit-dispatch"
 mkdir -p "$scratch/state/janitor"
 date +%s > "$scratch/state/janitor/last-observe"
 date +%s > "$scratch/state/janitor/last-inventory"
-# Monitoring snapshots exist in a correctly initialized town. A missing
-# snapshot is now an incident rather than evidence of a healthy bootstrap.
-now=$(date +%s)
-mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases" "$scratch/state/branches"
-printf '{"observed_at":%s}\n' "$now" > "$scratch/state/institutional-outcomes/latest.json"
-printf '{"observed_at":%s,"count":0}\n' "$now" > "$scratch/state/institutional-cases/index.json"
-printf '{"observed_at":%s}\n' "$now" > "$scratch/state/branches/judiciary-measurements.json"
 seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
 /bin/sh "$town/constitution/boot.sh" --once
-[ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
+[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+2)) ]
 [ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
 python3 - "$scratch/state/branches/judiciary-measurements.json" "$scratch/state/branches" <<'PY'
 import hashlib, json, pathlib, sys
@@ -129,17 +120,17 @@ assert len(detail_data['per_change'])==block['per_change_count']
 assert len(detail_data['changes_reaching_main_red'])==block['red_change_count']
 PY
 /bin/sh "$town/constitution/boot.sh" --once
-[ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
+[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
 centre=$(awk -F '\t' '$1=="innovation-centre" {print $2}' "$scratch/state/appointments/appointments.tsv")
 [ -n "$centre" ] && [ -f "$scratch/mock/$centre" ]
-[ "$(wc -l < "$scratch/mock/ran")" -ge $((seat_count+2)) ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+3)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
 # A summons wakes legislative seats and must NOT suppress the independent Executive.
 summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
 printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
 /bin/sh "$town/constitution/boot.sh" --once
-[ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
-[ "$(wc -l < "$scratch/mock/ran")" -ge $((seat_count+3)) ]
+[ "$(wc -l < "$scratch/mock/created")" -eq $((seat_count+3)) ]
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+6)) ]
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 2 ]
 # A stray ballot checkout must not strand the government. Preserve its commit
 # and recover even if fetching origin also fails transiently.

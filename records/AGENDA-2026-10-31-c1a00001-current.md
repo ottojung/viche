@@ -1,1 +1,0 @@
-/var/lib/lubko/wd/viche/records/AGENDA-2026-10-31-c1a00001-sitting80.md

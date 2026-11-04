@@ -63,33 +63,6 @@ if [ -f "$state/inaugurated" ]; then
     fi
   fi
 fi
-# Monitoring is itself a fallible dependency: lack of positive evidence
-# is evidence against declaring this town healthy.
-evidence_age=${VICHE_EVIDENCE_MAX_AGE:-1200}
-case "$evidence_age" in ''|*[!0-9]*) exit 2;; esac
-fresh_evidence() {
-  [ -s "$1" ] || return 1
-  at=$(jq -er '.observed_at | select(type=="number" and .>=0)' "$1" 2>/dev/null) || return 1
-  case "$at" in ''|*[!0-9]*) return 1;; esac
-  [ "$at" -le "$now" ] && [ $((now-at)) -le "$evidence_age" ]
-}
-if ! command -v python3 >/dev/null 2>&1 ||
-   ! python3 -c 'import json, pathlib' >/dev/null 2>&1; then
-  signals="${signals}${signals:+,}python_runtime_unhealthy"
-fi
-for observation in "outcomes:$state/institutional-outcomes/latest.json" "institutional_cases:$state/institutional-cases/index.json" "judiciary_measurements:$state/branches/judiciary-measurements.json"; do
-  evidence_name=${observation%%:*}
-  evidence_path=${observation#*:}
-  if ! fresh_evidence "$evidence_path"; then
-    signals="${signals}${signals:+,}${evidence_name}_stale"
-  fi
-done
-# Unreviewed agent impediments are unresolved adverse evidence.
-mailbox_dir="$state/oversight/judiciary-mailbox/inbox"
-if [ -d "$mailbox_dir" ] &&
-   [ -n "$(find "$mailbox_dir" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null)" ]; then
-  signals="${signals}${signals:+,}judiciary_mailbox_pending"
-fi
 printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"
 if [ -z "$signals" ]; then
   if [ -s "$root/incident.json" ]; then

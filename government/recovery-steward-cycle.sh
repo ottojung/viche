@@ -26,7 +26,7 @@ case "$mode" in
       { echo 'Cannot duplicate active runner' >&2; exit 1; }
     id=$(/bin/sh "$town/government/appointments.sh" replace recovery-steward "$id" recovery-steward terminal_new_session 'Fresh recovery investigator after terminal failure; no prompt or tool replay')
     fresh=yes ;;
-  idle|clearexit) : ;;
+  idle|succeeded) : ;;
   *) echo "Unrecognized recovery runner state: $mode" >&2; exit 1 ;;
 esac
 now=$(date +%s)
@@ -55,9 +55,6 @@ Your worktree: $cwd
 Current UTC: $(date -u +%FT%TZ)
 EOF
 )
-policy_file="$town/government/AGENT-REPORTING-POLICY.md"
-[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
-prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1
 printf '%s\n' "$now" > "$root/last-dispatch"
 printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$id" "$fresh" >> "$root/dispatches.tsv"

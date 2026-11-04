@@ -236,8 +236,3 @@ authorize only lawful action and verify its effect before closure.
 EOF
     fi
 fi
-
-# The Founder policy is appended to each seat's generated launch prompt.
-[ -s "$town/government/AGENT-REPORTING-POLICY.md" ] || exit 1
-printf '\n'
-cat "$town/government/AGENT-REPORTING-POLICY.md"

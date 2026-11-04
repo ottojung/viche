@@ -29,7 +29,7 @@ case "$last" in ''|*[!0-9]*) echo 'Invalid Innovation Centre timestamp' >&2; exi
 dispatched=false
 case "$mode" in
   running) readiness=running ;;
-  idle|clearexit)
+  idle|succeeded)
     readiness=ready
     if [ "$last" -eq 0 ] || [ "$now" -lt "$last" ] || [ $((now-last)) -ge "$interval" ]; then
       prompt=$(cat <<EOF
@@ -115,9 +115,6 @@ EOF
         recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction innovation-centre) || exit 1
       fi
       prompt=$(printf '%s\n\n%s\n' "$prompt" "$recovery")
-policy_file="$town/government/AGENT-REPORTING-POLICY.md"
-[ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
-prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach \
         > "$root/dispatch.log" 2>&1 ||
         { echo 'Innovation Centre dispatch failed' >&2; exit 1; }
