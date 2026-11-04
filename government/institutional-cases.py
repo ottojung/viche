@@ -72,8 +72,6 @@ def collect():
 
 def owner(signal):
     # The law already authorizes operational continuity under Acts 2/5.
-    if signal == "judiciary_mailbox_pending":
-        return "judiciary"
     # Changing the offices or statutes requires actual parliamentary action.
     if signal.startswith("innovation_") or signal.startswith("continuity_"):
         return "executive"
@@ -119,7 +117,8 @@ def reconcile():
         elif not case:
             continue
         atomic(path, case)
-    open_cases = [read(p) for p in sorted(STORE.glob("*.json"))]
+    open_cases = [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+                  if isinstance(x, dict) and x.get("id")]
     active = [x for x in open_cases if x.get("state") == "open"]
     atomic(STORE / "index.json", {
         "observed_at": now, "active": [x["id"] for x in active],
@@ -129,8 +128,10 @@ def reconcile():
 
 
 def report():
-    return [read(p) for p in sorted(STORE.glob("*.json"))
-            if p.name != "index.json" and read(p).get("state") == "open"]
+    # Only case objects count. Addendum or malformed records (lists, empty
+    # files) are evidence to preserve, never crash conditions for the collector.
+    return [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+            if isinstance(x, dict) and x.get("state") == "open"]
 
 
 if __name__ == "__main__":
