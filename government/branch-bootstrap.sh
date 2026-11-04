@@ -61,10 +61,19 @@ if [ "$reset_due" = true ]; then
   antonina agent log --id "$id" --lines 200 > "$snapshot/log.txt" 2>&1 || :
   git -C "$cwd" status --short > "$snapshot/worktree.txt"
   oc_quiesce_for_reset "$id" || exit 1
+  oc_old_id=$id
   id=$(/bin/sh "$town/government/appointments.sh" replace "$branch" "$id" branch-bootstrap act19_failure_threshold 'Act 19 threshold reset after durable failure evidence and quiescence')
   printf '%s\n' "$now" > "$liv/last-reset-$branch"
   meta=$(antonina agent status --id "$id" --json)
   oc_clear_failures "$liv" "$branch"
+  # The hold belongs to the OLD unsafe invocation, which the reset replaced
+  # with a fresh reconciliatory appointment. Archive it like
+  # terminal-continuity.sh does; never silently block the office forever.
+  oc_hold=$state/liveness/unsafe-holds/$branch
+  if [ -s "$oc_hold" ] && grep -Fq "$oc_old_id" "$oc_hold"; then
+    mkdir -p "$liv/archived-unsafe-holds"
+    mv "$oc_hold" "$liv/archived-unsafe-holds/$branch-$oc_old_id-act19-reset" || :
+  fi
   printf '%s branch=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
     "$(date -u +%FT%TZ)" "$branch" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$liv/recoveries.log"
