@@ -42,7 +42,6 @@ if [ "$mode" = failed ]; then
     unsafe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == false then "yes" else "no" end')
     retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     oc_record_failure "$liv" "$branch" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$cwd" || exit 1
-    [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$liv" "$branch" "$id" "$invocation"
   else
     oc_surface_permanent "$liv" "$id" "$reason"
   fi

@@ -58,7 +58,8 @@ legislative clarification is needed. No legislation is enacted by this
 engineering change.
 
 Tests: `tests/appointments-smoke.sh` covers precise restart orphan
-recognition, non-replay, evidence preservation, idempotence, unsafe holds,
-old/new epoch mismatch, explicit backend errors and queued steers.
+recognition, non-replay, evidence preservation, idempotence, stale hold
+markers not blocking new appointments, old/new epoch mismatch, explicit
+backend errors and queued steers.
 `tests/continuity-incidents-smoke.sh` covers idempotent incident
 records and correct classification. Both are included in the full suite.
