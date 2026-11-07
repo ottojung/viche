@@ -47,7 +47,38 @@ def board_trail():
     if shutil.which('antonina') is None:
         out['reason']='antonina CLI unavailable'; return out
     try:
-        done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,timeout=30)
+        # Viche's OpenCode service supplies private XDG roots for its own
+        # service data. The Antonina CLI needs the user's shared credential and
+        # managed-agent registry instead. Correct only those known service
+        # roots (or unset/empty values); preserve valid caller-provided XDG
+        # roots so isolated installations continue to work.
+        cli_env=os.environ.copy()
+        home=Path.home()
+        xdg_defaults={
+            'XDG_CONFIG_HOME':home/'.config',
+            'XDG_STATE_HOME':home/'.local/state',
+        }
+        xdg_service_roots={
+            'XDG_CONFIG_HOME':home/'.local/state/antonina/opencode-service/config',
+            'XDG_STATE_HOME':home/'.local/state/antonina/opencode-service/state',
+        }
+        for key,default in xdg_defaults.items():
+            if cli_env.get(key) in (None,'',str(xdg_service_roots[key])):
+                cli_env[key]=str(default)
+        # The cross-check performs bounded board pagination per originating
+        # issue. A fixed 30s ceiling made the mandatory lens routinely stale
+        # even with valid credentials. Keep this synchronous but allow a
+        # bounded window sized to the mapping; each individual read remains
+        # retry-bounded and unreadable records remain explicitly unreadable.
+        mapping_rows=sum(1 for line in mapping.open() if line.strip() and
+                         not line.lstrip().startswith('#'))
+        # The scanner makes one or more paged board calls per such row. The
+        # 15-second allowance is a conservative per-row budget based on
+        # observed latency/retries; floor and cap bound both small-map
+        # overhead and pathological synchronous stalls.
+        timeout=max(120,min(900,30+mapping_rows*15))
+        done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,
+                            timeout=timeout,env=cli_env)
     except (subprocess.TimeoutExpired,OSError) as err:
         out['reason']='cross-check unavailable: '+str(err)[:160]; return out
     if done.returncode!=0:

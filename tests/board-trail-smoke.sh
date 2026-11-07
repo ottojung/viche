@@ -21,6 +21,14 @@ cat > "$scratch/bin/antonina" <<'MOCK'
 set -eu
 case "$1 $2" in
 "board show")
+    if [ "${ASSERT_STANDARD_XDG:-0}" = 1 ]; then
+        [ "$XDG_CONFIG_HOME" = "$EXPECTED_XDG_CONFIG_HOME" ] || {
+            echo "unexpected Antonina config root: $XDG_CONFIG_HOME" >&2; exit 91;
+        }
+        [ "$XDG_STATE_HOME" = "$EXPECTED_XDG_STATE_HOME" ] || {
+            echo "unexpected Antonina state root: $XDG_STATE_HOME" >&2; exit 92;
+        }
+    fi
     id=; prev=
     for a in "$@"; do [ "$prev" = "--id" ] && id=$a; prev=$a; done
     case "$id" in
@@ -54,6 +62,13 @@ jq -e 'select(.issue=="103") | .stage_markers=="proposal" and .chatter==0' "$scr
 jq -e 'select(.issue=="104") | .terminal==0 and .stage_markers=="" and .post_completion==1' "$scratch/rows" >/dev/null
 jq -e 'select(.issue=="105") | .terminal==0 and .stage_markers=="verification" and .post_completion==1' "$scratch/rows" >/dev/null
 jq -e 'select(.issue=="106") | .terminal==1 and .stage_markers=="verification" and .post_completion==1' "$scratch/rows" >/dev/null
+XDG_CONFIG_HOME=$HOME/.local/state/antonina/opencode-service/config
+XDG_STATE_HOME=$HOME/.local/state/antonina/opencode-service/state
+ASSERT_STANDARD_XDG=1
+EXPECTED_XDG_CONFIG_HOME=$HOME/.config
+EXPECTED_XDG_STATE_HOME=$HOME/.local/state
+export EXPECTED_XDG_CONFIG_HOME EXPECTED_XDG_STATE_HOME
+export XDG_CONFIG_HOME XDG_STATE_HOME ASSERT_STANDARD_XDG
 python3 "$scratch/town/government/judiciary-measurements.py" >/dev/null
 report=$scratch/state/branches/judiciary-measurements.json
 jq -e '.board_trail.status=="measured"' "$report" >/dev/null
@@ -61,4 +76,12 @@ jq -e '.board_trail.completed_total==6 and .board_trail.terminal_reached==2 and 
 jq -e '(.board_trail.git_only_gaps|length)==1 and .board_trail.git_only_gaps[0].issue=="102"' "$report" >/dev/null
 jq -e '.board_trail.dangling_trails==4 and .board_trail.content_standard_failures==1' "$report" >/dev/null
 jq -e '.no_proposals==true and .measurement_reliability=="not_established"' "$report" >/dev/null
+# Valid custom roots are preserved rather than overwritten.
+XDG_CONFIG_HOME=$scratch/custom-config
+XDG_STATE_HOME=$scratch/custom-state
+EXPECTED_XDG_CONFIG_HOME=$scratch/custom-config
+EXPECTED_XDG_STATE_HOME=$scratch/custom-state
+export XDG_CONFIG_HOME XDG_STATE_HOME EXPECTED_XDG_CONFIG_HOME EXPECTED_XDG_STATE_HOME
+python3 "$scratch/town/government/judiciary-measurements.py" >/dev/null
+jq -e '.board_trail.status=="measured"' "$report" >/dev/null
 echo 'Board-trail completeness lens smoke passed'
