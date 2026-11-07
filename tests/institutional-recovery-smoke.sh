@@ -58,63 +58,82 @@ grep -Fq 'old-agent' "$d/reconciliation-prompt"
 
 # Deterministic cross-branch case survives agent/process restarts.
 printf '{"signals":["innovation_stale"],"observed_at":1000}\n' > "$d/state/branches/incident.json"
-printf '1000\tinnovation_stale\tfixture-incident\n' > "$d/state/branches/observations.tsv"
+printf '1000\tinnovation_stale\n' > "$d/state/branches/observations.tsv"
 export VICHE_CASE_NOW=1000
 python3 "$repo/government/institutional-cases.py" reconcile > "$d/cases"
 jq -e '.open_cases | length==2' "$d/cases" >/dev/null
 jq -e '.state=="open" and .owner=="executive"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 jq -e '.state=="open" and .owner=="executive" and .first_seen==1000' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 rm "$d/state/branches/incident.json"
-printf '1100\tclear\tleg=1100,exe=1100,out=1100\n' >> "$d/state/branches/observations.tsv"
+printf '1100\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1100 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==1 and .last_clear_observation==1100' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 VICHE_CASE_NOW=1150 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-# Re-probing the SAME producer generations is a check, not a new observation.
-printf '1160\tclear\tleg=1100,exe=1100,out=1100\n' >> "$d/state/branches/observations.tsv"
-VICHE_CASE_NOW=1160 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-printf '1175\texecutive_unhealthy\tleg=1175,exe=1175,out=1175\n' >> "$d/state/branches/observations.tsv"
+printf '1175\texecutive_unhealthy\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1175 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-# An arbitrary evidence token is not a durable generation and cannot close.
-printf '1180\tclear\tevidence-a\n' >> "$d/state/branches/observations.tsv"
-VICHE_CASE_NOW=1180 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-printf '1200\tclear\tleg=1200,exe=1200,out=1200\n' >> "$d/state/branches/observations.tsv"
+printf '1200\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1200 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-printf '1250\tclear\tleg=1250,exe=1250,out=1250\n' >> "$d/state/branches/observations.tsv"
+printf '1250\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1250 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="verified_closed" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+# Healthy probes alone must NOT close an obligation: an independent, case-bound
+# verification artifact with resolvable evidence is required.
+jq -e '.state=="open" and .clear_observations==2 and .awaiting_independent_verification==true' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+mkdir -p "$d/state/verification" "$d/state/evidence"
+printf 'repair evidence\n' > "$d/state/evidence/repair.txt"
+digest=$(python3 -c 'import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "$d/state/evidence/repair.txt")
+write_artifact() {
+  printf '{"case_id":"%s","verified_by":"%s","verified_at":%s,"evidence":{"ref":"%s","sha256":"%s"}}\n' \
+    "$1" "$2" "$3" "$4" "$5" > "$d/state/verification/innovation_stale.json"
+}
+# Pre-dated artifact, wrong case identity, non-independent verifier, missing
+# evidence and a mismatched digest must all be refused.
+write_artifact 'innovation_stale:9999' clerk 1300 evidence/repair.txt "$digest"
+VICHE_CASE_NOW=1260 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' executive 1300 evidence/repair.txt "$digest"
+VICHE_CASE_NOW=1270 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 500 evidence/repair.txt "$digest"
+VICHE_CASE_NOW=1280 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 1300 evidence/missing.txt "$digest"
+VICHE_CASE_NOW=1290 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 1300 evidence/repair.txt "$(printf '0%.0s' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64)"
+VICHE_CASE_NOW=1295 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 1300 evidence/repair.txt "$digest"
+VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="verified_closed" and .closure_evidence.verified_by=="clerk" and .closure_evidence.evidence_sha256=="'"$digest"'"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 # Only a matching independent Judiciary verification can discharge the
 # uncertain-effects reconciliation case.
 printf '{"previous_agent":"old-agent","successor_agent":"new-agent","verified_by":"judiciary","verification_scope":"external_effect_reconciled","evidence_ref":"fixture:independent-reviewed-effects"}\n' > "$d/state/continuity/verified-innovation-centre.json"
-VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
-printf '1350\tclear\tleg=1350,exe=1350,out=1350\n' >> "$d/state/branches/observations.tsv"
-VICHE_CASE_NOW=1350 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
-printf '1450\tclear\tleg=1450,exe=1450,out=1450\n' >> "$d/state/branches/observations.tsv"
+jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '1450\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1450 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="verified_closed"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
-# Closure of a continuity case must cite THAT case'"'"'s independently verified
-# reconciliation evidence, not merely generic health recovery.
-jq -e '.closure_evidence.verified_by=="judiciary" and .closure_evidence.previous_agent=="old-agent" and .closure_evidence.evidence_ref=="fixture:independent-reviewed-effects"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
-# Withdrawing the case-specific receipt must block closure on a fresh case:
-# generic healthy probes are not sufficient evidence for a continuity
-# obligation, so the signal must reappear and the case must stay open.
-rm "$d/state/institutional-cases/continuity_unverified_innovation-centre.json"
-printf '{"signals":["continuity_unverified_innovation-centre"],"observed_at":1500}\n' > "$d/state/branches/incident.json"
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '1500\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-rm "$d/state/branches/incident.json" "$d/state/continuity/verified-innovation-centre.json"
-printf '1550\tclear\tleg=1550,exe=1550,out=1550\n' >> "$d/state/branches/observations.tsv"
-VICHE_CASE_NOW=1550 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-printf '1600\tclear\tleg=1600,exe=1600,out=1600\n' >> "$d/state/branches/observations.tsv"
+# Healthy probes plus a valid continuity receipt are still not closure.
+jq -e '.state=="open" and .clear_observations==2 and .awaiting_independent_verification==true' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '{"case_id":"continuity_unverified_innovation-centre:1000","verified_by":"judiciary","verified_at":1500,"evidence":{"ref":"evidence/repair.txt","sha256":"%s"}}\n' "$digest" > "$d/state/verification/continuity_unverified_innovation-centre.json"
+VICHE_CASE_NOW=1510 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="verified_closed" and .closure_evidence.verified_by=="judiciary" and .closure_evidence.continuity_receipt.previous_agent=="old-agent"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+# Withdrawing the case-specific receipt must keep a fresh case open: generic
+# healthy probes and generic artifacts are not continuity evidence.
+rm "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" "$d/state/continuity/verified-innovation-centre.json"
+printf '{"signals":["continuity_unverified_innovation-centre"],"observed_at":1600}\n' > "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1600 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+rm "$d/state/branches/incident.json"
+printf '1650\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1650 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+printf '1700\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1700 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
 # After a real enactment, Executive unit runs on preserved worktree, not a
