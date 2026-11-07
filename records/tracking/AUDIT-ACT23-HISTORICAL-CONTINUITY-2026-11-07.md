@@ -56,3 +56,7 @@ After this audit was published, the same summons text was dispatched to c1a0000b
 - **Independently checkable acceptance:** Clerk verifies the deliverable above exists at the recorded path/hash, records the verification, then removes `c1a0000b` from `records/SUMMONED.txt` (or replaces it with genuinely new work); the next convening must not re-issue this assignment. Auditor rechecks `records/SUMMONED.txt` contents and the summons hash afterward.
 - **Severity:** efficiency/attention cost only; no protected record, case object, or legal state was altered by the repeats. Not a recovery or truthfulness defect.
 - I did not edit `records/SUMMONED.txt` or the summons because they are Clerk-owned; doing so would usurp agenda authority and overwrite another office's state.
+
+## Publication
+
+This audit and the accompanying clearance request were published on branch `audit/c1a0000b-act23-continuity-review` (first commit `cad8d3399fa8f30c97c954ee6dc605ec5fd639ce`, based on `origin/main` 91a136e) so the record is durable and reviewable rather than existing only as an untracked working-tree file. The branch does not modify the reviewed tracker, any case object, or the index. A Clerk or independent reviewer should merge it if the findings are accepted.
