@@ -153,6 +153,21 @@ on, not enacted as drafted.
   whether the Act has been relied upon or deployed does not determine the
   record-validity question.
 
+## Independent verification performed
+
+On the base commit `7acb5ea`, in this seat worktree, read-only:
+
+- `sh tests/ballot-integrity.sh` → exit 1, with exactly ten `Digest mismatch`
+  lines for `records/ballots/executive-innovation-office-act.tsv`.
+- `sh tests/records-smoke.sh` → exit 0 (records carry no conflict markers).
+- Re-hashing the current bill and the bill with the inserted block removed
+  reproduces `ae39df45…` and `647449cc…` respectively; `git show
+  3be8aa5:records/ballots/executive-innovation-office-act.tsv` contains one row,
+  not ten.
+
+These checks establish the byte mismatch and the one-row consolidation. They do
+not establish which instruction governed, and they do not authorize a fix.
+
 ## Recommendation
 
 Do **not** apply Option A directly. Parliament should treat the mismatch as a
