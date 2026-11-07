@@ -6,6 +6,7 @@ d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
 mkdir -p "$d/town/government" "$d/state/oversight/random" "$d/seats/branches/judiciary" "$d/bin"
 cp "$repo/government/audit-cycle.sh" "$d/town/government/audit-cycle.sh"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
 printf 'Charter\n' > "$d/charter"
 printf 'observation\n' > "$d/state/oversight/observations.tsv"
 printf 'incident\n' > "$d/state/oversight/incident.json"
