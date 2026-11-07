@@ -45,9 +45,12 @@ if [ "$reset_due" = true ]; then
   git -C "$seats/$seat_id" rev-parse HEAD > "$snapshot/worktree-head.txt"
   # Persist the attempted recovery before any destructive agent-metadata operation.
   oc_quiesce_for_reset "$id" || exit 1
+  oc_old_id=$id
   id=$(/bin/sh "$town/government/appointments.sh" replace "$seat_id" "$id" clerk-liveness act19_failure_threshold 'Act 19 threshold reset after durable failure evidence and quiescence')
   printf '%s\n' "$now" > "$state/last-reset-$seat_id"
   oc_clear_failures "$state" "$seat_id"
+  oc_archive_hold "$state" "$seat_id" "$oc_old_id" ||
+    echo "Viche: could not archive the old unsafe hold for $seat_id; evidence may remain" >&2
   printf '%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
     "$(date -u +%FT%TZ)" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$state/recoveries.log"

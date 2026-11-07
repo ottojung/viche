@@ -144,6 +144,41 @@ oc_clear_failures() {
   return 0
 }
 
+# Archive the unsafe-hold lines that belong to ONE failed agent before its
+# appointment is replaced. Unlike a blind `mv`, this keeps holds belonging to
+# other invocations and never overwrites earlier archived evidence, so repeated
+# recovery is idempotent. A hold is evidence of the old request, not a veto on
+# the replacement agent.
+# $1 liveness dir, $2 office/seat key, $3 old agent id
+oc_archive_hold() {
+  oc_hold_id=${3:-}
+  [ -n "$oc_hold_id" ] || return 0
+  oc_hold_file=$1/unsafe-holds/$2
+  [ -s "$oc_hold_file" ] || return 0
+  awk -F '\t' -v id="$oc_hold_id" '$2==id {found=1} END {exit found?0:1}' \
+    "$oc_hold_file" || return 0
+  oc_hold_dir=$1/archived-unsafe-holds
+  mkdir -p "$oc_hold_dir" || return 1
+  oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id
+  oc_hold_n=0
+  while [ -e "$oc_hold_backup" ]; do
+    oc_hold_n=$((oc_hold_n + 1))
+    oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id.$oc_hold_n
+  done
+  awk -F '\t' -v id="$oc_hold_id" '$2==id' "$oc_hold_file" >> "$oc_hold_backup" || return 1
+  oc_hold_tmp=$oc_hold_file.tmp.$$
+  if ! awk -F '\t' -v id="$oc_hold_id" '$2!=id' "$oc_hold_file" > "$oc_hold_tmp"; then
+    rm -f "$oc_hold_tmp"
+    return 1
+  fi
+  if [ -s "$oc_hold_tmp" ]; then
+    mv -f "$oc_hold_tmp" "$oc_hold_file" || return 1
+  else
+    rm -f "$oc_hold_tmp" "$oc_hold_file"
+  fi
+  return 0
+}
+
 # Surface a permanent or UNCLASSIFIED failure exactly once per agent and
 # classification. An absent backend_error is NOT evidence of permanence.
 # Durable incident records survive restart without flooding each sitting.

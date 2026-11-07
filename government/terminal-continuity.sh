@@ -98,11 +98,10 @@ tmp=$(mktemp "$root/reconciled.XXXXXXXX")
 jq -c --arg new "$new" '. + {state:"awaiting_reconciliation",successor_agent:$new}' "$receipt" > "$tmp"
 mv -f "$tmp" "$receipt"
 # A hold on the OLD request is valid evidence, not a prohibition on a NEW
-# reconciliatory appointment. Archive it instead of erasing it.
-hold=$state/liveness/unsafe-holds/$office
-if [ -s "$hold" ] && grep -Fq "$id" "$hold"; then
-  mkdir -p "$state/liveness/archived-unsafe-holds"
-  mv "$hold" "$state/liveness/archived-unsafe-holds/$office-$id" || :
-fi
+# reconciliatory appointment. Archive only this agent's lines, preserving any
+# other invocation's holds and earlier archives.
+. "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/office-continuity.sh"
+oc_archive_hold "$state/liveness" "$office" "$id" ||
+  echo "Viche: could not archive the old unsafe hold for $office; evidence may remain" >&2
 printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$office" "$id" "$new" >> "$root/reappointments.tsv"
 echo "Viche continuity: $office reappointed from $id to $new; no prompt replay" >&2

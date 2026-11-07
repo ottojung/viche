@@ -100,7 +100,16 @@ run_branch
 id3=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id3" = "$id2"
 set_status failed "$((base+2))" run-3 upstream_endpoint_unavailable true true "$id3"
+# A pre-existing hold for exactly this failed invocation must be archived by
+# the threshold reset, not left to block the office and not silently erased.
+mkdir -p "$VICHE_STATE_ROOT/liveness/unsafe-holds"
+printf 'executive\t%s\trun-3\n' "$id3" > "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
 MOCK_REVIVE_ON_LOG=$id3 run_branch
+test -s "$VICHE_STATE_ROOT/liveness/archived-unsafe-holds/executive-$id3" ||
+  { echo 'Threshold reset did not archive the old unsafe hold' >&2; exit 1; }
+grep -Fq "$id3" "$VICHE_STATE_ROOT/liveness/archived-unsafe-holds/executive-$id3"
+test ! -e "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive" ||
+  { echo 'Archived unsafe hold still blocks the office' >&2; exit 1; }
 test "$(grep -c -Fx "$id3" "$MOCK_ROOT/stops")" -eq 1 ||
   { echo 'Running appointee was not stopped exactly once before reset' >&2; exit 1; }
 id4=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
@@ -122,6 +131,26 @@ jq -e --arg prior "$id3" '.caller=="branch-bootstrap" and .trigger=="act19_failu
 oc_quiesce_for_reset_test_id=$id4
 set_status running "$((base+5))" run-running idle false true "$oc_quiesce_for_reset_test_id"
 . "$repo/government/office-continuity.sh"
+# Archiving one agent's hold must preserve another invocation's hold and must
+# not overwrite evidence if recovery runs twice.
+holdtest=$d/holdtest/liveness
+mkdir -p "$holdtest/unsafe-holds"
+printf 'executive\told-a\trun-a\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-b\trun-b\n' >> "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-a
+test -s "$holdtest/archived-unsafe-holds/executive-old-a" ||
+  { echo 'Archive helper did not retain the old hold' >&2; exit 1; }
+grep -Fq old-a "$holdtest/archived-unsafe-holds/executive-old-a"
+! grep -Fq old-a "$holdtest/unsafe-holds/executive" ||
+  { echo 'Archived agent still appears in the live hold file' >&2; exit 1; }
+grep -Fq old-b "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-a
+test "$(find "$holdtest/archived-unsafe-holds" -name 'executive-old-a*' | wc -l | tr -d ' ')" -eq 1 ||
+  { echo 'Repeated archive created a duplicate record' >&2; exit 1; }
+oc_archive_hold "$holdtest" executive old-b
+test ! -e "$holdtest/unsafe-holds/executive" ||
+  { echo 'Empty hold file was not removed' >&2; exit 1; }
+test -s "$holdtest/archived-unsafe-holds/executive-old-b"
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
