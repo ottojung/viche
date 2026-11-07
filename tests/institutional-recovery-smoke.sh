@@ -93,16 +93,35 @@ write_artifact() {
 # evidence and a mismatched digest must all be refused.
 write_artifact 'innovation_stale:9999' clerk 1300 evidence/repair.txt "$digest"
 VICHE_CASE_NOW=1260 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2 and .awaiting_independent_verification==true' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 write_artifact 'innovation_stale:1000' executive 1300 evidence/repair.txt "$digest"
 VICHE_CASE_NOW=1270 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 write_artifact 'innovation_stale:1000' clerk 500 evidence/repair.txt "$digest"
 VICHE_CASE_NOW=1280 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 write_artifact 'innovation_stale:1000' clerk 1300 evidence/missing.txt "$digest"
 VICHE_CASE_NOW=1290 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+# Evidence outside the state root, path traversal and symlinks are refused:
+# the cited artifact must be a real regular file under the state root.
+write_artifact 'innovation_stale:1000' clerk 1300 /etc/hostname "$(python3 -c 'import hashlib;print(hashlib.sha256(open("/etc/hostname","rb").read()).hexdigest())')"
+VICHE_CASE_NOW=1292 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 1300 ../../etc/hostname "$(python3 -c 'import hashlib;print(hashlib.sha256(open("/etc/hostname","rb").read()).hexdigest())')"
+VICHE_CASE_NOW=1294 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+ln -s /etc/hostname "$d/state/evidence/link.txt"
+write_artifact 'innovation_stale:1000' clerk 1300 evidence/link.txt "$(python3 -c 'import hashlib;print(hashlib.sha256(open("/etc/hostname","rb").read()).hexdigest())')"
+VICHE_CASE_NOW=1296 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+# A JSON boolean is not a timestamp; a future-dated artifact is not evidence.
+printf '{"case_id":"innovation_stale:1000","verified_by":"clerk","verified_at":true,"evidence":{"ref":"evidence/repair.txt","sha256":"%s"}}\n' "$digest" > "$d/state/verification/innovation_stale.json"
+VICHE_CASE_NOW=1297 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+write_artifact 'innovation_stale:1000' clerk 999999 evidence/repair.txt "$digest"
+VICHE_CASE_NOW=1298 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 write_artifact 'innovation_stale:1000' clerk 1300 evidence/repair.txt "$(printf '0%.0s' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64)"
 VICHE_CASE_NOW=1295 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
@@ -125,15 +144,21 @@ printf '{"case_id":"continuity_unverified_innovation-centre:1000","verified_by":
 VICHE_CASE_NOW=1510 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="verified_closed" and .closure_evidence.verified_by=="judiciary" and .closure_evidence.continuity_receipt.previous_agent=="old-agent"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 # Withdrawing the case-specific receipt must keep a fresh case open: generic
-# healthy probes and generic artifacts are not continuity evidence.
+# healthy probes are not continuity evidence, and even a matching artifact
+# cannot substitute for the missing reconciliation receipt.
 rm "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" "$d/state/continuity/verified-innovation-centre.json"
 printf '{"signals":["continuity_unverified_innovation-centre"],"observed_at":1600}\n' > "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1600 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+cid=$(jq -r '.id' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json")
+printf '{"case_id":"%s","verified_by":"judiciary","verified_at":1700,"evidence":{"ref":"evidence/repair.txt","sha256":"%s"}}\n' "$cid" "$digest" > "$d/state/verification/continuity_unverified_innovation-centre.json"
 rm "$d/state/branches/incident.json"
 printf '1650\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1650 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 printf '1700\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1700 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '1750\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1750 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
 # After a real enactment, Executive unit runs on preserved worktree, not a

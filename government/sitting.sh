@@ -206,8 +206,11 @@ $cases
 === END CORRECTIVE OBLIGATIONS ===
 Preserve identity across sittings. Judiciary independently measures;
 Parliament authorizes changes to ordinary law when needed; Executive
-implements authorized repairs. Case closure requires disappearance of the
-failure confirmed by repeated deterministic observation, not an agent exit.
+implements authorized repairs. Healthy branch probes are only a precondition:
+closure requires a case-bound verification artifact for that case id, recorded
+by an independent office, whose cited evidence still resolves and matches its
+recorded digest. A disappearance of the symptom alone, an agent exit, or a
+repeated probe is not closure.
 EOF
 fi
 

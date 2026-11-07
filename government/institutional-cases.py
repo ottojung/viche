@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import pathlib
+import stat
 import tempfile
 import time
 
@@ -20,7 +21,7 @@ STORE = ROOT / "institutional-cases"
 def read(path):
     try:
         return json.loads(path.read_text())
-    except (FileNotFoundError, ValueError):
+    except (OSError, ValueError):
         return {}
 
 
@@ -123,26 +124,55 @@ def latest_health_observation():
 
 
 INDEPENDENT_VERIFIERS = ("judiciary", "clerk")
+MAX_EVIDENCE_BYTES = 4 * 1024 * 1024
 
 
-def verification_artifact(case):
-    """Validate the case-bound independent verification artifact, or None.
+def _is_int(value):
+    # JSON booleans satisfy isinstance(x, int); they are not timestamps.
+    return type(value) is int
 
-    A case may only close on evidence produced by an independent office for
-    THAT case. Requirements are deliberately strict because the earlier
-    "healthy observation" schemes let the reconciler's own clock stand in for
-    evidence:
 
-      * ``case_id`` equals this case's id (a receipt cannot be reused for a
-        later case for the same signal);
-      * ``verified_by`` is an independent office, never the Executive that
-        owns the repair;
-      * ``verified_at`` is later than ``first_seen`` (no pre-dated artifact);
-      * ``evidence`` names a durable file that still exists and whose sha256
-        matches what the verifier recorded (tamper-evident, checkable).
+def _within_root(ref):
+    """True only for a real regular file inside ROOT, reached without symlinks."""
+    relative = pathlib.PurePath(ref)
+    if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+        return False
+    path = ROOT
+    for part in relative.parts:
+        path = path / part
+        # Reject symlinks anywhere on the path inside the state root.
+        if path.is_symlink():
+            return False
+    try:
+        info = path.lstat()
+    except OSError:
+        return False
+    return stat.S_ISREG(info.st_mode) and info.st_size <= MAX_EVIDENCE_BYTES
+
+
+def verification_artifact(case, now):
+    """Validate the case-bound verification artifact, or None.
+
+    Closure needs evidence recorded for THIS case by an office other than the
+    one that owns the repair:
+
+      * ``case_id`` equals this case's id (no reuse for a later case);
+      * ``verified_by`` names an independent office;
+      * ``first_seen < verified_at <= last_seen <= now``: the verification must
+        postdate the last observed failure and cannot be future-dated;
+      * ``evidence`` names a regular file inside the state root, reached with
+        no symlinks and within a size cap, whose sha256 matches the recorded
+        digest.
+
+    Honest limit: all offices run as the same host user, so this validates the
+    artifact's contents, not who wrote it. Provenance is enforced by process
+    (the verification pipeline is the only intended writer), not by
+    cryptography.
     """
     signal = case.get("signal")
-    if not signal:
+    if not isinstance(signal, str) or not signal:
+        return None
+    if not signal.replace("_", "").replace("-", "").isalnum():
         return None
     path = ROOT / "verification" / (signal + ".json")
     artifact = read(path)
@@ -152,9 +182,10 @@ def verification_artifact(case):
         return None
     verified_at = artifact.get("verified_at")
     first_seen = case.get("first_seen")
-    if not isinstance(verified_at, int) or not isinstance(first_seen, int):
+    last_seen = case.get("last_seen", first_seen)
+    if not (_is_int(verified_at) and _is_int(first_seen) and _is_int(last_seen)):
         return None
-    if verified_at <= first_seen:
+    if not (first_seen < verified_at <= now and last_seen <= verified_at):
         return None
     evidence = artifact.get("evidence")
     if not isinstance(evidence, dict):
@@ -165,22 +196,22 @@ def verification_artifact(case):
         return None
     if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
         return None
-    target = pathlib.Path(ref)
-    if not target.is_absolute():
-        target = ROOT / ref
+    if not _within_root(ref):
+        return None
     try:
-        data = target.read_bytes()
+        data = (ROOT / ref).read_bytes()
     except OSError:
         return None
     if hashlib.sha256(data).hexdigest() != digest:
         return None
     return {
-        "artifact": str(path.relative_to(ROOT)),
+        "artifact": "verification/" + signal + ".json",
         "case_id": case.get("id"),
         "verified_by": artifact.get("verified_by"),
         "verified_at": verified_at,
         "evidence_ref": ref,
         "evidence_sha256": digest,
+        "provenance": "declared_by_artifact_content_not_cryptographically_enforced",
     }
 
 
@@ -196,6 +227,9 @@ def owner(signal):
     return "legislature"
 
 
+META_SIGNALS = {"case_awaiting_verification"}
+
+
 def reconcile():
     now, signals = collect()
     health_observation = latest_health_observation()
@@ -204,6 +238,10 @@ def reconcile():
     names = set(signals) | {p.stem for p in existing}
     for signal in sorted(names):
         if not signal.replace("_", "").replace("-", "").isalnum():
+            continue
+        if signal in META_SIGNALS:
+            # Advisory: derived from open cases, so it must not become a case
+            # itself (that would be self-referential and unclosable).
             continue
         path = STORE / (signal + ".json")
         case = read(path)
@@ -231,6 +269,7 @@ def reconcile():
             if health_observation is None or health_observation[1] != "clear":
                 case["clear_observations"] = 0
                 case.pop("last_clear_observation", None)
+                case.pop("awaiting_independent_verification", None)
             elif (health_observation[0] > case.get("last_seen", case.get("first_seen", 0))
                   and health_observation[0] != case.get("last_clear_observation")):
                 case["clear_observations"] = case.get("clear_observations", 0) + 1
@@ -239,7 +278,7 @@ def reconcile():
                 # Healthy probes are necessary but NOT sufficient. An open
                 # case closes only on a case-bound artifact from an
                 # independent office whose cited evidence resolves.
-                artifact = verification_artifact(case)
+                artifact = verification_artifact(case, now)
                 continuity = None
                 if signal.startswith("continuity_unverified_"):
                     continuity = continuity_receipt(signal[len("continuity_unverified_"):])

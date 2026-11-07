@@ -96,4 +96,12 @@ restamp 5600
 sh "$repo/government/branch-health.sh"
 VICHE_CASE_NOW=5600 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .awaiting_independent_verification==true' "$scratch/institutional-cases/outcomes_stale.json" >/dev/null
+# A stuck obligation must be visible and routed, not silently healthy, and the
+# advisory signal must not become a self-referential case.
+VICHE_BRANCH_NOW=5700; export VICHE_BRANCH_NOW
+restamp 5700
+sh "$repo/government/branch-health.sh" >/dev/null 2>&1 && exit 1
+jq -e '.signals|index("case_awaiting_verification")' "$scratch/branches/incident.json" >/dev/null
+VICHE_CASE_NOW=5700 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+[ ! -e "$scratch/institutional-cases/case_awaiting_verification.json" ]
 echo 'Three-branch liveness and Judiciary self-measurement smoke passed'
