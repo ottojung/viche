@@ -161,6 +161,19 @@ printf '1750\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1750 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
+# Historical closures without a case-bound artifact stay discoverable in the
+# index even though their stored state is not rewritten. Non-case records
+# (list-shaped addenda) must not crash the collector or be overwritten.
+printf '[{"case":"legacy","role":"addendum-evidence-only"}]\n' > "$d/state/institutional-cases/addendum-fixture.json"
+printf '{"id":"legacy_closed:1","signal":"legacy_closed","state":"verified_closed","verified_at":100,"verification":"absent-signal probes","closure_evidence":null}\n' > "$d/state/institutional-cases/legacy_closed.json"
+printf '{"id":"legacy_evidenced:2","signal":"legacy_evidenced","state":"verified_closed","verified_at":100,"closure_evidence":{"verified_by":"judiciary","evidence_ref":"x"}}\n' > "$d/state/institutional-cases/legacy_evidenced.json"
+VICHE_CASE_NOW=1800 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="verified_closed" and .closure_evidence==null' "$d/state/institutional-cases/legacy_closed.json" >/dev/null
+jq -e '[.unresolved_without_closure_evidence[].id] | index("legacy_closed:1") != null' "$d/state/institutional-cases/index.json" >/dev/null
+jq -e '[.unresolved_without_closure_evidence[].id] | index("legacy_evidenced:2") == null' "$d/state/institutional-cases/index.json" >/dev/null
+jq -e '[.active[]] | index("legacy_closed:1") == null' "$d/state/institutional-cases/index.json" >/dev/null
+jq -e 'length==1 and .[0].role=="addendum-evidence-only"' "$d/state/institutional-cases/addendum-fixture.json" >/dev/null
+
 # After a real enactment, Executive unit runs on preserved worktree, not a
 # parliamentary summons. Mock only the branch-bootstrap and deployment.
 printf '## Act 23 — Executive Innovation Office Act (enacted 2026-10-25 by recorded vote)\n' > "$d/town/government/LAWS.md"

@@ -245,6 +245,11 @@ def reconcile():
             continue
         path = STORE / (signal + ".json")
         case = read(path)
+        # Addendum/evidence files in this directory are not case objects. A
+        # malformed or list-shaped record is evidence to preserve, never a
+        # reason for the collector to crash and leave the index stale.
+        if not isinstance(case, dict):
+            case = {}
         if signal in signals:
             if not case or case.get("state") == "verified_closed":
                 case = {
@@ -298,18 +303,49 @@ def reconcile():
         elif not case:
             continue
         atomic(path, case)
-    open_cases = [read(p) for p in sorted(STORE.glob("*.json"))]
-    active = [x for x in open_cases if x.get("state") == "open"]
+    records = [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+               if isinstance(x, dict) and x.get("id")]
+    active = [x for x in records if x.get("state") == "open"]
+    # A closed label is not resolution evidence. Some historical cases were
+    # closed by the old absent-signal path and carry no case-bound artifact.
+    # They must remain visible to monitoring and to the responsible office
+    # until an authorized reconciliation supplies that evidence.
+    unresolved = [x for x in records if closure_unsubstantiated(x)]
     atomic(STORE / "index.json", {
-        "observed_at": now, "active": [x["id"] for x in active],
-        "count": len(active), "caveat": "operational health, not proof of delivery",
+        "observed_at": now,
+        "active": [x["id"] for x in active],
+        "count": len(active),
+        "unresolved_without_closure_evidence": [
+            {"id": x.get("id"), "signal": x.get("signal"), "state": x.get("state"),
+             "reason": "verified_closed without a case-bound closure artifact"}
+            for x in unresolved],
+        "unresolved_without_closure_evidence_count": len(unresolved),
+        "total_obligations": len(active) + len(unresolved),
+        "caveat": "operational health, not proof of delivery; a closed label "
+                  "without a case-bound closure artifact is listed as unresolved",
     })
     return active
 
 
+def closure_unsubstantiated(case):
+    """True for a closed case whose closure is not backed by a case artifact.
+
+    Historical closures from the absent-signal path have no closure_evidence.
+    An artifact explicitly marked closure_eligible=false is likewise not
+    resolution. This does not reopen or rewrite the case object; it keeps the
+    obligation discoverable.
+    """
+    if case.get("state") != "verified_closed":
+        return False
+    evidence = case.get("closure_evidence")
+    if not isinstance(evidence, dict) or not evidence:
+        return True
+    return evidence.get("closure_eligible") is False
+
+
 def report():
-    return [read(p) for p in sorted(STORE.glob("*.json"))
-            if p.name != "index.json" and read(p).get("state") == "open"]
+    return [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+            if isinstance(x, dict) and x.get("id") and x.get("state") == "open"]
 
 
 if __name__ == "__main__":
