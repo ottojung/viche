@@ -7,6 +7,7 @@ trap 'rm -rf "$d"' 0
 mkdir -p "$d/bin" "$d/town/government" "$d/state" "$d/seats/c1a00001" "$d/charter" "$d/mock"
 printf 'c1a00001\tClerk\tFounder intake\n' > "$d/town/government/seats.tsv"
 printf 'Protected constitution fixture\n' > "$d/charter/CONSTITUTION.md"
+printf 'Report material blockers to the Judiciary mailbox.\n' > "$d/town/government/AGENT-REPORTING-POLICY.md"
 cat > "$d/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
@@ -18,7 +19,17 @@ case "$1 $2" in
   jq -c --argjson page "$page" '{messages:(.messages | (length) as $n | .[([0,$n-$page*50]|max):($n-($page-1)*50)])}' "$MOCK_DIR/comments"
   ;;
 'board feed')
-  echo '{"entries":[]}'
+  if [ ! -s "$MOCK_DIR/feed" ]; then
+    echo '{"entries":[]}'
+  else
+    page=1
+    limit=100
+    while [ "$#" -gt 0 ]; do
+      case "$1" in --page) page=$2; shift 2;; --limit) limit=$2; shift 2;; *) shift;; esac
+    done
+    jq -c --argjson start "$(((page-1)*limit))" --argjson end "$((page*limit))" \
+      '{entries:(.entries[$start:$end])}' "$MOCK_DIR/feed"
+  fi
   ;;
 'agent status')
   printf '{"state":"%s"}\n' "$(cat "$MOCK_DIR/status")"
@@ -94,4 +105,22 @@ oldfile=$(find "$d/state/founder-inbox/sent" -name '*.json' | head -n 1)
 touch -d '11 minutes ago' "$oldfile"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 4 ]
+# Feed cursors are opaque event identities, not necessarily numeric positions.
+# The saved anchor can be on a later page; process every newer item exactly once.
+jq -n '{entries:[range(0;102)|
+  {id:("sha256:message-"+(.|tostring)),position:(1000-.),
+   author:(if .==0 then "Vitalik" else "other" end),
+   issueNumber:"303",at:"2026-10-15T01:00:00Z",body:"new instruction"}]}' > "$d/mock/feed"
+printf '%s\n' 'sha256:message-101' > "$d/state/founder-inbox/feed-cursor"
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'sha256:message-0' ]
+[ "$(wc -l < "$d/mock/calls")" -eq 5 ]
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(wc -l < "$d/mock/calls")" -eq 5 ]
+# An unknown prior anchor must never be silently skipped during a cutover.
+printf '%s\n' 'sha256:missing-event' > "$d/state/founder-inbox/feed-cursor"
+if /bin/sh "$repo/government/founder-intake.sh" >/dev/null 2>&1; then
+  echo 'Missing founder feed anchor was incorrectly accepted' >&2; exit 1
+fi
+[ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'sha256:missing-event' ]
 echo 'Viche Founder intake smoke passed'

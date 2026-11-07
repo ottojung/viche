@@ -40,22 +40,31 @@ if [ -n "$latest" ]; then
   mv "$d/cursor" "$q/town-cursor"
 fi
 # Board activity outside Town Hall, using monotonic positions.
-last=0
+last=
 [ ! -s "$q/feed-cursor" ] || last=$(cat "$q/feed-cursor")
-case "$last" in ''|*[!0-9]*) exit 1;; esac
+# Board v4 publishes stable opaque message IDs. Older intake runs stored
+# numeric positions; accept those until the next successful observation, then
+# persist the entry ID instead. Never discard an unrecognized durable anchor.
+last_kind=id
+case "$last" in ''|*[!0-9]*) :;; *) last_kind=position;; esac
 page=1
-first=0
+first=
 while :; do
   antonina board feed --page "$page" --limit 100 --json > "$d/feed"
   jq -e '.entries|type=="array"' "$d/feed" >/dev/null
   count=$(jq '.entries|length' "$d/feed")
   [ "$count" -gt 0 ] || break
-  [ "$first" -gt 0 ] || first=$(jq -r '.entries[0].position // 0' "$d/feed")
+  [ -n "$first" ] || first=$(jq -r '.entries[0].id // empty' "$d/feed")
   stop=0
   jq -c '.entries[]' "$d/feed" > "$d/items"
   while IFS= read -r line; do
     pos=$(printf '%s\n' "$line" | jq -r '.position // 0')
-    if [ "$last" -gt 0 ] && [ "$pos" -le "$last" ]; then stop=1; break; fi
+    entry_id=$(printf '%s\n' "$line" | jq -r '.id // empty')
+    if [ "$last_kind" = id ]; then
+      if [ -n "$last" ] && [ "$entry_id" = "$last" ]; then stop=1; break; fi
+    elif [ -n "$last" ] && [ "$pos" -le "$last" ]; then
+      stop=1; break
+    fi
     [ "$(printf '%s\n' "$line" | jq -r '.author // empty')" = Vitalik ] || continue
     issue=$(printf '%s\n' "$line" | jq -r '.issueNumber // empty')
     [ "$issue" != "$VICHE_TOWNHALL_ID" ] || continue
@@ -68,11 +77,17 @@ while :; do
     mv "$d/new" "$q/pending/$key.json"
   done < "$d/items"
   [ "$stop" -eq 0 ] || break
-  [ "$last" -gt 0 ] || break
+  [ -n "$last" ] || break
   [ "$count" -eq 100 ] || break
   page=$((page+1))
 done
-if [ "$first" -gt 0 ]; then
+# The source may have been compacted or changed. Do not silently jump past
+# an unseen Founder instruction if our exact prior event cannot be located.
+if [ "$last_kind" = id ] && [ -n "$last" ] && [ "$stop" -eq 0 ]; then
+  echo "Founder feed cursor not found in board history: $last" >&2
+  exit 1
+fi
+if [ -n "$first" ]; then
   printf '%s\n' "$first" > "$d/cursor"
   mv "$d/cursor" "$q/feed-cursor"
 fi
