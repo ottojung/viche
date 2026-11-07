@@ -200,6 +200,16 @@ test -s "$holdtest/archived-unsafe-holds/executive-old-h" &&
   { echo 'Concurrent archiving lost a hold' >&2; exit 1; }
 test ! -e "$holdtest/unsafe-holds/executive" ||
   { echo 'Concurrent archiving left the hold file behind' >&2; exit 1; }
+# A missing hold directory or file is a fast no-op: no lock is created, no
+# error is printed, and no bounded wait is burned.
+rm -rf "$holdtest/unsafe-holds"
+if ! oc_archive_hold "$holdtest" executive nobody 2>"$d/nohold.err"; then
+  echo 'Absent hold directory made archiving fail' >&2; exit 1
+fi
+test ! -s "$d/nohold.err" ||
+  { echo 'Absent hold directory produced error output' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds" ||
+  { echo 'Archiving created a lock without a hold' >&2; exit 1; }
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
