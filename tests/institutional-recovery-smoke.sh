@@ -32,6 +32,7 @@ esac
 MOCK
 chmod +x "$d/bin/antonina" "$d/town/government/appointments.sh"
 cp "$repo/government/EXECUTIVE-INNOVATION.md" "$d/town/government/EXECUTIVE-INNOVATION.md"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
 printf '# Historic Act 14 — Legislative Centre\n' > "$d/town/government/LAWS.md"
 printf 'Founder-controlled fixture Constitution\n' > "$d/charter"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"

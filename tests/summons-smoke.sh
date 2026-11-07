@@ -5,6 +5,7 @@ repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 mkdir -p "$scratch/government" "$scratch/records/summons" "$scratch/state"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/government/AGENT-REPORTING-POLICY.md"
 printf 'c1a00001\tClerk\tintake\nc1a00002\tExecutive\tdelivery\nc1a00004\tResearch\tmetrics\nc1a00005\tResource\taudit\n' > "$scratch/government/seats.tsv"
 printf '%s\n' 'UNIQUE ACT 10 CGROUP ASSIGNMENT' > "$scratch/records/summons/c1a00004.md"
 VICHE_TOWN_ROOT=$scratch

@@ -9,6 +9,7 @@ printf 'c1a00001\tClerk\tlegislature\n' > "$scratch/town/government/seats.tsv"
 printf '%s\n' c1e00011 > "$scratch/town/records/SUMMONED.txt"
 printf 'Founder test constitution, model neutral\n' > "$scratch/constitution"
 touch "$scratch/state/inaugurated"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
 cat > "$scratch/town/government/branch-bootstrap.sh" <<'BOOT'
 #!/bin/sh
 mkdir -p "$VICHE_SEATS_ROOT/branches/innovation-centre"
