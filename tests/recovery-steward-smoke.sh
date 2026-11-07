@@ -9,6 +9,7 @@ mkdir -p "$d/bin" "$d/home" "$d/town/government" "$d/seats" "$d/state" "$d/mock"
 git init -q "$d/town"
 git -C "$d/town" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm start
 cp "$repo/government/RECOVERY-STEWARD.md" "$d/town/government/"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/"
 printf 'test-authoritative-charter\n' > "$d/charter"
 printf 'old-agent\n' > "$d/mock/registry"
 cat > "$d/town/government/appointments.sh" <<'MOCK'

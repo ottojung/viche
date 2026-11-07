@@ -5,7 +5,9 @@ repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 mkdir -p "$scratch/town/government" "$scratch/town/records" "$scratch/bin" "$scratch/state/branches"
+mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases"
 printf 'c1a00001\tClerk\tlegislature\n' > "$scratch/town/government/seats.tsv"
+printf '# Current-law fixture\n' > "$scratch/town/government/LAWS.md"
 printf '%s\n' c1e00011 > "$scratch/town/records/SUMMONED.txt"
 printf 'Founder test constitution, model neutral\n' > "$scratch/constitution"
 touch "$scratch/state/inaugurated"
@@ -47,6 +49,7 @@ DISPATCHES=$scratch/runs
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
 cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-CENTRE.md"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
 # Standing written mandate must agree with the dispatch prompt.
 grep -Fq "Existing-software evaluation (Founder guidance)" "$scratch/town/government/INNOVATION-CENTRE.md"
 grep -Fq "neither mandatory nor presumptively superior" "$scratch/town/government/INNOVATION-CENTRE.md"
@@ -77,6 +80,9 @@ export MODEL
 for branch in legislature executive judiciary; do
  printf '{"branch":"%s","readiness":"ready","observed_at":23000}\n' "$branch" > "$scratch/state/branches/$branch.json"
 done
+printf '{"observed_at":23000,"count":0}\n' > "$scratch/state/institutional-outcomes/latest.json"
+printf '{"observed_at":23000,"active":[],"count":0}\n' > "$scratch/state/institutional-cases/index.json"
+printf '{"observed_at":23000,"measurement_reliability":"established"}\n' > "$scratch/state/branches/judiciary-measurements.json"
 VICHE_BRANCH_NOW=23000
 export VICHE_BRANCH_NOW
 /bin/sh "$repo/government/branch-health.sh"
