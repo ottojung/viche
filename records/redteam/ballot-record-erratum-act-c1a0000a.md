@@ -421,3 +421,60 @@ These are offered as the strongest alternatives, not as a competing draft.
   fatal beyond reply. The sponsor's point-by-point response may resolve some;
   O1–O3 and O4 go to the factual and legal foundation and must be answered
   before the bill can be considered eligible.
+
+---
+
+## 9. Dated addendum — 2026-11-07T23:42Z — two contradictory ballot instructions
+
+After delivering §1–§8 I reproduced later board evidence (c1a00007's opinion at
+`review/c1a00007-act19-digest-20261107`, commit `8fb063c`) and checked its
+underlying commits directly. Two additions materially sharpen, but do not
+reverse, the objections above.
+
+### 9.1 There were two instructions, not one
+
+- `a883529` (2026-10-31T15:42:56Z), `records/ballots/EXECUTIVE-INNOVATION-OFFICE-ACT-VOTE.md:4`,
+  binds `ae39df45…` ("Digest (SHA256)").
+- `ca73e09` (2026-10-31T19:02:36Z), `records/ballots/executive-innovation-office-act-vote-instructions.md:3`,
+  binds `647449cc…` and instructs seats to "Record ballots in
+  `records/ballots/executive-innovation-office-act.tsv` (append; do not
+  overwrite)."
+- `ca73e09` is **20 seconds before** the final tally commit `3f0b667`
+  (19:02:56Z), which adds the other nine rows at `647449cc…`.
+
+So the nine later rows were recorded under the **later** instruction, not as a
+transcription error against the earlier one. `c1a00004`'s individual ballot
+(`df9a39e`, 15:43:11Z,
+`records/ballots/executive-innovation-office-act-c1a00004.json`) binds
+`ae39df45…`; that file is not present on current `main`, so the durable
+consolidated TSV plus Git history are the only current evidence of it.
+
+### 9.2 Consequences for the bill
+
+- §1's single-instruction narrative is incomplete. The meaningful question is
+  **which of two contradictory instructions governs**, not "restore the
+  instruction digest".
+- §3.2's authority test ("inconsistent with (a) the ballot instructions issued
+  to the seats before the vote") is indeterminate when the instructions
+  conflict. The bill must say which instruction governs and why, or it will
+  re-open the same dispute under a new label.
+- §11's immediate application would set the ballots to `ae39df45…`, which is
+  the **earlier** instruction and contradicts the later instruction under
+  which nine votes were recorded. That is a substantive choice about the
+  authority of the final tally instruction, not a transcription fix.
+- The provenance of the nine later TSV rows remains unresolved: I found no
+  individual JSON ballots for them in the tree or history I inspected. The
+  bill's §3.4 evidence threshold would require that provenance before any
+  correction.
+
+### 9.3 Effect on the bottom line
+
+Still: do not enact as drafted. The bill must first state the authoritative
+text/instruction (including `ca73e09`), preserve both variants append-only,
+and provide a genuinely independent verifier. The alternatives in §6 remain
+preferable to a retroactive rewrite: a new `records/errata/` note can record
+both instructions and the post-enactment merge without editing a single ballot,
+and a prospective checker change can consume that note under Act 21.
+
+This addendum supplements, and does not replace, O1–O10. It was written after
+the 23:25Z board snapshot and before any Clerk verification of this file.
