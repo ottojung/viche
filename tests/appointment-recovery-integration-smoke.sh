@@ -167,25 +167,39 @@ oc_archive_hold "$holdtest" executive old-e
 test "$(grep -c 'run-e' "$holdtest/archived-unsafe-holds/executive-old-e")" -eq 1 ||
   { echo 'Empty archive swallowed the extracted hold' >&2; exit 1; }
 test ! -e "$holdtest/unsafe-holds/executive"
-# A lock whose recorded holder is dead (crash) must be stolen; a lock whose
-# recorded holder is alive must be respected and left in place.
+# A lock is a pid file published atomically. A dead holder is reclaimed; a
+# live holder is respected and left intact.
 printf 'executive\told-f\trun-f\n' > "$holdtest/unsafe-holds/executive"
-mkdir "$holdtest/unsafe-holds/.archive-lock"
-printf '999999\n' > "$holdtest/unsafe-holds/.archive-lock/pid"
+printf '999999\n' > "$holdtest/unsafe-holds/.archive-lock"
 oc_archive_hold "$holdtest" executive old-f
 test -s "$holdtest/archived-unsafe-holds/executive-old-f" ||
   { echo 'Dead-holder lock blocked archiving' >&2; exit 1; }
-test ! -e "$holdtest/unsafe-holds/.archive-lock"
+test ! -e "$holdtest/unsafe-holds/.archive-lock" ||
+  { echo 'Reclaimed lock was not removed' >&2; exit 1; }
 printf 'executive\told-g\trun-g\n' > "$holdtest/unsafe-holds/executive"
-mkdir "$holdtest/unsafe-holds/.archive-lock"
-printf '%s\n' "$$" > "$holdtest/unsafe-holds/.archive-lock/pid"
+printf '%s\n' "$$" > "$holdtest/unsafe-holds/.archive-lock"
 oc_archive_hold "$holdtest" executive old-g
 test -s "$holdtest/unsafe-holds/executive" &&
   grep -Fq old-g "$holdtest/unsafe-holds/executive" ||
   { echo 'Live lock holder was not respected' >&2; exit 1; }
-test -s "$holdtest/unsafe-holds/.archive-lock/pid" ||
+grep -Fq "$$" "$holdtest/unsafe-holds/.archive-lock" ||
   { echo 'Live lock was stolen' >&2; exit 1; }
-rm -rf "$holdtest/unsafe-holds/.archive-lock"
+rm -f "$holdtest/unsafe-holds/.archive-lock"
+# Two contenders archiving different agents from one hold file must both
+# succeed without losing either line or deadlocking.
+printf 'executive\told-h\trun-h\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-i\trun-i\n' >> "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-h &
+oc_h_pid=$!
+oc_archive_hold "$holdtest" executive old-i &
+oc_i_pid=$!
+wait "$oc_h_pid"
+wait "$oc_i_pid"
+test -s "$holdtest/archived-unsafe-holds/executive-old-h" &&
+  test -s "$holdtest/archived-unsafe-holds/executive-old-i" ||
+  { echo 'Concurrent archiving lost a hold' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive" ||
+  { echo 'Concurrent archiving left the hold file behind' >&2; exit 1; }
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi

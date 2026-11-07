@@ -155,41 +155,49 @@ oc_archive_hold() {
   [ -n "$oc_hold_id" ] || return 0
   oc_hold_dir=$1/archived-unsafe-holds
   oc_lock=$1/unsafe-holds/.archive-lock
-  # Serialize the whole read-archive-rewrite sequence. The holder records its
-  # PID so a lock left by a crash is distinguished from a live holder; never
-  # steal a live holder's lock. Bounded wait so a wedged lock cannot spin.
+  # Serialize the whole read-archive-rewrite sequence. The lock is a FILE
+  # published atomically with a hard link, so it never exists without its
+  # holder PID. A dead holder's lock is reclaimed by atomic rename, so only one
+  # contender can win reclamation. Never steal a live holder's lock.
   oc_wait=0
-  while ! mkdir "$oc_lock" 2>/dev/null; do
+  while :; do
+    oc_tmp=$oc_lock.$$
+    if printf '%s\n' "$$" > "$oc_tmp" 2>/dev/null && ln "$oc_tmp" "$oc_lock" 2>/dev/null; then
+      rm -f "$oc_tmp" 2>/dev/null || :
+      break
+    fi
+    rm -f "$oc_tmp" 2>/dev/null || :
     oc_wait=$((oc_wait + 1))
     if [ "$oc_wait" -ge 100 ]; then
       echo "Viche: unsafe-hold archive busy for $2; leaving the hold in place" >&2
       return 0
     fi
-    oc_holder=
-    [ ! -s "$oc_lock/pid" ] || oc_holder=$(cat "$oc_lock/pid" 2>/dev/null || :)
+    oc_holder=$(cat "$oc_lock" 2>/dev/null || :)
     if [ -z "$oc_holder" ] || ! kill -0 "$oc_holder" 2>/dev/null; then
-      rm -rf "$oc_lock" 2>/dev/null || :
+      oc_stale=$oc_lock.stale.$$
+      if mv "$oc_lock" "$oc_stale" 2>/dev/null; then
+        rm -f "$oc_stale" 2>/dev/null || :
+      fi
       continue
     fi
     sleep 0.1 2>/dev/null || sleep 1
   done
-  printf '%s\n' "$$" > "$oc_lock/pid" 2>/dev/null || :
   oc_hold_file=$1/unsafe-holds/$2
   if [ ! -s "$oc_hold_file" ]; then
-    rm -rf "$oc_lock" 2>/dev/null || :
+    rm -f "$oc_lock" 2>/dev/null || :
     return 0
   fi
   oc_extract=$oc_hold_file.extract.$$
   if ! awk -F '\t' -v id="$oc_hold_id" '$2==id' "$oc_hold_file" > "$oc_extract"; then
-    rm -f "$oc_extract" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+    rm -f "$oc_extract" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
     return 1
   fi
   if [ ! -s "$oc_extract" ]; then
-    rm -f "$oc_extract" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+    rm -f "$oc_extract" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
     return 0
   fi
   mkdir -p "$oc_hold_dir" || {
-    rm -f "$oc_extract" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :; return 1; }
+    rm -f "$oc_extract" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :; return 1; }
   oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id
   if [ -s "$oc_hold_backup" ]; then
     # A previous attempt may have archived these lines but been interrupted
@@ -199,11 +207,11 @@ oc_archive_hold() {
     oc_new=$oc_hold_file.new.$$
     if ! awk 'FILENAME==ARGV[1] {seen[$0]=1; next} !seen[$0]' \
          "$oc_hold_backup" "$oc_extract" > "$oc_new"; then
-      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
       return 1
     fi
     if [ -s "$oc_new" ] && ! cat "$oc_new" >> "$oc_hold_backup"; then
-      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
       return 1
     fi
     rm -f "$oc_new" 2>/dev/null || :
@@ -214,7 +222,7 @@ oc_archive_hold() {
     if ! ln "$oc_extract" "$oc_hold_backup" 2>/dev/null; then
       oc_cp=$oc_hold_backup.tmp.$$
       if ! cp "$oc_extract" "$oc_cp" || ! mv -f "$oc_cp" "$oc_hold_backup"; then
-        rm -f "$oc_extract" "$oc_cp" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+        rm -f "$oc_extract" "$oc_cp" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
         return 1
       fi
     fi
@@ -222,18 +230,18 @@ oc_archive_hold() {
   rm -f "$oc_extract" 2>/dev/null || :
   oc_hold_tmp=$oc_hold_file.tmp.$$
   if ! awk -F '\t' -v id="$oc_hold_id" '$2!=id' "$oc_hold_file" > "$oc_hold_tmp"; then
-    rm -f "$oc_hold_tmp" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+    rm -f "$oc_hold_tmp" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
     return 1
   fi
   if [ -s "$oc_hold_tmp" ]; then
     if ! mv -f "$oc_hold_tmp" "$oc_hold_file"; then
-      rm -f "$oc_hold_tmp" 2>/dev/null || :; rm -rf "$oc_lock" 2>/dev/null || :
+      rm -f "$oc_hold_tmp" 2>/dev/null || :; rm -f "$oc_lock" 2>/dev/null || :
       return 1
     fi
   else
     rm -f "$oc_hold_tmp" "$oc_hold_file" 2>/dev/null || :
   fi
-  rm -rf "$oc_lock" 2>/dev/null || :
+  rm -f "$oc_lock" 2>/dev/null || :
   return 0
 }
 
