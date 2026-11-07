@@ -49,8 +49,11 @@ last_kind=id
 case "$last" in ''|*[!0-9]*) :;; *) last_kind=position;; esac
 page=1
 first=
+# The board supports 500 entries per page. A recovered historical cursor may
+# be thousands of entries behind; page through the history in bounded batches.
+page_size=500
 while :; do
-  antonina board feed --page "$page" --limit 100 --json > "$d/feed"
+  antonina board feed --page "$page" --limit "$page_size" --json > "$d/feed"
   jq -e '.entries|type=="array"' "$d/feed" >/dev/null
   count=$(jq '.entries|length' "$d/feed")
   [ "$count" -gt 0 ] || break
@@ -78,7 +81,7 @@ while :; do
   done < "$d/items"
   [ "$stop" -eq 0 ] || break
   [ -n "$last" ] || break
-  [ "$count" -eq 100 ] || break
+  [ "$count" -eq "$page_size" ] || break
   page=$((page+1))
 done
 # The source may have been compacted or changed. Do not silently jump past

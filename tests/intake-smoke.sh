@@ -107,11 +107,11 @@ touch -d '11 minutes ago' "$oldfile"
 [ "$(wc -l < "$d/mock/calls")" -eq 4 ]
 # Feed cursors are opaque event identities, not necessarily numeric positions.
 # The saved anchor can be on a later page; process every newer item exactly once.
-jq -n '{entries:[range(0;102)|
+jq -n '{entries:[range(0;502)|
   {id:("sha256:message-"+(.|tostring)),position:(1000-.),
    author:(if .==0 then "Vitalik" else "other" end),
    issueNumber:"303",at:"2026-10-15T01:00:00Z",body:"new instruction"}]}' > "$d/mock/feed"
-printf '%s\n' 'sha256:message-101' > "$d/state/founder-inbox/feed-cursor"
+printf '%s\n' 'sha256:message-501' > "$d/state/founder-inbox/feed-cursor"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'sha256:message-0' ]
 [ "$(wc -l < "$d/mock/calls")" -eq 5 ]
