@@ -146,9 +146,9 @@ oc_clear_failures() {
 
 # Archive the unsafe-hold lines that belong to ONE failed agent before its
 # appointment is replaced. Unlike a blind `mv`, this keeps holds belonging to
-# other invocations and never overwrites earlier archived evidence, so repeated
-# recovery is idempotent. A hold is evidence of the old request, not a veto on
-# the replacement agent.
+# other invocations and never loses or duplicates evidence if it is interrupted
+# or retried, so repeated recovery is idempotent. A hold is evidence of the old
+# request, not a veto on the replacement agent.
 # $1 liveness dir, $2 office/seat key, $3 old agent id
 oc_archive_hold() {
   oc_hold_id=${3:-}
@@ -159,23 +159,58 @@ oc_archive_hold() {
     "$oc_hold_file" || return 0
   oc_hold_dir=$1/archived-unsafe-holds
   mkdir -p "$oc_hold_dir" || return 1
-  oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id
-  oc_hold_n=0
-  while [ -e "$oc_hold_backup" ]; do
-    oc_hold_n=$((oc_hold_n + 1))
-    oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id.$oc_hold_n
+  # Serialize archive+rewrite. A crashed holder leaves the lock behind, so
+  # steal it only after a full minute; meanwhile the live hold stays in place.
+  oc_lock=$1/unsafe-holds/.archive-lock
+  oc_wait=0
+  while ! mkdir "$oc_lock" 2>/dev/null; do
+    if [ -d "$oc_lock" ] && [ -n "$(find "$oc_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
+      rmdir "$oc_lock" 2>/dev/null || :
+      continue
+    fi
+    oc_wait=$((oc_wait + 1))
+    if [ "$oc_wait" -ge 50 ]; then
+      echo "Viche: unsafe-hold archive busy for $2; leaving the hold in place" >&2
+      return 0
+    fi
+    sleep 0.1 2>/dev/null || sleep 1
   done
-  awk -F '\t' -v id="$oc_hold_id" '$2==id' "$oc_hold_file" >> "$oc_hold_backup" || return 1
+  oc_extract=$oc_hold_file.extract.$$
+  if ! awk -F '\t' -v id="$oc_hold_id" '$2==id' "$oc_hold_file" > "$oc_extract"; then
+    rm -f "$oc_extract"; rmdir "$oc_lock" 2>/dev/null || :
+    return 1
+  fi
+  oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id
+  if [ -e "$oc_hold_backup" ]; then
+    # A previous attempt may have archived these lines but been interrupted
+    # before removing them. Append only lines not already present.
+    oc_new=$oc_hold_file.new.$$
+    if ! awk 'NR==FNR {seen[$0]=1; next} !seen[$0]' "$oc_hold_backup" "$oc_extract" > "$oc_new"; then
+      rm -f "$oc_extract" "$oc_new"; rmdir "$oc_lock" 2>/dev/null || :
+      return 1
+    fi
+    if [ -s "$oc_new" ]; then
+      cat "$oc_new" >> "$oc_hold_backup" || {
+        rm -f "$oc_extract" "$oc_new"; rmdir "$oc_lock" 2>/dev/null || :; return 1; }
+    fi
+    rm -f "$oc_new"
+  elif ! ln "$oc_extract" "$oc_hold_backup" 2>/dev/null; then
+    cp "$oc_extract" "$oc_hold_backup" || {
+      rm -f "$oc_extract"; rmdir "$oc_lock" 2>/dev/null || :; return 1; }
+  fi
+  rm -f "$oc_extract"
   oc_hold_tmp=$oc_hold_file.tmp.$$
   if ! awk -F '\t' -v id="$oc_hold_id" '$2!=id' "$oc_hold_file" > "$oc_hold_tmp"; then
-    rm -f "$oc_hold_tmp"
+    rm -f "$oc_hold_tmp"; rmdir "$oc_lock" 2>/dev/null || :
     return 1
   fi
   if [ -s "$oc_hold_tmp" ]; then
-    mv -f "$oc_hold_tmp" "$oc_hold_file" || return 1
+    mv -f "$oc_hold_tmp" "$oc_hold_file" || {
+      rm -f "$oc_hold_tmp"; rmdir "$oc_lock" 2>/dev/null || :; return 1; }
   else
     rm -f "$oc_hold_tmp" "$oc_hold_file"
   fi
+  rmdir "$oc_lock" 2>/dev/null || :
   return 0
 }
 

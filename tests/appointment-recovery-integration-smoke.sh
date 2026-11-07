@@ -151,6 +151,14 @@ oc_archive_hold "$holdtest" executive old-b
 test ! -e "$holdtest/unsafe-holds/executive" ||
   { echo 'Empty hold file was not removed' >&2; exit 1; }
 test -s "$holdtest/archived-unsafe-holds/executive-old-b"
+# Simulate a crash after the archive append but before the live removal: a
+# retry must not duplicate the archived evidence.
+printf 'executive\told-c\trun-c\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-c\trun-c\n' > "$holdtest/archived-unsafe-holds/executive-old-c"
+oc_archive_hold "$holdtest" executive old-c
+test "$(grep -c 'run-c' "$holdtest/archived-unsafe-holds/executive-old-c")" -eq 1 ||
+  { echo 'Interrupted archive retry duplicated evidence' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive"
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
