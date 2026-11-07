@@ -159,15 +159,33 @@ oc_archive_hold "$holdtest" executive old-c
 test "$(grep -c 'run-c' "$holdtest/archived-unsafe-holds/executive-old-c")" -eq 1 ||
   { echo 'Interrupted archive retry duplicated evidence' >&2; exit 1; }
 test ! -e "$holdtest/unsafe-holds/executive"
-# A lock left by a crashed archiver must be stolen after a minute, not block
-# archiving forever, while a live lock is respected.
-printf 'executive\told-d\trun-d\n' > "$holdtest/unsafe-holds/executive"
+# An empty archive left by a failed creation must be replaced atomically, not
+# silently swallow the extracted line.
+printf 'executive\told-e\trun-e\n' > "$holdtest/unsafe-holds/executive"
+: > "$holdtest/archived-unsafe-holds/executive-old-e"
+oc_archive_hold "$holdtest" executive old-e
+test "$(grep -c 'run-e' "$holdtest/archived-unsafe-holds/executive-old-e")" -eq 1 ||
+  { echo 'Empty archive swallowed the extracted hold' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive"
+# A lock whose recorded holder is dead (crash) must be stolen; a lock whose
+# recorded holder is alive must be respected and left in place.
+printf 'executive\told-f\trun-f\n' > "$holdtest/unsafe-holds/executive"
 mkdir "$holdtest/unsafe-holds/.archive-lock"
-touch -d '2 minutes ago' "$holdtest/unsafe-holds/.archive-lock"
-oc_archive_hold "$holdtest" executive old-d
-test -s "$holdtest/archived-unsafe-holds/executive-old-d" ||
-  { echo 'Stale archive lock blocked archiving' >&2; exit 1; }
+printf '999999\n' > "$holdtest/unsafe-holds/.archive-lock/pid"
+oc_archive_hold "$holdtest" executive old-f
+test -s "$holdtest/archived-unsafe-holds/executive-old-f" ||
+  { echo 'Dead-holder lock blocked archiving' >&2; exit 1; }
 test ! -e "$holdtest/unsafe-holds/.archive-lock"
+printf 'executive\told-g\trun-g\n' > "$holdtest/unsafe-holds/executive"
+mkdir "$holdtest/unsafe-holds/.archive-lock"
+printf '%s\n' "$$" > "$holdtest/unsafe-holds/.archive-lock/pid"
+oc_archive_hold "$holdtest" executive old-g
+test -s "$holdtest/unsafe-holds/executive" &&
+  grep -Fq old-g "$holdtest/unsafe-holds/executive" ||
+  { echo 'Live lock holder was not respected' >&2; exit 1; }
+test -s "$holdtest/unsafe-holds/.archive-lock/pid" ||
+  { echo 'Live lock was stolen' >&2; exit 1; }
+rm -rf "$holdtest/unsafe-holds/.archive-lock"
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
