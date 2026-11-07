@@ -84,13 +84,57 @@ for observation in "outcomes:$state/institutional-outcomes/latest.json" "institu
     signals="${signals}${signals:+,}${evidence_name}_stale"
   fi
 done
+# Bind each health row to the durable evidence GENERATIONS it inspected, using
+# each producer's own observation clock (key=epoch pairs). A new probe clock
+# timestamp over unchanged producer observations is another check, not a new
+# independent observation, so it must not close an institutional case.
+# Deliberately excluded: institutional-cases/index.json, which reconciliation
+# itself rewrites; including it would let our own bookkeeping manufacture a
+# "new generation" without new underlying evidence.
+if [ -z "$signals" ]; then
+  evidence_signature=$(python3 - "$state" "${innovation:-}" <<'PY'
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+innovation_arg = sys.argv[2] if len(sys.argv) > 2 else ""
+sources = [
+    ("leg", root / "branches/legislature.json"),
+    ("exe", root / "branches/executive.json"),
+    ("jud", root / "branches/judiciary.json"),
+    ("out", root / "institutional-outcomes/latest.json"),
+    ("meas", root / "branches/judiciary-measurements.json"),
+]
+if innovation_arg:
+    sources.append(("inn", pathlib.Path(innovation_arg)))
+parts = []
+for key, path in sources:
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        raise SystemExit(1)
+    import json
+    try:
+        at = json.loads(raw).get("observed_at")
+    except ValueError:
+        raise SystemExit(1)
+    if not isinstance(at, int) or at < 0:
+        raise SystemExit(1)
+    parts.append(f"{key}={at}")
+print(",".join(parts))
+PY
+) || evidence_signature=
+  case "$evidence_signature" in
+    ''|*[!a-z0-9=,]*|*,|,*) signals="${signals}${signals:+,}health_evidence_unidentifiable" ;;
+  esac
+fi
 # Unreviewed agent impediments are unresolved adverse evidence.
 mailbox_dir="$state/oversight/judiciary-mailbox/inbox"
 if [ -d "$mailbox_dir" ] &&
    [ -n "$(find "$mailbox_dir" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null)" ]; then
   signals="${signals}${signals:+,}judiciary_mailbox_pending"
 fi
-printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"
+printf '%s\t%s\t%s\n' "$now" "${signals:-clear}" "${evidence_signature:-unavailable}" >> "$root/observations.tsv"
 if [ -z "$signals" ]; then
   if [ -s "$root/incident.json" ]; then
     jq -c --argjson at "$now" '. + {cleared_at:$at,closure:"readiness_restored_not_delivery_verified"}' \

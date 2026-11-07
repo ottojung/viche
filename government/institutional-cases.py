@@ -38,6 +38,37 @@ def atomic(path, item):
             os.unlink(name)
 
 
+def continuity_receipt(office):
+    """Return the validated case-specific continuity binding, or None.
+
+    A continuity case may only close on evidence that belongs to THAT case: a
+    Judiciary-scoped reconciliation receipt naming the specific previous and
+    successor agents, both matching the durable reconciliation record.
+    """
+    receipt = read(ROOT / ("continuity/reconciliation-" + office + ".json"))
+    verified = read(ROOT / ("continuity/verified-" + office + ".json"))
+    if receipt.get("state") != "awaiting_reconciliation":
+        return None
+    if verified.get("previous_agent") != receipt.get("previous_agent"):
+        return None
+    if verified.get("successor_agent") != receipt.get("successor_agent"):
+        return None
+    if verified.get("verified_by") != "judiciary":
+        return None
+    if verified.get("verification_scope") != "external_effect_reconciled":
+        return None
+    ref = verified.get("evidence_ref")
+    if not isinstance(ref, str) or not ref.strip():
+        return None
+    return {
+        "previous_agent": receipt.get("previous_agent"),
+        "successor_agent": receipt.get("successor_agent"),
+        "verified_by": "judiciary",
+        "verification_scope": "external_effect_reconciled",
+        "evidence_ref": ref.strip(),
+    }
+
+
 def collect():
     incident = read(ROOT / "branches/incident.json")
     signals = set(incident.get("signals", []))
@@ -54,20 +85,39 @@ def collect():
         signals.add("innovation_stale")
     # A failed office may be masked by a stale or missing branch-health probe;
     # its terminal continuity record remains an independently observable case.
+    # Offices with no reconciliation record at all are not continuity cases.
     for office in ("executive", "judiciary", "innovation-centre", "c1a00001"):
-        receipt = read(ROOT / ("continuity/reconciliation-" + office + ".json"))
-        if receipt.get("state") in ("preparing", "awaiting_reconciliation"):
-            verified = read(ROOT / ("continuity/verified-" + office + ".json"))
-            valid = (receipt.get("state") == "awaiting_reconciliation"
-                and verified.get("previous_agent") == receipt.get("previous_agent")
-                and verified.get("successor_agent") == receipt.get("successor_agent")
-                and verified.get("verified_by") == "judiciary"
-                and verified.get("verification_scope") == "external_effect_reconciled"
-                and isinstance(verified.get("evidence_ref"), str)
-                and bool(verified["evidence_ref"].strip()))
-            if not valid:
-                signals.add("continuity_unverified_" + office)
+        declared = read(ROOT / ("continuity/reconciliation-" + office + ".json")).get("state")
+        if declared in ("preparing", "awaiting_reconciliation") and continuity_receipt(office) is None:
+            signals.add("continuity_unverified_" + office)
     return now, signals
+
+
+MIN_SIGNATURE_SOURCES = 3
+
+
+def parse_generation(value):
+    """Parse a branch-health evidence generation ("key=epoch,...") strictly.
+
+    Anything malformed, or covering too few independent producers, is not a
+    usable observation: it cannot distinguish a fresh acquisition from a
+    re-read of unchanged evidence, and it must not close a case.
+    """
+    if not isinstance(value, str) or not value:
+        return None
+    pairs = {}
+    for part in value.split(","):
+        key, sep, at = part.partition("=")
+        if not sep or not key or not at:
+            return None
+        if not key.isalnum() or not key.islower() or not at.isdigit():
+            return None
+        if key in pairs:
+            return None
+        pairs[key] = int(at)
+    if len(pairs) < MIN_SIGNATURE_SOURCES:
+        return None
+    return tuple(sorted(pairs.items()))
 
 
 def latest_health_observation():
@@ -75,7 +125,8 @@ def latest_health_observation():
 
     Reconciliation can run repeatedly against unchanged inputs. Its wall-clock
     time is therefore not an independent health observation. The branch
-    liveness probe appends timestamp/signal rows to this durable source.
+    liveness probe appends timestamp/signal/generation rows to this durable
+    source; a row is usable only when its generation is well formed.
     """
     path = ROOT / "branches/observations.tsv"
     try:
@@ -83,14 +134,14 @@ def latest_health_observation():
     except OSError:
         return None
     for row in reversed(rows):
-        fields = row.split("\t", 1)
-        if len(fields) != 2:
-            continue
+        fields = row.split("\t")
+        if len(fields) < 3:
+            return None
         try:
             observed_at = int(fields[0])
         except ValueError:
-            continue
-        return observed_at, fields[1].strip()
+            return None
+        return observed_at, fields[1].strip(), fields[2].strip()
     return None
 
 
@@ -123,6 +174,7 @@ def reconcile():
                     "id": f"{signal}:{now}", "signal": signal,
                     "first_seen": now, "state": "open",
                     "clear_observations": 0,
+                    "clear_generations": [],
                     "judiciary": "independent_fact_finding_required",
                     "legislature": "consider_evidence_and_legislation_if_needed",
                     "executive": "investigate_and_repair_within_existing_authority",
@@ -132,21 +184,50 @@ def reconcile():
             case["last_seen"] = now
             case["observations"] = case.get("observations", 0) + 1
             case["clear_observations"] = 0
+            case["clear_generations"] = []
+            case.pop("last_clear_observation", None)
+            case.pop("last_clear_evidence_generation", None)
+            case.pop("closure_blocked", None)
         elif case.get("state") == "open":
             # Never count repeated reconciliations of one sample as separate
-            # healthy observations. Require distinct durable probe rows, each
-            # explicitly clear and later than the last time the signal held.
-            if health_observation is None or health_observation[1] != "clear":
+            # healthy observations. Each counted observation must be a distinct
+            # later probe row, explicitly clear, carrying a well-formed durable
+            # evidence generation that has not already been counted. An
+            # alternating generation (A, B, A) is still one acquisition of A.
+            generation = (parse_generation(health_observation[2])
+                          if health_observation else None)
+            counted = case.get("clear_generations", [])
+            if not isinstance(counted, list):
+                counted = []
+            if generation is None or health_observation[1] != "clear":
                 case["clear_observations"] = 0
+                case["clear_generations"] = []
                 case.pop("last_clear_observation", None)
+                case.pop("last_clear_evidence_generation", None)
             elif (health_observation[0] > case.get("last_seen", case.get("first_seen", 0))
-                  and health_observation[0] != case.get("last_clear_observation")):
-                case["clear_observations"] = case.get("clear_observations", 0) + 1
+                  and health_observation[0] != case.get("last_clear_observation")
+                  and health_observation[2] not in counted):
+                counted = counted + [health_observation[2]]
+                case["clear_generations"] = counted
+                case["clear_observations"] = len(counted)
                 case["last_clear_observation"] = health_observation[0]
+                case["last_clear_evidence_generation"] = health_observation[2]
             if case.get("clear_observations", 0) >= 2:
-                case["state"] = "verified_closed"
-                case["verified_at"] = now
-                case["verification"] = "two distinct later branch-health samples explicitly clear"
+                binding = continuity_receipt(signal[len("continuity_unverified_"):]) \
+                    if signal.startswith("continuity_unverified_") else None
+                if signal.startswith("continuity_unverified_") and binding is None:
+                    # Health cleared, but the case's own reconciliation evidence
+                    # is not currently valid and case-bound: do not close.
+                    case["closure_blocked"] = (
+                        "case-specific continuity receipt not independently verified")
+                else:
+                    case["state"] = "verified_closed"
+                    case["verified_at"] = now
+                    case["verification"] = (
+                        "two distinct clear probes over distinct durable evidence "
+                        "generations")
+                    if binding is not None:
+                        case["closure_evidence"] = binding
         elif not case:
             continue
         atomic(path, case)
