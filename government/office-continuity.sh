@@ -144,22 +144,6 @@ oc_clear_failures() {
   return 0
 }
 
-# Mark an unsafe failed invocation as requiring explicit handoff review before
-# any new session can dispatch work. The durable intent remains open in the
-# handoff queue; this marker prevents an automatic duplicate side effect.
-oc_mark_unsafe_hold() {
-  # $1 liveness dir, $2 office key, $3 agent id, $4 invocation
-  mkdir -p "$1/unsafe-holds" || return 1
-  oc_hold_file=$1/unsafe-holds/$2
-  oc_hold_line=$(printf '%s\t%s\t%s' "$2" "$3" "$4")
-  # Repeated 3-minute observations are not new invocations; the same
-  # unsafe hold must be recorded ONCE, not 158 times or once per sitting.
-  if [ -s "$oc_hold_file" ] && grep -Fxq "$oc_hold_line" "$oc_hold_file"; then
-    return 0
-  fi
-  printf '%s\n' "$oc_hold_line" >> "$oc_hold_file"
-}
-
 # Surface a permanent or UNCLASSIFIED failure exactly once per agent and
 # classification. An absent backend_error is NOT evidence of permanence.
 # Durable incident records survive restart without flooding each sitting.

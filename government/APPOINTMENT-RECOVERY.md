@@ -42,20 +42,25 @@ stop leaves the old appointment in place and does **not** start cooldown.
 This prevents two live agents writing one seat worktree. Existing dirty
 worktrees and the durable handoff queue are preserved.
 
-A *new*, independently specified prompt may be dispatched following a failed
-front only when Antonina explicitly marks the preceding failure both
-`transient=true` and `automatic_retry_safe=true`; the previous
-side-effecting prompt is not blindly replayed. If retry safety is false or
-unknown, a durable unsafe hold prevents both generic Executive dispatch and
-parliamentary sittings until independent review/authorization. Permanent
-failure is surfaced, not silently reset. This prevents unsafe retries but
-also means some outages cannot be autonomously recovered without an
-independently justified next action or a lawful Act 19 amendment.
+A *new*, independently specified prompt may follow a failed front
+only when Antonina positively classifies the preceding failure as both
+`transient=true` and `automatic_retry_safe=true`. Otherwise, preserve
+the failure evidence and use a new reconciliatory appointment when the
+supervisor's continuity procedure authorizes it; never replay an uncertain
+side-effecting prompt. Permanent failures remain visible for investigation.
 
-The complete real-appointments regression covers failure-event identity,
-fractional timestamps, unreadable status, a single reset, permanent errors,
-retry-safe fresh handoffs and unsafe holds. Separate source code review and
-Act 21 exact merged-commit attestation are still required before delivery.
+The old per-seat `unsafe-holds` marker files were removed as dispatch
+gates on 2026-11-05. They could outlive an agent reset and prevent completely
+new V2 agents from working, even when the old agent no longer existed.
+Historical markers remain archived as evidence, but their mere presence no
+longer blocks Parliament or the Executive. Checks of current agent state,
+quiescence, real failure classification, and resource headroom remain.
+
+The real-appointments regression covers failure-event identity, fractional
+timestamps, unreadable status, a single reset, permanent errors,
+retry-safe fresh handoffs, and stale markers not blocking new appointments.
+Separate source code review and Act 21 exact merged-commit attestation
+are still required before delivery.
 
 The Executive and Legislature must implement the complete lawful treatment
 of that contradiction under the explicitly billy-dev-assigned Antonina

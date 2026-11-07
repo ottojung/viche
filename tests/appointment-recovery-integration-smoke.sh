@@ -11,7 +11,7 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
   "$repo/government/executive-cycle.sh" "$repo/government/office-continuity.sh" \
   "$repo/government/terminal-appointment-evidence.sh" "$repo/government/policy-sync.sh" \
   "$repo/government/seat-liveness.sh" "$repo/government/predict-scorer.py" \
-  "$repo/government/AGENT-REPORTING-POLICY.md" \
+  "$repo/government/handoff-queue.sh" "$repo/government/AGENT-REPORTING-POLICY.md" \
   "$d/town/government/"
 git -C "$d/seats/branches/executive" init -q
 git -C "$d/seats/branches/executive" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm baseline
@@ -152,7 +152,7 @@ run_branch
 id5=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id5" = "$id4"
 test "$(wc -l < "$registry")" -eq 1
-test -s "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
+test ! -e "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
 printf 'founder charter fixture\n' > "$d/charter"
 touch "$VICHE_STATE_ROOT/inaugurated"
 export VICHE_CONSTITUTION="$d/charter"

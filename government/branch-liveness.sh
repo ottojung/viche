@@ -51,7 +51,6 @@ if [ "$bootstrap_ok" = true ] && [ -n "$id" ] && [ -s "$town/government/$program
       if [ "$bootstrap_ok" = true ]; then
         retry_safe=$(printf '%s\n' "$chk" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
         [ "$retry_safe" = yes ] || bootstrap_ok=false
-        [ ! -s "$state/liveness/unsafe-holds/$key" ] || bootstrap_ok=false
       fi ;;
   esac
 fi
