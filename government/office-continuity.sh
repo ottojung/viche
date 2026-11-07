@@ -164,14 +164,16 @@ oc_archive_hold() {
   oc_lock=$1/unsafe-holds/.archive-lock
   oc_wait=0
   while ! mkdir "$oc_lock" 2>/dev/null; do
-    if [ -d "$oc_lock" ] && [ -n "$(find "$oc_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
-      rmdir "$oc_lock" 2>/dev/null || :
-      continue
-    fi
+    # Bounded attempts: a live holder or an unremovable stale lock must not
+    # spin forever. The live hold stays in place, so nothing is lost.
     oc_wait=$((oc_wait + 1))
     if [ "$oc_wait" -ge 50 ]; then
       echo "Viche: unsafe-hold archive busy for $2; leaving the hold in place" >&2
       return 0
+    fi
+    if [ -d "$oc_lock" ] && [ -n "$(find "$oc_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
+      rmdir "$oc_lock" 2>/dev/null || :
+      continue
     fi
     sleep 0.1 2>/dev/null || sleep 1
   done

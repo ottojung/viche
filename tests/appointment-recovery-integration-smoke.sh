@@ -159,6 +159,15 @@ oc_archive_hold "$holdtest" executive old-c
 test "$(grep -c 'run-c' "$holdtest/archived-unsafe-holds/executive-old-c")" -eq 1 ||
   { echo 'Interrupted archive retry duplicated evidence' >&2; exit 1; }
 test ! -e "$holdtest/unsafe-holds/executive"
+# A lock left by a crashed archiver must be stolen after a minute, not block
+# archiving forever, while a live lock is respected.
+printf 'executive\told-d\trun-d\n' > "$holdtest/unsafe-holds/executive"
+mkdir "$holdtest/unsafe-holds/.archive-lock"
+touch -d '2 minutes ago' "$holdtest/unsafe-holds/.archive-lock"
+oc_archive_hold "$holdtest" executive old-d
+test -s "$holdtest/archived-unsafe-holds/executive-old-d" ||
+  { echo 'Stale archive lock blocked archiving' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/.archive-lock"
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
