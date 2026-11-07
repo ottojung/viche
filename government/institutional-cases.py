@@ -70,6 +70,30 @@ def collect():
     return now, signals
 
 
+def latest_health_observation():
+    """Return the latest branch-health sample, not this reconciliation call.
+
+    Reconciliation can run repeatedly against unchanged inputs. Its wall-clock
+    time is therefore not an independent health observation. The branch
+    liveness probe appends timestamp/signal rows to this durable source.
+    """
+    path = ROOT / "branches/observations.tsv"
+    try:
+        rows = path.read_text().splitlines()
+    except OSError:
+        return None
+    for row in reversed(rows):
+        fields = row.split("\t", 1)
+        if len(fields) != 2:
+            continue
+        try:
+            observed_at = int(fields[0])
+        except ValueError:
+            continue
+        return observed_at, fields[1].strip()
+    return None
+
+
 def owner(signal):
     # The law already authorizes operational continuity under Acts 2/5.
     if signal == "judiciary_mailbox_pending":
@@ -84,6 +108,7 @@ def owner(signal):
 
 def reconcile():
     now, signals = collect()
+    health_observation = latest_health_observation()
     STORE.mkdir(parents=True, exist_ok=True)
     existing = sorted(STORE.glob("*.json"))
     names = set(signals) | {p.stem for p in existing}
@@ -108,14 +133,20 @@ def reconcile():
             case["observations"] = case.get("observations", 0) + 1
             case["clear_observations"] = 0
         elif case.get("state") == "open":
-            # Never resolve from agent success, a comment or a merge alone.
-            # This confirmation observes the SAME underlying signal cleared
-            # in two subsequent independent cycles.
-            case["clear_observations"] = case.get("clear_observations", 0) + 1
-            if case["clear_observations"] >= 2:
+            # Never count repeated reconciliations of one sample as separate
+            # healthy observations. Require distinct durable probe rows, each
+            # explicitly clear and later than the last time the signal held.
+            if health_observation is None or health_observation[1] != "clear":
+                case["clear_observations"] = 0
+                case.pop("last_clear_observation", None)
+            elif (health_observation[0] > case.get("last_seen", case.get("first_seen", 0))
+                  and health_observation[0] != case.get("last_clear_observation")):
+                case["clear_observations"] = case.get("clear_observations", 0) + 1
+                case["last_clear_observation"] = health_observation[0]
+            if case.get("clear_observations", 0) >= 2:
                 case["state"] = "verified_closed"
                 case["verified_at"] = now
-                case["verification"] = "two successive deterministic health checks without signal"
+                case["verification"] = "two distinct later branch-health samples explicitly clear"
         elif not case:
             continue
         atomic(path, case)

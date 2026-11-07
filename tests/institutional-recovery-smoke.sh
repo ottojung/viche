@@ -32,6 +32,7 @@ esac
 MOCK
 chmod +x "$d/bin/antonina" "$d/town/government/appointments.sh"
 cp "$repo/government/EXECUTIVE-INNOVATION.md" "$d/town/government/EXECUTIVE-INNOVATION.md"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
 printf '# Historic Act 14 — Legislative Centre\n' > "$d/town/government/LAWS.md"
 printf 'Founder-controlled fixture Constitution\n' > "$d/charter"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"
@@ -57,22 +58,40 @@ grep -Fq 'old-agent' "$d/reconciliation-prompt"
 
 # Deterministic cross-branch case survives agent/process restarts.
 printf '{"signals":["innovation_stale"],"observed_at":1000}\n' > "$d/state/branches/incident.json"
+printf '1000\tinnovation_stale\n' > "$d/state/branches/observations.tsv"
 export VICHE_CASE_NOW=1000
 python3 "$repo/government/institutional-cases.py" reconcile > "$d/cases"
 jq -e '.open_cases | length==2' "$d/cases" >/dev/null
 jq -e '.state=="open" and .owner=="executive"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 jq -e '.state=="open" and .owner=="executive" and .first_seen==1000' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 rm "$d/state/branches/incident.json"
+printf '1100\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1100 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==1 and .last_clear_observation==1100' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+VICHE_CASE_NOW=1150 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+printf '1175\texecutive_unhealthy\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1175 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+printf '1200\tclear\n' >> "$d/state/branches/observations.tsv"
 VICHE_CASE_NOW=1200 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+printf '1250\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1250 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="verified_closed" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 # Only a matching independent Judiciary verification can discharge the
 # uncertain-effects reconciliation case.
 printf '{"previous_agent":"old-agent","successor_agent":"new-agent","verified_by":"judiciary","verification_scope":"external_effect_reconciled","evidence_ref":"fixture:independent-reviewed-effects"}\n' > "$d/state/continuity/verified-innovation-centre.json"
 VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==0' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '1350\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1350 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+printf '1450\tclear\n' >> "$d/state/branches/observations.tsv"
+VICHE_CASE_NOW=1450 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="verified_closed"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
 # After a real enactment, Executive unit runs on preserved worktree, not a
