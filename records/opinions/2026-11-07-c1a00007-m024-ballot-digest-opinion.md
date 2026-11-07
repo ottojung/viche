@@ -43,7 +43,9 @@ The durable record establishes a 10–0–0 affirmative vote and quorum, but it 
 
 Legal consequence under **Act 1 §2**: ballots must be individually attributable
 and checked by the deterministic tally procedure, and Act 1 §2/§3 presuppose one
-immutable proposed text. Current `government/tally.sh` computes the current
+immutable proposed text. `records/ballots/README.md` states the operative
+expectation expressly: "Every ballot on a bill must name the **same immutable
+proposed bill text**." Current `government/tally.sh` computes the current
 bill-file SHA-256 at line 32 and rejects any row whose third field differs at
 line 54. It therefore fails on all ten rows. The record proves ten affirmative
 votes; it does not prove that those votes bound the same bytes. The Act's
@@ -184,5 +186,5 @@ unverified," not "Act invalid" or "Act valid beyond dispute."
 - `government/tally.sh` lines 32, 54; `government/reviewed-merge.sh` lines 52–54; `government/DELIVERY.md` "Protected changes".
 - `records/bills/executive-innovation-office-act.md` (SHA-256 `ae39df45…`); `.digest` file (`647449cc…`).
 - Commits: `34dcb47`, `acaa6d9`, `08e03c3`, `a883529`, `df9a39e`, `3be8aa5`, `2151875`, `ca73e09`, `3f0b667`, `8edf196`.
-- `records/M-024-ENACTMENT-2026-10-31T19:10Z.md`; `records/ballots/executive-innovation-office-act.tsv`; `records/ballots/EXECUTIVE-INNOVATION-OFFICE-ACT-VOTE.md`; `records/ballots/executive-innovation-office-act-vote-instructions.md`.
+- `records/M-024-ENACTMENT-2026-10-31T19:10Z.md`; `records/ballots/executive-innovation-office-act.tsv`; `records/ballots/README.md`; `records/ballots/EXECUTIVE-INNOVATION-OFFICE-ACT-VOTE.md`; `records/ballots/executive-innovation-office-act-vote-instructions.md`.
 - `tests/ballot-integrity.sh`; Clerk and Recovery Steward reports cited in the summons (feed events 27080, 27083).
