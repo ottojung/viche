@@ -78,6 +78,13 @@ export MODEL
 for branch in legislature executive judiciary; do
  printf '{"branch":"%s","readiness":"ready","observed_at":23000}\n' "$branch" > "$scratch/state/branches/$branch.json"
 done
+# branch-health treats missing/stale monitoring snapshots as its own adverse
+# evidence, so a healthy fixture must supply fresh ones (as boot-smoke does).
+mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases"
+printf '{"observed_at":23000}\n' > "$scratch/state/institutional-outcomes/latest.json"
+printf '{"observed_at":23000,"count":0}\n' > "$scratch/state/institutional-cases/index.json"
+printf '{"observed_at":23000}\n' > "$scratch/state/branches/judiciary-measurements.json"
+printf '# hermetic fixture laws; no Executive Innovation Office Act here\n' > "$scratch/town/government/LAWS.md"
 VICHE_BRANCH_NOW=23000
 export VICHE_BRANCH_NOW
 /bin/sh "$repo/government/branch-health.sh"

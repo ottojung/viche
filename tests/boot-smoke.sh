@@ -64,7 +64,7 @@ case "$action" in
             *) exit 6 ;;
         esac
         # Every newly launched Town agent must receive the Founder reporting rule.
-        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
+        case "$prompt" in *"Standing Founder operational instructions"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
