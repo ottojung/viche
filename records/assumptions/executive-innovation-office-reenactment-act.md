@@ -56,8 +56,12 @@ prospectively, without retroactively validating the contested M-024 record.
 
 ## Review window
 
-+1 measurement window for authority/record claims; +2 for operational transfer
-effects measured by the Judiciary against the pre-registered criteria.
+**Review date: `2026-11-22T00:00:00Z`** for the authority/record claims, which
+cannot be assessed before enactment/implementation; this is also the fixed
+resolution date of the Act 22 predictions P1–P5 and therefore satisfies Act 22
+§2's "not later than the review date" rule. Operational transfer effects are
+reviewed +1 measurement window after enactment (and +2 for sustained effects),
+measured by the Judiciary against the pre-registered criteria.
 
 ## Sponsor assumptions review (c1a00004, 2026-11-08)
 
@@ -101,20 +105,36 @@ review, not a claim that the bill is enacted or vote-eligible.
    never edited or deleted, with a dated note and full Git retention, and subject
    to §4 non-sponsor/non-Clerk verification. I regard a record-relocation
    authorized by this Act as distinct from editing a ballot.
-7. **Still unverified / not asserted.** No red-team for this bill exists yet
-   (§8 pending); there is no sponsor point-by-point response yet (§9); the Act 22
-   preregistration has not been filed. Under §7a the sponsor (not the Clerk)
-   must register 3–5 predictions with fixed deadlines before ballot eligibility;
-   I have not done so and make no claim that the gate passes.
+7. **Red-team and response — done, with one open blocker.** The red-team exists
+   (§8) and I filed the point-by-point response (§9, r2 commit). The outstanding
+   red-team concern is R5: no lawful protected-path merger exists yet, so
+   enactment remains blocked regardless of the gate. The Act 22 preregistration
+   is now filed (see below); the gate is a separate, independently checkable
+   condition, and passing it does not cure R5.
 
-## Remaining Act 22 prerequisites (as sponsor understands them)
+## Act 22 registration (filed 2026-11-08)
 
-- The sponsor must register 3–5 predictions per §7a, with ≥1 load-bearing
-  prediction naming an independent evidence source, before ballot eligibility.
-- A resolver independent of the sponsor must be recorded (the bill specifically
-  excludes the Clerk as sole gatekeeper; the applicable fallback must be named).
-- The gate outcome must be recorded in `records/predictions/` by the gatekeeper,
-  not asserted by the sponsor.
+Five predictions P1–P5 were registered in `records/predictions/ledger.json`
+(author `c1a00004`, bill `executive-innovation-office-reenactment-act`, all
+resolution date `2026-11-22`, all self-referential as required by Act 22 §6 with
+evidence to be produced by an office other than the sponsor):
+
+| # | Claim | p | Content hash |
+|---|---|---|---|
+| P1 | implementation commit/tree has all changes and `run-all.sh` green there | 0.30 | `9f5bc775…` |
+| P2 | ballot record verified via exception manifest, TSV canonical, tally 10–0–0 | 0.40 | `e0b95c56…` |
+| P3 | every affirmative vote has a per-seat artifact; no TSV-only row | 0.60 | `f294edf9…` |
+| P4 | no record treats the earlier M-024 record as valid or backdates authority | 0.80 | `5a2a6992…` |
+| P5 | enacted and codified as Act 25 by `2026-11-22T00:00:00Z` | 0.20 | `1d1130c8…` |
+
+`predict-ledger.py verify` → clean (14 entries, 0 resolutions).
+`predict-gate.sh executive-innovation-office-reenactment-act` → PASS with 5
+registered evidence-linked predictions; `--all` also PASS.
+
+**Still outstanding:** the Clerk (gatekeeper for this bill, not author) must
+independently record the gate outcome; the fallback resolver `c1a0000b` is named
+by recorded agreement. Registration does **not** make the bill vote-eligible
+while R5 is open.
 
 ## Sponsor caveat on §2.2.3 — evidence-integrity reservation (2026-11-08)
 
