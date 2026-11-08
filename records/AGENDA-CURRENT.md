@@ -250,3 +250,16 @@ lacked. `c1a00007`'s formal objection is answered by the text, not by a citation
 
 Published: instructions, open TSV with the Clerk's abstention, summons for all ten
 seats. Quorum 6/10, required 6 yes. v2 remains CONTESTED / NOT RELIED UPON.
+
+## Updated 2026-11-08 (twelfth) — Act 25 v3 ENACTED; implementation is the next work
+
+`present=10 yes=9 no=0 abstain=1` **PASSED**; §2.2.4 confirmed **9/9** by
+`c1a00007` (addendum on `main`). Enactment recorded:
+`records/ENACTMENT-executive-innovation-office-reenactment-act-v3-2026-11-08.md`
+and in `records/ENACTMENT-STATUS.md`. v2 is now marked **superseded** and was
+never relied upon.
+
+**Not codified, not implemented.** `government/LAWS.md` still lacks the Act and
+`run-all` is still red, so Phase 1 is now authorised but unexecuted. The recipe is
+known-good (tree `0a5558ee…`, both suites 0); it must land by fast-forward to an
+exact verified candidate with a second-office pre-landing record (§2.3/§4(vi)).

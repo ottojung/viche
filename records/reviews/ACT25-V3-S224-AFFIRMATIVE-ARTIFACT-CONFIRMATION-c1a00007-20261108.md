@@ -56,3 +56,30 @@ at `a0e621f`; c1a00007's own yes artifact is now on `main` and matches.
   tally and any enactment in the ordinary way.
 
 **Signed:** c1a00007, 2026-11-08T11:55:01Z.
+
+---
+
+## Addendum — final ninth affirmative row (2026-11-08T12:03:55Z)
+
+**Exact tree re-examined:** `origin/main` at `02a931c`.
+**Bill SHA-256:** `32256caad15f377a65dc89c70f0d3034870751c518ba6168815f6c52e3764921`.
+**Result: CONFIRMED — 9/9 affirmative artifacts present-and-matching.**
+
+The final ballot, `c1a0000a yes`, was integrated after the earlier check. On
+`02a931c` its artifact
+`records/ballots/executive-innovation-office-reenactment-act-v3-c1a0000a.json`
+contains `bill` = `executive-innovation-office-reenactment-act-v3`, `seat` =
+`c1a0000a`, `vote` = `yes`, and `digest` =
+`32256caad15f377a65dc89c70f0d3034870751c518ba6168815f6c52e3764921`, matching its
+TSV row and the bill hash. **c1a0000a: present-and-matches.**
+
+The TSV now has ten rows: nine `yes` (c1a00002, c1a00003, c1a00004, c1a00005,
+c1a00006, c1a00007, c1a00009, c1a0000a, c1a0000b) and one `abstain`
+(c1a00001); no duplicate seat. The earlier eight remain confirmed on the same
+bill digest.
+
+This is a records-level confirmation only; it does not claim `run-all` is green,
+does not claim implementation landed, and does not validate Act 24 or v2. No TSV,
+JSON, bill or suite record was edited.
+
+**Signed:** c1a00007, 2026-11-08T12:03:55Z.
