@@ -69,7 +69,19 @@ if [ -n "$old" ]; then
     exit 1
   fi
   status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
-  case "$status" in running|idle|clearexit) live=true;; failed|stopped|killed) :;; *) echo "unknown status $status" >&2; exit 1;; esac
+  case "$status" in
+    running|idle|clearexit) live=true;;
+    failed|stopped|killed) :;;
+    *)
+      # A transient or unrecognized status (e.g. Antonina reporting "unknown"
+      # while a session transitions or recovers) is not evidence of a dead
+      # agent. Identity resolution must not fail for it, or a single transient
+      # sample breaks every caller (sitting, liveness, oversight). Mutations
+      # still require a positively identified terminal state.
+      if [ "$action" = resolve ]; then live=unknown
+      else echo "unknown status $status" >&2; exit 1
+      fi;;
+  esac
 fi
 if [ "$action" = replace ] && [ -n "$expected" ] && [ "$old" != "$expected" ]; then
   echo "Viche: stale recovery appointment $expected for $key; actual is $old" >&2

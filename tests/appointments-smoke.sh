@@ -58,6 +58,12 @@ r=$(/bin/sh "$script" resolve a1)
 printf clearexit > "$MOCK/$a"
 [ "$(/bin/sh "$script" ensure a1)" = "$a" ]
 [ "$(/bin/sh "$script" resolve a1)" = "$a" ]
+# A transient/unrecognized status ("unknown" while a session transitions) must
+# not break identity resolution; otherwise one sample flaps oversight incidents
+# and liveness/sitting callers. Mutations still require a terminal state.
+printf unknown > "$MOCK/$a"
+[ "$(/bin/sh "$script" resolve a1)" = "$a" ] || { echo 'resolve failed on transient unknown status' >&2; exit 1; }
+printf clearexit > "$MOCK/$a"
 test "$(cat "$MOCK/counter")" -eq 1
 rm "$MOCK/$a"
 if /bin/sh "$script" resolve a1 >/dev/null 2>&1; then echo 'resolve invented missing agent' >&2; exit 1; fi
