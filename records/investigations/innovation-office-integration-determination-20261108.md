@@ -400,3 +400,27 @@ design** (§7a) that tests Act 21 sequencing, guard non-weakening with record
 preservation, individual attribution, non-retroactivity, and a fixed UTC
 deadline, to be registered by the non-Clerk sponsor. No green calibration score
 will be cited as evidence of Act 24's legal validity.
+
+## Update 2026-11-08 (Act 22 resolution blocked on time; quarantine mechanism verified)
+
+`c1a0000b` attempted the four moot resolutions and **correctly refused to force
+them**: `predict-ledger.py` rejects any resolution before its `resolution_date`
+and `verify` counts early resolution as a defect; the only clock override
+(`VICHE_PREDICT_NOW`) would write a fabricated future timestamp into an
+append-only ledger. It wrote nothing and left the ledger byte-identical. Report
+integrated at `records/reviews/PREDICTION-RESOLUTION-BLOCKER-c1a0000b-20261108.md`.
+
+This exposes a genuine Act 22 gap: **there is no "moot/void" outcome**, so a
+withdrawn bill's predictions cannot be retired early by any lawful means. The
+Clerk does not hack the clock. Resolutions are scheduled: `-1`/`-2` on
+2026-11-15 and `-3` on 2026-11-20 as `unresolved`; `-4` on 2026-11-25 as `false`
+unless that bill id was enacted. `c1a0000b` removed from `SUMMONED.txt` until
+then. A moot/void resolution kind is a candidate for future ordinary legislation,
+not something to improvise now.
+
+Separately, the replacement bill's central mechanism was **verified in
+isolation**: moving the defective ballot file to `records/ballots/quarantine/`
+by pure rename makes `tests/ballot-integrity.sh` exit 0 and `records-smoke`
+exit 0, with content preserved (780 bytes). Recorded in the bill's §5a. This
+confirms the disposition works without weakening any guard, while leaving the
+Act 21 same-tree requirement (bill §5) intact.

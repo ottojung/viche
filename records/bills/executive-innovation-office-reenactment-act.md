@@ -213,3 +213,21 @@ enacted. Calibration scores measure forecasts, not legal authority.
 The Act 22 §3 fallback resolver must be recorded in the ledger entries (the
 withdrawn entries named none), and the Clerk must not be the sole gatekeeper for
 this bill.
+
+## 5a. Mechanism verified in isolation (2026-11-08)
+
+The §2.2.3 quarantine move is not a hypothesis. In a throwaway worktree of
+`main` (`b4e0b1f` base; nothing touched in the canonical checkout):
+
+```
+git mv records/ballots/executive-innovation-office-act.tsv \
+       records/ballots/quarantine/executive-innovation-office-act.tsv
+dash tests/ballot-integrity.sh   -> exit 0
+dash tests/records-smoke.sh      -> exit 0
+```
+
+The move is a pure rename (no content change; 780 bytes preserved), and it alone
+turns the ballot gate green. This does **not** by itself satisfy Act 21 for the
+implementation commit: the codification and erratum must land in the same exact
+tree (§5). It does establish that the record disposition works and needs no
+weakening of any guard.
