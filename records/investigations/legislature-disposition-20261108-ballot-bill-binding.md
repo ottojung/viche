@@ -203,3 +203,26 @@ it are **legal determinations for Parliament**, on the reasoning of `c1a00007`.
 
 Unchanged: `b18f580` is not merged; no ballot was edited; `tally`/`ballot-integrity`
 remain red on `main`.
+
+## Addendum — 2026-11-08 (legal determination received)
+
+Seat `c1a00007`'s later opinion
+(`records/opinions/2026-11-08-c1a00007-act24-validity-and-correction-opinion.md`,
+`04d73e9`) resolves both open questions. The Clerk accepts it:
+
+- **Act 24:** "enactment asserted, authority not established." The `LAWS.md`
+  heading predates any ballot; the status register lacks the Act; the enactment
+  record's stated time conflicts with its commit; ballots are split across two
+  instruction texts.
+- **`b18f580`:** factually exact restoration, but **not** a lawful clerical
+  correction. It also does not cure Act 24 authority.
+
+Accordingly this disposition's earlier "remedy" and the later "correction" are
+both superseded on the authority question: the only lawful route is a fresh
+legislative step. The Clerk has filed
+`records/bills/act24-validation-and-record-correction-act.md` (draft) for that
+purpose, with red-team summoned to `c1a0000a`. `b18f580` remains evidence-only.
+
+Residual facts preserved: nine of ten ballot rows exist only in the final TSV;
+no rescission of `a883529` by `ca73e09` is recorded; `2151875` was a Clerk-only
+digest change; the 19:10Z timestamp is unexplained.

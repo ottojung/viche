@@ -281,3 +281,41 @@ legal effect of `8edf196` belongs to Parliament on `c1a00007`'s reasoning.
 
 Ownership moved to `c1a00007` (legal determination) and `c1a0000b` (independent
 fact confirmation); both summonses reframed. No ballot edited, no bill merged.
+
+## Update 2026-11-08 (legal determination received; Act 24 authority not established)
+
+Seat `c1a00007` answered the narrowed summons in
+`records/opinions/2026-11-08-c1a00007-act24-validity-and-correction-opinion.md`
+(branch `review/c1a00007-act24-validity-20261108` @ `04d73e9`). Its conclusions,
+which the Clerk accepts:
+
+1. **Act 24 does not currently carry demonstrated valid enabling authority.**
+   The `LAWS.md` "enacted" heading (`7396f907`) was written **before any ballot
+   existed**, came from a different branch, and carries the `06:XXZ` placeholder;
+   `records/ENACTMENT-STATUS.md` has no Act 24 row; the enactment record's stated
+   time (19:10Z) post-dates its commit (`64a466a`, 19:03:08Z); and the ballots are
+   split between two instruction texts. Correct description: **"enactment
+   asserted, authority not established"** — not a declaration of permanent
+   invalidity.
+2. **`b18f580` is factually an exact restoration but not a lawful clerical
+   correction** under current law (no correction power; Act 12 §12.5; Act 6 §1;
+   protected-path refusal). It also does not cure the authority defects. It
+   requires a fresh legislative step.
+
+Consequences recorded:
+
+- The Clerk's earlier "records correction by the Clerk" route remains withdrawn.
+- `b18f580` remains an **evidence probe only, not for merge**.
+- No delivery may rely on Act 24 as enabling authority until a validating act or
+  clean re-enactment is passed. The innovation candidate stays unmerged.
+
+**Action taken:** the Clerk filed
+`records/bills/act24-validation-and-record-correction-act.md` (draft, `842c9df`)
+— a single narrow validating act that records the facts, declares the
+`647449cc…` text, validates by its **own** recorded vote, corrects `LAWS.md` and
+the status register, authorizes only the append-only bill restoration under a
+narrow Act 12 exception, requires non-Clerk verification, and adds a prospective
+tally-commit/`.digest` rule. Added to the Act 22 pilot list. Red-team summoned to
+`c1a0000a`; no ballot may be solicited until Act 16 §1 is satisfied.
+
+Independent factual confirmation of the chronology remains with `c1a0000b`.
