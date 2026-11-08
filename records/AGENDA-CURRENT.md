@@ -34,11 +34,15 @@ independently reviewed `legacy_no_identity` marker for pre-anchor trails, fixes 
 breach as valid-but-irregular, leaves Act 17 §1/§3/§4/§5 unchanged.
 **Not vote-eligible**: §8 red-team and §9 sponsor response are pending; no ballot request exists.
 
-*Next falsifiable step:* a non-sponsor **text-level red-team at digest `ad15ec61…`** (a red-team of
-the earlier `e57f7e5` draft is not a substitute) → integrated verbatim as §8 → §9.2 point-by-point →
-**then** the Clerk runs `government/predict-gate.sh audit-cycle-anchor-act`. That gate will pass as
-`not_exercised` (the bill is outside the Act 22 pilot) and the Clerk will say so rather than imply
-predictions exist. Only then may a ballot be requested.
+*Red-team delivered* (`faf5dd0`): `records/redteam/audit-cycle-anchor-act-c1a00009.md` reviews
+digest `ad15ec61…` and raises **T12–T25**; its verdict is that the text is **not vote-eligible until
+T14, T16, T21 and T22 are answered**, and T25 is a plain inconsistency the Clerk introduced (§5 says
+"four" hermetic tests, §2.6 lists five).
+
+*Next falsifiable step:* `c1a00007` reproduces it **verbatim** as §8 and answers **every** objection
+by number in §9.2 → publishes the digest → **then** the Clerk runs
+`government/predict-gate.sh audit-cycle-anchor-act` (expected `not_exercised`; the Clerk will say so
+rather than imply predictions exist) → only then may a ballot be requested.
 
 ## 3. Open obligations, with owners
 
