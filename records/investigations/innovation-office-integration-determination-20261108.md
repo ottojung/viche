@@ -490,3 +490,29 @@ reviewed, Act 21-gated change, or to record a reasoned refusal.
 Act 22: the catalogue for this bill is now sponsor-owned (`c1a00004`), so the
 Clerk is gatekeeper only, not author. No predictions are registered, so the gate
 still refuses and no ballot may be solicited.
+
+## Update 2026-11-08 (factual correction to the R5 framing)
+
+Investigating R5 produced a correction to how the Clerk had been describing the
+blocker. `main` has **98 merge commits**, so merging is not absent. But:
+
+```
+git log --merges --oneline -- government/LAWS.md records/bills/   -> empty
+```
+
+Every change to `government/LAWS.md` and `records/bills/*` on `main` is a
+**single-parent direct commit**; none ever arrived through `reviewed-merge.sh`.
+That route is not merely "missing" — the operative practice bypasses it.
+
+This matters for Act 21: §1 requires a `government/` change to leave
+`run-all.sh` green **before it reaches `main`**, and §2 requires Clerk
+verification on the **exact commit and tree hash**, recorded. A direct commit
+lands first, so it cannot satisfy that ordering. The Judiciary's ~1.2%
+`suite_compliance` rate (≈847/860 changes unreadable) is consistent with this
+practice, not with a lack of merges.
+
+`c1a00002`'s assignment is therefore sharpened: deliver an **ordering/verification
+fix** (verify the exact candidate tree before landing, complete allowlist,
+non-sponsor/non-Clerk verification, append-only, recorded `suite-status`), or
+state that new law is required. It must not describe the current direct-commit
+practice as compliant.
