@@ -25,7 +25,15 @@ case "$1 $2" in
   "board show")
     echo '{"body":"All agent execution and development work must happen on billy-dev.","messages":[]}' ;;
   "agent status")
-    printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL" ;;
+    if [ "$MODE" = sequence ]; then
+        n=0
+        [ ! -f "$MOCK_STATE/status-calls" ] || n=$(cat "$MOCK_STATE/status-calls")
+        n=$((n+1)); printf '%s\n' "$n" > "$MOCK_STATE/status-calls"
+        if [ "$n" -eq 1 ]; then printf '%s\n' '{"state":"unknown"}'
+        else printf '%s\n' '{"state":"running"}'; fi
+    else
+        printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL"
+    fi ;;
   "agent run")
     case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
     case "$*" in *"SoringP1"*"research-plan.md"*) : ;; *) exit 8 ;; esac
@@ -46,6 +54,9 @@ MODE=idle MODEL=test-provider/example
 OUTPUT=$scratch/dispatched
 SORING_FRONTIER_STATE=$scratch/frontier.json
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT SORING_FRONTIER_STATE
+MOCK_STATE=$scratch
+MOCK_STATE=$MOCK_STATE
+export MOCK_STATE
 grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
 grep -Fq "government/antonina-interface.md" "$repo/government/executive-agenda.md"
 sh "$repo/government/executive-cycle.sh"
@@ -70,4 +81,24 @@ BOARD_DOWN=yes
 export MODE MODEL BOARD_DOWN
 if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
 test "$(wc -l < "$OUTPUT")" -eq 3
+# A transient 'unknown' is re-read, not fatal and not treated as idle.
+MODE=sequence
+VICHE_AGENT_STATE_RETRIES=3 VICHE_AGENT_STATE_DELAY=0
+export MODE VICHE_AGENT_STATE_RETRIES VICHE_AGENT_STATE_DELAY
+rm -f "$MOCK_STATE/status-calls"
+sh "$repo/government/executive-cycle.sh"
+test "$(cat "$MOCK_STATE/status-calls")" -eq 2
+test "$(wc -l < "$OUTPUT")" -eq 3
+
+# A persistent 'unknown' fails closed with a specific diagnostic and no dispatch.
+MODE=unknown
+export MODE
+if sh "$repo/government/executive-cycle.sh" 2>"$scratch/unknown.err"; then
+    echo 'FAIL: persistent unknown state must not be treated as success' >&2; exit 1
+fi
+grep -q 'has no usable state' "$scratch/unknown.err"
+grep -q "unrecognized agent state 'unknown'" "$scratch/unknown.err"
+test "$(wc -l < "$OUTPUT")" -eq 3
+
 echo 'Independent Executive dispatch and fail-closed assignment smoke passed'
+
