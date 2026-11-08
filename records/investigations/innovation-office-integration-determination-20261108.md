@@ -625,3 +625,17 @@ heading; R7 fixes the cutoff at the `ENACTMENT-STATUS` timestamp and requires th
 per-seat artifact to match bill/seat/vote/digest.
 
 Still open: R5 (landing ordering) and `c1a00002`'s fixture repair. No ballot.
+
+## Update 2026-11-08 (predictions are append-only; registered P2 needs a correction entry)
+
+The sponsor's revised §7a design and the **registered** P2 are no longer the same
+proposition. Registered entries are immutable, and no correction entry exists
+(`predict-ledger.py verify`: 14 entries, 0 resolutions). P2 as registered omits
+which tree `tally.sh` runs in, while the revised §2.2.3(v) requires a clean
+detached worktree of `64a466a`.
+
+This matters because P2 resolves on 2026-11-22: an ambiguous proposition cannot
+be scored honestly. The sponsor is asked to register a **correction entry**
+citing the original (`register --cites`, append-only) or to state an explicit
+resolution rule in the bill. Hand-editing the ledger is prohibited and was not
+done.
