@@ -76,3 +76,37 @@ to be reviewed.
 
 The bill is **not vote-eligible**: §8 now has a review outside the bill text, but
 §9 has no point-by-point response to *this* text. The sponsor must supply it.
+
+## Update 2 — new candidate `5c31fdb` (eligibility clause); earlier measurements superseded, not reused
+
+The sponsor reconciled the eligibility language at `5c31fdb` (tree `358df2b6…`).
+I re-verified the **new** tree rather than carrying the `dcf5c22` results:
+
+| Check | `5c31fdb` |
+|---|---|
+| Bill digest | `8361124030d600b4c8e628f589d4f69fe841ee0b8df1b01c9650bbdeacab1e33` |
+| Self-disqualifying phrases ("not vote-eligible", "no ballot is solicited") | **none** |
+| §2.1 identical to `64a466a` lines 18–79 | yes (blank-line normalised diff empty) |
+| `tests/records-smoke.sh` | exit 0 |
+| `predict-gate.sh --all` on that tree | **PASS**, 5 predictions |
+| `predict-ledger.py verify` | clean, 19 entries, 0 resolutions |
+
+The digest therefore **changed from `94fe623f…` to `83611240…`**. Anything that
+quoted the old digest is superseded.
+
+### Where the eligibility conditions actually stand (v2 §7)
+
+1. **Fresh Act 16 §1 review + sponsor response — NOT met.** `c1a0000a`
+   delivered a review at `da8ef33` against `dcf5c22` (blob `94fe623f…`), i.e.
+   **the previous text**. The sponsor has not yet filed the §9 point-by-point
+   response, and the review does not cover `83611240…`. A delta confirmation on
+   the new digest is needed, plus the response.
+2. **Gate passing on `main` — NOT met.** The five v2 entries remain only on the
+   sponsor branch; `origin/main` `ef701c3` still holds 14 entries, so
+   `predict-gate.sh` on `main` refuses. The bill and assumptions are likewise
+   not on `main`.
+3. **Clerk tally basis — mine, recorded when I publish.** Not yet applicable.
+
+**Consequence:** no ballot request is published, and I have not landed the draft.
+Landing should be the **frozen** text, because every edit changes the digest; a
+landing now would be obsolete when §9 is added.

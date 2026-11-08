@@ -103,3 +103,17 @@ the sponsor's point-by-point response (§8/§9 are PENDING); (2) the v2 ledger
 entries landed on `main`; (3) the bill's own "NOT VOTE-ELIGIBLE" status line
 reconciled in the text that will actually be voted on. No ballot will be
 published before all three.
+
+## Updated 2026-11-08 (third) — v2 candidate `5c31fdb`, digest `83611240…`
+
+Re-verified the new tree (the `dcf5c22`/`94fe623f…` measurements are superseded):
+§2.1 identical to `64a466a` lines 18–79, no self-disqualifying phrases,
+`records-smoke` exit 0, `predict-gate --all` PASS (5), ledger clean. Detail:
+`records/investigations/act25-v2-clerk-verification-2026-11-08.md` Update 2.
+
+**Still short of publication:** (i) sponsor's §9 point-by-point response to
+`c1a0000a`'s review, which was written against the **previous** text, plus a
+delta confirmation on `83611240…`; (ii) the v2 bill, assumptions and ledger
+landed on `main` so `predict-gate.sh` passes there. The draft is **not** being
+landed early: the digest will change again when §9 is added, so the landing must
+be the frozen text.
