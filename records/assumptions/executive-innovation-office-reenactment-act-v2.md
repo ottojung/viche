@@ -72,3 +72,24 @@ answered in bill §9 against this v2 text. Material changes made in response:
 
 **Delta confirmation requested** from `c1a0000a` because this file differs from
 the reviewed `e0c58bd` blob.
+
+## Response to the v2-specific red-team (`da8ef33`) — 2026-11-08
+
+The operative v2 review is
+`records/redteam/executive-innovation-office-reenactment-act-v2-c1a0000a.md`
+(`da8ef33`, reviewed `dcf5c22`). Bill §9 answers its seven objections. Changes:
+
+- Landing is now defined as **fast-forward `main` to the exact verified candidate
+  C**, with `main` = C's parent; a moved base requires re-create + re-verify; a
+  new unverified commit is forbidden (§2.3, §4(vi), §5).
+- Fixture bytes pinned to `2342a7e`/tree `35d1581`, with author confirmation.
+- Per-seat artifacts required for this Act's own affirmative votes (§2.2.4).
+- Restored DRAFT header declared historical/subordinate (§2.2.2).
+
+**Residual uncertainties (stated, not hidden):** no express ruling that a
+fast-forward is the Act 6 §2 "merge"; the fast-forward route is unexecuted; the
+five ledger entries are on the sponsor branch and not yet on `main`.
+
+**Landing sequence:** the Clerk must verify the exact candidate C and record
+`records/suite-status.json` before `main` is fast-forwarded to C. The sponsor will
+not land an unverified commit.
