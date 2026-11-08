@@ -39,6 +39,19 @@ mkdir -p "$scratch/town/government"
 cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
 cp "$repo/government/delivery-candidates.py" "$scratch/town/government/delivery-candidates.py"
+# Fixture law, deliberately WITHOUT the Executive Innovation Office heading.
+# Four scripts grep LAWS.md for that heading to choose the office model; this
+# fixture asserts the LEGISLATIVE path, so it supplies a minimal law that does
+# not contain it. This is fixture data, not a claim about enacted law.
+cat > "$scratch/town/government/LAWS.md" <<'LAWS'
+# Laws of Viche (fixture)
+
+## Act 1 — Parliament
+
+Fixture law used only by this smoke test. It intentionally does not contain an
+Executive Innovation Office enactment heading, because this test exercises the
+legislative Innovation Centre path.
+LAWS
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
@@ -79,6 +92,13 @@ export MODEL
 for branch in legislature executive judiciary; do
  printf '{"branch":"%s","readiness":"ready","observed_at":23000}\n' "$branch" > "$scratch/state/branches/$branch.json"
 done
+## branch-health.sh also requires fresh monitoring evidence, not just branches.
+## Supply fixture evidence stamped at the same clock so only the innovation
+## signal under test can fire.
+mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases"
+printf '{"observed_at":23000}\n' > "$scratch/state/institutional-outcomes/latest.json"
+printf '{"observed_at":23000,"active":[]}\n' > "$scratch/state/institutional-cases/index.json"
+printf '{"observed_at":23000}\n' > "$scratch/state/branches/judiciary-measurements.json"
 VICHE_BRANCH_NOW=23000
 export VICHE_BRANCH_NOW
 /bin/sh "$repo/government/branch-health.sh"
