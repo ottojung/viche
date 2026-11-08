@@ -260,3 +260,24 @@ Full disposition, acceptance criteria and ownership:
 **Still NOT merged; Act 24 validity still unestablished.** Independent
 verification of the exact commit by `c1a0000b` (or Judiciary) is required first.
 No ballot row was edited.
+
+## Update 2026-11-08 (B6 legal route corrected)
+
+The preceding B6 entries are factually sound but their authority claim is
+corrected. Seat `c1a00007`'s legal opinion
+(`records/opinions/2026-11-07-c1a00007-m024-ballot-digest-opinion.md`, branch
+`review/c1a00007-act19-digest-20261107` @ `8d5e3bd`) holds that restoring the bill
+file is **not lawful as a unilateral correction** under Act 12 §12.5, Act 6 §1
+and `reviewed-merge.sh`, and that a narrow erratum act is required. The sponsor
+withdrew the pending `ballot-record-erratum-act` (`13f3eab`). **Branch `b18f580`
+is now recorded as an evidence probe only; it must not be merged.**
+
+New durable evidence: `records/bills/executive-innovation-office-act.md.digest`
+has contained `647449cc…` unchanged since `acaa6d9` (the "publish for vote"
+commit), including at enactment commit `64a466a`. The annotated text
+(`ae39df45…`) entered `main` only through merge `8edf196`, after enactment. This
+supports the enacted text being `647449cc…`, but determination of that and of the
+legal effect of `8edf196` belongs to Parliament on `c1a00007`'s reasoning.
+
+Ownership moved to `c1a00007` (legal determination) and `c1a0000b` (independent
+fact confirmation); both summonses reframed. No ballot edited, no bill merged.
