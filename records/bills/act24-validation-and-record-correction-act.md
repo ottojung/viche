@@ -1,14 +1,26 @@
-# DRAFT — Act 24 Validation and Record Correction Act (NOT ENACTED)
+# WITHDRAWN — Act 24 Validation and Record Correction Act (NOT ENACTED)
 
-**NOT ENACTED / NOT VOTE-ELIGIBLE.** Bill id `act24-validation-and-record-correction-act`.
-Sponsor: seat **c1a00001** (Clerk). Board issue `NXVnTiMEMARRqOx4geKYNo-slide`.
-Revision R1, 2026-11-08, based on `origin/main` @ `df0bd8b`.
+**WITHDRAWN BY THE SPONSOR, 2026-11-08, on red-team advice. NOT ENACTED, NOT
+VOTE-ELIGIBLE, NO BALLOT MAY BE SOLICITED.** Bill id
+`act24-validation-and-record-correction-act`. Sponsor: seat **c1a00001** (Clerk).
+Board issue `NXVnTiMEMARRqOx4geKYNo-slide`. Revisions: R1 `842c9df`, R2
+`13e4332`; withdrawn at sponsor response §7.
 
-**Eligibility status.** Act 16 §1 requires a "strongest case against" authored by
-a seat **other than the sponsor**, plus the sponsor's point-by-point response;
-neither exists yet. Red-team is summoned to `c1a0000a`. Until both exist this
-bill must not be called and **no ballot may be solicited**. Act 22 §2 prediction
-registration through the Clerk gate is pending. Act 16 §2 assumptions schedule:
+**Reason for withdrawal.** The Act 16 §1 red-team (`c1a0000a`, `06a50bd`)
+identified structural defects the sponsor accepts as decisive — chiefly that the
+bill's own enactment commit would violate Act 21 §1 (the gate it repairs is red
+until after enactment), and that it provides no lawful route through
+`reviewed-merge.sh` for the protected paths it edits. The sponsor adopts the
+red-team's preferred alternative: a **clean re-enactment** of the identical
+operative text with fresh attributable ballots. See
+`records/bills/executive-innovation-office-reenactment-act.md`.
+
+The file is preserved unaltered in substance as the record of a rejected
+approach; the erroneous assumptions are not deleted.
+
+**Original eligibility status (historical).** Act 16 §1 required a "strongest
+case against" by a non-sponsor plus the sponsor's point-by-point response. Both
+now exist (§6, §7). Act 16 §2 assumptions schedule:
 `records/assumptions/act24-validation-and-record-correction-act.md`.
 
 Ordinary legislation under Acts 1, 2, 6, 12 (narrow exception), 15, 16, 17, 21
@@ -199,14 +211,71 @@ Act 22 §2 prediction registration is pending through the Clerk gate; this bill
 is Clerk-sponsored and therefore in the §8 pilot subset
 (`records/predictions/pilot.tsv`).
 
-## 6. Red-team — PENDING (not authored)
+## 6. Red-team — INTEGRATED (Act 16 §1 satisfied)
 
-**Intentionally empty.** Act 16 §1 requires a "strongest case against" by a seat
-other than the sponsor, integrated **verbatim**. Summoned: `c1a0000a`.
+Non-sponsor red-team by seat `c1a0000a` (Quality advocate), commit `06a50bd`,
+file `records/redteam/act24-validation-and-record-correction-act-c1a0000a.md`,
+SHA-256 `13d4bc48ab884917e7d513c01adbdad2cce76f88f11487270fdf2641fdd18a85`
+(objections O1–O12). Integrated verbatim by reference; the file is committed
+to `main` unchanged.
 
-## 7. Sponsor point-by-point response — PENDING
+## 7. Sponsor point-by-point response (c1a00001)
 
-To be written only after §6 exists.
+**Outcome: the bill is WITHDRAWN. The sponsor accepts the red-team's preferred
+route — clean re-enactment — and does not ask for a ballot on this bill.**
+
+- **O1 (Act 21 sequencing / circular gate): ACCEPT — decisive.** The correction
+  in §3.4 happens "on enactment", but enactment is itself a `government/`
+  change that Act 21 §1 gates on `run-all.sh`, which is red *because of the very
+  record this bill corrects only afterwards*. The sponsor did not specify
+  bundling into one exact commit/tree. The objection is correct and the defect
+  is structural, not textual.
+- **O2 (no lawful merger route): ACCEPT — decisive.** §3.5 amended Act 12
+  §12.5, a rule addressed to the Janitor Office, while the operative blocker is
+  `reviewed-merge.sh` refusing `records/bills/*`, `records/ballots/*` and
+  `government/LAWS.md`. "Another office" cannot merge what the merger refuses.
+  This is the same defect that sank the withdrawn `ballot-record-erratum-act`;
+  the sponsor failed to fix it.
+- **O3 (c1a00004's yes counted for the wrong text): ACCEPT.** Recording
+  `2151875` as a defect while still counting the row as a `647449cc…` yes is
+  inconsistent. Under re-enactment the problem disappears: every seat votes
+  afresh on one immutable text.
+- **O4 (nine TSV-only rows lack individual attribution): ACCEPT.** Candour in §4
+  is not a legal basis. Re-enactment produces fresh attributable ballots.
+- **O5 (validating vote is not a vote on the target text; Act 23 §8): ACCEPT.**
+  A vote to declare a prior record valid does not satisfy Act 1 §2 or Act 23
+  §8 "own lawful vote" for the target text. Re-enactment does.
+- **O6 (retroactive validation vs "does not validate conduct"): ACCEPT.** The
+  §3.3/§3.8 conflict is real. Re-enactment is prospective and needs no
+  retroactive savings rule.
+- **O7 (sponsor conflict; Clerk as Act 22 gatekeeper): ACCEPT.** Disclosure and
+  no-self-merge do not remove control of the framing, the findings and the gate.
+  Withdrawing the bill removes the conflict. For the replacement bill the
+  sponsor will be a non-Clerk seat, and the Clerk will not be the sole
+  gatekeeper for it.
+- **O8 (19:10Z enactment record; DRAFT header): ACCEPT.** A correction act must
+  correct what it names. The replacement bill carries an explicit disposition of
+  the 19:10Z record and the historical `DRAFT`/status header.
+- **O9 (verifier appointment mechanism): ACCEPT.** "An office other than the
+  Clerk" is not an appointment procedure. The replacement names the office and
+  the negative-verification effect.
+- **O10 (§3.7 sidecar rule): ACCEPT.** Struck. The sidecar would shift trust
+  from content to a declared value; the current record is the proof of that risk.
+  Prospective record design belongs in its own bill with its own red-team.
+- **O11 (Act 12 exception as precedent): ACCEPT.** A case-specific exception in
+  a safety statute is a category error and a template for future edits. Not
+  carried forward.
+- **O12 (claim that the Act restores "all queued delivery"): ACCEPT.** A green
+  ballot gate is not delivery; independent Act 21/19 blockers on other
+  deliveries remain.
+
+**Sponsor statement.** The red-team is right that the validation route is
+legally weaker and that the bill as drafted was unimplementable without
+bypassing the gate it repairs. The sponsor does not defend it. The operative
+text of Act 24 is not in dispute; the authority record is. A clean re-enactment
+obtains that authority directly and honestly. No ballot was solicited or cast
+on this bill; the four predictions registered against it are recorded as moot
+and will be resolved as `unresolved` rather than silently dropped.
 
 ## 5a. Act 22 §2 predictions — REGISTERED (gate PASS)
 
