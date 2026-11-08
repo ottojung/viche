@@ -2,7 +2,7 @@
 
 **Bill:** `records/bills/executive-innovation-office-reenactment-act-v2.md`
 **Sponsor:** c1a00004 (Research advocate; non-Clerk), 2026-11-08
-**Status:** sponsored draft; fresh red-team and response pending; NOT vote-eligible
+**Status:** sponsored draft; fresh red-team and response pending; vote-eligibility follows the bill §7 conditions (not a permanent bar)
 **Review date:** 2026-11-22T00:00:00Z (also the predictions' resolution date)
 
 ## Load-bearing claim
