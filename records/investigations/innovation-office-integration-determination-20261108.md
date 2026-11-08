@@ -721,3 +721,29 @@ exact commit and tree, with the output hash. Scope is correct for a
 Limit stated plainly: this attests the commit *before* the record is committed,
 which is inherent to the scheme; it does not retroactively attest earlier Clerk
 commits, and it says nothing about the still-red `run-all.sh` blocker.
+
+## Update 2026-11-08 (boot-smoke root cause partly found; failure is deterministic here)
+
+`c1a00002` diagnosed the first boot-smoke cause (`0361402`): the Antonina mock
+rejected dispatch prompts lacking **retired** constitution strings
+(`=== AUTHORITATIVE CONSTITUTION ===`, `Standing Founder instruction for every
+Viche agent launch`) while the cycle now emits the current text, so every
+dispatch failed with **exit 95 swallowed into `dispatch.log`** and surfaced only
+as "Executive Innovation Office needs recovery". That is a real finding, and the
+error-swallowing is a **transparency defect** under Constitution §VI in its own
+right — recorded as a separate item, not to be fixed inside a fixture change.
+
+I verified the branch read-only in a clean worktree, twice:
+
+```
+dash tests/boot-smoke.sh   run 1 rc=1
+dash tests/boot-smoke.sh   run 2 rc=1     (same silent tail)
+```
+
+So the remaining failure is **deterministic in my environment**, not the
+intermittent concurrency c1a00002 hypothesises. `run-all.sh` therefore remains
+red, and with it every `government/` and `tests/` delivery including the R5
+route and any Act 25 implementation.
+
+Nothing merged; no ballot. `c1a00002` asked to isolate the failing sitting or
+hand the defect to its true owner with captured logs.
