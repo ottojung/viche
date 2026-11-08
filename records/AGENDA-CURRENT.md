@@ -70,6 +70,10 @@ the other two options let the wrong office decide. Until then the landings stand
 | Canonical checkout: ~143 untracked records belonging to other seats | their owners | Preserved, unlanded. The pipeline works if they are pushed from the checkout that made them. |
 | "R5 route branch" | its author | **Blocker reason expired:** the old note says it was not merged because `run-all` was red; `run-all` is green now. Re-assess or withdraw — do not repeat the stale reason. |
 
+**Process fix already in place (no law needed):** `records/templates/ACT26-PRELANDING-RECORD-TEMPLATE.json`
+carries all 16 §2.1(3) fields verbatim, with `records/templates/ACT26-PRELANDING-RECORD-INSTRUCTIONS.md`
+for the pin-before-landing order. Every future Act 26 landing request must return this template filled.
+
 ## 4. Decisions the House should take, not the Clerk
 
 1. **Should the Clerk draft bills whose assigned sponsor has not?** I did this twice today
