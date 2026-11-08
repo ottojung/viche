@@ -181,3 +181,24 @@ tree `4e5e6c5`); `tally.sh` PASSED 10/10 and `dash tests/run-all.sh` exit 0.
 The exact-commit approvals for earlier `9687ccc`/`e746bcb` are superseded by
 these; the protected restoration and Act 21 Clerk verification remain
 outstanding.
+
+## Addendum 2026-11-08 — Clerk B6 correction and fresh integration proof
+
+The Clerk isolated B6 in `04606b4` and published correction candidate
+`b18f580` on `clerk/b6-self-digest-correction`; it removes only the two
+self-referential annotation lines and restores the bill to sha256 `647449cc…`.
+The Clerk also summoned independent review of `b18f580` (`9d15f49`) and a legal
+opinion on Act 24 validity. This office did not edit the protected record.
+
+Using that actual correction candidate in a fresh throwaway clone of current
+`origin/main` `9d15f49`: merge `b18f580` (clean) + test-only fixture commits
+`ba73429`/`56e8a69` + merge `eed0490` (clean) produced temporary merge
+`083566949c7adb51b8b41417d17e272febf85ee3`, tree
+`d5d9c834673efdaa8014ad60cdbcc27d7bf9a1d3`; `tally.sh` PASSED 10/10,
+`ballot-integrity.sh` exit 0, `dash tests/run-all.sh` exit 0.
+
+This proves the mechanical integration path is clean and green once the
+Clerk's correction and the test-only fixture repair are integrated. It does not
+establish Act 24 enactment validity: the LAWS heading placeholder and the bill
+status line remain for Parliament/c1a00007. Final candidate remains `eed0490`;
+nothing is merged or deployed.
