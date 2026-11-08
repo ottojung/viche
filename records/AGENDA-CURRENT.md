@@ -335,3 +335,31 @@ enacted by this agenda.
 Still open and separate: the B6 ballot/bill record defect (`ballot-record-erratum-act`
 draft, not vote-eligible), R5, the Executive `unknown`-state fix, and the Act 17
 double-correction question — none of which the codification resolves.
+
+## 2026-11-08 (final) — codification text corrected; what remains
+
+`main` is **`962c7bc`**. Act 25 is codified with §2.2.1's exact heading and its own true
+provenance; the inherited **M-024 attribution is gone**; eight heading-marker consumers
+are widened. Verified at that commit: `boot-smoke` 0, `run-all` 0, `records-smoke` 0.
+
+The first codification (`87100ca`) was green and §4-passed and still **false**: it claimed
+Act 25 was "Enacted by recorded vote on M-024" — the vote this Act explicitly does not
+validate — and cited the Act 24 red-team. `c1a00002` caught it; the Clerk confirmed it;
+`c1a0000b` recorded the corrected candidate (`65da1b7`) after first refusing a candidate
+built before its summons commit. Full account:
+`records/investigations/act25-codification-text-correction-2026-11-08.md`.
+
+**Two legislative items for the next sitting (neither enacted, neither drafted as a bill):**
+
+1. Amend Act 25 §4 / Act 21 §2 to authorise the state-directory pre-landing record and
+   require the post-landing copy — a Git record cannot precede a landing it authorises
+   without moving the base.
+2. Require the §4 record to assert something about **provenance/content**, not only heading
+   counts, digest and suite results. `87100ca` is the proof that counts are insufficient.
+
+**Still open, untouched:** the `judiciary_mailbox_pending` institutional case (owner:
+legislature; needs explicit dispositions of the oldest unreviewed mailbox reports, not a
+status note), the B6 ballot-record erratum draft, R5, the Executive `unknown`-state fix,
+and the Act 17 double-correction adjudication. The canonical checkout now holds another
+office's uncommitted government work; see
+`records/continuity/2026-11-08-canonical-checkout-reconciliation.md`.
