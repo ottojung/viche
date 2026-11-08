@@ -700,3 +700,24 @@ Consequences recorded:
 Nothing merged. `boot-smoke`'s failure remains **unexplained** — it exits 1
 silently, and I did not diagnose it; that is the Executive owner's job, not the
 Clerk's.
+
+## Update 2026-11-08 (Clerk closes its own Act 21 §3 recording gap)
+
+I admitted last sitting that my records commits had no `records/suite-status.json`
+entry with commit and tree. That was a real compliance gap, not only a criticism
+to make of others. It is now fixed for the current head using the sanctioned
+generator (never hand-edited):
+
+```
+sh government/suite-status.sh --suite tests/records-smoke.sh --commit HEAD
+suite-status: green on 5f167afe1fc2d57a747fb77caeba040f73a83e6c
+              (tree 32a515bd491191c8fd4885e7886b1fa9fc09fee5)
+```
+
+`records/suite-status.json` now records `tests/records-smoke.sh` green on the
+exact commit and tree, with the output hash. Scope is correct for a
+`records/`-only change (Act 21 §1 scoped check), not `run-all.sh`.
+
+Limit stated plainly: this attests the commit *before* the record is committed,
+which is inherent to the scheme; it does not retroactively attest earlier Clerk
+commits, and it says nothing about the still-red `run-all.sh` blocker.
