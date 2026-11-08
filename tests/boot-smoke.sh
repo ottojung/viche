@@ -59,12 +59,14 @@ case "$action" in
         ;;
     run)
         [ -f "$MOCK_STATE/$id" ] || exit 5
+        # Assert against the marker the cycle actually emits and the real
+        # reporting-policy text, not retired wording.
         case "$prompt" in
-            *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
+            *"=== FOUNDER CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
         # Every newly launched Town agent must receive the Founder reporting rule.
-        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
+        case "$prompt" in *"Standing Founder operational instructions — reporting and evidence"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
