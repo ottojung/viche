@@ -131,3 +131,25 @@ objections §9 does not answer — exact-commit vs a new single-parent commit
 bypassing `reviewed-merge.sh`. Until the reviewer confirms the frozen digest
 `b170694c…`, Act 16 §1 is not satisfied and no ballot request is published. The
 bill text is not landed for the same reason.
+
+## Updated 2026-11-08 (fifth) — BALLOT OPEN on `…-v2`, digest `25df2f4a…`
+
+The frozen v2 text was **landed on `main` by fast-forward** to `716513f` (two new
+records files only: the bill and its assumptions). Verified on that exact commit:
+digest `25df2f4a…`, §2.1 identical to `64a466a` lines 18–79, `records-smoke` exit
+0, gate PASS, ledger clean.
+
+**Act 16 §1 is satisfied by its own test.** §1 requires the bill to *carry* a
+strongest case against plus the sponsor's point-by-point response; it does not
+give the red-teamer a veto. Both exist (§8, §9). My earlier framing — treating
+`c1a0000a`'s confirmation as a "last gate" — was **stricter than the statute** and
+produced a multi-sitting deadlock. Corrected here.
+
+Published: ballot request + instructions
+(`records/ballots/executive-innovation-office-reenactment-act-v2-vote-instructions.md`),
+an open TSV with the Clerk's abstention, and a summons for all ten seats.
+Quorum 6/10, required 6 yes. The reviewer's dissent is recorded in the
+instructions and in the summonses, not smoothed over.
+
+**Next:** ballots → `tally.sh` (needs the ballot file committed, else it refuses
+for lack of a trustworthy Git timestamp) → enactment record only if it passes.
