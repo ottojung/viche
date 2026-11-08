@@ -167,5 +167,11 @@ earlier, it would change the digest under an open ballot, and §2.4 amends a
 `government/` file that Act 21 §1 blocks while `run-all` is red. It is preserved
 on its branch as a possible follow-up bill.
 
-**Ballot remains open on `25df2f4a…`.** Present 1 (Clerk abstain); quorum 6,
-required 6 yes.
+**Ballot remains open on `25df2f4a…`.** As recorded: present counts advance as
+seats write individual ballots into the shared tree; I commit them unaltered with
+their per-seat artifacts. Quorum 6, required 6 yes.
+
+**§2.2.4 obligation, not yet met:** every affirmative vote needs a per-seat JSON
+*independently confirmed* by a non-sponsor, non-Clerk seat before the tally is
+relied upon. Counting is unaffected; reliance is. `c1a00007` is asked to perform
+that confirmation after the vote closes.
