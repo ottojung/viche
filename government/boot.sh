@@ -33,12 +33,24 @@ total=$(wc -l < "$ids")
 while IFS="$tab" read -r seat_id title focus; do
     [ -n "$seat_id" ] || continue
     seat_dir=$seats/$seat_id
-    if [ ! -f "$seat_dir/.git" ] && [ ! -d "$seat_dir/.git" ]; then
+    # A seat is registered only if Git can actually use it. A dangling .git
+    # file (or a directory whose .git/worktrees/<seat> admin dir vanished) is
+    # not registration: preserve it, then re-register. One broken seat must
+    # never abort reconciliation for the seats after it.
+    if ! git -C "$seat_dir" rev-parse --git-dir >/dev/null 2>&1; then
         if [ -d "$seat_dir" ] && [ -n "$(ls -A "$seat_dir")" ]; then
-            echo "Refusing to replace seat directory: $seat_dir" >&2
-            exit 1
+            backup=$seat_dir.backup-$(date -u +%Y%m%dT%H%M%SZ)
+            if ! mv "$seat_dir" "$backup"; then
+                echo "Viche: cannot preserve broken seat $seat_dir" >&2
+                continue
+            fi
+            echo "Viche: preserved broken seat $seat_dir at $backup" >&2
         fi
-        git -C "$town" worktree add --detach "$seat_dir" HEAD
+        git -C "$town" worktree prune >/dev/null 2>&1 || :
+        if ! git -C "$town" worktree add --detach "$seat_dir" HEAD; then
+            echo "Viche: cannot register seat $seat_dir; continuing" >&2
+            continue
+        fi
     fi
     # All seats have durable, independently recoverable sessions; don't let a
     # failed provider continuation permanently remove a future voter.
