@@ -39,6 +39,7 @@ mkdir -p "$scratch/town/government"
 cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
 cp "$repo/government/delivery-candidates.py" "$scratch/town/government/delivery-candidates.py"
+cp "$repo/government/agent-state.sh" "$scratch/town/government/agent-state.sh"
 # Fixture law, deliberately WITHOUT the Executive Innovation Office heading.
 # Four scripts grep LAWS.md for that heading to choose the office model; this
 # fixture asserts the LEGISLATIVE path, so it supplies a minimal law that does

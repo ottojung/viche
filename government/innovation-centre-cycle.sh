@@ -21,8 +21,10 @@ case "$now:$interval" in *[!0-9:]*|:*|*:) exit 2;; esac
 /bin/sh "$town/government/branch-bootstrap.sh" innovation-centre \
     > "$root/bootstrap.log" 2>&1 || { echo 'Innovation Centre bootstrap failed' >&2; exit 1; }
 id=$(/bin/sh "$town/government/appointments.sh" ensure innovation-centre)
-status=$(antonina agent status --id "$id" --json)
-mode=$(printf '%s\n' "$status" | jq -r '.state // "unknown"')
+. "$town/government/agent-state.sh"
+agent_state_probe "$id"
+status=$AGENT_STATE_META
+mode=$AGENT_STATE
 last=0
 [ ! -s "$root/last-dispatch" ] || last=$(cat "$root/last-dispatch")
 case "$last" in ''|*[!0-9]*) echo 'Invalid Innovation Centre timestamp' >&2; exit 1;; esac
@@ -120,13 +122,16 @@ policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach \
         > "$root/dispatch.log" 2>&1 ||
-        { echo 'Innovation Centre dispatch failed' >&2; exit 1; }
+        { echo "Innovation Centre dispatch failed for agent $id" >&2
+          dispatch_failure_log "$root/dispatch.log"; exit 1; }
       printf '%s\n' "$now" > "$root/last-dispatch"
       last=$now
       readiness=dispatched
       dispatched=true
     fi ;;
-  *) echo "Innovation Centre unhealthy: $mode" >&2; exit 1 ;;
+  *) echo "Innovation Centre state '$mode' unresolved after $AGENT_STATE_ATTEMPTS probe(s): $AGENT_STATE_REASON" >&2
+     echo "Viche: raw_status=$AGENT_STATE_RAW" >&2
+     exit 1 ;;
 esac
 activity=$(printf '%s\n' "$status" | jq -r '.last_activity_at // 0 | floor')
 case "$activity" in ''|*[!0-9]*) activity=0;; esac
