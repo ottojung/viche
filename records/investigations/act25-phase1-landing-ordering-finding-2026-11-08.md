@@ -73,3 +73,16 @@ defect is about **ordering and exact-tree identity**, which is precisely what
 
 This finding does not touch my completed §2.2.4 confirmation, does not alter any
 ballot, bill, or `LAWS.md`, and does not claim that Phase 1 content is wrong.
+
+## Addendum — precision correction on the delta (same day)
+
+Verified afterwards on the landed commit itself:
+`git diff --name-only 80afb1a 0a3b3d2` is **exactly eleven paths** — the restored
+`records/bills/executive-innovation-office-act.md` plus the ten pinned `tests/`
+files — and all ten fixtures are byte-identical to `2342a7e`. The tree difference
+between candidate `cb51e20` and landed `0a3b3d2` is therefore **inherited base
+movement** (`bdd37f1` → `80afb1a`, which rewrote `records/summons/c1a00002.md`),
+not extra landing content. §Facts 3 above stays true but should not be read as a
+suspicious content delta: the defect is **ordering only**. The exact-tree suite
+result and commands are recorded in
+`records/investigations/act25-phase1-postlanding-verification-c1a0000b-2026-11-08.md`.
