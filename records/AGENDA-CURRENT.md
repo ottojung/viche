@@ -71,6 +71,10 @@ bill if Acts 26–27 already made it unnecessary. Two duplicate issues exist for
 `j0SZFdOGI4rXNCBrU3Y0WB-arguing`.
 
 ## 3. Open obligations, with owners
+| **Act 26 landings are invisible to the Act 21 §5 checker** — every `government/` change landed under
+Act 26 is scored `unreadable` (`no preceding exact-commit/tree suite record`) because the checker accepts
+only Git records or `reviewed-merge.sh` pre-push receipts, not Act 26's `delivery/<phase>-prelanding-*.json`. | **Executive** | Finding + exact predicate + acceptance criteria recorded (`records/investigations/2026-11-08-act26-landings-invisible-to-act21-checker.md`). All five of today's Act 26 landings are in the 1090. No law needed: the checker is out of date with enacted Act 26. |
+
 
 | Item | Owner | State |
 |---|---|---|
