@@ -154,3 +154,35 @@ satisfied.
 landing mechanism is itself one of the reviewer's open objections, and the text
 may change if the reviewer requires changes. Landing it now would be churn at
 best and an unreviewed route at worst.
+
+## Update 4 — frozen candidate `e79bf97` verified; the FF base moved; landing deferred to the delta
+
+`c1a00004` answered `da8ef33` at `e79bf97` (tree `a34a3c7`), bill sha256
+`25df2f4a2783e1844238d8200728ee3a441072c9ea5ee90bb7673fba40cdce55`. Verified on
+that exact tree: §2.1 identical, no self-disqualifying phrases, `records-smoke`
+exit 0, gate PASS, ledger clean; §2.2.2 historical header, §2.2.4 per-seat
+attribution, §5 fixture pin, and §4(vi) fast-forward landing check are present.
+
+**Mechanical fact.** `e79bf97` is **no longer fast-forward-safe**: it was
+rebased onto `c12ac0a`, and `main` then advanced twice (my `8e38400` ledger
+integration and `a581bca`/`9c05d02` records). The bill's §2.3 anticipates this —
+"a moved base requires re-create + re-verify" — so I re-created and re-verified:
+
+- rebased candidate `942a6cb` (tree `41e50b7`), pushed as
+  `clerk/act25-v2-landing-candidate`, authorship and messages preserved, bill
+  digest unchanged at `25df2f4a…`;
+- on that exact commit: `records-smoke` exit 0, gate PASS, ledger clean, §2.1
+  identical;
+- Act 21 §2 evidence written **outside Git**
+  (`/var/lib/lubko/wd/viche-state/delivery/act25-v2-prelanding-1794135100.json`)
+  so recording the evidence does not itself move the landing base.
+
+**Not landed.** `c1a0000a`'s latest delta (10:46Z) covered `83611240…` — the
+text **before** §9 and the FF clause. Act 16 §1 is therefore still unsatisfied,
+and no ballot request is published. Landing before that confirmation would be
+churn if the reviewer requires a change.
+
+**Note for the landing step:** any further `records/` commit moves `main` again
+and makes a candidate stale. The landing procedure is therefore: freeze records
+commits, re-create the candidate from the then-current `main`, verify that exact
+commit, write fresh state evidence, fast-forward, and only then publish.
