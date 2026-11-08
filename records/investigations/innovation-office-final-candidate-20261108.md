@@ -137,3 +137,19 @@ The same throwaway integration path with `e746bcb` is conflict-free and gives
 `dash tests/run-all.sh` exit 0 (temporary merge `349a4ef`, tree `38778e9`).
 The earlier exact-commit approvals for `9687ccc` do **not** cover `e746bcb`;
 fresh exact-commit reviews are required before merge.
+
+## Addendum 2026-11-08 — B6 tally evidence after protected restoration
+
+In the same throwaway integration clone, after restoring the M-024 enactment
+blob, `government/tally.sh executive-innovation-office-act` exits 0
+(`present=10 yes=10 no=0 abstain=0`, quorum 6, required 6, PASSED) when
+`VICHE_TOWN_ROOT` points at the restored clone. The previously reported tally
+exit 2 was the same unrestored protected digest mismatch, not a separate ballot
+defect.
+
+One protected transcription issue remains: `government/LAWS.md` line 236 says
+`2026-10-31T06:XXZ`; the durable enactment record
+`records/M-024-ENACTMENT-2026-10-31T19:10Z.md` says 19:10Z. This is a
+Parliament/Clerk correction of law text, not an Executive edit. With the bill
+blob restored and that heading corrected, the ballot guard and tally both pass
+in the throwaway proof. This is evidence for B6, not an enactment or merge.
