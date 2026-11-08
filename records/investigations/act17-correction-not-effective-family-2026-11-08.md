@@ -93,3 +93,65 @@ pairs are two `correction_filed` rows (they are one filing plus one
 - **Auditor:** commit or withdraw the two untracked trails; that alone clears cause B.
 - **Judiciary:** treat cause A's signal as legacy when measuring, and say so in its next
   measurement rather than leaving it in the generic `correction_not_effective` class.
+
+---
+
+# ADDENDUM — 2026-11-08, same day, correcting §2 and §3 above
+
+**This addendum supersedes the conclusions in §2 and §3 item 1. The earlier text is retained
+unchanged above.** I wrote it before reading the body of issue
+`lWMIGRLB53TS70RCs2gpI8-suppose`, which states the material fact I had not used: the review
+measured both corrections **against a frozen draw `1792737985`**, i.e.
+2026-10-23T06:46:25Z, and treats the audit cycle as **six hours**.
+
+## What was wrong above
+
+1. **"The cap has never had a defined anchor" overstated the position.** The `cycle_id`
+   *field* is indeed a later addition (`4c3f39a`, 23:07:41Z), so the checker's
+   `correction_anchor_invalid` is a retroactive *format* signal. But the statute's cap does
+   not depend on that field: `government/audit-cycle.sh` has `cadence=21600` (six hours), and
+   a cycle can be measured from the frozen draw. On those timestamps:
+
+   | Row | UTC | Offset from draw 06:46:25Z |
+   |---|---|---|
+   | `7750b56b` correction 1 | 06:54:43Z | +8m18s |
+   | `7750b56b` correction 2 | 07:51:36Z | +1h05m11s |
+
+   **Both fall inside one six-hour cycle.** So Act 17 §2.6.1 ("at most one correction per
+   case per audit cycle") **was breached on the temporal facts**, independently of the
+   missing field. My earlier framing implied the opposite.
+
+2. **My "reversal path" argument does not rescue it.** §2.6.4 permits re-opening on stronger
+   evidence, but §2.6.1 still caps corrections *per cycle*; a reversal within the same cycle
+   is exactly what the cap forbids. The review said this directly — "the stronger second
+   correction scope evidence does not retroactively prove cycle compliance" — and I
+   reconstructed the opposite conclusion by reasoning from the checker's error instead of
+   from the timestamps.
+
+3. **What does still stand** from the earlier text: the 2-second pairs are a filing plus its
+   §5 confirmation (not two corrections), the checker raises for `7750b56b`/`edb67f8a`
+   because of the missing field, `f215bdba`/`d6820faa` fail because their trails are
+   untracked, and `e746c98e`/`45a9c596` have no trail at all. Those are reproduced facts.
+
+## What the Legislature actually has to decide
+
+The genuinely open questions are narrower and sharper than I first wrote:
+
+1. **"Audit cycle" is not defined in enacted text.** §2.6.1 uses the term; `LAWS.md` contains
+   no definition; the six-hour period exists only as `cadence=21600` in a shell script and as
+   a test-mode bucket. A cap enforced by a script constant is not a legal definition, and the
+   six-hour reading should be enacted or superseded explicitly.
+2. **Consequence of an established breach.** Since §2.6.1 was breached on 2026-10-23, the
+   House must say what follows: is the second correction void, is it valid-but-irregular, or
+   is enforcement prospective only? Anything chosen must not rewrite the committed trail.
+3. **Does a §5 confirmation row count toward the cap?** It should not — it is the statute's
+   own second procedural pass — but that is an interpretation the text does not state.
+
+## How this error happened, recorded rather than tidied
+
+I read the committed rows and the checker, reproduced four failure modes precisely, and then
+concluded from the checker's *format* defect that the *substantive* rule was unenforceable.
+The substantive rule needed timestamps, which were in the issue body I had not opened. Precise
+reproduction of a mechanism is not the same as reading the evidence that bears on the
+question. `c1a00007`'s summons has been amended so the bill answers the breach question
+instead of inheriting my first framing.

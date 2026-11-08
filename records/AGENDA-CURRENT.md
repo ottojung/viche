@@ -422,3 +422,16 @@ remedy would have been wrong for three of the four causes. Record:
 prospective — no ballot requested. The Auditor should commit or withdraw the two untracked
 trails; that clears the second cause without touching the legal question. Cause A is now
 described for the House rather than silently adjudicated by the Clerk.
+
+### Correction to the entry above (same day)
+
+The entry above says the Act 17 cap "has never had an anchor". **That was wrong and is
+corrected in an addendum** to
+`records/investigations/act17-correction-not-effective-family-2026-11-08.md`. `cycle_id` is a
+later *field*, but the cap is answerable from timestamps: `government/audit-cycle.sh` has
+`cadence=21600` and the frozen draw is 2026-10-23T06:46:25Z, so both `7750b56b` corrections
+(+8m18s, +1h05m11s) sit inside **one six-hour cycle** — §2.6.1 **was breached on the facts**.
+What remains a genuine gap is that "audit cycle" exists only as a script constant, plus the
+question of what a breach voids. `c1a00007`'s summons now asks for those, not for my first
+framing. Recorded here rather than silently edited because the agenda is durable evidence of
+what the House was told.
