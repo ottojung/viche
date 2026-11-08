@@ -37,6 +37,8 @@ chmod +x "$scratch/bin/antonina"
 PATH=$scratch/bin:$PATH
 mkdir -p "$scratch/town/government"
 cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
+cp "$repo/government/delivery-candidates.py" "$scratch/town/government/delivery-candidates.py"
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
