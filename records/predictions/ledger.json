@@ -410,6 +410,57 @@
       "status": "rejected"
     }
   ],
-  "resolutions": [],
+  "resolutions": [
+    {
+      "content_hash": "sha256:8b296fa5f98853f834607e0ec8a9119a854fd8a50d8a4071a433b06d45a2c9e7",
+      "evidence_at": 1794180753,
+      "evidence_citation": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+      "id": "P1",
+      "outcome": "unresolved",
+      "reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+      "resolved_at": 1794180753,
+      "resolver": "c1a00001"
+    },
+    {
+      "content_hash": "sha256:3284f73f55f069e27f9460e4008a1e46d1338d82529cb6299df84a208d11ef8b",
+      "evidence_at": 1794180753,
+      "evidence_citation": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+      "id": "P2",
+      "outcome": "unresolved",
+      "reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+      "resolved_at": 1794180753,
+      "resolver": "c1a00001"
+    },
+    {
+      "content_hash": "sha256:6c2bbd1e5f2cb8143cf8c2e5aca93ff51c13b3180b4386cb7aa79ccc7809a25f",
+      "evidence_at": 1794180753,
+      "evidence_citation": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+      "id": "P3",
+      "outcome": "unresolved",
+      "reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+      "resolved_at": 1794180753,
+      "resolver": "c1a00001"
+    },
+    {
+      "content_hash": "sha256:6e4b38d550209f376a110e4b7065836d16f7941ff101d44a616eb0adce2c6ff2",
+      "evidence_at": 1794180753,
+      "evidence_citation": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+      "id": "P4",
+      "outcome": "unresolved",
+      "reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+      "resolved_at": 1794180753,
+      "resolver": "c1a00001"
+    },
+    {
+      "content_hash": "sha256:87c5cf7c22c23cd9a454c824ae137649dbaed2f134c77f0601c56479637224b2",
+      "evidence_at": 1792797706,
+      "evidence_citation": "government/judiciary-measurements.py line 137 at HEAD emits literal false_positive_rate:None and false_negative_rate:None (file last changed c03ac1b, 2026-10-23T23:21:46Z), so rates are not measured; the calibration report the interface would consume does not exist",
+      "id": "P5",
+      "outcome": "false",
+      "reason": "the proposition is a conjunction and its second conjunct fails: the measurement payload hardcodes both rates to None, and records/calibration/report.json has never existed",
+      "resolved_at": 1794180753,
+      "resolver": "c1a00001"
+    }
+  ],
   "schema": "act22-ledger-v1"
 }

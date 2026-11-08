@@ -18,21 +18,21 @@
   "counts": {
     "due": 0,
     "due_unresolved": 0,
-    "registered": 0,
-    "rejected": 0,
+    "registered": 21,
+    "rejected": 2,
     "resolved_scored": 0,
     "unresolved": 0
   },
-  "coverage": null,
+  "coverage": 0.0,
   "discrimination": {
     "high_conf_accuracy": null,
     "high_conf_n": 0,
     "low_conf_accuracy": null,
     "low_conf_n": 0
   },
-  "generated_at": 1793569728,
+  "generated_at": 1794180759,
   "generated_by": "government/predict-scorer.py",
-  "generated_iso": "2026-11-01T21:48:48Z",
+  "generated_iso": "2026-11-08T23:32:39Z",
   "integrity": {
     "clean": true,
     "defects": []
@@ -49,7 +49,66 @@
     "aggregate": null,
     "per_prediction": []
   },
-  "per_author": [],
+  "per_author": [
+    {
+      "author": "c1a00001",
+      "baselines": {
+        "always_0_5": {
+          "brier": 0.25,
+          "skill_vs_ledger": null
+        },
+        "base_rate": {
+          "brier": null,
+          "p": null,
+          "skill_vs_ledger": null
+        }
+      },
+      "brier": null,
+      "coverage": 0.0,
+      "discrimination": {
+        "high_conf_accuracy": null,
+        "high_conf_n": 0,
+        "low_conf_accuracy": null,
+        "low_conf_n": 0
+      },
+      "due_unresolved": 0,
+      "log_score": null,
+      "observed_true_rate": null,
+      "registered": 6,
+      "reliability": [],
+      "scored": 0,
+      "unresolved": 0
+    },
+    {
+      "author": "c1a00004",
+      "baselines": {
+        "always_0_5": {
+          "brier": 0.25,
+          "skill_vs_ledger": null
+        },
+        "base_rate": {
+          "brier": null,
+          "p": null,
+          "skill_vs_ledger": null
+        }
+      },
+      "brier": null,
+      "coverage": 0.0,
+      "discrimination": {
+        "high_conf_accuracy": null,
+        "high_conf_n": 0,
+        "low_conf_accuracy": null,
+        "low_conf_n": 0
+      },
+      "due_unresolved": 0,
+      "log_score": null,
+      "observed_true_rate": null,
+      "registered": 15,
+      "reliability": [],
+      "scored": 0,
+      "unresolved": 0
+    }
+  ],
   "reliability": [],
   "review_checkpoint": {
     "checkpoints": [
