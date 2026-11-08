@@ -101,6 +101,13 @@ VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile 
 test "$(sha256sum "$d/state/institutional-cases/addendum-fixture.json" | cut -d ' ' -f1)" = "$addendum_sum"
 jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed:900") != null' "$d/state/institutional-cases/index.json" >/dev/null
 jq -e '.state=="verified_closed"' "$d/state/institutional-cases/legacy_closed.json" >/dev/null
+# A complete Clerk-recorded closure artifact that cites an independent
+# Judiciary disposition is accepted; an incomplete or self-declared one is not.
+printf '{"id":"legacy_closed_ok:901","signal":"legacy_closed_ok","state":"verified_closed","first_seen":901,"last_seen":901,"closure_evidence":{"closure_eligible":true,"disposition":"confirmed_resolved","verified_by":"judiciary","verifier":"judge-a","evidence_ref":"fixture:independent-review","recorded_by":"clerk"}}\n' > "$d/state/institutional-cases/legacy_closed_ok.json"
+printf '{"id":"legacy_closed_bad:902","signal":"legacy_closed_bad","state":"verified_closed","first_seen":902,"last_seen":902,"closure_evidence":{"closure_eligible":true,"disposition":"confirmed_resolved","verified_by":"executive","evidence_ref":"fixture:self-declared","recorded_by":"executive"}}\n' > "$d/state/institutional-cases/legacy_closed_bad.json"
+VICHE_CASE_NOW=1600 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed_ok:901") == null' "$d/state/institutional-cases/index.json" >/dev/null
+jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed_bad:902") != null' "$d/state/institutional-cases/index.json" >/dev/null
 
 # After a real enactment, new Executive work has a clean worktree, separate
 # from the historical legislative one. Mock only the dispatcher prerequisites.

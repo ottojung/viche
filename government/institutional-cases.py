@@ -4,6 +4,11 @@
 A case is a monitored obligation, NOT a Judiciary verdict or an authorization
 to enact law. Observation and routing remain deterministic even if every model
 is down. Existing independent Judiciary/Parliament/Executive powers remain.
+
+This collector never closes a case. Closure is a recorded manual decision by
+the Clerk after independently inspecting a Judiciary disposition. The Clerk
+writes a case-bound closure_evidence artifact; the mechanical check below only
+verifies that the artifact is complete and attributed, never that it is true.
 """
 import argparse
 import json
@@ -148,11 +153,17 @@ def reconcile():
     return active
 
 
+def nonempty_text(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
 def closure_unsubstantiated(case):
-    """True for a closed case whose closure is not backed by a case artifact.
+    """True for a closed case whose closure is not backed by a complete artifact.
 
     Historical closures from the absent-signal path carry no closure_evidence.
-    An artifact explicitly marked closure_eligible=false is likewise not
+    Closure is a recorded manual decision by the Clerk after an independent
+    Judiciary disposition; this is a mechanical completeness check, not proof
+    of the disposition's truth. An incomplete or self-declared artifact is not
     resolution.
     """
     if case.get("state") != "verified_closed":
@@ -160,7 +171,14 @@ def closure_unsubstantiated(case):
     evidence = case.get("closure_evidence")
     if not isinstance(evidence, dict) or not evidence:
         return True
-    return evidence.get("closure_eligible") is False
+    if evidence.get("closure_eligible") is not True:
+        return True
+    if evidence.get("verified_by") != "judiciary":
+        return True
+    if evidence.get("disposition") not in ("confirmed_resolved", "superseded", "withdrawn"):
+        return True
+    return not all(nonempty_text(evidence.get(key))
+                   for key in ("verifier", "evidence_ref", "recorded_by"))
 
 
 def report():

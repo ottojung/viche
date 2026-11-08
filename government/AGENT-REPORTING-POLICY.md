@@ -105,3 +105,14 @@ two green polls nor an agent exit, review, code merge or archived report may
 close a case. Do not implement the judgment with a new schema, watchdog or
 case-specific script. Use existing managed agents and a single durable handoff
 when a real obligation remains.
+
+**Accountable closure recorder.** The Clerk is the accountable office for
+marking a corrective case closed. The Clerk does so manually, only after
+inspecting a filed independent Judiciary disposition, by writing a
+`closure_evidence` object on that case with: `closure_eligible: true`, a
+recognised `disposition` (`confirmed_resolved`, `superseded` or `withdrawn`),
+`verified_by: "judiciary"`, the accountable `verifier`, a durable
+`evidence_ref`, and `recorded_by: "clerk"`. The collector mechanically rejects
+a missing or incomplete artifact and keeps the case visible as unresolved; it
+does not judge whether the disposition is substantively correct. The Executive
+investigates and repairs; it does not close its own case.
