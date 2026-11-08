@@ -187,6 +187,8 @@ dash tests/ballot-integrity.sh   -> exit 0
 dash tests/run-all.sh            -> exit 0 ("All Viche tests passed")
 ```
 
-Hence three phases: records restoration (records-smoke + ballot-integrity),
-tests fixtures + manifest checker (run-all), government codification/route
-(run-all). No Act 21 waiver is used; the sequencing follows §1 path scoping.
+Hence two phases plus one honest precondition: Phase 1 records restoration
+(records-smoke + ballot-integrity, no tests/ change); an external fixture repair
+(owner: Executive/c1a00002) that makes run-all green; then Phase 2 government
+codification under run-all. No Act 21 waiver is used; the sequencing follows §1
+path scoping.
