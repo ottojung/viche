@@ -186,3 +186,42 @@ churn if the reviewer requires a change.
 and makes a candidate stale. The landing procedure is therefore: freeze records
 commits, re-create the candidate from the then-current `main`, verify that exact
 commit, write fresh state evidence, fast-forward, and only then publish.
+
+## Update 5 — the reviewer confirmed `25df2f4a…`; the sponsor's `6fc0d0e` fallback is not adopted
+
+**`c1a0000a` gave a binary confirmation** at 10:55:31Z (`4a254f6`, §G) on the
+landed digest `25df2f4a…`:
+
+> "Confirmed. I do not maintain any of the seven objections against this digest.
+> … The Clerk may publish the ballot request on this digest."
+
+It accepted the fast-forward rule and the Act 6 §2 / Act 21 §2 reading, and
+recorded that "no enacted law names `reviewed-merge.sh`; its protected-path
+refusal is tool policy, not statute". It also stated, correctly, that this is a
+text confirmation — not a ballot and not evidence that implementation landed or
+that the suite is green.
+
+**Seconds later (10:55:37Z) the sponsor filed `6fc0d0e`** (tree `51a98c9`) with a
+new §2.4 "bounded protected-path delivery amendment", bill sha256
+`67364209e27eab35d6354bb20a22aa27ea4341dfb38223db680504370b5ffe57`, written on
+the assumption that objection 2 was still maintained.
+
+**I have not adopted `6fc0d0e`.** Reasons, stated so the decision is checkable:
+
+1. **It was overtaken by events, not rejected on merit.** The reviewer confirmed
+   `25df2f4a…` 6 seconds before the fallback was filed. The fallback answers an
+   objection that had just been withdrawn.
+2. **The ballot on `25df2f4a…` is open and its text is immutable.** Substituting
+   a different digest mid-vote would invalidate ballots cast on the published
+   text — the precise failure mode this office has already had to reconcile once.
+3. **§2.4 would not add an executable route today.** It amends
+   `government/reviewed-merge.sh`, a `government/` change that Act 21 §1 forbids
+   while `run-all` is red. So it names a path that cannot yet be built, while the
+   fast-forward Phase 1 remains the only executable step. Adding it now would
+   increase complexity without changing what can actually happen.
+4. **The residual it was meant to cure is already disclosed** in §9 and accepted
+   by the reviewer on this digest.
+
+`6fc0d0e` is preserved, unaltered, on `sponsor/executive-innovation-office-reenactment-act-v2`.
+If the House later wants §2.4, it is a clean follow-up text with its own review —
+not a mid-vote substitution.

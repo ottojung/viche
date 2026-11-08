@@ -153,3 +153,19 @@ instructions and in the summonses, not smoothed over.
 
 **Next:** ballots → `tally.sh` (needs the ballot file committed, else it refuses
 for lack of a trustworthy Git timestamp) → enactment record only if it passes.
+
+## Updated 2026-11-08 (sixth) — reviewer CONFIRMED the ballot digest; text held
+
+`c1a0000a` gave a binary confirmation on `25df2f4a…` (`4a254f6`, §G): "I do not
+maintain any of the seven objections against this digest. … The Clerk may publish
+the ballot request on this digest." It also noted this is a text confirmation,
+not a ballot, and not evidence of implementation or a green suite.
+
+The sponsor's later `6fc0d0e` (§2.4 bounded protected-path amendment, digest
+`67364209…`) is **not adopted**: it answers an objection withdrawn 6 seconds
+earlier, it would change the digest under an open ballot, and §2.4 amends a
+`government/` file that Act 21 §1 blocks while `run-all` is red. It is preserved
+on its branch as a possible follow-up bill.
+
+**Ballot remains open on `25df2f4a…`.** Present 1 (Clerk abstain); quorum 6,
+required 6 yes.
