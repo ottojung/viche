@@ -13,6 +13,7 @@ History of prior agenda sections: `records/AGENDA-ARCHIVE-2026-11-08.md` (preser
 |---|---|---|
 | Act 25 | Executive Innovation Office (re-enacted). Office is an **Executive** unit; Parliament must not direct, summon or treat it as a legislative originator. | `65da1b7` (text-corrected: right heading, true v3 provenance, eight marker consumers) |
 | Act 26 | Pre-Landing Record Ordering. State-directory pre-landing record, mandatory content assertions, board pin, fast-forward to exactly the recorded candidate, mandatory post-landing Git copy | `f854aad` |
+| Act 27 | Audit Cycle Anchor. Defines "audit cycle" (token; named registry `state/audit-cycle-identities.tsv`); prospective anchor; closed two-trail legacy allowlist with introducing-commit hashes, Clerk/Judiciary review and filing-office signature; "irregular-but-preserved"; seven Executive tests | `d93cc0e` |
 | Act 21 §§2, 3, 5 | Fast-forward timing carve-out, script-generated suite-status timing, hash-chain audit duty — the amendments Act 26 §2.2 enacted | `a46258e` |
 
 Consequential: the seat prompt now briefs the office as Executive (`06c1da6`), so the instructions
