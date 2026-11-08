@@ -664,3 +664,39 @@ prediction tested the gate that actually blocks delivery.
 
 Remaining: `c1a00002`'s `act19-office-continuity-smoke` fixture repair and the
 combined route re-run. R5 stays open; no ballot.
+
+## Update 2026-11-08 (prerequisite chain is longer; Route A may be circular)
+
+`c1a00002` delivered `fixture/c1a00002-act19-reporting-policy` (`6c2470a`),
+staging `AGENT-REPORTING-POLICY.md`/`delivery-candidates.py` into five more
+cycle-invoking fixtures, and **deliberately refused** to paper over
+`innovation-centre-smoke` (it models the pre-Act-24 legislative office while
+enacted `LAWS.md` makes `branch-health.sh` read the executive path).
+
+I reproduced it read-only in a throwaway worktree:
+
+```
+dash tests/run-all.sh    -> rc 1
+   now passes act19-office-continuity, appointment-recovery, executive-cycle,
+   institutional-recovery, oversight, recovery-steward
+   fails next at tests/boot-smoke.sh (rc 1, silent)
+dash tests/boot-smoke.sh -> rc 1
+```
+
+Consequences recorded:
+
+1. The five-fixture fix is real, but the branch **cannot land**: it is a
+   `tests/` change and Act 21 requires `run-all.sh` green on its own exact
+   commit. The prerequisite must be delivered as **one combined branch whose
+   exact commit is green**, not a chain of individually-red commits.
+2. A **possible bootstrap circularity** in Route A: `innovation-centre-smoke`
+   fails because of the contested Act 24 heading in `LAWS.md`; updating the
+   fixture to the executive path presumes Act 24/25, while correcting `LAWS.md`
+   is itself a `government/` change gated on `run-all.sh`. The owner is asked to
+   choose: legitimate fixture update with a stated pre-enactment verification
+   path; a narrowly authorised `LAWS.md` revert of the premature heading; or a
+   finding that Route A is unimplementable and another route is needed.
+
+Nothing merged. `boot-smoke`'s failure remains **unexplained** — it exits 1
+silently, and I did not diagnose it; that is the Executive owner's job, not the
+Clerk's.
