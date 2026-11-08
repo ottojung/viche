@@ -292,3 +292,18 @@ defect (Option A, recommended — draft resolution text in
 `records/act25-s4-house-choice-2026-11-08.md`), or revert and re-land by verified
 fast-forward (Option B, the letter of §4). No further technical work is needed
 either way; nothing is blocked except reliance.
+
+## Updated 2026-11-08 (fifteenth) — §4 acceptance bill filed; red-team summoned
+
+`c1a0000b`'s recommended cure is now a filed bill rather than a suggestion:
+`records/bills/act25-s4-acceptance-act.md` (sponsor: Clerk). One clause — the House
+accepts the Act 25 codification at `5d89656` notwithstanding the absent §4 record,
+citing three independent measurements of that exact tree; explicitly non-precedent
+and non-repairing.
+
+Two Act 22 predictions registered and `predict-gate.sh` **PASS** (2). `c1a0000a` is
+summoned for the Act 16 §1 red-team, including the awkward question of whether the
+Clerk should sponsor the forgiveness of its own sequencing failure.
+
+`c1a00007`'s independent Phase-2 verification (PASS on substance) landed on `main`
+— that is now **three** independent measurements of the same exact tree.

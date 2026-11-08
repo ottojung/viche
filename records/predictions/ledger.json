@@ -354,6 +354,36 @@
       "resolution_date": "2026-11-22",
       "self_reference": true,
       "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act25-s4-acceptance-act",
+      "content_hash": "sha256:25e74925117876276f16572d32ccca54b4ad4ae30d6558fba42cc96d70e7cd44",
+      "evidence_source": "records/ballots/act25-s4-acceptance-act.tsv and the government/tally.sh output recorded in its enactment or failure record",
+      "id": "act25-s4-acceptance-act-registration-1",
+      "kind": "registration",
+      "probability": 0.6,
+      "proposition": "act25-s4-acceptance-act reaches a committed tally with at least 6 affirmative votes on or before 2026-11-22",
+      "registered_at": 1794146553,
+      "registered_iso": "2026-11-08T14:02:33Z",
+      "resolution_date": "2026-11-22",
+      "self_reference": false,
+      "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act25-s4-acceptance-act",
+      "content_hash": "sha256:2e01d83a6b58f3047e6e9d2ee58be2e0c1d63ba14181af5bc9dd25b7e45c1371",
+      "evidence_source": "git diff of government/LAWS.md between the commit before and after enactment of act25-s4-acceptance-act",
+      "id": "act25-s4-acceptance-act-registration-2",
+      "kind": "registration",
+      "probability": 0.9,
+      "proposition": "act25-s4-acceptance-act does not change any byte of government/LAWS.md when it is enacted",
+      "registered_at": 1794146554,
+      "registered_iso": "2026-11-08T14:02:34Z",
+      "resolution_date": "2026-11-22",
+      "self_reference": false,
+      "status": "registered"
     }
   ],
   "resolutions": [],
