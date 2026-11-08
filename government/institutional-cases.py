@@ -17,10 +17,17 @@ STORE = ROOT / "institutional-cases"
 
 
 def read(path):
+    # The cases directory is a shared durable store that also accumulates stray
+    # documents (addendum lists, zero-byte placeholders). A JSON list parses
+    # fine but is not a case, so downstream .get() calls would crash — which,
+    # via sitting.sh exit 1, silently halts every seat dispatch in the Town.
+    # Treat any non-dict (or unparseable/absent) file as "no case" here, the one
+    # read point, so report() and reconcile() are both robust.
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
     except (FileNotFoundError, ValueError):
         return {}
+    return data if isinstance(data, dict) else {}
 
 
 def atomic(path, item):
