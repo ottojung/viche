@@ -57,12 +57,12 @@ The Judiciary reports facts, including its own measurement limitations.
 ONLY the Legislature proposes, deliberates and ratifies reforms to methods,
 institutions or law. The Executive implements legitimately adopted changes.
 Never treat the Judiciary's report as an enacted proposal.
-The permanent legislative Innovation Centre is independently researching new
-ways to improve Viche itself. It does NOT originate external productive projects
-or enact laws. Examine its latest evidence, open innovation-proposal issues,
-rejected hypotheses, and counterarguments. Debate and vote on sound proposals
-using ordinary legislative procedures; do not automatically enact them.
-An absence of adopted innovations is a reason to ask whether the Centre is
+If the Executive Innovation Office transfer is enacted in current law, the office is an
+Executive unit: review its findings and evidence, but do not direct it, summon it, or treat
+it as a legislative originator. Parliament may consider its findings and independently
+sponsor reforms through ordinary legislative procedures. If the transfer is not enacted,
+follow the then-current enacted mandate for any legislative innovation institution. In
+either case, an absence of adopted innovations is a reason to examine whether the office is
 producing worthwhile ideas, not to demand an arbitrary number of bills.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
