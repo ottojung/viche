@@ -6,7 +6,12 @@ branch=$1
 case "$branch" in
   executive) id=c1e00002; title=Executive ;;
   judiciary) id=c1e00008; title=Judiciary ;;
-  innovation-centre) id=c1e00011; title="Legislative Innovation Centre" ;;
+  innovation-centre)
+    id=c1e00011; title="Legislative Innovation Centre"
+    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' \
+        "${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}/government/LAWS.md" 2>/dev/null; then
+      title="Executive Innovation Office"
+    fi ;;
   *) exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}

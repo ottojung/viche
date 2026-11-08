@@ -7,6 +7,9 @@ trap 'rm -rf "$d"' EXIT HUP INT TERM
 mkdir -p "$d/bin" "$d/town/government" "$d/seats/branches/innovation-centre" "$d/state/branches" "$d/mock"
 git -C "$d/seats/branches/innovation-centre" init -q
 git -C "$d/seats/branches/innovation-centre" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm baseline
+mkdir -p "$d/seats/branches/innovation-office"
+git -C "$d/seats/branches/innovation-office" init -q
+git -C "$d/seats/branches/innovation-office" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm office-baseline
 printf 'old-agent\n' > "$d/mock/registry"
 printf '{"state":"failed","alive":false,"active_runner":false,"native_session_id":"ses_fixture","steers_pending":0,"backend_error":{"transient":true,"automatic_retry_safe":false,"classification":"transient_backend_server_error"}}\n' > "$d/mock/old-agent.json"
 printf '{"state":"idle","alive":false,"active_runner":false}\n' > "$d/mock/new-agent.json"
@@ -25,7 +28,10 @@ MOCK
 cat > "$d/bin/antonina" <<'MOCK'
 #!/bin/sh
 case "$1 $2" in
-  'agent status') cat "$MOCK_ROOT/$4.json" ;;
+  'agent status')
+    if [ "$4" = real-new ]; then printf '{"state":"idle"}\n'
+    else cat "$MOCK_ROOT/$4.json"; fi ;;
+  'agent new') printf '%s\n' "$*" > "$MOCK_ROOT/new-agent-args"; printf 'real-new\n' ;;
   'agent run') printf '%s\n' "$*" >> "$MOCK_ROOT/runs" ;;
   *) exit 6 ;;
 esac
@@ -50,6 +56,12 @@ test ! -e "$MOCK_ROOT/runs"
 test "$(cat "$MOCK_ROOT/registry")" = new-agent
 test "$(wc -l < "$MOCK_ROOT/replacements")" -eq 1
 jq -e '.state=="awaiting_reconciliation" and .previous_agent=="old-agent" and .successor_agent=="new-agent" and .old_session_preserved==true' "$d/state/continuity/reconciliation-innovation-centre.json" >/dev/null
+# Act 24 continuity evidence must point at the clean Executive worktree, not
+# the historical legislative one, while the latter remains intact.
+test "$(jq -r '.worktree_head' "$d/state/continuity/reconciliation-innovation-centre.json")" = \
+  "$(git -C "$d/seats/branches/innovation-office" rev-parse HEAD)"
+test "$(git -C "$d/seats/branches/innovation-centre" rev-parse --verify HEAD)" != \
+  "$(git -C "$d/seats/branches/innovation-office" rev-parse HEAD)"
 /bin/sh "$repo/government/terminal-continuity.sh" recover innovation-centre
 test "$(wc -l < "$MOCK_ROOT/replacements")" -eq 1
 /bin/sh "$repo/government/terminal-continuity.sh" instruction innovation-centre > "$d/reconciliation-prompt"
@@ -106,4 +118,15 @@ test -e "$d/seats/branches/innovation-office/.git"
 # The historical Centre retains its own separate repository and evidence.
 git -C "$d/seats/branches/innovation-centre" rev-parse --verify HEAD >/dev/null
 ! grep -Fq 'permanent LEGISLATIVE' "$MOCK_ROOT/runs"
+# Exercise the real appointment path, not the fixture stub: Act 24's stable
+# key must create the disposable agent in the clean office worktree.
+mkdir -p "$d/real/town/government" "$d/real/seats/branches/innovation-office" "$d/real/state"
+printf 'c1a00001\tClerk\tintake\n' > "$d/real/town/government/seats.tsv"
+printf '## Act 24 — Executive Innovation Office Act (enacted 2026-10-31 by recorded vote)\n' > "$d/real/town/government/LAWS.md"
+git -C "$d/real/seats/branches/innovation-office" init -q
+git -C "$d/real/seats/branches/innovation-office" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm office
+VICHE_TOWN_ROOT="$d/real/town" VICHE_SEATS_ROOT="$d/real/seats" VICHE_STATE_ROOT="$d/real/state" \
+  PATH="$d/bin:$PATH" /bin/sh "$repo/government/appointments.sh" ensure innovation-centre >/dev/null
+grep -Fq 'innovation-office' "$MOCK_ROOT/new-agent-args"
+! grep -Fq 'innovation-centre' "$MOCK_ROOT/new-agent-args"
 echo 'Institutional continuity + executive innovation gate smoke passed'

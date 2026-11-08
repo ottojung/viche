@@ -13,11 +13,16 @@ root=$state/executive/innovation-office
 # Executive work in its own clean, Git-managed worktree.
 cwd=$seats/branches/innovation-office
 mkdir -p "$root"
-/bin/sh "$town/government/branch-bootstrap.sh" innovation-centre > "$root/bootstrap.log" 2>&1 || exit 1
+# Create the active Executive worktree BEFORE bootstrap. Bootstrap, appointment
+# resolution and terminal recovery all redirect the innovation-centre key to
+# this worktree only once it exists; creating it first prevents the first
+# post-enactment run from recovering or syncing against the historical
+# legislative worktree.
 if [ ! -e "$cwd/.git" ]; then
   [ ! -e "$cwd" ] || { echo "Refusing occupied non-Git Innovation Office workspace" >&2; exit 1; }
   git -C "$town" worktree add --detach "$cwd" HEAD || exit 1
 fi
+/bin/sh "$town/government/branch-bootstrap.sh" innovation-centre > "$root/bootstrap.log" 2>&1 || exit 1
 id=$(/bin/sh "$town/government/appointments.sh" ensure innovation-centre)
 meta=$(antonina agent status --id "$id" --json)
 mode=$(printf '%s\n' "$meta" | jq -r '.state // "unknown"')
