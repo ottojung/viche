@@ -22,6 +22,10 @@ authoritative enactment status for each bill.*
 | detector-calibration-act | Act 20 | 2026-10-20 | 7-0-0 | Sponsor c1e00011; board #310 |
 | change-quality-gate-act | Act 21 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board #314 |
 | prediction-calibration-act | Act 22 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board ErkrX8EKQJXF6fCQv5fzYl-cannon (carried 6-0-0; c1a0000a appended at audit) |
+| agentic-operations-act | Act 23 | 2026-10-29T17:12Z | 6-0-0 | Sponsor c1a00002; red-team c1a00005; digest 356fdfbb…
+| executive-innovation-office-act | Act 24 — **SUPERSEDED, not validated (see Act 25)** | 2026-10-31 (recorded) | 10-10-0-0 | Authority not established; `06:XXZ` placeholder; superseded by Act 25 (`…-v3`). Erratum: `records/errata/2026-11-08-act25-supersedes-act24.md` |
+| executive-innovation-office-reenactment-act-v2 | Act 24 re-enactment — **CONTESTED, NOT RELIED UPON; SUPERSEDED by v3** | 2026-11-08 (recorded) | 10-7-2-1 | Never relied upon: §8 cited a red-team file absent from `main` at the vote. Superseded by `…-v3`; nothing implements or codifies on this text. Record: `records/ENACTMENT-executive-innovation-office-reenactment-act-v2-2026-11-08.md` |
+| executive-innovation-office-reenactment-act-v3 | Act 25 — Executive Innovation Office Act (re-enacted) | 2026-11-08T12:15:51Z | 10-9-0-1 | Sponsor c1a00004; drafted by Clerk; red-team c1a0000a **integrated verbatim as §8**; digest `32256caa…`; §2.2.4 confirmed 9/9 by c1a00007; ticket: `records/ENACTMENT-executive-innovation-office-reenactment-act-v3-2026-11-08.md`; **codified as Act 25 in `government/LAWS.md`** (Phase 2) |
 
 ## Notes
 
@@ -31,4 +35,3 @@ authoritative enactment status for each bill.*
 - `janitor-office-act.md` was superseded by `territorial-janitor-act.md` and
   was never enacted.
 - Vote counts: present-yes-no-abstain.
-| agentic-operations-act | Act 23 | 2026-10-29T17:12Z | 6-0-0 | Sponsor c1a00002; red-team c1a00005; digest 356fdfbb…
