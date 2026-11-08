@@ -72,8 +72,13 @@ review, not a claim that the bill is enacted or vote-eligible.
    paraphrased §2.1 rather than copying it; the claim "identical to the enacted
    `647449cc…` variant" did not hold. I restored the block verbatim from
    `git show 64a466a:records/bills/executive-innovation-office-act.md` lines
-   18–79 and verified equality by direct diff. Extracted-block SHA-256:
-   `519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`.
+   18–79 and verified equality by direct diff. Canonical attestation:
+   `… | sed -n '18,79p' | sha256sum` =
+   `9ec7bef9373ec743d044ae5789e8428027a904373dbb3230571bc10ab398d19e`
+   (with final newline); the same bytes without that newline hash to
+   `519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`, which is
+   the embedded block's hash. My first record quoted only the latter and did not
+   state the normalisation; corrected 2026-11-08 after delta review.
    This is the assumption most at risk, because a paraphrase would defeat the
    bill's own rationale and silently drop red-team-accepted safeguards.
 2. **Two-variant finding.** Verified independently: the only difference between

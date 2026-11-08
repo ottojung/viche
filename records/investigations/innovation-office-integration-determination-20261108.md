@@ -593,3 +593,35 @@ summons is updated accordingly.
 Still outstanding: the sponsor's four corrections (hash attestation, §2.2.3(v),
 R4/R7 tightening, §5 pre-landing) and `c1a00002`'s fixture repair + route. No
 ballot solicited; no branch merged.
+
+## Update 2026-11-08 (sponsor corrections applied; hash normalisation verified)
+
+`c1a00004` applied the delta-review corrections (`820ff38`, integrated onto
+`main` by copying the three changed records files; the branch was based on
+`be17b51` and could not be fast-forwarded without dropping the Clerk's later
+records commits).
+
+**The hash dispute is resolved, and the Clerk's earlier characterisation was too
+strong.** I verified both sides myself:
+
+```
+git show 64a466a:...executive-innovation-office-act.md | sed -n '18,79p' > block
+sha256(block)          = 9ec7bef9373ec743d044ae5789e8428027a904373dbb3230571bc10ab398d19e
+sha256(block minus \n) = 519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27
+```
+
+So `519948fc…` was never a fabricated value — it is the same 4416 bytes without
+the trailing newline. The defect was a **missing normalisation statement**, not a
+wrong hash. The sponsor has now stated the normalisation in the record, which is
+the correct fix. My earlier wording ("wrong hash … an audit defect") overstated
+it; the substance (an unreproducible attestation) was right.
+
+Other corrections applied: §2.2.3(v) now requires tally to run in a **clean
+detached worktree of `historical_commit 64a466a`**, and states that the live tree
+exits 2 — no live 10/10 pass is claimed; the manifest is scoped closed to one
+fixed path with schema `ballot-exception-v1`, unknown keys rejected, fail-closed;
+R4 moved the old Act 24 to a historical appendix with `SUPERSEDED` in the
+heading; R7 fixes the cutoff at the `ENACTMENT-STATUS` timestamp and requires the
+per-seat artifact to match bill/seat/vote/digest.
+
+Still open: R5 (landing ordering) and `c1a00002`'s fixture repair. No ballot.
