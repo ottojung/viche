@@ -139,6 +139,17 @@ expect_ok 'new ballot file accepted as add' \
     delivery/ballotadd --manifest records/enactment/ba-act.allowlist \
     --sponsor c1a00004 --verified-by c1e00008 --reviewed-by c1a00007 --check
 
+# --- 5b. A declared tests/ path is permitted (enactment needs fixtures) --
+d3b=$tmp/testschange
+git -C "$town" worktree add -q -b delivery/testschange "$d3b" main
+printf '# fixture note\n' >> "$d3b/tests/records-smoke.sh"
+printf 'tests/records-smoke.sh\tmodify\n' | write_manifest "$d3b" tc-act
+git -C "$d3b" add -A; git -C "$d3b" commit -qm 'a declared test change'
+git -C "$d3b" push -q origin "HEAD:refs/heads/delivery/testschange"
+expect_ok 'declared tests/ path accepted' \
+    delivery/testschange --manifest records/enactment/tc-act.allowlist \
+    --sponsor c1a00004 --verified-by c1e00008 --reviewed-by c1a00007 --check
+
 # --- 6. Actor gate: Clerk may not verify -------------------------------
 expect_fail 'Clerk as verifier' \
     delivery/good --manifest records/enactment/good-act.allowlist \

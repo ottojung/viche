@@ -31,6 +31,10 @@
 #   <path><TAB>add|modify
 # The manifest must match the delivery delta EXACTLY: every changed path listed
 # once, nothing listed that did not change, nothing changed outside the set.
+# Permitted classes: records/*, government/LAWS.md and tests/*. tests/ is allowed
+# only because an enactment's pre-landing verification requires the fixture and
+# smoke repairs to travel with it; every such path is still individually declared
+# and the suite forced to run-all.sh, so a test change cannot ride in unverified.
 set -eu
 
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -157,7 +161,7 @@ while IFS="$tab" read -r path mode; do
             echo "Ambiguous or absolute path refused: $path" >&2; exit 1 ;;
         constitution/*|government/seats.tsv)
             echo "Path may never be delivered by this route: $path" >&2; exit 1 ;;
-        records/*|government/LAWS.md) : ;;
+        records/*|government/LAWS.md|tests/*) : ;;
         *) echo "Path outside the permitted enactment set: $path" >&2; exit 1 ;;
     esac
     case "$mode" in
