@@ -18,6 +18,11 @@ cp "$repo/government/eligible-work.py" "$d2/town/government/eligible-work.py"
 cp "$repo/government/executive-cycle.sh" "$d2/town/government/executive-cycle.sh"
 cp "$repo/government/handoff-queue.sh" "$d2/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$d2/town/government/predict-scorer.py"
+# The real executive-cycle.sh requires the Founder agent-reporting policy and
+# reads the delivery-candidate inventory. Stage both so the fixture exercises
+# the actual code path instead of failing on files it never copied.
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d2/town/government/AGENT-REPORTING-POLICY.md"
+cp "$repo/government/delivery-candidates.py" "$d2/town/government/delivery-candidates.py"
 cat > "$d2/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
