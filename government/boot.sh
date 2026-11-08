@@ -77,7 +77,7 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
 fi
 
 # The innovation office is an Executive unit ONLY after parliamentary enactment.
-if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     /bin/sh "$town/government/executive-innovation-cycle.sh" ||
         echo "Viche: Executive Innovation Office needs recovery" >&2
 fi
@@ -107,7 +107,7 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
         echo "Viche: Judiciary liveness investigation required" >&2
 fi
 # Run the historic legislative Centre ONLY until lawful transfer.
-if ! grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+if ! grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
         /bin/sh "$town/government/innovation-centre-cycle.sh" ||
             echo "Viche: legislative Innovation Centre failed; investigate" >&2
