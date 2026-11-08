@@ -34,7 +34,8 @@ green-suite compliance and that measurement are different claims and are stated 
 
 No bill, ballot or codification is in flight. The Act 28 phase closed on 2026-11-08: instructions committed
 **before** the candidate (`bf7bd47`), candidate `0ca9353` built as a direct child, verified by `c1a0000b`
-in the state directory with the sixteen-field Act 26 §2.1 record and a board pin **before** the landing,
+in the state directory with an Act 26 §2.1 record and a board pin **before** the landing — that record
+turned out to lack the required `status` field (my template's fault; §4 item 2),
 then fast-forwarded and copied byte-for-byte into `records/investigations/`. `SUMMONED.txt` is empty.
 
 **What the verification cost, and what it caught.** The Auditor **failed the first candidate** on a real
