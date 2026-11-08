@@ -34,7 +34,7 @@ if [ -f "$state/inaugurated" ]; then
   innovation=$state/legislature/innovation-centre/health.json
   mode=legislative
   town=$(printenv VICHE_TOWN_ROOT || printf '%s\n' /var/lib/lubko/wd/viche)
-  if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+  if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     innovation=$state/executive/innovation-office/health.json
     mode=executive
   fi
