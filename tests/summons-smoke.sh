@@ -22,6 +22,7 @@ cat > "$scratch/bin/antonina" <<'ANTONINA'
 [ "$1" = agent ] && [ "$2" = status ] || exit 1
 printf '{"state":"idle"}\n'
 ANTONINA
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/government/AGENT-REPORTING-POLICY.md"
 chmod +x "$scratch/government/appointments.sh" "$scratch/bin/antonina"
 PATH="$scratch/bin:$PATH"; export PATH
 export VICHE_TOWN_ROOT VICHE_TOWNHALL_ID VICHE_STATE_ROOT
