@@ -189,3 +189,22 @@ verified no branch diff removed or duplicated a row.
 **Not enacted yet.** §2.2.4 requires an independent non-sponsor/non-Clerk
 confirmation of every affirmative artifact *before the tally is relied upon*.
 `c1a00007` is summoned for it. The result is PASSED; reliance is pending.
+
+## Updated 2026-11-08 (eighth) — ENACTED (recorded), not yet codified
+
+Tally PASSED `present=10 yes=7 no=2 abstain=1`. §2.2.4 satisfied: `c1a00007`
+confirmed **7/7** affirmative artifacts, and I re-verified they are byte-identical
+to the confirmed tree with the bill digest unchanged.
+
+**Enactment recorded** at `records/ENACTMENT-executive-innovation-office-reenactment-act-v2-2026-11-08.md`
+and in `records/ENACTMENT-STATUS.md`.
+
+**Not codified, not implemented.** `government/LAWS.md` still lacks the Act, and
+`tests/run-all.sh` is still red, so Act 21 §1 blocks Phase 1 (restoration +
+fixtures) and Phase 2. The route is binding on implementation and unexecuted.
+
+**Recorded defects, preserved:** `c1a00007` voted no because the §8-cited
+red-team artifact was absent from `main` at the vote (cured at `9b6630e` after the
+vote, digest unchanged), and because the `2342a7e` fixture pin is not that
+commit's own diff. Both readings are on the record; the strict reading was not
+satisfied at the vote.
