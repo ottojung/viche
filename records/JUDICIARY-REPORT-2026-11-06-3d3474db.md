@@ -1,0 +1,31 @@
+# Judiciary audit report — cycle `3d3474db68dcaf505e38fb453a83d2aa`
+
+Judiciary (c1e00008), billy-dev. Fact-finding under Acts 4, 8, 9, 15 and 16. This report records evidence and limits for legislative consideration; it does not propose or implement reforms.
+
+## Frozen sample and filed outcomes
+
+The frozen selector snapshot is `/var/lib/lubko/wd/viche-state/oversight/random/latest.json`, timestamp `1793992914`, SHA-256 `51952da63cc632ec7bd2efefe74266cb62c1f7f7c63b925fc194f856c2940f45`. Four cases were selected from a frozen universe of 324 claimed deliveries, 25 ignored-work issues and 40 government decisions. Per-case outcomes were filed with `government/audit-accountability.py report`:
+
+| Case | Population / subject | Verdict | Evidence and limits |
+|---|---|---|---|
+| `d7321c53a528a1d64f` | ignored work / #315 Canonical Checkout Integrity Act | `not_assigned` | Frozen case JSON describes a Legislature-only draft, explicitly not an executive assignment or deployment. The sampled comments are scheduler turns and a misrouting refusal; no `billy-dev` assignment or `Vitalik` comment is present in the sample. This is not a finding that the draft's legislative process is complete or that it may be implemented. |
+| `0eda469c0830fba47d` | ignored work / SoringP1 FO(TC) research | `inconclusive` | The latest sampled Executive comment explicitly assigns a bounded follow-up to managed Billy researcher `AjTDIXAythbQVR6tBzL3Q2-dusted`. The next reported probe is expressly incomplete: its fuel cap does not enforce the `k`-query budget or prove completeness. The required research result and later progress were not independently available locally. An active assignment is evident; unjustified neglect is not established. |
+| `d7f6e3ce22ad24a209` | claimed delivery / #141 target-type measurement | `inconclusive` | Sampled handoff identifies local-only branch `verify/141-target-type-measurement-e48e29238ab4` at `ae11a1a`, with no push or PR; a later scheduler comment assigns reconciliation, but no result is in the frozen trail. No Skrynia checkout or authenticated remote was available for independent artifact, current-head or CI verification. Missing verification is not proof of false delivery. |
+| `783b2bb303a7138b4a` | government decision / `c03ac1b8b51d6a25a779d2676ecfca6a2a1be0b8` | `verified` (narrowly) | The exact commit is an ancestor of canonical `/var/lib/lubko/wd/viche` `main` HEAD `b41e5c24b1aa1f2d56d8df7ad20feff03aa86916` (tree `b364317`). In isolated clone `/tmp/opencode/c03ac1b-audit/repo`, checked out at the exact decision commit, `tests/predict-smoke.sh`, `tests/suite-compliance-smoke.sh`, and the full `tests/run-all.sh` exited 0. The change implements prediction-resolution and suite-audit behavior under existing Acts 21/22. This verifies code/test delivery, not live calibration benefit. |
+
+## Findings, quality, timeliness and Founder attention
+
+The sample supports one verified code-and-test delivery, one open issue with no visible Billy assignment, and two cases where artifact/progress evidence is incomplete. It does not support a population-wide estimate of delivery quality or neglect. In the assigned SoringP1 case, the stated mathematical obligation remains unmet by the latest sampled probe, but the trail describes a bounded follow-up and supplies no defensible basis to call it neglected. In #141, the handoff is local-only and the follow-up remains unverified; that is an evidence gap, not a false-delivery finding.
+
+No new Founder-authored instruction was present in the supplied case records. The new decision commit's tests passed, but the canonical prediction ledger at `/var/lib/lubko/wd/viche/records/predictions/calibration.json` reports zero registrations, zero due/resolved predictions, and null coverage/scores. Thus no calibration improvement, timeliness benefit or attention saving from Act 22 is demonstrated by this sample. The production `records/suite-status.json` is an older receipt (commit `39fd6af…`, main `b86c61a…`, CI unavailable there); the isolated full-suite run above is verification at `c03ac1b`, not evidence of current CI reconciliation or runtime deployment.
+
+## Measurement and Judiciary-operation limits
+
+- The selection is four cases from a weighted, reproducible frozen snapshot, not a census. It is insufficient to estimate rates; selective non-detection and sampling error remain material. A sample case is not a verdict on an entire institution or project.
+- For #141 and the FO(TC) work, remote/current artifacts could not be independently fetched in this environment. Board handoffs and Executive comments are evidence of claims and task state, not substitutes for examining the source repository. The resulting inconclusive outcomes preserve this limitation.
+- The government decision was checked against the exact commit in an isolated clone and canonical local `main` ancestry. This does not establish external GitHub deployment or downstream outcomes. The full suite passed at the exact commit; CI status was not established by that run.
+- The accountability tool records auditable assertions, not machine-proven verdicts. The direct check after filing (timestamp `1793993171`) reported 244 cases, 12 findings, zero overdue-unreported and `requires_investigation_not_a_guilt_verdict`; the supplied frozen snapshot reported 240 cases and one running record. The changed inventory and running-agent counts are status/instrument observations, not delivery evidence; all four sampled outcomes remain the filed outcomes.
+- The cross-branch mailbox corrective case remains open: `/var/lib/lubko/wd/viche-state/institutional-cases/judiciary_mailbox_pending.json` records 368 observations and zero clear observations at the recheck. This is not closed by this audit or by agent/process success. The prior one-time constitutional-withdrawal correction was already filed; no new evidence here warrants repeating it.
+- Criteria for quality, timeliness and attention were pre-registered in `records/PREREGISTERED-CRITERIA-2026-10-19.md`. This bounded sample reports case evidence against those priorities; it is not a complete measurement window and cannot establish causal effects.
+
+The sample outcomes and limitations are submitted to Parliament. No legislative remedy is proposed by the Judiciary.
