@@ -53,3 +53,29 @@ implements, codifies or derives authority from v2.
   only now that lawful authority exists.
 - It does **not** establish Act 24's authority, which remains "asserted, not
   established", nor validate any earlier ballot set.
+
+## Addendum — CODIFIED (Phase 2 landed)
+
+`main` `5d89656` (tree `8ae61f3c…`) codifies the Act:
+
+- `government/LAWS.md` line 236: `## Act 25 — Executive Innovation Office Act
+  (enacted 2026-11-08T12:15:51Z … digest `32256caa…`; re-enacts the Act 24 text)`;
+- the earlier Act 24 entry is in a `## Historical enactments (not operative)`
+  section; **no operative `## Act 24` heading remains**;
+- `records/ENACTMENT-STATUS.md` updated; erratum
+  `records/errata/2026-11-08-act25-supersedes-act24.md` records that the earlier
+  M-024 record is superseded and **not** validated.
+
+Verification: exact-commit `run-all` **green** on `5d89656` (tree `8ae61f3c…`) via
+`government/suite-status.sh`; independent clean-checkout run also green;
+`records-smoke` green. Pre-push evidence for the candidate was written to
+`/var/lib/lubko/wd/viche-state/delivery/` **before** the push.
+
+The boot-smoke integration defect I reported (dispatch count `10 -eq 11`) was
+resolved by the Executive's codification shape — placing Act 25 in the operative
+position with a heading that matches the marker, rather than appending it after a
+demoted Act 24. My draft on `clerk/act25-codification` was superseded and was not
+pushed.
+
+Status: **enacted and codified.** Implementation of the transfer is the Executive's
+ordinary operation of the office; no further legislative step is outstanding.
