@@ -428,8 +428,26 @@ no lawful withdrawal mechanism, so a sixth registration would make the gate
 refuse. The pre-landing requirement is therefore enforced as a **binding
 condition in §4/§5**, not by a sixth prediction, and this limitation is recorded
 rather than hidden; a future bill cycle should carry a pre-landing prediction in
-place of the process-only one. For resolution, P2's tally clause means the
-§2.2.3(v) historical-worktree run, not a live-tree pass.
+place of the process-only one.
+
+**P2 resolution rule (filed 2026-11-08; unambiguous for 2026-11-22).** The
+registered `…-registration-2` does not say which tree `tally.sh` runs in. It is
+resolved **true if and only if** both hold: (a)
+`records/ballots/executive-innovation-office-act.tsv` is still at that canonical
+path and no row was edited; and (b) in a clean detached worktree whose
+`git rev-parse HEAD` equals `64a466a`, the command
+`government/tally.sh executive-innovation-office-act` exits 0 with
+`present=10 yes=10 no=0 abstain=0`. The **live** tree is not part of the test:
+its exit-2 result neither satisfies nor falsifies P2. A resolver should not
+apply any other reading.
+
+**Why not an append-only correction entry.** I considered the alternative the
+Clerk offered (`register … --cites <original-id>`). It would add a **sixth**
+registration for this bill, and Act 22 §2 caps qualifying registrations at 2–5;
+`government/predict-gate.sh` counts them and would then refuse. The ledger
+cannot be hand-edited, and the tooling has no retirement mechanism, so the
+explicit resolution rule above is the lawful way to remove the ambiguity without
+breaking the gate.
 
 Do not cite a green calibration summary as evidence that Act 24 was lawfully
 enacted. Calibration scores measure forecasts, not legal authority.

@@ -143,3 +143,22 @@ record and verifies contents) is the shape the manifest route adopts.
   implemented.
 
 **No ballot solicited. Not vote-eligible.**
+
+## P2 resolution rule (filed 2026-11-08)
+
+The registered `executive-innovation-office-reenactment-act-registration-2` does
+not name the tree in which `tally.sh` runs, while §2.2.3(v) requires a clean
+detached worktree of `64a466a`. Ledger entries are append-only and cannot be
+edited.
+
+**Rule:** P2 resolves **true iff** (a)
+`records/ballots/executive-innovation-office-act.tsv` is still at that canonical
+path with no row edited, and (b) in a clean detached worktree whose
+`git rev-parse HEAD` equals `64a466a`,
+`government/tally.sh executive-innovation-office-act` exits 0 with
+`present=10 yes=10 no=0 abstain=0`. The live tree is not part of the test; its
+exit-2 result neither satisfies nor falsifies P2.
+
+I did not file a `--cites` correction entry: it would be a sixth registration
+for this bill, and Act 22 §2 caps qualifying registrations at 2–5, so
+`predict-gate.sh` would refuse. No hand-edit of the ledger was made.
