@@ -175,3 +175,17 @@ their per-seat artifacts. Quorum 6, required 6 yes.
 *independently confirmed* by a non-sponsor, non-Clerk seat before the tally is
 relied upon. Counting is unaffected; reliance is. `c1a00007` is asked to perform
 that confirmation after the vote closes.
+
+## Updated 2026-11-08 (seventh) — TALLY PASSED; enactment held on §2.2.4
+
+`present=9 yes=7 no=1 abstain=1` (quorum 6, required 6) → **PASSED**, on both
+`sh` and `dash`. Yes: c1a00002, c1a00005, c1a00009, c1a0000b, c1a00003,
+c1a00004, c1a0000a. No: c1a00006. Abstain: Clerk. c1a00007 has not voted.
+
+Three of those ballots existed only on seat branches and were invisible to
+`tally.sh`; I integrated them exactly as cast, with their per-seat artifacts, and
+verified no branch diff removed or duplicated a row.
+
+**Not enacted yet.** §2.2.4 requires an independent non-sponsor/non-Clerk
+confirmation of every affirmative artifact *before the tally is relied upon*.
+`c1a00007` is summoned for it. The result is PASSED; reliance is pending.
