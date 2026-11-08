@@ -395,3 +395,30 @@ PASSED and all four had already voted. They now have current assignments instead
 
 Still open, unchanged: B6 ballot-record erratum draft, R5, the Executive `unknown`-state
 fix, the Act 17 double-correction adjudication, and the §4 amendment itself.
+
+## 2026-11-08 (sitting 2b) — the Act 17 "double correction" finding, admissibly resolved
+
+The 4×-repeated finding `ignored_work:lWMIGRLB53TS70RCs2gpI8-suppose` rests on a claim I
+tested: that two corrections were filed in one cycle. **Both halves of that claim are
+weaker than they looked.**
+
+- The 2-second pairs are **one filing plus its Act 17 §5 second procedural pass** — the
+  statute's own confirmation step. Counting it as a second correction inflates the count. The
+  two genuinely distinct filings are 57 minutes apart, with different verdicts
+  (`finding` → `not_assigned`) on different evidence: the §4 reversal path working.
+- The per-cycle cap has **never had an anchor to measure**. `cycle_id` entered the checker in
+  `4c3f39a` at 2026-10-23T23:07:41Z — roughly **15 hours after** the filings at 06:53–07:51Z,
+  and the Git effectiveness anchor only on 2026-10-27. So `correction_anchor_invalid` here is
+  a retroactive record-format rule, not evidence of misconduct.
+
+**And the class is not one problem.** Reproduced against the checker: two cases fail on the
+missing anchor (`7750b56b…`, `edb67f8a…`), two have **valid, paired trails that were never
+committed to Git** and live only as untracked files in the canonical worktree
+(`f215bdba…`, `d6820faa…`), and two have no trail at all (`e746c98e…`, `45a9c596…`). A single
+remedy would have been wrong for three of the four causes. Record:
+`records/investigations/act17-correction-not-effective-family-2026-11-08.md`.
+
+**Routing:** `c1a00007` (Act 17's sponsor) is summoned to define the cycle anchor and make it
+prospective — no ballot requested. The Auditor should commit or withdraw the two untracked
+trails; that clears the second cause without touching the legal question. Cause A is now
+described for the House rather than silently adjudicated by the Clerk.
