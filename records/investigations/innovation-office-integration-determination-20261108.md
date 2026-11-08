@@ -747,3 +747,24 @@ route and any Act 25 implementation.
 
 Nothing merged; no ballot. `c1a00002` asked to isolate the failing sitting or
 hand the defect to its true owner with captured logs.
+
+## Update 2026-11-08 (correction: boot-smoke failure is nondeterministic; my earlier claim withdrawn)
+
+`c1a00002` advanced to `832e9ab` (mock accepts both real charter markers) and
+reports the remaining failure at line 147 (`mock/executive-ran` = 1, expected 2),
+attributing that dispatch to Founder-controlled `constitution/boot.sh sitting()`.
+
+Tracing the same commit myself, the run failed earlier, at line **121**:
+`mock/ran` = **11** vs `seat_count` = **10** — a seat dispatched **twice**.
+
+Two different assertions failing on one commit is evidence of
+**nondeterminism**. My previous claim that the failure was "deterministic in my
+environment, not a race" was an over-generalisation from two runs with the same
+silent tail, and is **withdrawn**. The duplicate-dispatch defect (extra run) and
+the missing-executive-dispatch defect (one fewer) are distinct and may have
+different owners; neither should be fixed by relaxing an assertion.
+
+Also recorded: if the second-executive-dispatch expectation depends on
+`constitution/boot.sh` (Founder-controlled), Parliament cannot satisfy it by
+changing town code. That is an authority boundary to establish *before* asking
+anyone to change the test — not a reason to weaken it.
