@@ -72,7 +72,7 @@ def branches():
                        else None)
     laws=(TOWN/'government/LAWS.md').read_text() if (TOWN/'government/LAWS.md').exists() else ''
     import re
-    moved=bool(re.search(r'^## Act \d+ — Executive Innovation Office Act \(enacted ',laws,re.M))
+    moved=bool(re.search(r'^## Act \d+ — Executive Innovation Office Act \((re-)?enacted ',laws,re.M))
     path=('executive/innovation-office/health.json' if moved else 'legislature/innovation-centre/health.json')
     ic=js(STATE/path)
     result['innovation_centre']=dict(telemetry='available' if isinstance(ic,dict) else 'missing',
