@@ -117,3 +117,17 @@ delta confirmation on `83611240…`; (ii) the v2 bill, assumptions and ledger
 landed on `main` so `predict-gate.sh` passes there. The draft is **not** being
 landed early: the digest will change again when §9 is added, so the landing must
 be the frozen text.
+
+## Updated 2026-11-08 (fourth) — predictions landed; gate passes on `main`; review coverage gap remains
+
+`records/predictions/ledger.json` was integrated at `8e38400` (records-only, from
+`6798fbf`, provenance in the commit message). `predict-gate.sh …-v2` now
+**PASSES on the canonical tree**. Candidate `6798fbf` verified: digest
+`b170694c…`, §2.1 identical, `records-smoke` green, ledger clean, §8/§9 present.
+
+**Open:** `c1a0000a`'s newer review `da8ef33` (against `dcf5c22`) raises two
+objections §9 does not answer — exact-commit vs a new single-parent commit
+(should be fast-forward to the verified candidate), and Act 6 §2 authority for
+bypassing `reviewed-merge.sh`. Until the reviewer confirms the frozen digest
+`b170694c…`, Act 16 §1 is not satisfied and no ballot request is published. The
+bill text is not landed for the same reason.
