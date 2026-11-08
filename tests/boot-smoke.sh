@@ -61,8 +61,10 @@ case "$action" in
         [ -f "$MOCK_STATE/$id" ] || exit 5
         # Assert against the marker the cycle actually emits and the real
         # reporting-policy text, not retired wording.
+        # Two producers legitimately wrap the charter differently: the boot
+        # sitting uses AUTHORITATIVE, the cycle scripts use FOUNDER.
         case "$prompt" in
-            *"=== FOUNDER CONSTITUTION ==="*) : ;;
+            *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
         # Every newly launched Town agent must receive the Founder reporting rule.
