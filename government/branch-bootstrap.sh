@@ -6,7 +6,12 @@ branch=$1
 case "$branch" in
   executive) id=c1e00002; title=Executive ;;
   judiciary) id=c1e00008; title=Judiciary ;;
-  innovation-centre) id=c1e00011; title="Legislative Innovation Centre" ;;
+  innovation-centre)
+    id=c1e00011; title="Legislative Innovation Centre"
+    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' \
+        "${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}/government/LAWS.md" 2>/dev/null; then
+      title="Executive Innovation Office"
+    fi ;;
   *) exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -14,6 +19,13 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 liv=$state/liveness
 cwd=$seats/branches/$branch
+# Act 24: the old Innovation Centre worktree is historical. Once the dedicated
+# Executive worktree exists, bootstrap/liveness must inspect the active one.
+if [ "$branch" = innovation-centre ] &&
+   { [ -f "$seats/branches/innovation-office/.git" ] ||
+     [ -d "$seats/branches/innovation-office/.git" ]; }; then
+  cwd=$seats/branches/innovation-office
+fi
 if cut -f 1 "$town/government/seats.tsv" | grep -Fxq "$id"; then
   echo "Office $branch must never share a parliamentary voting seat" >&2
   exit 1
