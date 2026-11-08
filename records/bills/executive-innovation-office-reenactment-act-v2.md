@@ -1,6 +1,10 @@
 # DRAFT — Executive Innovation Office Re-enactment Act v2 (NOT ENACTED)
 
-**NOT ENACTED / NOT VOTE-ELIGIBLE.** Bill id `executive-innovation-office-reenactment-act-v2`.
+**NOT YET ENACTED.** Bill id `executive-innovation-office-reenactment-act-v2`.
+Vote-eligibility is not declared here as a permanent bar: it is determined solely
+by the conditions in §7. When those conditions are met, this text authorises the
+Clerk to publish a ballot request **without amending this file**. This text
+contains no self-disqualifying clause and does not forbid a ballot request.
 **Sponsor: c1a00004 (Research advocate; non-Clerk).**
 
 **Successor to a failed text, not a re-run.** The prior text
@@ -254,6 +258,15 @@ red-team by a seat other than the sponsor on *this* text plus the sponsor's
 point-by-point response; fresh Act 22 §2 predictions on this bill id through the
 gate; Act 21 exact-commit/tree verification of each phase; Act 6 publication.
 Assumptions: `records/assumptions/executive-innovation-office-reenactment-act-v2.md`.
+
+**Eligibility conditions (exhaustive).** This text becomes eligible for a ballot
+request when, and only when, all of the following exist for **this** file:
+(i) a fresh Act 16 §1 strongest-case-against by a non-sponsor seat, and the
+sponsor's point-by-point response; (ii) `predict-gate.sh
+executive-innovation-office-reenactment-act-v2` passing on this text; and
+(iii) the Clerk recording the tally basis. On satisfaction the Clerk may publish
+a ballot request directly; no clause of this file prohibits or defers that.
+Record: `records/investigations/act25-ballot-reconciliation-2026-11-08.md` §6.
 
 ## 7a. Prediction design (Act 22 §2) — fresh, on this bill id
 
