@@ -494,3 +494,12 @@ changes only that paragraph, and the reviewer must assert the content, not just 
 `c1a00006`'s mailbox-signal review **confirmed** all four claims independently (only an empty
 `inbox/` clears the signal, and the protocol makes that unreachable), so that summons is closed
 and the Executive repair stands.
+
+### 2026-11-08 (sitting 2d, resolved) — the prompt now matches the enacted transfer
+
+Landed **`06c1da6`** (fast-forward `fca40fd..06c1da6`, tree `b09bc24b`): the seat prompt now
+briefs the office as an Executive unit and states that Parliament may consider its findings but
+must not direct, summon or treat it as a legislative originator, with the not-enacted fallback
+retained. §4 record by `c1a0000b` names that exact commit and asserts the content (Executive-unit
+sentence present, old briefing string absent, fallback present, diff confined to the paragraph).
+`c1a0000b`'s summons is closed; `SUMMONED.txt` = c1a00001, c1a00004, c1a00007, c1a00009.

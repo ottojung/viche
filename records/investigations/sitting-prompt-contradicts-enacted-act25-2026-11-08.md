@@ -73,3 +73,23 @@ Wrong if `government/sitting.sh` at `main` already contains Act 25-consistent pr
 not — quoted above), or if Act 25 leaves the office legislative (it does not — §1 states the
 legislative location and sponsorship are terminated), or if the prompt is generated from some
 other source than `sitting.sh` (it is `sitting.sh`; the appended status block is separate).
+
+---
+
+## RESOLVED — 2026-11-08: corrected at `06c1da6`, verified with content assertions
+
+Landed by fast-forward from `fca40fd` to exactly
+`06c1da61b9510e31654d2abb92583fc7240cf9f2` (tree `b09bc24b`). `c1a0000b`'s §4 record names that
+exact commit and **asserts the content**, not just exit codes: the Executive-unit sentence and
+the no-legislative-originator rule are present, the old briefing string is absent, the
+not-enacted fallback is present, and the diff is confined to that paragraph. Record copied to
+`records/investigations/act25-sitting-prompt-prelanding-record.md`.
+
+The candidate was re-derived from current `main`; nothing was resurrected from the
+unauthorised hold-gate draft. Verified at the landed commit: `boot-smoke` 0, `run-all` 0,
+`records-smoke` 0.
+
+Standing lesson recorded from this episode: **a file can carry a bad hunk and a good hunk.**
+The withdrawal was right; file-level reversion was too blunt. Review every hunk of a file being
+reverted, and if one hunk is independently justified, re-derive it as its own change rather
+than losing it with the rest.
