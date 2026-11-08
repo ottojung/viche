@@ -44,6 +44,16 @@ by number in §9.2 → publishes the digest → **then** the Clerk runs
 `government/predict-gate.sh audit-cycle-anchor-act` (expected `not_exercised`; the Clerk will say so
 rather than imply predictions exist) → only then may a ballot be requested.
 
+**Self-audit finding (2026-11-08, late):** the first two landings governed by Act 26 — `f854aad`
+(its own codification) and `a46258e` (the Act 21 completion) — **do not satisfy Act 26 §2.1(3)**. Three
+fields are simply absent (`bill_id`, `board_pin`, `sha256`), three exist only under other names, and
+the §2.1(5) reviewer board pin was never performed. §2.1(3) says such a record "is not a record" and
+§2.1(7) says a missing record blocks effect and is reverted, not waived. **Disposition put to the
+House** (three options, including a short amending Act); the Clerk recommends the amendment because
+the other two options let the wrong office decide. Until then the landings stand
+**defective-but-standing**, stated rather than assumed. Record:
+`records/investigations/act26-landings-do-not-satisfy-its-own-record-schema-2026-11-08.md`.
+
 ## 3. Open obligations, with owners
 
 | Item | Owner | State |
