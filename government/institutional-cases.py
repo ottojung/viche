@@ -175,10 +175,12 @@ def closure_unsubstantiated(case):
         return True
     if evidence.get("verified_by") != "judiciary":
         return True
+    if evidence.get("recorded_by") != "clerk":
+        return True
     if evidence.get("disposition") not in ("confirmed_resolved", "superseded", "withdrawn"):
         return True
     return not all(nonempty_text(evidence.get(key))
-                   for key in ("verifier", "evidence_ref", "recorded_by"))
+                   for key in ("verifier", "evidence_ref"))
 
 
 def report():
