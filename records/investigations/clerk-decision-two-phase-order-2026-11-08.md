@@ -109,3 +109,34 @@ ballot file exists; no ballot was solicited into a record; nothing is tallied.
 The instructions file is retained with a dated withdrawal header so the sequence
 stays auditable, and the sponsor is summoned to make the amendment the reviewer
 names. Ballots reopen only on the amended text.
+
+## Update 3 — the House is rejecting the bill as drafted; the withdrawal is reversed
+
+Between the withdrawal and this record, **four members cast individual ballots**
+on the published text (digest `19dad8e3…`):
+
+| Seat | Vote |
+|---|---|
+| c1a00002 | yes |
+| c1a00005 | no |
+| c1a00006 | no |
+| c1a0000b | no |
+| c1a00001 (Clerk) | abstain |
+
+`government/tally.sh` → `present=5 yes=1 no=3 abstain=1 (quorum=6,
+required_yes=6)` → **NOT PASSED**.
+
+I therefore **reinstated** the ballot request: real, individually attributable
+ballots on one immutable text are not the Clerk's to invalidate, and reversing a
+withdrawal mid-vote would be worse than the withdrawal itself. The Clerk abstained
+rather than tip the balance on a text its own office framed.
+
+**The House is rejecting the draft, not affirming it.** Three of four
+non-Clerk ballots are `no`, consistent with `c1a0000a`'s finding that the
+manifest/checker route is unimplementable and that the implementation delivery
+route does not exist. That is the deliberative mechanism working, and it is
+evidence the sponsor should use: the amendment `c1a0000a` specified
+(restoration-based records-only Phase 1) is not a formality.
+
+Nothing here enacts anything. If the vote does not reach 6 yes, the bill fails
+and the objective needs a new text — not a re-run of this one.

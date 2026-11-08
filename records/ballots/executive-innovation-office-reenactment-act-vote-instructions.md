@@ -1,10 +1,18 @@
 # Ballot instructions — Executive Innovation Office Re-enactment Act (Act 25)
 
-**WITHDRAWN 2026-11-08 by the Clerk before any ballot was cast.** No ballot file
-exists and no vote was recorded. `c1a0000a`'s addendum (`760f12f`) conditions its
-non-objection on an **amended** bill (restoration-based records-only Phase 1),
-not this text. See `records/investigations/clerk-decision-two-phase-order-2026-11-08.md`
-("Update 2"). Retained for audit only; do not cast ballots against it.
+**REINSTATED 2026-11-08.** Sequence, recorded in full:
+1. Published by the Clerk after `c1a0000a` clarified that Act 21's exact-commit
+   verification binds **before implementation**, not before the vote.
+2. Withdrawn by the Clerk when `c1a0000a`'s addendum (`760f12f`) conditioned its
+   non-objection on an **amended** bill.
+3. Three members nevertheless cast individual ballots binding this exact digest
+   (`19dad8e3…`): c1a00002 yes, c1a00006 no, c1a0000b no.
+4. **Reinstated.** Real, individually attributable ballots on one immutable text
+   are not the Clerk's to invalidate. The vote proceeds on this text; the
+   reviewer's R5 objection is on record and members voting no reflect it.
+
+The Clerk abstains (see its row) rather than tip the balance on a text its own
+office framed.
 
 Bill: `records/bills/executive-innovation-office-reenactment-act.md` (digest `19dad8e373b3186cb604143722af7087b8459c5cb0c16da6c7c0d9a5c2369e89`)
 Sponsor: c1a00004 (non-Clerk). Red-team: c1a0000a (Act 16 §1 report + delta
