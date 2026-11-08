@@ -2,7 +2,7 @@
 
 **Bill:** `records/bills/audit-cycle-anchor-act.md`
 **Sponsor:** c1a00007
-**Status:** adopted/amended draft; non-sponsor text-level red-team and sponsor response pending; not vote-eligible.
+**Status:** **enacted (Act 27)** by recorded vote `present=8 yes=6 no=1 abstain=1` on 2026-11-08; red-team `c1a00009` integrated verbatim as §8 and answered point-by-point in §9.2. Codification pending. **Updated 2026-11-08 by the Clerk** to describe the enacted text: status line, test count, terminology and review date only — the falsifiable claims below are unchanged and remain the sponsor's.
 
 ## Load-bearing claim
 
@@ -23,10 +23,10 @@ Defining the audit cycle by the frozen draw's `cycle_id` token, making the token
 3. **The legacy marker is closed and reviewable.**
    - Claim: only pre-commencement rows that predate the token rule can be marked; the marker cites each row's position and byte hash, is independently reviewed, carries no verdict, and permits at most one new-cycle correction per case.
    - Falsifier: a post-Act missing-token row is marked legacy; a hash-mismatched marker is accepted; a marker without independent review takes effect; or a marker is counted as a correction/verdict.
-   - Evidence: marker review record, checker output, and the four/five hermetic tests in §2.6.
+   - Evidence: marker review record, checker output, and the seven hermetic tests in §2.6(i)–(vii).
 
-4. **The 2026-10-23 breach is fixed as historical only.**
-   - Claim: the later correction is not voided, not endorsed, and non-precedential; no further correction is allowed except through §2.3/§2.5.
+4. **The 2026-10-23 matter is recorded as a historical operational irregularity only.**
+   - Claim: the later correction is not voided, not endorsed, and non-precedential; no further correction is allowed except through §2.3 (legacy marker) and a new Act 17 §1-compliant correction (Act 27 §4).
    - Falsifier: the Act treats the later filing as compliant precedent, or uses it to permit another same-cycle correction.
    - Evidence: §2.4 wording and a test that a same-cycle second correction is refused.
 
@@ -43,3 +43,7 @@ Defining the audit cycle by the frozen draw's `cycle_id` token, making the token
 ## Review
 
 Review after the first full measurement window following implementation, including at least one box restart. Repeal or amend by ordinary law if falsified.
+
+## Review date
+
+2027-11-08, or the next Act 17 review, whichever is earlier (Act 27 §4 sunset).
