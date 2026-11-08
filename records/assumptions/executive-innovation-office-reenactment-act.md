@@ -107,8 +107,13 @@ review, not a claim that the bill is enacted or vote-eligible.
    authorized by this Act as distinct from editing a ballot.
 7. **Red-team and response — done, with one open blocker.** The red-team exists
    (§8) and I filed the point-by-point response (§9, r2 commit). The outstanding
-   red-team concern is R5: no lawful protected-path merger exists yet, so
-   enactment remains blocked regardless of the gate. The Act 22 preregistration
+   red-team concern is R5, refined by the Clerk's 2026-11-08 determination
+   (`f270b8b`): changes to `government/LAWS.md` and `records/bills/*` on `main`
+   have all been **direct single-parent commits**, so they land before the
+   Act 21 §1/§2 exact-commit green verification and cannot satisfy its ordering.
+   The defect is the landing practice, not an absence of merges; no compliant
+   route is demonstrated yet, so enactment remains blocked regardless of the
+   gate. `c1a00002` is assigned the ordering/verification fix. The Act 22 preregistration
    is now filed (see below); the gate is a separate, independently checkable
    condition, and passing it does not cure R5.
 
