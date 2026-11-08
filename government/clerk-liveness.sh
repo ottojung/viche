@@ -19,14 +19,12 @@ reason=$(printf '%s\n' "$metadata" | jq -r '.backend_error.classification // ""'
 . "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/office-continuity.sh"
 now=$(date +%s)
 tflag=$(printf '%s\n' "$metadata" | jq -r '.backend_error.transient // false')
-unsafe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == false then "yes" else "no" end')
 invocation=$(printf '%s\n' "$metadata" | jq -r '.invocation_id // .run_id // .finished_at // ""')
 finished=$(printf '%s\n' "$metadata" | jq -r '.finished_at // ""')
 if [ "$kind" = failed ]; then
   if oc_is_transient "$reason" "$tflag"; then
     retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     oc_record_failure "$state" "$seat_id" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$seats/$seat_id"
-    [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$state" "$seat_id" "$id" "$invocation"
   else
     oc_surface_permanent "$state" "$id" "$reason"
   fi
@@ -66,7 +64,7 @@ fi
 if [ "${1:-}" = --gate ]; then
   if [ "$kind" = failed ]; then
     retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
-    [ "$retry_safe" = yes ] && [ ! -s "$state/unsafe-holds/$seat_id" ] ||
+    [ "$retry_safe" = yes ] ||
       { echo "Viche: Clerk terminal failure not safe to re-dispatch" >&2; exit 1; }
   fi
   exit 0

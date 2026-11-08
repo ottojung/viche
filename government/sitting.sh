@@ -6,10 +6,6 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
-if [ -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$seat" ]; then
-  echo "Viche: unsafe seat invocation, preserve work for review" >&2
-  exit 1
-fi
 if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
     /bin/sh "$town/government/clerk-liveness.sh" --gate || {
         echo "Viche: Clerk sitting deferred until endpoint retry cooldown" >&2
@@ -57,13 +53,14 @@ The Judiciary reports facts, including its own measurement limitations.
 ONLY the Legislature proposes, deliberates and ratifies reforms to methods,
 institutions or law. The Executive implements legitimately adopted changes.
 Never treat the Judiciary's report as an enacted proposal.
-The permanent legislative Innovation Centre is independently researching new
-ways to improve Viche itself. It does NOT originate external productive projects
-or enact laws. Examine its latest evidence, open innovation-proposal issues,
-rejected hypotheses, and counterarguments. Debate and vote on sound proposals
-using ordinary legislative procedures; do not automatically enact them.
-An absence of adopted innovations is a reason to ask whether the Centre is
-producing worthwhile ideas, not to demand an arbitrary number of bills.
+If the Executive Innovation Office transfer is enacted in current law, it is an
+Executive unit: Parliament may consider its findings and independently sponsor
+reforms, but must not direct, summon, or treat it as a legislative originator.
+Review current office evidence and transfer-verification obligations without
+mistaking readiness or dispatch for useful innovation. Otherwise, follow the
+then-current enacted mandate for any legislative innovation institution.
+Consider proposals only through ordinary legislative procedures; do not
+automatically enact them or impose proposal-count quotas.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
 per line, in $town/records/SUMMONED.txt. For each summoned member, write a

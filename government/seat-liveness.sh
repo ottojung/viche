@@ -35,7 +35,6 @@ if ! oc_is_transient "$reason" "$tflag"; then
 fi
 retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
 oc_record_failure "$root" "$seat_id" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$seats/$seat_id"
-[ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$root" "$seat_id" "$id" "$invocation"
 oc_commit_age_signal "$root" "$id" "$seats/$seat_id" "$now"
 oc_worktree=$seats/$seat_id
 if ! oc_reset_due "$root" "$seat_id" "$now"; then

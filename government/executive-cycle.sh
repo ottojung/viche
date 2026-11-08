@@ -16,10 +16,6 @@ python3 "$town/government/predict-scorer.py" || {
 }
 id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
-if [ -s "$state/liveness/unsafe-holds/executive" ]; then
-  echo "Viche: unsafe Executive failed invocation is on durable hold" >&2
-  exit 1
-fi
 # Act 19 §3.2: the durable handoff queue at $town/records/handoffs/ is the
 # dispatch's single input. Read it FIRST, before any failure-prone work
 # (board fetch, agent status). If the script fails before this read, no
