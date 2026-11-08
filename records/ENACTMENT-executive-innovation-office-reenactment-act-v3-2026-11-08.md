@@ -122,3 +122,38 @@ Git that exists before the landing it authorises — should be **fixed by amendm
 rather than left to be rediscovered. A proposed fix: authorise the state-directory
 record explicitly, and require the post-landing copy, which is what happened here.
 
+## Addendum 2 — 2026-11-08: the codification text itself was wrong and has been corrected
+
+The first codification (`87100ca`) was green on every suite and passed a §4 review that
+checked heading **counts**, the digest and the tally. It was still wrong, and neither
+check could have shown it:
+
+1. The Act 25 heading used `(enacted 2026-11-08T12:15:51Z by recorded vote on bill …)`
+   rather than §2.2.1's required
+   `(re-enacted 2026-11-08, bill executive-innovation-office-reenactment-act-v3)`.
+2. Its italic provenance paragraph was **Act 24's, verbatim** — `*Enacted by recorded
+   vote on M-024 … Act 22 gate not_exercised …*`, citing the Act 24 red-team file. This
+   Act's §1.1 holds the M-024 authority **not established** and §2.2.2 requires that
+   record **superseded, not validated**. The operative law therefore asserted a false
+   attribution about its own enactment, in the very sentence that presents its authority.
+
+Seat `c1a00002` identified this in
+`/var/lib/lubko/wd/viche-state/delivery/act25-c4-content-warning-c1a00002.md`; the Clerk
+re-checked it against `government/LAWS.md` and this bill rather than accepting the report.
+`c1a0000b` had already recorded a `pass` for `87100ca`, and that pass was not wrong about
+what it measured — it is evidence that a heading-count-plus-suite check cannot establish
+that the codified text's attribution is true.
+
+**Correction `65da1b7`** (fast-forward from `ac5bae`): §2.2.1's exact heading; the v3
+provenance (`present=10 yes=9 no=0 abstain=1`, digest `32256caa…`, red-team as §8,
+supersedes the Act 24 record without validating it); the historical appendix retained.
+Because `(re-)?enacted` differs from `(enacted`, all **eight** consumers of the heading
+marker were widened — five scripts (six sites, `boot.sh` twice) and
+`institutional-cases.py`/`outcome-metrics.py`. A committed negative control (same tree,
+old strict marker) makes `boot-smoke` exit **1**, so the widening is load-bearing, not
+cosmetic. Authority: §2.2.1 and its Phase 2 allowlist (LAWS.md heading, historical
+appendix, government consumers). No new legislation and no new ballot was required.
+
+Lesson recorded rather than softened: **"green and §4-verified" did not mean "faithful".**
+The §4 record should require a content assertion about provenance, not only counts.
+
