@@ -32,6 +32,7 @@ esac
 MOCK
 chmod +x "$d/bin/antonina" "$d/town/government/appointments.sh"
 cp "$repo/government/EXECUTIVE-INNOVATION.md" "$d/town/government/EXECUTIVE-INNOVATION.md"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
 printf '# Historic Act 14 — Legislative Centre\n' > "$d/town/government/LAWS.md"
 printf 'Founder-controlled fixture Constitution\n' > "$d/charter"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"
@@ -75,8 +76,10 @@ VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile 
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="verified_closed"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
-# After a real enactment, Executive unit runs on preserved worktree, not a
-# parliamentary summons. Mock only the branch-bootstrap and deployment.
+# After a real enactment, new Executive work has a clean worktree, separate
+# from the historical legislative one. Mock only the dispatcher prerequisites.
+git -C "$d/town" init -q
+git -C "$d/town" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm baseline
 printf '## Act 23 — Executive Innovation Office Act (enacted 2026-10-25 by recorded vote)\n' > "$d/town/government/LAWS.md"
 printf '#!/bin/sh\nexit 0\n' > "$d/town/government/branch-bootstrap.sh"
 chmod +x "$d/town/government/branch-bootstrap.sh"
@@ -85,5 +88,10 @@ cp "$repo/government/terminal-continuity.sh" "$d/town/government/terminal-contin
 /bin/sh "$repo/government/executive-innovation-cycle.sh"
 jq -e '.executive_office==true and .legislative_branch==false and .controlled_by=="executive" and .voting_seat==false' "$d/state/executive/innovation-office/health.json" >/dev/null
 grep -Fq 'EXECUTIVE INNOVATION OFFICE' "$MOCK_ROOT/runs"
+grep -Fq 'Do not stop with a status memo' "$MOCK_ROOT/runs"
+grep -Fq "$d/seats/branches/innovation-office" "$MOCK_ROOT/runs"
+test -e "$d/seats/branches/innovation-office/.git"
+# The historical Centre retains its own separate repository and evidence.
+git -C "$d/seats/branches/innovation-centre" rev-parse --verify HEAD >/dev/null
 ! grep -Fq 'permanent LEGISLATIVE' "$MOCK_ROOT/runs"
 echo 'Institutional continuity + executive innovation gate smoke passed'

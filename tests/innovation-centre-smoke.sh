@@ -47,6 +47,13 @@ DISPATCHES=$scratch/runs
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
 cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-CENTRE.md"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
+# A pre-transfer fixture has no Executive Innovation Office Act enacted.
+printf '# Historic Act 14 pilot; no Act 24\n' > "$scratch/town/government/LAWS.md"
+mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases"
+printf '{"observed_at":23000}\n' > "$scratch/state/institutional-outcomes/latest.json"
+printf '{"observed_at":23000,"count":0}\n' > "$scratch/state/institutional-cases/index.json"
+printf '{"observed_at":23000}\n' > "$scratch/state/branches/judiciary-measurements.json"
 # Standing written mandate must agree with the dispatch prompt.
 grep -Fq "Existing-software evaluation (Founder guidance)" "$scratch/town/government/INNOVATION-CENTRE.md"
 grep -Fq "neither mandatory nor presumptively superior" "$scratch/town/government/INNOVATION-CENTRE.md"

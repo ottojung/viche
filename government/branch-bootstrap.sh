@@ -14,6 +14,13 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 liv=$state/liveness
 cwd=$seats/branches/$branch
+# Act 24: the old Innovation Centre worktree is historical. Once the dedicated
+# Executive worktree exists, bootstrap/liveness must inspect the active one.
+if [ "$branch" = innovation-centre ] &&
+   { [ -f "$seats/branches/innovation-office/.git" ] ||
+     [ -d "$seats/branches/innovation-office/.git" ]; }; then
+  cwd=$seats/branches/innovation-office
+fi
 if cut -f 1 "$town/government/seats.tsv" | grep -Fxq "$id"; then
   echo "Office $branch must never share a parliamentary voting seat" >&2
   exit 1
