@@ -217,7 +217,7 @@ this bill.
 ## 5a. Mechanism verified in isolation (2026-11-08)
 
 The §2.2.3 quarantine move is not a hypothesis. In a throwaway worktree of
-`main` (`b4e0b1f` base; nothing touched in the canonical checkout):
+`main` (`d840429` base; the canonical checkout was untouched):
 
 ```
 git mv records/ballots/executive-innovation-office-act.tsv \
