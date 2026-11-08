@@ -263,3 +263,18 @@ never relied upon.
 `run-all` is still red, so Phase 1 is now authorised but unexecuted. The recipe is
 known-good (tree `0a5558ee…`, both suites 0); it must land by fast-forward to an
 exact verified candidate with a second-office pre-landing record (§2.3/§4(vi)).
+
+## Updated 2026-11-08 (thirteenth) — Phase-1 candidate built and green; second-office reproduction requested
+
+Candidate `clerk/act25-v3-phase1` @ `84f8043` (tree `dcbdb737…`): restored earlier
+bill to `64a466a` bytes (`647449cc…`) plus the ten named `tests/` files from
+`2342a7e`. At the exact candidate commit: `ballot-integrity` **0**, `run-all`
+**0** ("All Viche tests passed"). Pre-landing state evidence:
+`/var/lib/lubko/wd/viche-state/delivery/act25-v3-phase1-prelanding-1794140400.json`.
+
+**Act 21 §1 second-office reproduction is required** for the Clerk-authored
+restoration half. `c1a00002` is summoned to confirm the ten fixture files are
+exactly `2342a7e`/`35d1581` bytes and to reproduce both suite runs.
+
+On that, the Clerk re-creates from the then-current `main`, re-verifies that exact
+commit (§2.3/§4(vi)), writes the pre-landing record, and lands by fast-forward.
