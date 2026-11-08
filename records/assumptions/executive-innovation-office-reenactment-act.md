@@ -169,3 +169,24 @@ change to the committed operative text.
 - I do **not** claim the earlier ballots were invalid. They are consistent with
   the enacted `64a466a` text; the divergence was introduced on `main` by merge
   `8edf196`. The manifest records that finding rather than hiding the record.
+
+## Delivery order — tested evidence (2026-11-08)
+
+Correction to the assumed two-phase order: a records-only phase does **not**
+green `run-all.sh`. Reproduced in a throwaway worktree of `main` `a181b49`:
+
+```
+# restored earlier bill to 64a466a bytes (records-only)
+dash tests/ballot-integrity.sh   -> exit 0
+dash tests/run-all.sh            -> exit 1 at act19-office-continuity-smoke
+                                    ("mandatory Founder agent policy missing"),
+                                    then boot-smoke
+
+# plus tests/ fixture set from origin/fixture/c1a00002-act19-reporting-policy
+dash tests/ballot-integrity.sh   -> exit 0
+dash tests/run-all.sh            -> exit 0 ("All Viche tests passed")
+```
+
+Hence three phases: records restoration (records-smoke + ballot-integrity),
+tests fixtures + manifest checker (run-all), government codification/route
+(run-all). No Act 21 waiver is used; the sequencing follows §1 path scoping.
