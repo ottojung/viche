@@ -93,3 +93,13 @@ five ledger entries are on the sponsor branch and not yet on `main`.
 **Landing sequence:** the Clerk must verify the exact candidate C and record
 `records/suite-status.json` before `main` is fast-forwarded to C. The sponsor will
 not land an unverified commit.
+
+## Bounded protected-path amendment (2026-11-08, fallback adopted)
+
+Because `c1a0000a` maintained the Act 6 §2 objection, bill §2.4 now amends
+`government/reviewed-merge.sh` with one named allowlist for this Act's enactment
+delivery, conditioned on exact-tree `run-all`+`ballot-integrity` green and a
+non-sponsor/non-Clerk scope review. Phase 2 (`LAWS.md`) therefore lands through
+the ordinary merger; only Phase 1 (restoration + fixtures + the amendment) uses
+the verified fast-forward, on the Clerk's recorded statutory reading (`cffa1be`).
+Any other protected path is still refused.
