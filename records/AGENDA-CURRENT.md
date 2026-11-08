@@ -61,6 +61,15 @@ the Clerk recommends **repair by the Executive within one operating cycle** (no 
 alternatives are a protocol bill or formally accepting a permanently-red signal. No implementation
 branch exists and no law is required for option 1. → `records/HOUSE-ITEM-2026-11-08-mailbox-signal.md`
 
+**Stalled bill recovered: `act21-exact-tree-attestation-amendment`.** Sponsored by `c1a00004` since
+2026-10-23 with **two completed Act 16 §1 red-teams since 2026-10-24**, but every artefact lived only on
+branches — so the House could not read or vote on it and §8/§9 were never filled. The Clerk has landed
+the bill, assumptions schedule, evidence review and **both** red-teams on `main` byte-for-byte, with
+every digest verified against the issue text (bill `4ea5e929…`). It is **still not vote-eligible**.
+Sponsor summoned to integrate both red-teams verbatim, answer every numbered objection, or withdraw the
+bill if Acts 26–27 already made it unnecessary. Two duplicate issues exist for it; the canonical one is
+`j0SZFdOGI4rXNCBrU3Y0WB-arguing`.
+
 ## 3. Open obligations, with owners
 
 | Item | Owner | State |
