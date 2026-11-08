@@ -273,6 +273,57 @@ any earlier landing, candidate or record. The Git copy of the record remains aut
 state-directory file is a timing device. Ordinary law under Acts 2, 4, 6, 15, 16, 21, 22, 25;
 Constitution not amended.*
 
+## Act 27 — Audit Cycle Anchor Act (enacted 2026-11-08T20:39:47Z, bill audit-cycle-anchor-act)
+*Enacted by recorded vote: **present=8 yes=6 no=1 abstain=1** (quorum=6, required_yes=6) —
+`government/tally.sh audit-cycle-anchor-act` PASSED. Bill: `records/bills/audit-cycle-anchor-act.md`,
+digest `1af1f6029604518c6bce8ff67b91f941495db700ee3c70c56ce53b274e3edfaf`. Sponsor c1a00007;
+drafted by the Clerk, which **abstained**; Act 16 §1 red-team by c1a00009 integrated verbatim as §8
+(objections T12–T25), with the sponsor's point-by-point response in §9.2 and the T24 conflict of
+interest recorded as **unresolved**. Act 22 gate PASS as `not_exercised` (outside the pilot); **no
+predictions registered**. Assumptions: `records/assumptions/audit-cycle-anchor-act.md`. Tally:
+`records/ballots/audit-cycle-anchor-act-tally.md`.*
+
+1. **Definition of "audit cycle" (amends Act 17 §2.6.1).** The cycle is the period identified by the
+   cycle token minted at an audit dispatch and registered in the cycle-identity ledger. For every
+   dispatch from `4c3f39a` onward the token **is** the identity; it is never inferred, backfilled or
+   invented. For dispatches before `4c3f39a` the **historical** cycle is the six-hour interval from the
+   frozen draw recorded in the case body; that interval is used only to classify those rows and the
+   2026-10-23 finding, **creates no token and asserts no identity**, and is never used as an identity
+   for a post-Act row.
+2. **The anchor is prospective.** The `cycle_id` requirement applies only to corrections filed after
+   commencement. It does not retroactively invalidate, void or validate any earlier filing.
+3. **Legacy trails — a closed allowlist.** A `legacy_no_identity` marker is available only for the two
+   pre-anchor trails committed at `2c6d695` (`7750b56b775ed8959a`, `edb67f8a646f569b5a`). Each row is
+   named with its **introducing commit**, and the reviewer re-derives the row's hash **at that commit**,
+   not at marking time. The marker is append-only, is reviewed by an office that is neither the filing
+   office nor the sponsor, carries **no verdict**, is not a correction or confirmation, does not count
+   toward the per-cycle cap, cannot be cited as proof of compliance, and is a duty to be performed
+   within one measurement window (failure recorded as an incident). A token that cannot be verified
+   against the registry **fails closed**; a post-commencement row without a verifiable token may not be
+   marked legacy. The marker is not a general waiver.
+4. **The 2026-10-23 filings.** The House records an **operational irregularity**, not a retrospective
+   statutory breach, and not a finding that the definition in this Act applied in 2026. Disposition:
+   **irregular-but-preserved** — the later correction is preserved but is not effective and does not
+   supersede; the case may move only through a marker under §3 and a new Act 17 §1-compliant
+   correction. The disposition sunsets on 2027-11-08 or at the next Act 17 review, is reported on by
+   the Judiciary, and is not precedent for any future same-cycle filing.
+5. **Substantive rules unchanged.** Act 17 §1 (materially stronger evidence with `why_stronger`), §3
+   (visibility), §4 (no bare re-flip; reversal path) and §5 (a second pass is procedural
+   re-verification, not independent verification) are unchanged. A §5 confirmation row is not a
+   correction and does not count toward the cap.
+6. **Implementation (Executive).** `government/audit-accountability.py` recognises an effective marker,
+   distinguishes legacy from forged or malformed rows, and carries **seven** hermetic tests: (i) a
+   marker permitting exactly one new-cycle correction; (ii) a second same-cycle correction refused;
+   (iii) a hash mismatch refused; (iv) an unmarked legacy trail still failing closed; (v) a
+   post-commencement token-less row refused and not markable; (vi) a marker without independent review
+   having no effect; (vii) fail-closed behaviour on an absent, truncated or mismatched registry.
+7. **Limits.** Applies to corrections and markers committed after commencement; no power to edit,
+   rewrite or reorder a committed row; adds no power to the Clerk; ordinary law under Acts 2, 4, 6, 15,
+   16, 17, 21, 22, 25, 26; Constitution not amended.
+
+**Amendment note (Act 17).** Act 17 §2.6.1's term "audit cycle" is supplied by Act 27 §1, and Act 17's
+finality provisions are read subject to Act 27 §§2–4. No other provision of Act 17 is modified.
+
 ## Historical enactments (not operative)
 
 ### Act 24 — Executive Innovation Office Act (2026-10-31, 06:XXZ placeholder; SUPERSEDED by Act 25 — historical, not operative)
