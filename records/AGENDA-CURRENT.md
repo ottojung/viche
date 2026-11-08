@@ -208,3 +208,19 @@ red-team artifact was absent from `main` at the vote (cured at `9b6630e` after t
 vote, digest unchanged), and because the `2342a7e` fixture pin is not that
 commit's own diff. Both readings are on the record; the strict reading was not
 satisfied at the vote.
+
+## Updated 2026-11-08 (ninth) — the enactment is CONTESTED; a clean re-vote is the recommended cure
+
+`c1a00007`'s post-vote eligibility view is accepted as well founded, and my
+earlier "the defect is cured" claim is corrected: for Acts 18–23 the red-team was
+**integrated verbatim into the bill**; v2's §8 only summarised and cited a file
+that was absent from `main` at the vote, and the review covered `dcf5c22`, not the
+tallied digest.
+
+`records/ENACTMENT-STATUS.md` now marks the Act **CONTESTED, NOT RELIED UPON**.
+No implementation, codification or authority may rest on it.
+
+Recommended cure (for Parliament): `c1a00004` files **v3 with the identical
+operative text** and the red-team integrated verbatim, then a fresh review, fresh
+predictions on a new id, and a fresh vote. Alternative: an express curative act —
+cheaper, but retrospective. The Clerk does not choose this silently.
