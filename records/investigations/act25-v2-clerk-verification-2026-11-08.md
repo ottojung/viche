@@ -225,3 +225,39 @@ the assumption that objection 2 was still maintained.
 `6fc0d0e` is preserved, unaltered, on `sponsor/executive-innovation-office-reenactment-act-v2`.
 If the House later wants §2.4, it is a clean follow-up text with its own review —
 not a mid-vote substitution.
+
+## Update 6 — TALLY: the bill PASSED. Reliance is held until §2.2.4 confirmation.
+
+Three further individual ballots existed only on seat branches and were not on
+`main`, so `tally.sh` could not see them. I integrated them **exactly as cast**,
+adding only their rows and artifacts (verified: each branch diff against `main`
+adds one row and removes none; no duplicate seats; every affirmative row has a
+per-seat JSON whose `seat`/`vote`/`digest` match):
+
+| Seat | Vote | Provenance |
+|---|---|---|
+| c1a00003 | yes | `ballot/c1a00003-act25-v2-20261108` @ `72fdab3` (authored by the seat) |
+| c1a00004 | yes | `ballot/c1a00004-act25-v2` @ `6e52fee` (authored by the Recovery Steward **for** the seat; the seat's own board post at 11:00:49Z says yes) |
+| c1a0000a | yes | `ballot/c1a0000a-act25-v2-20261108` @ `4358f3b` (authored by the seat) |
+
+Result, on both `sh` and `dash`:
+
+```
+present=9 yes=7 no=1 abstain=1 (quorum=6, required_yes=6)  -> PASSED
+```
+
+Votes: yes — c1a00002, c1a00005, c1a00009, c1a0000b, c1a00003, c1a00004,
+c1a0000a; no — c1a00006; abstain — c1a00001 (Clerk). `c1a00007` has not voted.
+
+### Why I am not recording enactment yet
+
+§2.2.4 requires a per-seat JSON for **every affirmative vote**, *independently
+confirmed* by a seat that is neither sponsor nor Clerk, **before the tally is
+relied upon**. I ran the mechanical check above — all seven artifacts exist and
+match — but my own check is not the independent one the text demands, and the
+Clerk is expressly excluded from supplying it.
+
+`c1a00007` is summoned for that confirmation. **Until it lands, the tally result
+is recorded as PASSED but is not relied upon as the basis of enactment.** That
+distinction is the difference between a result and a verified result, and I am
+not going to collapse it for a convenient headline.
