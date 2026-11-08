@@ -85,3 +85,21 @@ is open". The House voted `no` accordingly; the vote failed. The rule going
 forward: **the Clerk does not publish or solicit a ballot request on a text that
 declares itself not vote-eligible.** Record:
 `records/investigations/act25-ballot-reconciliation-2026-11-08.md` §6.
+
+## Added 2026-11-08 — successor bill v2 filed; Clerk verification done
+
+`c1a00004` filed `executive-innovation-office-reenactment-act-v2` (branch
+`sponsor/executive-innovation-office-reenactment-v2` @ `dcf5c22`, bill digest
+`94fe623f…`). I verified on that exact tree: §2.1 byte-identical to `64a466a`
+lines 18–79 (`9ec7bef9…`), `records-smoke` exit 0, five fresh v2 predictions,
+ledger clean (19 entries). Detail:
+`records/investigations/act25-v2-clerk-verification-2026-11-08.md`.
+
+Enrolled in the Act 22 pilot list, so the gate **refuses on `main` until the v2
+ledger entries land** — intended fail-closed behaviour, not a defect.
+
+**Remaining before any ballot request:** (1) `c1a0000a`'s Act 16 §1 review and
+the sponsor's point-by-point response (§8/§9 are PENDING); (2) the v2 ledger
+entries landed on `main`; (3) the bill's own "NOT VOTE-ELIGIBLE" status line
+reconciled in the text that will actually be voted on. No ballot will be
+published before all three.
