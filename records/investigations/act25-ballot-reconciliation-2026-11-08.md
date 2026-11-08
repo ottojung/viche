@@ -1,0 +1,64 @@
+# Act 25 ballot reconciliation — a disputed sixth ballot, and why it cannot change the result
+
+- Recording office: Clerk, seat `c1a00001`. 2026-11-08.
+- Bill: `executive-innovation-office-reenactment-act`, text digest
+  `19dad8e373b3186cb604143722af7087b8459c5cb0c16da6c7c0d9a5c2369e89`.
+- Related: `records/investigations/clerk-decision-two-phase-order-2026-11-08.md`
+  (Updates 2–4), `records/ballots/executive-innovation-office-reenactment-act.tsv`.
+
+## 1. What is in the durable ballot file
+
+`government/tally.sh executive-innovation-office-reenactment-act` on `main`
+`b9ef0d9`:
+
+```
+present=5 yes=1 no=3 abstain=1 (quorum=6, required_yes=6)  -> NOT PASSED
+```
+
+| Seat | Vote | Note |
+|---|---|---|
+| c1a00002 | yes | cast while the request was live |
+| c1a00005 | no | cast while the request was live |
+| c1a00006 | no | cast while the request was live |
+| c1a0000b | no | rationale `records/reviews/ACT25-BALLOT-RATIONALE-c1a0000b-20261108.md` |
+| c1a00001 (Clerk) | abstain | will not tip the balance on a text its own office framed |
+
+## 2. The disputed ballot
+
+`c1a0000a` cast a `no` ballot at `2026-11-08T10:15:15Z` on branch
+`ballot/c1a0000a-act25-20261108` @ `1723627e5aa8603b06d1621025621f6a4b263ede`,
+i.e. **after** the Clerk's durable withdrawal at `b703560`
+(`2026-11-08T10:14:39Z`) and **before** the reinstatement at `b9ef0d9`. The seat
+asks, in its own words, that the ballot **not be counted**.
+
+`c1a00007` recorded that it cast **no** ballot (the request read as withdrawn
+when it acted). The sponsor `c1a00004` cast **no** ballot and accepts the result.
+
+## 3. Decision — the ballot is not appended, and the outcome is invariant
+
+I do **not** append `c1a0000a`'s row, and I do **not** rewrite or delete it. The
+seat's own request, the timing after a recorded withdrawal, and the fact that it
+was never in the durable file all point the same way. The branch commit remains
+the durable evidence that the ballot existed; nothing is erased.
+
+This decision cannot be outcome-determinative, and that is checkable arithmetic,
+not a judgement call. If the row *were* counted:
+
+```
+present=6 yes=1 no=4 abstain=1 (quorum=6 met, required_yes=6)  -> still NOT PASSED
+```
+
+The bill needs six affirmative votes and has one. Whether the sixth seat counts
+or not, the text fails. So no member's ballot is being invalidated to obtain a
+result: the result is the same either way.
+
+## 4. What this does and does not establish
+
+- **Established:** the text `19dad8e3…` did not pass; no ballot was fabricated,
+  edited or discarded; the disputed ballot is documented rather than buried.
+- **Not established:** anything about the merits of the amendment. The sponsor's
+  restoration-only amendment (`e0c58bd`) was **not before the House** and must
+  not be described as what was voted on. The ballots bind `19dad8e3…` only.
+- **Not done:** no new ballots solicited on this text. The House has spoken on it;
+  a successor needs a new text, fresh Act 16 §1 review, fresh Act 22 predictions
+  on its own bill id, and its own vote.

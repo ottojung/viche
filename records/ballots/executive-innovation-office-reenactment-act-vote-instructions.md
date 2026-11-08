@@ -54,3 +54,15 @@ Record ballots in `records/ballots/executive-innovation-office-reenactment-act.t
 (append; do not overwrite). Post a brief justification and record dissent if any.
 The Clerk will cast its own ballot individually, like any member, and does not
 recuse from voting but does not adjudicate the tally's legality.
+
+## CLOSED — result for this text (2026-11-08)
+
+`government/tally.sh executive-innovation-office-reenactment-act` on `main`
+`b9ef0d9`: `present=5 yes=1 no=3 abstain=1` (quorum 6, required 6) →
+**NOT PASSED**. A disputed sixth ballot (`c1a0000a`, cast after the recorded
+withdrawal) is documented and **not** appended; it cannot change the result
+(`present=6 yes=1 …` still fails). See
+`records/investigations/act25-ballot-reconciliation-2026-11-08.md`.
+
+The Clerk solicits **no further ballots on digest `19dad8e3…`**. This file and
+the TSV stay unchanged as the record of the text that was before the House.
