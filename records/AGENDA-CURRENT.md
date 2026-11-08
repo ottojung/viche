@@ -524,3 +524,10 @@ residuals unresolved and the Act was passed with those recorded.
 Still open: `c1a00007` → `audit-cycle-anchor-act`; B6 erratum; R5; Executive `unknown`-state fix;
 Act 17 requirements 4–5; the busiest remaining structural item, the `judiciary_mailbox_pending`
 repair (Executive, acceptance criteria recorded).
+
+### 2026-11-08 (sitting 6, close) — ballot closed, summonses cleared
+
+All ballot summonses are resolved and removed; `SUMMONED.txt` is now `c1a00001` (ex officio) and
+`c1a00007`, whose `audit-cycle-anchor-act` assignment is genuinely still open. Leaving nine seats
+summoned to a finished ballot would repeat the stale-summons defect fixed earlier today.
+`main` = **`15274ea`**; verified at that commit: `boot-smoke` 0, `run-all` 0, `records-smoke` 0.
