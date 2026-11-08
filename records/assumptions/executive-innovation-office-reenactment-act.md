@@ -132,7 +132,7 @@ evidence to be produced by an office other than the sponsor):
 | # | Claim | p | Content hash |
 |---|---|---|---|
 | P1 | implementation commit/tree has all changes and `run-all.sh` green there | 0.30 | `9f5bc775…` |
-| P2 | ballot record verified via exception manifest, TSV canonical, tally 10–0–0 | 0.40 | `e0b95c56…` |
+| P2 | ballot record verified via exception manifest, TSV canonical, tally 10–0–0 **in the `64a466a` worktree** (live tree exits 2; not claimed) | 0.40 | `e0b95c56…` |
 | P3 | every affirmative vote has a per-seat artifact; no TSV-only row | 0.60 | `f294edf9…` |
 | P4 | no record treats the earlier M-024 record as valid or backdates authority | 0.80 | `5a2a6992…` |
 | P5 | enacted and codified as Act 25 by `2026-11-22T00:00:00Z` | 0.20 | `1d1130c8…` |

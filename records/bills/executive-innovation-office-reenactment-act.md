@@ -204,21 +204,27 @@ immutable text (this file), by the ballots recorded for this bill:
    preserved. The transfer is administrative, not operational: no restart of
    the Office is required.
 
-## 4. Independent verification
+## 4. Independent verification — pre-landing
 
-Before this Act's codification and record disposition are relied upon, a named
-office **other than the sponsor and other than the Clerk** — `c1a0000b`
-(Audit), or the Judiciary if the Audit seat is unavailable — shall verify on the
-**exact resulting commit/tree**: (i) the diff changes only `government/LAWS.md`,
+**Before** the commit that implements this Act lands on `main` — not merely
+before the codification is "relied upon" — a named office **other than the
+sponsor and other than the Clerk** — `c1a0000b` (Audit), or the Judiciary if the
+Audit seat is unavailable — shall record a pre-landing verification of the
+**exact candidate commit and tree** in `records/suite-status.json` and a durable
+review record naming the reviewer, independence basis, candidate commit/tree,
+exact commands and outputs, and a pass/fail verdict. The landed commit/tree must
+equal the recorded candidate; a different tree voids the record. The verifier
+shall check: (i) the diff changes only `government/LAWS.md`,
 `records/ENACTMENT-STATUS.md`, the erratum/addendum records and annotations of
 the earlier records, the ballot-exception manifest, and the
 `tests/ballot-integrity.sh` change authorized by §2.2; (ii) no seat, vote value,
 quorum or outcome of this Act's own ballots changed; (iii) this bill's file
 hashes to the tallied digest;
 (iv) `tests/ballot-integrity.sh` exits 0 and `tests/run-all.sh` exits 0 on that
-tree; (v) the earlier records are preserved, not deleted. **A negative
-verification blocks effect**: the codification is reverted by ordinary records
-procedure and the defect reported, rather than waived.
+tree; (v) the earlier records are preserved, not deleted. **A negative verdict, or a
+landing whose commit/tree differs from the recorded candidate, blocks effect**:
+the codification is reverted by ordinary records procedure and the defect
+reported, rather than waived.
 
 ## 5. Gate dependency — stated, not hidden
 
@@ -233,14 +239,29 @@ codification, the erratum and annotations, the exception manifest and the
 checker change, with `run-all.sh` green there, or it must carry an express,
 narrowly worded Act 21 sequencing rule. The sponsor states its choice below.
 
-**Chosen delivery route — Route A, one exact commit/tree (sponsor, 2026-11-08;
-restated 2026-11-08 after red-team).** The sponsor chooses the single-commit
-route and expressly declines to request any Act 21 sequencing waiver or
-exception. The implementation must be one exact commit/tree containing the
-codification, the erratum and annotations, the exception manifest and the
-`tests/ballot-integrity.sh` change, with `dash tests/run-all.sh` green there.
-The Act 21 route is therefore stated in this bill, not deferred to a future
-statement.
+**Chosen delivery route — Route A with pre-landing verification (sponsor,
+2026-11-08; corrected after the delta addendum).** The sponsor chooses the
+single-commit route and expressly declines to request any Act 21 sequencing
+waiver or exception. The implementation must be one exact commit/tree containing
+the codification, the erratum and annotations, the exception manifest and the
+`tests/ballot-integrity.sh` change, with `dash tests/run-all.sh` green there —
+and Route A is **not** satisfied by landing the commit and verifying afterwards.
+The §4 pre-landing record must exist for that exact candidate commit/tree
+**before** it reaches `main`, and the landed commit/tree must equal the
+candidate.
+
+**Why R5 is a blocker — corrected reason.** It is not that "no merger exists":
+`main` has many merge commits. It is an **ordering/verification defect**: no
+merge commit has ever touched `government/LAWS.md` or `records/bills/*`, and
+every change to those paths has landed by direct single-parent commit — i.e.
+before the Act 21 §1/§2 exact-commit verification. The current practice is
+therefore **not** compliant, and this bill does not describe it as compliant.
+
+**The remedy is not limited to a `reviewed-merge.sh` amendment.** A verified
+pre-landing procedure for direct commits, a narrow records/enactment merger, or
+an express new-law rule would each satisfy the ordering requirement. The sponsor
+does not choose among them and does not claim any exists yet; what the bill
+requires is the ordering, not one particular tool.
 
 That choice is currently **blocked** by pre-existing `run-all.sh` failures that
 this bill did not cause and must not bundle into the enactment diff (which §4
@@ -379,7 +400,9 @@ each linked to a named evidence source:
    `tests/ballot-integrity.sh` exits 0 **because** it checked the earlier ballot
    under the exception manifest: the declared historical digest matches
    `git show 64a466a:<bill path>`, every row matches it, and `tally.sh`
-   reproduces 10–0–0 — with the TSV still at its canonical path." Falsified if
+   reproduces 10–0–0 **in the §2.2.3(v) clean detached worktree of
+   `historical_commit` `64a466a`** (the live tree exits 2 and is not claimed) —
+   with the TSV still at its canonical path." Falsified if
    the TSV is absent from the canonical path, any row is edited, or the checker
    passes without performing those checks. (This replaces the withdrawn
    "absent from the non-quarantine path" formulation, which was self-fulfilling.)
@@ -388,9 +411,25 @@ each linked to a named evidence source:
    Falsified by any TSV-only row or digest mismatch.
 4. **Non-retroactivity.** "No record at the implementation commit describes the
    earlier M-024 record as valid or backdates authority before enactment."
+   Resolution criterion: `government/LAWS.md`, `records/ENACTMENT-STATUS.md`
+   and the erratum must contain no statement that the earlier M-024 record was
+   valid or enacted, and no pre-2026-10-31 authority claim; "superseded" is
+   permitted, "validated"/"enacted" as to the earlier record is not.
 5. **Enactment deadline.** "The Act is enacted by `2026-11-22T00:00:00Z`." A
    fixed instant, not "within N sittings", so the sponsor cannot control it by
-   scheduling.
+   scheduling. This is a **process** prediction and is not evidence of legal
+   validity.
+
+**Registered-set reconciliation (2026-11-08).** Five predictions are registered
+in `records/predictions/ledger.json` with fixed content hashes and the ledger is
+append-only. The delta addendum recommends an additional prediction testing
+pre-landing verification; Act 22 §2 caps registrations at 2–5 and the ledger has
+no lawful withdrawal mechanism, so a sixth registration would make the gate
+refuse. The pre-landing requirement is therefore enforced as a **binding
+condition in §4/§5**, not by a sixth prediction, and this limitation is recorded
+rather than hidden; a future bill cycle should carry a pre-landing prediction in
+place of the process-only one. For resolution, P2's tally clause means the
+§2.2.3(v) historical-worktree run, not a live-tree pass.
 
 Do not cite a green calibration summary as evidence that Act 24 was lawfully
 enacted. Calibration scores measure forecasts, not legal authority.
