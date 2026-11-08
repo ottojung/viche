@@ -35,6 +35,8 @@ cp "$repo/government/EXECUTIVE-INNOVATION.md" "$d/town/government/EXECUTIVE-INNO
 printf '# Historic Act 14 — Legislative Centre\n' > "$d/town/government/LAWS.md"
 printf 'Founder-controlled fixture Constitution\n' > "$d/charter"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
+cp "$repo/government/delivery-candidates.py" "$d/town/government/delivery-candidates.py"
 export VICHE_TOWN_ROOT="$d/town" VICHE_SEATS_ROOT="$d/seats" VICHE_STATE_ROOT="$d/state" VICHE_CONSTITUTION="$d/charter"
 
 # No legislative transfer without an actually enacted law record.
