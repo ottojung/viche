@@ -1,21 +1,14 @@
 {
   "generated_by": "government/suite-status.sh",
   "act": 21,
-  "recorded_at": 1794099607258,
-  "recorded_iso": "2026-11-08T01:00:07Z",
-  "suite": "tests/records-smoke.sh",
-  "commit": "2ab0c6c9bdb4cab574befe947d7a29737cc09fa0",
-  "tree": "420a613c",
-  "main": "2ab0c6c9bdb4cab574befe947d7a29737cc09fa0",
+  "recorded_at": 1794114960,
+  "recorded_iso": "2026-11-08T05:16:00Z",
+  "suite": "tests/appointments-smoke.sh",
+  "commit": "08a05b2aa47dcf66459ed90ddadd40a1f991509d",
+  "tree": "25029e69daeda6508bf9b241b800ff80eef5515c",
+  "main": "08a05b2aa47dcf66459ed90ddadd40a1f991509d",
   "result": "green",
-  "runs": [
-    {
-      "run": 1,
-      "result": "green",
-      "exit": 0,
-      "output_sha256": "clerk-c1a00001-verified-records-smoke"
-    }
-  ],
+  "runs": [{"run":1,"result":"green","exit":0,"output_sha256":"ca29cd24bc3a77ac4ed48b216a88fc83a04ba8c1009335278dfe8298b78c3abf"}],
   "ci_result": "unavailable",
   "ci_reconciliation": "unavailable",
   "incident": false
