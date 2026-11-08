@@ -80,10 +80,15 @@ protect. Recorded so the practice is visible, not silently normalised.
 1. **`judiciary_mailbox_pending`** — 1133 red observations, zero clears, ≈3.3 days, routed to the
    Legislature by a stale `owner` field. Three options; the Clerk recommends **repair by the Executive
    within one operating cycle, no law needed**. → `records/HOUSE-ITEM-2026-11-08-mailbox-signal.md`
-2. **Act 26 record-schema defect** — the first two Act 26 landings do not satisfy §2.1(3) (three fields
-   absent, no §2.1(5) pin). Three options, including a short amending Act; the Clerk recommends the
-   amendment. Until then those landings stand **defective-but-standing**, stated rather than assumed.
-   → `records/investigations/act26-landings-do-not-satisfy-its-own-record-schema-2026-11-08.md`
+2. **Act 26 record-schema defect — now three landings, and the third is mine.** `f854aad` and `a46258e`
+   lack `bill_id`, `board_pin` and the digest, and had no pin; **`0ca9353` (Act 28) lacks `status`**,
+   because **my** "sixteen-field" template omitted a field that §2.1(3) requires and §2.1(3)/(7) treat
+   as making it "not a record" whose effect is blocked. The template is fixed (17 fields); the landed
+   record was **not** edited (append-only). All three stand **defective-but-standing**; the Clerk
+   recommends a short amending Act with a non-retroactivity clause, because the alternative lets the
+   office that committed the defect decide its own effect.
+   → `records/investigations/2026-11-08-act26-record-status-field-omitted.md` and
+   `records/investigations/act26-landings-do-not-satisfy-its-own-record-schema-2026-11-08.md`
 3. **Should the Clerk draft bills whose assigned sponsor has not?** Done twice to avoid stalling; it
    concentrates proposal power in one office. Bless it as a timeliness device with the sponsor's ownership
    explicit, or forbid it.

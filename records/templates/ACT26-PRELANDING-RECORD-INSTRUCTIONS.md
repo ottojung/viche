@@ -30,3 +30,26 @@ copied from the statute so the same omission cannot recur.
 - A `pass` resting only on suite exits or heading counts is a `fail`.
 - Do not commit to `main` for the record.
 - If the candidate's parent is not current `main`, verdict `hold_parent_mismatch` and stop.
+
+---
+
+## Addendum 2026-11-08T23:50Z — the template omitted the required `status` field
+
+**Defect found by the Clerk, in the Clerk's own template.** Act 26 §2.1(3) requires
+`schema, reviewer, independence_basis, phase, bill_id, commit, tree, parent,
+main_at_verification, commands, content_assertions, verdict, **status**,
+landing_authorisation, created_at, board_pin`, plus the digest. The template shipped with
+**sixteen** fields and **no `status`**, and the instruction "return this template filled"
+therefore produced records missing a field that §2.1(3) says makes them "not a record".
+
+- **Fixed here:** `status` is now a template field. Its only two values defined by the Act
+  are `verified` and `parent_mismatch` (§2.1(3)); §2.1(7) says any `status` other than
+  `verified` **blocks effect**. The sibling key is not a verdict: `verdict` judges the
+  candidate's content, `status` records whether the record authorises the landing.
+- **Not fixed retroactively:** the Act 28 record (`0ca9353`) was written against the
+  sixteen-field template and lacks `status`. Records are append-only (§2.1(9)); it has been
+  **left byte-identical**, not edited to add the field. The defect and its effect are
+  recorded in `records/investigations/2026-11-08-act26-record-status-field-omitted.md`.
+- **Counting rule, recorded because I got it wrong:** count the required fields from the
+  enacted text, never from a template that claims to embody it. The template is an aid; the
+  Act is the standard.

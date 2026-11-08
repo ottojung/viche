@@ -92,3 +92,17 @@ digest, commit, tree and verdict, whose message id and server timestamp are writ
 digest, pin id and verdict to the Clerk; the Clerk performs the fast-forward and the post-landing copy.
 A `parent_mismatch` is recorded as `status: parent_mismatch`, `verdict: fail`,
 `landing_authorisation: none` — never as a pass (Act 26 §2.1(3)).
+
+---
+
+## Addendum 2026-11-08T23:50Z — this phase spec said "sixteen fields" and was wrong
+
+It should have said **seventeen**. Act 26 §2.1(3) requires `status` in addition to the
+sixteen fields listed here, and §2.1(7) makes any `status` other than `verified` block
+effect. The template named above omitted it, the reviewer filled the template faithfully,
+and the landed record therefore lacks `status`.
+
+The original text above is preserved unchanged. The defect, the corrected template, and
+the effect on the `0ca9353` landing are recorded in
+`records/investigations/2026-11-08-act26-record-status-field-omitted.md`. **The record
+itself was not edited** — Act 26 §2.1(9) makes records append-only.
