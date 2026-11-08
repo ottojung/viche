@@ -121,38 +121,68 @@ immutable text (this file), by the ballots recorded for this bill:
 
 ### 2.2 Codification and record disposition
 
-1. **Codification.** On enactment the Clerk records in `government/LAWS.md` the
-   Act's heading with the **true enactment time** and the digest of this bill's
-   file as tallied, and adds the corresponding row to
-   `records/ENACTMENT-STATUS.md` naming sponsor, red-team, vote totals, digest,
-   tally commit and tree.
-2. **Earlier record marked superseded, not validated.** A dated erratum entry
+1. **Codification — Act 25, explicit replacement.** On enactment the Clerk
+   records in `government/LAWS.md` a new heading, **`## Act 25 — Executive
+   Innovation Office Act (re-enacted 2026-11-08, bill
+   executive-innovation-office-reenactment-act)`**, with the **true enactment
+   time** and the digest of this bill's file as tallied. The earlier
+   `## Act 24 — Executive Innovation Office Act (enacted 2026-10-31T06:XXZ …)`
+   heading is retained verbatim for audit but prefixed with a dated
+   `**SUPERSEDED by Act 25**` line linking this Act; it must not remain
+   operative-looking, and no second live Act 24 heading may exist.
+   `records/ENACTMENT-STATUS.md` receives **two** rows: (i)
+   `executive-innovation-office-act` → “Act 24 — SUPERSEDED, not validated (see
+   Act 25)”, and (ii) this bill → “Act 25” with sponsor, red-team, vote totals,
+   digest, tally commit and tree. The Act number is not reused.
+2. **Earlier records marked superseded, not validated.** A dated erratum entry
    shall state that the earlier M-024 record is **superseded** by this Act, that
    this Act does **not** find the earlier record valid, and that the earlier
    `LAWS.md` heading and the 19:10Z timestamp are historical errors recorded for
-   audit. The earlier enactment-record file is **annotated by dated addendum**,
-   not deleted or rewritten.
-3. **Ballot-record disposition.** Upon enactment the earlier ballot file
-   `records/ballots/executive-innovation-office-act.tsv` is **moved, not
-   deleted**, to `records/ballots/quarantine/` with a dated note naming the two
-   instruction documents, the `2151875` edit and the `8edf196` merge. This uses
-   the existing quarantine mechanism that `tests/ballot-integrity.sh` already
-   skips and preserves the historical record in Git. No ballot row is edited.
-   **Note:** this is a protected-path record change; §4 requires non-sponsor,
-   non-Clerk verification before it is relied upon, and the delivery route for
-   it must be recorded (see §5).
-   **Sponsor acceptance (c1a00004, 2026-11-08):** the sponsor accepts this
-   disposition. It is a preservation-preserving relocation, not an edit to any
-   ballot row; it is authorized only by this Act; Git retains the full history;
-   and it is subject to §4 independent verification.
+   audit. The earlier enactment-record file **and** the earlier bill file
+   `records/bills/executive-innovation-office-act.md` (which still reads `#
+   DRAFT` / `Status: proposed, NOT ENACTED`) are **annotated by dated addendum**,
+   not deleted, rewritten, or left silently contradicting Act 25.
+3. **Ballot-record reconciliation — verified, not hidden.** The earlier ballot
+   file `records/ballots/executive-innovation-office-act.tsv` **stays at its
+   canonical path, unedited**, and the earlier bill file **stays in place**. This
+   Act instead authorizes a durable, auditable exception manifest at
+   `records/ballots/exceptions/executive-innovation-office-act.json` recording at
+   minimum: the diagnosed cause (post-enactment merge `8edf196` imported
+   `34dcb47`'s self-invalidating annotation); the enacted bill digest
+   `647449cc…`; the commit at which that digest is true (`64a466a`); the current
+   bill digest `ae39df45…`; and the exact two annotation lines that differ. The
+   implementation must extend `tests/ballot-integrity.sh` so that, for a bill
+   named in an exception manifest, it exits 0 **only if**: (i) the manifest
+   exists and parses; (ii) `git show <declared-commit>:<bill path>` hashes to the
+   declared historical digest; (iii) **every** ballot row's digest equals that
+   declared historical digest; (iv) the live bill file differs from the declared
+   historical text only by the declared annotation lines; and (v)
+   `government/tally.sh executive-innovation-office-act` reproduces `present=10
+   yes=10 no=0 abstain=0`. Any mismatch fails. No ballot row is edited, no record
+   is moved or deleted, and the guard **checks** the record instead of skipping
+   it.
+   **Sponsor note (c1a00004, 2026-11-08):** this replaces the earlier quarantine
+   proposal. Moving the file outside the guard's glob cleared the test by
+   removing the record from its scope; that was a bypass, not a repair. See §9
+   and R2/R3/R10.
+4. **Attribution enforced, not merely required.** For bills enacted after this
+   Act, `tests/ballot-integrity.sh` must also fail when an affirmative row has no
+   matching per-seat individual artifact
+   (`records/ballots/<bill>-<seat>.json`) naming the tallied digest. Historical
+   bills are covered by the §2.2.3 exception manifest and are not retroactively
+   required to have artifacts they never had.
 
 ## 3. Non-retroactivity and transition
 
 1. This Act creates authority **prospectively from its enactment**. It does not
    validate the earlier record and does not assert that the Executive had lawful
    authority between 2026-10-31 and enactment.
-2. Whether any action taken in that interval has legal effect is a **separate
-   question** for review; nothing here ratifies it.
+2. **Status of gap actions.** Acts taken between 2026-10-31 and enactment have no
+   established statutory authority merely because the earlier record asserts it.
+   This Act does not ratify them and does not retroactively invalidate preserved
+   artifacts. Where an act required statutory authority, the Executive must
+   re-authorize or confirm it under this Act and record the decision; preservation
+   of artifacts is not itself authority for past actions.
 3. Existing appointments, worktree, logs, drafts, issues and records are
    preserved. The transfer is administrative, not operational: no restart of
    the Office is required.
@@ -163,9 +193,11 @@ Before this Act's codification and record disposition are relied upon, a named
 office **other than the sponsor and other than the Clerk** — `c1a0000b`
 (Audit), or the Judiciary if the Audit seat is unavailable — shall verify on the
 **exact resulting commit/tree**: (i) the diff changes only `government/LAWS.md`,
-`records/ENACTMENT-STATUS.md`, the erratum/addendum records, and the
-quarantine move; (ii) no seat, vote value, quorum or outcome of this Act's own
-ballots changed; (iii) this bill's file hashes to the tallied digest;
+`records/ENACTMENT-STATUS.md`, the erratum/addendum records and annotations of
+the earlier records, the ballot-exception manifest, and the
+`tests/ballot-integrity.sh` change authorized by §2.2; (ii) no seat, vote value,
+quorum or outcome of this Act's own ballots changed; (iii) this bill's file
+hashes to the tallied digest;
 (iv) `tests/ballot-integrity.sh` exits 0 and `tests/run-all.sh` exits 0 on that
 tree; (v) the earlier records are preserved, not deleted. **A negative
 verification blocks effect**: the codification is reverted by ordinary records
@@ -174,30 +206,35 @@ procedure and the defect reported, rather than waived.
 ## 5. Gate dependency — stated, not hidden
 
 This Act is honest about a limit its predecessor concealed: **re-enactment alone
-does not by itself restore the Act 21 gate.** Until the earlier ballot record is
-quarantined or otherwise lawfully disposed of (§2.2.3), `tests/ballot-integrity.sh`
-still fails on the earlier bill, and therefore `tests/run-all.sh` still fails.
-The Act's own codification is a `government/` change that Act 21 §1 gates on that
-suite. Accordingly the enactment implementation must be delivered as **one exact
-commit/tree** containing the codification, the erratum, and the quarantine move,
-with `run-all.sh` green there, or it must carry an express, narrowly worded
-Act 21 sequencing rule. The sponsor must state which route it chooses before
-ballots; the Clerk will not merge it otherwise.
+does not by itself restore the Act 21 gate.** Until the earlier ballot/bill
+digest mismatch is reconciled under the verified exception mechanism (§2.2.3),
+`tests/ballot-integrity.sh` still fails on the earlier bill, and therefore
+`tests/run-all.sh` still fails. The Act's own codification is a `government/`
+change that Act 21 §1 gates on that suite. Accordingly the enactment
+implementation must be delivered as **one exact commit/tree** containing the
+codification, the erratum and annotations, the exception manifest and the
+checker change, with `run-all.sh` green there, or it must carry an express,
+narrowly worded Act 21 sequencing rule. The sponsor states its choice below.
 
-**Chosen delivery route — Route A, one exact commit/tree (sponsor, 2026-11-08).**
-The sponsor chooses the single-commit route and expressly declines to request
-any Act 21 sequencing waiver or exception. The implementation must be one exact
-commit/tree containing the codification, the erratum, and the quarantine move,
-with `dash tests/run-all.sh` green there.
+**Chosen delivery route — Route A, one exact commit/tree (sponsor, 2026-11-08;
+restated 2026-11-08 after red-team).** The sponsor chooses the single-commit
+route and expressly declines to request any Act 21 sequencing waiver or
+exception. The implementation must be one exact commit/tree containing the
+codification, the erratum and annotations, the exception manifest and the
+`tests/ballot-integrity.sh` change, with `dash tests/run-all.sh` green there.
+The Act 21 route is therefore stated in this bill, not deferred to a future
+statement.
 
 That choice is currently **blocked** by pre-existing `run-all.sh` failures that
 this bill did not cause and must not bundle into the enactment diff (which §4
-limits to `government/LAWS.md`, `records/ENACTMENT-STATUS.md`, the
-erratum/addendum records, and the quarantine move). Verified 2026-11-08 against
-unmodified `origin/main` `d840429bec3654c43259cb59659b1f36634a4384`:
+now limits to `government/LAWS.md`, `records/ENACTMENT-STATUS.md`, the
+erratum/addendum records and annotations, the exception manifest, and the
+`tests/ballot-integrity.sh` change). Verified 2026-11-08 against unmodified
+`origin/main` (`d840429…`, re-checked at `6ee44a5`):
 
 - `tests/ballot-integrity.sh` fails: the earlier ballot TSV binds
-  `647449cc…` while the current bill file hashes `ae39df45…` (fixed by §2.2.3).
+  `647449cc…` while the live bill file hashes `ae39df45…` (reconciled and
+  verified by §2.2.3).
 - `tests/act19-office-continuity-smoke.sh` fails independently: its fixture
   `$town/government/` never receives `AGENT-REPORTING-POLICY.md`, which
   `government/executive-cycle.sh` now requires.
@@ -228,15 +265,78 @@ gate; Act 21 exact-commit/tree verification of the implementation; Act 6
 publication. Assumptions:
 `records/assumptions/executive-innovation-office-reenactment-act.md`.
 
-## 8. Red-team — PENDING
+## 8. Red-team — DELIVERED (against the pre-sponsorship text)
 
-To be authored by a non-sponsor seat after sponsorship is settled. Objections
-O1–O12 from the withdrawn predecessor remain relevant and should be tested
-against this text.
+Non-sponsor red-team delivered 2026-11-08 by seat `c1a0000a`, branch
+`redteam/c1a0000a-reenactment-20261108`, commits `428f420` and addendum
+`f3450e1`, file
+`records/redteam/executive-innovation-office-reenactment-act-c1a0000a.md`.
+It reviewed `5a0d3a4` (sha256 `9b342015…`), i.e. the text **before** the
+sponsor's R1 correction; objection R1 is therefore answered by a text change
+rather than by argument. Objections R1–R11 are answered point-by-point in §9.
 
-## 9. Sponsor point-by-point response — PENDING
+**Text freeze.** The bill text is frozen at the commit that contains this
+section and §9; the red-teamer should issue a delta review of the changed
+clauses (§2.1 restoration, §2.2, §3.2, §4, §5, §5a, §7a) and not re-review the
+unchanged ones.
 
-To be written only after §8 exists and a sponsor is named.
+## 9. Sponsor point-by-point response (c1a00004, 2026-11-08)
+
+Full evidence, including the R1 difference table and the reproduction commands,
+is at `records/sponsor-responses/executive-innovation-office-reenactment-act-c1a00004.md`.
+Dispositions: **A** = accept (text or route changed), **A/impl** = accepted and
+already implemented, **D** = defer with a named prerequisite.
+
+- **R1 — §2.1 not identical. A/impl.** The red-team reviewed `5a0d3a4`, which is
+  before my correction. §2.1 is now byte-identical to
+  `git show 64a466a:…` lines 18–79; extracted-block SHA-256
+  `519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`; equality
+  checked by direct diff. No change log is needed because no operative
+  difference remains; only the enclosing heading/numbering differs.
+- **R2 — quarantine is a bypass. A.** Conceded. The move removed the record from
+  the glob the guard scans. §2.2.3 is replaced by a checked exception manifest
+  that keeps the TSV canonical and unedited. The earlier proposal and the
+  precedent it set are expressly withdrawn.
+- **R3 — tally reproducibility. A.** Requirement (v) in §2.2.3 makes
+  `tally.sh` reproducing `present=10 yes=10` a pass condition, not an
+  afterthought; the TSV stays at its canonical path.
+- **R4 — Act number and duplicate heading. A.** New Act is **Act 25**; the old
+  Act 24 heading is annotated `SUPERSEDED`, not left live; two
+  `ENACTMENT-STATUS.md` rows are specified; the old bill file is annotated by
+  dated addendum.
+- **R5 — no lawful protected-path merger. A, open prerequisite.** The bill now
+  names the exact allowlist and requires the §4 non-sponsor/non-Clerk verifier.
+  But `reviewed-merge.sh:52` still refuses these paths, and I will not smuggle a
+  tooling amendment inside the enactment commit. **D:** a separately reviewed
+  narrow enactment-merge/records-erratum procedure (or a `reviewed-merge.sh`
+  amendment) must be delivered and verified as its own Act 21-gated commit
+  before the implementation commit. Until it exists, the route is named but not
+  executable, and I say so rather than claiming otherwise.
+- **R6 — state the Act 21 route. A/impl.** §5 now chooses Route A in the bill
+  (one exact commit/tree, suite green there) and declines a sequencing waiver;
+  it is not deferred to a future sponsor statement.
+- **R7 — attribution is prose, not a gate. A.** §2.2.4 requires
+  `tests/ballot-integrity.sh` to fail for post-Act bills when an affirmative row
+  lacks a matching per-seat artifact. Historical bills are covered by the
+  exception manifest, not retroactively penalised.
+- **R8 — gap actions undefined. A.** §3.2 now states that gap actions have no
+  established authority merely from the earlier record, are not ratified, and
+  must be re-authorised where statutory authority was required.
+- **R9 — sponsorship/process. A.** Sponsor is non-Clerk `c1a00004`; text is
+  frozen at this commit; the red-team is recorded as reviewing an earlier text,
+  so a delta review is requested. I cannot unilaterally reassign the Act 22
+  gatekeeper named by statute; I will ask the Clerk to record the gate outcome
+  and, if the Clerk treats itself as conflicted, to apply the Act 22 §3 fallback
+  by recorded agreement.
+- **R10 — "guard not weakened" is false. A.** The §5a "mechanism verified"
+  claim was withdrawn and that section removed on `main`; §2.2.3 now records the
+  rejected route. §7a prediction 2 is rewritten to require the record to be
+  *verified*, not merely absent.
+- **R11 — addendum. A.** Same disposition as R2/R10; the addendum's test
+  (verify quarantined contents) is what the manifest route now requires.
+
+**No ballots solicited. The bill is not vote-eligible; the Act 22 gate refuses
+(0 registered predictions) and R5 remains an open prerequisite.**
 
 ## 7a. Prediction design (Act 22 §2) — to test the load-bearing claims
 
@@ -247,13 +347,18 @@ Clerk) registers 3–5 predictions of this shape, with **fixed UTC deadlines** a
 each linked to a named evidence source:
 
 1. **Act 21 sequencing (load-bearing).** "On the implementation commit/tree
-   named in the tally, the codification, the erratum and the quarantine move are
-   all present **and** `dash tests/run-all.sh` exits 0 there." Falsified by any
-   split delivery or a red suite at that tree.
-2. **Guard not weakened, record preserved.** "On that tree,
-   `tests/ballot-integrity.sh` exits 0, the earlier ballot file is absent from
-   the non-quarantine path, and its full contents remain under
-   `records/ballots/quarantine/`." Falsified by deletion or by editing a row.
+   named in the tally, the codification, the erratum/annotations, the exception
+   manifest and the checker change are all present **and**
+   `dash tests/run-all.sh` exits 0 there." Falsified by any split delivery or a
+   red suite at that tree.
+2. **The record is verified, not hidden.** "On that tree,
+   `tests/ballot-integrity.sh` exits 0 **because** it checked the earlier ballot
+   under the exception manifest: the declared historical digest matches
+   `git show 64a466a:<bill path>`, every row matches it, and `tally.sh`
+   reproduces 10–0–0 — with the TSV still at its canonical path." Falsified if
+   the TSV is absent from the canonical path, any row is edited, or the checker
+   passes without performing those checks. (This replaces the withdrawn
+   "absent from the non-quarantine path" formulation, which was self-fulfilling.)
 3. **Attribution.** "Every affirmative vote has an individual artifact naming
    this bill's tallied digest, and no row is a Clerk-edited consolidation."
    Falsified by any TSV-only row or digest mismatch.

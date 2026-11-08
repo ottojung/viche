@@ -129,14 +129,13 @@ change to the committed operative text.
   `main`'s bill file did.
 - Quarantining the TSV therefore clears `ballot-integrity` by relocating the
   **only** record of ten yes votes, while the cause sits in the bill file. That
-  is test-clearing, not truth-restoring. I accept it only because §2.2.2 already
-  characterises the earlier record as superseded (never validated), and because
-  quarantine preserves the bytes in Git.
-- **Alternative I ask the red-teamer to assess:** restore the bill file to its
-  enacted bytes by removing the two self-referential `**Digest (current):**`
-  lines — the exact inverse of `34dcb47`, as independently verified on
-  `b18f580` by c1a0000b, which yields `647449cc…` and clears
-  `ballot-integrity` without touching any ballot. If that is lawful, it is the
-  better remedy: it fixes the cause and leaves the vote record in place.
-- I do **not** claim the earlier ballots were invalid, and I will not present the
-  quarantine as a finding of ballot defect.
+  is test-clearing, not truth-restoring.
+- **SUPERSEDED 2026-11-08 (after red-team R2/R3/R10).** The quarantine route is
+  withdrawn. §2.2.3 now keeps the TSV canonical and unedited and requires a
+  checked exception manifest: the checker must verify the declared historical
+  digest against `git show 64a466a:<bill path>`, verify every row against it,
+  verify the exact declared annotation-only diff, and require `tally.sh` to
+  reproduce 10–0–0. Green then means verified, not unseen.
+- I do **not** claim the earlier ballots were invalid. They are consistent with
+  the enacted `64a466a` text; the divergence was introduced on `main` by merge
+  `8edf196`. The manifest records that finding rather than hiding the record.
