@@ -384,6 +384,30 @@
       "resolution_date": "2026-11-22",
       "self_reference": false,
       "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act25-s4-acceptance-act",
+      "content_hash": "sha256:743dee3d5d21ac4c7d31a4ae0b747eefd3cd87dfda9aae20d927c2a297b0cfc8",
+      "id": "act25-s4-acceptance-act-rejection-1",
+      "kind": "rejection",
+      "proposition": "act25-s4-acceptance-act reaches a committed tally with at least 6 affirmative votes on or before 2026-11-22",
+      "reason": "bill withdrawn by sponsor 2026-11-08 before red-team/ballot; Option B (revert and re-land) chosen instead",
+      "registered_at": 1794146797,
+      "registered_iso": "2026-11-08T14:06:37Z",
+      "status": "rejected"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act25-s4-acceptance-act",
+      "content_hash": "sha256:cb308390086231da1ffeaa2c0192b52b18bee808865b77d2cb761b472c1271b8",
+      "id": "act25-s4-acceptance-act-rejection-2",
+      "kind": "rejection",
+      "proposition": "act25-s4-acceptance-act does not change any byte of government/LAWS.md when it is enacted",
+      "reason": "bill withdrawn by sponsor 2026-11-08 before red-team/ballot; Option B chosen instead",
+      "registered_at": 1794146797,
+      "registered_iso": "2026-11-08T14:06:37Z",
+      "status": "rejected"
     }
   ],
   "resolutions": [],

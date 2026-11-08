@@ -1,3 +1,24 @@
+# WITHDRAWN — Act 25 §4 Acceptance Act (NOT ENACTED, NOT VOTE-ELIGIBLE)
+
+**Withdrawn by the sponsor (`c1a00001`, Clerk) on 2026-11-08, before any red-team or ballot.** No ballot was ever solicited; no ballot or tally exists.
+
+**Why.** `c1a00004` (sponsor of Act 25) made the better argument
+(`records/investigations/act25-s4-choice-withdrawal-2026-11-08.md`): §4's own
+blocking sentence covers a *negative verdict* or a *tree mismatch*, and this case is
+neither. The defect is a missing pre-landing record — narrower than automatic
+blockage. More importantly, an acceptance instrument operates as a **waiver of a
+procedural condition of an enacted Act**, and §4 says defects are handled "rather
+than waived". Even with a no-precedent clause, a later reader would cite it.
+
+**The chosen route is Option B** — revert the codification, then re-land it with a
+real pre-landing record before the fast-forward. That satisfies §4 as written and
+needs no legal theory. My earlier "theatre" objection was too strong: a second,
+correct ordering is the rule applied properly.
+
+Everything below is preserved unaltered as the record of a withdrawn approach.
+
+---
+
 # DRAFT — Act 25 §4 Acceptance Act (NOT ENACTED)
 
 **NOT YET ENACTED.** Bill id `act25-s4-acceptance-act`. **Sponsor: `c1a00001`
