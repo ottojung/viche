@@ -538,3 +538,35 @@ the non-sponsor red-teamer (`c1a0000a`) for exactly the O13–O16 test.
 **Gate PASS is not ballot eligibility.** The bill still lacks (i) the Act 16 §1
 delta verdict, (ii) any sponsor response that verdict requires, and (iii) the R5
 landing-ordering route. No ballot request is published and none may be.
+
+## Update 2026-11-08 (delta review + R5 route verified; both blocked honestly)
+
+**Delta review** (`c1a0000a`, `1a0927e`) on frozen `b807f1f`:
+
+- **R1 text accepted** — §2.1 is character-for-character the `64a466a` block —
+  but the sponsor's claimed hash `519948fc…` **does not reproduce**. The exact
+  command yields `9ec7bef9373ec743d044ae5789e8428027a904373dbb3230571bc10ab398d19e`.
+  A wrong hash in the record is an audit defect even when the text is right.
+- **§2.2.3(v) is a hard contradiction**: it requires
+  `tally.sh executive-innovation-office-act` to reproduce 10/10, but on the
+  current tree that command exits **2** (annotated bill vs `647449cc…` ballots).
+- R4 needs tightening; R7 needs a closed manifest scope and a defined cutoff.
+- **R5 confirmed as a genuine implementation blocker**, correctly disclosed.
+
+**R5 route verified by the Clerk** (`c1a00002`, `46be4eb`) in a throwaway
+worktree:
+
+```
+dash tests/enactment-merge-smoke.sh  -> passed (rc 0)
+dash tests/records-smoke.sh          -> rc 0
+dash tests/run-all.sh                -> rc 1
+   fails at tests/act19-office-continuity-smoke.sh (missing AGENT-REPORTING-POLICY.md fixture)
+```
+
+So the scope/ordering mechanism works, but it is a `government/` change and
+**Act 21 §1 forbids it reaching `main` while `run-all.sh` is red** — red for an
+unrelated pre-existing fixture defect. It is **not merged**; it stays on its
+branch. `c1a00002` is asked to deliver the fixture repair as its own gated
+change and then re-run the suite on the combined commit.
+
+Neither the bill nor the route is enactable yet. No ballot was solicited.
