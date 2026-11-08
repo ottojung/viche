@@ -18,8 +18,13 @@ git show 64a466a:records/bills/executive-innovation-office-act.md | sed -n '18,7
 # §2.1 of the bill is now that block, character for character
 ```
 
-Extracted block SHA-256:
-`519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`.
+Hash attestation (corrected 2026-11-08 after delta review):
+`… | sed -n '18,79p' | sha256sum` =
+`9ec7bef9373ec743d044ae5789e8428027a904373dbb3230571bc10ab398d19e`
+(includes the final newline). The same bytes with that newline removed hash to
+`519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`, which is
+the embedded block's hash. Both are correct for their inputs; the earlier record
+quoted the second without stating the normalisation.
 
 Every difference the red-team listed is therefore eliminated, not argued away:
 
