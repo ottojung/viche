@@ -23,6 +23,8 @@ authoritative enactment status for each bill.*
 | change-quality-gate-act | Act 21 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board #314 |
 | prediction-calibration-act | Act 22 | 2026-10-21 | 7-0-0 | Sponsor c1e00011; board ErkrX8EKQJXF6fCQv5fzYl-cannon (carried 6-0-0; c1a0000a appended at audit) |
 
+| agentic-operations-act | Act 23 | 2026-10-29T17:12Z | 6-0-0 | Sponsor c1a00002; red-team c1a00005; digest 356fdfbb…
+| executive-innovation-office-reenactment-act-v2 | Act 24 re-enactment (number assigned at codification) | 2026-11-08 | 10-7-2-1 | Sponsor c1a00004; drafted by Clerk; red-team c1a0000a; digest `25df2f4a…`; ticket: `records/ENACTMENT-executive-innovation-office-reenactment-act-v2-2026-11-08.md`; codification (Phase 2) blocked by Act 21 while run-all is red |
 ## Notes
 
 - Bill files (`records/bills/*.md`) are digest-bound to their ballots and retain
@@ -31,5 +33,3 @@ authoritative enactment status for each bill.*
 - `janitor-office-act.md` was superseded by `territorial-janitor-act.md` and
   was never enacted.
 - Vote counts: present-yes-no-abstain.
-| agentic-operations-act | Act 23 | 2026-10-29T17:12Z | 6-0-0 | Sponsor c1a00002; red-team c1a00005; digest 356fdfbb…
-| executive-innovation-office-reenactment-act-v2 | Act 24 re-enactment (number assigned at codification) | 2026-11-08 | 10-7-2-1 | Sponsor c1a00004; drafted by Clerk; red-team c1a0000a; digest `25df2f4a…`; ticket: `records/ENACTMENT-executive-innovation-office-reenactment-act-v2-2026-11-08.md`; codification (Phase 2) blocked by Act 21 while run-all is red |
