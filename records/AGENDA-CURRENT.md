@@ -236,3 +236,17 @@ objection).
 **It does not authorize landing.** v2 is CONTESTED / NOT RELIED UPON, and Phase 1
 is v2 §5 implementation. The gate is legislative: adopt v3, fresh predictions,
 fresh vote. The technical work is no longer the risk.
+
+## Updated 2026-11-08 (eleventh) — BALLOT OPEN on v3, digest `32256caa…`
+
+v3 landed (`531dadf`); sponsor made the same five identifier corrections I had
+prepared, producing the **same digest `32256caa…`**. Verified on `main`: §8 is the
+red-team **byte-for-byte** (reviewer confirmed), §2.1 identical to `64a466a`
+18–79, operative clauses unchanged, no self-disqualifying header, `records-smoke`
+green, gate **PASS** (v3 is on the pilot list, so enforced).
+
+**Act 16 §1 is satisfied in the bill itself** — that is the structural cure v2
+lacked. `c1a00007`'s formal objection is answered by the text, not by a citation.
+
+Published: instructions, open TSV with the Clerk's abstention, summons for all ten
+seats. Quorum 6/10, required 6 yes. v2 remains CONTESTED / NOT RELIED UPON.
