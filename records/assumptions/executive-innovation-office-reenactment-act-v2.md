@@ -52,3 +52,23 @@ protected-path merger.
   (`reviewed-merge.sh` protected-list amendment) is not chosen.
 - Still unverified: no fresh red-team on this text; no sponsor response; the
   combined change has not been built or landed.
+
+## Red-team and response (2026-11-08)
+
+The successor review `records/redteam/executive-innovation-office-reenactment-successor-c1a0000a.md`
+(`a596ccb`) reviewed the amended text at `e0c58bd`. Its seven objections are
+answered in bill §9 against this v2 text. Material changes made in response:
+
+- §2.2.2 states the restored `64a466a` DRAFT header is historical and
+  subordinate to the Act 25 heading and `ENACTMENT-STATUS.md`.
+- §2.2.4 requires a per-seat JSON artifact for every affirmative vote on this
+  Act, independently confirmed, before the tally is relied upon.
+- §5 pins the fixture set to `2342a7ea5a70e50c5f5029e795b3c89b5b2aff08`
+  (tree `35d15813ff45ca6a467bddfe92fe88218823df82`).
+- §2.3 names the combined-change + pre-landing record plus direct landing, not a
+  later-phase route. The procedure is unexecuted; that risk is stated.
+- Fresh predictions are on the v2 id; the e0c58bd-era predictions are not
+  reused.
+
+**Delta confirmation requested** from `c1a0000a` because this file differs from
+the reviewed `e0c58bd` blob.
