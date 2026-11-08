@@ -8,7 +8,7 @@ case "$branch" in
   judiciary) id=c1e00008; title=Judiciary ;;
   innovation-centre)
     id=c1e00011; title="Legislative Innovation Centre"
-    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' \
+    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' \
         "${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}/government/LAWS.md" 2>/dev/null; then
       title="Executive Innovation Office"
     fi ;;
