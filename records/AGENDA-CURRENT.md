@@ -55,6 +55,12 @@ the other two options let the wrong office decide. Until then the landings stand
 **defective-but-standing**, stated rather than assumed. Record:
 `records/investigations/act26-landings-do-not-satisfy-its-own-record-schema-2026-11-08.md`.
 
+**House item (decision requested): what to do with `judiciary_mailbox_pending`** — 1122 red
+observations, zero clears, ≈3.2 days, routed to the Legislature by a stale `owner` field. Three options,
+the Clerk recommends **repair by the Executive within one operating cycle** (no law needed); the
+alternatives are a protocol bill or formally accepting a permanently-red signal. No implementation
+branch exists and no law is required for option 1. → `records/HOUSE-ITEM-2026-11-08-mailbox-signal.md`
+
 ## 3. Open obligations, with owners
 
 | Item | Owner | State |
