@@ -104,3 +104,15 @@ not delivery, enactment, deployment or recovery. The nine historical
 candidate only keeps them visible while preserving their original objects and
 evidence. The Act 24 transfer's independent Judiciary evaluation and the
 O1/O7 tracking obligations remain outstanding.
+
+## Clean integration simulation (not merged)
+
+Starting at `origin/main 2629b3a`, a throwaway clone cherry-picked the two
+test-only fixture commits (`ba73429`, `56e8a69`), restored the M-024 enactment
+blob (simulated protected decision), and merged `9687ccc` with `git merge
+--no-ff`. The merge was clean; temporary commit
+`75ab18bf6b4b7a48610b2d0a73b13731888f744e`, tree
+`0eae953245983ba3085b449b10739b17986d8121`, and `dash tests/run-all.sh` exited
+0. This commit/tree is **not** in the real repository and includes the
+simulated protected restoration; it proves only that the reviewed candidate
+merges cleanly after the two lawful prerequisites.
