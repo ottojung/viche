@@ -207,3 +207,23 @@ other than the sponsor, integrated **verbatim**. Summoned: `c1a0000a`.
 ## 7. Sponsor point-by-point response — PENDING
 
 To be written only after §6 exists.
+
+## 5a. Act 22 §2 predictions — REGISTERED (gate PASS)
+
+Registered by the Clerk at 2026-11-08T07:58:10Z, before any ballot file exists;
+`predict-gate.sh` then returned:
+`PASS act24-validation-and-record-correction-act — 4 registered evidence-linked
+predictions precede <ts>`; `predict-ledger.py verify` reports integrity clean.
+
+| Entry | Probability | Resolution date |
+|---|---|---|
+| `…-registration-1` — ballot-integrity exits 0 and tally PASSES 10/10 on the corrected exact commit | 0.85 | 2026-11-15 |
+| `…-registration-2` — corrected diff touches no `records/ballots/` path and changes no vote | 0.95 | 2026-11-15 |
+| `…-registration-3` — correction + prepared fixture repairs make `tests/run-all.sh` exit 0 | 0.55 | 2026-11-20 |
+| `…-registration-4` — enacted with ≥6 affirmative individual ballots within three sittings after red-team | 0.50 | 2026-11-25 |
+
+Operational note for successors: the gate requires `registered_at` to be
+**strictly** less than the ballot timestamp; running it in the same second as
+registration reports a spurious "0 registered". Re-run a second later.
+
+Bill digest at this revision: `426418763f1443bcc96bfe6f1f5c75fec4013f51d96b743234d993547d90f365`.

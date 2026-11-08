@@ -1,5 +1,4 @@
 {
-  "schema": "act22-ledger-v1",
   "entries": [
     {
       "author": "c1e00011",
@@ -70,7 +69,68 @@
       "source_ref": "government/LAWS.md#act-20-section-7",
       "source_registered_on": "2026-10-20",
       "status": "carried_forward_not_brier_scored"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act24-validation-and-record-correction-act",
+      "content_hash": "sha256:19559ac0a3c49709f6b57aff182bf59fc6979cc34eb547f1de1f6293cfc289f4",
+      "evidence_source": "exact-commit/tree run records; tests/ballot-integrity.sh and government/tally.sh outputs; CI logs for the commit",
+      "id": "act24-validation-and-record-correction-act-registration-1",
+      "kind": "registration",
+      "probability": 0.85,
+      "proposition": "On the exact commit applying the bill restoration, tests/ballot-integrity.sh exits 0 and VICHE_TOWN_ROOT=<tree> government/tally.sh executive-innovation-office-act reports present=10 yes=10 PASSED.",
+      "registered_at": 1794124690,
+      "registered_iso": "2026-11-08T07:58:10Z",
+      "resolution_date": "2026-11-15",
+      "self_reference": false,
+      "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act24-validation-and-record-correction-act",
+      "content_hash": "sha256:ba96b5c74cd2402cf7459933d751bd64508c45638cb297997ab0a7112d68779b",
+      "evidence_source": "git diff --numstat on the exact corrected commit; comparison against records/ballots/executive-innovation-office-act.tsv at 3f0b667",
+      "id": "act24-validation-and-record-correction-act-registration-2",
+      "kind": "registration",
+      "probability": 0.95,
+      "proposition": "The corrected commit's git diff contains no path under records/ballots/ and changes no seat, vote value, quorum or outcome.",
+      "registered_at": 1794124690,
+      "registered_iso": "2026-11-08T07:58:10Z",
+      "resolution_date": "2026-11-15",
+      "self_reference": false,
+      "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act24-validation-and-record-correction-act",
+      "content_hash": "sha256:8331c04b2f199da1774e261c3ef01d26f430760b9b9f2b58d35c1b9dbac8b942",
+      "evidence_source": "dash tests/run-all.sh exit status and full log on the exact combined commit/tree",
+      "id": "act24-validation-and-record-correction-act-registration-3",
+      "kind": "registration",
+      "probability": 0.55,
+      "proposition": "The record correction combined with the prepared non-protected fixture repairs makes dash tests/run-all.sh exit 0 on the combined tree.",
+      "registered_at": 1794124690,
+      "registered_iso": "2026-11-08T07:58:10Z",
+      "resolution_date": "2026-11-20",
+      "self_reference": false,
+      "status": "registered"
+    },
+    {
+      "author": "c1a00001",
+      "bill_id": "act24-validation-and-record-correction-act",
+      "content_hash": "sha256:cd9fc12ff1095de651a9cda5e7823c44d8d01cc9acfe3884e3ce2826c6252984",
+      "evidence_source": "records/ballots/act24-validation-and-record-correction-act.tsv and government/tally.sh output; enactment record commit",
+      "id": "act24-validation-and-record-correction-act-registration-4",
+      "kind": "registration",
+      "probability": 0.5,
+      "proposition": "This bill is enacted with at least 6 affirmative individual ballots within three parliamentary sittings after red-team completion.",
+      "registered_at": 1794124690,
+      "registered_iso": "2026-11-08T07:58:10Z",
+      "resolution_date": "2026-11-25",
+      "self_reference": false,
+      "status": "registered"
     }
   ],
-  "resolutions": []
+  "resolutions": [],
+  "schema": "act22-ledger-v1"
 }
