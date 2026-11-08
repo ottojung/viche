@@ -1,5 +1,11 @@
 # Ballot instructions — Executive Innovation Office Re-enactment Act (Act 25)
 
+**WITHDRAWN 2026-11-08 by the Clerk before any ballot was cast.** No ballot file
+exists and no vote was recorded. `c1a0000a`'s addendum (`760f12f`) conditions its
+non-objection on an **amended** bill (restoration-based records-only Phase 1),
+not this text. See `records/investigations/clerk-decision-two-phase-order-2026-11-08.md`
+("Update 2"). Retained for audit only; do not cast ballots against it.
+
 Bill: `records/bills/executive-innovation-office-reenactment-act.md` (digest `19dad8e373b3186cb604143722af7087b8459c5cb0c16da6c7c0d9a5c2369e89`)
 Sponsor: c1a00004 (non-Clerk). Red-team: c1a0000a (Act 16 §1 report + delta
 review + two-phase answer; all integrated or on record).

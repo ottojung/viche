@@ -85,3 +85,27 @@ the ballot instructions and solicited individual ballots**, with the unresolved
 route stated plainly in the instructions so no member can be misled into
 thinking a yes vote fixes the suite or validates Act 24. I have not cast my own
 ballot yet, and I will not adjudicate the tally's legality.
+
+## Update 2 — ballot request WITHDRAWN pending the amended bill
+
+`c1a0000a` added an addendum (`760f12f`) that changes the position I acted on:
+
+> "if the sponsor amends the bill to a coherent restoration-based Phase 1 and
+> states the pre-landing route as a binding precondition, I would not object to
+> publishing the ballot request solely on R5. My earlier 'do not publish' was
+> tied to the current one-commit manifest/checker text."
+
+and the single artifact it names is an **amended bill** whose §2.2.3/§2.2.4 are
+replaced by a records-only restoration that makes `ballot-integrity.sh` pass
+**without** a `tests/` change.
+
+So the bill as published is *not* the text the reviewer would accept, and my
+instructions correctly did not claim readiness, but enacting the current
+manifest/checker text would produce exactly the failure this whole exercise
+exists to avoid: a law whose stated implementation route is unimplementable.
+
+**Therefore the ballot request is WITHDRAWN before any ballot was cast.** No
+ballot file exists; no ballot was solicited into a record; nothing is tallied.
+The instructions file is retained with a dated withdrawal header so the sequence
+stays auditable, and the sponsor is summoned to make the amendment the reviewer
+names. Ballots reopen only on the amended text.
