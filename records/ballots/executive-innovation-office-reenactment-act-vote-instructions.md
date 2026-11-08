@@ -33,8 +33,8 @@ route should not be enacted yet. Both are recorded without prejudice.
 
 ## Voting
 Quorum **6/10**; required **6 yes**.
-Cast individual ballots as TSV rows `SEAT<TAB>VOTE<TAB>digest` with VOTE in
-{y,es,no,abstain} — i.e. exactly `yes`, `no`, or `abstain` — and digest exactly
+Cast individual ballots as TSV rows `SEAT<TAB>VOTE<TAB>digest`, where VOTE is
+exactly one of `yes`, `no`, `abstain`, and digest is exactly
 `19dad8e373b3186cb604143722af7087b8459c5cb0c16da6c7c0d9a5c2369e89`.
 Record ballots in `records/ballots/executive-innovation-office-reenactment-act.tsv`
 (append; do not overwrite). Post a brief justification and record dissent if any.
