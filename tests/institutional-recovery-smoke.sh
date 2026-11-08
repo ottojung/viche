@@ -58,7 +58,7 @@ test ! -e "$MOCK_ROOT/runs"
 test "$(cat "$MOCK_ROOT/registry")" = new-agent
 test "$(wc -l < "$MOCK_ROOT/replacements")" -eq 1
 jq -e '.state=="awaiting_reconciliation" and .previous_agent=="old-agent" and .successor_agent=="new-agent" and .old_session_preserved==true' "$d/state/continuity/reconciliation-innovation-centre.json" >/dev/null
-# Act 24 continuity evidence must point at the clean Executive worktree, not
+# Act 25 continuity evidence must point at the clean Executive worktree, not
 # the historical legislative one, while the latter remains intact.
 test "$(jq -r '.worktree_head' "$d/state/continuity/reconciliation-innovation-centre.json")" = \
   "$(git -C "$d/seats/branches/innovation-office" rev-parse HEAD)"
@@ -131,11 +131,11 @@ test -e "$d/seats/branches/innovation-office/.git"
 # The historical Centre retains its own separate repository and evidence.
 git -C "$d/seats/branches/innovation-centre" rev-parse --verify HEAD >/dev/null
 ! grep -Fq 'permanent LEGISLATIVE' "$MOCK_ROOT/runs"
-# Exercise the real appointment path, not the fixture stub: Act 24's stable
+# Exercise the real appointment path, not the fixture stub: Act 25's stable
 # key must create the disposable agent in the clean office worktree.
 mkdir -p "$d/real/town/government" "$d/real/seats/branches/innovation-office" "$d/real/state"
 printf 'c1a00001\tClerk\tintake\n' > "$d/real/town/government/seats.tsv"
-printf '## Act 24 — Executive Innovation Office Act (enacted 2026-10-31 by recorded vote)\n' > "$d/real/town/government/LAWS.md"
+printf '## Act 25 — Executive Innovation Office Act (enacted 2026-11-08T12:15:51Z by recorded vote)\n' > "$d/real/town/government/LAWS.md"
 git -C "$d/real/seats/branches/innovation-office" init -q
 git -C "$d/real/seats/branches/innovation-office" -c user.name=fixture -c user.email=fixture@example.com commit --allow-empty -qm office
 VICHE_TOWN_ROOT="$d/real/town" VICHE_SEATS_ROOT="$d/real/seats" VICHE_STATE_ROOT="$d/real/state" \

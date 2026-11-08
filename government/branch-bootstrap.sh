@@ -19,7 +19,7 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 liv=$state/liveness
 cwd=$seats/branches/$branch
-# Act 24: the old Innovation Centre worktree is historical. Once the dedicated
+# Act 25: the old Innovation Centre worktree is historical. Once the dedicated
 # Executive worktree exists, bootstrap/liveness must inspect the active one.
 if [ "$branch" = innovation-centre ] &&
    { [ -f "$seats/branches/innovation-office/.git" ] ||

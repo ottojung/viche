@@ -64,7 +64,7 @@ export VICHE_INNOVATION_NOW MODE MODEL VARIANT ACTIVITY DISPATCHES
 cp "$repo/government/INNOVATION-CENTRE.md" "$scratch/town/government/INNOVATION-CENTRE.md"
 cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
 # A pre-transfer fixture has no Executive Innovation Office Act enacted.
-printf '# Historic Act 14 pilot; no Act 24\n' > "$scratch/town/government/LAWS.md"
+printf '# Historic Act 14 pilot; no Act 25\n' > "$scratch/town/government/LAWS.md"
 mkdir -p "$scratch/state/institutional-outcomes" "$scratch/state/institutional-cases"
 printf '{"observed_at":23000}\n' > "$scratch/state/institutional-outcomes/latest.json"
 printf '{"observed_at":23000,"count":0}\n' > "$scratch/state/institutional-cases/index.json"

@@ -18,7 +18,7 @@ if [ -r "$town/government/seats.tsv" ] &&
 else
   cwd=$seats/branches/$office
 fi
-# Act 24: continuity for the stable innovation-centre key belongs to the clean
+# Act 25: continuity for the stable innovation-centre key belongs to the clean
 # Executive office worktree once it exists, not the historical legislative one.
 if [ "$office" = innovation-centre ] &&
    { [ -f "$seats/branches/innovation-office/.git" ] ||

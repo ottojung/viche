@@ -1,5 +1,5 @@
 #!/bin/sh
-# Executive-controlled innovation office under enacted Act 24.
+# Executive-controlled innovation office under enacted Act 25.
 set -eu
 town=$(printenv VICHE_TOWN_ROOT || printf '%s\n' /var/lib/lubko/wd/viche)
 seats=$(printenv VICHE_SEATS_ROOT || printf '%s\n' /var/lib/lubko/wd/viche-seats)
@@ -35,7 +35,7 @@ case "$mode" in
   idle|clearexit)
     readiness=ready
     if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
-      orders='No specific Executive order: proactively research, prototype, review and pursue high-return Viche improvements under Act 24.'
+      orders='No specific Executive order: proactively research, prototype, review and pursue high-return Viche improvements under Act 25.'
       [ ! -s "$root/orders.md" ] || orders=$(cat "$root/orders.md")
       cases='{"open_cases":[]}'
       [ ! -f "$town/government/institutional-cases.py" ] ||

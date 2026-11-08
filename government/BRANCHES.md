@@ -18,9 +18,9 @@ The independent `judiciary-measurements.py` writes observational facts to `branc
 
 The branch bootstrap appoints generated agents to stable Executive and Judiciary office keys, using the durable state/appointments registry. Each office has a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, without any execution-target registry. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
 
-## Executive Innovation Office (Act 24, enacted)
+## Executive Innovation Office (Act 25, enacted; Act 24 historical)
 
-Act 24 transferred the former non-voting Legislative Innovation Centre into an
+Act 25 re-enacted the Act 24 text, transferring the former non-voting Legislative Innovation Centre into an
 **Executive** research and engineering office. It is not a fourth branch or a
 Legislature member, and it cannot sponsor legislation, vote, alter law or
 override independent Judiciary fact-finding. The previous legislative office's
@@ -29,7 +29,7 @@ history and dirty worktree are preserved, not replayed.
 The stable appointment identifier remains `innovation-centre` solely for
 continuity; the clean Executive development worktree is
 `viche-seats/branches/innovation-office`. The single active dispatcher is
-`government/executive-innovation-cycle.sh` after Act 24 enactment.
+`government/executive-innovation-cycle.sh` after Act 25 enactment.
 `state/executive/innovation-office/health.json` records operational readiness
 only. Authority and duties are in `government/EXECUTIVE-INNOVATION.md` and
 enacted `government/LAWS.md`; the former
