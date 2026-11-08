@@ -101,4 +101,3 @@ grep -q "unrecognized agent state 'unknown'" "$scratch/unknown.err"
 test "$(wc -l < "$OUTPUT")" -eq 3
 
 echo 'Independent Executive dispatch and fail-closed assignment smoke passed'
-

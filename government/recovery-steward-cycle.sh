@@ -19,7 +19,7 @@ id=$(/bin/sh "$town/government/appointments.sh" ensure recovery-steward)
 agent_state_probe "$id"
 meta=$AGENT_STATE_META
 mode=$AGENT_STATE
-[ -n "$meta" ] || meta='{}' 
+[ -n "$meta" ] || meta='{}'
 fresh=no
 case "$mode" in
   running) exit 0 ;;
