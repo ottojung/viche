@@ -50,7 +50,7 @@ def collect():
     town = pathlib.Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
     laws = (town / "government/LAWS.md").read_text() if (town / "government/LAWS.md").exists() else ""
     import re
-    executive = bool(re.search(r"^## Act \d+ — Executive Innovation Office Act \(enacted ", laws, re.M))
+    executive = bool(re.search(r"^## Act \d+ — Executive Innovation Office Act \((re-)?enacted ", laws, re.M))
     innovation_path = ("executive/innovation-office/health.json" if executive
                        else "legislature/innovation-centre/health.json")
     innovation = read(ROOT / innovation_path)

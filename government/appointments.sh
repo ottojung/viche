@@ -35,7 +35,7 @@ if [ -z "$cwd" ]; then
     judiciary) title=Judiciary;;
     innovation-centre)
       title='Legislative Innovation Centre'
-      if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+      if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
         title='Executive Innovation Office'
       fi ;;
     recovery-steward) title='Institutional Recovery Steward';;
