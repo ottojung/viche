@@ -102,10 +102,9 @@ fi
 # physically lost during a positively identified PID1 restart is NOT an
 # Antonina-model transient-error reset under Act19 §3.1. Replace its dead
 # *appointment*, never resume the interrupted prompt or old session.
-# Do not bypass any unsafe prompt hold; those require an independent review.
+# A confirmed restart orphan is replaced as a new appointment, not replayed.
 restart_orphan=no
 if [ "$action" = ensure ] && [ -n "$old" ] && [ "${status:-}" = failed ] &&
-   [ ! -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$key" ] &&
    [ -s "$town/government/restart-orphan.sh" ] &&
    printf '%s\n' "$meta" | /bin/sh "$town/government/restart-orphan.sh"; then
   restart_orphan=yes

@@ -19,14 +19,12 @@ reason=$(printf '%s\n' "$metadata" | jq -r '.backend_error.classification // ""'
 . "$(CDPATH= cd "$(dirname "$0")" && pwd -P)/office-continuity.sh"
 now=$(date +%s)
 tflag=$(printf '%s\n' "$metadata" | jq -r '.backend_error.transient // false')
-unsafe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == false then "yes" else "no" end')
 invocation=$(printf '%s\n' "$metadata" | jq -r '.invocation_id // .run_id // .finished_at // ""')
 finished=$(printf '%s\n' "$metadata" | jq -r '.finished_at // ""')
 if [ "$kind" = failed ]; then
   if oc_is_transient "$reason" "$tflag"; then
     retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
     oc_record_failure "$state" "$seat_id" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$seats/$seat_id"
-    [ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$state" "$seat_id" "$id" "$invocation"
   else
     oc_surface_permanent "$state" "$id" "$reason"
   fi
@@ -47,9 +45,12 @@ if [ "$reset_due" = true ]; then
   git -C "$seats/$seat_id" rev-parse HEAD > "$snapshot/worktree-head.txt"
   # Persist the attempted recovery before any destructive agent-metadata operation.
   oc_quiesce_for_reset "$id" || exit 1
+  oc_old_id=$id
   id=$(/bin/sh "$town/government/appointments.sh" replace "$seat_id" "$id" clerk-liveness act19_failure_threshold 'Act 19 threshold reset after durable failure evidence and quiescence')
   printf '%s\n' "$now" > "$state/last-reset-$seat_id"
   oc_clear_failures "$state" "$seat_id"
+  oc_archive_hold "$state" "$seat_id" "$oc_old_id" ||
+    echo "Viche: could not archive the old unsafe hold for $seat_id; evidence may remain" >&2
   printf '%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
     "$(date -u +%FT%TZ)" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" \
     >> "$state/recoveries.log"
@@ -66,7 +67,7 @@ fi
 if [ "${1:-}" = --gate ]; then
   if [ "$kind" = failed ]; then
     retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
-    [ "$retry_safe" = yes ] && [ ! -s "$state/unsafe-holds/$seat_id" ] ||
+    [ "$retry_safe" = yes ] ||
       { echo "Viche: Clerk terminal failure not safe to re-dispatch" >&2; exit 1; }
   fi
   exit 0

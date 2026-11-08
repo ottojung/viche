@@ -11,6 +11,7 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
   "$repo/government/executive-cycle.sh" "$repo/government/office-continuity.sh" \
   "$repo/government/terminal-appointment-evidence.sh" "$repo/government/policy-sync.sh" \
   "$repo/government/seat-liveness.sh" "$repo/government/predict-scorer.py" \
+  "$repo/government/handoff-queue.sh" "$repo/government/AGENT-REPORTING-POLICY.md" \
   "$d/town/government/"
 git -C "$d/seats/branches/executive" init -q
 git -C "$d/seats/branches/executive" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm baseline
@@ -99,7 +100,16 @@ run_branch
 id3=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id3" = "$id2"
 set_status failed "$((base+2))" run-3 upstream_endpoint_unavailable true true "$id3"
+# A pre-existing hold for exactly this failed invocation must be archived by
+# the threshold reset, not left to block the office and not silently erased.
+mkdir -p "$VICHE_STATE_ROOT/liveness/unsafe-holds"
+printf 'executive\t%s\trun-3\n' "$id3" > "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
 MOCK_REVIVE_ON_LOG=$id3 run_branch
+test -s "$VICHE_STATE_ROOT/liveness/archived-unsafe-holds/executive-$id3" ||
+  { echo 'Threshold reset did not archive the old unsafe hold' >&2; exit 1; }
+grep -Fq "$id3" "$VICHE_STATE_ROOT/liveness/archived-unsafe-holds/executive-$id3"
+test ! -e "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive" ||
+  { echo 'Archived unsafe hold still blocks the office' >&2; exit 1; }
 test "$(grep -c -Fx "$id3" "$MOCK_ROOT/stops")" -eq 1 ||
   { echo 'Running appointee was not stopped exactly once before reset' >&2; exit 1; }
 id4=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
@@ -121,6 +131,85 @@ jq -e --arg prior "$id3" '.caller=="branch-bootstrap" and .trigger=="act19_failu
 oc_quiesce_for_reset_test_id=$id4
 set_status running "$((base+5))" run-running idle false true "$oc_quiesce_for_reset_test_id"
 . "$repo/government/office-continuity.sh"
+# Archiving one agent's hold must preserve another invocation's hold and must
+# not overwrite evidence if recovery runs twice.
+holdtest=$d/holdtest/liveness
+mkdir -p "$holdtest/unsafe-holds"
+printf 'executive\told-a\trun-a\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-b\trun-b\n' >> "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-a
+test -s "$holdtest/archived-unsafe-holds/executive-old-a" ||
+  { echo 'Archive helper did not retain the old hold' >&2; exit 1; }
+grep -Fq old-a "$holdtest/archived-unsafe-holds/executive-old-a"
+! grep -Fq old-a "$holdtest/unsafe-holds/executive" ||
+  { echo 'Archived agent still appears in the live hold file' >&2; exit 1; }
+grep -Fq old-b "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-a
+test "$(find "$holdtest/archived-unsafe-holds" -name 'executive-old-a*' | wc -l | tr -d ' ')" -eq 1 ||
+  { echo 'Repeated archive created a duplicate record' >&2; exit 1; }
+oc_archive_hold "$holdtest" executive old-b
+test ! -e "$holdtest/unsafe-holds/executive" ||
+  { echo 'Empty hold file was not removed' >&2; exit 1; }
+test -s "$holdtest/archived-unsafe-holds/executive-old-b"
+# Simulate a crash after the archive append but before the live removal: a
+# retry must not duplicate the archived evidence.
+printf 'executive\told-c\trun-c\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-c\trun-c\n' > "$holdtest/archived-unsafe-holds/executive-old-c"
+oc_archive_hold "$holdtest" executive old-c
+test "$(grep -c 'run-c' "$holdtest/archived-unsafe-holds/executive-old-c")" -eq 1 ||
+  { echo 'Interrupted archive retry duplicated evidence' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive"
+# An empty archive left by a failed creation must be replaced atomically, not
+# silently swallow the extracted line.
+printf 'executive\told-e\trun-e\n' > "$holdtest/unsafe-holds/executive"
+: > "$holdtest/archived-unsafe-holds/executive-old-e"
+oc_archive_hold "$holdtest" executive old-e
+test "$(grep -c 'run-e' "$holdtest/archived-unsafe-holds/executive-old-e")" -eq 1 ||
+  { echo 'Empty archive swallowed the extracted hold' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive"
+# A lock is a pid file published atomically. A dead holder is reclaimed; a
+# live holder is respected and left intact.
+printf 'executive\told-f\trun-f\n' > "$holdtest/unsafe-holds/executive"
+printf '999999\n' > "$holdtest/unsafe-holds/.archive-lock"
+oc_archive_hold "$holdtest" executive old-f
+test -s "$holdtest/archived-unsafe-holds/executive-old-f" ||
+  { echo 'Dead-holder lock blocked archiving' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/.archive-lock" ||
+  { echo 'Reclaimed lock was not removed' >&2; exit 1; }
+printf 'executive\told-g\trun-g\n' > "$holdtest/unsafe-holds/executive"
+printf '%s\n' "$$" > "$holdtest/unsafe-holds/.archive-lock"
+oc_archive_hold "$holdtest" executive old-g
+test -s "$holdtest/unsafe-holds/executive" &&
+  grep -Fq old-g "$holdtest/unsafe-holds/executive" ||
+  { echo 'Live lock holder was not respected' >&2; exit 1; }
+grep -Fq "$$" "$holdtest/unsafe-holds/.archive-lock" ||
+  { echo 'Live lock was stolen' >&2; exit 1; }
+rm -f "$holdtest/unsafe-holds/.archive-lock"
+# Two contenders archiving different agents from one hold file must both
+# succeed without losing either line or deadlocking.
+printf 'executive\told-h\trun-h\n' > "$holdtest/unsafe-holds/executive"
+printf 'executive\told-i\trun-i\n' >> "$holdtest/unsafe-holds/executive"
+oc_archive_hold "$holdtest" executive old-h &
+oc_h_pid=$!
+oc_archive_hold "$holdtest" executive old-i &
+oc_i_pid=$!
+wait "$oc_h_pid"
+wait "$oc_i_pid"
+test -s "$holdtest/archived-unsafe-holds/executive-old-h" &&
+  test -s "$holdtest/archived-unsafe-holds/executive-old-i" ||
+  { echo 'Concurrent archiving lost a hold' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds/executive" ||
+  { echo 'Concurrent archiving left the hold file behind' >&2; exit 1; }
+# A missing hold directory or file is a fast no-op: no lock is created, no
+# error is printed, and no bounded wait is burned.
+rm -rf "$holdtest/unsafe-holds"
+if ! oc_archive_hold "$holdtest" executive nobody 2>"$d/nohold.err"; then
+  echo 'Absent hold directory made archiving fail' >&2; exit 1
+fi
+test ! -s "$d/nohold.err" ||
+  { echo 'Absent hold directory produced error output' >&2; exit 1; }
+test ! -e "$holdtest/unsafe-holds" ||
+  { echo 'Archiving created a lock without a hold' >&2; exit 1; }
 if MOCK_STOP_FAIL=yes oc_quiesce_for_reset "$oc_quiesce_for_reset_test_id"; then
   echo 'Failed quiescence incorrectly reported success' >&2; exit 1
 fi
@@ -151,7 +240,7 @@ run_branch
 id5=$(/bin/sh "$VICHE_TOWN_ROOT/government/appointments.sh" resolve "$office")
 test "$id5" = "$id4"
 test "$(wc -l < "$registry")" -eq 1
-test -s "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
+test ! -e "$VICHE_STATE_ROOT/liveness/unsafe-holds/executive"
 printf 'founder charter fixture\n' > "$d/charter"
 touch "$VICHE_STATE_ROOT/inaugurated"
 export VICHE_CONSTITUTION="$d/charter"
@@ -166,7 +255,8 @@ mkdir -p "$d/safe/town/government" "$d/safe/town/records" \
   "$d/safe/seats/branches/executive" "$d/safe/state/appointments"
 cp "$repo/government/appointments.sh" "$repo/government/executive-cycle.sh" \
   "$repo/government/handoff-queue.sh" "$repo/government/terminal-appointment-evidence.sh" \
-  "$repo/government/predict-scorer.py" "$d/safe/town/government/"
+  "$repo/government/predict-scorer.py" "$repo/government/AGENT-REPORTING-POLICY.md" \
+  "$d/safe/town/government/"
 printf 'c1a00001\tClerk\tintake\n' > "$d/safe/town/government/seats.tsv"
 printf 'executive\tsafe-id\n' > "$d/safe/state/appointments/appointments.tsv"
 printf '{"state":"idle","model":null,"variant":null}\n' > "$MOCK_ROOT/safe-id.json"

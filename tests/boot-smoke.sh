@@ -31,6 +31,7 @@ set -eu
 if [ "$1" = board ] && [ "$2" = list ]; then echo "[]"; exit 0; fi
 [ "$1" = agent ] || exit 91
 action=$2
+if [ "$action" = list ]; then printf '[]\n'; exit 0; fi
 shift 2
 id= prompt=
 while [ "$#" -gt 0 ]; do
@@ -64,7 +65,7 @@ case "$action" in
             *) exit 6 ;;
         esac
         # Every newly launched Town agent must receive the Founder reporting rule.
-        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
+        case "$prompt" in *"Every Town agent receives this instruction at startup and resumption"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;

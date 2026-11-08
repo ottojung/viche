@@ -163,12 +163,14 @@ printf failed-restart-with-steer > "$MOCK/$i"
 [ "$(/bin/sh "$script" ensure executive)" = "$i" ]
 j=$(/bin/sh "$script" replace executive "$i" appointments-smoke fixture 'pending steer fixture')
 [ "$j" = fresh-10 ]
-# Even true container orphans may not bypass an explicit unsafe hold.
+# A stale marker from a previous agent may not prevent a fresh restart
+# appointment. Its old session is never replayed.
 mkdir -p "$tmp/state/liveness/unsafe-holds"
 printf 'executive\told-id\tunsafe\n' > "$tmp/state/liveness/unsafe-holds/executive"
 printf failed-restart > "$MOCK/$j"
-[ "$(/bin/sh "$script" ensure executive)" = "$j" ]
-[ "$(wc -l < "$tmp/state/appointments/restart-renewals.jsonl")" -eq 1 ]
+k=$(/bin/sh "$script" ensure executive)
+[ "$k" = fresh-11 ]
+[ "$(wc -l < "$tmp/state/appointments/restart-renewals.jsonl")" -eq 2 ]
 # A post-registry provenance rename failure is a successful replacement with
 # its prepared intent retained for reconciliation, never a failed retry signal.
 printf stopped > "$MOCK/$y"

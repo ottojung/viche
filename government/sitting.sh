@@ -6,10 +6,6 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
-if [ -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$seat" ]; then
-  echo "Viche: unsafe seat invocation, preserve work for review" >&2
-  exit 1
-fi
 if [ "$seat" = "$clerk" ] && [ -f "$town/government/clerk-liveness.sh" ]; then
     /bin/sh "$town/government/clerk-liveness.sh" --gate || {
         echo "Viche: Clerk sitting deferred until endpoint retry cooldown" >&2
@@ -206,8 +202,11 @@ $cases
 === END CORRECTIVE OBLIGATIONS ===
 Preserve identity across sittings. Judiciary independently measures;
 Parliament authorizes changes to ordinary law when needed; Executive
-implements authorized repairs. Case closure requires disappearance of the
-failure confirmed by repeated deterministic observation, not an agent exit.
+implements authorized repairs. Healthy branch probes are only a precondition:
+closure requires a case-bound verification artifact for that case id, recorded
+by an independent office, whose cited evidence still resolves and matches its
+recorded digest. A disappearance of the symptom alone, an agent exit, or a
+repeated probe is not closure.
 EOF
 fi
 

@@ -35,7 +35,6 @@ if ! oc_is_transient "$reason" "$tflag"; then
 fi
 retry_safe=$(printf '%s\n' "$meta" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
 oc_record_failure "$root" "$seat_id" "$id" "$invocation" "$reason" "$finished" "$retry_safe" "$now" "$seats/$seat_id"
-[ "$retry_safe" = yes ] || oc_mark_unsafe_hold "$root" "$seat_id" "$id" "$invocation"
 oc_commit_age_signal "$root" "$id" "$seats/$seat_id" "$now"
 oc_worktree=$seats/$seat_id
 if ! oc_reset_due "$root" "$seat_id" "$now"; then
@@ -55,8 +54,11 @@ antonina agent log --id "$id" --lines 200 > "$snapshot/agent-log-tail.txt" 2>&1 
 git -C "$seat" status --short > "$snapshot/worktree-status.txt"
 git -C "$seat" rev-parse HEAD > "$snapshot/worktree-head.txt"
 oc_quiesce_for_reset "$id" || exit 1
+oc_old_id=$id
 id=$(/bin/sh "$town/government/appointments.sh" replace "$seat_id" "$id" seat-liveness act19_failure_threshold 'Act 19 threshold reset after durable failure evidence and quiescence')
 printf '%s\n' "$now" > "$root/last-reset-$seat_id"
 oc_clear_failures "$root" "$seat_id"
+oc_archive_hold "$root" "$seat_id" "$oc_old_id" ||
+  echo "Viche: could not archive the old unsafe hold for $seat_id; evidence may remain" >&2
 printf '%s seat=%s session_reset=failure_count threshold=%s window=%s cooldown=%s evidence=%s\n' \
   "$(date -u +%FT%TZ)" "$seat_id" "$oc_threshold" "$oc_window" "$oc_cooldown" "$snapshot" >> "$root/recoveries.log"

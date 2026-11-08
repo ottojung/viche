@@ -90,6 +90,13 @@ if [ -d "$mailbox_dir" ] &&
    [ -n "$(find "$mailbox_dir" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null)" ]; then
   signals="${signals}${signals:+,}judiciary_mailbox_pending"
 fi
+# An obligation whose symptom cleared but which still lacks a case-bound
+# verification artifact is NOT healthy, and must not be reported as clear.
+cases_dir="$state/institutional-cases"
+if [ -d "$cases_dir" ] &&
+   grep -l '"awaiting_independent_verification": true' "$cases_dir"/*.json >/dev/null 2>&1; then
+  signals="${signals}${signals:+,}case_awaiting_verification"
+fi
 printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"
 if [ -z "$signals" ]; then
   if [ -s "$root/incident.json" ]; then

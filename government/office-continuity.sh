@@ -144,20 +144,118 @@ oc_clear_failures() {
   return 0
 }
 
-# Mark an unsafe failed invocation as requiring explicit handoff review before
-# any new session can dispatch work. The durable intent remains open in the
-# handoff queue; this marker prevents an automatic duplicate side effect.
-oc_mark_unsafe_hold() {
-  # $1 liveness dir, $2 office key, $3 agent id, $4 invocation
-  mkdir -p "$1/unsafe-holds" || return 1
+# Remove an unsafe-hold archive lock only if it still belongs to this shell.
+# A lock reclaimed or replaced by another holder must never be deleted here.
+oc_release_lock() {
+  oc_lock_owner=$(cat "$1" 2>/dev/null || :)
+  if [ "$oc_lock_owner" = "$$" ]; then
+    rm -f "$1" 2>/dev/null || :
+  fi
+  return 0
+}
+
+# Archive the unsafe-hold lines that belong to ONE failed agent before its
+# appointment is replaced. Unlike a blind `mv`, this keeps holds belonging to
+# other invocations and never loses or duplicates evidence if it is interrupted
+# or retried, so repeated recovery is idempotent. A hold is evidence of the old
+# request, not a veto on the replacement agent.
+# $1 liveness dir, $2 office/seat key, $3 old agent id
+oc_archive_hold() {
+  oc_hold_id=${3:-}
+  [ -n "$oc_hold_id" ] || return 0
+  oc_hold_dir=$1/archived-unsafe-holds
+  oc_lock=$1/unsafe-holds/.archive-lock
+  # Fast, read-only precondition: no hold file means no work and no lock. The
+  # file is re-checked after acquiring the lock before anything is rewritten.
   oc_hold_file=$1/unsafe-holds/$2
-  oc_hold_line=$(printf '%s\t%s\t%s' "$2" "$3" "$4")
-  # Repeated 3-minute observations are not new invocations; the same
-  # unsafe hold must be recorded ONCE, not 158 times or once per sitting.
-  if [ -s "$oc_hold_file" ] && grep -Fxq "$oc_hold_line" "$oc_hold_file"; then
+  [ -s "$oc_hold_file" ] || return 0
+  # Serialize the whole read-archive-rewrite sequence. The lock is a FILE
+  # published atomically with a hard link, so it never exists without its
+  # holder PID. A dead holder's lock is reclaimed by atomic rename, so only one
+  # contender can win reclamation. Never steal a live holder's lock.
+  oc_wait=0
+  while :; do
+    oc_tmp=$oc_lock.$$
+    if printf '%s\n' "$$" > "$oc_tmp" 2>/dev/null && ln "$oc_tmp" "$oc_lock" 2>/dev/null; then
+      rm -f "$oc_tmp" 2>/dev/null || :
+      break
+    fi
+    rm -f "$oc_tmp" 2>/dev/null || :
+    oc_wait=$((oc_wait + 1))
+    if [ "$oc_wait" -ge 100 ]; then
+      echo "Viche: unsafe-hold archive busy for $2; leaving the hold in place" >&2
+      return 0
+    fi
+    oc_holder=$(cat "$oc_lock" 2>/dev/null || :)
+    if [ -z "$oc_holder" ] || ! kill -0 "$oc_holder" 2>/dev/null; then
+      oc_stale=$oc_lock.stale.$$
+      if mv "$oc_lock" "$oc_stale" 2>/dev/null; then
+        rm -f "$oc_stale" 2>/dev/null || :
+      fi
+      continue
+    fi
+    sleep 0.1 2>/dev/null || sleep 1
+  done
+  if [ ! -s "$oc_hold_file" ]; then
+    oc_release_lock "$oc_lock"
     return 0
   fi
-  printf '%s\n' "$oc_hold_line" >> "$oc_hold_file"
+  oc_extract=$oc_hold_file.extract.$$
+  if ! awk -F '\t' -v id="$oc_hold_id" '$2==id' "$oc_hold_file" > "$oc_extract"; then
+    rm -f "$oc_extract" 2>/dev/null || :; oc_release_lock "$oc_lock"
+    return 1
+  fi
+  if [ ! -s "$oc_extract" ]; then
+    rm -f "$oc_extract" 2>/dev/null || :; oc_release_lock "$oc_lock"
+    return 0
+  fi
+  mkdir -p "$oc_hold_dir" || {
+    rm -f "$oc_extract" 2>/dev/null || :; oc_release_lock "$oc_lock"; return 1; }
+  oc_hold_backup=$oc_hold_dir/$2-$oc_hold_id
+  if [ -s "$oc_hold_backup" ]; then
+    # A previous attempt may have archived these lines but been interrupted
+    # before removing them. Append only lines genuinely absent from the
+    # archive; FILENAME (not NR==FNR) is used so an empty archive cannot
+    # swallow the extraction.
+    oc_new=$oc_hold_file.new.$$
+    if ! awk 'FILENAME==ARGV[1] {seen[$0]=1; next} !seen[$0]' \
+         "$oc_hold_backup" "$oc_extract" > "$oc_new"; then
+      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; oc_release_lock "$oc_lock"
+      return 1
+    fi
+    if [ -s "$oc_new" ] && ! cat "$oc_new" >> "$oc_hold_backup"; then
+      rm -f "$oc_extract" "$oc_new" 2>/dev/null || :; oc_release_lock "$oc_lock"
+      return 1
+    fi
+    rm -f "$oc_new" 2>/dev/null || :
+  else
+    # Absent or empty archive: drop an empty leftover, then create the archive
+    # atomically with a hard link (cp via a temp file as fallback).
+    [ ! -e "$oc_hold_backup" ] || rm -f "$oc_hold_backup" 2>/dev/null || :
+    if ! ln "$oc_extract" "$oc_hold_backup" 2>/dev/null; then
+      oc_cp=$oc_hold_backup.tmp.$$
+      if ! cp "$oc_extract" "$oc_cp" || ! mv -f "$oc_cp" "$oc_hold_backup"; then
+        rm -f "$oc_extract" "$oc_cp" 2>/dev/null || :; oc_release_lock "$oc_lock"
+        return 1
+      fi
+    fi
+  fi
+  rm -f "$oc_extract" 2>/dev/null || :
+  oc_hold_tmp=$oc_hold_file.tmp.$$
+  if ! awk -F '\t' -v id="$oc_hold_id" '$2!=id' "$oc_hold_file" > "$oc_hold_tmp"; then
+    rm -f "$oc_hold_tmp" 2>/dev/null || :; oc_release_lock "$oc_lock"
+    return 1
+  fi
+  if [ -s "$oc_hold_tmp" ]; then
+    if ! mv -f "$oc_hold_tmp" "$oc_hold_file"; then
+      rm -f "$oc_hold_tmp" 2>/dev/null || :; oc_release_lock "$oc_lock"
+      return 1
+    fi
+  else
+    rm -f "$oc_hold_tmp" "$oc_hold_file" 2>/dev/null || :
+  fi
+  oc_release_lock "$oc_lock"
+  return 0
 }
 
 # Surface a permanent or UNCLASSIFIED failure exactly once per agent and
