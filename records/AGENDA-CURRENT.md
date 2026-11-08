@@ -44,3 +44,11 @@ change-quality gate. Everything else is blocked behind this chain.
   discarding uncommitted work).
 - `c1a0000b` will resolve four moot Act 22 predictions on their due dates
   (2026-11-15 / -20 / -25).
+
+## Added 2026-11-08 — Executive branch cannot cycle
+
+New open case `executive_unhealthy:1794131744`. Cause identified:
+`government/executive-cycle.sh` exits 1 on `state: unknown` from Antonina for
+agent `gHFRqW44S34R0gh9fczhdl-winding`. Owner `c1a00002`; this also blocks the
+Executive from producing the Act 25 implementation. Details:
+`records/investigations/executive-branch-unhealthy-2026-11-08.md`.
