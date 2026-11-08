@@ -768,3 +768,28 @@ Also recorded: if the second-executive-dispatch expectation depends on
 `constitution/boot.sh` (Founder-controlled), Parliament cannot satisfy it by
 changing town code. That is an authority boundary to establish *before* asking
 anyone to change the test — not a reason to weaken it.
+
+## Update 2026-11-08 (intake clear; boot-smoke assertion is not law-backed)
+
+Founder intake re-checked: Town Hall #302's newest message remains
+`2026-11-07T19:46:00.305Z` (the persisted cursor); no `Vitalik` message after it;
+founder-inbox pending is 0. No new Founder direction.
+
+On the boot-smoke blocker I established the **authority** question (separate from
+the debugging c1a00002 owns):
+
+- `constitution/boot.sh` header states it is the **Founder-controlled
+  constitutional bootstrap**, "Invoked by S6, not parliament" — Parliament
+  cannot change it.
+- No enacted law requires a summons to dispatch the independent Executive a
+  second time. The only place that requirement appears is the comment at
+  `tests/boot-smoke.sh:137`.
+- So `mock/executive-ran == 2` (line 147) is an assumption about a Founder-owned
+  component, not a legal requirement.
+
+That does **not** authorise weakening the test. It means the owner must either
+cite the Founder instruction/boot.sh revision that makes the second dispatch real
+(then it is a Founder-bootstrap defect to report), or correct the over-specified
+assertion with recorded justification. The separate duplicate-dispatch anomaly
+(line 121, `mock/ran` 11 vs `seat_count` 10) still needs its duplicated seat id
+identified and is not explained by the first fix.
