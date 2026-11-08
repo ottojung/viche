@@ -59,12 +59,16 @@ case "$action" in
         ;;
     run)
         [ -f "$MOCK_STATE/$id" ] || exit 5
+        # Assert against the marker the cycle actually emits and the real
+        # reporting-policy text, not retired wording.
+        # Two producers legitimately wrap the charter differently: the boot
+        # sitting uses AUTHORITATIVE, the cycle scripts use FOUNDER.
         case "$prompt" in
-            *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER-CONTROLLED CONSTITUTION ==="*) : ;;
+            *"=== AUTHORITATIVE CONSTITUTION ==="*|*"=== FOUNDER CONSTITUTION ==="*) : ;;
             *) exit 6 ;;
         esac
         # Every newly launched Town agent must receive the Founder reporting rule.
-        case "$prompt" in *"Standing Founder instruction for every Viche agent launch"*) :;; *) exit 95;; esac
+        case "$prompt" in *"Standing Founder operational instructions — reporting and evidence"*) :;; *) exit 95;; esac
         printf '%s\n' "$id" >> "$MOCK_STATE/ran"
         case "$prompt" in *"This is independent executive delivery"*) printf '%s\n' "$id" >> "$MOCK_STATE/executive-ran";; esac
         ;;
@@ -114,7 +118,9 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$seat_count" -ge 1 ]
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
-[ "$(wc -l < "$scratch/mock/ran")" -eq "$seat_count" ]
+# Act 24 is enacted, so boot also runs the Executive Innovation Office cycle,
+# which legitimately dispatches once in addition to the seats.
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+1)) ]
 python3 - "$scratch/state/branches/judiciary-measurements.json" "$scratch/state/branches" <<'PY'
 import hashlib, json, pathlib, sys
 report=json.loads(pathlib.Path(sys.argv[1]).read_text())

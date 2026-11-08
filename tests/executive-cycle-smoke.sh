@@ -13,6 +13,8 @@ cp "$repo/government/research-frontier-status.py" "$scratch/town/government/rese
 printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"clearexit","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
+cp "$repo/government/delivery-candidates.py" "$scratch/town/government/delivery-candidates.py"
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu

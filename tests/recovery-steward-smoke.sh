@@ -39,6 +39,8 @@ esac
 MOCK
 chmod +x "$d/bin/antonina" "$d/town/government/appointments.sh"
 export PATH="$d/bin:$PATH" MOCK_ROOT="$d/mock"
+cp "$repo/government/AGENT-REPORTING-POLICY.md" "$d/town/government/AGENT-REPORTING-POLICY.md"
+cp "$repo/government/delivery-candidates.py" "$d/town/government/delivery-candidates.py"
 export VICHE_TOWN_ROOT="$d/town" VICHE_SEATS_ROOT="$d/seats"
 export VICHE_STATE_ROOT="$d/state" VICHE_CONSTITUTION="$d/charter"
 # Exercise the service's actual profile/strict-mode prefix. Both errexit and
