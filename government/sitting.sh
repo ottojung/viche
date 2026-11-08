@@ -120,7 +120,7 @@ fi
 if [ "$seat" = "$clerk" ]; then
     innovation=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/legislature/innovation-centre
     innovation_header="AUTONOMOUS LEGISLATIVE INNOVATION CENTRE STATUS"
-    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \(enacted ' "$town/government/LAWS.md"; then
+    if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
         innovation=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/executive/innovation-office
         innovation_header="EXECUTIVE INNOVATION OFFICE STATUS (not legislative business)"
     fi
