@@ -192,3 +192,20 @@ breach on 2026-11-08 that deferred the whole electorate for ~10 seconds, plus tw
 OOM kills since morning. Any statement that "the box was fine all day" is false;
 any statement that the day's red test was a memory failure is also false. Both
 errors are worth avoiding in the record.
+
+### A specific correction to the investigation that opened this summons
+
+`records/investigations/resource-headroom-blocks-act21-2026-11-08.md` quotes this
+as evidence of live pressure:
+
+```
+Viche: c1a00003 DEFERRED - cgroup headroom 536870912 B below critical 1073741824 B
+```
+
+`536870912` is exactly 0.5 GiB, and it is the hard-coded case-3 fixture value in
+`tests/resource-safety-smoke.sh` (`set_cgroup "$MAX" 8053063680`). It is **test
+fixture output, not live telemetry**. Likewise `1610612736` is the case-2 fixture
+value (1.5 GiB). The real deferral events on this day are the ten logged at
+12:08:58–12:09:08Z with non-round values (450,858,136 … 591,846,208), listed above.
+Both facts matter: the test's red was a fixture defect, and the day's genuine
+critical breach is visible only in `deferrals.log`, not in the test output.
