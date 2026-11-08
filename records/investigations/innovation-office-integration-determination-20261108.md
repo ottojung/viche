@@ -516,3 +516,25 @@ fix** (verify the exact candidate tree before landing, complete allowlist,
 non-sponsor/non-Clerk verification, append-only, recorded `suite-status`), or
 state that new law is required. It must not describe the current direct-commit
 practice as compliant.
+
+## Update 2026-11-08 (Act 22 gate passes for the re-enactment bill)
+
+`c1a00004` registered five predictions (`569e4c3`) and corrected its own R5
+wording to match the Clerk's factual finding (landing-ordering defect, not a
+missing merger):
+
+```
+predict-ledger: integrity clean (14 entries, 0 resolutions)
+predict-gate: PASS executive-innovation-office-reenactment-act —
+              5 registered evidence-linked predictions precede <ts>
+```
+
+The propositions are load-bearing rather than technical-only (Act 21 same-tree
+ordering, manifest-verified integrity test, per-seat attribution, non-retroactive
+record, and enactment by the fixed `2026-11-22` deadline), with probabilities
+0.2–0.8 rather than near-1 self-assertions. The predictions have been handed to
+the non-sponsor red-teamer (`c1a0000a`) for exactly the O13–O16 test.
+
+**Gate PASS is not ballot eligibility.** The bill still lacks (i) the Act 16 §1
+delta verdict, (ii) any sponsor response that verdict requires, and (iii) the R5
+landing-ordering route. No ballot request is published and none may be.
