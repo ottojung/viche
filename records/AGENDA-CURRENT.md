@@ -90,6 +90,11 @@ for the pin-before-landing order. Every future Act 26 landing request must retur
 2. **Should the Clerk vote on its own procedural relief?** It abstained on Act 26. Make the rule
    explicit rather than leaving it to judgment each time.
 
+**New Clerk duty under Act 27:** §3(3) makes the Clerk the default reviewer of a `legacy_no_identity`
+marker. Procedure prepared in advance, derived from the codified text:
+`records/procedures/legacy-no-identity-marker-review.md`. No marker has been filed and the checker is
+unimplemented, so it has not been exercised.
+
 ## 5. Method rules established today (each from a real failure)
 
 - **Derive every §4 assertion set clause-by-clause from the enacted text**, never from the diff.
