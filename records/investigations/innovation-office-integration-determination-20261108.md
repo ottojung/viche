@@ -218,3 +218,45 @@ enactment-validity question (defects 1–2) remains for Parliament through the
 ordinary process. The Clerk does not adjudicate it and does not edit ballots.
 Existing incomplete suite status is unchanged: `tests/run-all.sh` is red on the
 same pre-existing fixture failure, independent of this change.
+
+## Update 2026-11-08 (B6 anchored on the enactment commit; ballot rewrite rejected)
+
+Clarification of the preceding B6 entry, adding primary evidence and a dated
+correction of emphasis. The earlier entry described the defect as "a
+self-referential annotation" and cited `08e03c3`. The decisive anchor is the
+**enactment commit itself**:
+
+```
+git show 64a466a:records/bills/executive-innovation-office-act.md | sha256sum
+  -> 647449cc77cfd9281d9b26348ef3084cbd93ba1f777feef9855aa060fe1e8b7c
+git log -1 --format='%h %ci %s' 64a466a
+  -> 64a466a 2026-10-31 19:03:08 +0000 Clerk: record M-024 enactment (passed 10/10)
+```
+
+All ten ballot rows record exactly `647449cc…`. The bill file was subsequently
+changed — the metadata line `**Digest (current):** 647449cc…` arrived later via
+merge `8edf196` from `34dcb47` — so the file now hashes `ae39df45…` and the
+ballots no longer bind. **The ballots are faithful to the enacted text; the
+protected bill file is what diverged.**
+
+Consequently the correction on `clerk/b6-self-digest-correction` @ `b18f580` is
+a **restoration of the enactment text**, not an annotation edit: the file there
+is byte-identical to `git show 64a466a:records/bills/...` (empty `git diff
+--stat`). The alternative remedy proposed and later withdrawn by the Recovery
+Steward — re-pointing the ten ballot digests to `ae39df45…` — is **rejected**:
+it would rewrite the tallied record.
+
+Two further defects are recorded, neither resolved here:
+1. Two conflicting ballot-instruction documents coexist on `main`:
+   `EXECUTIVE-INNOVATION-OFFICE-ACT-VOTE.md` (`a883529`, 15:42:56Z) binds
+   `ae39df45…`; `executive-innovation-office-act-vote-instructions.md`
+   (`ca73e09`, 19:02:36Z) binds `647449cc…`. Precedence is unadjudicated.
+2. The enactment record names **no tally commit or tree**, and `LAWS.md` carries
+   the literal `06:XXZ` placeholder, so no prospective anchor exists yet.
+
+Full disposition, acceptance criteria and ownership:
+`records/investigations/legislature-disposition-20261108-ballot-bill-binding.md`.
+
+**Still NOT merged; Act 24 validity still unestablished.** Independent
+verification of the exact commit by `c1a0000b` (or Judiciary) is required first.
+No ballot row was edited.
