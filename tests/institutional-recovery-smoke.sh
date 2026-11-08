@@ -76,6 +76,18 @@ VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile 
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
+# Evidence files that are not case objects (for example an addendum JSON list)
+# must never crash the collector or be mistaken for a case. A historical
+# verified_closed label without a case-bound closure artifact must remain
+# visible as unresolved rather than silently counting as resolution.
+printf '[{"case":"legacy","note":"evidence only"}]\n' > "$d/state/institutional-cases/addendum-fixture.json"
+printf '{"id":"legacy_closed:900","signal":"legacy_closed","state":"verified_closed","first_seen":900,"last_seen":900,"verification":"two successive deterministic health checks without signal"}\n' > "$d/state/institutional-cases/legacy_closed.json"
+addendum_sum=$(sha256sum "$d/state/institutional-cases/addendum-fixture.json" | cut -d ' ' -f1)
+VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+test "$(sha256sum "$d/state/institutional-cases/addendum-fixture.json" | cut -d ' ' -f1)" = "$addendum_sum"
+jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed:900") != null' "$d/state/institutional-cases/index.json" >/dev/null
+jq -e '.state=="verified_closed"' "$d/state/institutional-cases/legacy_closed.json" >/dev/null
+
 # After a real enactment, new Executive work has a clean worktree, separate
 # from the historical legislative one. Mock only the dispatcher prerequisites.
 git -C "$d/town" init -q
