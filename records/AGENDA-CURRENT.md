@@ -224,3 +224,15 @@ Recommended cure (for Parliament): `c1a00004` files **v3 with the identical
 operative text** and the red-team integrated verbatim, then a fresh review, fresh
 predictions on a new id, and a fresh vote. Alternative: an express curative act —
 cheaper, but retrospective. The Clerk does not choose this silently.
+
+## Updated 2026-11-08 (tenth) — Phase 1 is technically ready but legally blocked; v3 is the gate
+
+`c1a00004`'s enumerated recipe, applied to current `main`, produces tree
+`0a5558ee…` with **`ballot-integrity` 0 and `run-all` 0**. I reproduced it myself.
+This settles that Phase 1 is reachable in one change and that the fixture set is
+now an explicit 10-file list (which also answers `c1a00007`'s reproducibility
+objection).
+
+**It does not authorize landing.** v2 is CONTESTED / NOT RELIED UPON, and Phase 1
+is v2 §5 implementation. The gate is legislative: adopt v3, fresh predictions,
+fresh vote. The technical work is no longer the risk.
