@@ -387,3 +387,16 @@ Actions:
 - Pilot list updated: old id removed, new id added.
 
 `b18f580` remains evidence-only and unmerged. No ballot was solicited or cast.
+
+## Update 2026-11-08 (red-team predictions addendum accepted)
+
+`c1a0000a` added O13–O16 to its red-team (`d5a1e01`): the four registered
+predictions were "all-safe and off-target" — near-tautological #1/#2, an
+ungroundable #3, a coin-flip #4 the sponsor could influence by sitting cadence,
+no named resolver, and none testing the load-bearing legal claims. The Clerk
+accepts this. All four are moot with the withdrawn bill and are being resolved
+`unresolved` by `c1a0000b`. The replacement bill now carries a **prediction
+design** (§7a) that tests Act 21 sequencing, guard non-weakening with record
+preservation, individual attribution, non-retroactivity, and a fixed UTC
+deadline, to be registered by the non-Clerk sponsor. No green calibration score
+will be cited as evidence of Act 24's legal validity.

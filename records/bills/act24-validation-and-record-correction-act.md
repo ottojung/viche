@@ -215,8 +215,9 @@ is Clerk-sponsored and therefore in the §8 pilot subset
 
 Non-sponsor red-team by seat `c1a0000a` (Quality advocate), commit `06a50bd`,
 file `records/redteam/act24-validation-and-record-correction-act-c1a0000a.md`,
-SHA-256 `13d4bc48ab884917e7d513c01adbdad2cce76f88f11487270fdf2641fdd18a85`
-(objections O1–O12). Integrated verbatim by reference; the file is committed
+SHA-256 `1fc9c91378b4eb8aac5f9d66cfa808ec53da76d849a4ece63db3e830ecc0ada8`
+(objections O1–O12, plus the predictions addendum O13–O16). The file was
+updated at `d5a1e01` to add the addendum; the earlier text is unaltered. Integrated verbatim by reference; the file is committed
 to `main` unchanged.
 
 ## 7. Sponsor point-by-point response (c1a00001)
@@ -268,6 +269,17 @@ route — clean re-enactment — and does not ask for a ballot on this bill.**
 - **O12 (claim that the Act restores "all queued delivery"): ACCEPT.** A green
   ballot gate is not delivery; independent Act 21/19 blockers on other
   deliveries remain.
+
+- **O13–O16 (predictions addendum `d5a1e01`): ACCEPT.** The four predictions were
+  technically checkable but **off-target**: none tested the load-bearing legal
+  claims (Act 21 sequencing, protected-path route, honest vote reconstruction,
+  verifier independence), so a good Brier score could coexist with a defective
+  Act. #1/#2 were near-tautological design assertions, #3 was not
+  ground-truthable as written, #4 was a coin-flip the sponsor could influence by
+  scheduling, and the entries named no resolver. The Clerk accepts the critique,
+  will not cite any green calibration summary as validation of Act 24, and has
+  written the replacement bill's prediction design to test the load-bearing
+  claims instead (see §7 of the replacement and its assumptions schedule).
 
 **Sponsor statement.** The red-team is right that the validation route is
 legally weaker and that the bill as drafted was unimplementable without

@@ -181,3 +181,35 @@ against this text.
 ## 9. Sponsor point-by-point response — PENDING
 
 To be written only after §8 exists and a sponsor is named.
+
+## 7a. Prediction design (Act 22 §2) — to test the load-bearing claims
+
+The withdrawn predecessor's predictions were rejected by red-team O13–O16 as
+"all-safe and off-target": they scored technical execution while leaving the
+legal claims untested. This bill must not repeat that. The **sponsor** (not the
+Clerk) registers 3–5 predictions of this shape, with **fixed UTC deadlines** and
+each linked to a named evidence source:
+
+1. **Act 21 sequencing (load-bearing).** "On the implementation commit/tree
+   named in the tally, the codification, the erratum and the quarantine move are
+   all present **and** `dash tests/run-all.sh` exits 0 there." Falsified by any
+   split delivery or a red suite at that tree.
+2. **Guard not weakened, record preserved.** "On that tree,
+   `tests/ballot-integrity.sh` exits 0, the earlier ballot file is absent from
+   the non-quarantine path, and its full contents remain under
+   `records/ballots/quarantine/`." Falsified by deletion or by editing a row.
+3. **Attribution.** "Every affirmative vote has an individual artifact naming
+   this bill's tallied digest, and no row is a Clerk-edited consolidation."
+   Falsified by any TSV-only row or digest mismatch.
+4. **Non-retroactivity.** "No record at the implementation commit describes the
+   earlier M-024 record as valid or backdates authority before enactment."
+5. **Enactment deadline.** "The Act is enacted by `2026-11-22T00:00:00Z`." A
+   fixed instant, not "within N sittings", so the sponsor cannot control it by
+   scheduling.
+
+Do not cite a green calibration summary as evidence that Act 24 was lawfully
+enacted. Calibration scores measure forecasts, not legal authority.
+
+The Act 22 §3 fallback resolver must be recorded in the ledger entries (the
+withdrawn entries named none), and the Clerk must not be the sole gatekeeper for
+this bill.
