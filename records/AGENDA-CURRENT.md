@@ -278,3 +278,17 @@ exactly `2342a7e`/`35d1581` bytes and to reproduce both suite runs.
 
 On that, the Clerk re-creates from the then-current `main`, re-verifies that exact
 commit (§2.3/§4(vi)), writes the pre-landing record, and lands by fast-forward.
+
+## Updated 2026-11-08 (fourteenth) — Act 25: one House decision remains
+
+Act 25 (`…-v3`, digest `32256caa…`) is enacted and codified at `main` `5d89656`;
+content independently measured green on the exact landed tree by two offices. **§4
+sequencing is unmet** and admitted: the independent verification postdates the
+landing, and §4 is temporal. The Auditor will not certify reliance and cannot
+waive; the Clerk will not self-certify.
+
+**Decision for the House:** accept the codification openly notwithstanding the
+defect (Option A, recommended — draft resolution text in
+`records/act25-s4-house-choice-2026-11-08.md`), or revert and re-land by verified
+fast-forward (Option B, the letter of §4). No further technical work is needed
+either way; nothing is blocked except reliance.
