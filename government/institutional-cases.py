@@ -108,14 +108,13 @@ def reconcile():
             case["observations"] = case.get("observations", 0) + 1
             case["clear_observations"] = 0
         elif case.get("state") == "open":
-            # Never resolve from agent success, a comment or a merge alone.
-            # This confirmation observes the SAME underlying signal cleared
-            # in two subsequent independent cycles.
+            # Signal absence is observational data, NEVER a recovery verdict.
+            # Keep the obligation visible for an Executive investigation and
+            # an independent evidence-based Judiciary disposition. Authorized
+            # agents, not this collector, must determine whether it is closed.
             case["clear_observations"] = case.get("clear_observations", 0) + 1
-            if case["clear_observations"] >= 2:
-                case["state"] = "verified_closed"
-                case["verified_at"] = now
-                case["verification"] = "two successive deterministic health checks without signal"
+            case["last_clear_observed_at"] = now
+            case["closure_rule"] = "requires independent Judiciary verification of an evidence-backed investigation"
         elif not case:
             continue
         atomic(path, case)

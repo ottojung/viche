@@ -67,14 +67,14 @@ rm "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1100 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 VICHE_CASE_NOW=1200 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="verified_closed" and .clear_observations==2' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2 and (.last_clear_observed_at==1200)' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 # Only a matching independent Judiciary verification can discharge the
 # uncertain-effects reconciliation case.
 printf '{"previous_agent":"old-agent","successor_agent":"new-agent","verified_by":"judiciary","verification_scope":"external_effect_reconciled","evidence_ref":"fixture:independent-reviewed-effects"}\n' > "$d/state/continuity/verified-innovation-centre.json"
 VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.state=="verified_closed"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
 # After a real enactment, new Executive work has a clean worktree, separate
 # from the historical legislative one. Mock only the dispatcher prerequisites.
