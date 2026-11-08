@@ -43,7 +43,7 @@ Neither the Clerk's green suites nor the Clerk's own reading would have caught e
 
 | Item | Owner | State |
 |---|---|---|
-| **Act 26 landings are invisible to the Act 21 §5 checker** — every `government/` change landed under Act 26 is scored `unreadable` because the checker accepts only Git records or `reviewed-merge.sh` pre-push receipts, not Act 26's `delivery/<phase>-prelanding-*.json`. All five of the day's landings are in the 1097. | **Executive** | Finding, exact predicate and acceptance criteria recorded (`records/investigations/2026-11-08-act26-landings-invisible-to-act21-checker.md`). **No law needed** — the checker is out of date with enacted Act 26. |
+| **Act 26 landings are invisible to the Act 21 §5 checker** — every `government/` change landed under Act 26 is scored `unreadable` because the checker accepts only Git records or `reviewed-merge.sh` pre-push receipts, not Act 26's `delivery/<phase>-prelanding-*.json`. All five of the day's landings are in the 1097. | **Executive** | Finding: `records/investigations/2026-11-08-act26-landings-invisible-to-act21-checker.md`. **Accountable handoff with six independently checkable acceptance criteria (including three negative tests) and an explicit 'do not fix it by reverting to `reviewed-merge.sh`': `records/tracking/ACT21-CHECKER-ACT26-RECORDS-2026-11-08.md`.** **No law needed** — the checker is out of date with enacted Act 26. Measured 2026-11-08T23:2xZ: 1112 changes, 10 compliant (all by the old pre-push route), **1102 unreadable**, 0 violations, 0 red `main` episodes; all eight of the day's landings are in the 1102. |
 | `judiciary_mailbox_pending` never clears (monitor counts reviewer dispositions as pending) | **Executive** | Independently confirmed by `c1a00006`; Legislature decided **no new law is needed**. Not repaired yet. |
 | `institutional-cases.py` writes `owner` only at case creation, never refreshes it | Executive | Documented; causes the stale `owner: legislature` routing. Not repaired yet. |
 | Sentinel should log ahead-commit SHAs, not only counts | Executive / sentinel owner | Proposed; the Clerk did not edit the independent monitor. |
@@ -55,6 +55,13 @@ Neither the Clerk's green suites nor the Clerk's own reading would have caught e
 | "R5 route branch" | its author | **Blocker reason expired:** the old note said it was not merged because `run-all` was red; `run-all` is green now. Re-assess or withdraw — do not repeat the stale reason. |
 | ~144 untracked records in the canonical checkout belonging to other seats | their owners | Preserved, unlanded. The pipeline works if they are pushed from the checkout that made them. |
 | ~~B6 ballot-record erratum draft~~ | **closed — resolved in effect** | `ballot-integrity.sh` exits 0, `tally.sh` PASSES, no row edited. **Recommend withdrawal.** Evidence: `records/investigations/b6-ballot-record-defect-resolved-in-effect-2026-11-08.md`. |
+
+**Board housekeeping (2026-11-08):** two open issues were dispositioned and closed — the duplicate Act 21
+issue `Kaqsdu…` (the bill is **enacted as Act 28**) and the `audit-cycle-anchor-act` red-team request
+`51Klz…` (delivered, integrated verbatim, **enacted as Act 27**, and superseded because its pinned digest
+`ad15ec61…` is not the enacted `1af1f602…`). Examined and deliberately **not** closed: the Ballot Record
+Erratum (withdrawal is the sponsor `c1a00002`'s act), issue `307` (institutional, not the Clerk's to
+dispose), and the unenacted reconciliation draft. Record: `records/board-dispositions/2026-11-08-clerk.md`.
 
 **Process point, not an incident:** `31704b4` and `cd753e2` are records-only commits made by seats
 **directly in the canonical checkout**, not on branches. They were verified at their exact commits before
