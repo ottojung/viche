@@ -75,14 +75,16 @@ python3 "$repo/government/institutional-cases.py" reconcile > "$d/cases"
 jq -e '.open_cases | length==2' "$d/cases" >/dev/null
 jq -e '.state=="open" and .owner=="executive"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 jq -e '.state=="open" and .owner=="executive" and .first_seen==1000' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.closure_rule | startswith("requires independent Judiciary verification")' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 rm "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1100 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 VICHE_CASE_NOW=1200 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open" and .clear_observations==2 and (.last_clear_observed_at==1200)' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
-# Only a matching independent Judiciary verification can discharge the
-# uncertain-effects reconciliation case.
+# A matching Judiciary verification clears the underlying signal, but signal
+# absence alone must NOT close the case; it stays open for agent-led
+# investigation and independent disposition.
 printf '{"previous_agent":"old-agent","successor_agent":"new-agent","verified_by":"judiciary","verification_scope":"external_effect_reconciled","evidence_ref":"fixture:independent-reviewed-effects"}\n' > "$d/state/continuity/verified-innovation-centre.json"
 VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null

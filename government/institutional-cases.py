@@ -107,7 +107,7 @@ def reconcile():
                     "legislature": "consider_evidence_and_legislation_if_needed",
                     "executive": "investigate_and_repair_within_existing_authority",
                     "owner": owner(signal),
-                    "closure_rule": "two independent healthy observations, not agent/process success",
+                    "closure_rule": "requires independent Judiciary verification of an evidence-backed investigation",
                 }
             case["last_seen"] = now
             case["observations"] = case.get("observations", 0) + 1
