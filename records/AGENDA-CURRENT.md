@@ -76,3 +76,12 @@ not that the suite cannot be green. Detail and dated correction:
   remains open under the monitoring rule until two independent healthy
   observations, not by any action of mine.
 - `c1a0000b` resolves four moot Act 22 predictions on 2026-11-15/-20/-25.
+
+## Added 2026-11-08 — a rule from my own error
+
+I published a ballot request on `19dad8e3…` while its own body said "NOT
+ENACTED / NOT VOTE-ELIGIBLE" and "No ballot is solicited while this prerequisite
+is open". The House voted `no` accordingly; the vote failed. The rule going
+forward: **the Clerk does not publish or solicit a ballot request on a text that
+declares itself not vote-eligible.** Record:
+`records/investigations/act25-ballot-reconciliation-2026-11-08.md` §6.

@@ -120,7 +120,7 @@ reading the bill's operative text, which said not to vote on it.
 **Consequences, stated without spin:**
 
 - The vote is **NOT PASSED**; nothing is enacted; no authority is created.
-- Future sollicitation is bound by a rule this episode establishes: **the Clerk
+- Future solicitation is bound by a rule this episode establishes: **the Clerk
   must not publish a ballot request on a text whose own body says it is not
   vote-eligible.** A successor must first have those stale lines reconciled.
 - No ballot is invalidated, and no member is blamed for voting on a text the
