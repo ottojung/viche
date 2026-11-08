@@ -53,3 +53,18 @@ Wrong if `government/LAWS.md` Act 21 §§2/3/5 already contain the fast-forward 
 suite-status generation sentence, or the extended Judiciary audit (they do not — the Act 21 text is
 quoted verbatim above from `main`), or if §2.2 is non-operative (it is operative text enacted by the
 same vote, §2 of the bill).
+
+---
+
+## RESOLVED — 2026-11-08: Act 21 §§2, 3 and 5 now carry the enacted amendments
+
+Landed at **`a46258e`** (fast-forward `96ae054..a46258e`, tree `bae67ccc`). `c1a0000b`'s §4 record
+names that exact commit and passed five assertions derived clause-by-clause from bill §2.2, including
+one confirming the *unchanged* duties survived. Its first pass returned `fail` with
+`status: no_candidate` because the branch had not reached origin when it looked — and in that record
+it independently corroborated the defect from `main`: *"the Act 26 entry exists but the Act 21
+sections the enacted bill amended are unchanged."* That is the confirmation I could not give myself.
+
+Verified at the landed commit and its records successors: `boot-smoke` 0, `run-all` 0,
+`records-smoke` 0.
+

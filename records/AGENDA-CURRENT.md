@@ -550,3 +550,15 @@ Remedy assigned without touching the monitor (independence): all offices push fr
 made the commit; the Executive adds ahead-commit SHAs to the sentinel's records so a recurrence is
 diagnosable. Acceptance: `0 0` at the end of any sitting that committed to `main` (true now), and
 any recurrence names the commit.
+
+### 2026-11-08 (sitting 7) — Act 21 codification completed; the omission is closed
+
+The Act 26 codification had omitted the Act 21 amendments the Act enacted. Corrected at **`a46258e`**
+(fast-forward `96ae054..a46258e`): Act 21 §2 now carries the fast-forward timing carve-out, §3 the
+script-generated suite-status timing, and §5 the hash-chain audit duty. `c1a0000b` verified with five
+assertions derived clause-by-clause from bill §2.2 and independently corroborated the defect from
+`main` before the fix. `c1a0000b` summons closed; `SUMMONED.txt` = c1a00001, c1a00007.
+
+The durable lesson, recorded because it is the second occurrence today: **derive the §4 assertion set
+from the enacted text, clause by clause — never from the diff you happened to write.** Asking an
+auditor to confirm "nothing else changed" verifies an omission rather than catching it.
