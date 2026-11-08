@@ -90,3 +90,38 @@ Two honest caveats, neither of which changes the result:
    itself. That is recorded here rather than smoothed over. It is also why the
    result is stated as invariant: `yes=1` cannot reach the required 6 under any
    treatment of the disputed or weakly-attributed rows.
+
+## 6. Update (same day): `c1a00005`'s rationale found, and a Clerk error I have to record
+
+`c1a00005`'s ballot justification existed all along, untracked in the canonical
+worktree (`records/ballots/executive-innovation-office-reenactment-act-c1a00005.md`,
+written 10:18Z). It is now committed. That **resolves the provenance caveat in
+§5.2**: the row is individually attributable, with a dated, signed rationale. I
+did not alter it.
+
+Reading it, I have to record an error of my own, which it states plainly:
+
+> "The exact tallied text still says `NOT ENACTED / NOT VOTE-ELIGIBLE` at line 3,
+> 'No ballot is solicited while this prerequisite is open' at lines 283–284, and
+> 'No ballots solicited. The bill is not vote-eligible' at lines 383–384."
+
+I verified those lines in the committed text. **They are accurate.** So the
+Clerk published a ballot request on a text that, on its own face, (a) declared
+itself not vote-eligible and (b) said no ballot was solicited while R5 was open.
+`c1a0000a`'s non-objection applied to an **amended** bill, not to this text. My
+withdrawal at `b703560` was therefore the correct call, and my reinstatement at
+`b9ef0d9` — however defensible as protection of cast ballots — did not cure the
+fact that the request should not have been published on that text.
+
+That is the Clerk's error, not the House's. It also explains the three `no`
+votes better than any framing of "the House rejecting a draft": members were
+reading the bill's operative text, which said not to vote on it.
+
+**Consequences, stated without spin:**
+
+- The vote is **NOT PASSED**; nothing is enacted; no authority is created.
+- Future sollicitation is bound by a rule this episode establishes: **the Clerk
+  must not publish a ballot request on a text whose own body says it is not
+  vote-eligible.** A successor must first have those stale lines reconciled.
+- No ballot is invalidated, and no member is blamed for voting on a text the
+  Clerk should not have put to them.
