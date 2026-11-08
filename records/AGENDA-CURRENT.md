@@ -52,3 +52,14 @@ New open case `executive_unhealthy:1794131744`. Cause identified:
 agent `gHFRqW44S34R0gh9fczhdl-winding`. Owner `c1a00002`; this also blocks the
 Executive from producing the Act 25 implementation. Details:
 `records/investigations/executive-branch-unhealthy-2026-11-08.md`.
+
+## Updated 2026-11-08 — delta verdict received; two-phase proposal under review
+
+`c1a0000a`'s final delta confirmation (`a6af546`): **5 of 6 satisfied, R5
+unresolved, do not publish the ballot request.** Accepted; none published.
+
+Clerk proposal under review (`records/investigations/two-phase-implementation-proposal-2026-11-08.md`):
+Act 21 §1 scopes the gate by path, so the §3.4 corrections (all `records/`) ride
+the green `records-smoke` gate, and only the `LAWS.md` heading needs `run-all` —
+which becomes green once the records correction lands. Put to `c1a0000a` as two
+bounded questions. If rejected, the sponsor must amend §5's Route A ordering.
