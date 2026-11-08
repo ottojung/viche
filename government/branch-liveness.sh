@@ -42,6 +42,16 @@ fi
 if [ -z "$id" ]; then bootstrap_ok=false; fi
 if [ "$bootstrap_ok" = true ] && [ -n "$id" ] && [ -s "$town/government/$program" ]; then
   current=$(antonina agent status --id "$id" --json 2>/dev/null | jq -r '.state // "unknown"') || current=unknown
+  # "unknown" is a transient runtime sample, not positive evidence of death
+  # (see appointments.sh resolve). Re-probe briefly before withholding the
+  # cycle; a persistent unknown still withholds it, but was not declared on one
+  # arbitrary sample.
+  root_probe=0
+  while [ "$current" = unknown ] && [ "$root_probe" -lt 3 ]; do
+    root_probe=$((root_probe + 1))
+    sleep 1
+    current=$(antonina agent status --id "$id" --json 2>/dev/null | jq -r '.state // "unknown"' 2>/dev/null) || current=unknown
+  done
   case "$current" in
     stopped|killed|unknown) bootstrap_ok=false ;;
     failed)
@@ -64,11 +74,28 @@ readable=false
 agent_state=unknown
 model=unknown
 variant=unknown
-if [ -n "$id" ] && meta=$(antonina agent status --id "$id" --json 2>/dev/null); then
-  if agent_state=$(printf '%s\n' "$meta" | jq -er '.state' 2>/dev/null); then
-    readable=true
-    model=$(printf '%s\n' "$meta" | jq -r '.model // "unknown"')
-    variant=$(printf '%s\n' "$meta" | jq -r '.variant // "unknown"')
+if [ -n "$id" ]; then
+  meta=$(antonina agent status --id "$id" --json 2>/dev/null) || meta=
+  # Same transient-unknown rule: do not report "unhealthy" on one unreadable or
+  # transitional sample. Re-probe a bounded number of times.
+  meta_probe=0
+  while [ "$meta_probe" -lt 3 ]; do
+    if [ -n "$meta" ]; then
+      probe_state=$(printf '%s\n' "$meta" | jq -r '.state // "unknown"' 2>/dev/null) || probe_state=unknown
+    else
+      probe_state=unknown
+    fi
+    [ "$probe_state" = unknown ] || break
+    meta_probe=$((meta_probe + 1))
+    sleep 1
+    meta=$(antonina agent status --id "$id" --json 2>/dev/null) || meta=
+  done
+  if [ -n "$meta" ]; then
+    if agent_state=$(printf '%s\n' "$meta" | jq -er '.state' 2>/dev/null); then
+      readable=true
+      model=$(printf '%s\n' "$meta" | jq -r '.model // "unknown"')
+      variant=$(printf '%s\n' "$meta" | jq -r '.variant // "unknown"')
+    fi
   fi
 fi
 readiness=unhealthy

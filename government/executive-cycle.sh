@@ -29,6 +29,19 @@ fi
 handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
 status=$(antonina agent status --id "$id" --json)
 current=$(printf "%s\n" "$status" | jq -r ".state")
+# A single "unknown" sample is not evidence that the office is dead: Antonina
+# reports it transiently while a session transitions or recovers (appointments.sh
+# resolve applies the same rule). Re-probe a bounded number of times so one
+# transient sample does not abort the cycle; a persistent unknown still fails
+# closed below with a specific, actionable message.
+probe=0
+while [ "$current" = unknown ] && [ "$probe" -lt 3 ]; do
+  probe=$((probe + 1))
+  sleep 1
+  status=$(antonina agent status --id "$id" --json) || status=
+  [ -n "$status" ] || continue
+  current=$(printf "%s\n" "$status" | jq -r '.state // "unknown"') || current=unknown
+done
 case "$current" in
   running) exit 0 ;;
   failed)
@@ -36,7 +49,7 @@ case "$current" in
     [ "$retry_safe" = yes ] || { echo "Viche: failed Executive not provably retry-safe" >&2; exit 1; }
     ;;
   idle|clearexit) : ;;
-  *) echo "Viche: unexpected executive state $current" >&2; exit 1 ;;
+  *) echo "Viche: executive agent state '$current' is not dispatch-safe after $probe re-probe(s); no dispatch" >&2; exit 1 ;;
 esac
 cwd=$seats/branches/executive
 [ -d "$cwd" ] && [ -s "$charter" ] || exit 1
