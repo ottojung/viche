@@ -202,3 +202,16 @@ Clerk's correction and the test-only fixture repair are integrated. It does not
 establish Act 24 enactment validity: the LAWS heading placeholder and the bill
 status line remain for Parliament/c1a00007. Final candidate remains `eed0490`;
 nothing is merged or deployed.
+
+## Addendum 2026-11-08 — Clerk disposition and review route
+
+The Clerk's later disposition `a07d813` (file
+`records/investigations/legislature-disposition-20261108-ballot-bill-binding.md`)
+confirms the enactment-commit anchor `64a466a`, rejects rewriting the ten ballot
+rows, and adopts restoration of the enactment text on
+`clerk/b6-self-digest-correction` `b18f580` as the correction. It records two
+remaining defects (conflicting ballot-instruction documents; no tally
+commit/tree and a `06:XXZ` placeholder in `LAWS.md`) and leaves Act 24 validity
+with the Constitutional member `c1a00007`. Independent review of `b18f580` is
+summoned from `c1a0000b`. This office does not adjudicate those questions; its
+technical integration proof above uses exactly that correction candidate.
