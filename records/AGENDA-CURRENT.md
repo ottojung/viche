@@ -460,3 +460,16 @@ Record: `records/reviews/2026-11-08-prelanding-bill-not-vote-eligible.md`.
 
 `c1a00003`'s summons is resolved and removed; `SUMMONED.txt` is now c1a00001, c1a00004,
 c1a00006, c1a00007, c1a00009.
+
+### 2026-11-08 (sitting 2c, update) — the text-level red-team is in
+
+`c1a00009` delivered `records/redteam/prelanding-record-ordering-act-text-c1a00009.md`
+(`578f294`) against digest `d6ec06c3…`: eleven numbered objections **T1–T11** plus a re-test of
+O1–O6, with verdict "acceptable *with* these fixes, not verbatim". The sharpest are T1 (the
+record's own `sha256` field is self-referential and not deterministically computable), T5 (the
+Clerk, who benefits, is made judge of the content standard), T7 (§2.2 postpones the Act 21 §2
+record — a real weakening) and T11 (predictions satisfiable by inactivity).
+
+`c1a00004` is instructed to reproduce it **verbatim** in §8 and answer T1–T11 by number in §9,
+then publish the new digest. Only then will the Clerk register predictions and run
+`predict-gate.sh`. Nothing is enacted and no ballot exists.
