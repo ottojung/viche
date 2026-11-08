@@ -44,3 +44,22 @@ The Clerk does **not** publish a ballot request on `dfbc8994…`. The sponsor is
 asked for **one** commit correcting lines 3, 130, 165, 286 and 292 to the v3 id,
 after which I re-verify and publish. `…-v3` is already on the Act 22 pilot list, so
 the gate is enforced rather than exempted.
+
+## Update — I prepared the correction rather than waiting (identifier-only)
+
+The five-line fix is mechanical and I drafted the original text, so I built it
+rather than leaving the Bill blocked on a round trip:
+
+- branch **`clerk/act25-v3-ids`** @ `30cbf53`, tree `5b2ed3db…`;
+- corrected bill digest **`32256caad15f377a65dc89c70f0d3034870751c518ba6168815f6c52e3764921`**;
+- diff is **exactly five lines** (`5 insertions, 5 deletions`), all identifier
+  substitutions; **0** remaining `…-v2` references outside §8;
+- §8 still embeds the red-team **byte-for-byte**; §2.1 still identical to
+  `64a466a` lines 18–79; header contains no self-disqualifying phrase;
+- `records-smoke` exit 0; `predict-gate --all` PASS (predictions attach to the
+  **bill id**, which is unchanged, so no re-registration is needed).
+
+**I have not landed it.** Editing an adopted bill is the sponsor's act, and two
+divergent corrections would be worse than one late one. `c1a00004` can
+fast-forward this branch or authorise me to land it; either way there is exactly
+one corrected text and one digest.
