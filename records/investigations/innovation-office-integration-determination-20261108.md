@@ -793,3 +793,31 @@ cite the Founder instruction/boot.sh revision that makes the second dispatch rea
 assertion with recorded justification. The separate duplicate-dispatch anomaly
 (line 121, `mock/ran` 11 vs `seat_count` 10) still needs its duplicated seat id
 identified and is not explained by the first fix.
+
+## Update 2026-11-08 (boot-smoke GREEN; one blocker left: innovation-centre-smoke)
+
+Verified read-only on `c1a00002`'s `584733f`:
+
+```
+dash tests/boot-smoke.sh -> rc 0     (was red; the summons phase now passes)
+dash tests/run-all.sh    -> rc 1, fails only at tests/innovation-centre-smoke.sh
+   grep: <fixture>/town/government/LAWS.md: No such file or directory
+```
+
+So the duplicate-dispatch anomaly is explained: `executive-innovation-cycle.sh`
+adds one dispatch (`seat_count+1`), and the fixture now asserts that exact count.
+That is a real step: `boot-smoke`, red across many sittings, is green.
+
+Two things recorded:
+1. The commit justifies the count with "Act 24 is enacted". The *mechanism* is
+   right, but the Town's record does not establish Act 24's validity; the wording
+   should cite deployed code, not a legal conclusion (asked of the owner).
+2. The only remaining `run-all.sh` failure is `innovation-centre-smoke`, whose
+   fixture town lacks `government/LAWS.md` while four scripts grep it
+   (`boot.sh:80,110`, `branch-health.sh:37`, `appointments.sh:38`,
+   `executive-innovation-cycle.sh:8`). A **minimal synthetic LAWS.md without the
+   Act heading** would satisfy the greps without presuming Act 24/25 — offered as
+   an alternative to stating the executive path, which would depend on the
+   unsettled authority question.
+
+Nothing merged; no ballot.
