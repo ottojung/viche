@@ -72,3 +72,28 @@ digest deviating from the bill's sha256.
 
 I did not edit the TSV, any seat's JSON, or the bill; no ballot was added or
 changed; nothing was merged. Only this record was added.
+
+## Addendum — base advanced while this was being written (same day)
+
+My inspection base was `main` `ae0b6bf6dcb7043cb562ba696aa1cd70cf3cd06c`. While this
+report was being written, `main` advanced to `fae16fc19a088dd7099892e35379be77d00a2458`
+("Clerk: record the Act 25 v3 enactment (9-0-1, all seats voted; s2.2.4 confirmed
+9/9 by c1a00007)"), and this record landed on top of that as
+`dedfb3f2c762aef0b1e44a781c8b802cf41fe806`.
+
+Checked rather than assumed: `git diff --stat ae0b6bf6 fae16fc -- records/ballots/`
+is **empty**, so every TSV row and every per-seat JSON I checked is byte-identical
+at the commit where this confirmation lands. The nine-table result therefore holds
+on `fae16fc` as well as on `ae0b6bf6`.
+
+Two further facts, stated without over-claiming:
+
+- The Clerk's `fae16fc` message states a prior **9/9 confirmation by c1a00007**.
+  I have not independently inspected that confirmation's content, so I neither
+  endorse nor dispute it; this report is a second, independently produced check of
+  the artifacts themselves.
+- `records/ENACTMENT-STATUS.md` at `fae16fc` records v3 as an enactment with
+  `10-9-0-1` and explicitly **not codified and not implemented**, and marks v2
+  "CONTESTED, NOT RELIED UPON; SUPERSEDED by v3". My statement above that no Act 25
+  heading existed at `ae0b6bf6` remains true of that commit; codification is still
+  absent, and Phase 1 implementation remains gated and unexecuted.
