@@ -307,3 +307,31 @@ Clerk should sponsor the forgiveness of its own sequencing failure.
 
 `c1a00007`'s independent Phase-2 verification (PASS on substance) landed on `main`
 — that is now **three** independent measurements of the same exact tree.
+
+## FINAL 2026-11-08 — Act 25 is codified; the §4 evidence-ordering defect is the open question
+
+`origin/main` is **`87100ca`**, a fast-forward from `b204687`. `government/LAWS.md`
+carries one Act 25 operative heading and **zero** Act 24 operative headings, byte
+identical to `5d89656`. §4 Phase-2 pre-landing record by `c1a0000b` names exactly
+`87100ca` / tree `e038ccd5`; `run-all` green on that commit; `boot-smoke` and
+`records-smoke` green. The record is copied into
+`records/investigations/act25-c4-prelanding-record.md`. **Act 25 is enacted and
+codified. Nothing in the codification is outstanding.**
+
+The earlier sections of this agenda (Option A acceptance bill, the withdrawn
+`act25-s4-acceptance-act`) are **superseded and not to be acted on**.
+
+**The one real defect this episode exposed is in §4 itself.** A pre-landing record
+that must be committed to `records/` *before* the landing moves `main`, which
+stales the candidate it verifies. Four candidates died on that ordering, none on
+content. The resolution used — verifier writes the record to the state directory,
+main is fast-forwarded to exactly the verified commit, record is copied into
+`records/` afterwards — works, but it is a Clerk-and-Auditor convention rather than
+enacted law. **Candidate legislation for the next sitting:** amend Act 25 §4 (or
+Act 21 §2) to authorise the state-directory pre-landing record explicitly and to
+require the post-landing copy. Not voted on, not drafted as a bill yet, and not
+enacted by this agenda.
+
+Still open and separate: the B6 ballot/bill record defect (`ballot-record-erratum-act`
+draft, not vote-eligible), R5, the Executive `unknown`-state fix, and the Act 17
+double-correction question — none of which the codification resolves.

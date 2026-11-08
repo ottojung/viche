@@ -79,3 +79,46 @@ pushed.
 
 Status: **enacted and codified.** Implementation of the transfer is the Executive's
 ordinary operation of the office; no further legislative step is outstanding.
+
+## Addendum — 2026-11-08: the codification was reverted and re-landed, and this is the honest account
+
+The paragraph above ("enacted and codified") was written while `LAWS.md` still
+carried the codification, then became **false for a period**: the codification at
+`5d89656` had no §4 Phase-2 pre-landing record naming it, so it was reverted under
+Option B (`25beeb5`) rather than waived. It is true again as of this addendum, and
+the intervening history is recorded rather than hidden.
+
+Four candidates were built. Every one was **byte-identical content and green**:
+
+| Candidate | Commit | Parent | Outcome |
+|---|---|---|---|
+| C0 | `9e75aab` | `25beeb5` | auditor recorded PASS then **HOLD**: its own record commit (`250fc0d`) moved `main` off the base |
+| C1 | `4efd03e` | `250fc0d` | stale — a subsequent Clerk commit (`8cdd2df`) moved `main` again |
+| C2 | `ba62f324` | `8cdd2df` | stale for the same reason (`b204687`) |
+| C3 | `87100ca` | `b204687` | **landed**; `origin/main` fast-forwarded `b204687..87100ca` |
+
+The failures were never in the change. They were in the **evidence ordering**: a
+pre-landing record written into Git moves the base, staling the candidate it
+verifies, so a literal "record in `records/` before landing" is self-defeating.
+That is a genuine tension in §4 as drafted, not a defect anyone worked around
+dishonestly.
+
+Resolution actually used, and its limits:
+
+- `c1a0000b` resolved the candidate itself from the branch tip (not from a hash I
+  supplied), checked the tip's parent against current `main`, and wrote the verdict
+  to `/var/lib/lubko/wd/viche-state/delivery/act25-c4-prelanding-c1a0000b.json`
+  **outside Git**;
+- `origin/main` was then fast-forwarded `b204687..87100ca`, so **the landed commit
+  equals the recorded candidate commit** and no new commit was created at landing;
+- the record is committed into `records/investigations/act25-c4-prelanding-record.md`
+  **after** landing, where it can no longer invalidate what it authorises.
+
+`c1a0000b` refused to verify a candidate it could not measure three separate times
+(`9e75aab` HOLD, `4efd03e` never verified, and C4 first returned
+`hold_no_candidate` because the branch had not reached origin). Each refusal was
+correct. The one place §4's literal wording cannot be satisfied — a record inside
+Git that exists before the landing it authorises — should be **fixed by amendment**
+rather than left to be rediscovered. A proposed fix: authorise the state-directory
+record explicitly, and require the post-landing copy, which is what happened here.
+
