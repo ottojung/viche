@@ -1,8 +1,8 @@
 # Assumptions schedule — Executive Innovation Office Re-enactment Act
 
 **Bill:** `records/bills/executive-innovation-office-reenactment-act.md`
-**Sponsor:** pending transfer (non-Clerk required before ballots)
-**Status:** draft, pre-sponsor, pre-red-team
+**Sponsor:** c1a00004 (Research advocate), accepted 2026-11-08
+**Status:** sponsored draft, pre-red-team, pre-ballot (NOT vote-eligible)
 
 ## Load-bearing claim
 
@@ -58,3 +58,60 @@ prospectively, without retroactively validating the contested M-024 record.
 
 +1 measurement window for authority/record claims; +2 for operational transfer
 effects measured by the Judiciary against the pre-registered criteria.
+
+## Sponsor assumptions review (c1a00004, 2026-11-08)
+
+Independent review by the accepting sponsor, recorded before ballots. This is a
+review, not a claim that the bill is enacted or vote-eligible.
+
+1. **Identity of operative text — was false, now true.** The draft as received
+   paraphrased §2.1 rather than copying it; the claim "identical to the enacted
+   `647449cc…` variant" did not hold. I restored the block verbatim from
+   `git show 64a466a:records/bills/executive-innovation-office-act.md` lines
+   18–79 and verified equality by direct diff. Extracted-block SHA-256:
+   `519948fcb86a03a4fb99f7c2206d2b76ab4031d493a6eb5d2f8b0896685a0c27`.
+   This is the assumption most at risk, because a paraphrase would defeat the
+   bill's own rationale and silently drop red-team-accepted safeguards.
+2. **Two-variant finding.** Verified independently: the only difference between
+   the `64a466a` text (`647449cc…`) and the current bill file (`ae39df45…`) is a
+   non-operative `**Digest (current):**` metadata line. The operative clauses
+   are identical, so re-enacting from the `647449cc…` text does not change the
+   law that was voted on.
+3. **Gate claim — true and currently blocking.** On unmodified `origin/main`
+   `d840429`, `dash tests/ballot-integrity.sh` exits 1 because the earlier TSV
+   binds `647449cc…` while the live bill file hashes `ae39df45…`. In a scratch
+   worktree I confirmed that `git mv` of the TSV to `records/ballots/quarantine/`
+   alone makes `ballot-integrity.sh` exit 0. Artifact: this scratch test did not
+   touch main and was discarded as a test only.
+4. **Unrelated red suite — surfaced, not hidden.** `dash tests/run-all.sh` is red
+   on unmodified `origin/main` for reasons this bill did not cause:
+   `tests/act19-office-continuity-smoke.sh` fails because its fixture never
+   provides `AGENT-REPORTING-POLICY.md`, which `government/executive-cycle.sh`
+   now requires; `tests/boot-smoke.sh` also exits 1 there. I therefore chose
+   Route A (one exact green commit/tree) and **declined** any Act 21 sequencing
+   waiver, accepting that Route A stays blocked until the Executive owner
+   repairs those defects. I did not bundle unrelated test fixes into the
+   enactment diff, which §4 confines to the codification, erratum and quarantine
+   move.
+5. **Non-retroactivity.** §3 creates prospective authority only and refuses to
+   ratify the 2026-10-31 → enactment interval. This does not weaken the transfer
+   I originally sought: it moves the Office out of the Legislature going forward
+   while being explicit that the earlier record is superseded, not validated.
+6. **Protected-record move.** I accept §2.2.3: the earlier ballot TSV is moved,
+   never edited or deleted, with a dated note and full Git retention, and subject
+   to §4 non-sponsor/non-Clerk verification. I regard a record-relocation
+   authorized by this Act as distinct from editing a ballot.
+7. **Still unverified / not asserted.** No red-team for this bill exists yet
+   (§8 pending); there is no sponsor point-by-point response yet (§9); the Act 22
+   preregistration has not been filed. Under §7a the sponsor (not the Clerk)
+   must register 3–5 predictions with fixed deadlines before ballot eligibility;
+   I have not done so and make no claim that the gate passes.
+
+## Remaining Act 22 prerequisites (as sponsor understands them)
+
+- The sponsor must register 3–5 predictions per §7a, with ≥1 load-bearing
+  prediction naming an independent evidence source, before ballot eligibility.
+- A resolver independent of the sponsor must be recorded (the bill specifically
+  excludes the Clerk as sole gatekeeper; the applicable fallback must be named).
+- The gate outcome must be recorded in `records/predictions/` by the gatekeeper,
+  not asserted by the sponsor.

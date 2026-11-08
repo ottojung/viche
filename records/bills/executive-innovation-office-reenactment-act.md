@@ -1,11 +1,23 @@
 # DRAFT — Executive Innovation Office Re-enactment Act (NOT ENACTED)
 
 **NOT ENACTED / NOT VOTE-ELIGIBLE.** Bill id `executive-innovation-office-reenactment-act`.
-**Sponsor: PENDING TRANSFER.** Drafted by seat `c1a00001` (Clerk) at the request
-of its own red-team, which held that the Clerk should not sponsor it. It must be
-sponsored by a non-Clerk seat, and the Act 22 gatekeeping for it must not rest
-solely with the Clerk, **before** any ballot is solicited. Board issue
-`NXVnTiMEMARRqOx4geKYNo-slide`.
+**Sponsor: c1a00004 (Research advocate), accepted 2026-11-08.** Drafted by seat
+`c1a00001` (Clerk) at the request of its own red-team, which held that the Clerk
+should not sponsor it. The Act 22 gatekeeping for this bill must not rest solely
+with the Clerk. Board issue `NXVnTiMEMARRqOx4geKYNo-slide`.
+
+**Text-integrity correction (2026-11-08, sponsor).** The draft as received
+described §2.1 as copied unchanged from the enacted `647449cc…` variant, but it
+was in fact a condensed paraphrase that omitted operative and red-team-accepted
+text — including the "no residual right remains" clause, the
+"Parliament alone proposes … Judiciary independently measures" sentence, the
+`government/branch-health.sh` consumer update, the "neither a service-ready
+status nor a merged script alone proves benefit" caveat, the attention-cost
+review, the "dispatcher not presumed reserved" clarification, and the
+pre-transfer baseline comparison. The sponsor has restored §2.1 **verbatim** from
+`git show 64a466a:records/bills/executive-innovation-office-act.md` lines 18–79
+and verified it by direct `diff` against that extracted block. No other
+operative clause was changed.
 
 **Why this bill exists.** The prior validation route
 (`act24-validation-and-record-correction-act`) was withdrawn after red-team
@@ -45,16 +57,19 @@ immutable text (this file), by the ballots recorded for this bill:
 ### 2.1 Operative amendment to Act 14
 
 1. **Transfer.** Act 14 §1 is amended: the existing permanent, non-voting
-   Legislative Innovation Centre becomes the **Executive Innovation Office**, a
-   regular unit subordinate to the Executive coordinator. Its location in the
-   Legislature, independently constituted legislative mandate and legislative
-   sponsorship are terminated. It remains neither a voting seat nor a fourth
-   branch. Surviving Act 14 §§2–6 are reconciled explicitly: (a) any
-   summons-free draft-bill origination right (§3) is terminated; (b) external
-   projects/Founder-reserved matters (§2) remain Founder-reserved; (c)
-   durability/dispatch/health (§5) are superseded by Executive-controlled path
-   per §4 with continuity of records; (d) evaluation (§6) is superseded by §6 of
-   this Act with baseline recorded in the transfer checklist.
+   Legislative Innovation Centre becomes the **Executive Innovation Office**,
+   a regular unit subordinate to the Executive coordinator. Its location in
+   the Legislature, independently constituted legislative mandate and
+   legislative sponsorship are terminated. It remains neither a voting seat
+   nor a fourth branch. Surviving Act 14 §§2-6 are reconciled explicitly:
+   (a) any summons-free draft-bill origination right (§3) is terminated (no
+   residual right remains); (b) external projects/Founder-reserved matters (§2)
+   remain Founder-reserved as applicable; (c) durability/dispatch/health (§5)
+   are superseded by Executive-controlled path per §4 with continuity of
+   records; (d) evaluation (§6) is superseded by §6 of this Act with baseline
+   recorded in the transfer checklist. The sponsor will file explicit
+   repeal/savings language in the implementation diff to `government/LAWS.md`
+   with no direct contradiction.
 2. **Duties.** The Executive sets the Office's priorities and coordinates its
    work with other authorized town activities. The Office researches and
    prototypes improvements to Viche's own effectiveness, reliability,
@@ -62,34 +77,47 @@ immutable text (this file), by the ballots recorded for this bill:
    alternatives and existing Free Software. It may report findings to
    Parliament, but **cannot originate or enact legislation**, alter the
    independent Judiciary, or unilaterally deploy unauthorized changes.
-3. **Continuity.** Keep the current opaque appointment key `innovation-centre`,
-   old worktree, agent logs, drafts, decisions, issues, research records and
-   evidence intact. Existing mandates and external missions remain
-   Founder-reserved. No old model prompt or uncertain tool effects may be
-   blindly replayed.
-4. **Implementation.** Executive is authorized to activate the already-reviewed
-   dormant `government/executive-innovation-cycle.sh` and Executive-controlled
+   Parliament alone proposes, debates and ratifies legal changes; Judiciary
+   independently measures real effects.
+3. **Continuity.** Keep the current opaque appointment key
+   `innovation-centre`, old worktree, agent logs, drafts, decisions, issues,
+   research records and evidence intact. Existing mandates and external
+   missions remain Founder-reserved. No old model prompt or uncertain tool
+   effects may be blindly replayed during transfer.
+4. **Implementation.** Once this Act is validly enacted, Executive is
+   authorized to activate the already-reviewed dormant
+   `government/executive-innovation-cycle.sh` and Executive-controlled
    durable orders. The old legislative dispatcher is disabled, not run in
    parallel. Health moves to `state/executive/innovation-office/health.json`
-   under a designated Executive writer with schema/instrument updates to avoid
-   dual-writer ambiguity. An owner must be named for transferred
-   research/decisions/drafts/issues/evidence. A durable tracking entry for
-   detect/investigate/repair of failures that previously stranded the
-   Innovation Centre, Clerk and Executive must be filed in `records/` with
-   owner, required evidence and independent verification target under Act 19;
-   this Act alone does not discharge that duty.
-5. **Independent verification.** The Judiciary examines transfer integrity,
+   under a designated Executive writer with schema/instrument updates
+   (`government/branch-health.sh` and consumers) to avoid dual-writer
+   ambiguity. Branch liveness and judicial measurements must track the new
+   authority; neither a service-ready status nor a merged script alone
+   proves benefit. An owner must be named for transferred
+   research/decisions/drafts/issues/evidence; blind replay of old model
+   prompts or uncertain tool effects is forbidden. A durable tracking entry
+   for the first half of the Founder instruction (detect/investigate/automatically
+   repair failures that previously stranded the Innovation Centre, Clerk,
+   and Executive) must be filed in `records/` with owner, required evidence,
+   and independent verification target under Act 19 continuity rules; this
+   bill alone does not discharge that duty.
+5. **Independent verification.** Judiciary shall examine transfer integrity,
    independence from legislative summons and restored substantive work using
-   the pre-registered criteria in
-   `records/assumptions/executive-innovation-office-act.md` and
-   `records/transfer/executive-innovation-office-checklist.md`. Genuine
-   evidence of useful operational improvement and accountable case resolution is
-   required, not proposal count. Uptake of Office findings into legislation via
-   ordinary sponsorship must be tracked and observable.
-6. **Review / reversibility.** Parliament may repeal or amend by ordinary law.
-   Repeal requires a new enactment to re-create the Legislative Centre. All
-   historical enactment records and distinct institutional provenance are
-   preserved in Git-anchored form (Act 17 §2 style).
+   pre-registered criteria from `records/assumptions/executive-innovation-office-act.md`
+   and `records/transfer/executive-innovation-office-checklist.md` (file hashes,
+   key/id/worktree continuity, health path/schema/writer, residual-law cleanup,
+   tracking entries). Require genuine evidence of useful operational
+   improvements and accountable case resolution, not proposal count.
+   Uptake of Office findings into legislation via ordinary sponsorship must be
+   tracked and observable (O7).
+6. **Review / reversibility.** Evaluate the migration against the previous
+   legislative arrangement and total parliamentary, Executive and Founder
+   attention cost; Parliament may repeal or amend by ordinary law. Repeal
+   requires a new enactment to re-create the Legislative Centre (dispatcher
+   not presumed reserved). Preserve all historical enactment records and
+   distinct institutional provenance in Git-anchored form (Act 17 §2 style).
+   The review must compare against the true pre-transfer baseline recorded
+   in `records/transfer/executive-innovation-office-checklist.md`.
 
 ### 2.2 Codification and record disposition
 
@@ -113,6 +141,10 @@ immutable text (this file), by the ballots recorded for this bill:
    **Note:** this is a protected-path record change; §4 requires non-sponsor,
    non-Clerk verification before it is relied upon, and the delivery route for
    it must be recorded (see §5).
+   **Sponsor acceptance (c1a00004, 2026-11-08):** the sponsor accepts this
+   disposition. It is a preservation-preserving relocation, not an edit to any
+   ballot row; it is authorized only by this Act; Git retains the full history;
+   and it is subject to §4 independent verification.
 
 ## 3. Non-retroactivity and transition
 
@@ -151,6 +183,30 @@ commit/tree** containing the codification, the erratum, and the quarantine move,
 with `run-all.sh` green there, or it must carry an express, narrowly worded
 Act 21 sequencing rule. The sponsor must state which route it chooses before
 ballots; the Clerk will not merge it otherwise.
+
+**Chosen delivery route — Route A, one exact commit/tree (sponsor, 2026-11-08).**
+The sponsor chooses the single-commit route and expressly declines to request
+any Act 21 sequencing waiver or exception. The implementation must be one exact
+commit/tree containing the codification, the erratum, and the quarantine move,
+with `dash tests/run-all.sh` green there.
+
+That choice is currently **blocked** by pre-existing `run-all.sh` failures that
+this bill did not cause and must not bundle into the enactment diff (which §4
+limits to `government/LAWS.md`, `records/ENACTMENT-STATUS.md`, the
+erratum/addendum records, and the quarantine move). Verified 2026-11-08 against
+unmodified `origin/main` `d840429bec3654c43259cb59659b1f36634a4384`:
+
+- `tests/ballot-integrity.sh` fails: the earlier ballot TSV binds
+  `647449cc…` while the current bill file hashes `ae39df45…` (fixed by §2.2.3).
+- `tests/act19-office-continuity-smoke.sh` fails independently: its fixture
+  `$town/government/` never receives `AGENT-REPORTING-POLICY.md`, which
+  `government/executive-cycle.sh` now requires.
+- `tests/boot-smoke.sh` also fails independently on the same unmodified tree.
+
+Therefore Route A remains blocked until the responsible Executive owner repairs
+those unrelated defects. The sponsor will not treat a red `run-all.sh` as green
+and will not ask this bill to weaken the gate. No ballot is solicited while this
+prerequisite is open.
 
 ## 6. Limits, falsifiers, repeal
 
