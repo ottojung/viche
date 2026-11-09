@@ -27,8 +27,40 @@ fi
 # a pre-read failure; the open handoff remains and the next successful run
 # honours it.
 handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
-status=$(antonina agent status --id "$id" --json)
-current=$(printf "%s\n" "$status" | jq -r ".state")
+# A transient backend failure can make Antonina return 'unknown' or an
+# unparseable status. Re-read a bounded number of times before deciding, and on
+# exhaustion fail with a distinct, actionable diagnostic. 'unknown' is NEVER
+# treated as idle: dispatching to an agent whose state is unknown could
+# duplicate work on an agent that is actually running.
+state_retries=${VICHE_AGENT_STATE_RETRIES:-3}
+state_delay=${VICHE_AGENT_STATE_DELAY:-1}
+case "$state_retries" in ''|*[!0-9]*|0) state_retries=1 ;; esac
+case "$state_delay" in ''|*[!0-9]*) state_delay=1 ;; esac
+attempt=1
+reason=
+while :; do
+  if ! status=$(antonina agent status --id "$id" --json 2>/dev/null); then
+    current=
+    reason="status query failed"
+  else
+    current=$(printf '%s\n' "$status" | jq -r '.state // empty' 2>/dev/null) || current=
+    [ -n "$current" ] || reason="status has no parseable .state field"
+  fi
+  case "$current" in
+    running|failed|idle|clearexit) reason=; break ;;
+  esac
+  [ -n "$reason" ] || reason="unrecognized agent state '$current'"
+  [ "$attempt" -lt "$state_retries" ] || break
+  attempt=$((attempt+1))
+  sleep "$state_delay"
+done
+if [ -n "$reason" ]; then
+  raw=$(printf '%s' "${status:-}" | tr '\n' ' ' | cut -c1-200)
+  echo "Viche: executive agent '$id' has no usable state after $attempt attempt(s): $reason" >&2
+  echo "Viche: raw_status=$raw" >&2
+  echo "Viche: refusing to dispatch on an unknown state; re-read later. Check 'antonina agent status --id $id --json'; if the agent no longer exists, re-resolve with 'appointments.sh ensure executive'." >&2
+  exit 1
+fi
 case "$current" in
   running) exit 0 ;;
   failed)
