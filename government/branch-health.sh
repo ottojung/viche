@@ -84,10 +84,25 @@ for observation in "outcomes:$state/institutional-outcomes/latest.json" "institu
     signals="${signals}${signals:+,}${evidence_name}_stale"
   fi
 done
-# Unreviewed agent impediments are unresolved adverse evidence.
+# Unreviewed agent impediments are unresolved adverse evidence. A reviewer's
+# own disposition or addendum is an answer, not a pending question, and must
+# not hold the signal red forever. This is a deterministic filename convention
+# because the mailbox has no metadata sidecar; it does not remove or rewrite
+# any preserved report.
 mailbox_dir="$state/oversight/judiciary-mailbox/inbox"
-if [ -d "$mailbox_dir" ] &&
-   [ -n "$(find "$mailbox_dir" -maxdepth 1 -type f -name '*.md' -print -quit 2>/dev/null)" ]; then
+pending_mailbox=no
+if [ -d "$mailbox_dir" ]; then
+  for mailbox_file in "$mailbox_dir"/*.md; do
+    [ -f "$mailbox_file" ] || continue
+    mailbox_name=$(basename "$mailbox_file")
+    case "$mailbox_name" in
+      *disposition*|*addendum*) continue ;;
+    esac
+    pending_mailbox=yes
+    break
+  done
+fi
+if [ "$pending_mailbox" = yes ]; then
   signals="${signals}${signals:+,}judiciary_mailbox_pending"
 fi
 printf '%s\t%s\n' "$now" "${signals:-clear}" >> "$root/observations.tsv"

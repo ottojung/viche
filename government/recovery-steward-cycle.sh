@@ -15,8 +15,11 @@ if [ ! -f "$cwd/.git" ] && [ ! -d "$cwd/.git" ]; then
   git -C "$town" worktree add --detach "$cwd" HEAD
 fi
 id=$(/bin/sh "$town/government/appointments.sh" ensure recovery-steward)
-meta=$(antonina agent status --id "$id" --json)
-mode=$(printf '%s\n' "$meta" | jq -er '.state')
+. "$town/government/agent-state.sh"
+agent_state_probe "$id"
+meta=$AGENT_STATE_META
+mode=$AGENT_STATE
+[ -n "$meta" ] || meta='{}'
 fresh=no
 case "$mode" in
   running) exit 0 ;;
@@ -27,7 +30,9 @@ case "$mode" in
     id=$(/bin/sh "$town/government/appointments.sh" replace recovery-steward "$id" recovery-steward terminal_new_session 'Fresh recovery investigator after terminal failure; no prompt or tool replay')
     fresh=yes ;;
   idle|clearexit) : ;;
-  *) echo "Unrecognized recovery runner state: $mode" >&2; exit 1 ;;
+  *) echo "Recovery steward state '$mode' unresolved after $AGENT_STATE_ATTEMPTS probe(s): $AGENT_STATE_REASON" >&2
+     echo "Viche: raw_status=$AGENT_STATE_RAW" >&2
+     exit 1 ;;
 esac
 now=$(date +%s)
 last=0
@@ -58,7 +63,11 @@ EOF
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
-antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1
+if ! antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1; then
+  echo "Recovery steward dispatch failed for agent $id" >&2
+  dispatch_failure_log "$root/dispatch.log"
+  exit 1
+fi
 printf '%s\n' "$now" > "$root/last-dispatch"
 printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$id" "$fresh" >> "$root/dispatches.tsv"
 echo "Recovery steward dispatched: $id"

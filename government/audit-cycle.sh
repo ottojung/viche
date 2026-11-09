@@ -16,9 +16,17 @@ id=$(/bin/sh "$town/government/appointments.sh" ensure judiciary)
 [ -s "$charter" ] && [ -d "$seats/branches/judiciary" ] || exit 1
 [ -f "$root/observations.tsv" ] || exit 0
 # The Judiciary has its own durable officer; parliamentary summons never gate it.
-meta=$(antonina agent status --id "$id" --json)
-kind=$(printf '%s\n' "$meta" | jq -r '.state')
-case "$kind" in running) exit 0;; failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1;; idle|clearexit) :;; *) exit 1;; esac
+. "$town/government/agent-state.sh"
+agent_state_probe "$id"
+kind=$AGENT_STATE
+case "$kind" in
+  running) exit 0 ;;
+  failed) echo 'Judiciary: failed agent, independent recovery required' >&2; exit 1 ;;
+  idle|clearexit) : ;;
+  *) echo "Judiciary state '$kind' unresolved after $AGENT_STATE_ATTEMPTS probe(s): $AGENT_STATE_REASON" >&2
+     echo "Viche: raw_status=$AGENT_STATE_RAW" >&2
+     exit 1 ;;
+esac
 
 # Investigate an incident at least every half hour; also run independent
 # broad audits at least once every six hours when there is no incident.

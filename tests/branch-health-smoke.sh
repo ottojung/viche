@@ -25,6 +25,17 @@ jq -e '.signals|index("judiciary_mailbox_pending")' "$scratch/branches/incident.
 VICHE_CASE_NOW=1000 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.owner=="judiciary" and .state=="open"' "$scratch/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
 rm "$scratch/oversight/judiciary-mailbox/inbox/test.md"
+# A mailbox holding only the reviewer's own disposition is not a pending
+# impediment and must not hold the signal red indefinitely.
+printf 'resolved\n' > "$scratch/oversight/judiciary-mailbox/inbox/20261109T000000Z-judiciary-disposition-test.md"
+sh "$repo/government/branch-health.sh"
+[ ! -e "$scratch/branches/incident.json" ]
+# An undisposed impediment report still raises the signal.
+printf 'blocked\n' > "$scratch/oversight/judiciary-mailbox/inbox/20261109T000001Z-report-test.md"
+sh "$repo/government/branch-health.sh" >/dev/null 2>&1 && exit 1
+jq -e '.signals|index("judiciary_mailbox_pending")' "$scratch/branches/incident.json" >/dev/null
+rm "$scratch/oversight/judiciary-mailbox/inbox/20261109T000000Z-judiciary-disposition-test.md" \
+   "$scratch/oversight/judiciary-mailbox/inbox/20261109T000001Z-report-test.md"
 sh "$repo/government/branch-health.sh"
 # Remove the outcome evidence without changing agent readiness: fail closed.
 rm "$scratch/institutional-outcomes/latest.json"
