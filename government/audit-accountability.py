@@ -18,8 +18,10 @@ Act 27 §3 legacy marker schema (append-only row in a correction trail, e.g.
                                   "rows_unmodified": true,
                                   "no_identity": true}}}
 
-A row's hash is SHA-256 over its JSON text without the trailing newline, as
-committed at the cited introducing commit.  A marker is effective only for the
+A row's hash is SHA-256 over the row's bytes as committed at the cited
+introducing commit.  The Act does not fix whether the single trailing newline
+is included; the review procedure requires the reviewer to record the
+convention, and this checker accepts either (both bind the same line).  A marker is effective only for the
 two case ids named in Act 27 §3(1), only when it is the single marker in the
 committed trail, lists every correction row that existed when the trail was
 first committed (and no later row) exactly once by position, and carries an
@@ -87,8 +89,16 @@ def _git_show(town, rev, rel):
                           capture_output=True, text=True, timeout=15)
 
 
-def _line_sha256(line):
-    return hashlib.sha256(line.encode("utf-8")).hexdigest()
+def _line_sha256s(line):
+    """The two defensible readings of "the row's bytes": with or without the
+    single trailing newline that separates it from the next row.  Act 27 §3(2)
+    does not fix the convention and the review procedure explicitly asks the
+    reviewer to record which was used, so both bind the same line content and
+    only the terminator differs.
+    """
+    text = line.encode("utf-8")
+    return {hashlib.sha256(text).hexdigest(),
+            hashlib.sha256(text + b"\n").hexdigest()}
 
 
 def effective_legacy_marker(case_id):
@@ -189,9 +199,9 @@ def effective_legacy_marker(case_id):
             return None
         anchor_line = anchor_lines[position - 1]
         head_line = lines[position - 1]
-        if _line_sha256(anchor_line) != entry["sha256"]:
+        if entry["sha256"] not in _line_sha256s(anchor_line):
             return None
-        if _line_sha256(head_line) != entry["sha256"]:
+        if entry["sha256"] not in _line_sha256s(head_line):
             return None
         row = parsed[position - 1]
         if row.get("correction") is not True:

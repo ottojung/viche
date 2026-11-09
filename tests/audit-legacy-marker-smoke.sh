@@ -96,6 +96,8 @@ for position, line in enumerate(lines, 1):
     if row.get("correction") is not True:
         continue
     digest = hashlib.sha256(line.encode("utf-8")).hexdigest()
+    if mode == "newline":
+        digest = hashlib.sha256((line + "\n").encode("utf-8")).hexdigest()
     if mode == "badhash" and first:
         digest = "0" * 64
     first = False
@@ -177,6 +179,32 @@ expect_refused 'second same-cycle correction' \
     file_correction "$CASE_LEGACY" "$TOKEN1" finding not_assigned \
     "a second same-cycle attempt" "second attempt in the same cycle"
 echo 'legacy marker (ii): second same-cycle correction refused'
+# (i-b) The review procedure requires the reviewer to record whether the hash
+# covers the trailing newline. Both conventions bind the same row and must be
+# accepted.
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+commit_town 'legacy trail for newline-convention fixture'
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" newline
+commit_town 'append a marker whose cited hashes include the trailing newline'
+file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence under the newline hash convention" "materially stronger replay" >/dev/null
+python3 "$CTRL" report --case "$CASE_LEGACY" --confirm \
+    --evidence "procedural confirmation of the newline-convention correction" >/dev/null
+commit_town 'anchor the newline-convention correction and confirmation'
+python3 "$CTRL" check > "$scratch/check"
+if jq -e --arg c "$CASE_LEGACY" \
+    '.signals[]|select(.type=="correction_not_effective" and .case_id==$c)' \
+    "$scratch/check" >/dev/null; then
+    echo "with-newline marker convention was not accepted" >&2
+    exit 1
+fi
+echo 'legacy marker (i-b): with-newline hash convention accepted on the same rows'
+
 
 # (iii) A hash mismatch against the introducing commit makes the marker ineffective.
 fresh
