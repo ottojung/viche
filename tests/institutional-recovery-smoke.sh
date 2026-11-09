@@ -83,6 +83,14 @@ printf '{"id":"judiciary_mailbox_pending:1","signal":"judiciary_mailbox_pending"
 VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.owner=="judiciary" and .state=="open"' "$d/state/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
 
+# A JSON-list evidence file beside case objects must be preserved without
+# crashing either reconcile or report.
+printf '[{"case":"evidence","note":"list"}]\n' > "$d/state/institutional-cases/addendum-fixture.json"
+addendum_sum=$(sha256sum "$d/state/institutional-cases/addendum-fixture.json" | cut -d ' ' -f1)
+VICHE_CASE_NOW=1600 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+VICHE_CASE_NOW=1600 python3 "$repo/government/institutional-cases.py" report >/dev/null
+test "$(sha256sum "$d/state/institutional-cases/addendum-fixture.json" | cut -d ' ' -f1)" = "$addendum_sum"
+
 # After a real enactment, Executive unit runs on preserved worktree, not a
 # parliamentary summons. Mock only the branch-bootstrap and deployment.
 printf '## Act 23 — Executive Innovation Office Act (enacted 2026-10-25 by recorded vote)\n' > "$d/town/government/LAWS.md"

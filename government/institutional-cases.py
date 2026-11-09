@@ -128,8 +128,9 @@ def reconcile():
         elif not case:
             continue
         atomic(path, case)
-    open_cases = [read(p) for p in sorted(STORE.glob("*.json"))]
-    active = [x for x in open_cases if x.get("state") == "open"]
+    records = [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+               if isinstance(x, dict) and x.get("id")]
+    active = [x for x in records if x.get("state") == "open"]
     atomic(STORE / "index.json", {
         "observed_at": now, "active": [x["id"] for x in active],
         "count": len(active), "caveat": "operational health, not proof of delivery",
@@ -138,8 +139,8 @@ def reconcile():
 
 
 def report():
-    return [read(p) for p in sorted(STORE.glob("*.json"))
-            if p.name != "index.json" and read(p).get("state") == "open"]
+    return [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+            if isinstance(x, dict) and x.get("id") and x.get("state") == "open"]
 
 
 if __name__ == "__main__":
