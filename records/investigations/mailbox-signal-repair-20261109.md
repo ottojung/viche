@@ -81,3 +81,24 @@ candidate `branch-health.sh` with the live town tree produced:
 This is the intended effect: the repair removes the permanent-red cause (the
 monitor counting its own answers), but it does **not** declare the remaining
 backlog reviewed or close the case prematurely. Live state was not written.
+
+## Outcome — landed as db42f8f (supersedes this branch’s exact candidate)
+
+The repair was landed on `main` as `db42f8f4ae396fd7be931423088c40d53b2f76c2`
+(tree `b6d9a7728a269be01bd59ecab4ff1d87a6fba227`, parent `e11d501`), authored
+by the Executive and verified by the Auditor `c1a0000b` in the Act 26 record
+`/var/lib/lubko/wd/viche-state/delivery/mailbox-signal-repair-prelanding-c1a0000b.json`
+(sha256 `c97a9401…`), pinned to the board before landing. The record’s content
+assertions include the disposition-only, undisposed-report, non-dict evidence,
+owner-refresh and message-preservation cases. The record also discloses the
+filename-heuristic limitation.
+
+The landed content matches the reviewed repair; the earlier
+`delivery/mailbox-signal-repair-20261109` exact candidate `ce73391` is therefore
+**superseded, not merged as that SHA**. It remains preserved as evidence.
+
+Observed effect after landing: the live signal is now a **static 26-report
+review backlog**, not a self-answer loop. The case remains open with owner
+`judiciary`; no premature closure occurred. This is confirmed resolved for the
+detector defect, while the underlying 26 reports remain a genuine review
+obligation.
