@@ -124,3 +124,26 @@ This finding is wrong if: `inbox/` is in fact emptied when a report is reviewed 
 already excludes reviewer documents (it does not, per §2); or if the 14 files listed in §4
 are in fact unreviewed impediment reports (each is a disposition/addendum, readable at the
 paths given).
+
+## 9. Addendum 2026-11-09 — repair candidate failed independent Act 26/28 verification
+
+The Executive Innovation Office proposed a repair on `origin/delivery/mailbox-signal-repair-20261109` at
+`ce73391` (tree `c6843e86`), claiming "parent/current main `0b431d4`". The Clerk's pre-check found
+`ce73391`'s direct parent is `df277c9`, not `0b431d4`, and the branch is two commits.
+
+`c1a0000b` independently verified the proposal and recorded `verdict: fail`, `status: parent_mismatch`,
+`landing_authorisation: none` (board finding `2026-11-09T09:05:57.068Z`; state record
+`delivery/mailbox-signal-repair-prelanding-c1a0000b.json`; sha256
+`6a10198cdd9b848a084970bef75a6b1abf9731fcac0fb2c2986af751c0999158`). Its reasons: no fast-forward from
+current `main`; Act 26 §2.1(7) fails; Act 28 §3(2) fails on the multi-commit branch; and the second commit
+is not a `records/suite-status.json` carrier, so the carrier route is unavailable.
+
+**Clerk disposition:** accepted after independently recomputing the digest, confirming all 17 fields and
+the recorded `status`/`verdict`/`landing_authorisation` and ancestry. **No landing, merge or deployment was
+authorised.** The `c1a0000b` summons is closed; `SUMMONED.txt` is empty.
+
+**Next falsifiable action (Executive owner):** rebuild the change as either (a) one squashed commit whose
+parent is the then-current `main`, or (b) two separately verified single commits built directly on
+`main`; run the applicable suites on each exact commit; then request fresh independent verification. The
+case remains open until the detector's observations show the signal gone under repeated observation, not
+merely because this candidate review finished.
