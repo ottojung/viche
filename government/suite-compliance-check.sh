@@ -59,12 +59,7 @@ def canonical_digest(record):
     body={key:value for key,value in record.items() if key!='sha256'}
     canonical=json.dumps(body,sort_keys=True,separators=(',',':'),ensure_ascii=False)
     return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
-def record_time(record):
-    """The reviewer's ISO time, falling back to the board pin's server time."""
-    value=record.get('created_at')
-    if not isinstance(value,str) or not value.strip():
-        pin=record.get('board_pin')
-        value=pin.get('server_timestamp') if isinstance(pin,dict) else None
+def iso_epoch(value):
     if not isinstance(value,str) or not value.strip():
         return None
     try:
@@ -74,15 +69,43 @@ def record_time(record):
     if parsed.tzinfo is None:
         parsed=parsed.replace(tzinfo=datetime.timezone.utc)
     return parsed.timestamp()
+def record_time(record):
+    """Act 26 §2.1: created_at must not be later than the board pin's time.
+
+    The pin is the chronology evidence; a created_at after the pin is
+    backdated or inconsistent, and a record without a pin is incomplete.
+    """
+    pin=record.get('board_pin')
+    if not isinstance(pin,dict) or not isinstance(pin.get('message_id'),str) or not pin['message_id'].strip():
+        return None
+    pin_time=iso_epoch(pin.get('server_timestamp'))
+    created=iso_epoch(record.get('created_at'))
+    if pin_time is None or created is None or created > pin_time:
+        return None
+    return pin_time
 def act26_record(path,data):
     """Return the record's epoch time only if it is a complete Act 26 record."""
     if not isinstance(data,dict) or data.get('schema')!='act26-prelanding-record/v1':
         return None
-    for field in ('commit','tree','parent'):
+    for field in ('commit','tree','parent','reviewer','independence_basis',
+                  'phase','bill_id','landing_authorisation'):
         value=data.get(field)
-        if not isinstance(value,str) or not value:
+        if not isinstance(value,str) or not value.strip():
             return None
-    if data.get('verdict')!='pass' or not data.get('landing_authorisation'):
+    if data.get('verdict')!='pass':
+        return None
+    if data.get('status') in ('parent_mismatch','fail','failed'):
+        return None
+    commands=data.get('commands')
+    if not isinstance(commands,list) or not commands:
+        return None
+    for entry in commands:
+        if (not isinstance(entry,dict)
+                or not isinstance(entry.get('command'),str)
+                or not entry['command'].strip()
+                or type(entry.get('exit')) is not int):
+            return None
+    if not isinstance(data.get('main_at_verification'),str) or not data['main_at_verification'].strip():
         return None
     timestamp=record_time(data)
     if timestamp is None:
@@ -93,7 +116,7 @@ def act26_record(path,data):
     for assertion in assertions:
         if not isinstance(assertion,dict):
             return None
-        for field in ('expected','actual'):
+        for field in ('expected','actual','basis'):
             value=assertion.get(field)
             if not isinstance(value,str) or not value.strip():
                 return None
@@ -244,9 +267,12 @@ try:
         # Act 26 chronology: the next first-parent commit bounds the landing.
         upper=commit_times.get(commits[i+1]) if i+1 < len(commits) else None
         act26_greens=[]
+        parent=commits[i-1] if i>0 else None
         if upper is not None:
             act26_greens=[(name,r) for name,r,stamp in act26_records
                           if r.get('commit')==commit and r.get('tree')==tree
+                          and r.get('parent')==parent
+                          and r.get('main_at_verification')==parent
                           and stamp < upper]
         if reds:
             status='violation'; reason='red suite recorded for exact commit/tree'

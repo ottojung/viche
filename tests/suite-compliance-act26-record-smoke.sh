@@ -49,12 +49,25 @@ record = {
     'status': 'verified',
     'landing_authorisation': 'fast_forward_main_to_this_exact_commit_only',
     'created_at': stamp.strftime('%Y-%m-%dT%H:%M:%SZ'),
-    'board_pin': {'server_timestamp': stamp.strftime('%Y-%m-%dT%H:%M:%SZ')},
+    'board_pin': {'author': 'c1-test-reviewer',
+                  'message_id': 'sha256:synthetic-pin',
+                  'server_timestamp': stamp.strftime('%Y-%m-%dT%H:%M:%SZ')},
 }
 if mode == 'noassert':
     del record['content_assertions']
 if mode == 'noverdict':
     del record['verdict']
+if mode == 'noreviewer':
+    del record['reviewer']
+if mode == 'nopin':
+    del record['board_pin']
+if mode == 'nocmd':
+    del record['commands']
+if mode == 'nobasis':
+    del record['content_assertions'][0]['basis']
+if mode == 'backdated':
+    record['created_at'] = stamp.strftime('%Y-%m-%dT%H:%M:%SZ')
+    record['board_pin']['server_timestamp'] = '2020-01-01T00:00:00Z' 
 if mode != 'nodigest':
     body = {k: v for k, v in record.items() if k != 'sha256'}
     canonical = json.dumps(body, sort_keys=True, separators=(',', ':'),
@@ -83,7 +96,7 @@ printf 'boundary one\n' > "$tmp/README.md"
 git -C "$tmp" add .
 commit_at 1700000200 'boundary after valid change'
 write_act26 "$VICHE_STATE_ROOT/delivery/act26-valid.json" \
-    "$c1" "$c1_tree" 1700000150 "$(git -C "$tmp" rev-parse HEAD~1)" valid
+    "$c1" "$c1_tree" 1700000150 "$(git -C "$tmp" rev-parse "$c1^")" valid
 
 # C2: a record whose tree does not match the change is not evidence.
 printf 'tree mismatch\n' > "$tmp/tests/tree-mismatch"
@@ -138,6 +151,19 @@ write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-verdict.json" \
     "$c4" "$c4_tree" 1700000750 "$c4_parent" noverdict
 write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-digest.json" \
     "$c4" "$c4_tree" 1700000750 "$c4_parent" nodigest
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-reviewer.json" \
+    "$c4" "$c4_tree" 1700000750 "$c4_parent" noreviewer
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-pin.json" \
+    "$c4" "$c4_tree" 1700000750 "$c4_parent" nopin
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-commands.json" \
+    "$c4" "$c4_tree" 1700000750 "$c4_parent" nocmd
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-no-basis.json" \
+    "$c4" "$c4_tree" 1700000750 "$c4_parent" nobasis
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-backdated.json" \
+    "$c4" "$c4_tree" 1700000750 "$c4_parent" backdated
+wrong_parent=$(git -C "$tmp" rev-parse "$c4_parent^")
+write_act26 "$VICHE_STATE_ROOT/delivery/act26-wrong-parent.json" \
+    "$c4" "$c4_tree" 1700000750 "$wrong_parent" valid
 
 # C5: the existing reviewed-merge receipt route must remain a positive control.
 printf 'receipt change\n' > "$tmp/tests/receipt-change"
@@ -207,4 +233,4 @@ assert x["main_red_episodes"] == 0, x
 assert x["compliant"] == 2, x
 '
 
-echo 'suite-compliance-act26-record-smoke: passed (valid Act 26 record compliant with source; tree mismatch, late record and missing fields unreadable; receipt control green)'
+echo 'suite-compliance-act26-record-smoke: passed (valid Act 26 record compliant with source; tree mismatch, late/backdated record, missing required fields, missing pin/commands/basis and wrong parent unreadable; receipt control green)'
