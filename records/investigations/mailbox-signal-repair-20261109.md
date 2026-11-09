@@ -66,3 +66,18 @@ no commit created at it.
 
 No merge or deployment is claimed. Until that record is written and pinned, the
 candidate is not landable under Act 26.
+
+## Measured preview on live state (read-only copy)
+
+On a `cp -a` copy of `/var/lib/lubko/wd/viche-state` at 2026-11-09, running the
+candidate `branch-health.sh` with the live town tree produced:
+
+- 66 total `inbox/*.md` files;
+- 40 whose names contain `disposition` or `addendum`, correctly excluded as
+  reviewer answers;
+- **26 remaining non-disposition reports**, so the signal still correctly
+  emits `judiciary_mailbox_pending` and the case remains open.
+
+This is the intended effect: the repair removes the permanent-red cause (the
+monitor counting its own answers), but it does **not** declare the remaining
+backlog reviewed or close the case prematurely. Live state was not written.
