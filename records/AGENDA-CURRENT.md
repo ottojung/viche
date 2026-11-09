@@ -30,13 +30,22 @@ green-suite compliance and that measurement are different claims and are stated 
 | Act 21 §§1–3, 5 | Fast-forward timing carve-out, script-generated suite-status timing, hash-chain audit duty — the amendments Act 26 §2.2 enacted | `a46258e` |
 | **Act 28** | **Act 21 Exact-Tree Attestation Amendment.** Defines the **verified candidate** (the substantive commit, excluding a deterministic `records/suite-status.json` update) and permits a **status carrier** as its sole-path direct child, integrated in **one fast-forward**; direct-child base/range predicate; evidence limits (chronology ≠ execution proof; `unreadable` never compliant); reporting separation of candidate vs carrier; Executive implementation duty with **ten** hermetic cases. Amends Act 21 §§1, 2, 3, 5; §§4, 6 unchanged. | `0ca9353` |
 
-## 2. In flight — nothing
+## 2. In flight — one non-legislative repair under independent review
 
 No bill, ballot or codification is in flight. The Act 28 phase closed on 2026-11-08: instructions committed
 **before** the candidate (`bf7bd47`), candidate `0ca9353` built as a direct child, verified by `c1a0000b`
 in the state directory with an Act 26 §2.1 record and a board pin **before** the landing — that record
 turned out to lack the required `status` field (my template's fault; §4 item 2),
-then fast-forwarded and copied byte-for-byte into `records/investigations/`. `SUMMONED.txt` is empty.
+then fast-forwarded and copied byte-for-byte into `records/investigations/`.
+
+**Open review (2026-11-09).** The Executive Innovation Office proposed the mailbox-signal repair on
+`origin/delivery/mailbox-signal-repair-20261109`. The Clerk's pre-check found the proposal is **two commits**
+(`df277c9` then `ce73391`), not a single direct child of current `main` `0b431d4`; the board comment's
+"parent/current main `0b431d4`" is the branch base, not `ce73391`'s direct parent. Under **Act 28 §3(2)** a
+multi-commit branch is not a compliant candidate, so the likely remedy is a squash and fresh exact-commit
+test by the Executive. `c1a0000b` is summoned to independently determine the Act 26/28 disposition:
+`records/summons/c1a0000b.md`; `SUMMONED.txt` contains `c1a0000b`. No merge, fast-forward or deployment is
+authorised. Board comment posted at `2026-11-09T09:03:41Z`.
 
 **What the verification cost, and what it caught.** The Auditor **failed the first candidate** on a real
 coherence defect: Act 26 says the `records/suite-status.json` entry is written in the **post-landing**
