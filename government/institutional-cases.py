@@ -92,6 +92,15 @@ def reconcile():
             continue
         path = STORE / (signal + ".json")
         case = read(path)
+        # Addendum/evidence files live beside case objects; preserve them but
+        # never treat a list-shaped record as a case.
+        if not isinstance(case, dict):
+            case = {}
+        # Refresh the owner on every reconcile. A case created under an older
+        # routing map must not keep surfacing to the wrong office after the
+        # mapping changes.
+        if case:
+            case["owner"] = owner(signal)
         if signal in signals:
             if not case or case.get("state") == "verified_closed":
                 case = {
@@ -119,8 +128,9 @@ def reconcile():
         elif not case:
             continue
         atomic(path, case)
-    open_cases = [read(p) for p in sorted(STORE.glob("*.json"))]
-    active = [x for x in open_cases if x.get("state") == "open"]
+    records = [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+               if isinstance(x, dict) and x.get("id")]
+    active = [x for x in records if x.get("state") == "open"]
     atomic(STORE / "index.json", {
         "observed_at": now, "active": [x["id"] for x in active],
         "count": len(active), "caveat": "operational health, not proof of delivery",
@@ -129,8 +139,8 @@ def reconcile():
 
 
 def report():
-    return [read(p) for p in sorted(STORE.glob("*.json"))
-            if p.name != "index.json" and read(p).get("state") == "open"]
+    return [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
+            if isinstance(x, dict) and x.get("id") and x.get("state") == "open"]
 
 
 if __name__ == "__main__":
