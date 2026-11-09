@@ -223,4 +223,49 @@ done
 if /bin/sh "$root/government/predict-gate.sh" --all --at 100 too-many >/dev/null 2>&1; then
     echo 'gate accepted more than five predictions (Act 22 maximum is five)' >&2; exit 1
 fi
+# Act 20 §7 review checkpoints: a recorded resolution must be reported (not
+# hardcoded "pending"), an absent one stays pending, and their due accounting
+# must be visible and separate from registration coverage.
+mkdir -p "$tmp/records/predictions"
+cat > "$tmp/records/predictions/review-checkpoint.json" <<'JSON'
+{"checkpoints": [
+ {"id": "PC1", "proposition": "first", "resolution_date": "1970-01-02", "evidence_source": "fixture-e", "author": "seat", "label": "one"},
+ {"id": "PC2", "proposition": "second", "resolution_date": "1970-01-02", "evidence_source": "fixture-e", "author": "seat", "label": "two"}
+]}
+JSON
+python3 - "$root" "$tmp" <<'PY'
+import importlib.util, json, sys
+root, tmp = sys.argv[1], sys.argv[2]
+spec = importlib.util.spec_from_file_location("scorer", root + "/government/predict-scorer.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+entries = []
+for cid, prop in (("PC1", "first"), ("PC2", "second")):
+    e = {"kind": "review_checkpoint", "id": cid, "proposition": prop,
+         "resolution_date": "1970-01-02", "evidence_source": "fixture-e",
+         "author": "seat", "source_ref": "fixture",
+         "source_registered_on": "1970-01-01", "recorded_at": 90}
+    e["content_hash"] = m.content_hash(e)
+    entries.append(e)
+res = {"id": "PC1", "outcome": "unresolved", "resolver": "seat",
+       "evidence_citation": "fixture", "evidence_at": 90,
+       "resolved_at": 92, "reason": "fixture"}
+res["content_hash"] = m.resolution_hash(res)
+json.dump({"entries": entries, "resolutions": [res]},
+          open(tmp + "/pc-ledger.json", "w"))
+PY
+VICHE_PREDICT_LEDGER=$tmp/pc-ledger.json \
+    VICHE_PREDICT_CALIBRATION=$tmp/pc-calibration.json \
+    VICHE_PREDICT_NOW=100 python3 "$root/government/predict-scorer.py" >/dev/null
+python3 - "$tmp/pc-calibration.json" <<'PY'
+import json, sys
+x = json.load(open(sys.argv[1]))
+rows = {r["id"]: r for r in x["review_checkpoint"]["checkpoints"]}
+assert rows["PC1"]["resolution"] == "unresolved", rows["PC1"]
+assert rows["PC2"]["resolution"] == "pending", rows["PC2"]
+c = x["counts"]["review_checkpoint"]
+assert c["due"] == 2 and c["due_unresolved"] == 1, c
+assert c["excluded_from_due"] is True
+assert x["integrity"]["clean"] is True, x["integrity"]
+PY
 echo 'predict-smoke: passed'

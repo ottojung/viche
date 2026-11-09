@@ -313,11 +313,30 @@ def main() -> int:
         definitions = rc.get("checkpoints", [])
     else:
         definitions = [dict(c) for c in ACT20_CHECKPOINTS]
+    cp_due = 0
+    cp_due_unresolved = 0
     for definition in definitions:
         e = checkpoint_by_id.get(definition.get("id"))
         row = dict(definition)
         row["registered"] = e is not None
-        row["resolution"] = "pending"
+        res = res_by_id.get(definition.get("id"))
+        if res is None or definition.get("id") in invalid_resolution_ids:
+            row["resolution"] = "pending"
+        else:
+            # A recorded resolution must be reported, not hidden behind a
+            # hardcoded "pending". An absent resolution stays pending.
+            row["resolution"] = res.get("outcome", "pending")
+            row["resolved_at"] = res.get("resolved_at")
+            row["resolution_reason"] = res.get("reason", "")
+            row["resolution_evidence"] = res.get("evidence_citation", "")
+        try:
+            due_now = due_epoch(str(definition.get("resolution_date", ""))) <= now
+        except (TypeError, ValueError):
+            due_now = False
+        if due_now:
+            cp_due += 1
+            if res is None or definition.get("id") in invalid_resolution_ids:
+                cp_due_unresolved += 1
         if e is not None:
             row.update({"proposition": e.get("proposition"),
                         "resolution_date": e.get("resolution_date"),
@@ -337,6 +356,17 @@ def main() -> int:
             "registered": len(registered), "rejected": len(rejected),
             "resolved_scored": n_scored, "unresolved": len(unresolved),
             "due": len(due), "due_unresolved": len(due_unresolved),
+            "review_checkpoint": {
+                "total": len(definitions),
+                "registered": sum(1 for r in checkpoints if r.get("registered")),
+                "due": cp_due,
+                "due_unresolved": cp_due_unresolved,
+                "scored": False,
+                "excluded_from_due": True,
+                "note": ("Act 20 §7 review checkpoints are reported separately; they "
+                         "are not counted in the registration due/due_unresolved "
+                         "totals or coverage"),
+            },
         },
         "coverage": (round(coverage, 4) if coverage is not None else None),
         "brier": {"aggregate": (round(brier_agg, 6) if brier_agg is not None else None),
