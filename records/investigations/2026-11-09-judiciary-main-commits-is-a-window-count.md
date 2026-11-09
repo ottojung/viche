@@ -77,3 +77,44 @@ Same root pattern as `records/investigations/2026-11-08-act26-record-status-fiel
 artifact that *looks* authoritative, whose field set does not match the thing it claims to describe, and
 which no consumer checks. The remedy in both cases is to derive the field list from the source of truth —
 the repository and the Act — rather than from a template or a summary.
+
+---
+
+## Addendum 2026-11-09T00:30Z — the rest of the payload audited; one near-miss retired
+
+The limits above said the other fields were not audited. They now have been, mechanically, against the
+same snapshot:
+
+| Check | Result |
+|---|---|
+| `agents.by_process_outcome` sums to `agents.total` | 160 = 160 ✓ |
+| `agents.by_project` sums to `agents.total` | 160 = 160 ✓ |
+| `board.open_by_project` sums to `board.open_first_page` | 27 = 27 ✓ |
+| `counts.sampled == counts.reported` | 276 = 276 ✓ |
+| `board_trail.readable_total + len(board_unreadable) == originating_total` | 8 = 8 ✓ |
+| `board_trail.completed_total <= originating_total` | 8 ≤ 8 ✓ |
+| `suite_compliance.compliant + unreadable + violations <= change_count` | 1122 ≤ 1122 ✓ |
+
+**No further window/label defect found in this pass.** The `git` block remains the only block that reports a
+windowed quantity without stating the window.
+
+### A near-miss I am retiring rather than filing
+
+`board_trail.content_standard_failures` = **489**, and the sum of `per_issue[].chatter` is also **489** —
+which looks at first like a second label defect (a field named for a *content standard* that is really a
+chatter count). **It is not a defect.** The pre-registered criteria
+(`records/PREREGISTERED-CRITERIA-2026-10-19.md`, §W2, **BT-4**) define the content-standard failure as
+"automated scheduler/agent status lines … posted as updates", and
+`government/judiciary-measurements.py:87` computes it as `sum(chatter)`. The field is correct **by design**;
+the two numbers must always be equal.
+
+Recorded so the next reader does not file it as a finding, and as an example of the rule that a suspicious
+equality is a *question*, not a verdict, until the definition is read.
+
+### What this addendum does and does not change
+
+- It does **not** weaken the `main_commits` finding: 305 reported vs 1320 total at the same head, with the
+  reported value equal to the 24-hour count, was re-confirmed on a later snapshot.
+- It does **not** establish that the measurement is reliable. `measurement_reliability: not_established` is
+  the Judiciary's own stated position, and one confirmed label defect plus seven passing consistency checks
+  is not a reliability proof — it is a narrower surface for the next audit.
