@@ -45,7 +45,7 @@ record `delivery/mailbox-signal-repair-prelanding-c1a0000b.json`; digest
 `6a10198cdd9b848a084970bef75a6b1abf9731fcac0fb2c2986af751c0999158`). I independently recomputed the
 digest, confirmed the 17 fields and the recorded ancestry, and accepted the record. `ce73391`'s direct
 parent is `df277c9`, not `0b431d4`; the branch is two commits and its base is stale relative to current
-`main` (`2b671d4` at verification, `2454c0b` afterwards; the later move does not change the fail). **No
+`main` (`2b671d4` at verification, further Clerk records commits afterwards; the later move does not change the fail). **No
 merge, fast-forward or deployment is authorised.** The `c1a0000b` summons is closed and `SUMMONED.txt` is
 empty. The Executive must rebuild as one squashed commit or two separately verified single commits on the
 then-current `main`; a fresh tip requires a **new** summons and independent record. The root-cause case
