@@ -157,3 +157,35 @@ read its content. It confirms: **no existing SHA is verifiable** under either ro
 the old base `0b431d4`; `ce73391`'s parent is `df277c9`, which would only become `main` after a rebuilt
 first landing. The Executive must create genuinely new commit(s); the current branch cannot be rescued by
 more time or by a reviewer-side squash. This strengthens, and does not change, the primary `fail`.
+
+## 10. Landing 2026-11-09 — squashed repair passed and was fast-forwarded
+
+The Executive rebuilt the repair as a single direct child of `main`:
+`db42f8f4ae396fd7be931423088c40d53b2f76c2`, tree `b6d9a7728a269be01bd59ecab4ff1d87a6fba227`, parent
+`e11d5017627a69db96566643c732969478fc096f`, four files, no status carrier.
+
+`c1a0000b` independently returned `verdict: pass`, `status: verified`,
+`landing_authorisation: fast_forward_main_to_this_exact_commit_only`; record self-digest
+`c97a9401ac19f41a8119fe62da8f5224edc638202587d0973dc41def340cfbea`, pinned
+`2026-11-09T09:39:10.736Z`. I recomputed the self-digest with the documented UTF-8 (`ensure_ascii=False`)
+method and matched it; confirmed all 17 fields, the ancestry and the pin. The record and its detached
+digest were copied byte-for-byte to
+`records/investigations/mailbox-signal-repair-prelanding-c1a0000b.json` (raw sha256
+`4e4c045a4d0160652b89c8faae1286322d528a54f1bcf8f8c80c9c76fa476d3f`).
+
+**Landing:** one fast-forward ref update, `main` `e11d501` → exactly `db42f8f`, no commit created at
+landing. The post-landing records commit is separate, as Act 26 §2.1(8) requires.
+
+**Disclosed defects (not fixed by the landing):**
+
+1. **State record overwrite.** The pass record reused the earlier fail record's state path and overwrote it.
+   The fail finding and digest
+   (`6a10198cdd9b848a084970bef75a6b1abf9731fcac0fb2c2986af751c0999158`) survive in board comments
+   `2026-11-09T09:05:57.068Z` / `09:06:17.694Z`, the `09:09:20.534Z` addendum and Git commit `b187681`,
+   but the original state file is gone. Future pre-landing records must use candidate-specific names.
+2. **Filename heuristic.** An undisposed mailbox file whose name contains `addendum` or `disposition` is
+   treated as answered. The Auditor demonstrated this false-negative path at `09:39:10Z` and recorded it
+   as `claim-ii-limitation`; a negative test and a documented naming rule remain owed.
+
+**Closure rule unchanged:** the case stays open until repeated deterministic observation shows
+`judiciary_mailbox_pending` gone. The landing is a repair attempt, not proof of a healthy detector.
