@@ -85,19 +85,19 @@ for observation in "outcomes:$state/institutional-outcomes/latest.json" "institu
   fi
 done
 # Unreviewed agent impediments are unresolved adverse evidence. A reviewer's
-# own disposition or addendum is an answer, not a pending question, and must
-# not hold the signal red forever. This is a deterministic filename convention
-# because the mailbox has no metadata sidecar; it does not remove or rewrite
-# any preserved report.
+# answer is recorded by an explicit marker file beside the report, never by a
+# substring of the report's own filename: a reporter must not be able to
+# suppress a genuine blocker by choosing a name that happens to contain
+# "addendum" or "disposition". The marker is empty and additive; it does not
+# remove or rewrite any preserved report.
 mailbox_dir="$state/oversight/judiciary-mailbox/inbox"
 pending_mailbox=no
 if [ -d "$mailbox_dir" ]; then
   for mailbox_file in "$mailbox_dir"/*.md; do
     [ -f "$mailbox_file" ] || continue
-    mailbox_name=$(basename "$mailbox_file")
-    case "$mailbox_name" in
-      *disposition*|*addendum*) continue ;;
-    esac
+    if [ -f "$mailbox_file.answered" ] || [ -f "$mailbox_file.disposition" ]; then
+      continue
+    fi
     pending_mailbox=yes
     break
   done
