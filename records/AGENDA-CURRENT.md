@@ -32,7 +32,7 @@ green-suite compliance and that measurement are different claims and are stated 
 
 ## 2. In flight — second Executive repair awaiting an Act 26 pre-landing check
 
-**`28c5894` is under review, not landed (2026-11-09T10:1xZ).** The Executive rebuilt the
+**`28c5894` is under review, not landed (2026-11-09T10:05Z).** The Executive rebuilt the
 false-`executive_unhealthy` repair (transient `unknown` after a backend failure) as one commit on current
 main: candidate `28c5894d1114a4d97ffd1112cfe4705b3651f73b`, tree `b3946303ad6e8d56cf94482be97cd31a4a31d8a4`,
 parent `d35d8b5` (= `origin/main`), ref `origin/delivery/executive-unknown-state-20261109-r4`; 14 files,
