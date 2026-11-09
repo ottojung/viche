@@ -77,6 +77,12 @@ VICHE_CASE_NOW=1300 python3 "$repo/government/institutional-cases.py" reconcile 
 VICHE_CASE_NOW=1400 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="verified_closed"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 
+# An existing case must follow a changed owner mapping, not keep the owner
+# recorded when it was first created.
+printf '{"id":"judiciary_mailbox_pending:1","signal":"judiciary_mailbox_pending","state":"open","first_seen":1,"last_seen":1,"clear_observations":0,"owner":"legislature"}\n' > "$d/state/institutional-cases/judiciary_mailbox_pending.json"
+VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.owner=="judiciary" and .state=="open"' "$d/state/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
+
 # After a real enactment, Executive unit runs on preserved worktree, not a
 # parliamentary summons. Mock only the branch-bootstrap and deployment.
 printf '## Act 23 — Executive Innovation Office Act (enacted 2026-10-25 by recorded vote)\n' > "$d/town/government/LAWS.md"

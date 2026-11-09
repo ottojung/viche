@@ -92,6 +92,15 @@ def reconcile():
             continue
         path = STORE / (signal + ".json")
         case = read(path)
+        # Addendum/evidence files live beside case objects; preserve them but
+        # never treat a list-shaped record as a case.
+        if not isinstance(case, dict):
+            case = {}
+        # Refresh the owner on every reconcile. A case created under an older
+        # routing map must not keep surfacing to the wrong office after the
+        # mapping changes.
+        if case:
+            case["owner"] = owner(signal)
         if signal in signals:
             if not case or case.get("state") == "verified_closed":
                 case = {
