@@ -48,8 +48,11 @@ parent is `df277c9`, not `0b431d4`; the branch is two commits and its base is st
 `main` (`2b671d4` at verification, further Clerk records commits afterwards; the later move does not change the fail). **No
 merge, fast-forward or deployment is authorised.** The `c1a0000b` summons is closed and `SUMMONED.txt` is
 empty. The Executive must rebuild as one squashed commit or two separately verified single commits on the
-then-current `main`; a fresh tip requires a **new** summons and independent record. The root-cause case
-`judiciary_mailbox_pending` remains open until repeated observation shows the signal gone.
+then-current `main`; a fresh tip requires a **new** summons and independent record. The Auditor's
+`09:09:20Z` addendum (`delivery/mailbox-signal-repair-prelanding-c1a0000b-addendum.json`, raw-file sha256
+`6adf62c9…`) further records that **neither existing SHA is verifiable under either route** — genuinely new
+commits are required, not a reviewer-side squash. The root-cause case `judiciary_mailbox_pending` remains
+open until repeated observation shows the signal gone.
 
 **What the verification cost, and what it caught.** The Auditor **failed the first candidate** on a real
 coherence defect: Act 26 says the `records/suite-status.json` entry is written in the **post-landing**

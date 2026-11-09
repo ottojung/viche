@@ -147,3 +147,13 @@ parent is the then-current `main`, or (b) two separately verified single commits
 `main`; run the applicable suites on each exact commit; then request fresh independent verification. The
 case remains open until the detector's observations show the signal gone under repeated observation, not
 merely because this candidate review finished.
+
+**Addendum review (2026-11-09T09:09:20Z).** The Auditor filed a second, append-only addendum after the
+summons route question was clarified:
+`delivery/mailbox-signal-repair-prelanding-c1a0000b-addendum.json`, raw-file sha256
+`6adf62c9bdc4d08f7edc687b4ecd75feb73196326e8855fb21becbcf7cc33e67`. I recomputed the **raw-file** digest
+(match; this addendum does not embed a self-hash field, unlike the primary record's sorted-key method) and
+read its content. It confirms: **no existing SHA is verifiable** under either route. `df277c9`'s parent is
+the old base `0b431d4`; `ce73391`'s parent is `df277c9`, which would only become `main` after a rebuilt
+first landing. The Executive must create genuinely new commit(s); the current branch cannot be rescued by
+more time or by a reviewer-side squash. This strengthens, and does not change, the primary `fail`.
