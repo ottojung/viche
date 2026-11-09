@@ -366,3 +366,22 @@ commission this record.
 
 No merge or deployment is claimed. If main moves before the record, a new
 single-parent candidate must be rebuilt and verified.
+
+## Correction 2026-11-09 — 48cb78d is now parent-stale; rebuild before landing
+
+After the 48cb78d handoff and board post, `origin/main` advanced from
+`8299c08` to `6344160`. The candidate's sole parent is `8299c08`, so it is no
+longer a fast-forward child of current main and **must not be landed as-is**.
+Under Act 26 the pre-landing record would be `hold_parent_mismatch`.
+
+The reviewed content remains valid, but the landable step is now:
+
+1. rebuild the same candidate as a single commit whose parent is the then-current
+   `origin/main`;
+2. run the exact-tree suite and write the content assertions;
+3. have the independent office write and board-pin the Act 26 record in the same
+   short window;
+4. fast-forward to exactly that commit with no new commit at landing.
+
+This is a coordination race between main moves and the Act 26 record, not a
+change in the technical result. The Executive should not self-write the record.
