@@ -8,8 +8,9 @@ set -eu
 repo=${1:-${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 python3 - "$repo" "$state" <<'PY'
-import hashlib, json, os, re, subprocess, sys
+import hashlib, json, os, re, subprocess, sys, time
 repo,state=sys.argv[1:]
+start=time.monotonic()
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
 def first_parent_paths(commit):
@@ -51,8 +52,24 @@ try:
     main=git('rev-parse','--verify','main')
     commits=git('rev-list','--first-parent','--reverse',main).splitlines()
     positions={c:i for i,c in enumerate(commits)}
+    # One batched tree lookup replaces a `git rev-parse` subprocess per commit
+    # and per candidate record; this is the other dominant cost against the
+    # monitor's 60s budget.
+    trees={}
+    for line in git('rev-list','--format=%H %T',main).splitlines():
+        parts=line.split()
+        if len(parts)==2 and re.fullmatch(r'[0-9a-f]{40,64}',parts[0]):
+            trees[parts[0]]=parts[1]
+    # Only a commit whose first-parent diff touches the status file can be a
+    # record. Scanning every commit with `git show` was the dominant cost
+    # (71s over 1141 changes against a 60s monitor budget); this one `git log`
+    # prefilter is behaviour-preserving because the first_parent_paths check
+    # below is kept.
+    record_candidates=git('log','--first-parent','--reverse',
+                          '--diff-merges=first-parent','--format=%H',
+                          '--','records/suite-status.json').splitlines()
     records=[]
-    for rec_commit in commits:
+    for rec_commit in record_candidates:
         try:
             data=json.loads(subprocess.check_output(['git','-C',repo,'show',rec_commit+':records/suite-status.json'],text=True,stderr=subprocess.DEVNULL))
         except (subprocess.CalledProcessError, ValueError):
@@ -107,7 +124,7 @@ try:
         expected_suite=('tests/records-smoke.sh'
                         if all(p.startswith('records/') for p in paths)
                         else 'tests/run-all.sh')
-        tree=git('rev-parse',commit+'^{tree}')
+        tree=trees.get(commit) or git('rev-parse',commit+'^{tree}')
         # Require the record commit to precede the main change. The record must
         # name that exact commit and its tree; a matching parent is insufficient
         # because it does not verify the resulting merge tree.
@@ -118,7 +135,10 @@ try:
                 continue
             candidate=r.get('commit','')
             try:
-                if git('rev-parse','--verify',candidate+'^{tree}') != tree:
+                cand_tree=trees.get(candidate)
+                if cand_tree is None:
+                    cand_tree=git('rev-parse','--verify',candidate+'^{tree}')
+                if cand_tree != tree:
                     continue
                 if candidate != commit:
                     continue
@@ -151,7 +171,7 @@ try:
     red_events=len(set((x['commit'],x['tree']) for x in changes if x['status']=='violation'))
     total=len(changes)
     good=sum(x['status']=='compliant' for x in changes)
-    print(json.dumps({'status':'measured','main_red_episodes':red_events,
+    print(json.dumps({'status':'measured','wall_seconds':round(time.monotonic()-start,3),'main_red_episodes':red_events,
       'change_count':total,'compliant':good,
       'unreadable':sum(x['status']=='unreadable' for x in changes),
       'violations':sum(x['status']=='violation' for x in changes),
@@ -161,5 +181,5 @@ try:
       'red_chronology_unresolved_changes':[x for x in changes if x['status']=='red_chronology_unresolved'],
       'per_change':changes},sort_keys=True))
 except (subprocess.CalledProcessError, OSError) as err:
-    print(json.dumps({'status':'unreadable','reason':str(err)}))
+    print(json.dumps({'status':'unreadable','reason':str(err),'wall_seconds':round(time.monotonic()-start,3)}))
 PY
