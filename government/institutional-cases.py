@@ -4,6 +4,11 @@
 A case is a monitored obligation, NOT a Judiciary verdict or an authorization
 to enact law. Observation and routing remain deterministic even if every model
 is down. Existing independent Judiciary/Parliament/Executive powers remain.
+
+This collector never closes a case. Closure is a recorded manual decision by
+the Clerk after independently inspecting a Judiciary disposition. The Clerk
+writes a case-bound closure_evidence artifact; the mechanical check below only
+verifies that the artifact is complete and attributed, never that it is true.
 """
 import argparse
 import json
@@ -111,31 +116,75 @@ def reconcile():
                     "legislature": "consider_evidence_and_legislation_if_needed",
                     "executive": "investigate_and_repair_within_existing_authority",
                     "owner": owner(signal),
-                    "closure_rule": "two independent healthy observations, not agent/process success",
+                    "closure_rule": "requires independent Judiciary verification of an evidence-backed investigation",
                 }
             case["last_seen"] = now
             case["observations"] = case.get("observations", 0) + 1
             case["clear_observations"] = 0
         elif case.get("state") == "open":
-            # Never resolve from agent success, a comment or a merge alone.
-            # This confirmation observes the SAME underlying signal cleared
-            # in two subsequent independent cycles.
+            # Signal absence is observational data, NEVER a recovery verdict.
+            # Keep the obligation visible for an Executive investigation and
+            # an independent evidence-based Judiciary disposition. Authorized
+            # agents, not this collector, must determine whether it is closed.
             case["clear_observations"] = case.get("clear_observations", 0) + 1
-            if case["clear_observations"] >= 2:
-                case["state"] = "verified_closed"
-                case["verified_at"] = now
-                case["verification"] = "two successive deterministic health checks without signal"
+            case["last_clear_observed_at"] = now
+            case["closure_rule"] = "requires independent Judiciary verification of an evidence-backed investigation"
         elif not case:
             continue
         atomic(path, case)
     records = [x for x in (read(p) for p in sorted(STORE.glob("*.json")))
                if isinstance(x, dict) and x.get("id")]
     active = [x for x in records if x.get("state") == "open"]
+    # A closed label without a case-bound closure artifact is not resolution.
+    # Historical cases closed by the removed absent-signal path stay visible
+    # to monitoring and to the responsible office until an authorized
+    # reconciliation supplies the evidence. This does not reopen or rewrite
+    # any case object, and it does not change open-case dispatch.
+    unresolved = [x for x in records if closure_unsubstantiated(x)]
     atomic(STORE / "index.json", {
-        "observed_at": now, "active": [x["id"] for x in active],
-        "count": len(active), "caveat": "operational health, not proof of delivery",
+        "observed_at": now,
+        "active": [x["id"] for x in active],
+        "count": len(active),
+        "unresolved_without_closure_evidence": [
+            {"id": x.get("id"), "signal": x.get("signal"), "state": x.get("state"),
+             "reason": "verified_closed without a case-bound closure artifact"}
+            for x in unresolved],
+        "unresolved_without_closure_evidence_count": len(unresolved),
+        "total_obligations": len(active) + len(unresolved),
+        "caveat": "operational health, not proof of delivery; a closed label "
+                  "without a case-bound closure artifact is listed as unresolved",
     })
     return active
+
+
+def nonempty_text(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def closure_unsubstantiated(case):
+    """True for a closed case whose closure is not backed by a complete artifact.
+
+    Historical closures from the absent-signal path carry no closure_evidence.
+    Closure is a recorded manual decision by the Clerk after an independent
+    Judiciary disposition; this is a mechanical completeness check, not proof
+    of the disposition's truth. An incomplete or self-declared artifact is not
+    resolution.
+    """
+    if case.get("state") != "verified_closed":
+        return False
+    evidence = case.get("closure_evidence")
+    if not isinstance(evidence, dict) or not evidence:
+        return True
+    if evidence.get("closure_eligible") is not True:
+        return True
+    if evidence.get("verified_by") != "judiciary":
+        return True
+    if evidence.get("recorded_by") != "clerk":
+        return True
+    if evidence.get("disposition") not in ("confirmed_resolved", "superseded", "withdrawn"):
+        return True
+    return not all(nonempty_text(evidence.get(key))
+                   for key in ("verifier", "evidence_ref"))
 
 
 def report():
