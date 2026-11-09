@@ -69,6 +69,19 @@ if [ -n "$old" ]; then
     exit 1
   fi
   status=$(printf '%s\n' "$meta" | jq -er '.state') || exit 1
+  # One "unknown" sample is a transient runtime observation, not a terminal
+  # state: re-probe a bounded number of times before deciding. A persistent
+  # unknown still fails closed for mutations below.
+  probe=0
+  while [ "$status" = unknown ] && [ "$probe" -lt 3 ]; do
+    probe=$((probe + 1))
+    sleep 1
+    if meta=$(antonina agent status --id "$old" --json 2>/dev/null); then
+      status=$(printf '%s\n' "$meta" | jq -er '.state' 2>/dev/null) || status=unknown
+    else
+      status=unknown
+    fi
+  done
   case "$status" in
     running|idle|clearexit) live=true;;
     failed|stopped|killed) :;;
@@ -79,7 +92,7 @@ if [ -n "$old" ]; then
       # sample breaks every caller (sitting, liveness, oversight). Mutations
       # still require a positively identified terminal state.
       if [ "$action" = resolve ]; then live=unknown
-      else echo "unknown status $status" >&2; exit 1
+      else echo "Viche: appointed agent $old still reports '$status' after $probe re-probe(s); refuse $action until a terminal state is proven" >&2; exit 1
       fi;;
   esac
 fi
