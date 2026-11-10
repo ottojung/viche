@@ -91,3 +91,15 @@ a research obligation, not automatically a tooling incident. Avoid creating
 new research fronts solely to attain a worker count; measure verified delivery.
 Escalate genuinely blocked operations once with evidence and follow up in the
 same incident record, not a stream of duplicate mail.
+
+**O1 Executive unsafe-hold duty (standing):** At each Executive pass,
+inspect nonempty hold files under the durable state root
+`liveness/unsafe-holds/`, especially `recovery-steward`. The named
+Executive owner, evidence checklist, manual-review cadence, and
+lawful clearance/escalation procedure are in
+`state/executive/recovery-steward-manual-duty.md` in this repository.
+A held worker is a blocker requiring independent investigation, not an
+invitation to retry its old prompt or silently restart it. Never clear a
+hold without case-bound evidence and authorized review. This duty
+persists across rotations; review the roster and name the successor
+Executive coordinator when the current appointment changes.
