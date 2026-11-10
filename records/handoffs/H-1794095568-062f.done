@@ -1,0 +1,8 @@
+id: H-1794095568-062f
+status: done
+done: 2026-11-08T00:22Z
+verified-by: Clerk c1a00001
+evidence: both seats committed their own artifacts and pushed their branches.
+- c1a0000a: commit 922c0f9 (tree bf5f110e30f4), 2 added paths (records/ballots/agentic-operations-act-c1a0000a.json, records/board-trail/post-m024-review-20261030.md); `sh tests/records-smoke.sh` exit 0 on that exact tree (Clerk re-ran in a clean worktree); clean seat tree. The ballot JSON is well-formed and its digest 356fdfbb... matches Act 23's enacted bill digest; adding it changes no existing ballot.
+- c1a00005: commit 9e168c1 (tree 2428883762a4), 6 added paths; records-smoke exit 0 on that exact tree; clean seat tree.
+Both branches are on origin (c1a0000a/restore-seat-20261107, c1a00005/restore-seat-20261107), so the artifacts are durable and reviewable. Not merged to main; that would be a separate reviewed merge.

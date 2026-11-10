@@ -1,0 +1,7 @@
+id: H-1793754104-824f
+status: done
+assigned-by: recovery-steward
+created: 2026-11-04T01:01:44Z
+done: 2026-11-04T02:XXZ
+evidence: branch recovery-steward/hold-archive-on-reset commit e451435, delivery branch delivery/hold-archive-on-reset pushed at 3a2b4b6 (tests/run-all.sh green); institutional-cases.py filters non-dict/non-id addenda (addendum-executive-2026-11-04.json is list), reconciles index with fresh sequence; collector no longer crashes.
+work: Robustness fix: institutional-cases.py report/reconcile crashed (AttributeError on list) because Executive addendum files addendum-executive-2026-11-04.json (JSON list) and an empty addendum JSON in viche-state/institutional-cases are not case dicts; collector crashed 2026-11-04T00:56Z while executive_unhealthy observations tracked. Addenda preserved verbatim. Fix filters non-dict/no-id entries in collect()+report(); parse verified. Merge plus collector reconciliations with fresh index sequence after merge.
