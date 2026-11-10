@@ -67,13 +67,40 @@ if [ -s "$receipt" ]; then
     echo "Continuity: restored committed $office appointment after interrupted transaction" >&2
   fi
 fi
-[ "$mode" = failed ] || exit 0
-# Failed metadata by itself does not prove the old process has exited.
+case "$mode" in
+  failed|stopped|killed) : ;;
+  *) exit 0 ;;
+esac
+# Terminal metadata by itself does not prove the old process has exited.
 printf '%s\n' "$meta" | jq -e '.alive == false and (.active_runner == false or .active_runner == null)' >/dev/null || {
-  echo "Continuity: failed $office still has a live process; refuse duplicate" >&2
+  echo "Continuity: terminal $office still has a live process; refuse duplicate" >&2
   exit 1
 }
-printf '%s\n' "$meta" | jq -e '(.intent // "") != "stop"' >/dev/null || exit 1
+# A stopped or killed worker is unavailable, but that alone is not authority
+# to repeat its work: an out-of-band human stop (SIGTERM, container stop)
+# looks identical to a backend kill when intent is null. Never auto-renew
+# stopped/killed here. Record a durable hold for agent-led Executive
+# investigation and exit non-zero so supervisors surface it instead of
+# silently stranding.
+if [ "$mode" = stopped ] || [ "$mode" = killed ]; then
+  invocation=$(printf '%s\n' "$meta" | jq -r '.invocation_id // .run_id // .finished_at // ""')
+  mkdir -p "$state/liveness/unsafe-holds"
+  hold=$state/liveness/unsafe-holds/$office
+  line=$(printf '%s\t%s\t%s' "$office" "$id" "$invocation")
+  if [ ! -s "$hold" ] || ! grep -Fxq "$line" "$hold"; then
+    printf '%s\n' "$line" >> "$hold"
+  fi
+  if printf '%s\n' "$meta" | jq -e '(.intent // "") == "stop"' >/dev/null; then
+    echo "Continuity: $office was intentionally stopped; no automatic replacement (hold recorded for authorized review)" >&2
+  else
+    echo "Continuity: $office terminally $mode with ambiguous intent; no automatic replacement (hold recorded for agent-led investigation)" >&2
+  fi
+  exit 1
+fi
+printf '%s\n' "$meta" | jq -e '(.intent // "") != "stop"' >/dev/null || {
+  echo "Continuity: failed $office was intentionally stopped; no automatic replacement" >&2
+  exit 1
+}
 cls=$(printf '%s\n' "$meta" | jq -r '.backend_error.classification // "unknown"')
 transient=$(printf '%s\n' "$meta" | jq -r '.backend_error.transient // false')
 # Classification is useful diagnostic evidence, NOT an exhaustive permission

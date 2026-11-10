@@ -56,7 +56,8 @@ if [ "$reset_due" = true ]; then
   reset_due=true
   # The preceding verified replacement is the sole reset for this event.
 fi
-if [ "$reset_due" != true ] && [ "$kind" = failed ] &&
+if [ "$reset_due" != true ] &&
+   { [ "$kind" = failed ] || [ "$kind" = stopped ] || [ "$kind" = killed ]; } &&
    [ -f "$town/government/terminal-continuity.sh" ]; then
   /bin/sh "$town/government/terminal-continuity.sh" recover "$seat_id" || exit 1
   id=$(/bin/sh "$town/government/appointments.sh" resolve "$seat_id")
@@ -64,10 +65,14 @@ if [ "$reset_due" != true ] && [ "$kind" = failed ] &&
   kind=$(printf '%s\n' "$metadata" | jq -r '.state')
 fi
 if [ "${1:-}" = --gate ]; then
-  if [ "$kind" = failed ]; then
-    retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
-    [ "$retry_safe" = yes ] && [ ! -s "$state/unsafe-holds/$seat_id" ] ||
-      { echo "Viche: Clerk terminal failure not safe to re-dispatch" >&2; exit 1; }
-  fi
+  case "$kind" in
+    failed)
+      retry_safe=$(printf '%s\n' "$metadata" | jq -r 'if .backend_error.automatic_retry_safe == true and .backend_error.transient == true then "yes" else "no" end')
+      [ "$retry_safe" = yes ] && [ ! -s "$state/unsafe-holds/$seat_id" ] ||
+        { echo "Viche: Clerk terminal failure not safe to re-dispatch" >&2; exit 1; } ;;
+    stopped|killed)
+      echo "Viche: Clerk appointment terminally $kind; reconciliation required" >&2
+      exit 1 ;;
+  esac
   exit 0
 fi

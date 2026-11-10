@@ -88,7 +88,8 @@ fi
 # renewed institutional continuity: replace the DEAD appointment and give a
 # fresh agent a reconciliation instruction (never reuse the old model turn).
 # Retain Act 19's existing counter/threshold for still-recoverable oscillations.
-if [ "$reset_due" != true ] && [ "$mode" = failed ] &&
+if [ "$reset_due" != true ] &&
+   { [ "$mode" = failed ] || [ "$mode" = stopped ] || [ "$mode" = killed ]; } &&
    [ -f "$town/government/terminal-continuity.sh" ]; then
   /bin/sh "$town/government/terminal-continuity.sh" recover "$branch" || exit 1
   id=$(/bin/sh "$town/government/appointments.sh" resolve "$branch")
