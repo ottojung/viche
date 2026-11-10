@@ -94,9 +94,9 @@ jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/
 
 # An existing case must follow a changed owner mapping, not keep the owner
 # recorded when it was first created.
-printf '{"id":"judiciary_mailbox_pending:1","signal":"judiciary_mailbox_pending","state":"open","first_seen":1,"last_seen":1,"clear_observations":0,"owner":"legislature"}\n' > "$d/state/institutional-cases/judiciary_mailbox_pending.json"
+printf '{"id":"judiciary_mailbox_pending:1","signal":"judiciary_mailbox_pending","state":"open","first_seen":1,"last_seen":1,"clear_observations":0,"owner":"legislature","closure_rule":"two independent healthy observations, not agent/process success"}\n' > "$d/state/institutional-cases/judiciary_mailbox_pending.json"
 VICHE_CASE_NOW=1500 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
-jq -e '.owner=="judiciary" and .state=="open"' "$d/state/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
+jq -e '.owner=="judiciary" and .state=="open" and (.closure_rule | startswith("requires independent Judiciary verification"))' "$d/state/institutional-cases/judiciary_mailbox_pending.json" >/dev/null
 
 # A JSON-list evidence file beside case objects must be preserved without
 # crashing either reconcile or report.
