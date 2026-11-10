@@ -8,7 +8,7 @@ set -eu
 repo=${1:-${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 python3 - "$repo" "$state" <<'PY'
-import hashlib, json, os, re, subprocess, sys
+import datetime, glob, hashlib, json, os, re, subprocess, sys
 repo,state=sys.argv[1:]
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
@@ -40,6 +40,94 @@ def recorded_result(data, expected_suite):
                     for run in runs)):
         return 'red'
     return None
+def timestamp(value):
+    if not isinstance(value,str):
+        return None
+    try:
+        d=datetime.datetime.fromisoformat(value.replace('Z','+00:00'))
+        return d.timestamp() if d.tzinfo else None
+    except ValueError:
+        return None
+def valid_act26_record(path, data):
+    """Check complete prelanding evidence; neither an agent exit nor a pin
+    alone proves the claimed run. Require an immutable Git copy on main."""
+    if not isinstance(data,dict) or data.get('schema')!='act26-prelanding-record/v1':
+        return None
+    mandatory=('commit','tree','parent','reviewer','independence_basis',
+               'phase','bill_id','landing_authorisation','main_at_verification')
+    if any(not isinstance(data.get(k),str) or not data[k].strip() for k in mandatory):
+        return None
+    if data.get('verdict')!='pass' or data.get('status') in ('parent_mismatch','fail','failed'):
+        return None
+    if data.get('main_at_verification') != data['parent']:
+        return None
+    commands=data.get('commands')
+    if (not isinstance(commands,list) or not commands
+            or any(not isinstance(c,dict) or not isinstance(c.get('command'),str)
+                   or not c['command'].strip() or
+                   (c.get('exit') is not None and type(c['exit']) is not int)
+                   for c in commands)):
+        return None
+    # An interrupted/unknown run may be preserved as exit=null, but it is
+    # NEVER a green result. A real matching full or records suite must pass.
+    if not any(c.get('exit')==0 and any(
+            suite in c['command'] for suite in
+            ('tests/run-all.sh','tests/records-smoke.sh')) for c in commands):
+        return None
+    assertions=data.get('content_assertions')
+    if (not isinstance(assertions,list) or not assertions
+            or any(not isinstance(a,dict) or any(
+                not isinstance(a.get(k),str) or not a[k].strip()
+                for k in ('expected','actual'))
+                or not any(isinstance(a.get(k),str) and a[k].strip()
+                    for k in ('basis','method'))
+                for a in assertions)):
+        return None
+    pin=data.get('board_pin')
+    if (not isinstance(pin,dict) or
+            not isinstance(pin.get('message_id'),str) or not pin['message_id'].strip()):
+        return None
+    created=timestamp(data.get('created_at'))
+    pinned=timestamp(pin.get('server_timestamp'))
+    if created is None or pinned is None or created>pinned:
+        return None
+    # Historical v1 included sha256 in JSON; current v1 deliberately keeps
+    # its detached digest separate, and the board pin is added after hashing.
+    # Accept only these two explicitly specified canonical representations.
+    embedded=data.get('sha256')
+    if embedded is not None and (
+            not isinstance(embedded,str) or re.fullmatch('[0-9a-f]{64}',embedded) is None):
+        return None
+    if embedded is None:
+        content={k:v for k,v in data.items() if k not in ('sha256','board_pin')}
+        canonical=json.dumps(content,sort_keys=True,separators=(',',':'),ensure_ascii=True)
+    else:
+        content={k:v for k,v in data.items() if k!='sha256'}
+        canonical=json.dumps(content,sort_keys=True,separators=(',',':'),ensure_ascii=False)
+    actual=hashlib.sha256(canonical.encode()).hexdigest()
+    if embedded is not None and embedded != actual:
+        return None
+    try:
+        with open(path+'.sha256',encoding='utf-8') as f:
+            detached=f.read().strip()
+        with open(path,'rb') as f:
+            raw=f.read()
+        with open(path+'.sha256','rb') as f:
+            detached_raw=f.read()
+        if detached != actual:
+            return None
+        basename=os.path.basename(path)
+        # Git-anchored postlanding copy (Act 26) must match the current state
+        # receipt exactly, including the separately stored detached digest.
+        repo_copy=subprocess.check_output(['git','-C',repo,'show',
+              'main:records/investigations/'+basename],stderr=subprocess.DEVNULL)
+        digest_copy=subprocess.check_output(['git','-C',repo,'show',
+              'main:records/investigations/'+basename+'.sha256'],stderr=subprocess.DEVNULL)
+        if raw != repo_copy or detached_raw != digest_copy:
+            return None
+    except (OSError,subprocess.CalledProcessError):
+        return None
+    return pinned
 def git_batch_show(specs):
     """Read '<commit>:<path>' blobs in one invocation; miss/invalid -> skip."""
     if not specs:
@@ -159,6 +247,25 @@ try:
         except (OSError,ValueError):
             continue
 
+    # Act 26's independent state receipt is separate from the old suite-status
+    # shape. This is a bounded, explicitly reviewed additional evidence source.
+    # The next first-parent commit provides a conservative landing upper bound.
+    commit_times={}
+    for line in git('log','--first-parent','--format=%H %ct',main).splitlines():
+        fields=line.split()
+        if len(fields)==2:
+            try: commit_times[fields[0]]=int(fields[1])
+            except ValueError: pass
+    act26=[]
+    for filename in sorted(glob.glob(os.path.join(state,'delivery','*.json'))):
+        try:
+            with open(filename,encoding='utf-8') as f:
+                record=json.load(f)
+            pinned=valid_act26_record(filename,record)
+            if pinned is not None:
+                act26.append((os.path.basename(filename),record,pinned))
+        except (OSError,ValueError):
+            continue
     changes=[]
     for i,commit in enumerate(commits):
         paths=[p for p in fp[commit][2] if p.startswith(('government/','tests/','records/'))]
@@ -196,10 +303,19 @@ try:
               if recorded_result(r,expected_suite)=='red']
         greens=[(rc,r,source) for rc,r,source in prior
                 if recorded_result(r,expected_suite)=='green']
+        parent=fp[commit][0]
+        upper=commit_times.get(commits[i+1]) if i+1<len(commits) else None
+        act26_matches=([name for name,r,pinned in act26
+            if upper is not None and pinned<upper
+            and r.get('commit')==commit and r.get('tree')==tree
+            and r.get('parent')==parent and r.get('main_at_verification')==parent])
         if reds:
             status='violation'; reason='red suite recorded for exact commit/tree'
-        elif greens:
-            status='compliant'; reason='preceding green record for exact commit/tree ('+','.join(sorted(set(source for _,_,source in greens)))+')'
+        elif greens or act26_matches:
+            labels=set(source for _,_,source in greens)
+            if act26_matches:labels.add('act26-prelanding-record')
+            status='compliant'
+            reason='preceding green record for exact commit/tree ('+','.join(sorted(labels))+')'
         elif any(recorded_result(r,expected_suite)=='red'
                  and r.get('commit')==commit and r.get('tree')==tree
                  for _,r,_source in records):
@@ -207,7 +323,11 @@ try:
             reason='exact red run exists but its pre-merge ordering is not established'
         else:
             status='unreadable'; reason='no preceding exact-commit/tree suite record'
-        changes.append({'commit':commit,'tree':tree,'paths':paths,'status':status,'reason':reason})
+        row={'commit':commit,'tree':tree,'paths':paths,'status':status,'reason':reason}
+        if act26_matches and status=='compliant':
+            row['source']=act26_matches[0]
+            row['source_labels']=['act26-prelanding-record']
+        changes.append(row)
 
     # Count distinct main changes with a recorded exact red result as episodes;
     # repeated status-file snapshots for the same main commit do not multiply it.
