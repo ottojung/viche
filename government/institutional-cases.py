@@ -121,6 +121,9 @@ def reconcile():
             case["last_seen"] = now
             case["observations"] = case.get("observations", 0) + 1
             case["clear_observations"] = 0
+            # Refresh the stated rule on every reconcile. A case created under
+            # the removed two-probe rule must not keep advertising it.
+            case["closure_rule"] = "requires independent Judiciary verification of an evidence-backed investigation"
         elif case.get("state") == "open":
             # Signal absence is observational data, NEVER a recovery verdict.
             # Keep the obligation visible for an Executive investigation and
