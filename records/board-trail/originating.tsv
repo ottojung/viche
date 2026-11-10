@@ -9,8 +9,7 @@
 # is the preferred input; this mapping is the fallback.
 #
 # Columns (TAB-separated):
-#   issue        originating board issue id (numeric, or an opaque string id
-#                such as ErkrX8EKQJXF6fCQv5fzYl-cannon)
+#   issue        originating board issue number
 #   work_id      bill / task identifier
 #   act          Act number for an enacted law ("-" for a draft/task)
 #   enacted_epoch epoch seconds when the underlying work was enacted/completed
@@ -22,7 +21,4 @@
 307	innovation-centre-act	14	1792241160	law
 308	epistemic-adversarialism-act	16	1792241160	law
 312	board-reporting-act	18	1792400760	law
-310	detector-calibration-act	20	1792454400	law
-313	office-continuity-act	19	1792417200	law
-314	change-quality-gate-act	21	1792553100	law
-ErkrX8EKQJXF6fCQv5fzYl-cannon	prediction-calibration-act	22	1792554900	law
+310	detector-calibration-act	-	0	draft
