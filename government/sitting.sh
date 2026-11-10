@@ -206,8 +206,10 @@ $cases
 === END CORRECTIVE OBLIGATIONS ===
 Preserve identity across sittings. Judiciary independently measures;
 Parliament authorizes changes to ordinary law when needed; Executive
-implements authorized repairs. Case closure requires disappearance of the
-failure confirmed by repeated deterministic observation, not an agent exit.
+implements authorized repairs. A missing health signal is only evidence of
+the probe's result, never proof of repair. Executive agents investigate and
+provide evidence; Judiciary independently verifies or leaves the case open.
+Neither agent exits nor repeated probes can close it automatically.
 EOF
 fi
 

@@ -18,17 +18,22 @@ The independent `judiciary-measurements.py` writes observational facts to `branc
 
 The branch bootstrap appoints generated agents to stable Executive and Judiciary office keys, using the durable state/appointments registry. Each office has a separate durable worktree under viche-seats/branches. Neither is present in seats.tsv or reads records/SUMMONED.txt. Former parliamentary seats remain voting seats until lawful reform. Executive eligibility comes directly from board issue descriptions and direct Founder assignments, without any execution-target registry. A persistently non-running Executive with eligible work is flagged unhealthy; scheduler success alone is not meaningful progress.
 
-## Permanent legislative Innovation Centre (Founder-directed operational pilot)
+## Executive Innovation Office (Act 25, enacted; Act 24 historical)
 
-Within the **Legislature**, the independent non-voting Innovation Centre has
-agent `c1e00011` and its own durable worktree. It does not share summons or
-voting seats with Parliament; it is not a fourth branch. Its standing mission
-is to originate Viche-only institutional improvements without awaiting the
-Founder, Executive or Judiciary to identify problems. It cannot initiate
-external projects (Founder-reserved), enact legislation or deploy government
-changes. It submits evidence-linked draft ideas to Parliament for debate and
-ratification. See `government/INNOVATION-CENTRE.md` and the draft
-`records/bills/innovation-centre-act.md` (not enacted). Its office health lives
-at `state/legislature/innovation-centre/health.json`, and branch-health requires
-fresh evidence of recurrent dispatch after inauguration. Readiness is not proof
-of novelty or real impact. No Constitution edits.
+Act 25 re-enacted the Act 24 text, transferring the former non-voting Legislative Innovation Centre into an
+**Executive** research and engineering office. It is not a fourth branch or a
+Legislature member, and it cannot sponsor legislation, vote, alter law or
+override independent Judiciary fact-finding. The previous legislative office's
+history and dirty worktree are preserved, not replayed.
+
+The stable appointment identifier remains `innovation-centre` solely for
+continuity; the clean Executive development worktree is
+`viche-seats/branches/innovation-office`. The single active dispatcher is
+`government/executive-innovation-cycle.sh` after Act 25 enactment.
+`state/executive/innovation-office/health.json` records operational readiness
+only. Authority and duties are in `government/EXECUTIVE-INNOVATION.md` and
+enacted `government/LAWS.md`; the former
+`government/INNOVATION-CENTRE.md` is a historical record of Act 14.
+The Office proactively researches and implements high-value improvements within
+the Executive's existing authority; verified delivery and independent Judiciary
+assessment, not activity counts, establish results.

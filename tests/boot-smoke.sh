@@ -25,6 +25,15 @@ git clone --quiet --no-hardlinks "$root" "$town"
 git -C "$town" switch -C main "$(git -C "$root" rev-parse HEAD)" >/dev/null
 : > "$town/records/SUMMONED.txt"
 
+# Boot smoke verifies the *transport* of a measurement into an independent
+# detail artifact. The costly full-history compliance scan has its own hermetic
+# tests (tests/suite-compliance-smoke.sh). Do not make every boot test depend
+# on production-sized Git history, process load, or the 60-second audit timeout.
+cat > "$town/government/suite-compliance-check.sh" <<'COMPLIANCE_FIXTURE'
+#!/bin/sh
+printf '%s\n' '{"status":"measured","per_change":[{"commit":"fixture","status":"compliant"}],"changes_reaching_main_red":[],"red_chronology_unresolved_changes":[]}'
+COMPLIANCE_FIXTURE
+
 cat > "$scratch/bin/antonina" <<'MOCK'
 #!/bin/sh
 set -eu
