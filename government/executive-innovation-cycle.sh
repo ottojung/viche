@@ -1,5 +1,5 @@
 #!/bin/sh
-# Prospective Executive-controlled innovation office; dormant until lawful enactment.
+# Executive-controlled innovation office under enacted Act 25.
 set -eu
 town=$(printenv VICHE_TOWN_ROOT || printf '%s\n' /var/lib/lubko/wd/viche)
 seats=$(printenv VICHE_SEATS_ROOT || printf '%s\n' /var/lib/lubko/wd/viche-seats)
@@ -9,8 +9,19 @@ grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "
   echo 'Executive innovation requires enacted ordinary law' >&2; exit 1;
 }
 root=$state/executive/innovation-office
-cwd=$seats/branches/innovation-centre
+# Keep the predecessor's dirty historical worktree intact. Dispatch new
+# Executive work in its own clean, Git-managed worktree.
+cwd=$seats/branches/innovation-office
 mkdir -p "$root"
+# Create the active Executive worktree BEFORE bootstrap. Bootstrap, appointment
+# resolution and terminal recovery all redirect the innovation-centre key to
+# this worktree only once it exists; creating it first prevents the first
+# post-enactment run from recovering or syncing against the historical
+# legislative worktree.
+if [ ! -e "$cwd/.git" ]; then
+  [ ! -e "$cwd" ] || { echo "Refusing occupied non-Git Innovation Office workspace" >&2; exit 1; }
+  git -C "$town" worktree add --detach "$cwd" HEAD || exit 1
+fi
 /bin/sh "$town/government/branch-bootstrap.sh" innovation-centre > "$root/bootstrap.log" 2>&1 || exit 1
 id=$(/bin/sh "$town/government/appointments.sh" ensure innovation-centre)
 meta=$(antonina agent status --id "$id" --json)
@@ -24,7 +35,7 @@ case "$mode" in
   idle|clearexit)
     readiness=ready
     if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
-      orders='No specific Executive order: research high-return Viche improvements.'
+      orders='No specific Executive order: proactively research, prototype, review and pursue high-return Viche improvements under Act 25.'
       [ ! -s "$root/orders.md" ] || orders=$(cat "$root/orders.md")
       cases='{"open_cases":[]}'
       [ ! -f "$town/government/institutional-cases.py" ] ||
@@ -42,11 +53,16 @@ external productive missions: invent no new external project.
 === FOUNDER CONSTITUTION ===
 $(cat "$charter")
 === END CONSTITUTION ===
-Read current government/LAWS.md, government/BRANCHES.md and
-government/EXECUTIVE-INNOVATION.md. Preserve all earlier Centre research,
+Read the CANONICAL $town/government/LAWS.md,
+$town/government/BRANCHES.md and
+$town/government/EXECUTIVE-INNOVATION.md (not stale local copies). Preserve all earlier Centre research,
 Git worktrees, evidence, and rejected ideas. Prioritize high marginal benefit
 relative to total cost, uncertainty, risks and opportunity costs.
 Compare existing Free Software before proposing new subsystems.
+Do not stop with a status memo. Work autonomously on prototypes and
+reviewable deliverables even without a specific Executive order; pursue lawful
+integration and independent outcome verification. An uncommitted investigation
+or a healthy process is not delivery. Preserve the predecessor worktree.
 === EXECUTIVE ORDERS ===
 $orders
 === END ORDERS ===

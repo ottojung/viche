@@ -42,6 +42,15 @@ if [ -z "$cwd" ]; then
     *) echo "unknown seat or office $key" >&2; exit 2;;
   esac
   cwd=$seats/branches/$key
+  # Act 25: the stable appointment key remains innovation-centre, but the
+  # active worktree is the clean Executive office once it exists. The
+  # historical legislative worktree is evidence only, never an appointment,
+  # policy-sync or recovery target.
+  if [ "$key" = innovation-centre ] &&
+     { [ -f "$seats/branches/innovation-office/.git" ] ||
+       [ -d "$seats/branches/innovation-office/.git" ]; }; then
+    cwd=$seats/branches/innovation-office
+  fi
 fi
 [ -d "$cwd" ] || { echo "missing worktree $cwd" >&2; exit 1; }
 registry=$root/appointments.tsv
