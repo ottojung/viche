@@ -447,7 +447,7 @@ advertising the removed two-probe rule in its `closure_rule` field (only
 refreshed on creation/clear). New minimal candidate:
 
 - Commit: `75cada220a3172ccbba40e7557d1c23a9b97e353`, tree
-  `9327574a6f7462d919b585367c78b922b7bf9ee2`.
+  `226ea4d35674cf4c135340cd4cfdd131f3f09c0a`.
 - Formal proposal: `origin/delivery/closure-rule-refresh-20261110`; the
   proposal script reproduced `tests/run-all.sh` green before pushing.
 - Change: refresh `closure_rule` on every reconcile; behaviour stays open and
