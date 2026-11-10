@@ -98,14 +98,25 @@ except (OSError,ValueError,TypeError):
     institutional_outcomes={'telemetry':'unavailable','not_a_clean_result':True}
 
 def suite_compliance():
+    """Bounded exact-commit suite audit with a stable schema.
+
+    Always emits `wall_seconds` (a real number, measured around the check,
+    including timeout/error paths) and `details_ref`/`details_sha256`
+    (None when no detail record was written). Downstream readers must not
+    assume a detail file exists; a missing detail with an unreadable
+    status is a clean signal, never a KeyError.
+    """
     script=town/'government/suite-compliance-check.sh'
     if not script.exists():
-        return {'status':'unreadable','reason':'suite compliance check absent'}
+        return {'status':'unreadable','reason':'suite compliance check absent',
+                'wall_seconds':0.0,'details_ref':None,'details_sha256':None}
+    start=time.monotonic()
     try:
         done=subprocess.run(['/bin/sh',str(script),str(town)],capture_output=True,text=True,timeout=60)
+        wall=time.monotonic()-start
         data=json.loads(done.stdout)
         if done.returncode:
-            return {'status':'unreadable','reason':done.stderr.strip()[-200:]}
+            data={'status':'unreadable','reason':done.stderr.strip()[-200:]}
         # The full per-change audit can be large. Preserve it as a durable,
         # separately addressable detail record; keep this prompt-facing summary
         # bounded so the Clerk's next boot dispatch remains within argv limits.
@@ -129,9 +140,15 @@ def suite_compliance():
             data['red_chronology_unresolved_count']=len(red_unknown)
             data['details_ref']=str(detail)
             data['details_sha256']=hashlib.sha256(blob).hexdigest()
+        else:
+            data['details_ref']=None
+            data['details_sha256']=None
+        data['wall_seconds']=wall
         return data
     except (subprocess.TimeoutExpired,OSError,ValueError) as err:
-        return {'status':'unreadable','reason':str(err)[:200]}
+        wall=time.monotonic()-start
+        return {'status':'unreadable','reason':str(err)[:200],
+                'wall_seconds':wall,'details_ref':None,'details_sha256':None}
 
 
 payload={'observed_at':now,'destination':'Legislature', 'kind':'Judiciary measurement, not legislation', 'counts':counts, 'false_positive_rate':None,'false_negative_rate':None,'measurement_reliability':'not_established','judiciary_independence':'non-voting independent measurement office (Act 15, enacted 2026-10-17)', 'no_proposals':True, 'institutional_outcomes':institutional_outcomes, 'board_trail':board_trail(), 'suite_compliance':suite_compliance()}

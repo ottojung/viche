@@ -9,6 +9,9 @@ node_modules/
 .cache/
 *.log
 .DS_Store
+# Regenerable interpreter bytecode must not pollute the tree or the suite.
+__pycache__/
+*.pyc
 
 # Act 18 §7: the board-trail index is GENERATED, never hand-maintained in Git.
 records/board-trail/index.json

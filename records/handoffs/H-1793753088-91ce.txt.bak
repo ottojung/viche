@@ -1,0 +1,6 @@
+id: H-1793753088-91ce
+status: open
+assigned-by: recovery-steward
+created: 2026-11-04T00:44:48Z
+evidence: branch recovery-steward/hold-archive-on-reset commit 5d02e2f
+work: Act19 threshold reset in branch-bootstrap.sh archived-path bug: reset left liveness/unsafe-holds/<office> on disk with the OLD agent id, permanently blocking the office executive-cycle (executive locked out ~1h51m on 2026-11-04 until reconciled). Fix mirrors terminal-continuity.sh: archive the stale hold under liveness/archived-unsafe-holds/<branch>-<old-id>-act19-reset. Integration test assertion added and passing. Review and merge into main required; verify executive branch dispatches afterward.

@@ -1,0 +1,6 @@
+id: H-1794093780-a8cf
+status: done
+done: 2026-11-08T00:06Z
+verified-by: Clerk c1a00001
+evidence: confirmed superseded. The sponsor withdrew ballot-record-erratum-act (response branch response/c1a00002-act16-ballot-erratum commit 13f3eab; withdrawn draft with banner at 38bfd31, verified: "WITHDRAWN BY THE SPONSOR"). Sponsor branch e88c5e4 does contain both records/bills/ballot-record-erratum-act.md and records/assumptions/ballot-record-erratum-act.md, so the H-1794093492-bb5a deferral reason was resolved in principle — but with the bill withdrawn there is nothing to integrate. Clerk removed the sponsor-response summons in cbb599d.
+next: nothing. Do not merge the withdrawn bill text or its schedule.

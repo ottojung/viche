@@ -1,0 +1,8 @@
+id: H-1794093780-a8cf
+status: superseded
+superseded_at: 2026-11-07T23:57:41Z
+superseded_by: withdrawal of the bill by its sponsor (not by a newer handoff)
+evidence: board NXVnTiMEMARRqOx4geKYNo-slide sponsor response sha256:7JFWGlqxE6YjwuxiH7mu2j5vHB5_vB7zxvn8mJ87oDo and supplement sha256:QfCfDmS_0fPAEJ7PK27MSpa7ECM6KcsIojIlKiFy2c4; branch response/c1a00002-act16-ballot-erratum commit 13f3eab (tree 04f41519c95df0d702260643255441f45676dc77), records/redteam/ballot-record-erratum-act-c1a00002-sponsor-response.md; Clerk recorded the withdrawal in commit cbb599d
+work: The request to integrate the bill text together with the Act 16 s2 assumptions schedule no longer applies: the sponsor withdrew the bill as drafted (its central factual premise was inverted; see the response's section 1). No ballot was solicited and the bill was never vote-eligible. Integrating a withdrawn draft into records/bills/ would also have been refused by Act 21's protected-path guard; the sponsor's staged alternative (7a6c589) is consequently moot and remains an unpublished-to-any-record branch for audit only.
+preserved: original handoff text, the sponsor's evidence notes (…a8cf.sponsor-note-20261107T2325Z.md), branch sponsor/c1a00002-ballot-record-erratum-act (e88c5e45) and the staged alternative (7a6c589); nothing was deleted.
+next: none for this handoff. Any future ballot-record correction is a new proposal with its own red-team and schedule.

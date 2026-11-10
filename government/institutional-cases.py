@@ -87,13 +87,42 @@ def owner(signal):
     return "legislature"
 
 
+def archive_superseded(path, case, now, reason):
+    """Keep the old case independently visible when its signal re-fires.
+
+    Use a separate case-bound JSON file rather than a sidecar ledger that the
+    existing index cannot see. Never silently overwrite an earlier archive.
+    The ordinary index already counts any artifact-less historical closure.
+    """
+    case_id = case.get("id")
+    if not isinstance(case_id, str) or not case_id:
+        raise ValueError(f"Cannot archive case without original ID: {path}")
+    archived = path.with_name("archive-" + case_id.replace(":", "-") + ".json")
+    if archived.exists():
+        # A crash after the archive is durable but before the live-case swap
+        # must not erase history OR permanently block safe resumption.
+        previous = read(archived)
+        if previous.get("archive_reason") == reason and all(
+            previous.get(key) == value for key, value in case.items()
+        ):
+            return
+        raise FileExistsError(f"Conflicting case archive: {archived}")
+    entry = dict(case)
+    entry["archived_at"] = now
+    entry["archive_reason"] = reason
+    atomic(archived, entry)
+
+
 def reconcile():
     now, signals = collect()
     STORE.mkdir(parents=True, exist_ok=True)
-    existing = sorted(STORE.glob("*.json"))
+    # Archived cases remain indexed but are not probed as fresh signal names.
+    existing = [p for p in sorted(STORE.glob("*.json"))
+                if not p.name.startswith("archive-")]
     names = set(signals) | {p.stem for p in existing}
     for signal in sorted(names):
-        if not signal.replace("_", "").replace("-", "").isalnum():
+        if (signal.startswith("archive-")
+                or not signal.replace("_", "").replace("-", "").isalnum()):
             continue
         path = STORE / (signal + ".json")
         case = read(path)
@@ -108,6 +137,10 @@ def reconcile():
             case["owner"] = owner(signal)
         if signal in signals:
             if not case or case.get("state") == "verified_closed":
+                if case and case.get("state") == "verified_closed":
+                    # Archive first: the re-fired instance replaces the live
+                    # object, and the prior history must survive the swap.
+                    archive_superseded(path, case, now, "re-fire after close")
                 case = {
                     "id": f"{signal}:{now}", "signal": signal,
                     "first_seen": now, "state": "open",
