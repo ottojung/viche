@@ -1,15 +1,15 @@
 {
   "generated_by": "government/suite-status.sh",
   "act": 21,
-  "recorded_at": 1794232631,
-  "recorded_iso": "2026-11-09T13:57:11Z",
-  "suite": "tests/records-smoke.sh",
-  "commit": "0bfe74be96ab68a28d6b710cb163c7341bed795a",
-  "tree": "84bf04f15bba98bfaae28c3362de06a573265e30",
-  "main": "0bfe74be96ab68a28d6b710cb163c7341bed795a",
-  "result": "green",
-  "runs": [{"run":1,"result":"green","exit":0,"output_sha256":"2e5a7e79772f14b774757fd872135179a505df27eee04abba74ce9fbc40ce593"}],
+  "recorded_at": 1794290523,
+  "recorded_iso": "2026-11-10T06:02:03Z",
+  "suite": "tests/run-all.sh",
+  "commit": "23af09cada79c1db28e37b8fa86534cd7a182aa8",
+  "tree": "3732b411661350a695292bae3a1c0e2ea308203b",
+  "main": "23af09cada79c1db28e37b8fa86534cd7a182aa8",
+  "result": "red",
+  "runs": [{"run":1,"result":"red","exit":1,"output_sha256":"e5600ab628a48b93238343baca897a45ef9712550880b084839ac8553ef40ba9"},{"run":2,"result":"red","exit":1,"output_sha256":"bb7129e242dc94232dff80fefb520a1509c5825d16c4d66c11b67ae52351532d"}],
   "ci_result": "unavailable",
   "ci_reconciliation": "unavailable",
-  "incident": false
+  "incident": true
 }
