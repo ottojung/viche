@@ -12,13 +12,6 @@ import hashlib, json, os, re, subprocess, sys
 repo,state=sys.argv[1:]
 def git(*args):
     return subprocess.check_output(['git','-C',repo,*args], text=True).strip()
-def first_parent_paths(commit):
-    """Paths introduced by this first-parent step (including merge commits)."""
-    try:
-        parent=git('rev-parse','--verify','--quiet',commit+'^1')
-    except subprocess.CalledProcessError:
-        return git('diff-tree','--root','--no-commit-id','--name-only','-r',commit).splitlines()
-    return git('diff','--name-only','--no-renames',parent,commit).splitlines()
 def recorded_result(data, expected_suite):
     """Accept only generated records with a run matching the reported result."""
     if (data.get('generated_by')!='government/suite-status.sh'
@@ -47,20 +40,88 @@ def recorded_result(data, expected_suite):
                     for run in runs)):
         return 'red'
     return None
+def git_batch_show(specs):
+    """Read '<commit>:<path>' blobs in one invocation; miss/invalid -> skip."""
+    if not specs:
+        return {}
+    proc=subprocess.run(['git','-C',repo,'cat-file','--batch'],
+        input=('\n'.join(specs)+'\n').encode(),capture_output=True)
+    out={}
+    buf=proc.stdout
+    for spec in specs:
+        nl=buf.find(b'\n')
+        if nl<0:
+            break
+        header=buf[:nl].decode(errors='replace'); buf=buf[nl+1:]
+        if header.endswith(' missing'):
+            continue
+        try:
+            size=int(header.rsplit(' ',1)[1])
+        except (ValueError,IndexError):
+            break
+        blob=buf[:size]; buf=buf[size:]
+        if buf[:1]==b'\n':
+            buf=buf[1:]
+        try:
+            out[spec]=json.loads(blob.decode())
+        except ValueError:
+            continue
+    return out
+def first_parent_map():
+    """One git invocation: commit -> (parent, tree, introduced paths).
+
+    Equivalent to per-commit `rev-parse <c>^1` plus
+    `diff(--root|--name-only --no-renames)`, without one subprocess per commit.
+    """
+    proc=subprocess.run(['git','-C',repo,'log','--first-parent','--reverse',
+        '--no-renames','--name-only','--format=COMMIT %H %P %T',main],
+        capture_output=True,text=True,check=True)
+    info={}
+    cur=None
+    want_files=False
+    for line in proc.stdout.splitlines():
+        if line.startswith('COMMIT '):
+            # Header shape: COMMIT <H> <P1>..<Pn> <T> (n=0 for root, where
+            # the slot is empty; n=2 for merges). Tree is always last.
+            parts=[t for t in line.split(' ') if t!='']
+            if len(parts)<3 or parts[0]!='COMMIT':
+                pass  # pathological path that happens to start with COMMIT
+            else:
+                _,h,rest,t=parts[0],parts[1],parts[2:-1],parts[-1]
+                parents=list(rest)
+                cur=h
+                info[cur]=[parents[0] if parents else None,t,[]]
+                want_files=False  # the header is followed by one blank line
+                continue
+        if line=='':
+            # A blank line right after the header precedes the file list;
+            # a blank line after files (or a second blank) ends the block.
+            if cur is not None and not want_files and not info[cur][2]:
+                want_files=True
+            else:
+                cur=None
+            continue
+        if cur is not None:
+            info[cur][2].append(line)
+            want_files=True
+    return info
 try:
     main=git('rev-parse','--verify','main')
-    commits=git('rev-list','--first-parent','--reverse',main).splitlines()
+    fp=first_parent_map()
+    commits=list(fp)
     positions={c:i for i,c in enumerate(commits)}
+    trees={c:t for c,(p,t,paths) in fp.items()}
     records=[]
+    blobs=git_batch_show([c+':records/suite-status.json' for c in commits])
     for rec_commit in commits:
         try:
-            data=json.loads(subprocess.check_output(['git','-C',repo,'show',rec_commit+':records/suite-status.json'],text=True,stderr=subprocess.DEVNULL))
-        except (subprocess.CalledProcessError, ValueError):
+            data=blobs[rec_commit+':records/suite-status.json']
+        except KeyError:
             continue
         recorded_commit=data.get('commit')
         # A status entry is evidence only if that commit itself introduced or
         # updated the status file; subsequent history snapshots aren't new runs.
-        touched=first_parent_paths(rec_commit)
+        touched=fp[rec_commit][2]
         if 'records/suite-status.json' in touched:
             records.append((rec_commit,data,'git'))
     # reviewed-merge.sh stores an immutable receipt before publishing and emits
@@ -100,14 +161,13 @@ try:
 
     changes=[]
     for i,commit in enumerate(commits):
-        paths=first_parent_paths(commit)
-        paths=[p for p in paths if p.startswith(('government/','tests/','records/'))]
+        paths=[p for p in fp[commit][2] if p.startswith(('government/','tests/','records/'))]
         if not paths:
             continue
         expected_suite=('tests/records-smoke.sh'
                         if all(p.startswith('records/') for p in paths)
                         else 'tests/run-all.sh')
-        tree=git('rev-parse',commit+'^{tree}')
+        tree=trees[commit]
         # Require the record commit to precede the main change. The record must
         # name that exact commit and its tree; a matching parent is insufficient
         # because it does not verify the resulting merge tree.
@@ -118,7 +178,10 @@ try:
                 continue
             candidate=r.get('commit','')
             try:
-                if git('rev-parse','--verify',candidate+'^{tree}') != tree:
+                cand_tree=trees.get(candidate)
+                if cand_tree is None:
+                    cand_tree=git('rev-parse','--verify',candidate+'^{tree}')
+                if cand_tree != tree:
                     continue
                 if candidate != commit:
                     continue

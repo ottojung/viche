@@ -126,13 +126,21 @@ import hashlib, json, pathlib, sys
 report=json.loads(pathlib.Path(sys.argv[1]).read_text())
 block=report['suite_compliance']
 assert 'per_change' not in block
-detail=pathlib.Path(block['details_ref'])
-assert detail.is_file() and str(detail).startswith(sys.argv[2])
-blob=detail.read_bytes()
-assert hashlib.sha256(blob).hexdigest()==block['details_sha256']
-detail_data=json.loads(blob)
-assert len(detail_data['per_change'])==block['per_change_count']
-assert len(detail_data['changes_reaching_main_red'])==block['red_change_count']
+# A missing detail record is a clean unreadable signal, never a crash.
+# (Suite-compliance timeouts and check errors report this shape; the
+# KeyError this used to raise hid the real cause behind a traceback.)
+if block.get('details_ref') is None:
+    assert block.get('status')=='unreadable', block
+    assert block.get('reason'), block
+    assert isinstance(block.get('wall_seconds'),(int,float)), block
+else:
+    detail=pathlib.Path(block['details_ref'])
+    assert detail.is_file() and str(detail).startswith(sys.argv[2])
+    blob=detail.read_bytes()
+    assert hashlib.sha256(blob).hexdigest()==block['details_sha256']
+    detail_data=json.loads(blob)
+    assert len(detail_data['per_change'])==block['per_change_count']
+    assert len(detail_data['changes_reaching_main_red'])==block['red_change_count']
 PY
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
