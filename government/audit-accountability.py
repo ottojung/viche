@@ -8,20 +8,29 @@ Act 27 §3 legacy marker schema (append-only row in a correction trail, e.g.
 ``records/oversight/corrections/<case>.jsonl``)::
 
     {"marker": "legacy_no_identity", "case_id": "<18 hex>", "at": <epoch>,
-     "filing_office": "<filing office id>", "predates_anchor": true,
+     "filing_office": "<filing office id>", "sponsor": "<sponsoring seat id>",
+     "predates_anchor": true,
      "identity_asserted": false,
+     "hash_convention": "with_newline" | "no_newline",
      "rows": [{"position": <1-based trail line>, "commit": "<introducing sha>",
                "sha256": "<sha256 of that line's bytes at that commit>"}, ...],
      "review": {"reviewer": "clerk" | "judiciary",
                 "independence_basis": "<non-empty>",
+                "clerk_unavailability_basis": "<non-empty, required iff reviewer is judiciary>",
                 "confirmations": {"hashes_match": true,
                                   "rows_unmodified": true,
                                   "no_identity": true}}}
 
+"Signed by the filing office" (§3(2)) is attribution only: the marker names the
+filing office in a committed append-only row, but nothing here binds that name
+to the committer or to a cryptographic signature (no per-office key
+infrastructure exists; see the independent review).  The reviewer records which
+row-hash convention was used in ``hash_convention``; the checker verifies the
+cited digests strictly under the declared convention.
+
 A row's hash is SHA-256 over the row's bytes as committed at the cited
-introducing commit.  The Act does not fix whether the single trailing newline
-is included; the review procedure requires the reviewer to record the
-convention, and this checker accepts either (both bind the same line).  A marker is effective only for the
+introducing commit, either with or without the single trailing newline as
+declared.  A marker is effective only for the
 two case ids named in Act 27 §3(1), only when it is the single marker in the
 committed trail, lists every correction row that existed when the trail was
 first committed (and no later row) exactly once by position, and carries an
@@ -91,14 +100,24 @@ def _git_show(town, rev, rel):
 
 def _line_sha256s(line):
     """The two defensible readings of "the row's bytes": with or without the
-    single trailing newline that separates it from the next row.  Act 27 §3(2)
-    does not fix the convention and the review procedure explicitly asks the
-    reviewer to record which was used, so both bind the same line content and
-    only the terminator differs.
+    single trailing newline that separates it from the next row.  The marker
+    declares which was used (``hash_convention``); the checker verifies
+    strictly under the declared convention.  This helper is retained for
+    introspection only.
     """
     text = line.encode("utf-8")
     return {hashlib.sha256(text).hexdigest(),
             hashlib.sha256(text + b"\n").hexdigest()}
+
+
+def _row_sha256(line, convention):
+    """SHA-256 of a row's bytes under the declared ``hash_convention``."""
+    text = line.encode("utf-8")
+    if convention == "with_newline":
+        return hashlib.sha256(text + b"\n").hexdigest()
+    if convention == "no_newline":
+        return hashlib.sha256(text).hexdigest()
+    return None
 
 
 def effective_legacy_marker(case_id):
@@ -143,6 +162,15 @@ def effective_legacy_marker(case_id):
     filing_office = marker.get("filing_office")
     if not isinstance(filing_office, str) or not filing_office.strip():
         return None
+    # Act 27 §3(3): the filing office and the sponsor are excluded as reviewer.
+    sponsor = marker.get("sponsor")
+    if not isinstance(sponsor, str) or not sponsor.strip():
+        return None
+    # The marker must declare which row-hash convention was used (cf. C5);
+    # the checker verifies strictly under the declared convention.
+    convention = marker.get("hash_convention")
+    if convention not in ("with_newline", "no_newline"):
+        return None
 
     entries = marker.get("rows")
     if not isinstance(entries, list) or not entries:
@@ -183,10 +211,16 @@ def effective_legacy_marker(case_id):
     if anchor_shown.returncode:
         return None
     anchor_lines = anchor_shown.stdout.splitlines()
-    anchor_corrections = [
-        number for number, line in enumerate(anchor_lines, 1)
-        if json.loads(line).get("correction") is True
-    ]
+    anchor_corrections = []
+    for number, line in enumerate(anchor_lines, 1):
+        try:
+            anchor_row = json.loads(line)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(anchor_row, dict):
+            return None
+        if anchor_row.get("correction") is True:
+            anchor_corrections.append(number)
     if sorted(positions) != sorted(anchor_corrections):
         return None
 
@@ -199,9 +233,9 @@ def effective_legacy_marker(case_id):
             return None
         anchor_line = anchor_lines[position - 1]
         head_line = lines[position - 1]
-        if entry["sha256"] not in _line_sha256s(anchor_line):
+        if entry["sha256"] != _row_sha256(anchor_line, convention):
             return None
-        if entry["sha256"] not in _line_sha256s(head_line):
+        if entry["sha256"] != _row_sha256(head_line, convention):
             return None
         row = parsed[position - 1]
         if row.get("correction") is not True:
@@ -216,11 +250,19 @@ def effective_legacy_marker(case_id):
     reviewer = review.get("reviewer")
     if not isinstance(reviewer, str) or reviewer.strip().lower() not in ("clerk", "judiciary"):
         return None
-    if reviewer.strip().lower() == filing_office.strip().lower():
+    reviewer_norm = reviewer.strip().lower()
+    if reviewer_norm == filing_office.strip().lower():
+        return None
+    if reviewer_norm == sponsor.strip().lower():
         return None
     basis = review.get("independence_basis")
     if not isinstance(basis, str) or not basis.strip():
         return None
+    # Act 27 §3(3): the Judiciary reviews only on recorded Clerk unavailability.
+    if reviewer_norm == "judiciary":
+        unavailability = review.get("clerk_unavailability_basis")
+        if not isinstance(unavailability, str) or not unavailability.strip():
+            return None
     confirmations = review.get("confirmations")
     if not isinstance(confirmations, dict):
         return None

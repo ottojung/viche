@@ -91,13 +91,15 @@ trail, case_id, anchor, mode = sys.argv[1:5]
 lines = open(trail, encoding="utf-8").read().splitlines()
 entries = []
 first = True
+convention = "with_newline" if mode == "newline" else "no_newline"
 for position, line in enumerate(lines, 1):
     row = json.loads(line)
     if row.get("correction") is not True:
         continue
-    digest = hashlib.sha256(line.encode("utf-8")).hexdigest()
-    if mode == "newline":
+    if convention == "with_newline":
         digest = hashlib.sha256((line + "\n").encode("utf-8")).hexdigest()
+    else:
+        digest = hashlib.sha256(line.encode("utf-8")).hexdigest()
     if mode == "badhash" and first:
         digest = "0" * 64
     first = False
@@ -107,16 +109,27 @@ marker = {
     "case_id": case_id,
     "at": 2000000000,
     "filing_office": "audit",
+    "sponsor": "c1a00007",
     "predates_anchor": True,
     "identity_asserted": False,
+    "hash_convention": convention,
     "rows": entries,
 }
+reviewer = "clerk"
+extra = {}
+if mode in ("judiciary", "judiciary_nobasis"):
+    reviewer = "judiciary"
+if mode == "judiciary":
+    extra["clerk_unavailability_basis"] = "Clerk unavailable 2026-11-09, recorded in session log"
+if mode == "sponsor_reviewer":
+    reviewer = "c1a00007"
 if mode != "noreview":
     marker["review"] = {
-        "reviewer": "clerk",
-        "independence_basis": "reviewer is not the filing office; re-derived each row from its introducing commit",
+        "reviewer": reviewer,
+        "independence_basis": "reviewer is not the filing office or sponsor; re-derived each row from its introducing commit",
         "confirmations": {"hashes_match": True, "rows_unmodified": True, "no_identity": True},
     }
+    marker["review"].update(extra)
 with open(trail, "a", encoding="utf-8") as fh:
     fh.write(json.dumps(marker, sort_keys=True) + "\n")
 PY
@@ -315,5 +328,120 @@ expect_refused 'mismatched cycle registry' \
     "evidence with a mismatched registry" "must fail closed"
 grep -q 'cycle_id is not the current audit dispatch token' "$scratch/refused.err"
 echo 'legacy marker (vii): absent, truncated or mismatched cycle registry fails closed'
+
+# (viii) A marker whose reviewer is the named sponsor is ineffective (§3(3)).
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+commit_town 'legacy trail for sponsor-exclusion fixture'
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" sponsor_reviewer
+commit_town 'append marker whose reviewer is the named sponsor'
+expect_refused 'sponsor reviewer marker' \
+    file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence behind a sponsor-reviewed marker" "the sponsor is excluded"
+echo 'legacy marker (viii): reviewer == sponsor refused'
+
+# (ix) A judiciary review without a recorded Clerk-unavailability basis is
+# ineffective; with the basis it is effective (§3(3)).
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+commit_town 'legacy trail for judiciary-basis fixture'
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" judiciary_nobasis
+commit_town 'append judiciary marker without an unavailability basis'
+expect_refused 'judiciary marker without basis' \
+    file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence behind a basis-less judiciary marker" "the Judiciary reviews only on recorded unavailability"
+echo 'legacy marker (ix-a): judiciary reviewer without clerk-unavailability basis refused'
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+commit_town 'legacy trail for judiciary-with-basis fixture'
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" judiciary
+commit_town 'append judiciary marker with an unavailability basis'
+file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence under a judiciary marker with basis" "materially stronger replay" >/dev/null
+echo 'legacy marker (ix-b): judiciary reviewer with clerk-unavailability basis accepted'
+
+# (x) A malformed anchor blob makes the marker ineffective, not an uncaught
+# traceback (fail closed per the effective_legacy_marker contract).
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+printf 'not-json\n' >> "$TRAIL"
+commit_town 'trail whose introducing commit is malformed (repaired next)'
+python3 - "$TRAIL" <<'PY'
+import sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+open(sys.argv[1], "w", encoding="utf-8").write("\n".join(lines[:-1]) + "\n")
+PY
+legacy_trail_extra() {
+    printf '{"at":1792738487,"case_id":"%s","correction":true,"confirmed":false,"verdict":"not_assigned","supersedes":"finding"}\n' \
+        "$1" >> "$TRAIL"
+}
+legacy_trail_extra "$CASE_LEGACY"
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" good
+commit_town 'marker over a trail whose first commit was malformed'
+out="$scratch/malformed.out"
+if python3 -c "
+import importlib.util, os
+spec = importlib.util.spec_from_file_location('ac', '$repo/government/audit-accountability.py')
+ac = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ac)
+os.environ['VICHE_TOWN_ROOT'] = '$scratch/town'
+print(ac.effective_legacy_marker('$CASE_LEGACY'))
+" > "$out" 2> "$scratch/malformed.err"; then
+    grep -q '^None$' "$out" || { echo "malformed anchor did not return None" >&2; exit 1; }
+else
+    echo "malformed anchor raised an uncaught exception:" >&2
+    cat "$scratch/malformed.err" >&2
+    exit 1
+fi
+expect_refused 'malformed-anchor marker' \
+    file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence behind a malformed-anchor marker" "must fail closed"
+echo 'legacy marker (x): malformed anchor refused without a traceback'
+
+# (xi) The declared hash convention is enforced: both conventions work when
+# declared, and an undeclared convention has no effect.
+fresh
+make_case "$CASE_LEGACY"
+base_verdict "$CASE_LEGACY"
+set_token "$TOKEN1"
+legacy_trail "$CASE_LEGACY"
+commit_town 'legacy trail for convention-declaration fixture'
+anchor=$(git -C "$scratch/town" rev-parse HEAD)
+add_marker "$TRAIL" "$CASE_LEGACY" "$anchor" good
+commit_town 'marker declaring no_newline'
+file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence under the declared no_newline convention" "materially stronger replay" >/dev/null
+echo 'legacy marker (xi-a): declared no_newline convention accepted'
+python3 - "$TRAIL" <<'PY'
+import json, sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+for i, line in enumerate(lines):
+    row = json.loads(line)
+    if row.get("marker") == "legacy_no_identity":
+        del row["hash_convention"]
+        lines[i] = json.dumps(row, sort_keys=True)
+open(sys.argv[1], "w", encoding="utf-8").write("\n".join(lines) + "\n")
+PY
+commit_town 'marker with the convention declaration stripped'
+expect_refused 'undeclared hash convention' \
+    file_correction "$CASE_LEGACY" "$TOKEN1" not_assigned finding \
+    "evidence behind an undeclared convention" "the reviewer must record the convention"
+echo 'legacy marker (xi-b): undeclared hash convention refused'
 
 echo 'Act 27 legacy marker smoke passed'
