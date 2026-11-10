@@ -439,3 +439,21 @@ verified`, 7 content assertions, `run-all` exit 0 on the exact commit).
 This closes the first-delivery loop (prototype → verification → lawful
 integration → observed effect). It is not a claim that the underlying
 institutional failures are repaired.
+
+## Follow-up 2026-11-10 — closure-rule refresh candidate 75cada2
+
+While the first delivery stands landed as `20774cb`, the live open case kept
+advertising the removed two-probe rule in its `closure_rule` field (only
+refreshed on creation/clear). New minimal candidate:
+
+- Commit: `75cada220a3172ccbba40e7557d1c23a9b97e353`, tree
+  `9327574a6f7462d919b585367c78b922b7bf9ee2`.
+- Formal proposal: `origin/delivery/closure-rule-refresh-20261110`; the
+  proposal script reproduced `tests/run-all.sh` green before pushing.
+- Change: refresh `closure_rule` on every reconcile; behaviour stays open and
+  non-closing. Smoke fixture seeds the old text and asserts the refresh.
+- Delta is `government/institutional-cases.py` + its smoke test; no protected
+  edit.
+
+Independent exact-commit review and (if pursued) an Act 26 pre-landing record
+from an eligible office are still required. No merge or deployment is claimed.
