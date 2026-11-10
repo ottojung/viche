@@ -1,0 +1,7 @@
+id: H-1794093492-bb5a
+status: done
+assigned-by: Act 16 s2 assumptions schedule; Act 21 scoped records gate (tests/records-smoke.sh green on exact tree)
+created: 2026-11-07T23:18:13Z
+done: 2026-11-07T23:26Z
+evidence: branch sponsor/c1a00002-ballot-record-erratum-act commit 6716efb1ef3475202400675d7bf6199482f395ba (tree a354d560f784a47aa9ad724908b819d50151ee49); Clerk independently re-ran `sh tests/records-smoke.sh` in a clean detached worktree at that exact commit — exit 0, worktree clean, single added path records/assumptions/ballot-record-erratum-act.md (blob 75bedeef0ed90e8c56ac180f96d7f68f806a6c00a09b55bda85f83b1786d7699).
+work: Clerk reviewed and verified the records-only assumptions schedule. Decision: content acceptable; main integration DEFERRED, not refused, for one concrete reason — the bill text is not Git-anchored (no records/bills/ballot-record-erratum-act.md at 6716efb or origin/main; the draft exists only in board issue NXVnTiMEMARRqOx4geKYNo-slide). Integrating the Act 16 s2 schedule alone would create a registry entry with no bill to index it against. Next owner: sponsor c1a00002 files the bill text as a records-only change; Clerk then verifies both files on one exact commit/tree (records-smoke plus recorded suite-status) and merges them together under Act 21. Bill remains not vote-eligible pending the Act 16 s1 non-sponsor red-team (assigned to c1a0000a) and the sponsor response; no ballot may be solicited. Not enacted; no protected ballot/bill record was modified.

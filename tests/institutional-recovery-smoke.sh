@@ -122,6 +122,35 @@ jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed_ok
 jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed_bad:902") != null' "$d/state/institutional-cases/index.json" >/dev/null
 jq -e '.unresolved_without_closure_evidence | map(.id) | index("legacy_closed_self:903") != null' "$d/state/institutional-cases/index.json" >/dev/null
 
+# First-ever signals have no prior case to archive; opening them must not crash.
+printf '{"signals":["new_case"],"observed_at":1850}\n' > "$d/state/branches/incident.json"
+VICHE_CASE_NOW=1850 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.id=="new_case:1850" and .state=="open" and .observations==1' "$d/state/institutional-cases/new_case.json" >/dev/null
+rm "$d/state/institutional-cases/new_case.json" "$d/state/branches/incident.json"
+
+# A signal re-firing after a verified close archives the superseded object
+# in an individually indexed JSON record, preserving old ID and evidence.
+printf '{"id":"refire_case:2000","signal":"refire_case","state":"verified_closed","first_seen":2000,"last_seen":2000,"verified_at":2000,"observations":5,"owner":"judiciary"}\n' > "$d/state/institutional-cases/refire_case.json"
+printf '{"signals":["refire_case"],"observed_at":1900}\n' > "$d/state/branches/incident.json"
+VICHE_CASE_NOW=1900 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .id=="refire_case:1900" and .first_seen==1900 and .observations==1 and .clear_observations==0' "$d/state/institutional-cases/refire_case.json" >/dev/null
+archived="$d/state/institutional-cases/archive-refire_case-2000.json"
+jq -e '.id=="refire_case:2000" and .state=="verified_closed" and .verified_at==2000 and .observations==5 and .archive_reason=="re-fire after close"' "$archived" >/dev/null
+# An unsupported historical closure remains an explicit obligation in the index.
+jq -e '.unresolved_without_closure_evidence | map(.id) | index("refire_case:2000") != null' "$d/state/institutional-cases/index.json" >/dev/null
+# Simulate a crash AFTER archive write but BEFORE swapping the live case.
+# Retrying the same old case must reuse the exact archive without corruption.
+archive_digest=$(sha256sum "$archived" | cut -d' ' -f1)
+printf '{"id":"refire_case:2000","signal":"refire_case","state":"verified_closed","first_seen":2000,"last_seen":2000,"verified_at":2000,"observations":5,"owner":"judiciary"}\n' > "$d/state/institutional-cases/refire_case.json"
+VICHE_CASE_NOW=1920 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+test "$(sha256sum "$archived" | cut -d' ' -f1)" = "$archive_digest"
+jq -e '.state=="open" and .id=="refire_case:1920"' "$d/state/institutional-cases/refire_case.json" >/dev/null
+# Signal absence afterwards must not duplicate the archive: only re-fire archives.
+rm "$d/state/branches/incident.json"
+VICHE_CASE_NOW=1950 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+test "$(find "$d/state/institutional-cases" -maxdepth 1 -name 'archive-refire_case-*.json' | wc -l)" -eq 1
+jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/refire_case.json" >/dev/null
+
 # After a real enactment, new Executive work has a clean worktree, separate
 # from the historical legislative one. Mock only the dispatcher prerequisites.
 git -C "$d/town" init -q

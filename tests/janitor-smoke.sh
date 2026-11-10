@@ -5,7 +5,49 @@
 set -eu
 root=$(git rev-parse --show-toplevel)
 d=$(mktemp -d)
-trap 'rm -rf "$d"' 0
+# Keep liveness fixtures alive until checked, even on an overloaded CI host.
+# Clean them up explicitly rather than leaving long-lived sleep processes.
+liveness_pids=""
+cleanup() {
+    for pid in $liveness_pids; do
+        kill "$pid" 2>/dev/null || :
+        wait "$pid" 2>/dev/null || :
+    done
+    rm -rf "$d"
+}
+trap cleanup 0
+
+# A FIFO keeps each helper's cwd referenced until explicit cleanup, regardless
+# of host load or how long the full suite takes. The readiness handshake
+# ensures classification never races the child process's initial chdir.
+start_liveness_fixture() {
+    target=$1
+    label=$2
+    gate=$d/$label.gate
+    ready=$d/$label.ready
+    mkfifo "$gate"
+    (
+        cd "$target" || exit 1
+        : > "$ready"
+        IFS= read -r _ < "$gate" || :
+    ) &
+    pid=$!
+    liveness_pids="$liveness_pids $pid"
+    tries=0
+    while [ ! -f "$ready" ]; do
+        kill -0 "$pid" 2>/dev/null || {
+            echo "janitor fixture exited before ready: $label" >&2
+            return 1
+        }
+        tries=$((tries + 1))
+        if [ "$tries" -gt 600 ]; then
+            echo "janitor fixture never became ready: $label" >&2
+            return 1
+        fi
+        sleep 0.05
+    done
+}
+
 town=$d/town
 state=$d/state
 seats=$d/seats
@@ -257,7 +299,8 @@ lbox=$d/lbox
 mkdir -p "$lbox/live-target"
 printf 'x\n' > "$lbox/live-target/f"
 touch -d '40 days ago' "$lbox/live-target"
-( cd "$lbox/live-target" && sleep 15 & )
+start_liveness_fixture "$lbox/live-target" "lbox"
+
 lt_mtime=$(stat -c %Y "$lbox/live-target")
 {
     printf 'ts\thost\tpath\tsize_kb\tmtime\tage_days\tis_git\tuncommitted\tunpushed\tclass\n'
@@ -273,7 +316,8 @@ pbox=$d/pbox
 mkdir -p "$pbox/live-parent/.lake"
 printf 'x\n' > "$pbox/live-parent/.lake/f"
 touch -d '40 days ago' "$pbox/live-parent/.lake" "$pbox/live-parent"
-( cd "$pbox/live-parent" && sleep 15 & )
+start_liveness_fixture "$pbox/live-parent" "pbox"
+
 lp_mtime=$(stat -c %Y "$pbox/live-parent")
 ll_mtime=$(stat -c %Y "$pbox/live-parent/.lake")
 {
