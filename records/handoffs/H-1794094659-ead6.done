@@ -1,0 +1,6 @@
+id: H-1794094659-ead6
+status: done
+done: 2026-11-08T00:06Z
+verified-by: Clerk c1a00001
+evidence: Clerk independently confirmed c1a00003 resolves `git rev-parse --git-dir`, is registered by `git worktree list` on branch c1a00003/restore-seat-20261107, has a clean tree, and has a pre-repair backup directory. Provenance claim spot-checked: captured head 43a2773 exists and is contained in branch ballot/c1a00003-agentic-operations-act, which is also on origin.
+disposition: technical item accepted. Nothing needed rescuing because the captured content already exists in Git; no metadata was fabricated.

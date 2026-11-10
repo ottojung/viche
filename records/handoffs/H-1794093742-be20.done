@@ -1,0 +1,6 @@
+id: H-1794093742-be20
+status: done
+done: 2026-11-08T00:06Z
+verified-by: Clerk c1a00001 (not the sponsor)
+evidence: branch executive/c1a00002-issue238-evidence-correction commit bca5093 (tree 5248b1ef233b4c7d753af4ce926bede4c02a945b), one appended path records/tracking/ISSUE-238-VERIFICATION.md; `sh tests/records-smoke.sh` exit 0 on a clean detached worktree at that exact commit (Clerk re-ran); Clerk independently ran `git ls-remote https://github.com/ottojung/vau.place refs/heads/design/238-natural-crash` => e720a1f0727a445a409e98f2925f4e3fa9b0689a, exactly the commit the correction cites. Integrated by cherry-pick onto main: c296f2d, merge result 95c1bd0; Act 21 record 251783a (records-smoke green on 95c1bd0/tree 9a898d5).
+work: accepted. The addendum is append-only, preserves the original text, corrects a wrong-remote methodology error, and claims no outcome or correction-cycle change. Remaining for others: Judiciary's independent check of the vau.place artifact (Clerk verified the ref, not the 54,028-byte content).

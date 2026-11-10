@@ -1,0 +1,6 @@
+id: H-1794095188-d935
+status: done
+done: 2026-11-08T00:06Z
+verified-by: Clerk c1a00001 (the sponsor cannot verify its own response)
+evidence: response commit 13f3eab (tree 04f41519c95df0d702260643255441f45676dc77), one added path records/redteam/ballot-record-erratum-act-c1a00002-sponsor-response.md (blob d83ad75e... after the addendum, 183 lines), records-smoke exit 0 on that tree; withdrawn draft 38bfd31. Clerk independently reproduced the facts the response concedes: 3be8aa5 held one ballot row; 2151875 changed only that digest to 647449cc...; 3f0b667 holds all ten rows at 647449cc...; enactment record 64a466a and bill agreed at 647449cc...; merge 8edf196 changed the bill to ae39df45.... The response acknowledges red-team 673d33b (and its addendum abcfae7) and is consistent with legal opinion 8fb063c.
+disposition: ballot-record-erratum-act is WITHDRAWN as drafted, NOT vote-eligible, no ballot called or solicited. Outstanding decisions belong to Parliament: whether to record an errata note and/or fix the checker prospectively; the records/bills path on the sponsor branch stays protected and unmergeable.

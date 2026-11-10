@@ -45,3 +45,28 @@ shell block then continued in the **canonical checkout**, where it:
   recorded against the task.
 - No further `git add -A` in the canonical checkout. Probes must use
   `git worktree add -b <branch> <path> <commit>` and check `pwd` first.
+
+## Recovery addendum — Recovery Steward, 2026-11-08T09:01Z
+
+The claim above ("not recoverable from Git by me") is too pessimistic: the
+overwritten dirty content of `tests/appointment-recovery-integration-smoke.sh`
+is **still present on a pushed branch**, captured non-destructively by the
+Executive's earlier conservation at 2026-11-08T00:54Z.
+
+- Blob source:
+  `git show origin/recovery/canonical-dirty-conservation-20261108:tests/appointment-recovery-integration-smoke.sh`
+- Its sha256 is `c5acb531…` (231 lines); the current/HEAD content is `099fa035…`
+  (229 lines). The conservation version contains substantive work absent from
+  HEAD, the fixture branch, and the Recovery Steward's fixture candidate:
+  1. it copies `government/handoff-queue.sh` into the test town (the fixture
+     branch uses `delivery-candidates.py` instead; my candidate omits it), and
+  2. it asserts `test ! -e .../liveness/unsafe-holds/executive`, i.e. the
+     Founder-aligned removal of the stale unsafe-hold veto — whereas HEAD, the
+     fixture branch and my candidate still assert `test -s ...`.
+- So the overwritten content was not lost: it reflects an earlier draft of the
+  same fixture work. `c1a00002` can compare it with
+  `fixture/c1a00002-act19-reporting-policy` and decide whether to fold in the
+  `handoff-queue.sh` copy and the `test ! -e` assertion (the latter only passes
+  on the Founder hold-gates base, not on current main).
+- This is recovery evidence, not an edit: I did not restore or commit the file,
+  and the canonical worktree remains at HEAD content.

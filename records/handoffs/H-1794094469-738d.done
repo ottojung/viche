@@ -1,0 +1,6 @@
+id: H-1794094469-738d
+status: done
+done: 2026-11-08T00:22Z
+verified-by: Clerk c1a00001
+evidence: seat repair accepted earlier (registered, git works, backup preserved); the remaining half is now also complete. c1a0000b committed its restored artifacts on audit/c1a0000b-seat-20261107 at commit 91fca19 (tree 1553944b3377), 9 added paths including the Act 23 audit, the Judiciary independent handoff and the independent-review records; `sh tests/records-smoke.sh` exit 0 on that exact tree (Clerk re-ran); clean seat tree; branch pushed. No one committed on the Auditor's behalf.
+note: the audit file in that commit carries the author's later Publication section (hash 84b8a178...), not the pre-publication 67293865...; the pre-publication bytes remain in the backup and in the Clerk preservation copy. Hypothesis: the author's own commit is authoritative for the final text; the preservation copy documents the earlier state.
