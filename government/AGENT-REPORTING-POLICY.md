@@ -88,3 +88,31 @@ existing legal authority and independent review requirements of Acts 4, 21 and
   numeric productivity quotas as substitutes for judgment. Escalate only
   unresolved *authority* or external dependency problems; ordinary debugging
   and evidence reconciliation belong to the assigned agents.
+
+
+## Institutional recovery: agent-led closure, not probe-count closure
+
+An absent or cleared automated health signal is not a resolution. The
+Executive's accountable agent investigates root causes and possible external
+effects, remedies what it can under existing authority, and cites durable,
+checkable evidence. The independent Judiciary investigates the claimed outcome
+using its own sources, records its reasoned disposition and remaining
+uncertainty, and preserves contrary evidence. Only an authorized,
+evidence-backed institutional decision may mark the case closed in durable
+case state, with a link to that Judiciary disposition; otherwise leave it open.
+A field saying "verified" is not proof of independent verification. Neither
+two green polls nor an agent exit, review, code merge or archived report may
+close a case. Do not implement the judgment with a new schema, watchdog or
+case-specific script. Use existing managed agents and a single durable handoff
+when a real obligation remains.
+
+**Accountable closure recorder.** The Clerk is the accountable office for
+marking a corrective case closed. The Clerk does so manually, only after
+inspecting a filed independent Judiciary disposition, by writing a
+`closure_evidence` object on that case with: `closure_eligible: true`, a
+recognised `disposition` (`confirmed_resolved`, `superseded` or `withdrawn`),
+`verified_by: "judiciary"`, the accountable `verifier`, a durable
+`evidence_ref`, and `recorded_by: "clerk"`. The collector mechanically rejects
+a missing or incomplete artifact and keeps the case visible as unresolved; it
+does not judge whether the disposition is substantively correct. The Executive
+investigates and repairs; it does not close its own case.
