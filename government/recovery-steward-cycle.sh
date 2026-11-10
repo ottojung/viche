@@ -23,10 +23,24 @@ mode=$AGENT_STATE
 fresh=no
 case "$mode" in
   running) exit 0 ;;
-  failed|stopped|killed)
+  stopped|killed)
+    # This supervisor must obey the same stop-intent protection it applies
+    # to other offices. An out-of-band human stop can have null intent.
+    mkdir -p "$state/liveness/unsafe-holds"
+    hold=$state/liveness/unsafe-holds/recovery-steward
+    invocation=$(printf '%s\n' "$meta" | jq -r '.invocation_id // .finished_at // ""')
+    line=$(printf 'recovery-steward\t%s\t%s' "$id" "$invocation")
+    if [ ! -s "$hold" ] || ! grep -Fxq "$line" "$hold"; then
+      printf '%s\n' "$line" >> "$hold"
+    fi
+    echo "Recovery steward terminally $mode; manual Executive investigation required; no auto-renewal" >&2
+    exit 1 ;;
+  failed)
     # No replay: the appointment service snapshots the old session first.
-    printf '%s\n' "$meta" | jq -e '.alive == false' >/dev/null ||
+    printf '%s\n' "$meta" | jq -e '.alive == false and (.active_runner == false or .active_runner == null)' >/dev/null ||
       { echo 'Cannot duplicate active runner' >&2; exit 1; }
+    printf '%s\n' "$meta" | jq -e '(.intent // "") != "stop"' >/dev/null ||
+      { echo 'Recovery steward intentionally stopped; refuse auto-renewal' >&2; exit 1; }
     id=$(/bin/sh "$town/government/appointments.sh" replace recovery-steward "$id" recovery-steward terminal_new_session 'Fresh recovery investigator after terminal failure; no prompt or tool replay')
     fresh=yes ;;
   idle|clearexit) : ;;
@@ -42,6 +56,15 @@ interval=3600
 if [ -s "$state/branches/incident.json" ] ||
    [ -s "$state/oversight/random/incident.json" ] ||
    [ -s "$state/oversight/incident.json" ]; then interval=600; fi
+# A recorded unsafe hold is an institutional blocker, not a reason to
+# restart its stopped agent. Use the EXISTING expert investigator sooner;
+# the launcher must not infer intent, authorize renewal or clear evidence.
+for evidence in "$state"/liveness/unsafe-holds/*; do
+  if [ -f "$evidence" ] && [ -s "$evidence" ]; then
+    interval=600
+    break
+  fi
+done
 if [ "$fresh" != yes ] && [ "$last" -gt 0 ] && [ "$now" -ge "$last" ] &&
    [ $((now-last)) -lt "$interval" ]; then exit 0; fi
 charter=${VICHE_CONSTITUTION:-}

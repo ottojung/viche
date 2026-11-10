@@ -29,7 +29,12 @@ cat > "$d/bin/antonina" <<'MOCK'
 case "$1 $2" in
   'agent status')
     case "$4" in
-      old-agent) echo '{"state":"failed","alive":false,"backend_error":{"classification":"unknown","transient":false,"automatic_retry_safe":false}}' ;;
+      old-agent)
+        if [ -s "$MOCK_ROOT/terminal-status" ]; then
+          cat "$MOCK_ROOT/terminal-status"
+        else
+          echo '{"state":"failed","alive":false,"backend_error":{"classification":"unknown","transient":false,"automatic_retry_safe":false}}'
+        fi ;;
       new-agent) echo '{"state":"clearexit","alive":false}' ;;
       *) exit 2 ;;
     esac ;;
@@ -71,10 +76,47 @@ test -d "$d/seats/branches/recovery-steward"
 sh "$repo/government/recovery-steward-cycle.sh"
 test "$(wc -l < "$d/mock/replacements")" -eq 1
 test "$(grep -cx 'agent' "$d/mock/runs")" -eq 1
+# After an ordinary dispatch, an unsafe-hold triggers this SAME capable
+# investigator at its existing incident cadence, but never renews the held
+# appointment, clears the evidence, or duplicates a recent dispatch.
+mkdir -p "$d/state/liveness/unsafe-holds"
+printf 'innovation-centre\tstopped-id\tunknown-intent\n' > "$d/state/liveness/unsafe-holds/innovation-centre"
+now=$(date +%s)
+printf '%s\n' "$((now - 601))" > "$d/state/recovery-steward/last-dispatch"
+sh "$repo/government/recovery-steward-cycle.sh"
+test "$(grep -cx 'agent' "$d/mock/runs")" -eq 2
+test -s "$d/state/liveness/unsafe-holds/innovation-centre"
+grep -Fq 'Unsafe appointment holds (O1 standing investigation duty)' "$d/mock/runs"
+sh "$repo/government/recovery-steward-cycle.sh"
+test "$(grep -cx 'agent' "$d/mock/runs")" -eq 2
+test "$(wc -l < "$d/mock/replacements")" -eq 1
+# An empty hold is not an incident and does not accelerate the schedule.
+: > "$d/state/liveness/unsafe-holds/innovation-centre"
+printf '%s\n' "$((now - 601))" > "$d/state/recovery-steward/last-dispatch"
+sh "$repo/government/recovery-steward-cycle.sh"
+test "$(grep -cx 'agent' "$d/mock/runs")" -eq 2
 # Finished healthy session gets the next independent recovery cycle without
 # replacing the appointment or replaying a prior invocation.
 rm "$d/state/recovery-steward/last-dispatch"
 sh "$repo/government/recovery-steward-cycle.sh"
 test "$(wc -l < "$d/mock/replacements")" -eq 1
-test "$(grep -cx 'agent' "$d/mock/runs")" -eq 2
-echo 'Recovery steward fresh-session and non-replay smoke passed'
+test "$(grep -cx 'agent' "$d/mock/runs")" -eq 3
+# Explicit or ambiguous human stops must never be auto-renewed, even for
+# the Recovery Steward itself. The existing investigator cannot replay itself.
+printf 'old-agent\n' > "$d/mock/registry"
+printf '{"state":"stopped","intent":"stop","alive":false,"active_runner":false,"invocation_id":"human-stop"}\n' > "$d/mock/terminal-status"
+if sh "$repo/government/recovery-steward-cycle.sh" >/dev/null 2>&1; then
+    echo 'Intentional stop was automatically renewed' >&2
+    exit 1
+fi
+test "$(cat "$d/mock/registry")" = old-agent
+test "$(wc -l < "$d/mock/replacements")" -eq 1
+grep -Fq 'human-stop' "$d/state/liveness/unsafe-holds/recovery-steward"
+printf '{"state":"killed","intent":null,"alive":false,"active_runner":false,"invocation_id":"unexplained-kill"}\n' > "$d/mock/terminal-status"
+if sh "$repo/government/recovery-steward-cycle.sh" >/dev/null 2>&1; then
+    echo 'Ambiguous kill was automatically renewed' >&2
+    exit 1
+fi
+test "$(cat "$d/mock/registry")" = old-agent
+grep -Fq 'unexplained-kill' "$d/state/liveness/unsafe-holds/recovery-steward"
+echo 'Recovery steward fresh-session, hold escalation and non-replay smoke passed'
