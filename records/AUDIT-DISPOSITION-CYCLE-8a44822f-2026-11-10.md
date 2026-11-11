@@ -64,3 +64,16 @@ HEAD:records/oversight/corrections/<case>.jsonl` returns two rows with the
 check` no longer emits `correction_not_effective` for these cases. Until then the
 original verdicts govern and the corrected analysis above stands as unevaluated
 judicial evidence, not law.
+
+## Addendum 3, 2026-11-11 (re-summons on same cycle: landing still pending)
+
+Re-checked on fresh dispatch (same cycle `8a44822f…`, same frozen batch
+`ef422749…`; no new sample, no new verdicts — per-case/per-cycle finality).
+`HEAD` is now `217ddc0` (Clerk O1 post-landing records) and still contains none
+of the three correction trails (`git show HEAD:records/oversight/corrections/
+{0b0e015a…,38d4051d…,c6041cb3…}.jsonl` → nonexistent). The Clerk landing path is
+demonstrably functional (O1 records landed byte-identical with green suite at
+`9981e9b`/`10fbb68`/`217ddc0`), but the escalated judicial trails
+(`efd62e0`/`cee4159` on this branch) are not yet among the landed records.
+Escalation from Addendum 2 remains open with the Clerk/Executive; effective
+verdicts unchanged (originals govern). Mailbox re-checked: zero unreviewed.
