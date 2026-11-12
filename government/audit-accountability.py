@@ -3,9 +3,43 @@
 
 Auditor submissions are claims with evidence references, not independently verified
 facts. The controller never declares an issue solved from agent completion alone.
+
+Act 27 §3 legacy marker schema (append-only row in a correction trail, e.g.
+``records/oversight/corrections/<case>.jsonl``)::
+
+    {"marker": "legacy_no_identity", "case_id": "<18 hex>", "at": <epoch>,
+     "filing_office": "<filing office id>", "sponsor": "<sponsoring seat id>",
+     "predates_anchor": true,
+     "identity_asserted": false,
+     "hash_convention": "with_newline" | "no_newline",
+     "rows": [{"position": <1-based trail line>, "commit": "<introducing sha>",
+               "sha256": "<sha256 of that line's bytes at that commit>"}, ...],
+     "review": {"reviewer": "clerk" | "judiciary",
+                "independence_basis": "<non-empty>",
+                "clerk_unavailability_basis": "<non-empty, required iff reviewer is judiciary>",
+                "confirmations": {"hashes_match": true,
+                                  "rows_unmodified": true,
+                                  "no_identity": true}}}
+
+"Signed by the filing office" (§3(2)) is attribution only: the marker names the
+filing office in a committed append-only row, but nothing here binds that name
+to the committer or to a cryptographic signature (no per-office key
+infrastructure exists; see the independent review).  The reviewer records which
+row-hash convention was used in ``hash_convention``; the checker verifies the
+cited digests strictly under the declared convention.
+
+A row's hash is SHA-256 over the row's bytes as committed at the cited
+introducing commit, either with or without the single trailing newline as
+declared.  A marker is effective only for the
+two case ids named in Act 27 §3(1), only when it is the single marker in the
+committed trail, lists every correction row that existed when the trail was
+first committed (and no later row) exactly once by position, and carries an
+effective independent review.  Otherwise it has no effect and token-less rows
+continue to fail closed.
 """
 import argparse
 import fcntl
+import hashlib
 import re
 import json
 import os
@@ -54,6 +88,190 @@ def correction_trail(case_id):
     return rows
 
 
+LEGACY_MARKER = "legacy_no_identity"
+# Act 27 §3(1): the only trails eligible for a legacy marker.
+LEGACY_CASE_ALLOWLIST = frozenset({"7750b56b775ed8959a", "edb67f8a646f569b5a"})
+
+
+def _git_show(town, rev, rel):
+    return subprocess.run(["git", "-C", town, "show", f"{rev}:{rel}"],
+                          capture_output=True, text=True, timeout=15)
+
+
+def _line_sha256s(line):
+    """The two defensible readings of "the row's bytes": with or without the
+    single trailing newline that separates it from the next row.  The marker
+    declares which was used (``hash_convention``); the checker verifies
+    strictly under the declared convention.  This helper is retained for
+    introspection only.
+    """
+    text = line.encode("utf-8")
+    return {hashlib.sha256(text).hexdigest(),
+            hashlib.sha256(text + b"\n").hexdigest()}
+
+
+def _row_sha256(line, convention):
+    """SHA-256 of a row's bytes under the declared ``hash_convention``."""
+    text = line.encode("utf-8")
+    if convention == "with_newline":
+        return hashlib.sha256(text + b"\n").hexdigest()
+    if convention == "no_newline":
+        return hashlib.sha256(text).hexdigest()
+    return None
+
+
+def effective_legacy_marker(case_id):
+    """Return the set of 1-based positions marked ``legacy_no_identity``.
+
+    The marker is verified independently from Git (Act 27 §3(2)-(3)): every
+    cited row's hash must match its bytes at the cited introducing commit, and
+    the current committed bytes at that position must be unchanged.  The marker
+    must list every correction row that existed when the trail was first
+    committed (so a post-commencement token-less row cannot be marked legacy),
+    and it must carry a complete independent review.  Fail closed: any defect
+    returns None, i.e. the marker has no effect.
+    """
+    if case_id not in LEGACY_CASE_ALLOWLIST:
+        return None
+    town = os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche")
+    rel = f"records/oversight/corrections/{case_id}.jsonl"
+    shown = _git_show(town, "HEAD", rel)
+    if shown.returncode:
+        return None
+    lines = shown.stdout.splitlines()
+    parsed = []
+    marker_positions = []
+    for number, line in enumerate(lines, 1):
+        try:
+            row = json.loads(line)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(row, dict):
+            return None
+        parsed.append(row)
+        if row.get("marker") == LEGACY_MARKER:
+            marker_positions.append(number)
+    # Act 27 §3(1): at most one marker, appended to the same trail.
+    if len(marker_positions) != 1:
+        return None
+    marker_number = marker_positions[0]
+    marker = parsed[marker_number - 1]
+    if (marker.get("case_id") != case_id or marker.get("predates_anchor") is not True
+            or marker.get("identity_asserted") is not False):
+        return None
+    filing_office = marker.get("filing_office")
+    if not isinstance(filing_office, str) or not filing_office.strip():
+        return None
+    # Act 27 §3(3): the filing office and the sponsor are excluded as reviewer.
+    sponsor = marker.get("sponsor")
+    if not isinstance(sponsor, str) or not sponsor.strip():
+        return None
+    # The marker must declare which row-hash convention was used (cf. C5);
+    # the checker verifies strictly under the declared convention.
+    convention = marker.get("hash_convention")
+    if convention not in ("with_newline", "no_newline"):
+        return None
+
+    entries = marker.get("rows")
+    if not isinstance(entries, list) or not entries:
+        return None
+    positions = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            return None
+        position = entry.get("position")
+        commit = entry.get("commit")
+        digest = entry.get("sha256")
+        if not isinstance(position, int) or isinstance(position, bool) or position < 1:
+            return None
+        if not isinstance(commit, str) or re.fullmatch(r"[0-9a-fA-F]{4,64}", commit) is None:
+            return None
+        if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+            return None
+        positions.append(position)
+    # Every pre-marker correction row must be listed exactly once.
+    if sorted(positions) != sorted(set(positions)):
+        return None
+    pre_marker_corrections = [
+        number for number, row in enumerate(parsed[:marker_number - 1], 1)
+        if row.get("correction") is True
+    ]
+    if sorted(positions) != sorted(pre_marker_corrections):
+        return None
+
+    # The trail's original commit is the pre-anchor state.  A row introduced
+    # later (a post-commencement token-less row) is not eligible.
+    log = subprocess.run(["git", "-C", town, "log", "--reverse", "--format=%H",
+                          "--", rel], capture_output=True, text=True, timeout=15)
+    introducing = log.stdout.split()
+    if log.returncode or not introducing:
+        return None
+    anchor = introducing[0]
+    anchor_shown = _git_show(town, anchor, rel)
+    if anchor_shown.returncode:
+        return None
+    anchor_lines = anchor_shown.stdout.splitlines()
+    anchor_corrections = []
+    for number, line in enumerate(anchor_lines, 1):
+        try:
+            anchor_row = json.loads(line)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(anchor_row, dict):
+            return None
+        if anchor_row.get("correction") is True:
+            anchor_corrections.append(number)
+    if sorted(positions) != sorted(anchor_corrections):
+        return None
+
+    for entry in entries:
+        position = entry["position"]
+        resolved = subprocess.run(
+            ["git", "-C", town, "rev-parse", "--verify", f"{entry['commit']}^{{commit}}"],
+            capture_output=True, text=True, timeout=15)
+        if resolved.returncode or resolved.stdout.strip() != anchor:
+            return None
+        anchor_line = anchor_lines[position - 1]
+        head_line = lines[position - 1]
+        if entry["sha256"] != _row_sha256(anchor_line, convention):
+            return None
+        if entry["sha256"] != _row_sha256(head_line, convention):
+            return None
+        row = parsed[position - 1]
+        if row.get("correction") is not True:
+            return None
+        # A legacy row carries no identity at all.
+        if valid_cycle_token(row.get("cycle_id")):
+            return None
+
+    review = marker.get("review")
+    if not isinstance(review, dict):
+        return None
+    reviewer = review.get("reviewer")
+    if not isinstance(reviewer, str) or reviewer.strip().lower() not in ("clerk", "judiciary"):
+        return None
+    reviewer_norm = reviewer.strip().lower()
+    if reviewer_norm == filing_office.strip().lower():
+        return None
+    if reviewer_norm == sponsor.strip().lower():
+        return None
+    basis = review.get("independence_basis")
+    if not isinstance(basis, str) or not basis.strip():
+        return None
+    # Act 27 §3(3): the Judiciary reviews only on recorded Clerk unavailability.
+    if reviewer_norm == "judiciary":
+        unavailability = review.get("clerk_unavailability_basis")
+        if not isinstance(unavailability, str) or not unavailability.strip():
+            return None
+    confirmations = review.get("confirmations")
+    if not isinstance(confirmations, dict):
+        return None
+    for key in ("hashes_match", "rows_unmodified", "no_identity"):
+        if confirmations.get(key) is not True:
+            return None
+    return set(positions)
+
+
 def committed_confirmed_correction(case_id):
     """Only rows committed in HEAD are effective under Act17 §2.2.
 
@@ -68,6 +286,7 @@ def committed_confirmed_correction(case_id):
                        capture_output=True, text=True, timeout=15)
     if p.returncode:
         return None
+    legacy = effective_legacy_marker(case_id) or set()
     pending = {}
     confirmed = set()
     effective = None
@@ -76,8 +295,13 @@ def committed_confirmed_correction(case_id):
             row = json.loads(line)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"committed correction row {idx} malformed") from exc
+        if isinstance(row, dict) and row.get("marker") == LEGACY_MARKER:
+            continue
         if not isinstance(row, dict) or row.get("case_id") != case_id or row.get("correction") is not True:
             raise ValueError(f"committed correction row {idx} wrong case or type")
+        if idx in legacy:
+            # Act 27 §3(4): marked rows are legacy, not effective corrections.
+            continue
         token = row.get("cycle_id")
         if not valid_cycle_token(token):
             raise ValueError(f"committed correction row {idx} missing valid cycle identity")
@@ -110,13 +334,20 @@ def valid_cycle_token(token):
 
 
 def used_cycle_tokens(prior, case_id):
-    """Read only explicit identities; legacy rows are deliberately unclassified."""
+    """Read only explicit identities; an effective Act 27 marker exempts legacy rows."""
     tokens = set()
     for item in prior.get("history", []):
         if item.get("correction") and valid_cycle_token(item.get("cycle_id")):
             tokens.add(item["cycle_id"])
-    for item in correction_trail(case_id):
+    legacy = effective_legacy_marker(case_id) or set()
+    for position, item in enumerate(correction_trail(case_id), 1):
+        if item.get("marker") == LEGACY_MARKER:
+            continue
         if item.get("correction"):
+            if position in legacy:
+                # Marked legacy: no identity exists or is asserted; the row is
+                # not an effective correction (Act 27 §3(4), §3(6)).
+                continue
             token = item.get("cycle_id")
             if not valid_cycle_token(token):
                 raise ValueError("authoritative correction trail has a correction without a valid cycle_id")
