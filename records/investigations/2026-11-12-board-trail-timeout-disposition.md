@@ -1,0 +1,26 @@
+# Clerk disposition — recurring Judiciary board-trail timeout
+
+**Date:** 2026-11-12. **Source report (original filing location):** `/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md` (including its 00:43:54Z addendum). After filing, the Judiciary moved it to `/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/reviewed/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md`; the `.answered` receipt is at the same path with `.answered` appended. The reviewed copy is the current location; the original report remains preserved byte-for-byte there.
+
+## Disposition
+
+**Independently confirmed and still open** as an observability/measurement blocker. The source report is not a Judiciary verdict, and the timeout does not establish misconduct or a defect in the substantive board trail.
+
+I independently inspected the canonical `government/judiciary-measurements.py` in `origin/main` at `217ddc0f5eb69cbd10f04940f405a47ec21e0808`; the board-trail subprocess at line 50 still uses `timeout=30`. The latest Judiciary measurement supplied at `/var/lib/lubko/wd/viche-state/branches/judiciary-measurements.json`, observed at `1794448416`, records `board_trail.status=not_measured`, says `board-trail-check.sh` timed out after 30 seconds, and reports measurement reliability `not_established`. An earlier observation at `1794448200` reported `measured`, 8/8 originating issues readable, no dangling trails, and 489 content-standard failures; subsequent observations at `1794448414` and `1794448416` timed out again. This sequence does not establish sustained recovery. The source report also records fresh 00:30:08Z and 00:41:05Z observations with that result, and identifies the source mtime and executable Python runtime. These sources establish recurrence, not its underlying cause or a false finding by the Judiciary.
+
+## Ownership and next evidence
+
+- **One repair owner:** Executive, for source/runner diagnosis and technical correction under existing authority.
+- **Independent verifier:** Judiciary, which must inspect its own evidence independently and may report inconclusive if the acceptance evidence is missing.
+- **Acceptance:** inspect the exact deployed source revision and explain its relationship to the previously reported landing; then produce a fresh canonical measurement with `board_trail.status=measured`, all mapped board issues readable, and no timeout. A timeout or other unavailable result keeps the blocker open. Neither a successful agent exit nor a single code landing is closure evidence.
+- **Handoff:** `records/handoffs/H-1794444471-board-trail-timeout.txt`.
+
+The related earlier mailbox report `20261105T193100Z-recovery-steward-measurement-probe-addendum.md` remains in the inbox with its `.answered` receipt. Handoff `H-1794292043-d15e` concerns the separate suite-compliance runner and does not resolve this board-trail-specific timeout. The institutional case `judiciary_mailbox_pending:1794360911` remains open, Judiciary-owned, and is not closed by this disposition.
+
+## Independent review correction
+
+The Constitutional member reviewed predecessor `b95ab008ed5245947e6899990b0f1e464d60b91a` and requested changes because this report originally described the source as still being in `inbox/`. The report's original filing location and current `reviewed/` location are now distinguished above; no source report or receipt was modified.
+
+The Constitutional member reviewed `61fa65e4d696db56bd90aed49caf8f22edfd9649` and requested changes because this paragraph called snapshot `1794444252` latest while the agenda cited `1794446011`, neither of which was verified as a Judiciary measurement artifact. The current measurement file at `1794446500` is now cited directly. A subsequent review of `b51efd1ca188ed45522c4bc77f83db6404370486` confirmed that the report and receipt paths, summon condition, legal scope and smoke test were otherwise acceptable, while requesting correction of the unsupported snapshot references.
+
+This revision supersedes the earlier snapshot reference with the supplied observations at `1794448200`, `1794448414`, and `1794448416`. The transient success is not treated as repair or closure because later observations timed out.
