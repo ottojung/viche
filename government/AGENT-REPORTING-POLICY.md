@@ -28,6 +28,13 @@ Every Town agent receives this instruction at startup and resumption:
   misconduct or of a particular cause. Never convert "unknown", successful
   agent exits or readiness into verified completion. Verify the monitoring
   system itself.
+- An answer to a mailbox report is recorded by an explicit, empty sibling
+  marker beside the report: `<report>.md.answered` (or `<report>.md.disposition`).
+  A report is counted as pending unless that marker exists. A bare
+  `addendum` or `disposition` substring in a report's own filename no longer
+  suppresses the pending signal, so a genuine blocker cannot be hidden by
+  choosing such a name. Writing an addendum file in addition to the marker is
+  encouraged, but the marker is the machine-readable answer.
 
 For Judiciary reviewers: reporting is NOT review. A disposition may say
 "independently verified" only after identifying the evidence inspected
