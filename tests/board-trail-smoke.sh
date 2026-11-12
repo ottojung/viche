@@ -61,4 +61,12 @@ jq -e '.board_trail.completed_total==6 and .board_trail.terminal_reached==2 and 
 jq -e '(.board_trail.git_only_gaps|length)==1 and .board_trail.git_only_gaps[0].issue=="102"' "$report" >/dev/null
 jq -e '.board_trail.dangling_trails==4 and .board_trail.content_standard_failures==1' "$report" >/dev/null
 jq -e '.no_proposals==true and .measurement_reliability=="not_established"' "$report" >/dev/null
+# The measurement wrapper must keep timeout failures explicit, never measured.
+# Use a short test-only budget so this remains a fast, hermetic regression.
+cat > "$scratch/town/government/board-trail-check.sh" <<'SLOW'
+#!/bin/sh
+sleep 2
+SLOW
+VICHE_BOARD_TRAIL_TIMEOUT=1 python3 "$scratch/town/government/judiciary-measurements.py" >/dev/null
+jq -e '.board_trail.status=="not_measured" and (.board_trail.reason|contains("timed out"))' "$report" >/dev/null
 echo 'Board-trail completeness lens smoke passed'
