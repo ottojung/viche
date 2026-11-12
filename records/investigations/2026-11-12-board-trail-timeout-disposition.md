@@ -1,6 +1,6 @@
 # Clerk disposition — recurring Judiciary board-trail timeout
 
-**Date:** 2026-11-12. **Source report:** `/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md` (including its 00:43:54Z addendum). Original remains preserved in the inbox.
+**Date:** 2026-11-12. **Source report (original filing location):** `/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md` (including its 00:43:54Z addendum). After filing, the Judiciary moved it to `/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/reviewed/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md`; the `.answered` receipt is at the same path with `.answered` appended. The reviewed copy is the current location; the original report remains preserved byte-for-byte there.
 
 ## Disposition
 
@@ -15,4 +15,8 @@ I independently inspected the canonical `government/judiciary-measurements.py` i
 - **Acceptance:** inspect the exact deployed source revision and explain its relationship to the previously reported landing; then produce a fresh canonical measurement with `board_trail.status=measured`, all mapped board issues readable, and no timeout. A timeout or other unavailable result keeps the blocker open. Neither a successful agent exit nor a single code landing is closure evidence.
 - **Handoff:** `records/handoffs/H-1794444471-board-trail-timeout.txt`.
 
-The related earlier mailbox report `20261105T193100Z-recovery-steward-measurement-probe-addendum.md` is preserved. Handoff `H-1794292043-d15e` concerns the separate suite-compliance runner and does not resolve this board-trail-specific timeout. The institutional case `judiciary_mailbox_pending:1794360911` remains open, Judiciary-owned, and is not closed by this disposition.
+The related earlier mailbox report `20261105T193100Z-recovery-steward-measurement-probe-addendum.md` remains in the inbox with its `.answered` receipt. Handoff `H-1794292043-d15e` concerns the separate suite-compliance runner and does not resolve this board-trail-specific timeout. The institutional case `judiciary_mailbox_pending:1794360911` remains open, Judiciary-owned, and is not closed by this disposition.
+
+## Independent review correction
+
+The Constitutional member reviewed predecessor `b95ab008ed5245947e6899990b0f1e464d60b91a` and requested changes because this report originally described the source as still being in `inbox/`. The report's original filing location and current `reviewed/` location are now distinguished above; no source report or receipt was modified.

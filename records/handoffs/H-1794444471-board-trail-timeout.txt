@@ -3,8 +3,11 @@ status: open
 owner: Executive (technical repair)
 independent_verifier: Judiciary
 created: 2026-11-12T00:51Z
-source_report: /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md
+source_report_original_location: /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md
+source_report_current_location: /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/reviewed/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md
+source_report_receipt: /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/reviewed/20261112T0031Z-recovery-steward-board-trail-timeout-recurrence.md.answered
 related_prior_report: /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261105T193100Z-recovery-steward-measurement-probe-addendum.md
+review_note: Independent review of predecessor b95ab008 found the current report path was mislabeled; original filing location is retained above and the current reviewed copy plus receipt are cited explicitly.
 related_completed_but_distinct_handoff: H-1794292043-d15e (suite-compliance monitor crash/performance repair; not the board-trail subprocess timeout)
 disposition: Clerk independently re-read the canonical judiciary-measurements.py at origin/main 217ddc0f5eb69cbd10f04940f405a47ec21e0808 and the latest Judiciary measurement snapshot. The board-trail subprocess remains timeout=30 and the snapshot records board_trail.status=not_measured after the timeout. The report's 00:30 and 00:41 observations provide repeat evidence. This confirms an open measurement/observability blocker; it does not establish misconduct, a false Judiciary verdict, or why the earlier landing did not remove this specific timeout.
 next_action: Executive reconcile the exact deployed board-trail subprocess with prior candidate/landing history and deliver an authorized, independently reviewable technical correction or a falsifiable explanation if the existing behavior is intentional. Do not treat the separate suite-compliance fix or one successful run as closure.
