@@ -32,7 +32,12 @@ case "$1 $2" in
     if [ "$4" = real-new ]; then printf '{"state":"idle"}\n'
     else cat "$MOCK_ROOT/$4.json"; fi ;;
   'agent new') printf '%s\n' "$*" > "$MOCK_ROOT/new-agent-args"; printf 'real-new\n' ;;
-  'agent run') printf '%s\n' "$*" >> "$MOCK_ROOT/runs" ;;
+  'agent run')
+    if [ "${FAIL_AGENT_RUN:-no}" = yes ]; then
+      echo 'fixture dispatcher denied: temporary endpoint unavailable' >&2
+      exit 23
+    fi
+    printf '%s\n' "$*" >> "$MOCK_ROOT/runs" ;;
   *) exit 6 ;;
 esac
 MOCK
@@ -160,6 +165,18 @@ printf '#!/bin/sh\nexit 0\n' > "$d/town/government/branch-bootstrap.sh"
 chmod +x "$d/town/government/branch-bootstrap.sh"
 cp "$repo/government/institutional-cases.py" "$d/town/government/institutional-cases.py"
 cp "$repo/government/terminal-continuity.sh" "$d/town/government/terminal-continuity.sh"
+cp "$repo/government/agent-state.sh" "$d/town/government/agent-state.sh"
+# A failed Antonina dispatch must surface its captured cause rather than exit
+# silently. The failure must not create a successful dispatch timestamp.
+FAIL_AGENT_RUN=yes
+export FAIL_AGENT_RUN
+if /bin/sh "$repo/government/executive-innovation-cycle.sh" 2>"$d/dispatch-error"; then
+  echo 'Executive innovation dispatch failure unexpectedly succeeded' >&2; exit 1
+fi
+grep -Fq "$d/state/executive/innovation-office/dispatch.log" "$d/dispatch-error"
+grep -Fq 'fixture dispatcher denied: temporary endpoint unavailable' "$d/dispatch-error"
+test ! -s "$d/state/executive/innovation-office/last-dispatch"
+unset FAIL_AGENT_RUN
 /bin/sh "$repo/government/executive-innovation-cycle.sh"
 jq -e '.executive_office==true and .legislative_branch==false and .controlled_by=="executive" and .voting_seat==false' "$d/state/executive/innovation-office/health.json" >/dev/null
 grep -Fq 'EXECUTIVE INNOVATION OFFICE' "$MOCK_ROOT/runs"

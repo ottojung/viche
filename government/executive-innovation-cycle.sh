@@ -9,6 +9,7 @@ grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "
   echo 'Executive innovation requires enacted ordinary law' >&2; exit 1;
 }
 root=$state/executive/innovation-office
+. "$town/government/agent-state.sh"
 # Keep the predecessor's dirty historical worktree intact. Dispatch new
 # Executive work in its own clean, Git-managed worktree.
 cwd=$seats/branches/innovation-office
@@ -75,7 +76,10 @@ EOF
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
-      antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
+      if ! antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1; then
+        dispatch_failure_log "$root/dispatch.log"
+        exit 1
+      fi
       printf '%s\n' "$now" > "$root/last-dispatch"
       last=$now
       readiness=dispatched
