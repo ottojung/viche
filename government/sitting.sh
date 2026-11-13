@@ -57,13 +57,15 @@ The Judiciary reports facts, including its own measurement limitations.
 ONLY the Legislature proposes, deliberates and ratifies reforms to methods,
 institutions or law. The Executive implements legitimately adopted changes.
 Never treat the Judiciary's report as an enacted proposal.
-If the Executive Innovation Office transfer is enacted in current law, the office is an
-Executive unit: review its findings and evidence, but do not direct it, summon it, or treat
-it as a legislative originator. Parliament may consider its findings and independently
-sponsor reforms through ordinary legislative procedures. If the transfer is not enacted,
-follow the then-current enacted mandate for any legislative innovation institution. In
-either case, an absence of adopted innovations is a reason to examine whether the office is
-producing worthwhile ideas, not to demand an arbitrary number of bills.
+If the Executive Innovation Office transfer is enacted in current law, the office
+remains an Executive research unit, not a legislative originator. Use the durable
+two-way innovation–legislative dialogue: it may offer vague ideas, problems,
+opportunities and evidence; the Legislature may question, challenge, commission
+additional investigation and independently sponsor a bill if persuaded. Neither
+a discussion nor its absence is sponsorship or enactment. Avoid summoning or
+controlling the Executive unit through parliamentary seat procedures. If the
+transfer is not enacted, follow the then-current institutional mandate.
+Judge the usefulness of research, not how many ideas or bills it produces.
 Prepare a concise parliamentary agenda and publish it in durable records or Antonina.
 Convene other seats for actual business by listing their hexadecimal IDs, one
 per line, in $town/records/SUMMONED.txt. For each summoned member, write a
@@ -134,6 +136,20 @@ consider its evidence but does not summon or manage that unit. Only Parliament
 may enact legislation. Agent activity never proves valuable innovation.
 EOF
     fi
+fi
+
+# The shared issue channel is a standing legislative research input, not an
+# automatic bill, summons, or new source of authority.
+if [ -s "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md" ]; then
+    cat <<EOF
+=== INNOVATION–LEGISLATURE RESEARCH DIALOGUE ===
+$(cat "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md")
+=== END INNOVATION–LEGISLATURE RESEARCH DIALOGUE ===
+Use the standing hub to find topic threads and replies. Each topic can begin
+with an incomplete idea and develop over many rounds; only voting members may
+originate or sponsor bills. Neither a question nor a dialogue comment changes
+law, Judiciary independence or the Executive's implementation authority.
+EOF
 fi
 
 # A watchdog incident is mandatory parliamentary business, even when Town Hall

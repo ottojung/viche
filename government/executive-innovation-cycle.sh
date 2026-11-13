@@ -72,6 +72,10 @@ $cases
 $recovery
 EOF
 )
+dialogue_file="$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md"
+if [ -s "$dialogue_file" ]; then
+    prompt=$(printf '%s\n\n=== CONTINUOUS IMPROVEMENT AND LEGISLATIVE RESEARCH DIALOGUE ===\n%s\n=== END RESEARCH DIALOGUE ===\n' "$prompt" "$(cat "$dialogue_file")")
+fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
