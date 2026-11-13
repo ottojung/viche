@@ -52,6 +52,8 @@ export PATH VICHE_TOWN_ROOT VICHE_STATE_ROOT VICHE_SEATS_ROOT VICHE_CONSTITUTION
 /bin/sh "$repo/government/executive-innovation-cycle.sh"
 grep -Fq 'GT2QzYsFG4t92DvJkE4Wuk-lodge' "$PROMPT_LOG"
 grep -Fq 'parallel, orthogonal' "$PROMPT_LOG"
+grep -Fq 'do NOT originate or sponsor' "$PROMPT_LOG"
+grep -Fq 'current problems AND unrealized opportunities' "$PROMPT_LOG"
 grep -Fq 'Judiciary independently investigates violations' "$PROMPT_LOG"
 grep -Fq 'Executive implements only measures authorized' "$PROMPT_LOG"
 jq -e '.controlled_by=="executive" and .quality_verified==false' \
