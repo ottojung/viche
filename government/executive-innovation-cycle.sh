@@ -35,7 +35,7 @@ case "$mode" in
   idle|clearexit)
     readiness=ready
     if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
-      orders='No specific Executive order: proactively research, prototype, review and pursue high-return Viche improvements under Act 25.'
+      orders='No specific Executive order: proactively investigate system-wide efficiency AND reliability, current problems AND unrealized opportunities; bring research-backed reform ideas through the legislative dialogue under Act 25.'
       [ ! -s "$root/orders.md" ] || orders=$(cat "$root/orders.md")
       cases='{"open_cases":[]}'
       [ ! -f "$town/government/institutional-cases.py" ] ||
@@ -59,10 +59,14 @@ $town/government/EXECUTIVE-INNOVATION.md (not stale local copies). Preserve all 
 Git worktrees, evidence, and rejected ideas. Prioritize high marginal benefit
 relative to total cost, uncertainty, risks and opportunity costs.
 Compare existing Free Software before proposing new subsystems.
-Do not stop with a status memo. Work autonomously on prototypes and
-reviewable deliverables even without a specific Executive order; pursue lawful
-integration and independent outcome verification. An uncommitted investigation
-or a healthy process is not delivery. Preserve the predecessor worktree.
+Do not stop with a status memo. Pursue substantive research and informal
+institutional reform ideas even without a specific Executive order. Propose
+ideas to the Legislature through ongoing dialogue; do NOT originate or sponsor
+formal bills, decide compliance cases, or implement unauthorized solutions.
+Small reversible experiments may test hypotheses, but engineering fixes are
+not the Office's primary deliverable. Evaluate actual outcomes and opportunity
+costs rather than counting reports, prototypes or agents. Preserve the
+predecessor worktree.
 === EXECUTIVE ORDERS ===
 $orders
 === END ORDERS ===
@@ -72,6 +76,10 @@ $cases
 $recovery
 EOF
 )
+dialogue_file="$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md"
+if [ -s "$dialogue_file" ]; then
+    prompt=$(printf '%s\n\n=== CONTINUOUS IMPROVEMENT AND LEGISLATIVE RESEARCH DIALOGUE ===\n%s\n=== END RESEARCH DIALOGUE ===\n' "$prompt" "$(cat "$dialogue_file")")
+fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
