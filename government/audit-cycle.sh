@@ -197,6 +197,28 @@ if [ -f "$town/government/terminal-continuity.sh" ]; then
   recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction judiciary) || exit 1
 fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$recovery")
+proceed=
+if [ -f "$town/government/proceed-by-default.sh" ]; then
+  proceed=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" judiciary || :)
+  [ -z "$proceed" ] || prompt=$(printf '%s\n\n%s\n' "$prompt" "$proceed")
+fi
+# Founder directive 2026-11-16 (item 4): the same frozen draw with the same
+# incident, cases and mailbox needs no second 30-minute pass. A fresh sample
+# (new cycle id), any change to the inputs, or the six-hour heartbeat dispatches.
+if [ -f "$town/government/dispatch-gate.sh" ]; then
+  mailbox_list=$(find "$mailbox/inbox" -maxdepth 1 -type f 2>/dev/null | sort || :)
+  if { printf '%s\n' "$cycle_id" "$recovery" "$proceed" "$mailbox_list"
+       for incident_file in "$root/incident.json" "$root/random/incident.json"; do
+         if [ -s "$incident_file" ]; then jq -cS '{first_seen,signals,id}' "$incident_file" 2>/dev/null || cat "$incident_file"; fi
+       done
+       printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"; } |
+     /bin/sh "$town/government/dispatch-gate.sh" check judiciary "${VICHE_JUDICIARY_GATE_MAX_AGE:-21600}" > "$root/gate.log"; then
+    :
+  else
+    echo "Judiciary: audit dispatch skipped, nothing it reads has changed since the last pass" >&2
+    exit 0
+  fi
+fi
 # Publish identity BEFORE launching a detached agent, otherwise a fast agent
 # may correctly report a correction before the CLI has made its token valid.
 # The registered token remains the same across repeated dispatches of a
@@ -222,3 +244,4 @@ if ! antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$
   exit 1
 fi
 printf '%s\t%s\taccepted_not_verified\n' "$now" "$incident" >> "$root/audit-dispatches.tsv"
+[ ! -f "$town/government/dispatch-gate.sh" ] || /bin/sh "$town/government/dispatch-gate.sh" commit judiciary

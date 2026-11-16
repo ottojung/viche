@@ -167,6 +167,34 @@ Parliament's vote for changes that alter law. Keep Judiciary independent.
 Never close cases merely by dispatching, commenting or merging.
 EOF
 )
+proceed=
+if [ -f "$town/government/proceed-by-default.sh" ]; then
+  proceed=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" executive || :)
+  [ -z "$proceed" ] || prompt=$(printf '%s\n\n%s\n' "$prompt" "$proceed")
+fi
+# Founder directive 2026-11-16 (item 4): do not pay for a model pass when every
+# input is identical to the last dispatched pass. Measured: 222 passes in 18h at
+# about 105K tokens each, 175 of them restating the same recovery note. The gate
+# fails open (a broken probe never suppresses work) and a heartbeat guarantees a
+# pass at least every VICHE_EXECUTIVE_GATE_MAX_AGE seconds (default 2h).
+if [ -f "$town/government/dispatch-gate.sh" ]; then
+  elig_numbers=$(printf '%s\n' "$eligible" | jq -r '.eligible[]?.number' 2>/dev/null || :)
+  # shellcheck disable=SC2086
+  if ! board_sig=$(/bin/sh "$town/government/dispatch-gate.sh" board-signature "${VICHE_TOWNHALL_ID:-302}" $elig_numbers 2>/dev/null); then
+    board_sig="board-unavailable-$(date +%s)"
+  fi
+  mkdir -p "$state/branches"
+  if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
+       git -C "$town" rev-parse HEAD 2>/dev/null || :
+       printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
+       printf '%s\n' "$frontier" | jq -cS '{status,counts,fronts_total}' 2>/dev/null || printf '%s\n' "$frontier"; } |
+     /bin/sh "$town/government/dispatch-gate.sh" check executive "${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}" > "$state/branches/executive-gate.log"; then
+    :
+  else
+    echo "Viche: executive dispatch skipped, nothing it reads has changed since the last pass" >&2
+    exit 0
+  fi
+fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 if [ -f "$town/government/handover.sh" ]; then
@@ -174,5 +202,6 @@ if [ -f "$town/government/handover.sh" ]; then
 fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+[ ! -f "$town/government/dispatch-gate.sh" ] || /bin/sh "$town/government/dispatch-gate.sh" commit executive
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"

@@ -37,3 +37,7 @@ enacted `government/LAWS.md`; the former
 The Office proactively researches and implements high-value improvements within
 the Executive's existing authority; verified delivery and independent Judiciary
 assessment, not activity counts, establish results.
+
+## Ministry of Economy (Act 29, enacted by Founder directive 2026-11-16)
+
+A second **Executive** unit beside the Innovation Office: appointment key `economy`, clean worktree `viche-seats/branches/economy`, health at `state/executive/economy/health.json`, working files in `state/economy/`. It is not a fourth branch or a voting seat. `government/executive-economy-cycle.sh` is its single dispatcher (after Act 29 enactment); `government/MINISTRY-OF-ECONOMY.md` is its mandate. Half of its work is deterministic and needs no model: `government/economy-models.py` keeps the Antonina model list in tier order (free, contributor, paid, Luna last) and probes new free models, so the Town stays funded even when its agent is down. The other half is agent judgment: researching free-model limits, ranking within the free tier and finding waste elsewhere in the Town.

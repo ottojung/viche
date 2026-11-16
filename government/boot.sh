@@ -70,6 +70,22 @@ if [ -f "$town/government/janitor.sh" ]; then
     ) >> "$janitor_state/boot-cycle.log" 2>&1 < /dev/null &
 fi
 
+# Founder directive 2026-11-16 (Act 30): obligations expire unless renewed with a
+# reason; deadline-bound requests become "due"; Parliament sits once a day.
+# Deterministic, no model call, none of it can block an office.
+if [ -f "$town/government/obligation-expiry.py" ]; then
+    python3 "$town/government/obligation-expiry.py" sweep > /dev/null ||
+        echo "Viche: obligation expiry sweep failed" >&2
+fi
+if [ -f "$town/government/proceed-by-default.sh" ]; then
+    /bin/sh "$town/government/proceed-by-default.sh" sweep "$town" ||
+        echo "Viche: proceed-by-default sweep failed" >&2
+fi
+if [ -f "$town/government/daily-sitting.py" ]; then
+    python3 "$town/government/daily-sitting.py" run ||
+        echo "Viche: daily plenary convening failed" >&2
+fi
+
 # Independent Executive: no parliamentary summons required.
 if [ -f "$town/government/branch-liveness.sh" ]; then
     /bin/sh "$town/government/branch-liveness.sh" executive ||
@@ -80,6 +96,15 @@ fi
 if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     /bin/sh "$town/government/executive-innovation-cycle.sh" ||
         echo "Viche: Executive Innovation Office needs recovery" >&2
+fi
+
+# The Ministry of Economy is an Executive unit ONLY after enactment of Act 29. Its
+# funding refresh is deterministic and backgrounded; its agent is gated.
+if grep -Eq '^## Act [0-9]+ — Ministry of Economy Act ' "$town/government/LAWS.md"; then
+    if [ -f "$town/government/executive-economy-cycle.sh" ]; then
+        /bin/sh "$town/government/executive-economy-cycle.sh" ||
+            echo "Viche: Ministry of Economy needs recovery" >&2
+    fi
 fi
 
 # Deterministic oversight continues even when every AI session is unavailable.

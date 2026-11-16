@@ -75,8 +75,8 @@ case "$cmd" in
     hof_new=$4
     hof_note=$5
     case "$hof_new" in
-      done|superseded) ;;
-      *) echo "status must be done or superseded" >&2; exit 2 ;;
+      done|superseded|expired) ;;
+      *) echo "status must be done, superseded or expired" >&2; exit 2 ;;
     esac
     hof_file=$dir/$hof_id.txt
     [ -f "$hof_file" ] || {

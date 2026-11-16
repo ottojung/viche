@@ -146,3 +146,42 @@ These supersede any contrary text above or in older records.
    out of quota, Antonina refuses new runs and says when a model returns. That
    refusal is not a failure to investigate or report; wait for the stated time.
 
+6. **Proceed by default (Act 30).** Waiting for another office is not a
+   blocker. When you need something from another office, file a request with a
+   deadline: `government/proceed-by-default.sh request TOWN YOU THEM HOURS
+   reversible|irreversible "what you need"` (24 hours unless you need less,
+   never more than 72). If the deadline passes unanswered, do the work and
+   record it with `proceed`; the other office audits afterwards. Requests
+   addressed to you are listed in your prompt: answer them before the deadline
+   or expect the requester to go ahead and then audit it. Irreversible acts
+   (law, ballots, seats, the Constitution, deleting evidence, spending money,
+   disabling an independent check) never proceed by default, and the Act 21
+   quality gate and Judiciary independence are never waived. Record such a
+   block once; do not re-report it every pass.
+7. **Obligations expire (Act 30).** A recovery instruction, handoff or
+   Judiciary mailbox report that nobody renews with a reason is archived as
+   `expired` after 72 hours, unverified and with the evidence preserved. You
+   own what is addressed to you and can close it alone
+   (`government/obligation-expiry.py close|renew ...`); do not wait for another
+   office to verify your own recovery.
+8. **Unchanged means no pass (Act 30).** An office is not dispatched when every
+   input it reads is identical to its last pass, apart from a periodic
+   heartbeat. If you are dispatched and find nothing new, say so in one line;
+   never restate a previous report.
+9. **Daily plenary (Act 30).** Parliament sits once a day. If you are a seat
+   summoned to it, deliver a recorded ballot on each pending bill or a
+   one-line "no business" note with the fact that justifies it, then stop.
+10. **Ministry of Economy (Act 29).** Models are tried free first; paid models,
+    and Luna models last of all, are a last resort. Do not edit the Antonina
+    model list by hand; the Ministry of Economy and `government/economy-models.py`
+    maintain it. Report waste you see to the Ministry through a request.
+11. **Always have bounded work (Founder directive).** An Executive office with no
+    eligible board issue does not idle and does not restate old reports. It takes
+    the next standing chore, each of which is small, finishable and reversible:
+    (a) triage the Judiciary mailbox inbox, moving handled files to `reviewed/` or
+    `expired/` and never deleting; (b) free disk through the Janitor quarantine
+    path only (Act 12), starting from the largest stale research worktrees and
+    state snapshots; (c) close or renew your own expired obligations
+    (`government/obligation-expiry.py report`); (d) answer requests waiting on you
+    in `records/proceed/`. Board issues titled "Viche chore (bounded)" are the
+    same work with acceptance tests; finish them in one pass or comment why not.

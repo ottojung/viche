@@ -32,6 +32,16 @@ if [ "$operation" = instruction ]; then
   jq -er '.state == "awaiting_reconciliation"' "$receipt" >/dev/null 2>&1 || exit 0
   echo '=== MANDATORY RECOVERY OF PRIOR APPOINTMENT (NOT PROMPT REPLAY) ==='
   jq -c '{office,previous_agent,successor_agent,classification,terminal_evidence,worktree_head,old_session_preserved,at}' "$receipt"
+  # Act 30: every obligation has an owner who can close it alone, and an expiry.
+  ttl_hours=${VICHE_OBLIGATION_TTL_HOURS:-72}
+  case "$ttl_hours" in ''|*[!0-9]*) ttl_hours=72 ;; esac
+  if [ "$ttl_hours" -gt 0 ]; then
+    clock=$(jq -r '(.renewed_at // .at // "")' "$receipt")
+    expires=$(date -u -d "$clock + $ttl_hours hours" +%FT%TZ 2>/dev/null || :)
+    [ -z "$expires" ] || echo "This instruction EXPIRES at $expires (Act 30). You own it and can close it alone:"
+    echo "python3 $town/government/obligation-expiry.py close receipt $office --evidence 'what you checked'"
+    echo "or renew it with a reason: python3 $town/government/obligation-expiry.py renew receipt $office --reason '...'"
+  fi
   cat <<EOF
 The previous agent failed during an uncertain backend turn. Do NOT blindly
 repeat its previous prompt, tools, posts, commits, grants, external actions, or
