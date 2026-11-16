@@ -280,6 +280,23 @@ def line_models(now, scan):
             funding = "; free-model funding risk: %s" % risk
     except (OSError, ValueError):
         pass
+    try:
+        res = json.loads((state / "economy/resources.json").read_text())
+        flagged = []
+        for key, r in sorted(res.get("resources", {}).items()):
+            if key == "model_funding" or r.get("status", "ok") == "ok":
+                continue
+            part = "%s %s" % (key.replace("disk:", "disk "), r["status"])
+            if r.get("used_pct") is not None:
+                part += " %.0f%%" % r["used_pct"]
+            if r.get("hours_to_full") is not None:
+                part += ", full in %s" % age(r["hours_to_full"] * 3600)
+            flagged.append(part)
+        funding += "; resources: " + ("; ".join(flagged) if flagged else "all ok")
+        if res.get("needs_founder"):
+            funding += " (NEEDS-FOUNDER)"
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     return "Models: %d/%d usable now%s; provider limit errors in window: %d quota, %d rate%s" % (
         len(models) - len(cooling), len(models), (" — " + detail) if detail else "", limits["quota"], limits["rate"], funding)
 

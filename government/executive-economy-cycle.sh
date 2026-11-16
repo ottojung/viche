@@ -41,6 +41,29 @@ if [ -f "$town/government/economy-models.py" ]; then
   fi
 fi
 
+# ---- 1b. deterministic resource steward (disk, inodes, memory, load) ----------
+# Measures, forecasts time-to-full and acts early through the Janitor's own
+# pipeline; no model call. Every 30 minutes, every 10 while anything is short.
+resource_level=ok
+if [ -f "$town/government/economy-resources.py" ]; then
+  last=0
+  [ ! -s "$root/last-resource-refresh" ] || last=$(cat "$root/last-resource-refresh")
+  case "$last" in ''|*[!0-9]*) last=0 ;; esac
+  interval=1800
+  if [ -s "$econ/resources.json" ]; then
+    resource_level=$(jq -r '.overall // "ok"' "$econ/resources.json" 2>/dev/null || echo ok)
+    case "$resource_level" in short|critical) interval=600 ;; esac
+  fi
+  if [ $((now-last)) -ge "$interval" ]; then
+    printf '%s\n' "$now" > "$root/last-resource-refresh"
+    (
+      flock -n 8 || exit 0
+      timeout 3000 nice python3 "$town/government/economy-resources.py" refresh ||
+        echo "Viche: economy resource refresh failed; nothing was changed by it" >&2
+    ) 8>"$root/resources.lock" >> "$root/resources.log" 2>&1 < /dev/null &
+  fi
+fi
+
 # ---- 2. the Ministry's agent -------------------------------------------------
 [ -n "$charter" ] && [ -s "$charter" ] || exit 0
 [ -f "$town/government/MINISTRY-OF-ECONOMY.md" ] || { echo 'Ministry mandate missing' >&2; exit 1; }
@@ -60,11 +83,15 @@ case "$mode" in
   running) readiness=running ;;
   idle|clearexit)
     readiness=ready
-    if [ "$last" -eq 0 ] || [ $((now-last)) -ge 43200 ]; then
+    agent_interval=43200
+    case "$resource_level" in short|critical) agent_interval=7200 ;; esac
+    if [ "$last" -eq 0 ] || [ $((now-last)) -ge "$agent_interval" ]; then
       orders='No specific Executive order: keep the Town funded, research the free models, find waste.'
       [ ! -s "$econ/orders.md" ] || orders=$(cat "$econ/orders.md")
       report='{"note":"no funding report yet; the first refresh runs within the hour"}'
       [ ! -s "$econ/report.json" ] || report=$(cat "$econ/report.json")
+      resources='{"note":"no resource report yet; the first refresh runs within the hour"}'
+      [ ! -s "$econ/resources.json" ] || resources=$(jq -c 'del(.policy)' "$econ/resources.json" 2>/dev/null || cat "$econ/resources.json")
       cases='{"open_cases":[]}'
       [ ! -f "$town/government/institutional-cases.py" ] ||
         cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
@@ -77,6 +104,10 @@ case "$mode" in
         # Fingerprint only stable inputs: timestamps and probe logs change every refresh.
         if { printf '%s\n%s\n%s\n' "$orders" "$recovery" "$proceed"
              printf '%s\n' "$report" | jq -cS 'del(.at,.backup,.probes_run,.previous_order)' 2>/dev/null || printf '%s\n' "$report"
+             # Resources: only the status of each, so a percentage drifting by 0.1 does not wake the agent.
+             if [ -s "$econ/resources.json" ]; then
+               jq -cS '{overall, s: (.resources | map_values(.status)), needs: .needs_founder}' "$econ/resources.json" 2>/dev/null || :
+             fi
              printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
              git -C "$town" rev-parse HEAD; } |
            /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
@@ -107,6 +138,18 @@ $orders
 === LATEST FUNDING REPORT (deterministic, from the last refresh) ===
 $report
 === END FUNDING REPORT ===
+=== LATEST RESOURCE REPORT (deterministic: disk, inodes, memory, load, Town-owned growth) ===
+$resources
+=== END RESOURCE REPORT ===
+Your mandate is the availability of EVERY scarce resource, not only model funding
+(Act 29 section 6). government/economy-resources.py measures and forecasts and has
+already run the safe Janitor steps listed under actions_this_pass; you act on what
+it cannot: pick quarantine candidates with evidence (Act 12.4), run
+government/janitor.sh modes yourself when the report says short or critical, ask
+another office for a bounded action through government/proceed-by-default.sh, and
+raise anything still short as one line beginning NEEDS-FOUNDER: on Town Hall.
+You never touch records/, government/, credentials, live processes or anything
+unverified (Act 12.5), and you never delete outside the Janitor's quarantine path.
 === PERSISTENT HEALTH CASES ===
 $cases
 === END CASES ===
