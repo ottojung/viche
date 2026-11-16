@@ -85,6 +85,9 @@ EOF
 )
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+if [ -f "$town/government/handover.sh" ]; then
+  prompt=$(printf '%s\n%s\n' "$prompt" "$(/bin/sh "$town/government/handover.sh" show recovery-steward "$id" || :)")
+fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 if ! antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1; then
   echo "Recovery steward dispatch failed for agent $id" >&2

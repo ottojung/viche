@@ -225,7 +225,9 @@ Parliament authorizes changes to ordinary law when needed; Executive
 implements authorized repairs. A missing health signal is only evidence of
 the probe's result, never proof of repair. Executive agents investigate and
 provide evidence; Judiciary independently verifies or leaves the case open.
-Neither agent exits nor repeated probes can close it automatically.
+Agent exits never close a case. A case whose signal stays clear for the
+configured run of consecutive observations closes automatically as auto_closed
+(Founder directive 2026-11-16); do not spend sittings on such cases.
 EOF
 fi
 
@@ -253,6 +255,11 @@ Preserve each durable institutional case and its independent judicial evidence;
 authorize only lawful action and verify its effect before closure.
 EOF
     fi
+fi
+
+# A fresh session after rotation gets its predecessor's handover note once.
+if [ -f "$town/government/handover.sh" ]; then
+    /bin/sh "$town/government/handover.sh" show "$seat" "$appointed" || :
 fi
 
 # The Founder policy is appended to each seat's generated launch prompt.

@@ -5,10 +5,22 @@ A case is a monitored obligation, NOT a Judiciary verdict or an authorization
 to enact law. Observation and routing remain deterministic even if every model
 is down. Existing independent Judiciary/Parliament/Executive powers remain.
 
-This collector never closes a case. Closure is a recorded manual decision by
-the Clerk after independently inspecting a Judiciary disposition. The Clerk
-writes a case-bound closure_evidence artifact; the mechanical check below only
-verifies that the artifact is complete and attributed, never that it is true.
+Two closures exist.
+
+1. Automatic (Founder directive, 2026-11-16): a case whose signal has been
+   absent for VICHE_CASE_AUTOCLOSE_CLEAR consecutive observations (default 20,
+   about an hour at the three-minute cycle) is closed as `auto_closed` with a
+   machine-written closure record naming exactly that evidence. Cases had
+   sat open for days at hundreds of clean checks waiting on a Judiciary
+   sign-off that consumed model quota and verified nothing the probe had not.
+   A re-fire after auto-closure opens a new case and archives the old one.
+2. Manual: the Clerk records `verified_closed` after an independent Judiciary
+   disposition, with a case-bound closure_evidence artifact; the mechanical
+   check below only verifies that artifact is complete and attributed.
+
+Auto-closure is an observation ("the signal stayed clear"), not a finding that
+the underlying cause was repaired. The Judiciary may still review any
+auto-closed case; it stays listed in the index for that purpose.
 """
 import argparse
 import json
@@ -19,6 +31,15 @@ import time
 
 ROOT = pathlib.Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
 STORE = ROOT / "institutional-cases"
+CLOSED_STATES = ("verified_closed", "auto_closed")
+
+
+def autoclose_threshold():
+    try:
+        value = int(os.environ.get("VICHE_CASE_AUTOCLOSE_CLEAR", "20"))
+    except ValueError:
+        return 20
+    return value if value > 0 else 0  # 0 disables automatic closure
 
 
 def read(path):
@@ -136,8 +157,8 @@ def reconcile():
         if case:
             case["owner"] = owner(signal)
         if signal in signals:
-            if not case or case.get("state") == "verified_closed":
-                if case and case.get("state") == "verified_closed":
+            if not case or case.get("state") in CLOSED_STATES:
+                if case and case.get("state") in CLOSED_STATES:
                     # Archive first: the re-fired instance replaces the live
                     # object, and the prior history must survive the swap.
                     archive_superseded(path, case, now, "re-fire after close")
@@ -149,7 +170,7 @@ def reconcile():
                     "legislature": "consider_evidence_and_legislation_if_needed",
                     "executive": "investigate_and_repair_within_existing_authority",
                     "owner": owner(signal),
-                    "closure_rule": "requires independent Judiciary verification of an evidence-backed investigation",
+                    "closure_rule": CLOSURE_RULE,
                 }
             case["last_seen"] = now
             case["observations"] = case.get("observations", 0) + 1
@@ -161,7 +182,21 @@ def reconcile():
             # agents, not this collector, must determine whether it is closed.
             case["clear_observations"] = case.get("clear_observations", 0) + 1
             case["last_clear_observed_at"] = now
-            case["closure_rule"] = "requires independent Judiciary verification of an evidence-backed investigation"
+            case["closure_rule"] = CLOSURE_RULE
+            threshold = autoclose_threshold()
+            if threshold and case["clear_observations"] >= threshold:
+                case["state"] = "auto_closed"
+                case["closed_at"] = now
+                case["closure_evidence"] = {
+                    "disposition": "auto_clear",
+                    "recorded_by": "institutional-cases.py",
+                    "basis": "signal absent for %d consecutive observations "
+                             "(threshold %d), last seen %s" % (
+                                 case["clear_observations"], threshold, case.get("last_seen")),
+                    "scope": "observation that the signal stayed clear; not a finding "
+                             "that the cause was repaired; Judiciary may still review",
+                    "authority": "Founder directive 2026-11-16",
+                }
         elif not case:
             continue
         atomic(path, case)
@@ -174,6 +209,7 @@ def reconcile():
     # reconciliation supplies the evidence. This does not reopen or rewrite
     # any case object, and it does not change open-case dispatch.
     unresolved = [x for x in records if closure_unsubstantiated(x)]
+    auto = [x for x in records if x.get("state") == "auto_closed"]
     atomic(STORE / "index.json", {
         "observed_at": now,
         "active": [x["id"] for x in active],
@@ -183,11 +219,18 @@ def reconcile():
              "reason": "verified_closed without a case-bound closure artifact"}
             for x in unresolved],
         "unresolved_without_closure_evidence_count": len(unresolved),
+        "auto_closed": [{"id": x.get("id"), "closed_at": x.get("closed_at")} for x in auto],
+        "auto_closed_count": len(auto),
         "total_obligations": len(active) + len(unresolved),
         "caveat": "operational health, not proof of delivery; a closed label "
                   "without a case-bound closure artifact is listed as unresolved",
     })
     return active
+
+
+CLOSURE_RULE = ("closes automatically after %s consecutive clear observations, or "
+                "earlier by Clerk record of an independent Judiciary disposition"
+                % os.environ.get("VICHE_CASE_AUTOCLOSE_CLEAR", "20"))
 
 
 def nonempty_text(value):
@@ -234,5 +277,7 @@ if __name__ == "__main__":
         "open_cases": cases,
         "rule": "Judiciary independently investigates; Parliament decides legal changes; "
                 "Executive repairs within existing authority and implements ratified changes. "
-                "Never close for agent activity, a comment, or a PR.",
+                "Never close for agent activity, a comment, or a PR. A case whose "
+                "signal stays clear for the configured number of observations closes "
+                "automatically (Founder directive 2026-11-16).",
     }, separators=(",", ":")))
