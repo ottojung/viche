@@ -137,6 +137,24 @@ if [ "$action" = ensure ] && [ -n "$old" ] && [ "${status:-}" = failed ] &&
   reason='confirmed PID1 restart orphan; no prompt replay'
   action=replace
 fi
+# Founder directive 2026-11-16: an idle office whose conversation has grown
+# too large is given a fresh session with a short handover note, instead of
+# re-reading one ever-growing conversation every cycle. Only a positively
+# idle/clearexit appointee rotates; a running, failed or held one never does.
+rotation=no
+if [ "$action" = ensure ] && [ -n "$old" ] && [ "$live" = true ] &&
+   { [ "${status:-}" = idle ] || [ "${status:-}" = clearexit ]; } &&
+   [ ! -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$key" ] &&
+   [ "${VICHE_SESSION_ROTATION:-on}" != off ] &&
+   [ -f "$town/government/handover.sh" ] &&
+   /bin/sh "$town/government/handover.sh" due "$old"; then
+  rotation=yes
+  expected=$old
+  caller=appointments.ensure
+  trigger=session_rotation
+  reason='conversation too large; fresh session with handover note'
+  action=replace
+fi
 if [ "$action" = ensure ] && [ -n "$old" ]; then
   # Backend failures remain assigned until lawful Act19 recovery or explicit
   # review. An uncertain process disappearance outside the restart signature
@@ -199,6 +217,11 @@ case "$new" in ''|*[!a-zA-Z0-9_-]*) echo 'malformed new agent ID' >&2; exit 1;; 
 [ "$new" != "$old" ] || { echo 'new agent reused old ID' >&2; exit 1; }
 meta=$(antonina agent status --id "$new" --json) || exit 1
 [ "$(printf '%s\n' "$meta" | jq -r '.state')" = idle ] || exit 1
+if [ "$rotation" = yes ]; then
+  # Written before the registry swap; a missing note never blocks the office.
+  /bin/sh "$town/government/handover.sh" write "$key" "$old" "$new" ||
+    echo "Viche: handover note for $key could not be written" >&2
+fi
 if [ -z "$transaction" ]; then transaction=$(date -u +%Y%m%dT%H%M%SZ)-$$-$key-$new; fi
 tmp=$(mktemp "$root/roster.XXXXXXXX")
 if [ -f "$registry" ]; then awk -F '\t' -v k="$key" '$1!=k {print}' "$registry" > "$tmp"; fi

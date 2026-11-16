@@ -30,4 +30,7 @@ The existing branch-health cycle checks executable Python and freshness of
 outcomes, corrective cases and judicial measurements. Stale or absent positive
 evidence is an adverse signal that requires independent investigation and
 durable case reconciliation. A running process and a stale empty index cannot
-establish good health or close a case.
+establish good health or close a case. (Founder directive, 16 November 2026: a
+case whose signal the collector itself observes clear for the configured run
+of consecutive observations does close automatically as `auto_closed`; that is
+a fresh observation, not a stale index.)

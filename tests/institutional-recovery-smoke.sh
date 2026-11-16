@@ -77,7 +77,7 @@ python3 "$repo/government/institutional-cases.py" reconcile > "$d/cases"
 jq -e '.open_cases | length==2' "$d/cases" >/dev/null
 jq -e '.state=="open" and .owner=="executive"' "$d/state/institutional-cases/continuity_unverified_innovation-centre.json" >/dev/null
 jq -e '.state=="open" and .owner=="executive" and .first_seen==1000' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
-jq -e '.closure_rule | startswith("requires independent Judiciary verification")' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
+jq -e '.closure_rule | startswith("closes automatically after")' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
 rm "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1100 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 jq -e '.state=="open"' "$d/state/institutional-cases/innovation_stale.json" >/dev/null
@@ -150,6 +150,36 @@ rm "$d/state/branches/incident.json"
 VICHE_CASE_NOW=1950 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
 test "$(find "$d/state/institutional-cases" -maxdepth 1 -name 'archive-refire_case-*.json' | wc -l)" -eq 1
 jq -e '.state=="open" and .clear_observations==1' "$d/state/institutional-cases/refire_case.json" >/dev/null
+
+# Founder directive 2026-11-16: a case whose signal stays clear for the
+# configured run of observations closes itself, with a machine closure record.
+VICHE_CASE_AUTOCLOSE_CLEAR=3 VICHE_CASE_NOW=1960 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .clear_observations==2' "$d/state/institutional-cases/refire_case.json" >/dev/null
+VICHE_CASE_AUTOCLOSE_CLEAR=3 VICHE_CASE_NOW=1970 python3 "$repo/government/institutional-cases.py" reconcile > "$d/cases-after-close"
+jq -e '.state=="auto_closed" and .closed_at==1970 and .clear_observations==3
+  and .closure_evidence.disposition=="auto_clear"
+  and (.closure_evidence.scope | contains("not a finding"))' "$d/state/institutional-cases/refire_case.json" >/dev/null
+jq -e '.open_cases | map(.signal) | index("refire_case") == null' "$d/cases-after-close" >/dev/null
+VICHE_CASE_NOW=1975 python3 "$repo/government/institutional-cases.py" report | jq -e '.open_cases | map(.signal) | index("refire_case") == null' >/dev/null
+jq -e '(.auto_closed | map(.id) | index("refire_case:1920") != null) and .auto_closed_count >= 1
+  and (.active | index("refire_case:1920") == null)
+  and (.unresolved_without_closure_evidence | map(.id) | index("refire_case:1920") == null)' \
+  "$d/state/institutional-cases/index.json" >/dev/null
+# Further clear observations leave a closed case alone.
+VICHE_CASE_AUTOCLOSE_CLEAR=3 VICHE_CASE_NOW=1980 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="auto_closed" and .clear_observations==3' "$d/state/institutional-cases/refire_case.json" >/dev/null
+# A re-fire after auto-closure archives it and opens a fresh case.
+printf '{"signals":["refire_case"],"observed_at":1990}\n' > "$d/state/branches/incident.json"
+VICHE_CASE_AUTOCLOSE_CLEAR=3 VICHE_CASE_NOW=1990 python3 "$repo/government/institutional-cases.py" reconcile >/dev/null
+jq -e '.state=="open" and .id=="refire_case:1990"' "$d/state/institutional-cases/refire_case.json" >/dev/null
+jq -e '.state=="auto_closed" and .archive_reason=="re-fire after close"' "$d/state/institutional-cases/archive-refire_case-1920.json" >/dev/null
+# A still-firing case never auto-closes, however low the threshold.
+for n in 1 2 3; do VICHE_CASE_AUTOCLOSE_CLEAR=1 VICHE_CASE_NOW=$((1990 + n)) python3 "$repo/government/institutional-cases.py" reconcile >/dev/null; done
+jq -e '.state=="open" and .clear_observations==0 and .observations==4' "$d/state/institutional-cases/refire_case.json" >/dev/null
+rm "$d/state/branches/incident.json"
+# Zero disables automatic closure entirely.
+for n in 1 2 3 4; do VICHE_CASE_AUTOCLOSE_CLEAR=0 VICHE_CASE_NOW=$((2000 + n)) python3 "$repo/government/institutional-cases.py" reconcile >/dev/null; done
+jq -e '.state=="open" and .clear_observations==4' "$d/state/institutional-cases/refire_case.json" >/dev/null
 
 # After a real enactment, new Executive work has a clean worktree, separate
 # from the historical legislative one. Mock only the dispatcher prerequisites.

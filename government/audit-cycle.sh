@@ -212,6 +212,9 @@ mv "$root/current-audit-cycle.tmp" "$root/current-audit-cycle"
 printf '%s\n' "$now" > "$root/last-audit-dispatch"
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+if [ -f "$town/government/handover.sh" ]; then
+  prompt=$(printf '%s\n%s\n' "$prompt" "$(/bin/sh "$town/government/handover.sh" show judiciary "$id" || :)")
+fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 if ! antonina agent run --id "$id" --cwd "$seats/branches/judiciary" --prompt "$prompt" --detach; then
   printf '%s\t%s\tlaunch_failed_or_ambiguous\n' "$now" "$cycle_id" >> "$root/audit-dispatches.tsv"

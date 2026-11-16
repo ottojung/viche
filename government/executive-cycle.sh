@@ -20,12 +20,11 @@ if [ -s "$state/liveness/unsafe-holds/executive" ]; then
   echo "Viche: unsafe Executive failed invocation is on durable hold" >&2
   exit 1
 fi
-# Act 19 §3.2: the durable handoff queue at $town/records/handoffs/ is the
-# dispatch's single input. Read it FIRST, before any failure-prone work
-# (board fetch, agent status). If the script fails before this read, no
-# dispatch occurs at all — the agent is never re-dispatched generically from
-# a pre-read failure; the open handoff remains and the next successful run
-# honours it.
+# Act 19 §3.2: the durable handoff queue at $town/records/handoffs/ is read
+# FIRST, before any failure-prone work (board fetch, agent status). If the
+# script fails before this read, no dispatch occurs at all. Open handoffs are
+# carried in the dispatch alongside the ordinary eligible-issue work (Founder
+# directive 2026-11-16); they no longer suspend it.
 handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
 # A transient backend failure can make Antonina return 'unknown' or an
 # unparseable status. Re-read a bounded number of times before deciding, and on
@@ -72,31 +71,6 @@ case "$current" in
 esac
 cwd=$seats/branches/executive
 [ -d "$cwd" ] && [ -s "$charter" ] || exit 1
-if [ -n "$handoffs" ]; then
-  # Act 19 §3.2.3: while any open handoff exists the generic eligible-issue
-  # prompt MUST NOT run; the dispatch carries the open handoffs only.
-  prompt=$(cat <<EOF
-You are Viche executive liaison. This is independent executive delivery,
-NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
-=== AUTHORITATIVE CONSTITUTION ===
-$(cat "$charter")
-=== END AUTHORITATIVE CONSTITUTION ===
-Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
-Before interacting with Antonina board or agents, read $town/government/antonina-interface.md. Use the documented commands and JSON shapes; consult command-specific --help when uncertain. Treat parser failures as errors, never as empty work or zero comments.
-Standing Founder priority: Continue SoringP1 until the final theorems for S(n)/SORT-BOUND-U are rigorously proved and independently checked and all authorized SoringP1 obligations are truly closed. At every pass inspect #301, SoringP1 main, current AGENTS.md, docs/research-plan.md, open issues, existing researchers and unresolved proof obligations. If every packet was consumed but theorems are still open, identify new independent, falsifiable mathematical fronts from literature and research failures, and dispatch useful researchers without a numeric cap. Do not produce filler, repeat completed work, demand Founder input for routine research direction, or interpret an agent exit as theorem completion. Research takes priority over monitoring and premature Lean formalization.
-Follow the standing operational agenda at $town/government/executive-agenda.md, including continuous SoringP1 research-pool maintenance; unrelated one-off handoffs do not suspend this duty.
-Act 19 §3.2: the following OPEN DURABLE HANDOFFS at $town/records/handoffs/ govern this dispatch. Do NOT run the generic eligible-issue cycle while any open handoff exists; act on each open handoff now, then mark it done (with an evidence link) or superseded (by a newer handoff) in the queue:
-$handoffs
-A billy-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to billy-dev. Require verified passing CI when applicable (a green run, not a claim).
-Maintain durable issue ownership, dependencies, completed work and blockers.
-Verify current issue comments, agents and PRs before assigning; avoid duplicates.
-Prioritize tested merged deliverables, not ceremonial discussion or agent counts.
-Parallelize constructive independent work without numerical worker limits.
-Use Antonina-managed agents, leaving model selection to Antonina.
-Your worktree is $cwd.
-EOF
-)
-else
   eligible=$(python3 "$town/government/eligible-work.py") || exit 1
   # Local Git inventory is read-only and never blocks research dispatch.
   delivery=$(python3 "$town/government/delivery-candidates.py" --brief) || {
@@ -128,6 +102,25 @@ Prioritize tested merged deliverables, not ceremonial discussion or agent counts
 Parallelize constructive independent work without numerical worker limits.
 Use Antonina-managed agents, leaving model selection to Antonina.
 Your worktree is $cwd.
+EOF
+)
+if [ -n "$handoffs" ]; then
+  # Founder directive 2026-11-16 repeals the Act 19 §3.2.3 preemption: open
+  # handoffs are ADDED to the ordinary Executive dispatch and never replace
+  # it. A handoff waiting on the Clerk, Judiciary, Auditor or Parliament had
+  # suspended all Executive delivery for a week (2026-11-08..15).
+  prompt=$(cat <<EOF
+$prompt
+
+=== OPEN DURABLE HANDOFFS (records/handoffs/; Act 19 queue) ===
+$handoffs
+=== END OPEN HANDOFFS ===
+Act now on each handoff whose next action belongs to the Executive, then mark
+it done (with an evidence link) or superseded using
+government/handoff-queue.sh mark. A handoff whose next action belongs to
+another office (Clerk, Judiciary, Auditor, Parliament) is listed for awareness
+only: do not wait on it, do not re-report it as a blocker every pass, and never
+let it suspend the eligible-issue work above.
 EOF
 )
 fi
@@ -176,6 +169,9 @@ EOF
 )
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+if [ -f "$town/government/handover.sh" ]; then
+  prompt=$(printf '%s\n%s\n' "$prompt" "$(/bin/sh "$town/government/handover.sh" show executive "$id" || :)")
+fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
 mkdir -p "$state/branches"

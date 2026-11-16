@@ -82,6 +82,9 @@ if [ -s "$dialogue_file" ]; then
 fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
+if [ -f "$town/government/handover.sh" ]; then
+  prompt=$(printf '%s\n%s\n' "$prompt" "$(/bin/sh "$town/government/handover.sh" show innovation-centre "$id" || :)")
+fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
       printf '%s\n' "$now" > "$root/last-dispatch"

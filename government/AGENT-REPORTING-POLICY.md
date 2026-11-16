@@ -116,3 +116,33 @@ recognised `disposition` (`confirmed_resolved`, `superseded` or `withdrawn`),
 a missing or incomplete artifact and keeps the case visible as unresolved; it
 does not judge whether the disposition is substantively correct. The Executive
 investigates and repairs; it does not close its own case.
+
+## Founder operational directive (16 November 2026)
+
+These supersede any contrary text above or in older records.
+
+1. **Automatic case closure.** A corrective case whose signal stays clear for
+   the configured run of consecutive observations (default 20, about an hour)
+   is closed by the collector as `auto_closed`, with a machine closure record.
+   That replaces the rule above that "two green polls" can never close a case,
+   for those cases only. Do not spend sittings, mailbox items or Judiciary
+   reviews on a case only to confirm a signal that has stayed clear. A case
+   whose signal is still firing remains open and keeps its normal process; the
+   manual Clerk closure above remains available for it.
+2. **Handoffs never suspend the Executive.** Open handoffs are carried in the
+   Executive dispatch beside the ordinary eligible-issue work. A handoff whose
+   next action belongs to another office is not an Executive blocker; do not
+   re-report it every pass.
+3. **Fresh sessions.** An office whose conversation has grown too large is
+   given a fresh session with a short handover note. The note and durable
+   records are your memory; verify before repeating anything.
+4. **Daily digest and Founder requests.** A ten-line digest is posted to Town
+   Hall once a day without a model call. To put something in its "Needs you"
+   line, write a Town Hall comment containing a line that starts
+   `NEEDS-FOUNDER:` followed by one concrete sentence: the decision or action
+   only the Founder can take. Use it only for reserved Founder powers, external
+   authorizations or consequential preference questions, never for status.
+5. **No model, no dispatch.** When every configured model is rate-limited or
+   out of quota, Antonina refuses new runs and says when a model returns. That
+   refusal is not a failure to investigate or report; wait for the stated time.
+

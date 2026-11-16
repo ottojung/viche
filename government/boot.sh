@@ -134,6 +134,18 @@ if [ -f "$town/government/judiciary-measurements.py" ]; then
         echo "Viche: Judiciary self-measurement unavailable" >&2
 fi
 
+# Founder directive 2026-11-16: ten-line daily digest on Town Hall, once per
+# UTC day after VICHE_DIGEST_HOUR. No model call; serialized; never blocks.
+if [ -f "$town/government/daily-digest.py" ] && [ -n "${VICHE_TOWNHALL_ID:-}" ]; then
+    digest_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/digest
+    mkdir -p "$digest_state"
+    (
+        flock -n 9 || exit 0
+        timeout 600 nice python3 "$town/government/daily-digest.py" --post ||
+            echo "Viche: daily digest failed; retried next cycle" >&2
+    ) 9>"$digest_state/digest.lock" >>"$digest_state/digest.log" 2>&1 < /dev/null &
+fi
+
 # Government setup completed; not proof of delivery.
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/health
 mkdir -p "$state"

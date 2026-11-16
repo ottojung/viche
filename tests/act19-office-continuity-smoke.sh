@@ -75,18 +75,19 @@ printf '%s\n' "$listed" | grep -Fq "$id2"
 printf '%s\n' "$listed" | grep -Fq 'Deliver the Act 18 section 7 step'
 test "$(printf '%s\n' "$listed" | head -n 1 | awk -F '\t' '{print NF}')" -eq 3
 
-# P3: with an open handoff the dispatch carries the handoff and MUST NOT run
-# the generic eligible-issue prompt (no supersession of the specific steer).
+# P3 (Founder directive 2026-11-16): an open handoff is CARRIED in the
+# dispatch but no longer suspends the ordinary eligible-issue work. A handoff
+# owned by another office must never stall Executive delivery.
 rm -f "$d2/state/branches/eligible-issues.json"
 /bin/sh "$d2/town/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2
 grep -Fq 'OPEN DURABLE HANDOFFS' "$PROMPT_FILE"
 grep -Fq 'Act 18 section 7 step' "$PROMPT_FILE"
 grep -Fq "$id1" "$PROMPT_FILE"
-# Standing Founder research duty can mention #301 even when the generic
-# eligible-issue dispatch is prohibited by a specific handoff.
-if grep -Fq 'Verified issue assignments' "$PROMPT_FILE"; then echo "generic eligible-issue prompt ran while a handoff was open" >&2; exit 1; fi
-test ! -e "$d2/state/branches/eligible-issues.json"
+grep -Fq 'Verified issue assignments' "$PROMPT_FILE"
+grep -Fq 'never' "$PROMPT_FILE"
+grep -Fq 'let it suspend the eligible-issue work' "$PROMPT_FILE"
+test -s "$d2/state/branches/eligible-issues.json"
 
 # The steer's own evidence and assigning authority are durable in the entry.
 grep -Fq 'assigned-by: Viche Clerk c1a00001' "$d2/town/records/handoffs/$id1.txt"
@@ -99,15 +100,18 @@ if /bin/sh "$d2/town/government/handoff-queue.sh" mark "$d2/town" "$id1" done 'a
   echo "re-closing a closed handoff must fail" >&2
   exit 1
 fi
-# One open handoff still blocks the generic dispatch.
+# One open handoff is still carried, alongside the generic dispatch.
 /bin/sh "$d2/town/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 3
-# The standing research mandate does not supersede the queued handoff.
+grep -Fq "$id2" "$PROMPT_FILE"
+grep -Fq 'Verified issue assignments' "$PROMPT_FILE"
+if grep -Fq "$id1" "$PROMPT_FILE"; then echo "a done handoff must not be carried" >&2; exit 1; fi
 /bin/sh "$d2/town/government/handoff-queue.sh" mark "$d2/town" "$id2" superseded 'newer durable handoff arrived'
-# With no open handoffs the generic dispatch resumes.
+# With no open handoffs the handoff section disappears.
 /bin/sh "$d2/town/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 4
 grep -Fq '301' "$PROMPT_FILE"
+if grep -Fq 'OPEN DURABLE HANDOFFS' "$PROMPT_FILE"; then echo "empty handoff section emitted" >&2; exit 1; fi
 test -s "$d2/state/branches/eligible-issues.json"
 
 # No dispatch at all when the script fails before the queue read: a queue

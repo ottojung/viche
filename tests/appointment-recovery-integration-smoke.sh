@@ -11,7 +11,7 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
   "$repo/government/executive-cycle.sh" "$repo/government/office-continuity.sh" \
   "$repo/government/terminal-appointment-evidence.sh" "$repo/government/policy-sync.sh" \
   "$repo/government/seat-liveness.sh" "$repo/government/predict-scorer.py" \
-  "$repo/government/delivery-candidates.py" \
+  "$repo/government/delivery-candidates.py" "$repo/government/eligible-work.py" \
   "$repo/government/AGENT-REPORTING-POLICY.md" \
   "$d/town/government/"
 git -C "$d/seats/branches/executive" init -q
@@ -49,6 +49,10 @@ case "$1 $2" in
     jq '.state="stopped"' "$MOCK_ROOT/$id.json" > "$MOCK_ROOT/$id.next"
     mv "$MOCK_ROOT/$id.next" "$MOCK_ROOT/$id.json" ;;
   'agent run') printf 'run\n' >> "$MOCK_ROOT/runs"; printf '%s\n' "$*" >> "$MOCK_ROOT/run-args" ;;
+  # An empty board: the ordinary eligible-issue inventory now always runs
+  # beside open handoffs (Founder directive 2026-11-16).
+  'board list') printf '[]\n' ;;
+  'board show') printf '{"body":"","messages":[]}\n' ;;
   *) echo "unexpected Antonina call: $*" >&2; exit 9 ;;
 esac
 MOCK
@@ -169,7 +173,7 @@ mkdir -p "$d/safe/town/government" "$d/safe/town/records" \
 cp "$repo/government/appointments.sh" "$repo/government/executive-cycle.sh" \
   "$repo/government/handoff-queue.sh" "$repo/government/terminal-appointment-evidence.sh" \
   "$repo/government/predict-scorer.py" \
-  "$repo/government/delivery-candidates.py" \
+  "$repo/government/delivery-candidates.py" "$repo/government/eligible-work.py" \
   "$repo/government/AGENT-REPORTING-POLICY.md" \
   "$d/safe/town/government/"
 printf 'c1a00001\tClerk\tintake\n' > "$d/safe/town/government/seats.tsv"
