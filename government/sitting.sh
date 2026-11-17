@@ -257,6 +257,72 @@ EOF
     fi
 fi
 
+# Founder directive 2026-11-16 (Act 29): the Ministry of Economy is an Executive
+# office; its funding position is visible to the Clerk as information only.
+if [ "$seat" = "$clerk" ]; then
+    econ_report=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/economy/report.json
+    if [ -s "$econ_report" ]; then
+        cat <<EOF
+=== MINISTRY OF ECONOMY: MODEL FUNDING POSITION (Executive office; information, not legislative business) ===
+$(jq -c '{at,funding_risk,free_models,free_available_now,next_free_returns_at,order:[.order[]?.model]}' "$econ_report" 2>/dev/null || cat "$econ_report")
+=== END FUNDING POSITION ===
+A funding_risk other than "none" means fewer than two free models are available now.
+EOF
+    fi
+fi
+
+# Founder directive 2026-11-16 (Act 30): deadline-bound requests between offices.
+# Waiting is not the default: after the deadline the requester proceeds and the
+# addressee audits afterwards.
+proceed_block=
+if [ -f "$town/government/proceed-by-default.sh" ]; then
+    proceed_block=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" "$seat" || :)
+    if [ "$seat" = "$clerk" ]; then
+        clerk_block=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" clerk || :)
+        proceed_block=$(printf '%s\n%s\n' "$proceed_block" "$clerk_block")
+    fi
+    [ -z "$(printf '%s' "$proceed_block" | tr -d '[:space:]')" ] || printf '%s\n' "$proceed_block"
+fi
+
+# Founder directive 2026-11-16 (item 4): the Clerk is summoned every sitting
+# interval. Skip the pass when nothing it reads has changed since the last one;
+# a two-hour heartbeat still guarantees a periodic sitting. Fails open.
+if [ "$seat" = "$clerk" ] && [ -f "$town/government/dispatch-gate.sh" ]; then
+    gate_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+    mkdir -p "$gate_state/dispatch-gate"
+    if ! hall_sig=$(/bin/sh "$town/government/dispatch-gate.sh" board-signature "${VICHE_TOWNHALL_ID:-302}" 2>/dev/null); then
+        hall_sig="board-unavailable-$(date +%s)"
+    fi
+    if { printf '%s\n' "$hall_sig"
+         git -C "$town" rev-parse HEAD 2>/dev/null || :
+         cat "$town/records/SUMMONED.txt" 2>/dev/null || :
+         /bin/sh "$town/government/handoff-queue.sh" list-open "$town" 2>/dev/null || :
+         find "$town/records/bills" "$town/records/ballots" -type f -printf '%p %s\n' 2>/dev/null | sort || :
+         find "$gate_state/oversight/judiciary-mailbox/inbox" -type f 2>/dev/null | sort || :
+         for incident_file in "$gate_state/oversight/incident.json" "$gate_state/oversight/random/incident.json" \
+                              "${VICHE_SENTINEL_STATE:-/var/lib/lubko/wd/viche-sentinel-state}/incident.json" \
+                              "$gate_state/branches/incident.json"; do
+             if [ -s "$incident_file" ]; then jq -cS '{first_seen,signals,id}' "$incident_file" 2>/dev/null || cat "$incident_file"; fi
+         done
+         /bin/sh "$town/government/terminal-continuity.sh" instruction "$seat" 2>/dev/null || :
+         echo "$proceed_block"
+         if [ -f "$town/government/institutional-cases.py" ]; then
+             python3 "$town/government/institutional-cases.py" report 2>/dev/null |
+                 jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
+         fi; } |
+       /bin/sh "$town/government/dispatch-gate.sh" check clerk "${VICHE_CLERK_GATE_MAX_AGE:-7200}" > "$gate_state/dispatch-gate/clerk.last" 2>&1; then
+        /bin/sh "$town/government/dispatch-gate.sh" commit clerk || :
+    else
+        echo "Viche: Clerk sitting skipped, nothing it reads has changed since the last sitting" >&2
+        exit 1
+    fi
+fi
+
+# The daily plenary tracks which summoned seats have actually been dispatched.
+if [ "$seat" != "$clerk" ] && [ -f "$town/government/daily-sitting.py" ]; then
+    python3 "$town/government/daily-sitting.py" dispatched "$seat" || :
+fi
+
 # A fresh session after rotation gets its predecessor's handover note once.
 if [ -f "$town/government/handover.sh" ]; then
     /bin/sh "$town/government/handover.sh" show "$seat" "$appointed" || :

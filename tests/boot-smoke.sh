@@ -129,7 +129,11 @@ seat_count=$(wc -l < "$town/government/seats.tsv")
 [ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
 # Act 24 is enacted, so boot also runs the Executive Innovation Office cycle,
 # which legitimately dispatches once in addition to the seats.
-[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+1)) ]
+# Act 29 is enacted as well, so boot also runs the Ministry of Economy cycle: one more
+# dispatch, with its own Executive-office health record.
+[ "$(wc -l < "$scratch/mock/ran")" -eq $((seat_count+2)) ]
+jq -e '.office == "economy" and .executive_office == true and .voting_seat == false' \
+  "$scratch/state/executive/economy/health.json" >/dev/null
 python3 - "$scratch/state/branches/judiciary-measurements.json" "$scratch/state/branches" <<'PY'
 import hashlib, json, pathlib, sys
 report=json.loads(pathlib.Path(sys.argv[1]).read_text())

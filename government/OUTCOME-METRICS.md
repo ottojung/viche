@@ -34,3 +34,5 @@ establish good health or close a case. (Founder directive, 16 November 2026: a
 case whose signal the collector itself observes clear for the configured run
 of consecutive observations does close automatically as `auto_closed`; that is
 a fresh observation, not a stale index.)
+
+- Inaction is a cost (Act 30 §7): the daily digest also reports model passes skipped because nothing changed, obligations expired unverified, and days since each office last produced a durable result. These are findings, not quotas.

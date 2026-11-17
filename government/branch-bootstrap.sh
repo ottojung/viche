@@ -12,6 +12,7 @@ case "$branch" in
         "${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}/government/LAWS.md" 2>/dev/null; then
       title="Executive Innovation Office"
     fi ;;
+  economy) id=c1e00012; title="Ministry of Economy" ;;
   *) exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}

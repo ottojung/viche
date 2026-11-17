@@ -120,7 +120,20 @@ if [ "$branch" = executive ] && [ "$readiness" = ready ] &&
     fi
     [ -s "$root/executive-pending-since" ] || printf '%s\n' "$now" > "$root/executive-pending-since"
     since=$(cat "$root/executive-pending-since")
-    if [ $((now-since)) -ge 1800 ]; then readiness=unhealthy; else readiness=pending; fi
+    if [ $((now-since)) -ge 1800 ]; then
+      readiness=unhealthy
+      # Founder directive 2026-11-16 (item 4): an Executive that was deliberately
+      # not dispatched because nothing it reads changed is idle on purpose, not
+      # unhealthy. Only a skip recorded within the last 15 minutes counts, so a
+      # stuck cycle (no skip, no dispatch) is still flagged.
+      gate_file=$state/dispatch-gate/executive.json
+      if [ -s "$gate_file" ] &&
+         [ "$(jq -r --argjson now "$now" '((.skips_since_dispatch // 0) > 0) and (($now - (.last_skip_at // 0)) < 900)' "$gate_file" 2>/dev/null)" = true ]; then
+        readiness=ready
+      fi
+    else
+      readiness=pending
+    fi
   fi
 fi
 # Legislature is dispatched by constitutional sitting() AFTER this check.

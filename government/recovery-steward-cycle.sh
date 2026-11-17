@@ -70,6 +70,26 @@ if [ "$fresh" != yes ] && [ "$last" -gt 0 ] && [ "$now" -ge "$last" ] &&
 charter=${VICHE_CONSTITUTION:-}
 [ -n "$charter" ] && [ -s "$charter" ] ||
   { echo 'Authoritative Founder charter unavailable' >&2; exit 1; }
+# Founder directive 2026-11-16 (item 4): skip a pass whose inputs did not change.
+# A fresh session (fresh=yes) always dispatches; a six-hour heartbeat guarantees
+# a periodic pass.
+if [ "$fresh" != yes ] && [ -f "$town/government/dispatch-gate.sh" ]; then
+  holds=$(find "$state/liveness/unsafe-holds" -maxdepth 1 -type f -size +0 2>/dev/null | sort || :)
+  if { printf '%s\n' "$holds"
+       for incident_file in "$state/branches/incident.json" "$state/oversight/random/incident.json" "$state/oversight/incident.json"; do
+         if [ -s "$incident_file" ]; then jq -cS '{first_seen,signals,id}' "$incident_file" 2>/dev/null || cat "$incident_file"; fi
+       done
+       if [ -f "$town/government/institutional-cases.py" ]; then
+         python3 "$town/government/institutional-cases.py" report 2>/dev/null |
+           jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
+       fi; } |
+     /bin/sh "$town/government/dispatch-gate.sh" check recovery-steward "${VICHE_RECOVERY_GATE_MAX_AGE:-21600}" > "$root/gate.log"; then
+    :
+  else
+    echo "Recovery steward: pass skipped, nothing it reads has changed since the last pass" >&2
+    exit 0
+  fi
+fi
 [ -s "$town/government/RECOVERY-STEWARD.md" ] ||
   { echo 'Recovery stewardship mandate missing' >&2; exit 1; }
 prompt=$(cat <<EOF
@@ -95,5 +115,6 @@ if ! antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$
   exit 1
 fi
 printf '%s\n' "$now" > "$root/last-dispatch"
+[ ! -f "$town/government/dispatch-gate.sh" ] || /bin/sh "$town/government/dispatch-gate.sh" commit recovery-steward
 printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$id" "$fresh" >> "$root/dispatches.tsv"
 echo "Recovery steward dispatched: $id"

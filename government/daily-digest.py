@@ -13,7 +13,9 @@ still reports when every model is exhausted, and it costs no quota. Lines:
    7  quota split: model steps and context tokens by consumer
    8  model availability and provider limit errors
    9  what needs the Founder
-  10  where the detail lives
+  10  inaction (Act 30 §7): passes run vs skipped as unchanged, obligations
+      expired, actions taken by default, days since each office last committed
+      (the pointer to the detail lives on line 1)
 
 Usage: daily-digest.py [--post] [--force] [--now EPOCH]
 Without --post it prints the digest. With --post it also writes
@@ -271,8 +273,82 @@ def line_models(now, scan):
     _, _, limits = scan
     detail = "; ".join("%s %s for %s" % (m.split("/")[-1], e["reason"].replace("_", " "), age(e["until"] - now))
                        for m, e in sorted(cooling.items(), key=lambda kv: kv[1]["until"]))
-    return "Models: %d/%d usable now%s; provider limit errors in window: %d quota, %d rate" % (
-        len(models) - len(cooling), len(models), (" — " + detail) if detail else "", limits["quota"], limits["rate"])
+    funding = ""
+    try:
+        risk = json.loads((state / "economy/report.json").read_text()).get("funding_risk")
+        if risk:
+            funding = "; free-model funding risk: %s" % risk
+    except (OSError, ValueError):
+        pass
+    try:
+        res = json.loads((state / "economy/resources.json").read_text())
+        flagged = []
+        for key, r in sorted(res.get("resources", {}).items()):
+            if key == "model_funding" or r.get("status", "ok") == "ok":
+                continue
+            part = "%s %s" % (key.replace("disk:", "disk "), r["status"])
+            if r.get("used_pct") is not None:
+                part += " %.0f%%" % r["used_pct"]
+            if r.get("hours_to_full") is not None:
+                part += ", full in %s" % age(r["hours_to_full"] * 3600)
+            flagged.append(part)
+        funding += "; resources: " + ("; ".join(flagged) if flagged else "all ok")
+        if res.get("needs_founder"):
+            funding += " (NEEDS-FOUNDER)"
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return "Models: %d/%d usable now%s; provider limit errors in window: %d quota, %d rate%s" % (
+        len(models) - len(cooling), len(models), (" — " + detail) if detail else "", limits["quota"], limits["rate"], funding)
+
+
+def line_inaction(now):
+    """Inaction as a cost: what was skipped, what expired, what was defaulted, who is quiet."""
+    short = {"executive": "exec", "clerk": "clerk", "judiciary": "jud",
+             "recovery-steward": "steward", "economy": "econ"}
+    ran, skipped = collections.Counter(), collections.Counter()
+    events = state / "dispatch-gate/events.tsv"
+    if events.exists():
+        for row in events.read_text().splitlines():
+            cols = row.split("\t")
+            if len(cols) >= 3 and cols[0].isdigit() and int(cols[0]) >= now - WINDOW:
+                (ran if cols[2] == "dispatch" else skipped)[cols[1]] += 1
+    gate = ", ".join("%s %d/%d" % (short.get(k, k), ran[k], skipped[k])
+                     for k in sorted(set(ran) | set(skipped))) or "gate idle"
+    expired = 0
+    ledger = state / "obligations/ledger.jsonl"
+    if ledger.exists():
+        for row in ledger.read_text().splitlines():
+            try:
+                entry = json.loads(row)
+            except ValueError:
+                continue
+            when = iso_epoch(entry.get("at"))
+            if entry.get("action") == "expired" and when is not None and when >= now - WINDOW:
+                expired += 1
+    defaulted = audited = 0
+    proceed_dir = town / "records/proceed"
+    if proceed_dir.is_dir():
+        for path in proceed_dir.glob("P-*.txt"):
+            status = re.search(r"^status:\s*(\S+)", path.read_text(), re.M)
+            if status and status.group(1) == "proceeded":
+                defaulted += 1
+            elif status and status.group(1).startswith("audited-"):
+                defaulted += 1
+                audited += 1
+    quiet = []
+    branches = pathlib.Path(os.environ.get("VICHE_SEATS_ROOT", "/var/lib/lubko/wd/viche-seats")) / "branches"
+    for name, label in (("executive", "exec"), ("judiciary", "jud"), ("innovation-office", "innov"),
+                        ("economy", "econ"), ("recovery-steward", "steward")):
+        tree = branches / name
+        if not (tree / ".git").exists():
+            continue
+        try:
+            stamp = int(run(["git", "-C", str(tree), "log", "-1", "--format=%ct", "HEAD"]).strip())
+            quiet.append("%s %s" % (label, age(now - stamp)))
+        except (Unavailable, ValueError):
+            quiet.append("%s ?" % label)
+    return "Inaction: passes run/skipped %s; obligations expired %d; by default %d (%d audited); last commit %s" % (
+        gate, expired, defaulted, audited, ", ".join(quiet) or "n/a")
 
 
 def line_needs(now, scan_ok):
@@ -326,7 +402,8 @@ def build(now):
     except OSError:
         scan, scan_ok = (collections.Counter(), collections.Counter(), collections.Counter()), False
     lines = [
-        "Viche daily digest — %s (24h to %s)" % (stamp.strftime("%Y-%m-%d"), stamp.strftime("%H:%MZ")),
+        "Viche daily digest — %s (24h to %s); detail in %s/digest/, records/handoffs/, institutional-cases/index.json; no model call" % (
+            stamp.strftime("%Y-%m-%d"), stamp.strftime("%H:%MZ"), state),
         guarded(lambda: line_viche(now), "Shipped (Viche main):"),
         guarded(lambda: line_elsewhere(now), "Shipped (elsewhere):"),
         agents_line,
@@ -335,7 +412,7 @@ def build(now):
         line_quota(scan) if scan_ok else "Quota split: agent logs unavailable",
         guarded(lambda: line_models(now, scan), "Models:"),
         line_needs(now, scan_ok),
-        "Detail: %s/digest/, records/handoffs/, institutional-cases/index.json; generated without a model call" % state,
+        guarded(lambda: line_inaction(now), "Inaction:"),
     ]
     lines = [(l if len(l) <= LINE_MAX else l[:LINE_MAX - 1] + "…") for l in lines]
     assert len(lines) == 10
