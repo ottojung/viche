@@ -86,6 +86,19 @@ if [ -f "$town/government/daily-sitting.py" ]; then
         echo "Viche: daily plenary convening failed" >&2
 fi
 
+# Act 31: the integration queue lands proposed work on main. It runs the test
+# suite, so it is backgrounded under its own lock and never blocks an office.
+if grep -Eq '^## Act [0-9]+ — Integration Queue Act ' "$town/government/LAWS.md" &&
+   [ -f "$town/government/integrator.py" ]; then
+    integration_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/delivery/integrator
+    mkdir -p "$integration_state"
+    (
+        flock -n 9 || exit 0
+        timeout 7200 nice python3 "$town/government/integrator.py" run ||
+            echo "Viche: integration queue pass failed" >&2
+    ) 9>"$integration_state/run.lock" >> "$integration_state/run.log" 2>&1 < /dev/null &
+fi
+
 # Independent Executive: no parliamentary summons required.
 if [ -f "$town/government/branch-liveness.sh" ]; then
     /bin/sh "$town/government/branch-liveness.sh" executive ||

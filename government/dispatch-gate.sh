@@ -67,7 +67,9 @@ case "$cmd" in
     fi
     max_age=${2:-21600}
     case "$max_age" in ''|*[!0-9]*) max_age=21600 ;; esac
-    fp=$(sha256sum | cut -d ' ' -f 1)
+    # Act 31: a change in the office's own deliveries (landed, rejected, red,
+    # conflict) is an input of every office, so the proposer wakes to act on it.
+    fp=$({ cat; cat "$state/delivery/office/$key.json" 2>/dev/null || :; } | sha256sum | cut -d ' ' -f 1)
     reason=
     if [ "${VICHE_DISPATCH_GATE:-on}" = off ]; then
       reason=gate_off

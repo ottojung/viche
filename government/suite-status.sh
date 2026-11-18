@@ -82,6 +82,11 @@ git -C "$town" worktree add --quiet --detach "$checkout" "$sha" ||
 run_once() {
     out=$(cd "$checkout" && VICHE_TOWN_ROOT="$checkout" /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
     hash=$(printf '%s' "$out" | sha256sum | cut -d ' ' -f1)
+    # Act 31: the integrator keeps the output so a proposer can see why a
+    # candidate was red. The recorded digest is of this same output.
+    if [ -n "${SUITE_STATUS_LOG_DIR:-}" ]; then
+        printf '%s\n' "$out" > "$SUITE_STATUS_LOG_DIR/suite-$hash.log" 2>/dev/null || :
+    fi
     printf '%s\t%s\n' "$rc" "$hash"
 }
 
@@ -133,6 +138,10 @@ tmp=$(mktemp "$town/records/.suite-status.XXXXXX")
     printf '  "runs": %s,\n' "$runs"
     printf '  "ci_result": "%s",\n' "$ci"
     printf '  "ci_reconciliation": "%s",\n' "$recon"
+    if [ -n "${SUITE_STATUS_VERIFIER:-}" ]; then
+        # Act 28 §1 asks for the verifier role; Act 31 names the integrator.
+        printf '  "verifier": "%s",\n' "$(printf '%s' "$SUITE_STATUS_VERIFIER" | tr -cd 'a-zA-Z0-9_./ -')"
+    fi
     printf '  "incident": %s\n' "$incident"
     printf '}\n'
 } > "$tmp"

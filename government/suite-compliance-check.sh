@@ -221,7 +221,8 @@ try:
         try:
             with open(filename,'rb') as f: raw=f.read()
             event=json.loads(raw)
-            if (event.get('generated_by')=='government/reviewed-merge.sh'
+            # Act 31: the integration queue emits the same bound event.
+            if (event.get('generated_by') in ('government/reviewed-merge.sh','government/integrator.py')
                     and isinstance(event.get('commit'),str)
                     and type(event.get('published_at_ns')) is int
                     and re.fullmatch(r'[0-9a-f]{64}',str(event.get('receipt_sha256','')))):

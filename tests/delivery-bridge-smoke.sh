@@ -36,14 +36,20 @@ jq -e '.candidate_count==1 and .candidates[0].category=="records-review" and
   (.candidates[0].dirty | length)==0' "$scratch/candidates.json" >/dev/null
 
 (cd "$records" && VICHE_TOWN_ROOT=$town VICHE_STATE_ROOT=$state \
-  /bin/sh "$repo/government/propose-delivery.sh" audited-record) >/dev/null
+  /bin/sh "$repo/government/propose-delivery.sh" --office c1a00001 audited-record) >/dev/null
 test "$(git -C "$remote" rev-parse refs/heads/delivery/audited-record)" = "$(git -C "$records" rev-parse HEAD)"
 test "$(wc -l < "$state/delivery/proposals.tsv")" -eq 1
+# Act 31: the proposing office is recorded for the integration queue.
+test "$(cut -f 7 "$state/delivery/proposals.tsv")" = c1a00001
+if (cd "$records" && VICHE_TOWN_ROOT=$town VICHE_STATE_ROOT=$state \
+    /bin/sh "$repo/government/propose-delivery.sh" no-office) >/dev/null 2>&1; then
+  echo 'A proposal without an office was accepted' >&2; exit 1
+fi
 
 # Local dirty edits cannot be hidden by an existing signed HEAD.
 printf 'not-committed\n' > "$records/records/draft.md"
 if (cd "$records" && VICHE_TOWN_ROOT=$town VICHE_STATE_ROOT=$state \
-    /bin/sh "$repo/government/propose-delivery.sh" unsaved-record) >/dev/null 2>&1; then
+    /bin/sh "$repo/government/propose-delivery.sh" --office c1a00001 unsaved-record) >/dev/null 2>&1; then
   echo 'Dirty branch was proposed' >&2; exit 1
 fi
 if git -C "$remote" show-ref --verify --quiet refs/heads/delivery/unsaved-record; then
@@ -66,7 +72,7 @@ printf 'policy synchronization only\n' > "$policy/AGENTS.md"
 git -C "$policy" add -A
 git -C "$policy" commit -qm policy
 if (cd "$policy" && VICHE_TOWN_ROOT=$town VICHE_STATE_ROOT=$state \
-    /bin/sh "$repo/government/propose-delivery.sh" useless-policy) >/dev/null 2>&1; then
+    /bin/sh "$repo/government/propose-delivery.sh" --office c1a00003 useless-policy) >/dev/null 2>&1; then
   echo 'Policy-only changes were proposed' >&2; exit 1
 fi
 

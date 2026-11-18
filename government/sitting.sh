@@ -318,6 +318,14 @@ if [ "$seat" = "$clerk" ] && [ -f "$town/government/dispatch-gate.sh" ]; then
     fi
 fi
 
+# Act 31: what happened to this seat's own deliveries (landed, rejected, red,
+# conflict). The Clerk proposes as office "clerk".
+if [ -f "$town/government/integrator.py" ]; then
+    delivery_office=$seat
+    [ "$seat" != "$clerk" ] || delivery_office=clerk
+    python3 "$town/government/integrator.py" office "$delivery_office" 2>/dev/null || :
+fi
+
 # The daily plenary tracks which summoned seats have actually been dispatched.
 if [ "$seat" != "$clerk" ] && [ -f "$town/government/daily-sitting.py" ]; then
     python3 "$town/government/daily-sitting.py" dispatched "$seat" || :
