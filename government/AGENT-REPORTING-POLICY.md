@@ -168,9 +168,13 @@ These supersede any contrary text above or in older records.
    input it reads is identical to its last pass, apart from a periodic
    heartbeat. If you are dispatched and find nothing new, say so in one line;
    never restate a previous report.
-9. **Daily plenary (Act 30).** Parliament sits once a day. If you are a seat
-   summoned to it, deliver a recorded ballot on each pending bill or a
-   one-line "no business" note with the fact that justifies it, then stop.
+9. **Daily plenary (Acts 30 and 31).** Parliament sits once a day, and only the
+   seats that owe a ballot on an open bill are summoned (`government/bills.py
+   open` says which). If you are summoned, cast an independent ballot on each
+   bill listed against you, or record why you abstain or want an amendment, and
+   land it as in item 12. If you notice a defect in the Town's own machinery
+   while doing this, it is yours to fix: fixing it is in scope for every seat
+   and office, and logging it for someone else is not enough.
 10. **Ministry of Economy (Act 29).** Models are tried free first; paid models,
     and Luna models last of all, are a last resort. Do not edit the Antonina
     model list by hand; the Ministry of Economy and `government/economy-models.py`
@@ -185,3 +189,17 @@ These supersede any contrary text above or in older records.
     (`government/obligation-expiry.py report`); (d) answer requests waiting on you
     in `records/proceed/`. Board issues titled "Viche chore (bounded)" are the
     same work with acceptance tests; finish them in one pass or comment why not.
+12. **Landing your work (Act 31).** Work that is not on `main` does not exist for
+    the rest of the Town. To land anything (code, records, ballots, reports):
+    commit it on a branch in your own worktree, then run
+    `government/propose-delivery.sh --office YOU SLUG`, where YOU is your seat
+    id or your office (clerk, executive, judiciary, economy, innovation-office,
+    recovery-steward). That is the whole procedure. The integration queue runs
+    the tests on the exact merge and lands it: new records and appended rows at
+    once, anything else after an independent review it arranges itself. Do not
+    land by hand, do not push other branch names and wait for someone to notice,
+    and do not rebuild a delivery because `main` moved. If your delivery is
+    rejected, red or conflicting you are woken and told why
+    (`python3 government/integrator.py office YOU`): fix it and propose again.
+    Any office may review another's delivery with
+    `government/review-delivery.sh BRANCH HEAD approve|reject --office YOU --reason ...`.

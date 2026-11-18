@@ -115,11 +115,30 @@ def line_viche(now):
     except Unavailable:
         ref = "main"
     changes = git_log(town, now - WINDOW, ref)
+    # Act 31 status carriers are bookkeeping for the landing before them, not work.
+    changes = [c for c in changes if not c["subject"].startswith("Act 21 suite-status for ")]
     code = [c for c in changes if any(not f.startswith("records/") for f in c["files"])]
     records = sum(1 for c in changes if c["files"] and c not in code)  # empty commits count as neither
     head = "; ".join(c["subject"][:70] for c in code[:3])
-    return "Shipped (Viche main): %d law/code change(s), %d records-only commit(s)%s" % (
-        len(code), records, (" — " + head) if head else "")
+    return "Shipped (Viche main): %d law/code change(s), %d records-only commit(s)%s%s" % (
+        len(code), records, queue_summary(), (" — " + head) if head else "")
+
+
+def queue_summary():
+    """Act 31 integration queue: what is waiting, and what came back to its proposer."""
+    root = pathlib.Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
+    try:
+        entries = json.loads((root / "delivery" / "queue.json").read_text()).get("entries", [])
+    except (OSError, ValueError):
+        return ""
+    count = {}
+    for e in entries:
+        count[e.get("status")] = count.get(e.get("status"), 0) + 1
+    parts = [("%d awaiting review" % (count.get("awaiting_review", 0) + count.get("reviewing", 0))),
+             ("%d stalled review" % count.get("review_stalled", 0)),
+             ("%d approved, not yet landed" % count.get("approved", 0))]
+    parts = [p for p in parts if not p.startswith("0 ")]
+    return "; queue: " + (", ".join(parts) if parts else "empty")
 
 
 def line_elsewhere(now):

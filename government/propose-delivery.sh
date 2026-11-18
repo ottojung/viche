@@ -2,9 +2,28 @@
 # Agents publish signed, locally-tested branches for independent review
 # without GitHub API tokens or PR creation permissions.
 # This script NEVER merges, enacts laws, edits ballots or changes the charter.
+#
+#   propose-delivery.sh --office OFFICE SHORT-SLUG
+#
+# OFFICE is who proposes (your seat id, or clerk, executive, judiciary, economy,
+# innovation-office, recovery-steward). The integration queue (Act 31,
+# government/integrator.py) lands it: additive records at once, anything else
+# after an independent review it arranges itself. Watch the outcome with
+# `python3 government/integrator.py office OFFICE`.
 set -eu
-[ "$#" -eq 1 ] || { echo 'Usage: propose-delivery.sh SHORT-SLUG' >&2; exit 2; }
-slug=$1
+office=
+slug=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --office) [ "$#" -ge 2 ] || exit 2; office=$2; shift 2 ;;
+        -*) echo "unknown option: $1" >&2; exit 2 ;;
+        *) [ -z "$slug" ] || { echo 'one slug only' >&2; exit 2; }; slug=$1; shift ;;
+    esac
+done
+[ -n "$slug" ] && [ -n "$office" ] ||
+    { echo 'Usage: propose-delivery.sh --office OFFICE SHORT-SLUG' >&2; exit 2; }
+printf '%s' "$office" | grep -Eqx '[a-z0-9][a-z0-9-]{0,63}' ||
+    { echo 'OFFICE is lowercase letters, digits and hyphens' >&2; exit 2; }
 case "$slug" in
     ''|*[!a-z0-9-]*) echo 'Expected a lowercase alphanumeric/hyphen slug' >&2; exit 2 ;;
 esac
@@ -50,10 +69,10 @@ target=refs/heads/delivery/$slug
 git -C "$cwd" push origin "HEAD:$target" ||
     { echo "Push to $target failed; no force push was attempted" >&2; exit 1; }
 mkdir -p "$state/delivery"
-printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "$(date -u +%FT%TZ)" "$branch" "$target" "$head" "$tree" "$suite" \
+printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$(date -u +%FT%TZ)" "$branch" "$target" "$head" "$tree" "$suite" "$office" \
     >> "$state/delivery/proposals.tsv"
-printf 'Proposed %s at %s with green %s. Review and merge are separate legal steps.\n' \
-    "$target" "$head" "$suite"
-printf 'Review comparison: https://github.com/ottojung/viche/compare/main...delivery/%s\n' "$slug"
-printf 'After independent approval, use government/reviewed-merge.sh; a PR is optional, not required.\n'
+printf 'Proposed %s at %s for %s with green %s.\n' "$target" "$head" "$office" "$suite"
+printf 'Comparison: https://github.com/ottojung/viche/compare/main...delivery/%s\n' "$slug"
+printf 'The integration queue lands it (Act 31); nothing else is needed from you.\n'
+printf 'Outcome: python3 %s/government/integrator.py office %s\n' "$repo" "$office"
