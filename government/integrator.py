@@ -305,7 +305,8 @@ def canonical_preflight(base, candidate):
     file the landing would overwrite (same rule as reviewed-merge.sh)."""
     head = git("rev-parse", "HEAD")
     if head != base:
-        ff = git("merge", "--ff-only", base, check=False)
+        # The boot supervisor normally fast-forwards first; do it here too.
+        git("merge", "--ff-only", base, check=False)
         if git("rev-parse", "HEAD") != base:
             return "canonical checkout is at %s, not main %s" % (head[:12], base[:12])
     for path in git("diff", "--name-only", base, candidate).splitlines():
