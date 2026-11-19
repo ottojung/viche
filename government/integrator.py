@@ -48,6 +48,7 @@ Environment: VICHE_TOWN_ROOT, VICHE_STATE_ROOT, VICHE_INTEGRATOR=off,
 VICHE_INTEGRATOR_NOW (tests), VICHE_INTEGRATOR_NO_REVIEWER=1 (never commission).
 """
 import datetime
+import fcntl
 import hashlib
 import json
 import os
@@ -436,7 +437,11 @@ def land(p, entry, review):
             {"name": "carrier parent is the candidate", "expected": candidate, "actual": git("rev-parse", carrier + "^")},
         ]
         if any(a["expected"] != a["actual"] for a in assertions):
-            entry.update({"status": "refused", "reason": "pre-landing assertion failed",
+            # No push occurred. A concurrent process may have replaced the
+            # temporary working HEAD during verification. Preserve the failed
+            # assertion and retry under the internal lock, never waive the gate.
+            entry.update({"status": "approved",
+                          "reason": "pre-landing assertion failed; no push; retry",
                           "assertions": assertions})
             return False
         blocked = canonical_preflight(base, carrier)
@@ -478,6 +483,19 @@ def run():
     if os.environ.get("VICHE_INTEGRATOR", "on") == "off":
         return 0
     ROOT.mkdir(parents=True, exist_ok=True)
+    # Supervisor locking is not enough: agents may invoke integrator.py
+    # directly. Shared ROOT/work must never have two concurrent writers.
+    # A DIFFERENT file from the outer S6 run.lock avoids self-deadlock.
+    with (ROOT / "internal.lock").open("a+") as lock:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            log("internal lock busy; another integration run owns worktree")
+            return 0
+        return run_locked()
+
+
+def run_locked():
     try:
         git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main",
             "+refs/heads/delivery/*:refs/remotes/origin/delivery/*")
