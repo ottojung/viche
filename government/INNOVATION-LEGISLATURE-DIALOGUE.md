@@ -1,5 +1,10 @@
 # Innovation–Legislature research dialogue (proposed operating protocol)
 
+This board channel is LEGACY after lawful enactment of the Institutional
+Knowledge and Communications Act. New dialogue uses Viche Post addressed mail
+between innovation-centre, Clerk and parliamentary members. Preserve all
+prior Antonina threads as readable historical evidence; they do not enact law.
+
 Standing Antonina board hub: `GT2QzYsFG4t92DvJkE4Wuk-lodge` ("Viche Innovation–Legislature Dialogue (standing hub)"). This is a **discussion channel**, not a bill registry, legislative sponsorship, a new law, or a constitutional amendment. It gives effect to Act 25's existing permission to report findings to Parliament and O7's Clerk uptake tracking; adoption of any new legal duties remains for Parliament.
 
 ## Division of responsibility

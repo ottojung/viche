@@ -120,6 +120,41 @@ if grep -Eq '^## Act [0-9]+ — Ministry of Economy Act ' "$town/government/LAWS
     fi
 fi
 
+# Source-code deployment alone does not create an institution. Parliament must
+# enact the Institutional Knowledge Act first. Offices run under independent
+# locks so they cannot block Parliament or Judiciary or each other.
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
+   [ -s "$town/government/knowledge-office-cycle.sh" ]; then
+    knowledge_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/offices
+    for office in statistics foresight strategy spying; do
+        mkdir -p "$knowledge_root/$office"
+        (
+            flock -n 9 || exit 0
+            timeout 900 /bin/sh "$town/government/knowledge-office-cycle.sh" "$office" ||
+                echo "Viche: $office knowledge office failed; see its log" >&2
+        ) 9>"$knowledge_root/$office/cycle.lock" >> "$knowledge_root/$office/cycle.log" 2>&1 < /dev/null &
+    done
+fi
+
+# A single frozen Statistics snapshot per UTC day, retried after crashes.
+# Data publication is not independent verification of outcomes.
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
+   [ -s "$town/government/statistics-report.py" ]; then
+    statistics_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/statistics
+    mkdir -p "$statistics_root"
+    (
+        flock -n 9 || exit 0
+        today=$(date -u +%Y-%m-%d)
+        [ ! -s "$statistics_root/last-published-day" ] ||
+          [ "$(cat "$statistics_root/last-published-day")" != "$today" ] || exit 0
+        if timeout 180 python3 "$town/government/statistics-report.py"; then
+            printf '%s\n' "$today" > "$statistics_root/last-published-day"
+        else
+            echo "Viche: Statistics publication unavailable; retry next cycle" >&2
+        fi
+    ) 9>"$statistics_root/report.lock" >> "$statistics_root/report.log" 2>&1 < /dev/null &
+fi
+
 # Deterministic oversight continues even when every AI session is unavailable.
 # Failure of telemetry/auditing must not prevent unrelated reconciliation.
 if [ -f "$town/government/oversight-watch.sh" ]; then

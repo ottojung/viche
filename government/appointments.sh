@@ -40,6 +40,10 @@ if [ -z "$cwd" ]; then
       fi ;;
     recovery-steward) title='Institutional Recovery Steward';;
     economy) title='Ministry of Economy';;
+    statistics) title='Statistics Bureau';;
+    foresight) title='Foresight Institute';;
+    strategy) title='Ministry of Strategic Development';;
+    spying) title='Ministry of Spying';;
     *) echo "unknown seat or office $key" >&2; exit 2;;
   esac
   cwd=$seats/branches/$key

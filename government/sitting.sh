@@ -140,7 +140,8 @@ fi
 
 # The shared issue channel is a standing legislative research input, not an
 # automatic bill, summons, or new source of authority.
-if [ -s "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md" ]; then
+if [ -s "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md" ] &&
+   ! grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
     cat <<EOF
 === INNOVATION–LEGISLATURE RESEARCH DIALOGUE ===
 $(cat "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md")
@@ -294,6 +295,9 @@ if [ "$seat" = "$clerk" ] && [ -f "$town/government/dispatch-gate.sh" ]; then
         hall_sig="board-unavailable-$(date +%s)"
     fi
     if { printf '%s\n' "$hall_sig"
+         if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+             python3 "$town/government/post.py" wake --office clerk 2>/dev/null || :
+         fi
          git -C "$town" rev-parse HEAD 2>/dev/null || :
          cat "$town/records/SUMMONED.txt" 2>/dev/null || :
          /bin/sh "$town/government/handoff-queue.sh" list-open "$town" 2>/dev/null || :
@@ -324,6 +328,21 @@ if [ -f "$town/government/integrator.py" ]; then
     delivery_office=$seat
     [ "$seat" != "$clerk" ] || delivery_office=clerk
     python3 "$town/government/integrator.py" office "$delivery_office" 2>/dev/null || :
+fi
+
+# Institutional Post is a data transport, NOT a source of authority.
+# New mail is checked only after lawful Act 32 institutional enactment.
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+    post="$town/government/post.py"
+    office=clerk
+    [ "$seat" != "$clerk" ] || office=clerk
+    [ "$seat" = "$clerk" ] || office="$seat"
+    if [ -f "$post" ]; then
+        echo "=== VICHE POST MAIL FOR $office (informational, not legally authoritative) ==="
+        python3 "$post" inbox --office "$office" --new --limit 20 ||
+            echo "Post unavailable: preserve any other obligations and investigate"
+        echo "=== END POST MAIL ==="
+    fi
 fi
 
 # The daily plenary tracks which summoned seats have actually been dispatched.
