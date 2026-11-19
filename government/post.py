@@ -15,7 +15,7 @@ import sys
 import time
 import uuid
 
-NAME = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
+NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,127}$")
 TOPIC = re.compile(r"^[a-z][a-z0-9/-]{0,127}$")
 KINDS = ("letter", "request", "observation", "forecast", "scenario",
          "strategy", "founder-inference", "finding", "report")
@@ -179,11 +179,13 @@ def publish(db, args):
             office,mode=item
             # A new article never summons a model. Only explicitly urgent direct
             # letters may do so, one causal hop at most, max four per 6h per office.
-            count=db.execute("""SELECT COUNT(*) FROM deliveries
-                  WHERE recipient=? AND alert=1 AND created_at>=?""",
-                  (office,now-21600)).fetchone()[0]
-            alert=int(channel=="mail" and args.priority=="urgent"
-                      and depth<=1 and count<4)
+            count=db.execute("""SELECT COUNT(*) FROM deliveries d
+                  JOIN messages m ON m.id=d.message_id
+                  WHERE d.recipient=? AND d.alert=1 AND m.channel='mail'
+                  AND d.created_at>=?""",(office,now-21600)).fetchone()[0]
+            alert=int((channel=="mail" and args.priority=="urgent"
+                      and depth<=1 and count<4) or
+                      (channel=="gazette" and mode=="alert"))
             db.execute("""INSERT INTO deliveries(message_id,recipient,status,alert,created_at)
                           VALUES(?,?,'new',?,?)""",(mid,office,alert,now))
             delivered+=1
@@ -220,7 +222,11 @@ def inbox(db, args):
     rows=db.execute("""SELECT m.*, d.status,d.alert,d.ack_at,d.resolved_at,d.resolution
        FROM deliveries d JOIN messages m ON m.id=d.message_id
        WHERE d.recipient=? """+statuses+"""
-       ORDER BY m.created_at,m.id LIMIT ?""",(office,args.limit)).fetchall()
+       ORDER BY CASE
+         WHEN m.channel='mail' AND d.alert=1 AND d.status='new' THEN 0
+         WHEN m.channel='mail' AND d.status='new' THEN 1
+         WHEN d.status='new' THEN 2 ELSE 3 END,
+         m.created_at,m.id LIMIT ?""",(office,min(max(args.limit,1),200))).fetchall()
     return [msg_dict(row) for row in rows]
 
 def feed(db,args):
@@ -231,6 +237,9 @@ def feed(db,args):
 
 def transition(db,args):
     office=valid_name(args.office)
+    # Serialize the status read with the update. Previously a late "read"
+    # could overwrite a concurrent "acknowledged" or "resolved" receipt.
+    db.execute("BEGIN IMMEDIATE")
     row=db.execute("SELECT status FROM deliveries WHERE message_id=? AND recipient=?",
                    (args.id,office)).fetchone()
     if row is None:
@@ -239,7 +248,7 @@ def transition(db,args):
     steps=["new","read","acknowledged","resolved"]
     requested={"read":"read","ack":"acknowledged","resolve":"resolved"}[args.command]
     if steps.index(requested)<steps.index(status):
-        raise ValueError("cannot roll a receipt backward")
+        return {"id":args.id,"status":status,"already_advanced":True}
     if requested=="resolved" and not args.reason:
         raise ValueError("resolutions require a reason; not proof of task success")
     if requested==status:
@@ -263,8 +272,10 @@ def transition(db,args):
 
 def wake(db,args):
     office=valid_name(args.office)
-    rows=db.execute("""SELECT message_id FROM deliveries
-       WHERE recipient=? AND status='new' AND alert=1 ORDER BY created_at,message_id""",
+    rows=db.execute("""SELECT d.message_id FROM deliveries d
+       JOIN messages m ON m.id=d.message_id
+       WHERE d.recipient=? AND d.status='new' AND d.alert=1
+       AND m.channel='mail' ORDER BY d.created_at,d.message_id""",
        (office,)).fetchall()
     mids=[r[0] for r in rows]
     return {"office":office,"urgent_unread":len(mids),

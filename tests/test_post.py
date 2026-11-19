@@ -57,6 +57,8 @@ class PostTest(unittest.TestCase):
                      "--priority","urgent")
         self.assertEqual(pub["delivered"],2)
         self.assertEqual(self.cli("wake","--office","foresight")["urgent_unread"],0)
+        self.assertEqual(self.cli("inbox","--office","foresight")[0]["alert"],1)
+        self.assertEqual(self.cli("inbox","--office","judiciary")[0]["alert"],0)
         self.assertEqual(len(self.cli("inbox","--office","strategy")),0)
         self.assertEqual(len(self.cli("inbox","--office","judiciary")),1)
         self.assertEqual(len(self.cli("feed","--topic","statistics/resources")),1)
@@ -117,6 +119,48 @@ class PostTest(unittest.TestCase):
                 db.execute("DELETE FROM messages WHERE id=?",(a,))
             with self.assertRaises(sqlite3.DatabaseError):
                 db.execute("UPDATE messages SET body=? WHERE id=?",("tampered",a))
+
+    def test_concurrent_receipts_monotonic(self):
+        # Read and acknowledgement may race across separate agent invocations.
+        # The final state cannot ever move backward.
+        for i in range(8):
+            mid=self.send("--key","receipt-"+str(i))["id"]
+            def action(cmd):
+                return subprocess.run(["python3",str(POST),cmd,
+                    "--office","judiciary","--id",mid],env=self.env,
+                    capture_output=True,text=True)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                results=list(pool.map(action,("read","ack")))
+            self.assertTrue(all(x.returncode==0 for x in results),results)
+            status=self.cli("trace","--id",mid)["deliveries"][0]["status"]
+            self.assertEqual(status,"acknowledged")
+        older=self.cli("read","--office","judiciary","--id",mid)
+        self.assertEqual(older["status"],"acknowledged")
+        self.assertTrue(older["already_advanced"])
+
+    def test_urgent_mail_not_buried(self):
+        self.cli("subscribe","--office","judiciary","--topic","statistics/outcomes")
+        for i in range(6):
+            self.cli("publish","--sender","statistics","--topic","statistics/outcomes",
+                     "--subject","Low-priority "+str(i),"--body","Derived report")
+        urgent=self.cli("send","--sender","executive","--to","judiciary",
+                        "--subject","Real urgent letter","--body","Please investigate",
+                        "--priority","urgent")["id"]
+        first=self.cli("inbox","--office","judiciary","--new","--limit","1")[0]
+        self.assertEqual(first["id"],urgent)
+        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],1)
+
+    def test_subscriber_agent_ids(self):
+        ident="Qwe2S9z-AbCd3"
+        self.cli("subscribe","--office",ident,"--topic","statistics/outcomes",
+                 "--mode","alert")
+        pub=self.cli("publish","--sender","statistics","--topic","statistics/outcomes",
+                     "--subject","Observed","--body","Collector updated",
+                     "--kind","observation","--source","collector:hash",
+                     "--condition","daily window")
+        self.assertEqual(pub["delivered"],1)
+        self.assertEqual(self.cli("inbox","--office",ident)[0]["alert"],1)
+        self.assertEqual(self.cli("wake","--office",ident)["urgent_unread"],0)
 
     def test_atomic_concurrent_idempotency(self):
         def action(_):
