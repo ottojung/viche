@@ -18,7 +18,7 @@ import uuid
 NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,127}$")
 TOPIC = re.compile(r"^[a-z][a-z0-9/-]{0,127}$")
 KINDS = ("letter", "request", "observation", "forecast", "scenario",
-         "strategy", "founder-inference", "finding", "report")
+         "strategy", "intervention", "founder-inference", "report")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS messages(
   id TEXT PRIMARY KEY, channel TEXT NOT NULL CHECK(channel IN ('mail','gazette')),
@@ -95,6 +95,8 @@ def msg_dict(row):
     result = dict(row)
     for key in ("sources","based_on"):
         result[key] = json.loads(result[key])
+    result["sender_authenticated"]=False
+    result["confidential"]=False
     return result
 
 def source_roots(db, message_id, visited=None):
@@ -112,8 +114,43 @@ def source_roots(db, message_id, visited=None):
         roots.update(source_roots(db,parent,seen))
     return roots
 
+def verify_committed_act22(sources, proposition):
+    """A scoreable forecast must cite its exact committed, hashed registration.
+
+    Even this is not proof of independently observed resolution; the existing
+    Act 22 resolver/scorer remains responsible for that separate judgment.
+    """
+    import subprocess
+    ids=[s[6:] for s in sources if s.startswith("act22:")]
+    if not ids:
+        return False
+    town=Path(os.environ.get("VICHE_TOWN_ROOT",
+               "/var/lib/lubko/wd/viche"))
+    try:
+        result=subprocess.run(
+            ["git","-C",str(town),"show","HEAD:records/predictions/ledger.json"],
+            check=True,capture_output=True,text=True,timeout=15)
+        data=json.loads(result.stdout)
+    except (OSError,ValueError,subprocess.SubprocessError):
+        return False
+    for entry in data.get("entries",[]):
+        if (entry.get("id") not in ids or entry.get("kind")!="registration"
+                or entry.get("proposition")!=proposition
+                or int(entry.get("registered_at",0))>clock()):
+            continue
+        fields=("bill_id","proposition","probability","resolution_date",
+                "evidence_source","author","registered_at")
+        canon={k:entry.get(k) for k in fields}
+        blob=json.dumps(canon,sort_keys=True,separators=(",",":")).encode()
+        digest="sha256:"+hashlib.sha256(blob).hexdigest()
+        if entry.get("content_hash")==digest:
+            return True
+    return False
+
 def publish(db, args):
     sender = valid_name(args.sender)
+    if args.command == "send" and not args.public:
+        raise ValueError("addressed correspondence is PUBLIC; explicitly pass --public")
     recipient = valid_name(args.to) if args.command == "send" else None
     topic = valid_topic(args.topic) if args.command == "publish" else None
     channel = "mail" if recipient else "gazette"
@@ -128,8 +165,20 @@ def publish(db, args):
     if kind == "forecast" and (not args.conditions or not args.baseline
         or not args.resolution_rule or not any(s.startswith("act22:") for s in sources)):
         raise ValueError("scoreable forecasts require conditions, baseline, resolution rule and Act 22 registration")
+    if kind == "forecast" and not verify_committed_act22(sources,args.subject):
+        raise ValueError("forecast must exactly match a hash-verified, committed Act 22 registration")
+    if kind in ("scenario","report","strategy","intervention") and not (sources or based_on):
+        raise ValueError("substantive publications require cited evidence or prior claims")
+    if kind == "scenario" and (not args.conditions or not args.alternative):
+        raise ValueError("scenarios require their assumptions and competing scenario")
+    if kind == "intervention" and (not sources or not based_on or
+        not args.conditions or not args.alternative):
+        raise ValueError("interventions require action evidence, forecast/plan references and alternatives")
     if kind == "founder-inference" and (not sources or not args.alternative or not args.conditions):
         raise ValueError("Founder inferences require authorized sources, alternative explanation and observation context")
+    if kind == "founder-inference" and not all(
+        s.startswith("antonina:") or s.startswith("github:public:") for s in sources):
+        raise ValueError("Founder inferences require publicly attributable Antonina/GitHub source identifiers")
     if kind == "strategy" and (not args.conditions or not args.alternative):
         raise ValueError("strategies require the proposed intervention and a baseline alternative")
     if kind == "request" and not recipient:
@@ -177,14 +226,9 @@ def publish(db, args):
         delivered=0
         for item in recipients:
             office,mode=item
-            # A new article never summons a model. Only explicitly urgent direct
-            # letters may do so, one causal hop at most, max four per 6h per office.
-            count=db.execute("""SELECT COUNT(*) FROM deliveries d
-                  JOIN messages m ON m.id=d.message_id
-                  WHERE d.recipient=? AND d.alert=1 AND m.channel='mail'
-                  AND d.created_at>=?""",(office,now-21600)).fetchone()[0]
-            alert=int((channel=="mail" and args.priority=="urgent"
-                      and depth<=1 and count<4) or
+            # Alert is only an inbox-presentation hint. It never summons an AI
+            # agent: unauthenticated mail must have no dispatch authority.
+            alert=int((channel=="mail" and args.priority=="urgent") or
                       (channel=="gazette" and mode=="alert"))
             db.execute("""INSERT INTO deliveries(message_id,recipient,status,alert,created_at)
                           VALUES(?,?,'new',?,?)""",(mid,office,alert,now))
@@ -223,9 +267,8 @@ def inbox(db, args):
        FROM deliveries d JOIN messages m ON m.id=d.message_id
        WHERE d.recipient=? """+statuses+"""
        ORDER BY CASE
-         WHEN m.channel='mail' AND d.alert=1 AND d.status='new' THEN 0
-         WHEN m.channel='mail' AND d.status='new' THEN 1
-         WHEN d.status='new' THEN 2 ELSE 3 END,
+         WHEN m.channel='mail' AND d.status='new' THEN 0
+         WHEN d.status='new' THEN 1 ELSE 2 END,
          m.created_at,m.id LIMIT ?""",(office,min(max(args.limit,1),200))).fetchall()
     return [msg_dict(row) for row in rows]
 
@@ -272,15 +315,14 @@ def transition(db,args):
 
 def wake(db,args):
     office=valid_name(args.office)
-    rows=db.execute("""SELECT d.message_id FROM deliveries d
-       JOIN messages m ON m.id=d.message_id
-       WHERE d.recipient=? AND d.status='new' AND d.alert=1
-       AND m.channel='mail' ORDER BY d.created_at,d.message_id""",
-       (office,)).fetchall()
-    mids=[r[0] for r in rows]
-    return {"office":office,"urgent_unread":len(mids),
-            "fingerprint":hashlib.sha256(("\n".join(mids)).encode()).hexdigest(),
-            "ids":mids[:10]}
+    # Compatibility with older dispatch runners, intentionally CONSTANT.
+    # Mail cannot authenticate senders on the shared Unix UID. Consequently
+    # no correspondence is permitted to cause an automatic model dispatch.
+    # Agents inspect inbox during their regularly scheduled working sessions.
+    return {"office":office,"urgent_unread":0,
+            "fingerprint":hashlib.sha256(b"").hexdigest(),
+            "ids":[],"automatic_dispatch":False,
+            "reason":"public untrusted correspondence cannot awaken agents"}
 
 def health(db,args):
     check=db.execute("PRAGMA integrity_check").fetchone()[0]
@@ -293,7 +335,10 @@ def health(db,args):
     return {"healthy":check=="ok","integrity":check,"messages":msg,
             "publications":pubs,"delivery_status":counts,
             "oldest_unresolved_age_s":clock()-pending if pending else None,
-            "db_bytes":location().stat().st_size}
+            "db_bytes":location().stat().st_size,
+            "public_correspondence":True,"sender_authentication":False,
+            "mail_triggered_model_dispatch":False,
+            "receipt_status_is_authoritative":False}
 def lineage(db,args):
     roots=sorted(source_roots(db,args.id))
     return {"message_id":args.id,"distinct_cited_source_ids":roots,
@@ -341,6 +386,9 @@ def parser():
     s=p.add_subparsers(dest="command",required=True)
     for action in ("send","publish"):
         q=s.add_parser(action)
+        if action=="send":
+            q.add_argument("--public",action="store_true",
+                           help="acknowledge that addressed correspondence is PUBLIC")
         q.add_argument("--sender",required=True)
         q.add_argument("--to",required=action=="send")
         q.add_argument("--topic",required=action=="publish")

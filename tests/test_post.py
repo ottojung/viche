@@ -17,6 +17,8 @@ class PostTest(unittest.TestCase):
         self.env=dict(os.environ,VICHE_POST_DB=str(Path(self.temp.name)/"post.sqlite3"))
 
     def cli(self,*argv,ok=True):
+        if argv and argv[0]=="send":
+            argv=(*argv,"--public")
         r=subprocess.run(["python3",str(POST),*argv],env=self.env,
                          text=True,capture_output=True)
         if ok:
@@ -46,6 +48,13 @@ class PostTest(unittest.TestCase):
         self.assertEqual(self.cli("inbox","--office","judiciary")[0]["status"],"resolved")
         self.assertEqual(self.cli("health")["integrity"],"ok")
 
+    def test_public_mail_requires_explicit_acknowledgement(self):
+        r=subprocess.run(["python3",str(POST),"send","--sender","office-a",
+            "--to","office-b","--subject","Message","--body","Message"],
+            env=self.env,text=True,capture_output=True)
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn("--public",r.stderr)
+
     def test_gazette_opt_in_no_autowake(self):
         self.cli("subscribe","--office","judiciary","--topic","statistics/resources")
         self.cli("subscribe","--office","foresight","--topic","statistics/resources",
@@ -65,15 +74,15 @@ class PostTest(unittest.TestCase):
 
     def test_causal_attention_budget_and_loop(self):
         first=self.send("--priority","urgent")
-        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],1)
+        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],0)
         second=self.send("--priority","urgent","--caused-by",first["id"])
         third=self.send("--priority","urgent","--caused-by",second["id"])
         self.assertEqual(third["causal_depth"],2)
-        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],2)
+        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],0)
         self.send("--priority","urgent")
         self.send("--priority","urgent")
         self.send("--priority","urgent")
-        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],4)
+        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],0)
         self.assertEqual(len(self.cli("inbox","--office","judiciary")),6)
 
     def test_provenance_deduplicates_repeated_summaries(self):
@@ -100,6 +109,43 @@ class PostTest(unittest.TestCase):
         self.assertIn("alternative explanation",self.cli("publish","--sender","spying",
             "--topic","founder/signals","--subject","Interest","--body","Observed",
             "--kind","founder-inference","--source","antonina:302",ok=False))
+
+    def test_committed_forecast_registry_cannot_be_faked(self):
+        import hashlib
+        import time
+        town=Path(self.temp.name)/"town"
+        (town/"records/predictions").mkdir(parents=True)
+        subprocess.run(["git","init","-q",str(town)],check=True)
+        at=int(time.time())-600
+        entry={"id":"trial-registration-1","kind":"registration",
+               "bill_id":"trial","proposition":"Capacity falls before deadline",
+               "probability":0.4,"resolution_date":"2026-12-31",
+               "evidence_source":"collector:capacity","author":"foresight",
+               "registered_at":at}
+        fields=("bill_id","proposition","probability","resolution_date",
+                "evidence_source","author","registered_at")
+        canon={k:entry[k] for k in fields}
+        blob=json.dumps(canon,sort_keys=True,separators=(",",":")).encode()
+        entry["content_hash"]="sha256:"+hashlib.sha256(blob).hexdigest()
+        (town/"records/predictions/ledger.json").write_text(
+            json.dumps({"entries":[entry],"resolutions":[]}))
+        subprocess.run(["git","-C",str(town),"add","records/predictions/ledger.json"],check=True)
+        subprocess.run(["git","-C",str(town),"-c","user.name=Test",
+            "-c","user.email=test@example.invalid","commit","-qm","Register forecast"],
+            check=True)
+        self.env["VICHE_TOWN_ROOT"]=str(town)
+        good=("publish","--sender","foresight","--topic","foresight/forecasts",
+              "--subject",entry["proposition"],"--body","Conditional forecast",
+              "--kind","forecast","--source","act22:"+entry["id"],
+              "--condition","No intervention","--baseline","0.5",
+              "--resolution-rule","collector:capacity")
+        self.assertEqual(self.cli(*good)["delivered"],0)
+        fake=list(good)
+        fake[fake.index("--source")+1]="act22:not-registered"
+        self.assertIn("committed Act 22 registration",self.cli(*fake,ok=False))
+        forged=list(good)
+        forged[forged.index("--subject")+1]="A different prediction"
+        self.assertIn("committed Act 22 registration",self.cli(*forged,ok=False))
 
     def test_thread_trace_search_and_immutability(self):
         a=self.send("--key","thread-root")["id"]
@@ -148,7 +194,7 @@ class PostTest(unittest.TestCase):
                         "--priority","urgent")["id"]
         first=self.cli("inbox","--office","judiciary","--new","--limit","1")[0]
         self.assertEqual(first["id"],urgent)
-        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],1)
+        self.assertEqual(self.cli("wake","--office","judiciary")["urgent_unread"],0)
 
     def test_subscriber_agent_ids(self):
         ident="Qwe2S9z-AbCd3"
