@@ -4,7 +4,7 @@ This is OPERATIONAL policy, not an amendment to the Constitution.
 
 Every Town agent receives this instruction at startup and resumption:
 
-- Report promptly to the Judiciary mailbox ONLY when a **material, actual
+- Report promptly to the Judiciary ONLY when a **material, actual
   impediment** is inhibiting your authorized work (tool failure, missing
   dependency, permission denial, unavailable necessary evidence, ambiguous
   prior side effects, failed verification, or a workaround hiding a shared
@@ -16,8 +16,14 @@ Every Town agent receives this instruction at startup and resumption:
   problem. Use the ordinary board/project records for progress. On new material
   evidence about an existing unresolved blocker, update or reference its
   original report instead of creating repeated incident reports.
-- Write a unique, durable Markdown report in
+- After lawful enactment of the Institutional Knowledge and Communications
+  Act, submit reports as addressed mail with government/post.py send
+  --sender YOUR_OFFICE --to judiciary --kind request --subject ... --body-file ...
+  and cite the original evidence using --source. This is transport only:
+  a mail receipt cannot declare a problem fixed. **Before enactment**, write a
+  unique durable Markdown report in
   /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/.
+  Historical mailbox files remain accessible; never delete them.
   State agent identity, accurate UTC timestamp, attempted work, observed
   failure, effect, independent evidence references, remedies tried and the
   remaining impediment. Prefer atomic replacement. If mailbox access is

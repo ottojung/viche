@@ -13,6 +13,10 @@ case "$branch" in
       title="Executive Innovation Office"
     fi ;;
   economy) id=c1e00012; title="Ministry of Economy" ;;
+  statistics) id=c1e00013; title="Statistics Bureau" ;;
+  foresight) id=c1e00014; title="Foresight Institute" ;;
+  strategy) id=c1e00015; title="Ministry of Strategic Development" ;;
+  spying) id=c1e00016; title="Ministry of Spying" ;;
   *) exit 2 ;;
 esac
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}

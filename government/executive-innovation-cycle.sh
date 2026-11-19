@@ -34,7 +34,13 @@ case "$mode" in
   running) readiness=running;;
   idle|clearexit)
     readiness=ready
-    if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ]; then
+    post_wake=
+    post_urgent=0
+    if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+      post_wake=$(python3 "$town/government/post.py" wake --office innovation-centre 2>/dev/null) || post_wake=
+      post_urgent=$(printf '%s\n' "$post_wake" | jq -r '.urgent_unread // 0' 2>/dev/null) || post_urgent=0
+    fi
+    if [ "$last" -eq 0 ] || [ $((now-last)) -ge 21600 ] || [ "$post_urgent" -gt 0 ]; then
       orders='No specific Executive order: proactively investigate system-wide efficiency AND reliability, current problems AND unrealized opportunities; bring research-backed reform ideas through the legislative dialogue under Act 25.'
       [ ! -s "$root/orders.md" ] || orders=$(cat "$root/orders.md")
       cases='{"open_cases":[]}'
@@ -77,8 +83,14 @@ $recovery
 EOF
 )
 dialogue_file="$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md"
-if [ -s "$dialogue_file" ]; then
+if [ -s "$dialogue_file" ] &&
+   ! grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
     prompt=$(printf '%s\n\n=== CONTINUOUS IMPROVEMENT AND LEGISLATIVE RESEARCH DIALOGUE ===\n%s\n=== END RESEARCH DIALOGUE ===\n' "$prompt" "$(cat "$dialogue_file")")
+fi
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+    post="$town/government/post.py"
+    post_mail=$(python3 "$post" inbox --office innovation-centre --new --limit 20) || post_mail='post_unavailable'
+    prompt=$(printf '%s\n\n=== POST INBOX; REPLACES LEGACY BOARD DIALOGUE ===\n%s\n=== END POST INBOX ===\n' "$prompt" "$post_mail")
 fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
@@ -86,7 +98,16 @@ if [ -f "$town/government/handover.sh" ]; then
   prompt=$(printf '%s\n%s\n' "$prompt" "$(/bin/sh "$town/government/handover.sh" show innovation-centre "$id" || :)")
 fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
+      # Unchanged urgent mail can remain unread; do not repeat the same prompt.
+      if [ -f "$town/government/dispatch-gate.sh" ]; then
+        if ! { printf '%s\n' "$post_wake" "$orders" "$recovery"; } |
+            /bin/sh "$town/government/dispatch-gate.sh" check innovation-centre 21600 > "$root/gate.log"; then
+          exit 0
+        fi
+      fi
       antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
+      [ ! -f "$town/government/dispatch-gate.sh" ] ||
+          /bin/sh "$town/government/dispatch-gate.sh" commit innovation-centre
       printf '%s\n' "$now" > "$root/last-dispatch"
       last=$now
       readiness=dispatched
