@@ -21,6 +21,30 @@ fi
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/appointments
+# Defense in depth: no direct caller can bypass the enacted-charter +
+# time-limited activation gate to manufacture a knowledge appointment.
+case "$key" in
+  statistics|foresight|strategy|spying)
+    if [ "$action" != resolve ]; then
+      grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" || {
+        echo "Knowledge appointment forbidden before lawful enactment" >&2; exit 1;
+      }
+      activation=$town/records/knowledge/activation.json
+      [ -s "$activation" ] && jq -e --arg office "$key" --argjson now "$(date +%s)" '
+        .schema=="viche-knowledge-activation-v1" and
+        (.offices[$office].enabled==true) and
+        (.offices[$office].authorized_by|type=="string") and
+        (.offices[$office].authorized_by|startswith("act:")) and
+        (.offices[$office].not_before|type=="number") and
+        (.offices[$office].expires_at|type=="number") and
+        ((.offices[$office].expires_at - .offices[$office].not_before) > 0) and
+        ((.offices[$office].expires_at - .offices[$office].not_before) <= 3888000) and
+        (.offices[$office].not_before <= $now) and
+        (.offices[$office].expires_at > $now)' "$activation" >/dev/null || {
+          echo "Knowledge appointment forbidden without unexpired office authorization" >&2; exit 1;
+        }
+    fi ;;
+esac
 mkdir -p "$root"
 umask 077
 tab=$(printf '\t')

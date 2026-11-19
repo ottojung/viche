@@ -47,9 +47,12 @@ On every assessment independently verify the observability infrastructure
 itself: executable Python, fresh outcomes, institutional-case index, judicial
 measurements, collector failures and their source timestamps. A clean-but-stale
 index or a process count is negative evidence against declaring recovery.
-Workarounds used by an agent do not fix a broken shared runtime. Check the
-Judiciary mailbox at /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/
-and immediately submit your own material blockers (including those worked around).
+Workarounds used by an agent do not fix a broken shared runtime. After lawful enactment of the Institutional Knowledge and Communications Act,
+check Post using government/post.py inbox --office recovery-steward --new.
+Report material blockers through addressed mail to Judiciary. Before enactment,
+use the historical mailbox at
+/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/.
+A Post receipt is not evidence of independent incident remediation.
 Do not claim no actionable repairs until fresh independent evidence verifies
 reporting, reconciled cases, actual branch work and disappearance of the original
 failure. Prefer independent general-purpose investigation to fragile scripts.

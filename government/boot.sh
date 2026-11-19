@@ -139,7 +139,15 @@ fi
 # A single frozen Statistics snapshot per UTC day, retried after crashes.
 # Data publication is not independent verification of outcomes.
 if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
-   [ -s "$town/government/statistics-report.py" ]; then
+   [ -s "$town/government/statistics-report.py" ] &&
+   [ -s "$town/records/knowledge/activation.json" ] &&
+   jq -e --argjson now "$(date +%s)" '
+     .schema=="viche-knowledge-activation-v1" and
+     (.offices.statistics.enabled==true) and
+     (.offices.statistics.not_before <= $now) and
+     ((.offices.statistics.expires_at - .offices.statistics.not_before) > 0) and
+     ((.offices.statistics.expires_at - .offices.statistics.not_before) <= 3888000) and
+     (.offices.statistics.expires_at > $now)' "$town/records/knowledge/activation.json" >/dev/null 2>&1; then
     statistics_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/statistics
     mkdir -p "$statistics_root"
     (

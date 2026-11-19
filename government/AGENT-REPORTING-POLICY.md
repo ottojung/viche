@@ -18,7 +18,8 @@ Every Town agent receives this instruction at startup and resumption:
   original report instead of creating repeated incident reports.
 - After lawful enactment of the Institutional Knowledge and Communications
   Act, submit reports as addressed mail with government/post.py send
-  --sender YOUR_OFFICE --to judiciary --kind request --subject ... --body-file ...
+  --public --sender YOUR_OFFICE --to judiciary --kind request
+  --subject ... --body-file ... (all Post correspondence is public),
   and cite the original evidence using --source. This is transport only:
   a mail receipt cannot declare a problem fixed. **Before enactment**, write a
   unique durable Markdown report in
