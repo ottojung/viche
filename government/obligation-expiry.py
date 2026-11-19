@@ -59,11 +59,16 @@ def ttl_seconds():
 def iso_to_epoch(text):
     if not isinstance(text, str) or not text:
         return None
-    try:
-        return datetime.datetime.strptime(text.strip(), "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=datetime.timezone.utc).timestamp()
-    except ValueError:
-        return None
+    value = text.strip()
+    # Accept second-precision (canonical) and minute-precision timestamps;
+    # the latter occur in durable records such as handoffs (e.g. "2026-...T16:02Z").
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%MZ"):
+        try:
+            return datetime.datetime.strptime(value, fmt).replace(
+                tzinfo=datetime.timezone.utc).timestamp()
+        except ValueError:
+            continue
+    return None
 
 
 def epoch_to_iso(epoch):
@@ -311,6 +316,28 @@ def close_receipt(office, evidence, now):
             "evidence": evidence.strip()})
 
 
+def close_handoff(ident, evidence, now):
+    if not evidence or not evidence.strip():
+        raise SystemExit("closing a handoff requires evidence text")
+    path = HANDOFFS / (ident + ".txt")
+    if not path.is_file():
+        raise SystemExit("no such handoff: %s" % ident)
+    fields = handoff_fields(path)
+    if fields.get("status") != "open":
+        raise SystemExit("handoff %s is %s, not open" % (ident, fields.get("status")))
+    text = path.read_text()
+    if not text.endswith("\\n"):
+        text += "\\n"
+    text = re.sub(r"(?m)^status: open$", "status: closed_by_owner", text, count=1)
+    text += "closed: %s\n" % epoch_to_iso(now)
+    text += "closed-by: owner\n"
+    text += "closure-evidence: %s\n" % " ".join(evidence.split())
+    text += "independently-verified: false\n"
+    atomic_write(path, text)
+    ledger({"at": epoch_to_iso(now), "kind": "handoff", "id": ident, "action": "closed_by_owner",
+            "evidence": evidence.strip()})
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--now", type=int, default=None)
@@ -322,7 +349,7 @@ def main(argv):
     renew_p.add_argument("ident")
     renew_p.add_argument("--reason", required=True)
     close_p = sub.add_parser("close")
-    close_p.add_argument("kind", choices=["receipt"])
+    close_p.add_argument("kind", choices=["receipt", "handoff"])
     close_p.add_argument("ident")
     close_p.add_argument("--evidence", required=True)
     args = parser.parse_args(argv)
@@ -335,7 +362,10 @@ def main(argv):
     elif command == "renew":
         renew(args.kind, args.ident, args.reason, now)
     elif command == "close":
-        close_receipt(args.ident, args.evidence, now)
+        if args.kind == "receipt":
+            close_receipt(args.ident, args.evidence, now)
+        elif args.kind == "handoff":
+            close_handoff(args.ident, args.evidence, now)
     return 0
 
 

@@ -96,6 +96,20 @@ jq -e '.state == "closed_by_owner" and .independently_verified == false and .clo
 test -z "$(/bin/sh "$d/town/government/terminal-continuity.sh" instruction fresh-office)"
 if $tool close receipt fresh-office --evidence x 2>/dev/null; then echo 'double close accepted' >&2; exit 1; fi
 
+# Minute-precision timestamps (used by durable handoffs) must not silently escape expiry.
+handoff H-4-minute 2026-11-08T16:02Z open
+$tool sweep | jq -e '.handoffs == ["H-4-minute"]' >/dev/null
+grep -q '^status: expired$' "$d/town/records/handoffs/H-4-minute.txt"
+grep -q 'expired unverified' "$d/town/records/handoffs/H-4-minute.txt"
+
+# The owner can close its own open handoff alone, without a verifier.
+handoff H-5-owner 2026-11-16T10:00:00Z open
+$tool close handoff H-5-owner --evidence 'checked durable board: nothing pending'
+grep -q '^status: closed_by_owner$' "$d/town/records/handoffs/H-5-owner.txt"
+grep -q '^closure-evidence: checked durable board: nothing pending$' "$d/town/records/handoffs/H-5-owner.txt"
+grep -q '^independently-verified: false$' "$d/town/records/handoffs/H-5-owner.txt"
+if $tool close handoff H-5-owner --evidence x 2>/dev/null; then echo 'double handoff close accepted' >&2; exit 1; fi
+
 # TTL 0 disables expiry entirely.
 receipt eternal 2026-01-01T00:00:00Z
 VICHE_OBLIGATION_TTL_HOURS=0 $tool sweep | jq -e '.receipts == []' >/dev/null
