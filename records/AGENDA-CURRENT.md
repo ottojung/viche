@@ -523,3 +523,38 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
   lists only the superseded historical executive-office bill; no seat owes a
   ballot and `SUMMONED.txt` is empty. No bill, ballot, case closure, external
   post, or Founder escalation is warranted.
+
+## Clerk continuity — current random-audit inquiry — 2026-11-20T16:56Z
+
+- **Founder intake:** Rechecked live Town Hall #302. It remains through the
+  already-triaged daily digest (`sha256:gClgNg1e…`); no newer comment or new
+  exact-author `Vitalik` communication. The saved Town Hall cursor remains
+  current; no cursor advance or acknowledgement replay was needed.
+- **Auditor investigation:** The latest supplied random-audit inquiry is
+  452/452 sampled/reported, 75 findings, and explicitly
+  `requires_investigation_not_a_guilt_verdict`. The existing Auditor's
+  2026-11-20 correction-integrity triage already names confirmed process
+  defects, owners, and falsifiable acceptance evidence, but does not review
+  the full current set. I filed reversible Act 30 request
+  `P-1795193785-175e` (due 2026-11-21T16:56:25Z) to the existing Audit member
+  c1a0000b for independent current-source triage, reconciliation with prior
+  reports, scoped repair ownership and acceptance criteria, while preserving
+  case/correction state. The existing managed Antonina Audit member
+  `AMQZIYZpGQzShz6HCQm76W-anglo` was idle and has now been dispatched on its
+  seat worktree for that request. Dispatch is not a report, verification, or
+  repair; wait for its durable evidence-linked result before disposition.
+- **Judiciary limits:** Latest supplied measurements still report reliability
+  `not_established`, false-positive/negative rates unavailable, and the
+  board-trail check `not_measured` after timeout. Suite compliance recognizes
+  147/1,445 changes and marks 1,297 unreadable, with one unresolved red
+  chronology. These are material limits, not an estimated error rate or a
+  Judiciary-sponsored reform; Parliament alone may propose and ratify method
+  changes.
+- **Corrective signal:** Executive-owned
+  `institutional_cases_stale:1795193135` remains open at 11 consecutive clear
+  observations (below the 20-clear auto-close threshold). This is signal
+  state, not proof of repair; Executive owns the technical investigation and
+  Judiciary remains independent fact-finder. No manual closure is supported.
+- **Agenda:** No ballot or seat owes a vote; `SUMMONED.txt` remains empty. No
+  cached verdicts, correction trails, case state, law, or Judiciary method
+  were changed; no external post or Founder escalation was made.
