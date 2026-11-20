@@ -67,11 +67,25 @@ fi
 # is evidence against declaring this town healthy.
 evidence_age=${VICHE_EVIDENCE_MAX_AGE:-1200}
 case "$evidence_age" in ''|*[!0-9]*) exit 2;; esac
+# The evidence files below are stamped by independent, concurrently-running
+# processes (the institutional-case collector stamps index.json; the Judiciary
+# measurement and outcomes writers stamp their own files). Each process reads
+# the clock at a slightly different instant, so a file can legitimately carry an
+# observed_at a second or two ahead of the $now captured at this probe's start.
+# Requiring at <= now then raises a spurious *_stale signal and a corrective
+# case even though the evidence is freshly refreshed. Tolerate a small, bounded
+# future skew while still rejecting grossly future-dated (broken/lying) stamps
+# and evidence older than evidence_age. This does not weaken the staleness
+# check: a stamp more than future_tolerance ahead, or older than evidence_age,
+# still fails closed.
+future_tolerance=${VICHE_EVIDENCE_FUTURE_TOLERANCE:-60}
+case "$future_tolerance" in ''|*[!0-9]*) exit 2;; esac
 fresh_evidence() {
   [ -s "$1" ] || return 1
   at=$(jq -er '.observed_at | select(type=="number" and .>=0)' "$1" 2>/dev/null) || return 1
   case "$at" in ''|*[!0-9]*) return 1;; esac
-  [ "$at" -le "$now" ] && [ $((now-at)) -le "$evidence_age" ]
+  skew=$((at - now))
+  [ "$skew" -le "$future_tolerance" ] && [ $((now-at)) -le "$evidence_age" ]
 }
 if ! command -v python3 >/dev/null 2>&1 ||
    ! python3 -c 'import json, pathlib' >/dev/null 2>&1; then
