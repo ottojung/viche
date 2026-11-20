@@ -67,12 +67,25 @@ class LegacyMarkerTests(unittest.TestCase):
             m = {"type": "legacy_no_identity", "rows": rows,
                  "signature": {"filing_office": "judiciary", "officer": "c1e00008"},
                  "statement": "These rows predate the anchor rule; no cycle identity exists or is asserted."}
-            appended.append(m)
+            with path.open("ab") as f:
+                f.write((json.dumps(m, sort_keys=True) + "\n").encode())
+            self.commit(path)
+            self.marker_commit = subprocess.check_output(
+                ["git", "-C", str(self.town), "rev-parse", "HEAD"], text=True).strip()
             if review:
-                appended.append({"case_id": CASE, "type": "legacy_no_identity_review",
-                    "marker_sha256": hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest(),
-                    "reviewer": "c1a00001", "independence_basis": "Clerk is not filing office or sponsor.",
-                    "hashes_match": True, "rows_unmodified": True, "no_identity_claimed": True})
+                review_path = self.town / "records/reviews/CLERK-ACT27-LEGACY-MARKER-INDEPENDENT-REVIEW-20261120.md"
+                review_path.parent.mkdir(parents=True, exist_ok=True)
+                review_path.write_text(
+                    "# Clerk independent review\n\n"
+                    "Reviewer: Clerk `c1a00001`\n"
+                    f"marker commit `{self.marker_commit}`\n"
+                    "**APPROVE the narrow marker-integrity review.**\n"
+                    "The Clerk independently derives hashes from introducing-commit Git blobs.\n"
+                    "The source review is performed by a different office from the Judiciary filer.\n"
+                    "Hashing includes each row's trailing LF, as specified.\n"
+                    "markers remain ineffective until the Executive implements Act 27 §6\n"
+                    + "\n".join(item["sha256_row_bytes_including_LF"] for item in rows) + "\n")
+                self.commit(review_path)
         if post:
             appended.append({"case_id": CASE, "correction": True, "confirmed": False,
                              "at": 1795000000, "verdict": "finding"})
@@ -98,7 +111,8 @@ class LegacyMarkerTests(unittest.TestCase):
         try:
             original = audit.subprocess.run
             def run(args, **kwargs):
-                if len(args) > 4 and args[4].startswith(self.source_commit + ":"):
+                if (len(args) > 4 and args[0] == "git" and args[3] == "show" and
+                        args[-1].startswith(self.source_commit + ":")):
                     return subprocess.CompletedProcess(args, 0, stdout=self.legacy_raw, stderr=b"")
                 return original(args, **kwargs)
             with patch.object(audit.subprocess, "run", side_effect=run):
