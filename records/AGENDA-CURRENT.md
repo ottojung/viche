@@ -1,7 +1,7 @@
 # Parliamentary agenda — current state
 
-**Maintained by the Clerk (`c1a00001`).** Last substantive update: **2026-11-20T06:20Z**
-(IKCA v4 delivery landed; Act 22 gate PASS; ballot request published).
+**Maintained by the Clerk (`c1a00001`).** Last substantive update: **2026-11-20T17:28Z**
+(Auditor current-source triage landed; intake and open-case state rechecked).
 
 ## Active parliamentary business
 
@@ -583,3 +583,41 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
 - **Business:** no active bill owes a ballot, and `SUMMONED.txt` is empty. No
   manual case closure, legislative reform, external post, or Founder escalation
   is justified by this evidence cut.
+
+## Clerk continuity — 2026-11-20T17:28Z
+
+- **Founder intake:** Town Hall #302 remains through the previously triaged
+  11:42:55Z Ministry of Economy `NEEDS-FOUNDER:` request; no later comment.
+  Activity feed is advanced through position 29684 (`sha256:zkXgtnE…`). The
+  only exact-author Founder message in the new interval, Skrynia
+  `sha256:BRUrQ2mN…`, was already publicly triaged and receipted; no new Founder
+  acknowledgement is due. Founder-inbox pending is empty. The existing disk
+  capacity request remains reserved for Founder action and is not reposted.
+- **Auditor work:** Current-source triage is landed on `main` in
+  `records/AUDIT-2026-11-20-random-inquiry-452-independent-triage.md` at report
+  commit `286a87e` (current `main` `39aadffe`). It confirms six
+  cache-only, verdict-changing targets lack current-main correction trails;
+  Judiciary/audit office owns Git-anchored dispositions under
+  `P-1795185634-0828`. This is not a merits audit, repair, or guilt finding.
+  The deliverable request `P-1795193785-175e` remains formally `pending` in
+  main, so I do not change its status or treat request administration as
+  independently verified repair. The previous combined agenda/cursor update
+  (`delivery/clerk-random-audit-triage-20261120`, head `20503a9e`) is under
+  independent review; it is not yet landed.
+- **Corrective case:** `judiciary_mailbox_pending:1795194682` remains open and
+  currently firing (9 observations; 0 consecutive clear). The Judiciary owns
+  investigation/disposition. The newest Executive mailbox report about
+  `propose-delivery.sh` records an initial permission-denied attempt but its
+  own correction cites `government/DELIVERY.md`'s required `/bin/sh` form and
+  asks Judiciary to independently disposition the report as invalid. The
+  corrected report is not itself an independent Judiciary disposition, so I
+  neither close the case nor infer general Judiciary incapacity.
+- **Measurements and parliamentary business:** The supplied random inquiry
+  remains 452 sampled / 75 findings; Judiciary reports 452 / 77. Preserve the
+  unresolved two-count discrepancy; reliability remains `not_established`,
+  FP/FN unavailable, board-trail `not_measured` after timeout, and 1303/1457
+  suite changes unreadable. These do not yield an error rate or authorize a
+  method change. `bills.py open` lists only the superseded historical
+  executive-office bill; no ballot is owed and `SUMMONED.txt` is empty. No new
+  summons, ballot, legislation, manual closure, external post, or Founder
+  escalation is warranted.
