@@ -20,6 +20,17 @@ grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(en
 # Act and THIS office, with a bounded hard expiry. The shared fail-closed
 # verifier is the same code boot.sh and appointments.sh use, so the three agree.
 /bin/sh "$town/government/knowledge-activation-verify.sh" "$office" || exit 0
+# Act 32 H: fail-closed metered budget guard. When the budget engine is not
+# installed (legacy fixtures) there is no budget subsystem to gate on; when it
+# is installed, a missing/corrupt config, absent token meter, exhausted cap or
+# held office blocks dispatch instead of assuming a budget.
+budget=$town/government/knowledge-budget.sh
+if [ -s "$budget" ]; then
+  /bin/sh "$budget" guard "$office" || {
+    echo "Viche $office: budget guard refused activation" >&2
+    exit 0
+  }
+fi
 [ -s "$town/records/knowledge/baseline-20261119.json" ] || {
   echo "Knowledge: cannot activate without frozen prelaunch baseline" >&2
   exit 1
@@ -122,7 +133,32 @@ EOF
 )
 [ ! -s "$town/government/AGENT-REPORTING-POLICY.md" ] ||
   prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$town/government/AGENT-REPORTING-POLICY.md")")
-antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
+# Reserve the hard cap BEFORE the session exists. A refused reservation means
+# no dispatch at all; the live detached agent is then monitored and stopped on
+# overrun/expiry by the budget engine (never by the launcher timeout alone).
+reservation=
+if [ -s "$budget" ]; then
+  reservation=$(/bin/sh "$budget" reserve "$office" "$id") || {
+    echo "Viche $office: budget reservation refused; no dispatch" >&2
+    exit 0
+  }
+fi
+if [ -n "$reservation" ]; then
+  /bin/sh "$budget" mark-dispatched "$reservation" || {
+    echo "Viche $office: cannot record dispatch intent; no session launched" >&2
+    exit 1
+  }
+fi
+antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || {
+  [ -z "$reservation" ] || /bin/sh "$budget" reconcile >/dev/null 2>&1 || :
+  exit 1
+}
+if [ -n "$reservation" ]; then
+  /bin/sh "$budget" start "$reservation" "$id" || {
+    echo "Viche $office: could not meter session; session stopped" >&2
+    exit 1
+  }
+fi
 printf '%s\n' "$now" > "$root/last-dispatch"
 [ ! -f "$town/government/dispatch-gate.sh" ] ||
   /bin/sh "$town/government/dispatch-gate.sh" commit "$office"

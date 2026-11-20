@@ -138,6 +138,12 @@ fi
 # locks so they cannot block Parliament or Judiciary or each other.
 if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
    [ -s "$town/government/knowledge-office-cycle.sh" ]; then
+    # Act 32 H: after a crash or box restart, reconcile in-flight reservations
+    # before any new dispatch. Deterministic, bounded and fail-closed.
+    if [ -s "$town/government/knowledge-budget.sh" ]; then
+        /bin/sh "$town/government/knowledge-budget.sh" reconcile ||
+            echo "Viche: knowledge budget reconciliation failed" >&2
+    fi
     knowledge_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/offices
     for office in statistics foresight strategy spying; do
         # Same fail-closed verifier as appointments and the office cycle: a
