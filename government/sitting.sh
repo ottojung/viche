@@ -6,6 +6,10 @@ seat=$1
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 tab=$(printf '\t')
 clerk=$(sed -n "1s/$tab.*//p" "$town/government/seats.tsv")
+state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+if [ "$seat" = "$clerk" ] && [ -f "$town/government/institutional-cases.py" ]; then
+  python3 "$town/government/institutional-cases.py" reconcile >/dev/null 2>&1 || true
+fi
 if [ -s "${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/liveness/unsafe-holds/$seat" ]; then
   echo "Viche: unsafe seat invocation, preserve work for review" >&2
   exit 1
