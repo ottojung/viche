@@ -32,12 +32,23 @@ Design guarantees:
     inference can never become an authorization, ballot, mandate, spending
     request or NEEDS-FOUNDER item;
   * no matched secret value is ever emitted -- only rule names;
-  * unknown or missing board APIs are reported honestly as gaps.
+  * unknown or missing board APIs are reported honestly as gaps;
+  * board reads use bounded pagination (a pinned older message is not lost off
+    page 1), and an unreadable required page fails closed.
+
+HONEST LIMIT / NOT A SANDBOX: this is a source-validation and launch gate, not
+access confinement. On the shared same-UID host an unconstrained coding agent
+can still read arbitrary files after a successful preflight; this module never
+claims global access control. The prompt-injection screen is a heuristic deny
+screen, not a proof of safety; the no-authority / no-NEEDS-FOUNDER boundary is
+enforced structurally on statement fields and is independent of source text.
+Every claimed inference or outcome must be re-validated at publication time
+against its ACTUAL cited source set through validate_bundle()/the `publish`
+subcommand -- a dispatch preflight alone is not a publication-time boundary.
 
 Standard library only. Python 3.8+.
 """
 import argparse
-import base64
 import datetime as _dt
 import hashlib
 import json
@@ -54,6 +65,8 @@ FOUNDER = "Vitalik"
 DEFAULT_ALLOWLIST = "records/knowledge/spying-source-allowlist.json"
 FUTURE_SKEW_SECONDS = 300
 BOARD_TIMEOUT_SECONDS = 15
+MAX_BOARD_PAGES = 5          # bounded: no unbounded board scan
+BOARD_PAGE_SIZE = 50         # Antonina board show pages hold up to 50 messages
 
 # Rule names only are ever returned; matched text is never retained or logged.
 _SECRET_PATTERNS = {
@@ -175,6 +188,10 @@ def load_allowlist(path, now=None):
     age = data.get("max_evidence_age_seconds")
     if not isinstance(age, int) or age <= 0 or age > 15552000:
         raise AllowlistError("invalid max_evidence_age_seconds")
+    pages = data.get("max_board_pages", MAX_BOARD_PAGES)
+    if not isinstance(pages, int) or pages <= 0 or pages > 10:
+        raise AllowlistError("invalid max_board_pages")
+    data["max_board_pages"] = pages
     eff = data.get("effective_from")
     exp = data.get("expires_at")
     if not isinstance(eff, (int, float)) or not isinstance(exp, (int, float)):
@@ -200,7 +217,15 @@ class BoardResolver:
         self._fetch = fetch
         self._offline = offline_json
 
-    def resolve(self, issue_id):
+    def resolve(self, issue_id, max_pages=MAX_BOARD_PAGES):
+        """Read a bounded number of board pages; merge by stable message id.
+
+        A pinned older message may no longer be on page 1 of an active issue.
+        We read up to `max_pages` pages, following the documented rule that a
+        further page exists only when the current page is full (50 messages).
+        An unreadable/malformed required page fails closed. The scan is bounded
+        and ends as soon as it is complete -- it is never an unbounded crawl.
+        """
         if not isinstance(issue_id, str) or not issue_id or "\n" in issue_id:
             raise BoardUnavailable("invalid issue id")
         if self._offline is not None:
@@ -211,26 +236,45 @@ class BoardResolver:
         if self._fetch is not None:
             return self._fetch(issue_id)
         # Default: read-only Antonina CLI. No credentials, no writes.
-        try:
-            proc = subprocess.run(
-                ["antonina", "board", "show", "--id", issue_id, "--page", "1", "--json"],
-                capture_output=True, text=True, timeout=BOARD_TIMEOUT_SECONDS,
-                check=False)
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise BoardUnavailable("board CLI unavailable: %s" % type(exc).__name__)
-        if proc.returncode != 0:
-            raise BoardUnavailable("board CLI exit %s" % proc.returncode)
-        try:
-            doc = json.loads(proc.stdout)
-        except (ValueError, TypeError):
-            raise BoardUnavailable("board JSON unparseable")
-        if not isinstance(doc, dict) or not isinstance(doc.get("messages"), list):
-            raise BoardUnavailable("board JSON missing messages array")
-        return doc
+        if not isinstance(max_pages, int) or max_pages <= 0 or max_pages > 10:
+            raise BoardUnavailable("invalid pagination cap")
+        merged = []
+        seen = set()
+        base = None
+        for page in range(1, max_pages + 1):
+            try:
+                proc = subprocess.run(
+                    ["antonina", "board", "show", "--id", issue_id,
+                     "--page", str(page), "--json"],
+                    capture_output=True, text=True, timeout=BOARD_TIMEOUT_SECONDS,
+                    check=False)
+            except (OSError, subprocess.SubprocessError) as exc:
+                raise BoardUnavailable("board CLI unavailable: %s" % type(exc).__name__)
+            if proc.returncode != 0:
+                raise BoardUnavailable("board CLI exit %s on page %d" %
+                                       (proc.returncode, page))
+            try:
+                doc = json.loads(proc.stdout)
+            except (ValueError, TypeError):
+                raise BoardUnavailable("board JSON unparseable on page %d" % page)
+            if not isinstance(doc, dict) or not isinstance(doc.get("messages"), list):
+                raise BoardUnavailable("board JSON missing messages array on page %d" % page)
+            if base is None:
+                base = doc
+            for msg in doc["messages"]:
+                mid = msg.get("id") if isinstance(msg, dict) else None
+                if isinstance(mid, str) and mid not in seen:
+                    seen.add(mid)
+                    merged.append(msg)
+            if len(doc["messages"]) < BOARD_PAGE_SIZE:
+                break  # last page, per the Antonina board contract
+        result = dict(base or {})
+        result["messages"] = merged
+        return result
 
-    def resolve_founder_message(self, pinned):
+    def resolve_founder_message(self, pinned, max_pages=MAX_BOARD_PAGES):
         """Return the authoritative message for a pinned Founder message id."""
-        doc = self.resolve(pinned["issue"])
+        doc = self.resolve(pinned["issue"], max_pages=max_pages)
         found = None
         for msg in doc.get("messages", []):
             if isinstance(msg, dict) and msg.get("id") == pinned.get("id"):
@@ -241,20 +285,24 @@ class BoardResolver:
         return found
 
 
-def _parse_created(created_at, now):
-    """Validate an ISO-8601 Z timestamp; reject unparseable or future-dated."""
+def _parse_created_ts(created_at):
+    """Parse an ISO-8601 Z timestamp to epoch, or None if invalid."""
     if not isinstance(created_at, str):
-        return False
+        return None
     try:
         dt = _dt.datetime.fromisoformat(created_at.replace("Z", "+00:00"))
     except ValueError:
-        return False
+        return None
     if dt.tzinfo is None:
-        return False
+        return None
     ts = dt.timestamp()
-    if ts > now + FUTURE_SKEW_SECONDS:
-        return False
-    if ts < 0:
+    return ts if ts >= 0 else None
+
+
+def _parse_created(created_at, now):
+    """Validate an ISO-8601 Z timestamp; reject unparseable or future-dated."""
+    ts = _parse_created_ts(created_at)
+    if ts is None or ts > now + FUTURE_SKEW_SECONDS:
         return False
     return True
 
@@ -280,6 +328,32 @@ def _allow(extra=None):
     return result
 
 
+def _board_attestation(evidence, allowlist, resolver, now, max_pages):
+    """Validate a publication attestation against real board provenance.
+
+    Returns (None, epoch) on success, or (deny_code, "") on failure. The
+    freshness check uses the authoritative board `createdAt`, not a caller
+    string, so a caller cannot launder stale evidence by relabelling it.
+    """
+    attested_by = evidence.get("attested_by")
+    pin = allowlist["antonina"]["messages"].get(attested_by)
+    if not isinstance(pin, dict):
+        return "publication_attestation_unpinned", ""
+    try:
+        msg = resolver.resolve_founder_message(
+            {"id": attested_by, "issue": pin.get("issue")}, max_pages=max_pages)
+    except BoardUnavailable as exc:
+        return "board_unreadable", str(exc)
+    if msg.get("author") != FOUNDER or msg.get("id") != attested_by:
+        return "publication_attestation_not_vitalik", ""
+    ts = _parse_created_ts(msg.get("createdAt"))
+    if ts is None or ts > now + FUTURE_SKEW_SECONDS:
+        return "stale_or_forged_publication_attestation", ""
+    if ts < now - allowlist["max_evidence_age_seconds"]:
+        return "stale_or_forged_publication_attestation", ""
+    return None, ts
+
+
 def validate_source(ref, evidence, allowlist, resolver, now):
     """Validate one caller-supplied source reference. Fail closed."""
     result = {}
@@ -288,6 +362,7 @@ def validate_source(ref, evidence, allowlist, resolver, now):
     cls, _, rest = ref.partition(":")
     evidence = evidence if isinstance(evidence, dict) else {}
     max_age = allowlist["max_evidence_age_seconds"]
+    max_pages = allowlist.get("max_board_pages", MAX_BOARD_PAGES)
     ts_reason = _check_timestamp(evidence.get("captured_at"), now, max_age)
     text = _evidence_text(evidence)
 
@@ -312,8 +387,8 @@ def validate_source(ref, evidence, allowlist, resolver, now):
         if pin.get("author") != FOUNDER:
             return _deny("pinned_author_not_exact_vitalik")
         try:
-            msg = resolver.resolve_founder_message({
-                "id": rest, "issue": pin.get("issue")})
+            msg = resolver.resolve_founder_message(
+                {"id": rest, "issue": pin.get("issue")}, max_pages=max_pages)
         except BoardUnavailable as exc:
             return _deny("board_unreadable", str(exc))
         if msg.get("author") != FOUNDER or msg.get("id") != rest:
@@ -366,10 +441,15 @@ def validate_source(ref, evidence, allowlist, resolver, now):
         if not isinstance(auth, dict):
             return _deny("github_authorization_unpinned")
         try:
-            resolver.resolve_founder_message({"id": auth.get("id"), "issue": auth.get("issue")})
+            resolver.resolve_founder_message(
+                {"id": auth.get("id"), "issue": auth.get("issue")}, max_pages=max_pages)
         except BoardUnavailable as exc:
             return _deny("board_unreadable", str(exc))
+        att_code, att_ts = _board_attestation(evidence, allowlist, resolver, now, max_pages)
+        if att_code:
+            return _deny(att_code)
         result.update({"class": "github:public", "repo": repo, "ref": refpart,
+                       "attested_at": att_ts,
                        "actor": actor, "commit_sha": sha, "verified_authorization": FOUNDER,
                        "scope": entry.get("scope")})
         return _allow(result)
@@ -388,13 +468,18 @@ def validate_source(ref, evidence, allowlist, resolver, now):
         if not isinstance(auth, dict):
             return _deny("project_authorization_unpinned")
         try:
-            resolver.resolve_founder_message({"id": auth.get("id"), "issue": auth.get("issue")})
+            resolver.resolve_founder_message(
+                {"id": auth.get("id"), "issue": auth.get("issue")}, max_pages=max_pages)
         except BoardUnavailable as exc:
             return _deny("board_unreadable", str(exc))
         if evidence.get("content_sha256") != entry.get("content_sha256"):
             return _deny("content_hash_mismatch_forged_evidence")
+        att_code, att_ts = _board_attestation(evidence, allowlist, resolver, now, max_pages)
+        if att_code:
+            return _deny(att_code)
         result.update({"class": "authorized_project", "source_id": rest,
-                       "verified_authorization": FOUNDER, "scope": entry.get("scope")})
+                       "verified_authorization": FOUNDER, "scope": entry.get("scope"),
+                       "attested_at": att_ts})
         return _allow(result)
 
     return _deny("unsupported_source_class")
@@ -459,6 +544,10 @@ def validate_bundle(bundle, allowlist, resolver, now=None):
     if not isinstance(bundle, dict) or bundle.get("schema") != "viche-spying-evidence-bundle-v1":
         return {"schema": SCHEMA, "decision": "DENY", "office": "spying",
                 "reasons": [{"code": "malformed_bundle", "detail": ""}],
+                "sources": [], "statements": [], "gaps": gaps}
+    if bundle.get("purpose") in ("publication", "inference") and not bundle.get("statements"):
+        return {"schema": SCHEMA, "decision": "DENY", "office": "spying",
+                "reasons": [{"code": "no_validated_inference_for_publication", "detail": ""}],
                 "sources": [], "statements": [], "gaps": gaps}
     raw_sources = bundle.get("sources", [])
     if not isinstance(raw_sources, list):
@@ -548,6 +637,11 @@ def preflight(town_root, allowlist_path=None, bundle_path=None, offline_json=Non
         return {"schema": SCHEMA, "decision": "DENY", "office": "spying",
                 "reasons": [{"code": "source_scope_record_malformed", "detail": ""}],
                 "sources": [], "statements": [], "gaps": []}
+    if not isinstance(bundle, dict) or not bundle.get("statements"):
+        return {"schema": SCHEMA, "decision": "DENY", "office": "spying",
+                "reasons": [{"code": "empty_or_incomplete_source_scope", "detail": ""}],
+                "sources": [], "statements": [],
+                "gaps": ["source-scope record carries no validated observation/inference"]}
     resolver = BoardResolver(offline_json=offline_json)
     verdict = validate_bundle(bundle, allowlist, resolver, now=now)
     verdict["allowlist"] = str(allowlist_path)
@@ -581,6 +675,11 @@ def main(argv=None):
     ppf = sub.add_parser("preflight", parents=[common], help="validate a bundle / launch gate")
     ppf.add_argument("--bundle", default=None)
     ppf.add_argument("--town-root", default=os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
+
+    pub = sub.add_parser("publish", parents=[common],
+                         help="publication-time gate: validate the ACTUAL cited source set")
+    pub.add_argument("--bundle", required=True)
+    pub.add_argument("--town-root", default=os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
 
     args = ap.parse_args(argv)
     now = args.now
@@ -622,7 +721,24 @@ def main(argv=None):
         print(json.dumps(out))
         return 0 if out["decision"] == "ALLOW" else 1
 
-    verdict = preflight(town, allowlist_path=args.allowlist, bundle_path=args.bundle,
+    if args.cmd == "publish":
+        try:
+            allowlist = load_allowlist(allowlist_path, now=now)
+            bundle = json.loads(Path(args.bundle).read_text(encoding="utf-8"))
+        except (AllowlistError, ValueError, OSError) as exc:
+            print(json.dumps({"schema": SCHEMA, "decision": "DENY", "office": "spying",
+                              "reasons": [{"code": "publication_gate_unusable",
+                                           "detail": type(exc).__name__}],
+                              "sources": [], "statements": [], "gaps": []}))
+            return 1
+        if isinstance(bundle, dict):
+            bundle["purpose"] = "publication"
+        resolver = BoardResolver(offline_json=offline)
+        verdict = validate_bundle(bundle, allowlist, resolver, now=now)
+        print(json.dumps(verdict))
+        return 0 if verdict["decision"] == "ALLOW" else 1
+
+    verdict = preflight(town, allowlist_path=allowlist_path, bundle_path=args.bundle,
                         offline_json=offline, now=now)
     print(json.dumps(verdict))
     return 0 if verdict["decision"] == "ALLOW" else 1

@@ -63,9 +63,36 @@ Enforcement properties, all in code:
    unreadable allowlist, bundle or board API returns DENY and records an
    explicit `gaps` entry — never "empty", "zero", "allowed" or "no messages".
 
+## Independent review response (issue comment `sha256:8Gm9Z3rN…`, `viche-deployment`)
+
+The independent review's substantive points were addressed in code, not just prose:
+
+1. **Pagination.** `BoardResolver.resolve` now reads a bounded number of board
+   pages (`max_board_pages`, default 5, config-capped at 10), following the
+   documented "next page only when full (50 messages)" rule, merges by stable
+   message id, stops when complete, and fails closed on an unreadable/malformed
+   required page. New tests prove a pinned message on page 2 is found and that a
+   cap of 1 page or an unreadable page DENIES.
+2. **Preflight is not a global security boundary.** The module docstring and this
+   record state explicitly: on the shared same-UID host an unconstrained agent
+   can still read arbitrary files after a pass; this gate is source validation,
+   not access confinement, and no global confinement is claimed. Every claimed
+   inference/outcome must be re-validated at publication time against its actual
+   cited source set via `validate_bundle()` / the new `publish` CLI gate. The
+   no-authority / no-NEEDS-FOUNDER rule is structural and independent of source
+   text; the injection regex is a heuristic deny screen, not a proof.
+3. **Empty bundles.** A `purpose=publication|inference` bundle with no statements
+   is DENIED (`no_validated_inference_for_publication`); the launch preflight
+   DENIES a source-scope record with no validated observation/inference
+   (`empty_or_incomplete_source_scope`); a truly empty bundle was already DENIED.
+4. **True provenance.** GitHub and project sources now require an `attested_by`
+   pinned exact-author Vitalik message; freshness is checked against the
+   authoritative board `createdAt` (not a caller string), yielding
+   `publication_attestation_unpinned` / `stale_or_forged_publication_attestation`.
+
 ## Test evidence
 
-- `python3 tests/test_spying_source_allowlist.py`: **20 tests, OK**. Includes 5
+- `python3 tests/test_spying_source_allowlist.py`: **26 tests, OK**. Includes 5
   positive classes (exact-Vitalik message, attributable public GitHub, authorized
   project source, observation statement, corrected inference) and independent
   negatives (bare prefix, unpinned id, non-exact authors, missing board API with
@@ -73,9 +100,10 @@ Enforcement properties, all in code:
   secret-bearing source with no value leakage, prompt injection,
   inference→authorization/NEEDS-FOUNDER, missing alternatives/confidence, copied
   conclusions, unvalidated source citation, malformed/expired allowlist, missing
-  source-scope record).
-- `dash tests/spying-source-allowlist-smoke.sh`: **PASS** (19 assertions), black-box
-  CLI and launch-preflight, hermetic.
+  source-scope record, bounded/unreadable pagination, missing/stale publication
+  attestation, publication/scope bundles without inference, `publish` gate).
+- `dash tests/spying-source-allowlist-smoke.sh`: **PASS** (24 assertions), black-box
+  CLI, `publish` gate and launch-preflight, hermetic.
 - Live authoritative-board check with the committed allowlist (2026-11-20):
   - `antonina:sha256:3rrGpDd6…` → `ALLOW`, `verified_author: Vitalik`, body hash
     `sha256:badf8fb3e…`;
@@ -100,6 +128,12 @@ Enforcement properties, all in code:
   token, or inspect private repositories, per scope. A committed evidence
   attestation is the trust boundary; independently confirming a specific GitHub
   account's public activity remains an audit task, not claimed here.
+- **Residual unrestricted runtime risk.** This gate validates cited sources and
+  dispatch/publication claims; it is not access confinement on the shared UID.
+  An unconstrained agent could still read an arbitrary private file after a pass
+  and never cite it. The boundary enforced here is "no unvalidated source may be
+  cited or published through this gate", not "the agent cannot reach other
+  paths". Independent runtime confinement remains a separate question.
 - **Post publication integration is a parallel agent's scope.** `government/post.py`
   and `government/post_guard.py` were NOT edited (a separate agent owns them).
   This delivery enforces *agent use* (dispatch) in code via the cycle gate and
