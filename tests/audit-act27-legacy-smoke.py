@@ -111,7 +111,8 @@ class LegacyMarkerTests(unittest.TestCase):
         try:
             original = audit.subprocess.run
             def run(args, **kwargs):
-                if len(args) > 4 and args[4].startswith(self.source_commit + ":"):
+                if (len(args) > 4 and args[0] == "git" and args[3] == "show" and
+                        args[-1].startswith(self.source_commit + ":")):
                     return subprocess.CompletedProcess(args, 0, stdout=self.legacy_raw, stderr=b"")
                 return original(args, **kwargs)
             with patch.object(audit.subprocess, "run", side_effect=run):
