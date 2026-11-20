@@ -1,0 +1,13 @@
+{
+  "branch": "executive",
+  "seat": "executive",
+  "agent_id": "vmjHeHAanEHVJEuhrnLwq3-saved",
+  "duty": "independent_delivery",
+  "observed_at": 1795151646,
+  "readiness": "running",
+  "agent_state": "running",
+  "cycle_accepted": true,
+  "model": "opencode/hy4-flash-free",
+  "variant": "low",
+  "caveat": "readiness_not_proof_of_agent_progress_or_completed_work"
+}

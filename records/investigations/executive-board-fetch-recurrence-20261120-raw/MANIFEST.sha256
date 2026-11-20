@@ -1,0 +1,18 @@
+# Capture time: 2026-11-20T05:16:41Z
+# Source roots: /var/lib/lubko/wd/viche-state ; /var/lib/lubko/wd/viche
+# Excerpts are verbatim lines with original line numbers; TSV files are read-only live state.
+
+archive-executive_unhealthy-1795107691.json	size=1088 mtime=2026-11-20 05:16:27.445489256 +0000	sha256=67c20671bbbbda239ad0e3681d5cb5e5f5d95faedb62a18a882c785abc9e5045
+branches-executive.json.snapshot	size=369 mtime=2026-11-20 05:16:27.449489256 +0000	sha256=88bcd57ed722168b388a56ad672627185a6b332c9cbdb5dfc52d8932e0b9fced
+branches-observations-firing-excerpt.tsv	size=106 mtime=2026-11-20 05:16:34.941488976 +0000	sha256=8991c4e90f899e359604336bb81890b3a542bae60818bc8f5f9e97f34dc8372d
+case-executive_unhealthy-1795150900.json	size=599 mtime=2026-11-20 05:16:27.441489256 +0000	sha256=daaaa992eb325bba11cc8d7fe45c2d4bac01ab3c2e94077f571f1429734fe5cf
+clerk-escalation-20261120.md.snapshot	size=4186 mtime=2026-11-20 05:16:27.457489256 +0000	sha256=d74aad38b8fd44e84667f5b01bc351adc60ee69446839825729d7e626e777422
+dispatch-events-firing-excerpt.tsv	size=778 mtime=2026-11-20 05:16:41.497488731 +0000	sha256=fa676e149beb4337707556520c96222bef389d983ecfbe77606e2a6dbfc42abd
+eligible-issues.json.snapshot	size=1164 mtime=2026-11-20 05:16:27.449489256 +0000	sha256=43d99e52dd053c67a10522ba950798bb71803237f42123727ad3e864e49c1cea
+eligible-work.py.pre-repair	size=3291 mtime=2026-11-20 05:16:27.457489256 +0000	sha256=ba253820c9ef293145d59825716fa39783f7f2456c525119844875a805e2cf2a
+executive-cycle.log.current-rotated	size=87 mtime=2026-11-20 05:16:27.453489256 +0000	sha256=13fc843c7f806b77a25038acd308a44d52acf347a9f3532d4801f1c6c35d8c95
+failure-path-source-excerpts.txt	size=1635 mtime=2026-11-20 05:16:41.521488730 +0000	sha256=7314604fdb51b5388ac392fa19083f591875f717546208d64aefe951e10ebade
+institutional-cases-index.json	size=3135 mtime=2026-11-20 05:16:27.445489256 +0000	sha256=5242c5e227d865f7916d9502dd094f5b099182304d2bd19ce50d98dd2ad479b8
+oversight-board-error.log.current	size=0 mtime=2026-11-20 05:16:27.453489256 +0000	sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+oversight-observations-firing-excerpt.tsv	size=196 mtime=2026-11-20 05:16:34.945488976 +0000	sha256=0a252d115e9d800a8c4a13247bcc505eefc336c085dbda526d752c19a49fe471
+oversight-telemetry.json.stale	size=324 mtime=2026-11-20 05:16:27.453489256 +0000	sha256=dd1f30452f2a49d5058df36fd3caef13a8969da046c5e97aa735722b72041123
