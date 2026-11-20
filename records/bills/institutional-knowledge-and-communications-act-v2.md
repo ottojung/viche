@@ -94,9 +94,13 @@ agreeing reports. Preserve the Founder's Constitution and all existing checks.
    mail read/reply by Judiciary and Innovation/Clerk. A pilot archive import
    may already have occurred, but is not proof of recipient participation.
    Historical Judiciary mailbox and Antonina dialogue remain operational
-   until the relevant offices independently verify the new route, after
-   which originals remain readable permanently. An archive or receipt is
-   never verification of remediation. Activation of the four new offices
+   until a SEPARATELY authorized, independently tested cutover is enacted
+   and deployed. Public Post cannot safely replace confidential or
+   authenticated channels merely by claiming that recipients read it;
+   material blockers continue on the established Judiciary mailbox.
+   No automatic cutover occurs on the Act's enactment. Originals remain
+   readable permanently. An archive or receipt is never verification of
+   remediation. Activation of the four new offices is separate and
    should be staged, observed, and reversible. The frozen baseline at
    `records/knowledge/baseline-20261119.json` records **197 agent executions,
    25 main commits, 21 registered forecasts and zero scored** in the measured

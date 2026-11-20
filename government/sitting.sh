@@ -140,8 +140,9 @@ fi
 
 # The shared issue channel is a standing legislative research input, not an
 # automatic bill, summons, or new source of authority.
-if [ -s "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md" ] &&
-   ! grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+# A new communications law is NOT proof that the Post pilot has been
+# independently received and accepted. Preserve working legacy dialogue.
+if [ -s "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md" ]; then
     cat <<EOF
 === INNOVATION–LEGISLATURE RESEARCH DIALOGUE ===
 $(cat "$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md")
