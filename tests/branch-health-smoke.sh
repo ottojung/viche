@@ -17,6 +17,18 @@ printf '{"observed_at":1000}\n' > "$scratch/institutional-outcomes/latest.json"
 printf '{"observed_at":1000,"count":0}\n' > "$scratch/institutional-cases/index.json"
 printf '{"observed_at":1000}\n' > "$scratch/branches/judiciary-measurements.json"
 sh "$repo/government/branch-health.sh"
+# Concurrent stampers may write an observed_at a second or two ahead of the
+# $now captured at this probe's start. A small future skew must not raise a
+# spurious *_stale signal/case (clock-ordering race), but a grossly future-dated
+# stamp must still fail closed so a broken/lying stamper is not masked.
+printf '{"observed_at":1002,"count":0}\n' > "$scratch/institutional-cases/index.json"
+sh "$repo/government/branch-health.sh"
+[ ! -e "$scratch/branches/incident.json" ]
+printf '{"observed_at":1500,"count":0}\n' > "$scratch/institutional-cases/index.json"
+sh "$repo/government/branch-health.sh" >/dev/null 2>&1 && exit 1
+jq -e '.signals|index("institutional_cases_stale")' "$scratch/branches/incident.json" >/dev/null
+rm -f "$scratch/branches/incident.json"
+printf '{"observed_at":1000,"count":0}\n' > "$scratch/institutional-cases/index.json"
 # Mailbox reports must be visible as unresolved health evidence.
 mkdir -p "$scratch/oversight/judiciary-mailbox/inbox"
 echo "blocked" > "$scratch/oversight/judiciary-mailbox/inbox/test.md"
