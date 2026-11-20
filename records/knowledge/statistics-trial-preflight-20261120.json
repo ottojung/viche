@@ -1,0 +1,142 @@
+{
+  "schema": "viche-statistics-trial-preflight-1",
+  "created_at": "2026-11-20T17:49:40Z",
+  "created_epoch": 1795196980,
+  "office": "statistics",
+  "host": "billy-dev",
+  "author": {
+    "role": "independent Act 32 Statistics trial preflight research/implementation agent",
+    "assignment": "Su7XcZoBu720pWGRTVoCio-emerson",
+    "origin": "SvMHxlO6F1R6u3cQcr3lKA-repeated",
+    "authority": "operator task; NOT a Founder impersonation, ballot, vote or activation order"
+  },
+  "readiness": "not_ready",
+  "decision": "reject_false_comparator_and_request_independent_judiciary_determination",
+  "summary": "No valid historical effect numerator and no matched, metered Economy resource denominator can be constructed from the available frozen sources. The diagnostic baseline-20261119.json is a false comparator: its five source digests address mutable paths whose current bytes all differ, it scores zero verified outcomes, and its only counts are agent executions, main commits and registered forecasts. The narrow candidate outcome (independently confirmed material incident repair) is defined below with explicit numerator, statistical denominator, negative controls, missingness, windows and comparison, but extracting it from historical sources yields zero independently confirmed repairs in the frozen window and material unrecoverable missingness. Resource cost measures were never metered and are recorded as unavailable, never zero. Preactivation gates remain non-green; no office is enabled.",
+  "candidate_outcome": {
+    "name": "independently_confirmed_material_incident_repair",
+    "definition": "A bounded event in which an authoritative, independently produced record identifies a concrete material impediment or defect in Viche operation, a durable exact-commit-bound repair artifact addressing that specific defect is landed with a green Act 21 suite record, and an independent office (not the repair owner) records after re-observation that the impediment is resolved and the repair is effective.",
+    "why_not_a_proxy": "Agent process exits, Git merges, report/record counts, Post mail, forecasts registered, readiness signals and automatic case clearance by consecutive clear observations are explicitly excluded. A cleared signal is not proof of repair (Judiciary disposition 1795150900).",
+    "eligible_sources": [
+      "records/JUDICIARY-DISPOSITION-* and records/JUDICIARY-ADDENDUM-* fact-finding dispositions",
+      "records/AUDIT-*-independent-disposition.md independent Audit dispositions",
+      "records/investigations/* material incident and recurrence reports",
+      "state institutional-cases index and per-case records (as signal only, not repair proof)"
+    ]
+  },
+  "numerator": {
+    "rule": "count distinct eligible events satisfying all three candidate_outcome conditions with first_confirmed_at inside the window",
+    "extraction_attempt": {
+      "frozen_window": ["2026-11-20T00:00:00Z", "2026-11-20T17:49:40Z"],
+      "records_read": [
+        "board-fetch-recurrence-addendum.md",
+        "judiciary-executive-disposition.md",
+        "audit-b40995-disposition.md",
+        "institutional-cases-index.json"
+      ],
+      "independently_confirmed_repairs_found": 0,
+      "notes": [
+        "The board-fetch repair is a bounded retry + append-only telemetry mitigation. Its own owner and the Judiciary both state the root trigger is unknown, the case remains open, the telemetry has zero field rows and the exhaustion path is test-verified only. It is not an independently confirmed material repair and is excluded from the numerator.",
+        "Correction-trail rows are predominantly 'second procedural pass (not independent verification)' and concern audit verdict provenance, not material incident repair.",
+        "Auto-closed cases in institutional-cases-index.json close on consecutive clear observations; the Judiciary records that a cleared signal is not proof of repair."
+      ]
+    },
+    "verified": false,
+    "independent_verifier": null
+  },
+  "denominator_statistical": {
+    "population": "all authoritative independent dispositions and material-incident records with a determinable repair status in the window",
+    "rule": "numerator / determinable cases; missing-status cases reported separately, never silently dropped",
+    "frozen_window_determinable_cases": null,
+    "reason_null": "The frozen sources do not enumerate a closed, independently checkable case population for the window; institutional-cases is a moving signal index, not a verified status census.",
+    "missing_status_cases": "unavailable"
+  },
+  "denominator_resource": {
+    "meter_available": false,
+    "units": "unavailable",
+    "tokens": null,
+    "machine_time": null,
+    "wall_time": null,
+    "_declared_unavailable": ["tokens", "machine_time", "wall_time"],
+    "economy_sources_checked": ["economy-report.json", "economy-resources.json"],
+    "finding": "Economy reports model availability, cooling, disk, load, memory and funding risk. No per-office token usage, machine time or wall-time field exists in any inspected report, and no cost meter was active before activation. These measures are unavailable, not zero.",
+    "hard_cap_units": "unavailable until Economy supplies a meter"
+  },
+  "negative_controls": [
+    {"name": "agent_process_exits", "source": "outcomes-latest.json agents.total", "must_not_enter_numerator": true},
+    {"name": "main_branch_commits", "source": "outcomes-latest.json git.main_commits", "must_not_enter_numerator": true},
+    {"name": "forecasts_registered", "source": "predictions-calibration.json", "must_not_enter_numerator": true},
+    {"name": "auto_closed_cases_on_clear_observations", "source": "institutional-cases-index.json", "must_not_enter_numerator": true},
+    {"name": "post_messages_and_readiness_signals", "source": "leading indicators", "must_not_enter_numerator": true}
+  ],
+  "missingness": [
+    {"field": "full raw stderr of failed antonina board fetch", "status": "unavailable", "reason": "three durable truncation/loss points; unrecoverable retroactively"},
+    {"field": "per-office token usage", "status": "unavailable", "reason": "no meter before activation"},
+    {"field": "per-office machine time and wall time", "status": "unavailable", "reason": "no meter before activation"},
+    {"field": "Judiciary false-positive/false-negative rates", "status": "unavailable", "reason": "judiciary-measurements reliability=not_established; rates null"},
+    {"field": "verified repair status census for window", "status": "unavailable", "reason": "no frozen authoritative population"}
+  ],
+  "observation_windows": {
+    "frozen_baseline": ["2026-11-20T00:00:00Z", "2026-11-20T17:49:40Z"],
+    "rationale": "pre-activation, unchanged-Viche period; statistics office remains disabled in frozen activation.json",
+    "planned_trial": "14 days spanning a host reboot, bounded by a reversible signed Executive order and a hard resource cap; exact dates not set because gates are unmet",
+    "caveat": "a single partial UTC day is too short for a rate; it is frozen only to demonstrate source attestation and missingness, not to support an effect estimate"
+  },
+  "comparison": {
+    "counterfactual": "credible unchanged-Viche (business-as-usual) counterfactual: same collectors and case sources measured over an equal-length pre-activation window with no Statistics dispatch",
+    "method": "interrupted time series with a difference-in-differences check against the registered negative-control process counts; no marginal utility is inferred from process-count changes",
+    "confounds": ["concurrent non-Statistics agents", "host reboots", "collector changes", "case-schema changes"],
+    "status": "specified_not_estimable",
+    "reason_not_estimable": "no verified numerator, no determinable statistical denominator and no metered resource denominator"
+  },
+  "falsifiers": [
+    "any success claim resting on agent runs, commits, reports, mail or procedural completion is invalid (Act 32 E)",
+    "any comparator using diagnostic baseline-20261119.json as a verified outcome numerator is invalid (Act 32 D)",
+    "any resource denominator that writes 0 for an unmetered measure is invalid",
+    "any readiness claim while a pinned source hash mismatches or a required artifact is missing",
+    "any claim of a historical effect numerator without an independent Judiciary factual determination under Act 23 5.2"
+  ],
+  "gates": {
+    "verified_numerator": {"status": "blocked", "owner": "Judiciary (independent factual determination)", "reason": "candidate defined; zero independently confirmed repairs in frozen window; no verifier sign-off"},
+    "frozen_resource_denominator": {"status": "blocked", "owner": "Ministry of Economy", "reason": "no per-office meter; all resource measures unavailable"},
+    "budget_cap_and_auto_disable": {"status": "absent", "owner": "Executive + Economy", "reason": "no metered units, so no enforceable hard cap"},
+    "executive_order": {"status": "absent", "owner": "Executive coordinator", "reason": "no signed reversible Statistics-only activation order"},
+    "judiciary_determination": {"status": "requested", "owner": "Judiciary", "reason": "requested on origin hub and issue; independent random audit selection not co-opted"}
+  },
+  "baseline": {
+    "file": "baseline-20261119.json",
+    "sha256": "1f7ce6153beb4e3391b2d5c387c93b386662c60414333ab477d2b557f97ea968",
+    "git_blob": "30f94cf6aa798a2de894387a29b03f05b73d5bd8",
+    "self_label": "diagnostic; NOT authority to activate; no validated marginal-utility baseline; zero scored outcomes",
+    "verified_outcome_numerator": 0,
+    "usable_as_comparator": false
+  },
+  "baseline_digest_recheck": [
+    {"name": "funding", "baseline_sha256": "af9734bf3c13537aed11dce858c4fcadadd987a3e7d5eccfa5a50277e1683e35", "frozen_sha256": "85de52d3f2cac7ce06896529727ca976b3181e17c33c6026cbe3e138ebbf7666", "match": false},
+    {"name": "judiciary", "baseline_sha256": "e64ffa96a4ff7f99f8ef0dfa62a8524c14288e74d49b4dd585416739165c0800", "frozen_sha256": "7458088bbfa1e27d7dd1673d24ccf76d748f45ac80a8447eaa97bc56de4d5eae", "match": false},
+    {"name": "outcomes", "baseline_sha256": "c4f3f2304bb2fb2ebe63a8e7577b68fecbc4d506d6917dfc985bd02ee614d1b5", "frozen_sha256": "a4740c19681285cee0c1cc25a4c7a1dc8f4ea629240251068fcc415be4a9563f", "match": false},
+    {"name": "predictions", "baseline_sha256": "2bc3d9a95e782bc3948704f498ec3a4e8439158c5ae1428c3b51246a644151ad", "frozen_sha256": "54ed9553993142a8496ddbce6bdf2593e12550e0465303eea481c5d10511be28", "match": false},
+    {"name": "resources", "baseline_sha256": "1562797889c65a49ec26b437106d61f1603bc167ba1dfbb21d8ccb8f982668b7", "frozen_sha256": "1f981efd2470cd48830253124d67f5eb94b089adcd5906399d54540809ff9028", "match": false}
+  ],
+  "sources": [
+    {"snapshot": "outcomes-latest.json", "kind": "live_state", "role": "negative_control / process counts", "sha256": "a4740c19681285cee0c1cc25a4c7a1dc8f4ea629240251068fcc415be4a9563f", "size_bytes": 1821, "observed_at": 1795196830, "path": "/var/lib/lubko/wd/viche-state/institutional-outcomes/latest.json", "reproducible": "point-in-time_snapshot_only"},
+    {"snapshot": "economy-report.json", "kind": "live_state", "role": "resource context (no cost meter)", "sha256": "85de52d3f2cac7ce06896529727ca976b3181e17c33c6026cbe3e138ebbf7666", "size_bytes": 2580, "observed_at": "2026-11-20T16:02:56Z", "path": "/var/lib/lubko/wd/viche-state/economy/report.json", "reproducible": "point-in-time_snapshot_only"},
+    {"snapshot": "economy-resources.json", "kind": "live_state", "role": "resource context (no cost meter)", "sha256": "1f981efd2470cd48830253124d67f5eb94b089adcd5906399d54540809ff9028", "size_bytes": 3442, "observed_at": "2026-11-20T17:47:10Z", "path": "/var/lib/lubko/wd/viche-state/economy/resources.json", "reproducible": "point-in-time_snapshot_only"},
+    {"snapshot": "judiciary-measurements.json", "kind": "live_state", "role": "independent measurement reliability", "sha256": "7458088bbfa1e27d7dd1673d24ccf76d748f45ac80a8447eaa97bc56de4d5eae", "size_bytes": 7032, "observed_at": 1795196830, "path": "/var/lib/lubko/wd/viche-state/branches/judiciary-measurements.json", "reproducible": "point-in-time_snapshot_only"},
+    {"snapshot": "institutional-cases-index.json", "kind": "live_state", "role": "case signal index (not repair proof)", "sha256": "239c9823ddb0f5e232538dd9b54b2f3c54aa15bbe27c853006a5ca82934188fc", "size_bytes": 4407, "observed_at": 1795196833, "path": "/var/lib/lubko/wd/viche-state/institutional-cases/index.json", "reproducible": "point-in-time_snapshot_only"},
+    {"snapshot": "predictions-calibration.json", "kind": "committed", "role": "negative_control / forecasts", "sha256": "54ed9553993142a8496ddbce6bdf2593e12550e0465303eea481c5d10511be28", "size_bytes": 8879, "git_blob": "a170c3ec9bf5359a866f5d3b1041d51581a85c8d", "path": "/var/lib/lubko/wd/viche/records/predictions/calibration.json", "reproducible": true},
+    {"snapshot": "activation.json", "kind": "committed", "role": "authorization state (all offices disabled)", "sha256": "91329c75e7f72b1cbffff97b186e1b94dbc8abeabb9d1dc17172ec260ab7a6e4", "size_bytes": 799, "path": "/var/lib/lubko/wd/viche/records/knowledge/activation.json", "reproducible": true},
+    {"snapshot": "baseline-20261119.json", "kind": "committed", "role": "diagnostic baseline (false comparator)", "sha256": "1f7ce6153beb4e3391b2d5c387c93b386662c60414333ab477d2b557f97ea968", "size_bytes": 2735, "git_blob": "30f94cf6aa798a2de894387a29b03f05b73d5bd8", "path": "records/knowledge/baseline-20261119.json", "reproducible": true},
+    {"snapshot": "preflight-investigation.md", "kind": "committed", "role": "prior readiness finding", "sha256": "ed71ab54b72d4776398d471712f0c65aa97d627640892e42b5c928b9fafc0184", "size_bytes": 6301, "git_blob": "9903e2f0991c22570992d56af4fd6216d8630645", "path": "records/investigations/knowledge-statistics-trial-preflight-20261120.md", "reproducible": true},
+    {"snapshot": "board-fetch-recurrence-addendum.md", "kind": "committed", "role": "candidate repair record (excluded: mitigation not verified fix)", "sha256": "439d687ebb1a973f85af3af2448b9159f05236a1f8edfa0193e7d89aa4d4977a", "size_bytes": 10827, "git_blob": "30397c0def29bd728ddca6b01654e53266b96a0f", "path": "records/investigations/executive-board-fetch-recurrence-addendum-20261120.md", "reproducible": true},
+    {"snapshot": "judiciary-executive-disposition.md", "kind": "committed", "role": "independent fact-finding on candidate repair", "sha256": "c05128a31c879e4271b5324d671b15d2173556eb2ae953de28cd7e906367496d", "size_bytes": 7251, "git_blob": "94eeac012278430655faaf2891cbaa7412876bf8", "path": "records/JUDICIARY-DISPOSITION-executive-unhealthy-1795150900-20261120.md", "reproducible": true},
+    {"snapshot": "audit-b40995-disposition.md", "kind": "committed", "role": "independent Audit disposition", "sha256": "358e55db27a0112f2b84a81b597a510ebf23c87f7a456ec4160d21a6729e756b", "size_bytes": 6126, "git_blob": "967d181314006c9653a44648faf3f3f511beb873", "path": "records/AUDIT-2026-11-20-cycle-b40995-independent-disposition.md", "reproducible": true},
+    {"snapshot": "act32-v4-bill.md", "kind": "committed", "role": "enacted law text (amendments D/E/K, clause 10)", "sha256": "787279bfe4c4d1f1b99a69e1bca2e8307bcc6473bba856514bddc70e5a841c6b", "size_bytes": 9047, "git_blob": "248149c2a5c58a8ba01ea06b09850bab4c9ecac8", "path": "records/bills/institutional-knowledge-and-communications-act-v4.md", "reproducible": true}
+  ],
+  "provenance": {
+    "method": "byte snapshots copied from the named paths and git blob hashes computed with git hash-object at the creation epoch; bytes pinned by MANIFEST.sha256 in the sources directory",
+    "caveat": "live_state sources are point-in-time snapshots of mutable paths; they are reproducible only as the frozen bytes in this record, not by re-reading the live path",
+    "verification_tools": ["government/statistics-evidence.py manifest|verify|missingness", "government/statistics-preflight.sh"],
+    "no_fabrication": "no verification, activation order, Judiciary verdict or marginal-utility claim is made by this record"
+  }
+}
