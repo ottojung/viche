@@ -29,20 +29,9 @@ case "$key" in
       grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" || {
         echo "Knowledge appointment forbidden before lawful enactment" >&2; exit 1;
       }
-      activation=$town/records/knowledge/activation.json
-      [ -s "$activation" ] && jq -e --arg office "$key" --argjson now "$(date +%s)" '
-        .schema=="viche-knowledge-activation-v1" and
-        (.offices[$office].enabled==true) and
-        (.offices[$office].authorized_by|type=="string") and
-        (.offices[$office].authorized_by|startswith("act:")) and
-        (.offices[$office].not_before|type=="number") and
-        (.offices[$office].expires_at|type=="number") and
-        ((.offices[$office].expires_at - .offices[$office].not_before) > 0) and
-        ((.offices[$office].expires_at - .offices[$office].not_before) <= 3888000) and
-        (.offices[$office].not_before <= $now) and
-        (.offices[$office].expires_at > $now)' "$activation" >/dev/null || {
-          echo "Knowledge appointment forbidden without unexpired office authorization" >&2; exit 1;
-        }
+      /bin/sh "$town/government/knowledge-activation-verify.sh" "$key" || {
+        echo "Knowledge appointment forbidden without valid, office-specific, unexpired authorization" >&2; exit 1;
+      }
     fi ;;
 esac
 mkdir -p "$root"

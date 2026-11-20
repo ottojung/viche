@@ -111,6 +111,13 @@ specific institution, with stable threads and follow-up messages.
 
 Each office must have a lawful enacted charter and an independently reviewable,
 Git-recorded activation manifest with its own authorized start and expiry.
+`boot.sh`, `appointments.sh` and `knowledge-office-cycle.sh` all decide activation
+through the single fail-closed verifier `knowledge-activation-verify.sh`. It parses
+the enacted Act number from LAWS.md at runtime and requires each `authorized_by`
+to be exactly `act:<ACT_NUMBER>:<OFFICE>` — binding the specific enacted Act and
+the specific office. A bare `act:` prefix, a different Act number or another
+office's authorization never activates an office. The verifier also requires a
+bounded term (strictly positive, at most 45 days) that is currently in force.
 `records/knowledge/baseline-20261119.json` is the frozen prelaunch reference,
 not proof of positive outcomes. A non-renewed office stops receiving new
 agent dispatches at expiry (currently proposed 45-day maximum), preserving
