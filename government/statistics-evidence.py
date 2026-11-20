@@ -26,6 +26,29 @@ def sha256_of(path):
     return h.hexdigest()
 
 
+def snapshot_path(root, name):
+    """Return a path only for a plain, non-symlink filename inside root.
+
+    Rejects '', '.', '..', any path separator, NUL and symlinks so a crafted
+    attestation cannot make verify() read outside the pinned snapshot set.
+    """
+    if not isinstance(name, str) or not name or name in (".", ".."):
+        return None
+    if "/" in name or "\\" in name or "\x00" in name:
+        return None
+    if os.path.basename(name) != name:
+        return None
+    path = root / name
+    if os.path.islink(path):
+        return None
+    try:
+        if path.resolve().parent != root.resolve():
+            return None
+    except OSError:
+        return None
+    return path
+
+
 def manifest(source_dir):
     """Return sha256sum-style lines for every regular file, sorted by name."""
     root = Path(source_dir)
@@ -33,6 +56,8 @@ def manifest(source_dir):
         raise SystemExit("evidence: not a directory: %s" % source_dir)
     lines = []
     for path in sorted(root.iterdir()):
+        if path.is_symlink():
+            continue
         if not path.is_file() or path.name == "MANIFEST.sha256":
             continue
         lines.append("%s  %s" % (sha256_of(path), path.name))
@@ -47,8 +72,9 @@ def load_attestation(path):
 def verify(attestation_path, source_dir):
     """Check pinned source snapshots against their declared hashes and sizes.
 
-    Prints a JSON report. Exit 0 only when every pinned snapshot is present and
-    byte-identical and the frozen MANIFEST (if present) is consistent.
+    Prints a JSON report. Exit 0 only when every attested snapshot is a plain
+    in-root file with matching hash and size, the attested set equals the files
+    present, and the frozen MANIFEST (if present) is consistent.
     """
     att = load_attestation(attestation_path)
     root = Path(source_dir)
@@ -57,15 +83,17 @@ def verify(attestation_path, source_dir):
     if not isinstance(sources, list) or not sources:
         problems.append("no pinned sources in attestation")
         sources = []
+    declared_names = []
     for entry in sources:
         if not isinstance(entry, dict):
             problems.append("malformed source entry")
             continue
         name = entry.get("snapshot")
-        if not name or not isinstance(name, str):
-            problems.append("source entry without snapshot name")
+        path = snapshot_path(root, name)
+        if path is None:
+            problems.append("unsafe or missing snapshot name: %r" % (name,))
             continue
-        path = root / name
+        declared_names.append(name)
         if not path.is_file():
             problems.append("missing source: %s" % name)
             continue
@@ -77,17 +105,22 @@ def verify(attestation_path, source_dir):
             problems.append("hash mismatch: %s" % name)
         if want_size is not None and size != want_size:
             problems.append("size mismatch: %s" % name)
+    present = {p.name for p in root.iterdir()
+               if p.is_file() and not p.is_symlink() and p.name != "MANIFEST.sha256"}
+    extra = sorted(present - set(declared_names))
+    if extra:
+        problems.append("unattested files present: %s" % ",".join(extra))
     manifest_path = root / "MANIFEST.sha256"
-    if manifest_path.is_file():
+    if manifest_path.is_file() and not manifest_path.is_symlink():
         declared = {}
         for line in manifest_path.read_text(encoding="utf-8").splitlines():
             parts = line.split("  ", 1)
             if len(parts) == 2:
                 declared[parts[1]] = parts[0]
         for name, digest in sorted(declared.items()):
-            path = root / name
-            if not path.is_file():
-                problems.append("manifest file missing: %s" % name)
+            path = snapshot_path(root, name)
+            if path is None or not path.is_file():
+                problems.append("manifest file missing or unsafe: %s" % name)
             elif sha256_of(path) != digest:
                 problems.append("manifest hash mismatch: %s" % name)
     report = {
@@ -100,11 +133,11 @@ def verify(attestation_path, source_dir):
 
 
 def missingness(attestation_path):
-    """Assert the design is present and unavailable measures are not faked as 0.
+    """Assert the design is present and measurements are not fabricated.
 
-    A resource measurement that was never metered must be recorded as
-    "unavailable"; writing 0 would manufacture a comparator the Town does not
-    have. Exit 0 only for an honest record.
+    An unmetered resource must be recorded as "unavailable"; writing 0 would
+    manufacture a comparator the Town does not have. A claimed meter must carry
+    a frozen source snapshot, numeric values, timestamps and a method.
     """
     att = load_attestation(attestation_path)
     problems = []
@@ -113,14 +146,24 @@ def missingness(attestation_path):
             problems.append("missing design field: %s" % key)
     res = att.get("denominator_resource")
     if isinstance(res, dict):
-        if res.get("meter_available") is True and res.get("units") in (None, "", "unavailable"):
-            problems.append("meter claimed available without units")
         if res.get("meter_available") is not True:
             for field in ("tokens", "machine_time", "wall_time"):
                 if res.get(field) == 0:
                     problems.append("unmetered %s recorded as zero" % field)
                 if res.get(field) is None and field not in res.get("_declared_unavailable", []):
                     problems.append("unmetered %s not declared unavailable" % field)
+        else:
+            for field in ("units", "source_snapshot", "measured_at", "method"):
+                value = res.get(field)
+                if not isinstance(value, str) or not value or value == "unavailable":
+                    problems.append("metered denominator missing %s" % field)
+            values = res.get("values")
+            if not isinstance(values, dict) or any(
+                    not isinstance(values.get(k), (int, float)) or isinstance(values.get(k), bool)
+                    for k in ("tokens", "machine_time", "wall_time")):
+                problems.append("metered denominator lacks numeric values")
+            if res.get("reproducible") is not True:
+                problems.append("metered denominator not reproducible")
     else:
         problems.append("denominator_resource is not an object")
     report = {"honest": not problems, "problems": problems}

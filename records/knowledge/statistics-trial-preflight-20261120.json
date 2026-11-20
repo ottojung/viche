@@ -58,6 +58,11 @@
     "machine_time": null,
     "wall_time": null,
     "_declared_unavailable": ["tokens", "machine_time", "wall_time"],
+    "source_snapshot": null,
+    "measured_at": null,
+    "method": "no cost meter was active before activation; no reproducible metered method exists",
+    "values": null,
+    "reproducible": false,
     "economy_sources_checked": ["economy-report.json", "economy-resources.json"],
     "finding": "Economy reports model availability, cooling, disk, load, memory and funding risk. No per-office token usage, machine time or wall-time field exists in any inspected report, and no cost meter was active before activation. These measures are unavailable, not zero.",
     "hard_cap_units": "unavailable until Economy supplies a meter"
@@ -97,11 +102,12 @@
     "any claim of a historical effect numerator without an independent Judiciary factual determination under Act 23 5.2"
   ],
   "gates": {
-    "verified_numerator": {"status": "blocked", "owner": "Judiciary (independent factual determination)", "reason": "candidate defined; zero independently confirmed repairs in frozen window; no verifier sign-off"},
-    "frozen_resource_denominator": {"status": "blocked", "owner": "Ministry of Economy", "reason": "no per-office meter; all resource measures unavailable"},
-    "budget_cap_and_auto_disable": {"status": "absent", "owner": "Executive + Economy", "reason": "no metered units, so no enforceable hard cap"},
-    "executive_order": {"status": "absent", "owner": "Executive coordinator", "reason": "no signed reversible Statistics-only activation order"},
-    "judiciary_determination": {"status": "requested", "owner": "Judiciary", "reason": "requested on origin hub and issue; independent random audit selection not co-opted"}
+    "verified_numerator": {"status": "blocked", "owner": "Judiciary (independent factual determination)", "evidence_ref": "requested: Su7XcZoBu720pWGRTVoCio-emerson", "reason": "candidate defined; zero independently confirmed repairs in frozen window; no verifier sign-off"},
+    "frozen_resource_denominator": {"status": "blocked", "owner": "Ministry of Economy", "evidence_ref": "frozen economy-report.json + economy-resources.json (no meter)", "reason": "no per-office meter; all resource measures unavailable"},
+    "source_attestation": {"status": "blocked", "owner": "independent research agent", "evidence_ref": "records/knowledge/statistics-trial-preflight-20261120.json + sources/MANIFEST.sha256", "reason": "sources frozen and hashed, but no independent verifier has signed the attestation"},
+    "budget_cap_enforcement": {"status": "absent", "owner": "Executive + Economy", "evidence_ref": "none", "reason": "no metered units, so no enforceable hard cap or automatic disable"},
+    "executive_order": {"status": "absent", "owner": "Executive coordinator", "evidence_ref": "none", "reason": "no signed reversible Statistics-only activation order"},
+    "judiciary_determination": {"status": "requested", "owner": "Judiciary", "evidence_ref": "requested on origin hub and issue", "reason": "independent random audit selection not co-opted"}
   },
   "baseline": {
     "file": "baseline-20261119.json",

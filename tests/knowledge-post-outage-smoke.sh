@@ -26,17 +26,24 @@ size=$(stat -c %s "$d/town/records/knowledge/statistics-preflight-20261120-sourc
 python3 - "$sha" "$size" > "$d/town/records/knowledge/statistics-trial-preflight-20261120.json" <<'PY'
 import json, sys
 sha, size = sys.argv[1], int(sys.argv[2])
-gates = {k: {"status": "green"} for k in (
-    "verified_numerator", "frozen_resource_denominator",
-    "budget_cap_and_auto_disable", "executive_order", "judiciary_determination")}
+gates = {k: {"status": "green", "owner": "independent-owner",
+             "evidence_ref": "sha256:fixture"} for k in (
+    "verified_numerator", "frozen_resource_denominator", "source_attestation",
+    "budget_cap_enforcement", "executive_order", "judiciary_determination")}
 json.dump({
     "schema": "viche-statistics-trial-preflight-1", "office": "statistics",
     "readiness": "ready", "gates": gates,
-    "candidate_outcome": "x", "numerator": "x", "denominator_statistical": "x",
+    "candidate_outcome": "x",
+    "numerator": {"verified": True, "independent_verifier": "judiciary-fixture"},
+    "denominator_statistical": "x",
     "negative_controls": ["x"], "observation_windows": "x", "comparison": "x",
     "falsifiers": ["x"], "missingness": ["x"],
-    "denominator_resource": {"meter_available": True, "units": "usd",
-        "tokens": 1, "machine_time": 1, "wall_time": 1},
+    "denominator_resource": {
+        "meter_available": True, "units": "usd", "tokens": 1,
+        "machine_time": 1, "wall_time": 1, "reproducible": True,
+        "source_snapshot": "src.json", "measured_at": "2026-11-20T00:00:00Z",
+        "method": "fixture meter",
+        "values": {"tokens": 1, "machine_time": 1, "wall_time": 1}},
     "sources": [{"snapshot": "src.json", "sha256": sha, "size_bytes": size}],
 }, sys.stdout, sort_keys=True)
 PY
