@@ -1,0 +1,55 @@
+{
+  "schema": "viche-spying-source-allowlist-v1",
+  "version": 1,
+  "office": "spying",
+  "note": "Act 32 clause 4 / amendment F enforced allowlist. Source IDs and path prefixes only, never a caller-supplied prefix. Every authorization below cites a pinned exact-author Vitalik board message that the verifier re-resolves from authoritative board data at validation time. This record is validation config, NOT office activation, publication authority or Founder authorization by itself.",
+  "effective_from": 1795132800,
+  "expires_at": 1799020800,
+  "max_evidence_age_seconds": 7776000,
+
+  "antonina": {
+    "founder_author": "Vitalik",
+    "messages": {
+      "sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0": {
+        "id": "sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0",
+        "issue": "SvMHxlO6F1R6u3cQcr3lKA-repeated",
+        "author": "Vitalik",
+        "createdAt": "2026-11-20T05:18:27.303Z",
+        "body_sha256": "sha256:badf8fb3ef66a0fdcd00ad302630cb79845019edc59635c02849300e565f84e2",
+        "scope": "founder-mandate-hub: bounded Viche knowledge-institutions expansion",
+        "captured_at": 1795151907
+      },
+      "sha256:kdbOK24EkPTSQlHgrQvLB9kGtaKzoqXL7wliFYia6Ug": {
+        "id": "sha256:kdbOK24EkPTSQlHgrQvLB9kGtaKzoqXL7wliFYia6Ug",
+        "issue": "302",
+        "author": "Vitalik",
+        "createdAt": "2026-11-20T05:17:49.551Z",
+        "body_sha256": "sha256:d822e0a2b83a0b2de2508ba32555ffdc9af3a319e0ea7ed5c0900ffb719c1279",
+        "scope": "town-hall-302: detailed Founder directive for the knowledge institutions",
+        "captured_at": 1795151869
+      }
+    }
+  },
+
+  "github_public": {
+    "repos": {
+      "ottojung/viche": {
+        "authorized_by": "sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0",
+        "scope": "Viche's own public repository activity, within the Founder-authorized expansion",
+        "content_sha256": null
+      }
+    }
+  },
+
+  "project_sources": {
+    "sources": {
+      "records/knowledge/baseline-20261119.json": {
+        "authorized_by": "sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0",
+        "scope": "frozen diagnostic prelaunch baseline; observations only, not verified outcomes",
+        "effective_from": 1795132800,
+        "expires_at": 1799020800,
+        "content_sha256": "sha256:1f7ce6153beb4e3391b2d5c387c93b386662c60414333ab477d2b557f97ea968"
+      }
+    }
+  }
+}

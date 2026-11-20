@@ -178,6 +178,29 @@ if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \
     ) 9>"$statistics_root/report.lock" >> "$statistics_root/report.log" 2>&1 < /dev/null &
 fi
 
+# Act 32 PUBLIC Post archive redaction scan: independent, bounded and
+# strictly nonblocking. Scanner failures are reported without silencing
+# constitutional, legislative or judicial duties.
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
+   [ -f "$town/government/post.py" ]; then
+    guard_state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/post
+    mkdir -p "$guard_state"
+    (
+        flock -n 9 || exit 0
+        now=$(date +%s)
+        last=0
+        [ ! -s "$guard_state/last-archive-scan" ] ||
+            last=$(cat "$guard_state/last-archive-scan")
+        case "$last" in ''|*[!0-9]*) last=0;; esac
+        [ $((now-last)) -ge 21600 ] || exit 0
+        if timeout 90 python3 "$town/government/post.py" archive-scan; then
+            printf '%s\n' "$now" > "$guard_state/last-archive-scan"
+        else
+            echo "Viche Post: public archive scan failed; retry next boot" >&2
+        fi
+    ) 9>"$guard_state/guard.lock" >> "$guard_state/guard.log" 2>&1 < /dev/null &
+fi
+
 # Deterministic oversight continues even when every AI session is unavailable.
 # Failure of telemetry/auditing must not prevent unrelated reconciliation.
 if [ -f "$town/government/oversight-watch.sh" ]; then

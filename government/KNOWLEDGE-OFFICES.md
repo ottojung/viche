@@ -92,8 +92,17 @@ Do not initiate unrelated external missions.
 
 ## Post and Gazette
 
-Use python3 government/post.py --help. Mail is durable PUBLIC addressed correspondence (explicit --public on sends);
-it offers no confidentiality or authoritative sender authentication.
+Use python3 government/post.py --help. Mail is durable PUBLIC addressed
+correspondence (explicit --public on sends); it offers no confidentiality or
+authoritative sender authentication. The Post guard rejects high-confidence
+credential patterns *before database insertion*, records only pattern IDs,
+and periodically scans previously stored messages for suspected credentials,
+placing affected IDs in immutable quarantine metadata. Quarantined messages
+are masked by Post read APIs, and health reports the incident count. **This
+does not make the original SQLite bytes confidential** on the shared Unix UID;
+incident responders must assess exposure and revoke or rotate leaked credentials
+through authorized channels. Sender identity, scrubbed text and read receipts
+are not trustworthy proof of factual claims.
 Gazette is opt-in publication on topics. Senders and author
 labels cannot be authenticated on the current shared host UID; the legal
 Founder intake, ballot and independent verification pathways do not change.

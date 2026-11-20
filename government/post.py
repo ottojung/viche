@@ -15,6 +15,8 @@ import sys
 import time
 import uuid
 
+import post_guard
+
 NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,127}$")
 TOPIC = re.compile(r"^[a-z][a-z0-9/-]{0,127}$")
 KINDS = ("letter", "request", "observation", "forecast", "scenario",
@@ -42,6 +44,12 @@ CREATE TABLE IF NOT EXISTS subscriptions(
 CREATE TABLE IF NOT EXISTS events(
   event_id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL,
   actor TEXT NOT NULL, action TEXT NOT NULL, message_id TEXT, details TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS quarantine(
+  message_id TEXT PRIMARY KEY REFERENCES messages(id),
+  detected_at INTEGER NOT NULL, pattern_ids TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS guard_scans(
+  scanned_at INTEGER PRIMARY KEY, messages_checked INTEGER NOT NULL,
+  messages_quarantined INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS msg_channel_topic ON messages(channel,topic,created_at);
 CREATE INDEX IF NOT EXISTS delivery_inbox ON deliveries(recipient,status,created_at);
 CREATE TRIGGER IF NOT EXISTS immutable_messages_update BEFORE UPDATE ON messages
@@ -52,6 +60,10 @@ CREATE TRIGGER IF NOT EXISTS immutable_events_update BEFORE UPDATE ON events
 BEGIN SELECT RAISE(ABORT,'event history is immutable'); END;
 CREATE TRIGGER IF NOT EXISTS immutable_events_delete BEFORE DELETE ON events
 BEGIN SELECT RAISE(ABORT,'event history deletion is forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS immutable_quarantine_update BEFORE UPDATE ON quarantine
+BEGIN SELECT RAISE(ABORT,'quarantine record cannot be changed'); END;
+CREATE TRIGGER IF NOT EXISTS immutable_quarantine_delete BEFORE DELETE ON quarantine
+BEGIN SELECT RAISE(ABORT,'quarantine record cannot be erased'); END;
 """
 
 def clock():
@@ -91,10 +103,24 @@ def valid_topic(value):
 def output(obj):
     print(json.dumps(obj,sort_keys=True,ensure_ascii=False))
 
-def msg_dict(row):
+def msg_dict(row, db):
     result = dict(row)
-    for key in ("sources","based_on"):
-        result[key] = json.loads(result[key])
+    quarantined = db.execute(
+        "SELECT pattern_ids FROM quarantine WHERE message_id=?",
+        (result["id"],)).fetchone()
+    result["quarantined"] = quarantined is not None
+    if quarantined:
+        for key in ("subject","body","conditions","baseline","resolution_rule",
+                    "alternative","resolution"):
+            if key in result:
+                result[key] = "[REDACTED: suspected credential]"
+        result["idempotency_key"] = None
+        result["sources"] = []
+        result["based_on"] = []
+        result["quarantine_pattern_ids"] = json.loads(quarantined[0])
+    else:
+        for key in ("sources","based_on"):
+            result[key] = json.loads(result[key])
     result["sender_authenticated"]=False
     result["confidential"]=False
     return result
@@ -109,6 +135,9 @@ def source_roots(db, message_id, visited=None):
                      (message_id,)).fetchone()
     if row is None:
         raise ValueError("unknown source message " + message_id)
+    if db.execute("SELECT 1 FROM quarantine WHERE message_id=?",
+                  (message_id,)).fetchone():
+        return set()
     roots = set(json.loads(row["sources"]))
     for parent in json.loads(row["based_on"]):
         roots.update(source_roots(db,parent,seen))
@@ -158,6 +187,19 @@ def publish(db, args):
     text = Path(args.body_file).read_text() if args.body_file else args.body
     if not text or not args.subject.strip():
         raise ValueError("message subject and body are required")
+    try:
+        post_guard.check(sender,recipient,topic,args.subject, text, args.key,
+                         args.conditions,args.baseline,args.resolution_rule,
+                         args.alternative,args.source,args.based_on)
+    except ValueError as exc:
+        # The rejection audit contains only pattern IDs, never raw credentials.
+        with db:
+            event(db,sender,"credential-like-content-rejected",
+                  pattern_ids=post_guard.check_ids(
+                      sender,recipient,topic,args.subject,text,args.key,
+                      args.conditions,args.baseline,args.resolution_rule,
+                      args.alternative,args.source,args.based_on))
+        raise ValueError(str(exc)) from None
     sources = sorted(set(args.source))
     based_on = sorted(set(args.based_on))
     if kind == "observation" and (not sources or not args.conditions):
@@ -270,13 +312,13 @@ def inbox(db, args):
          WHEN m.channel='mail' AND d.status='new' THEN 0
          WHEN d.status='new' THEN 1 ELSE 2 END,
          m.created_at,m.id LIMIT ?""",(office,min(max(args.limit,1),200))).fetchall()
-    return [msg_dict(row) for row in rows]
+    return [msg_dict(row,db) for row in rows]
 
 def feed(db,args):
     rows=db.execute("""SELECT * FROM messages WHERE channel='gazette'
       AND (?='' OR topic=?) ORDER BY created_at DESC,id DESC LIMIT ?""",
       (args.topic or "",args.topic or "",args.limit)).fetchall()
-    return [msg_dict(r) for r in rows]
+    return [msg_dict(r,db) for r in rows]
 
 def transition(db,args):
     office=valid_name(args.office)
@@ -294,6 +336,14 @@ def transition(db,args):
         return {"id":args.id,"status":status,"already_advanced":True}
     if requested=="resolved" and not args.reason:
         raise ValueError("resolutions require a reason; not proof of task success")
+    if requested=="resolved":
+        try:
+            post_guard.check(args.reason)
+        except ValueError as exc:
+            event(db,office,"credential-like-content-rejected",args.id,
+                  pattern_ids=post_guard.check_ids(args.reason))
+            db.commit()
+            raise ValueError(str(exc)) from None
     if requested==status:
         return {"id":args.id,"status":status,"duplicate":True}
     at=clock()
@@ -324,6 +374,46 @@ def wake(db,args):
             "ids":[],"automatic_dispatch":False,
             "reason":"public untrusted correspondence cannot awaken agents"}
 
+def archive_scan(db,args):
+    """Quarantine public API retrieval of existing credential-like messages.
+
+    Historical on-disk copies are NOT made confidential by this operation:
+    the shared Unix user may read the database. Record incidents for follow-up.
+    """
+    checked=0
+    newly=0
+    with db:
+        db.execute("BEGIN IMMEDIATE")
+        messages=db.execute("SELECT * FROM messages").fetchall()
+        for row in messages:
+            checked+=1
+            values=[row[k] for k in row.keys() if k not in ("created_at","chain_depth")]
+            values.extend(r[0] for r in db.execute(
+                "SELECT resolution FROM deliveries WHERE message_id=? AND resolution IS NOT NULL",
+                (row["id"],)))
+            values.extend(r[0] for r in db.execute(
+                "SELECT details FROM events WHERE message_id=?",
+                (row["id"],)))
+            ids=post_guard.check_ids(*values)
+            if not ids:
+                continue
+            if db.execute("SELECT 1 FROM quarantine WHERE message_id=?",
+                          (row["id"],)).fetchone():
+                continue
+            db.execute("INSERT INTO quarantine VALUES(?,?,?)",
+                       (row["id"],clock(),json.dumps(ids)))
+            event(db,"post-guard","credential-like-content-quarantined",
+                  row["id"],pattern_ids=ids)
+            newly+=1
+        db.execute("INSERT OR REPLACE INTO guard_scans VALUES(?,?,?)",
+                   (clock(),checked,newly))
+    total=db.execute("SELECT COUNT(*) FROM quarantine").fetchone()[0]
+    return {"checked":checked,"newly_quarantined":newly,
+            "total_quarantined":total,"api_redaction":True,
+            "disk_confidentiality":False,
+            "warning":"shared Unix UID can still read historical raw SQLite bytes"}
+
+
 def health(db,args):
     check=db.execute("PRAGMA integrity_check").fetchone()[0]
     counts={row[0]:row[1] for row in db.execute(
@@ -332,7 +422,12 @@ def health(db,args):
     msg=db.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
     pending=db.execute("""SELECT MIN(created_at) FROM deliveries
        WHERE status IN ('new','read','acknowledged')""").fetchone()[0]
-    return {"healthy":check=="ok","integrity":check,"messages":msg,
+    quarantine=db.execute("SELECT COUNT(*) FROM quarantine").fetchone()[0]
+    last_scan=db.execute("SELECT MAX(scanned_at) FROM guard_scans").fetchone()[0]
+    return {"healthy":check=="ok" and quarantine==0,
+            "integrity":check,"messages":msg,
+            "quarantined_messages":quarantine,
+            "last_archive_scan_at":last_scan,
             "publications":pubs,"delivery_status":counts,
             "oldest_unresolved_age_s":clock()-pending if pending else None,
             "db_bytes":location().stat().st_size,
@@ -358,7 +453,7 @@ def thread(db,args):
         if mid in seen:continue
         seen.add(mid)
         r=db.execute("SELECT * FROM messages WHERE id=?",(mid,)).fetchone()
-        if r: found.append(msg_dict(r))
+        if r: found.append(msg_dict(r,db))
         queue.extend(x[0] for x in db.execute(
             "SELECT id FROM messages WHERE caused_by=? ORDER BY created_at,id",(mid,)))
     return {"root_id":root,"messages":found,
@@ -371,7 +466,14 @@ def trace(db,args):
         "SELECT * FROM deliveries WHERE message_id=? ORDER BY recipient",(args.id,))]
     events=[dict(x) for x in db.execute(
         "SELECT * FROM events WHERE message_id=? ORDER BY event_id",(args.id,))]
-    return {"message":msg_dict(row),"deliveries":deliveries,
+    protected = bool(db.execute("SELECT 1 FROM quarantine WHERE message_id=?",
+                                (args.id,)).fetchone())
+    if protected:
+        for item in deliveries:
+            item["resolution"] = "[REDACTED: suspected credential]"
+        for item in events:
+            item["details"] = "[REDACTED: suspected credential]"
+    return {"message":msg_dict(row,db),"deliveries":deliveries,
             "events":events,"lineage":lineage(db,args)}
 
 def search(db,args):
@@ -379,7 +481,7 @@ def search(db,args):
     rows=db.execute("SELECT * FROM messages WHERE "
        "(subject LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\') "
        "ORDER BY created_at DESC,id DESC LIMIT ?",(q,q,args.limit)).fetchall()
-    return [msg_dict(r) for r in rows]
+    return [msg_dict(r,db) for r in rows]
 
 def parser():
     p=argparse.ArgumentParser(description=__doc__)
@@ -420,6 +522,7 @@ def parser():
     q=s.add_parser("wake");q.add_argument("--office",required=True)
     q=s.add_parser("lineage");q.add_argument("--id",required=True)
     s.add_parser("health")
+    s.add_parser("archive-scan")
     for name in ("thread","trace"):
         q=s.add_parser(name);q.add_argument("--id",required=True)
         if name=="thread":q.add_argument("--limit",type=int,default=200)
@@ -440,6 +543,7 @@ def main():
         elif args.command=="wake": result=wake(db,args)
         elif args.command=="lineage": result=lineage(db,args)
         elif args.command=="health": result=health(db,args)
+        elif args.command=="archive-scan": result=archive_scan(db,args)
         elif args.command=="thread": result=thread(db,args)
         elif args.command=="trace": result=trace(db,args)
         elif args.command=="search": result=search(db,args)
@@ -447,7 +551,9 @@ def main():
             destination=Path(args.destination)
             if destination.exists(): raise ValueError("backup destination already exists")
             with sqlite3.connect(str(destination)) as dst: db.backup(dst)
-            result={"backup":str(destination),"integrity":"check with post.py health on backup"}
+            result={"backup":str(destination),"contains_raw_quarantined_records":bool(
+                db.execute("SELECT COUNT(*) FROM quarantine").fetchone()[0]),
+                "warning":"backup remains PUBLIC to same-UID processes; handle suspected credentials as an incident"}
         else: raise ValueError("unknown command")
         output(result)
     except (ValueError,sqlite3.Error,OSError) as exc:

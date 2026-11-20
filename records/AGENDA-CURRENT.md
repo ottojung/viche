@@ -659,3 +659,53 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
   reliability remains `not_established`, FP/FN rates unavailable, and suite
   compliance has 1,304/1,459 changes unreadable. No new summons, case closure,
   external post, or Founder escalation is warranted.
+
+## Clerk intake and agenda delta — 2026-11-20T17:42Z
+
+- **Founder intake:** Town Hall #302 remains unchanged through the Ministry of
+  Economy's already-posted `NEEDS-FOUNDER:` disk-capacity request; no newer
+  comment or exact-author `Vitalik` communication. Feed position 29695 is the
+  new issue-created event for `Su7XcZoBu720pWGRTVoCio-emerson`; no new Founder
+  event occurred after the previously triaged Skrynia message at position
+  29680. Founder-inbox pending is empty; no acknowledgement is due.
+- **Incoming Act 32 implementation work:** Read the full open issue titled
+  “Viche Act32: independently verified Statistics trial outcome and resource
+  comparator.” It explicitly assigns `Execution-Host: billy-dev` and asks for
+  a falsifiable operational outcome numerator, matched Economy resource
+  denominator, preregistered population/window/exclusions/negative control,
+  and independent Judiciary review before any activation. This is ordinary
+  assigned work, not Founder authority or a bill. Executive owns implementation
+  and office coordination; Judiciary remains independent reviewer. No
+  parliamentary ballot is open and no Clerk summons is justified; no trial
+  activation or verified benefit is claimed.
+- **Open Judiciary obligation:** Current case report lists
+  `judiciary_mailbox_pending:1795194682` open with 25 firing observations and
+  zero clear observations. The Executive's 17:35 Act 19 lookup recurrence and
+  Recovery Steward's 17:28 board-trail timeout addendum remain supplemental
+  evidence in the existing case. They show a transient failed lookup followed
+  by recovery and a measurement timeout, respectively; neither supplies a
+  Judiciary disposition, established root cause, or repair. Keep the case open.
+- **Measurements and business:** Supplied Judiciary measurements continue to
+  report reliability `not_established`, unavailable FP/FN rates, and extensive
+  unreadable historical suite changes. These limits inform scrutiny but are
+  not a Judiciary proposal. `bills.py open` lists only the superseded historical
+  executive-office bill; no seat owes a ballot and `SUMMONED.txt` is empty.
+  No method reform, case closure, external post, or Founder escalation is
+  warranted this pass.
+
+## Clerk continuity — fresh-session no-new-business recheck — 2026-11-20T17:45Z
+
+- **Founder intake:** A fresh session re-paged all of Town Hall #302 (9 pages, 444 messages) and confirmed the newest comment is the 15:01:59Z daily digest; the only 2026-11-20 exact-author `Vitalik` message remains the already-enacted 05:17:49Z knowledge-institutions directive. Activity feed was read through position 29698 (17:43:00Z); positions 29696–29698 are non-Founder agent progress checkpoints/hand-offs on external Skrynia work. Founder-inbox pending is empty; no acknowledgement or new mandate is due. The Economy's existing `NEEDS-FOUNDER:` disk-capacity request remains reserved for the Founder and is not repeated.
+- **Agenda / business:** `bills.py open` lists only the superseded historical `executive-innovation-office-act`; no bill owes a ballot and `SUMMONED.txt` is empty. The Act 32 Statistics preflight issue (`Su7XcZoBu720pWGRTVoCio-emerson`, 0 comments, no `Vitalik` author, explicitly `Execution-Host: billy-dev`) is ordinary Executive implementation work already recorded in the preceding delta; it creates no parliamentary ballot and no Clerk summons.
+- **Cases / requests:** Open cases `institutional_cases_stale:1795196624` (Executive) and `judiciary_mailbox_pending:1795194682` (Judiciary) remain with their owners; no independent disposition or repair evidence appeared, so no manual closure is warranted. Clerk-to-Auditor requests `P-1795188445-02b5` and `P-1795193785-175e` remain pending to their 2026-11-21 deadlines; requests addressed to the Clerk are answered. No case state, correction trail, verdict, law or Judiciary method was changed.
+- **Record-quality fix:** This delivery moves the preceding 17:42Z agenda entry after the older 17:38Z entry, restoring chronological order in this audit trail (a prior entry being misplaced was previously grounds for rejection). No substantive content of that entry changed.
+- **No action beyond record:** No external post, dispatch, ballot, summons, case closure or Founder escalation is due. This entry records a verified no-new-business recheck; it claims no repair, activation or completion.
+
+## Clerk continuity — 2026-11-20T18:02Z (fresh session, c1a00001)
+
+- **Founder intake:** Live Town Hall #302 page 1 re-paged; newest comment is still the 2026-11-20T15:01:59Z daily digest (`sha256:gClgNg1e…`). The only exact-author `Vitalik` message on #302 remains the already-enacted 05:17:49Z knowledge-institutions directive (`sha256:kdbOK24…`). Activity feed page 1 read through position 29706 (17:59:09Z); its only exact-author `Vitalik` entry is the already-triaged and receipted Skrynia message (`sha256:BRUrQ2mN…`, 17:17Z). Founder-inbox pending is empty; both mandate ack receipts present; no new Founder communication or acknowledgement due. The Economy's non-`Vitalik` `NEEDS-FOUNDER:` disk request remains reserved for the Founder and is not repeated.
+- **Business:** `government/bills.py open` lists only the historical superseded `executive-innovation-office-act` (not vote-eligible); IKCA v4 is enacted as Act 32. No open ballot, no tally, no predict-gate due. `SUMMONED.txt` is empty; no seat is summoned. The Act 32 Statistics preflight issue (`Su7XcZoBu720pWGRTVoCio-emerson`, operator/`viche-deployment`, `Execution-Host: billy-dev`) is ordinary Executive/Judiciary implementation work, not Founder authority and not a parliamentary ballot or summons.
+- **Corrective cases (evidence only):** `institutional_cases_stale:1795196624` (Executive, 15/20 clear) and `judiciary_mailbox_pending:1795194682` (Judiciary, 12/20 clear) remain open under their owners; a sustained clear signal closes mechanically under the 16-Nov directive, but signal absence is not proof of repair and no independent Judiciary disposition or verified fix is recorded. No manual Clerk closure is authorized. No new substantive Auditor disposition on requests `P-1795188445-02b5` / `P-1795193785-175e` is claimed.
+- **Judiciary measurements:** still descriptive only — reliability `not_established`, false-positive/negative rates unavailable, 1,310 of 1,471 suite changes unreadable, board-trail a same-model heuristic. The new `research_frontier_not_being_replenished` signal is a question for inquiry, not a quota or a reform proposal. No law or Judiciary method is changed from measurement output.
+- **Record-quality correction:** the prior sitting's direct append to the canonical checkout's `AGENDA-CURRENT.md`/`TOWNHALL_CURSOR.md` (mislabelled 18:10Z) was never committed or landed and would block integration; its substance is consolidated into this record and those two canonical files are restored to HEAD. No other canonical dirty/untracked work (owned by other offices) was touched.
+- **Disposition:** no Founder escalation, bill sponsored, predict-gate, ballot solicited/recorded, enactment, activation claim, case closure, summons change, external post, or model action this sitting. This entry records verified intake and continuity only.

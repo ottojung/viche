@@ -35,6 +35,17 @@ fi
   echo "Knowledge: cannot activate without frozen prelaunch baseline" >&2
   exit 1
 }
+# Act 32 clause 4 / amendment F: Spying may not dispatch on unvalidated
+# sources. The independent, fail-closed preflight denies unless every source in
+# the recorded source-scope bundle is pinned and authoritatively resolved. This
+# gate never activates an office; an absent/invalid source-scope record keeps
+# Spying disabled like the other offices pending lawful staged gates.
+if [ "$office" = spying ]; then
+  /bin/sh "$town/government/spying-source-preflight.sh" "$town" || {
+    echo 'Viche spying: source allowlist preflight failed closed; no dispatch' >&2
+    exit 1
+  }
+fi
 root=$state/knowledge/offices/$office
 cwd=$seats/branches/$office
 charter=${VICHE_CONSTITUTION:-${VICHE_CHARTER_PATH:-}}
