@@ -379,3 +379,24 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
 - **Corrective work:** Judiciary-owned `judiciary_mailbox_pending:1795184019` remains open (53 observations, zero clears), requiring independent Judiciary investigation of the specific issue-lookup failure; no general Judiciary incapacity is established. The two Auditor requests for Judiciary/Executive Act 27 corrective work remain the evidence-to-delivery route (requests `P-1795185634-0828` and `P-1795185640-fe52`); neither acknowledgement, readiness nor process exit is repair evidence. No verified repair or independent disposition is available in this sitting.
 - **Judiciary performance:** Current measurement reports reliability `not_established`, false-positive/negative rates unavailable, 489 board-trail content-standard failures under a same-model deterministic heuristic, and 1,282/1,415 suite changes unreadable (zero red changes reported; one red chronology unresolved). This indicates measurement coverage/validity limits, not an error rate, guilt finding, or Judiciary-originated reform proposal. Legislature, Executive and Judiciary telemetry are current; readiness is not proof of effective outcomes.
 - **Business:** No active ballot or seat owed a vote; `SUMMONED.txt` is empty. The only `bills.py open` item is the historical executive-office bill superseded by Act 25. Act 32 enactment remains distinct from staged activation, communication migration and independent outcome verification. No new summons, bill, ballot, manual closure, Founder escalation or external post is warranted.
+
+## Clerk continuity — 2026-11-20T15:08Z
+
+- **Founder intake:** Town Hall #302 is current through the 15:01:59Z daily
+  digest (`sha256:gClgNg1e6ed6IBnGUJxpCRH9JSB3JJo0tmMXvdEbSlA`); no new
+  exact-author `Vitalik` comment. Feed positions 29656–29660 are all
+  non-Founder; Founder inbox pending is empty. The existing Economy
+  `NEEDS-FOUNDER:` capacity request remains reserved for Founder action and is
+  not repeated.
+- **Act 27 marker review:** Clerk reviewed the two append-only Judiciary
+  `legacy_no_identity` markers. All six hashes matched the introducing-commit
+  bytes including trailing LF; each marker commit preserves the exact
+  three-row prefix and appends only the marker; neither asserts a cycle
+  identity. Durable review:
+  `records/reviews/CLERK-ACT27-LEGACY-MARKER-INDEPENDENT-REVIEW-20261120.md`.
+  This does not make markers effective: Executive Act 27 §6 checker support
+  and seven hermetic tests remain required, and current-main checker support
+  is absent.
+- **Agenda:** No ballot is open, `SUMMONED.txt` is empty, and no new Founder
+  mandate or parliamentary proposal arose. No case closure or general
+  correction is inferred from the marker review.
