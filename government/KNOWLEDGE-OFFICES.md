@@ -33,12 +33,12 @@ install without the Act, the communication program is a reversible pilot.
    interests, corrective effort and independent confirmation; record
    uncertainty and alternate explanations. Compare inference against later
    explicit Founder feedback, and publish errors as well as successes.
-7. Communication consumes attention. Gazette articles NEVER wake a model by
-   themselves. Only explicitly urgent, direct first-hop mail can preempt an
-   office, bounded to four automatic wake notifications per office per six
-   hours. ALL mail is retained and inspected during normal office sessions.
-   If any office needs immediate action beyond this, use the existing
-   protected Founder/emergency pathways; never rely on forged mail priority.
+7. Communication consumes attention. Neither Gazette nor direct Post mail
+   may wake a model automatically: the shared Unix UID cannot authenticate
+   sender/recipient claims. All mail is retained, inspected at normal
+   substantive office sessions, and may be ordered by priority as a
+   presentation hint only. Existing authorized Founder and emergency
+   supervision remains separate. Mail cannot affect dispatch fingerprints.
 8. Each office evaluates its own expected value: did information change a
    decision, was the change justified, and was it worth the total cost? An
    institutional report count is not a success measure.
@@ -92,8 +92,9 @@ Do not initiate unrelated external missions.
 
 ## Post and Gazette
 
-Use python3 government/post.py --help. Mail is durable addressed
-correspondence. Gazette is opt-in publication on topics. Senders and author
+Use python3 government/post.py --help. Mail is durable PUBLIC addressed correspondence (explicit --public on sends);
+it offers no confidentiality or authoritative sender authentication.
+Gazette is opt-in publication on topics. Senders and author
 labels cannot be authenticated on the current shared host UID; the legal
 Founder intake, ballot and independent verification pathways do not change.
 Publication and delivery events are append-only; receipt transitions do not
@@ -106,7 +107,16 @@ archives throughout migration. Never infer a verified fix from their legacy
 "reviewed" or "expired" folders. New dialogue is addressed to the Clerk or
 specific institution, with stable threads and follow-up messages.
 
-## Evaluation window
+## Evaluation window and activation integrity
+
+Each office must have a lawful enacted charter and an independently reviewable,
+Git-recorded activation manifest with its own authorized start and expiry.
+`records/knowledge/baseline-20261119.json` is the frozen prelaunch reference,
+not proof of positive outcomes. A non-renewed office stops receiving new
+agent dispatches at expiry (currently proposed 45-day maximum), preserving
+historical messages, evidence and prior agent sessions. All newspaper
+subscriptions are voluntary choices of the receiving office, not dictated
+by a scripted subscription graph.
 
 After launch, measure four things against the prelaunch baseline: independently
 verified useful outcomes per resource, forecast resolution+calibration (including

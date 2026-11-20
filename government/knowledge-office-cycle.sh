@@ -15,6 +15,26 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 # Installing a program is not creating an institution. Parliament must enact it.
 grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' \
     "$town/government/LAWS.md" || exit 0
+# An enacted Act alone does not mass-dispatch four new agents. Require a
+# separate, audited activation record per office, with a hard expiry.
+activation=$town/records/knowledge/activation.json
+[ -s "$activation" ] || exit 0
+now=$(date +%s)
+jq -e --arg office "$office" --argjson now "$now" '
+    .schema=="viche-knowledge-activation-v1" and
+    (.offices[$office].enabled==true) and
+    (.offices[$office].authorized_by|type=="string") and
+    (.offices[$office].authorized_by|startswith("act:")) and
+    (.offices[$office].not_before|type=="number") and
+    (.offices[$office].expires_at|type=="number") and
+    ((.offices[$office].expires_at - .offices[$office].not_before) > 0) and
+    ((.offices[$office].expires_at - .offices[$office].not_before) <= 3888000) and
+    (.offices[$office].not_before <= $now) and
+    (.offices[$office].expires_at > $now)' "$activation" >/dev/null || exit 0
+[ -s "$town/records/knowledge/baseline-20261119.json" ] || {
+  echo "Knowledge: cannot activate without frozen prelaunch baseline" >&2
+  exit 1
+}
 root=$state/knowledge/offices/$office
 cwd=$seats/branches/$office
 charter=${VICHE_CONSTITUTION:-${VICHE_CHARTER_PATH:-}}
@@ -33,28 +53,18 @@ case "$mode" in
   idle|clearexit) : ;;
   *) echo "Viche $office: agent state $mode requires recovery; no replay" >&2; exit 1 ;;
 esac
-# All topics are opt-in. No Gazette article itself triggers a model dispatch.
+# Gazette is opt-in by the recipient agent; no scripted subscription graph.
+# Publications have no dispatch authority.
 post="$town/government/post.py"
-case "$office" in
-  statistics) subscriptions='foresight/forecasts strategy/plans' ;;
-  foresight) subscriptions='statistics/outcomes statistics/resources founder/signals' ;;
-  strategy) subscriptions='statistics/outcomes statistics/resources foresight/forecasts foresight/scenarios founder/signals economy/availability' ;;
-  spying) subscriptions='strategy/plans' ;;
-esac
-for topic in $subscriptions; do
-  python3 "$post" subscribe --office "$office" --topic "$topic" >/dev/null || exit 1
-done
 mail=$(python3 "$post" inbox --office "$office" --new --limit 25) || exit 1
-wake=$(python3 "$post" wake --office "$office") || exit 1
 last=0
 [ ! -s "$root/last-dispatch" ] || last=$(cat "$root/last-dispatch")
 case "$last" in ''|*[!0-9]*) last=0;; esac
 now=$(date +%s)
-urgent=$(printf '%s\n' "$wake" | jq -r '.urgent_unread')
-[ "$urgent" -gt 0 ] || [ $((now-last)) -ge "$interval" ] || exit 0
+[ $((now-last)) -ge "$interval" ] || exit 0
 recovery=$(/bin/sh "$town/government/terminal-continuity.sh" instruction "$office") || exit 1
 if [ -s "$town/government/dispatch-gate.sh" ]; then
-  if ! { printf '%s\n%s\n' "$wake" "$recovery"; cat "$town/government/KNOWLEDGE-OFFICES.md"; } |
+  if ! { printf '%s\n' "$recovery"; cat "$town/government/KNOWLEDGE-OFFICES.md"; } |
         /bin/sh "$town/government/dispatch-gate.sh" check "$office" "$interval" > "$root/gate.log"; then
     exit 0
   fi

@@ -65,6 +65,13 @@ for evidence in "$state"/liveness/unsafe-holds/*; do
     break
   fi
 done
+# Direct urgent mail can preempt cadence; normal Gazette cannot wake models.
+post_wake=
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+  post_wake=$(python3 "$town/government/post.py" wake --office recovery-steward 2>/dev/null) || post_wake=post_unavailable
+  post_urgent=$(printf '%s\n' "$post_wake" | jq -r '.urgent_unread // 0' 2>/dev/null) || post_urgent=0
+  [ "$post_urgent" -eq 0 ] || interval=0
+fi
 if [ "$fresh" != yes ] && [ "$last" -gt 0 ] && [ "$now" -ge "$last" ] &&
    [ $((now-last)) -lt "$interval" ]; then exit 0; fi
 charter=${VICHE_CONSTITUTION:-}
@@ -75,7 +82,7 @@ charter=${VICHE_CONSTITUTION:-}
 # a periodic pass.
 if [ "$fresh" != yes ] && [ -f "$town/government/dispatch-gate.sh" ]; then
   holds=$(find "$state/liveness/unsafe-holds" -maxdepth 1 -type f -size +0 2>/dev/null | sort || :)
-  if { printf '%s\n' "$holds"
+  if { printf '%s\n' "$holds" "$post_wake"
        for incident_file in "$state/branches/incident.json" "$state/oversight/random/incident.json" "$state/oversight/incident.json"; do
          if [ -s "$incident_file" ]; then jq -cS '{first_seen,signals,id}' "$incident_file" 2>/dev/null || cat "$incident_file"; fi
        done
@@ -103,6 +110,10 @@ Your worktree: $cwd
 Current UTC: $(date -u +%FT%TZ)
 EOF
 )
+if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+  post_mail=$(python3 "$town/government/post.py" inbox --office recovery-steward --new --limit 25) || post_mail=post_unavailable
+  prompt=$(printf '%s\n\n=== RECOVERY STEWARD POST MAIL ===\n%s\n=== END POST MAIL ===\n' "$prompt" "$post_mail")
+fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
 [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }
 if [ -f "$town/government/handover.sh" ]; then

@@ -40,7 +40,7 @@ def migrate(dry_run):
                   ". State is historical filing/triage only; no verified remediation inferred.")
             if not dry_run:
                 if state=="inbox":
-                    invoke("send","--sender","legacy-import","--to","judiciary",
+                    invoke("send","--public","--sender","legacy-import","--to","judiciary",
                            "--subject","Unreviewed legacy record: "+item.name,
                            "--body",text,"--source",source,"--key",key)
                 else:
