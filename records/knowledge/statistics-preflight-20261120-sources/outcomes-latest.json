@@ -1,0 +1,72 @@
+{
+  "agents": {
+    "by_process_outcome": {
+      "clearexit": 346,
+      "failed": 2
+    },
+    "by_project": {
+      "SoringP1": 143,
+      "Viche": 199,
+      "other": 6
+    },
+    "caveat": "process success does NOT prove work delivery or verification",
+    "total": 348,
+    "window_seconds": 86400
+  },
+  "board": {
+    "caveat": "first page only; do not infer issues missing on this page were closed",
+    "open_by_project": {
+      "SoringP1": 2,
+      "Viche": 19,
+      "other": 29
+    },
+    "open_first_page": 50
+  },
+  "branches": {
+    "executive": {
+      "age_seconds": 209,
+      "readiness": "running",
+      "telemetry": "available"
+    },
+    "innovation_centre": {
+      "age_seconds": 199,
+      "readiness": "ready",
+      "telemetry": "available"
+    },
+    "judiciary": {
+      "age_seconds": 209,
+      "readiness": "running",
+      "telemetry": "available"
+    },
+    "legislature": {
+      "age_seconds": 3,
+      "readiness": "running",
+      "telemetry": "available"
+    }
+  },
+  "delivery_verified_by_this_probe": false,
+  "git": {
+    "caveat": "merged history is not proof of independently verified impact",
+    "main_commits": 252,
+    "main_head": "a1fd8de25dbea55c8696c5a199f85570878c54c7",
+    "main_merge_commits": 0,
+    "most_recent": [
+      "1795196430",
+      "a1fd8de25dbea55c8696c5a199f85570878c54c7",
+      "Act 21 suite-status for 26d45053ed0c (tests/records-smoke.sh green)"
+    ]
+  },
+  "no_prescriptive_quota": true,
+  "observed_at": 1795196830,
+  "research": {
+    "caveat": "curator proposals are not verified research results",
+    "curator_running": true,
+    "states": {
+      "blocked": 21,
+      "investigated": 590
+    },
+    "telemetry": "available"
+  },
+  "role": "descriptive evidence for independent branch review",
+  "signals_for_inquiry_not_verdicts": []
+}
