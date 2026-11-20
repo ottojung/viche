@@ -276,7 +276,17 @@ def cmd_verify(a) -> int:
                 int(e.get("registered_at"))
             except (TypeError, ValueError):
                 defects.append({"id": eid, "defect": "invalid_registration_fields"})
-    known = {e.get("id"): e for e in data["entries"] if e.get("kind") == "registration"}
+    # Act 22 §9: Act 20 §7 P1–P5 are carried into the ledger as review_checkpoint
+    # entries (not re-registered, in a separate block). They are legitimate
+    # targets for their recorded resolutions even though they are not Brier-scored
+    # live registrations. Treat them as carried-forward registrations for the
+    # limited purpose of resolution validation, mirroring predict-scorer.py which
+    # applies Brier integrity only to kind == "registration". Brier-only rules
+    # (resolver independence, outcome-evidence timing, due-date) do not apply to
+    # carried-forward checkpoints whose evidence predates the checkpoint record.
+    # Live registrations keep every check unchanged.
+    known = {e.get("id"): e for e in data["entries"]
+             if e.get("kind") in ("registration", "review_checkpoint")}
     for r in data["resolutions"]:
         want = resolution_hash(r)
         if r.get("content_hash") != want:
@@ -287,29 +297,34 @@ def cmd_verify(a) -> int:
         target = known.get(r.get("id"))
         if target is None:
             defects.append({"id": r.get("id"), "defect": "resolution_without_registration"})
-        elif r.get("resolver") == target.get("author"):
+            continue
+        carried = target.get("kind") == "review_checkpoint"
+        reg_at = int(target.get("recorded_at", 0) if carried
+                     else target.get("registered_at", 0))
+        if not carried and r.get("resolver") == target.get("author"):
             defects.append({"id": r.get("id"), "defect": "author_self_resolved"})
-        elif int(r.get("resolved_at", 0)) < int(target.get("registered_at", 0)):
+        elif int(r.get("resolved_at", 0)) < reg_at:
             defects.append({"id": r.get("id"), "defect": "resolution_timestamp_precedes_registration"})
         else:
             if not (r.get("evidence_citation") or "").strip():
                 defects.append({"id": r.get("id"), "defect": "missing_resolution_evidence"})
             if r.get("outcome") == "unresolved" and not (r.get("reason") or "").strip():
                 defects.append({"id": r.get("id"), "defect": "unresolved_without_reason"})
-            if r.get("outcome") in ("true", "false"):
+            if r.get("outcome") in ("true", "false") and not carried:
                 try:
                     evidence_at = int(r.get("evidence_at"))
-                    if evidence_at <= int(target.get("registered_at", 0)):
+                    if evidence_at <= reg_at:
                         defects.append({"id": r.get("id"), "defect": "outcome_evidence_not_after_registration"})
                     if evidence_at > int(r.get("resolved_at", 0)):
                         defects.append({"id": r.get("id"), "defect": "outcome_evidence_after_resolution"})
                 except (TypeError, ValueError):
                     defects.append({"id": r.get("id"), "defect": "missing_outcome_evidence_timestamp"})
-            try:
-                if int(r.get("resolved_at", 0)) < date_epoch(target.get("resolution_date", "")):
-                    defects.append({"id": r.get("id"), "defect": "resolution_before_due_date"})
-            except (TypeError, ValueError):
-                defects.append({"id": r.get("id"), "defect": "invalid_resolution_date"})
+            if not carried:
+                try:
+                    if int(r.get("resolved_at", 0)) < date_epoch(target.get("resolution_date", "")):
+                        defects.append({"id": r.get("id"), "defect": "resolution_before_due_date"})
+                except (TypeError, ValueError):
+                    defects.append({"id": r.get("id"), "defect": "invalid_resolution_date"})
     resolution_ids = [r.get("id") for r in data["resolutions"]]
     for eid in set(resolution_ids):
         if resolution_ids.count(eid) > 1:

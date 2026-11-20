@@ -268,4 +268,46 @@ assert c["due"] == 2 and c["due_unresolved"] == 1, c
 assert c["excluded_from_due"] is True
 assert x["integrity"]["clean"] is True, x["integrity"]
 PY
+# Act 22 §9 carried-forward checkpoints: the ledger verifier accepts a recorded
+# resolution on a review_checkpoint (P1-P5 defect), without applying Brier-only
+# timing/self-resolution rules to it; a tampered resolution is still detected and
+# live registrations keep every check.
+carried_ledger=$tmp/carried-ledger.json
+python3 - "$root" "$carried_ledger" <<'PY'
+import importlib.util, json, sys
+root, path = sys.argv[1], sys.argv[2]
+spec = importlib.util.spec_from_file_location("ledger", root + "/government/predict-ledger.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+e = {"kind": "review_checkpoint", "id": "P1", "proposition": "carried forward",
+     "resolution_date": "2026-10-31", "evidence_source": "act20-report",
+     "author": "c1e00011", "source_ref": "government/LAWS.md#act-20-section-7",
+     "source_registered_on": "2026-10-20", "recorded_at": 100,
+     "status": "carried_forward_not_brier_scored"}
+e["content_hash"] = m.content_hash(e)
+r = {"id": "P1", "outcome": "false", "resolver": "c1a00001",
+     "evidence_citation": "act20-report#1", "evidence_at": 90,
+     "resolved_at": 200, "reason": "fixture false checkpoint"}
+r["content_hash"] = m.resolution_hash(r)
+json.dump({"entries": [e], "resolutions": [r], "schema": "act22-ledger-v1"},
+          open(path, "w"))
+PY
+if ! VICHE_PREDICT_LEDGER=$carried_ledger python3 "$root/government/predict-ledger.py" verify >/dev/null 2>&1; then
+    echo 'verify rejected a legitimate carried-forward checkpoint resolution' >&2; exit 1
+fi
+carried_tamper=$tmp/carried-tamper.json
+cp "$carried_ledger" "$carried_tamper"
+python3 - "$carried_tamper" <<'PY'
+import json,sys
+p=sys.argv[1]; x=json.load(open(p)); x["resolutions"][0]["outcome"]="true"
+open(p,"w").write(json.dumps(x))
+PY
+if VICHE_PREDICT_LEDGER=$carried_tamper python3 "$root/government/predict-ledger.py" verify >/dev/null 2>&1; then
+    echo 'tampered carried-forward resolution escaped verify' >&2; exit 1
+fi
+# The committed ledger must now verify clean (carried-forward P1-P5 accepted).
+# VICHE_PREDICT_LEDGER is still exported to a tmp path above, so override it here.
+if ! VICHE_PREDICT_LEDGER="$root/records/predictions/ledger.json" \
+     python3 "$root/government/predict-ledger.py" verify >/dev/null 2>&1; then
+    echo 'committed ledger still fails integrity verification' >&2; exit 1
+fi
 echo 'predict-smoke: passed'
