@@ -35,6 +35,20 @@ if [ "$office" = spying ]; then
     exit 1
   }
 fi
+# Statistics-only readiness preflight. Additive and fail-closed: the office
+# cannot dispatch until a source-attested comparator, a metered Economy cost
+# with a hard cap, a signed Executive order and an independent Judiciary
+# determination are all green. Other offices are unaffected.
+if [ "$office" = statistics ]; then
+  [ -f "$town/government/statistics-preflight.sh" ] || {
+    echo "Knowledge: statistics preflight helper missing; no dispatch" >&2
+    exit 0
+  }
+  /bin/sh "$town/government/statistics-preflight.sh" "$office" || {
+    echo "Knowledge: statistics readiness preflight failed; no dispatch" >&2
+    exit 0
+  }
+fi
 root=$state/knowledge/offices/$office
 cwd=$seats/branches/$office
 charter=${VICHE_CONSTITUTION:-${VICHE_CHARTER_PATH:-}}
