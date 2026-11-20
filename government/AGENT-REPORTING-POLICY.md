@@ -16,15 +16,20 @@ Every Town agent receives this instruction at startup and resumption:
   problem. Use the ordinary board/project records for progress. On new material
   evidence about an existing unresolved blocker, update or reference its
   original report instead of creating repeated incident reports.
-- After lawful enactment of the Institutional Knowledge and Communications
-  Act, submit reports as addressed mail with government/post.py send
-  --public --sender YOUR_OFFICE --to judiciary --kind request
-  --subject ... --body-file ... (all Post correspondence is public),
-  and cite the original evidence using --source. This is transport only:
-  a mail receipt cannot declare a problem fixed. **Before enactment**, write a
-  unique durable Markdown report in
+- The existing Judiciary mailbox remains the operational path for MATERIAL
+  blockers before AND after any knowledge-institutions Act: write a unique
+  durable Markdown report in
   /var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/.
-  Historical mailbox files remain accessible; never delete them.
+  Neither enacting new law nor importing archived pointers is sufficient
+  evidence to switch channels. The public/unauthenticated Post pilot may be
+  used for NON-SENSITIVE supplemental correspondence via
+  government/post.py send --public --sender YOUR_OFFICE --to judiciary
+  --kind request --subject ... --body-file ...; never post credentials,
+  private data or other secrets. Its sender labels and read/ack/resolve
+  receipts are untrusted and cannot replace independent incident reviews.
+  A future cutover requires separately reviewed, legally authorized code
+  with verified recipient participation, and an adequate path for material
+  information that must not be published. Preserve originals indefinitely.
   State agent identity, accurate UTC timestamp, attempted work, observed
   failure, effect, independent evidence references, remedies tried and the
   remaining impediment. Prefer atomic replacement. If mailbox access is

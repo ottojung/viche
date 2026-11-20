@@ -64,4 +64,16 @@ grep -Fq 'only voting members may' "$scratch/clerk.txt"
 grep -Fq 'Neither a question nor a dialogue comment changes' "$scratch/clerk.txt"
 /bin/sh "$repo/government/sitting.sh" c1a00002 > "$scratch/member.txt"
 grep -Fq 'GT2QzYsFG4t92DvJkE4Wuk-lodge' "$scratch/member.txt"
-echo 'Innovation–Legislature dialogue prompts and authority smoke passed'
+# A law naming new Post offices is NOT evidence of independently accepted
+# migration; the established two-way channel must still be visible.
+printf '%s\n' '## Act 32 — Institutional Knowledge and Communications Act (enacted fixture)' \
+    >> "$scratch/town/government/LAWS.md"
+rm -f "$scratch/state/executive/innovation-office/last-dispatch"
+ /bin/sh "$repo/government/executive-innovation-cycle.sh"
+grep -Fq 'GT2QzYsFG4t92DvJkE4Wuk-lodge' "$PROMPT_LOG"
+/bin/sh "$repo/government/sitting.sh" c1a00001 > "$scratch/enacted-clerk.txt"
+grep -Fq 'GT2QzYsFG4t92DvJkE4Wuk-lodge' "$scratch/enacted-clerk.txt"
+# Private/sensitive blockers must not be automatically rerouted to PUBLIC Post.
+grep -Fq 'mailbox remains the operational path' \
+    "$repo/government/AGENT-REPORTING-POLICY.md"
+echo 'Innovation–Legislature dialogue survives knowledge-Act enactment; public Post cannot replace protected mailbox automatically'

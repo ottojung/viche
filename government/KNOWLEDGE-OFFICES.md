@@ -102,10 +102,15 @@ delete evidence. A resolved receipt only says the recipient closed its own
 communication, NOT that an incident was independently repaired. Replies
 can continue after automatic attention cutoffs; no messages are discarded.
 
-Old Judiciary mailbox and Antonina innovation dialogue remain readable
-archives throughout migration. Never infer a verified fix from their legacy
-"reviewed" or "expired" folders. New dialogue is addressed to the Clerk or
-specific institution, with stable threads and follow-up messages.
+The original Judiciary mailbox and Antonina Innovation–Legislature dialogue
+remain ACTIVE during the public Post/Gazette pilot, even if the new
+institutions' ordinary law is enacted. An import, message delivery, or
+legal header does NOT automatically migrate their responsibilities.
+Sensitive material blockers must not be published into Post. A future
+cutover needs a separately authorized and independently verified protocol,
+including actual participation and a safe confidential route where needed.
+Preserve original records and never infer a fix from "reviewed"/"expired"
+mailbox folders. Post threads can supplement, not supersede, those channels.
 
 ## Evaluation window and activation integrity
 

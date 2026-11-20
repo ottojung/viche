@@ -78,8 +78,9 @@ $recovery
 EOF
 )
 dialogue_file="$town/government/INNOVATION-LEGISLATURE-DIALOGUE.md"
-if [ -s "$dialogue_file" ] &&
-   ! grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
+# The legacy dialogue is kept through any new Act until a separately
+# accepted and reviewed cutover. Public Post is an additive pilot only.
+if [ -s "$dialogue_file" ]; then
     prompt=$(printf '%s\n\n=== CONTINUOUS IMPROVEMENT AND LEGISLATIVE RESEARCH DIALOGUE ===\n%s\n=== END RESEARCH DIALOGUE ===\n' "$prompt" "$(cat "$dialogue_file")")
 fi
 # The pilot does not replace the working Innovation-Legislature dialogue.
