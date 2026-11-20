@@ -45,7 +45,16 @@ esac
 # Gazette is opt-in by the recipient agent; no scripted subscription graph.
 # Publications have no dispatch authority.
 post="$town/government/post.py"
-mail=$(python3 "$post" inbox --office "$office" --new --limit 25) || exit 1
+# Post is an OPTIONAL evidence channel. A locked/corrupt/unavailable database
+# must never prevent Statistics, Foresight, Strategy or Spying from doing their
+# independent statutory work. The bounded helper disclaims sender authority.
+mail='Public Post preview unavailable; continue other authorized work.'
+if [ -f "$town/government/post-inbox-brief.sh" ]; then
+  mail=$(timeout 12 /bin/sh "$town/government/post-inbox-brief.sh" "$office") || {
+    echo "Viche $office: Post preview failed; independent work proceeds" >&2
+    mail='Public Post preview unavailable; continue other authorized work.'
+  }
+fi
 last=0
 [ ! -s "$root/last-dispatch" ] || last=$(cat "$root/last-dispatch")
 case "$last" in ''|*[!0-9]*) last=0;; esac
