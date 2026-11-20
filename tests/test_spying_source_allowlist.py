@@ -121,15 +121,105 @@ class SpySourceTest(unittest.TestCase):
     def test_github_public_attributable_activity_allowed(self):
         v = self.src("github:public:" + GH_REPO + "#" + GH_SHA,
                      evidence(actor=GH_ACTOR, commit_sha=GH_SHA, source_url=GH_URL,
-                              captured_at=NOW - 60))
+                              attested_by=AUTH_ID, captured_at=NOW - 60))
         self.assertAllowed(v)
         self.assertEqual(v["actor"], GH_ACTOR)
 
     def test_authorized_project_source_allowed(self):
         v = self.src("authorized:records/fixture.json",
-                     evidence(content_sha256=h(PROJECT_CONTENT)))
+                     evidence(content_sha256=h(PROJECT_CONTENT), attested_by=AUTH_ID))
         self.assertAllowed(v)
         self.assertEqual(v["verified_authorization"], "Vitalik")
+
+    def test_board_pagination_finds_older_pinned_message(self):
+        # Pinned message is on page 2, not page 1: a page-1-only reader would
+        # wrongly deny a genuine older Founder message.
+        # Offline snapshot containing the older message alongside filler.
+        board = {HUB: {"number": HUB, "messages": [
+            {"id": "other-" + str(i), "author": "someone", "body": "x",
+             "createdAt": "2026-11-20T05:00:00.000Z"} for i in range(50)] +
+            [{"id": MSG_ID, "author": "Vitalik", "body": BODY,
+              "createdAt": "2026-11-20T05:00:00.000Z"},
+             {"id": AUTH_ID, "author": "Vitalik", "body": AUTH_BODY,
+              "createdAt": "2026-11-20T05:01:00.000Z"}]}}
+        self.resolver = m.BoardResolver(offline_json=board)
+        self.assertAllowed(self.src("antonina:" + MSG_ID))
+
+    def test_cli_pagination_retrieves_older_message_and_honours_cap(self):
+        import json as _json
+        def page_proc(page):
+            msgs = ([{"id": "filler-%d-%d" % (page, i), "author": "x", "body": "x",
+                      "createdAt": "2026-11-20T05:00:00.000Z"} for i in range(50)]
+                    if page == 1 else
+                    [{"id": MSG_ID, "author": "Vitalik", "body": BODY,
+                      "createdAt": "2026-11-20T05:00:00.000Z"}])
+            class P:
+                returncode = 0
+                stdout = _json.dumps({"number": HUB, "messages": msgs})
+            return P()
+        def fake_run(argv, **kw):
+            page = int(argv[argv.index("--page") + 1])
+            return page_proc(page)
+        original = m.subprocess.run
+        m.subprocess.run = fake_run
+        try:
+            r = m.BoardResolver()
+            found = r.resolve_founder_message({"id": MSG_ID, "issue": HUB}, max_pages=3)
+            self.assertEqual(found["author"], "Vitalik")
+            with self.assertRaises(m.BoardUnavailable):
+                r.resolve_founder_message({"id": MSG_ID, "issue": HUB}, max_pages=1)
+        finally:
+            m.subprocess.run = original
+
+    def test_bounded_pagination_fails_closed_on_unreadable_page(self):
+        # An unreadable required page must never be read as "no messages".
+        def boom(*a, **kw):
+            raise m.subprocess.SubprocessError("simulated")
+        original = m.subprocess.run
+        m.subprocess.run = boom
+        try:
+            r = m.BoardResolver()
+            with self.assertRaises(m.BoardUnavailable):
+                r.resolve(HUB, max_pages=3)
+        finally:
+            m.subprocess.run = original
+        self.assertDenied(self._verify_with(m.BoardResolver()), "board_unreadable")
+
+    def _verify_with(self, resolver):
+        return m.validate_source("antonina:" + MSG_ID, evidence(),
+                                 self.cfg, resolver, NOW)
+
+    def test_publication_attestation_required_and_board_freshness(self):
+        ev = evidence(actor=GH_ACTOR, commit_sha=GH_SHA, source_url=GH_URL)
+        self.assertDenied(self.src("github:public:" + GH_REPO + "#" + GH_SHA, ev),
+                          "publication_attestation_unpinned")
+        # Stale board provenance cannot be laundered by a fresh caller string.
+        board = board_doc()
+        for msg in board[HUB]["messages"]:
+            if msg["id"] == AUTH_ID:
+                msg["createdAt"] = "2026-01-01T00:00:00.000Z"
+        self.resolver = m.BoardResolver(offline_json=board)
+        ev2 = evidence(actor=GH_ACTOR, commit_sha=GH_SHA, source_url=GH_URL,
+                       attested_by=AUTH_ID)
+        self.assertDenied(self.src("github:public:" + GH_REPO + "#" + GH_SHA, ev2),
+                          "stale_or_forged_publication_attestation")
+
+    def test_publication_purpose_without_inference_denied(self):
+        b = self.bundle(sources=[{"ref": "antonina:" + MSG_ID, "evidence": evidence()}])
+        b["purpose"] = "publication"
+        self.assertDenied(self.check_bundle(b), "no_validated_inference_for_publication")
+
+    def test_preflight_without_statements_denied(self):
+        town = self.root / "preflight-town"
+        (town / "government").mkdir(parents=True, exist_ok=True)
+        (town / "government" / "spying_source_allowlist.py").write_text("stub")
+        (town / "records" / "knowledge").mkdir(parents=True, exist_ok=True)
+        (town / "records" / "knowledge" / "spying-source-allowlist.json").write_text(
+            json.dumps(allowlist_doc()))
+        (town / "bundle.json").write_text(json.dumps(self.bundle(
+            sources=[{"ref": "antonina:" + MSG_ID, "evidence": evidence()}])))
+        v = m.preflight(town, bundle_path=town / "bundle.json", now=NOW)
+        self.assertDenied(v, "empty_or_incomplete_source_scope")
 
     def test_observation_statement_allowed(self):
         bundle = self.bundle(

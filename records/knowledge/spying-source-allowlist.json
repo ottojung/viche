@@ -6,6 +6,7 @@
   "effective_from": 1795132800,
   "expires_at": 1799020800,
   "max_evidence_age_seconds": 7776000,
+  "max_board_pages": 5,
 
   "antonina": {
     "founder_author": "Vitalik",
