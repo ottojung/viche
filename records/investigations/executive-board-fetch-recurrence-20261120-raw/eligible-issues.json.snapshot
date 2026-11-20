@@ -1,0 +1,36 @@
+{
+  "complete": true,
+  "count": 7,
+  "eligible": [
+    {
+      "number": "301",
+      "title": "SoringP1: Lean-checked complexity of optimal sorting numbers (phoebe-dev only)"
+    },
+    {
+      "number": "307",
+      "title": "Viche Legislature: ratify the permanent Innovation Centre Act"
+    },
+    {
+      "number": "JTsW4AnxTLzN18IBQibXea-fervor",
+      "title": "SoringP1: explore FO(TC) strategy programs for exact optimal sorting"
+    },
+    {
+      "number": "4Ux4sxiHjpXqSi9T9d2suq-alabama",
+      "title": "Viche: reconcile Act 19 failed appointment replacement with real per-office recovery"
+    },
+    {
+      "number": "lWMIGRLB53TS70RCs2gpI8-suppose",
+      "title": "Viche: adjudicate Act 17 double-correction limit before Judiciary PR #32"
+    },
+    {
+      "number": "s2SvtsxOuLhoFeYC0Yw0Cn-surrounds",
+      "title": "Viche: transfer innovation to Executive (Founder request; legislative amendment required)"
+    },
+    {
+      "number": "PMddbtIFY77z4vDSg86JLY-calculate",
+      "title": "Viche: ratify and review agentic operations redesign (837fef8)"
+    }
+  ],
+  "host": "billy-dev",
+  "source": "board_description_and_founder_comments"
+}
