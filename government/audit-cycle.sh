@@ -42,12 +42,7 @@ if [ -s "$root/incident.json" ] || [ -s "$root/random/incident.json" ] ||
   incident=yes
   cadence=1800
 fi
-# Direct urgent mail can preempt the audit cadence; unchanged gate blocks loops.
-post_urgent=0
-if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
-  post_urgent=$(python3 "$town/government/post.py" wake --office judiciary 2>/dev/null | jq -r '.urgent_unread // 0') || post_urgent=0
-fi
-[ "$post_urgent" -eq 0 ] || cadence=0
+# Public Post correspondence cannot alter the Judiciary's audit cadence.
 last=0
 if [ -s "$root/last-audit-dispatch" ]; then last=$(cat "$root/last-audit-dispatch"); fi
 case "$last" in ''|*[!0-9]*) last=0;; esac
@@ -208,23 +203,18 @@ if [ -f "$town/government/proceed-by-default.sh" ]; then
   proceed=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" judiciary || :)
   [ -z "$proceed" ] || prompt=$(printf '%s\n\n%s\n' "$prompt" "$proceed")
 fi
-post_wake=
-if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
-  post="$town/government/post.py"
-  if [ -f "$post" ]; then
-    python3 "$post" subscribe --office judiciary --topic statistics/outcomes >/dev/null || :
-    python3 "$post" subscribe --office judiciary --topic statistics/resources >/dev/null || :
-    post_mail=$(python3 "$post" inbox --office judiciary --new --limit 30) || post_mail='post_unavailable'
-    post_wake=$(python3 "$post" wake --office judiciary 2>/dev/null || echo post_unavailable)
-    prompt=$(printf '%s\n\n=== POST INBOX; NOT INDEPENDENT EVIDENCE ===\n%s\n=== END POST INBOX ===\n' "$prompt" "$post_mail")
-  fi
+# Pilot correspondence is an optional ordinary-session input. No topic is
+# auto-subscribed, and no mail changes this audit's random selection or timing.
+if [ -f "$town/government/post-inbox-brief.sh" ]; then
+  post_mail=$(/bin/sh "$town/government/post-inbox-brief.sh" judiciary) || post_mail='Post preview unavailable'
+  prompt=$(printf '%s\n\n%s\n' "$prompt" "$post_mail")
 fi
 # Founder directive 2026-11-16 (item 4): the same frozen draw with the same
 # incident, cases and mailbox needs no second 30-minute pass. A fresh sample
 # (new cycle id), any change to the inputs, or the six-hour heartbeat dispatches.
 if [ -f "$town/government/dispatch-gate.sh" ]; then
   mailbox_list=$(find "$mailbox/inbox" -maxdepth 1 -type f 2>/dev/null | sort || :)
-  if { printf '%s\n' "$cycle_id" "$recovery" "$proceed" "$mailbox_list" "$post_wake"
+  if { printf '%s\n' "$cycle_id" "$recovery" "$proceed" "$mailbox_list"
        for incident_file in "$root/incident.json" "$root/random/incident.json"; do
          if [ -s "$incident_file" ]; then jq -cS '{first_seen,signals,id}' "$incident_file" 2>/dev/null || cat "$incident_file"; fi
        done
