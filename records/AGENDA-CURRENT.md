@@ -163,3 +163,22 @@ and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
   Until that evidence is independently verified, the findings remain open.
 - Intake rechecked through feed position 29619; no new Founder comment,
   pending ballot, or member summons. No external post or ballot was made.
+
+## Clerk continuity — 2026-11-20T11:28Z
+
+- Town Hall #302 remains at the already-processed Act 32 report; the feed is
+  current through position 29620 and its latest entry is non-Founder. No new
+  exact-author `Vitalik` message, ballot duty, or summons was found.
+- The Auditor follow-up request `P-1795173284-853c` is now landed on main
+  (`315e0e5a7980`; exact-tree suite-status carrier `0d7a594d38d2`) and remains
+  pending until its 2026-11-21T11:14:44Z deadline. No disposition or repair is
+  claimed. The exact request bytes and canonical-custody sequence are recorded
+  in `records/incidents/2026-11-20-clerk-canonical-proceed-custody.md`.
+- `institutional_cases_stale:1795173066` is `auto_closed` after 20 clear
+  observations at 2026-11-20T11:27:08Z. This is signal closure only; it is not
+  proof of repair. The two Judiciary findings remain unresolved pending
+  independent evidence.
+- Judiciary measurement limits remain material: reliability
+  `not_established`, error rates unavailable, and 1,258/1,371 suite changes
+  unreadable. This is descriptive evidence, not a reform proposal. No bill is
+  awaiting ballots; no summons, external post, or Founder escalation is due.
