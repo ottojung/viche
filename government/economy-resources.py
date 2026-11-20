@@ -27,6 +27,8 @@ Environment
   VICHE_TOWN_ROOT, VICHE_SEATS_ROOT, VICHE_STATE_ROOT   as elsewhere
   VICHE_ECONOMY_NOW           epoch override (tests)
   VICHE_ECONOMY_FS_OVERRIDE   JSON {label:{total,avail,files,ffree}} (tests)
+  VICHE_ECONOMY_LOAD_OVERRIDE JSON {load1,load5,load15,cpus?} load override (tests; keeps
+                              the smoke suite hermetic under host load spikes)
   VICHE_ECONOMY_CGROUP        cgroup directory (default /sys/fs/cgroup)
   VICHE_ECONOMY_JANITOR       janitor script path (default $TOWN/government/janitor.sh)
 """
@@ -168,11 +170,20 @@ def memory():
 
 
 def load_average():
-    try:
-        one, five, fifteen = os.getloadavg()
-    except OSError:
-        return {"status": "unknown"}
-    cpus = os.cpu_count() or 1
+    override = os.environ.get("VICHE_ECONOMY_LOAD_OVERRIDE")
+    if override:
+        try:
+            data = json.loads(override)
+            one, five, fifteen = (float(data[k]) for k in ("load1", "load5", "load15"))
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
+            return {"status": "unknown"}
+        cpus = int(data.get("cpus", os.cpu_count() or 1))
+    else:
+        try:
+            one, five, fifteen = os.getloadavg()
+        except OSError:
+            return {"status": "unknown"}
+        cpus = os.cpu_count() or 1
     return {"load1": round(one, 2), "load5": round(five, 2), "load15": round(fifteen, 2), "cpus": cpus,
             "per_cpu": round(five / cpus, 2)}
 
