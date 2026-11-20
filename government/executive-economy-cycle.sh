@@ -85,13 +85,8 @@ case "$mode" in
     readiness=ready
     agent_interval=43200
     case "$resource_level" in short|critical) agent_interval=7200 ;; esac
-    post_urgent=0
-    post_wake=
-    if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
-      post_wake=$(python3 "$town/government/post.py" wake --office economy 2>/dev/null) || post_wake=
-      post_urgent=$(printf '%s\n' "$post_wake" | jq -r '.urgent_unread // 0' 2>/dev/null) || post_urgent=0
-    fi
-    if [ "$last" -eq 0 ] || [ $((now-last)) -ge "$agent_interval" ] || [ "$post_urgent" -gt 0 ]; then
+    # Public Post content cannot change the Economy office's launch cadence.
+    if [ "$last" -eq 0 ] || [ $((now-last)) -ge "$agent_interval" ]; then
       orders='No specific Executive order: keep the Town funded, research the free models, find waste.'
       [ ! -s "$econ/orders.md" ] || orders=$(cat "$econ/orders.md")
       report='{"note":"no funding report yet; the first refresh runs within the hour"}'
@@ -108,7 +103,7 @@ case "$mode" in
       gate=dispatch
       if [ -f "$town/government/dispatch-gate.sh" ]; then
         # Fingerprint only stable inputs: timestamps and probe logs change every refresh.
-        if { printf '%s\n%s\n%s\n%s\n' "$orders" "$recovery" "$proceed" "$post_wake"
+        if { printf '%s\n%s\n%s\n' "$orders" "$recovery" "$proceed"
              printf '%s\n' "$report" | jq -cS 'del(.at,.backup,.probes_run,.previous_order)' 2>/dev/null || printf '%s\n' "$report"
              # Resources: only the status of each, so a percentage drifting by 0.1 does not wake the agent.
              if [ -s "$econ/resources.json" ]; then
@@ -163,10 +158,9 @@ $recovery
 $proceed
 EOF
 )
-        if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
-          post="$town/government/post.py"
-          post_mail=$(python3 "$post" inbox --office economy --new --limit 20) || post_mail='post_unavailable'
-          prompt=$(printf '%s\n\n=== POST INBOX (NOT AUTHORITY) ===\n%s\n=== END POST INBOX ===\n' "$prompt" "$post_mail")
+        if [ -f "$town/government/post-inbox-brief.sh" ]; then
+          post_mail=$(/bin/sh "$town/government/post-inbox-brief.sh" economy) || post_mail='Post preview unavailable'
+          prompt=$(printf '%s\n\n%s\n' "$prompt" "$post_mail")
         fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
         [ -s "$policy_file" ] || { echo "Viche: mandatory Founder agent policy missing" >&2; exit 1; }

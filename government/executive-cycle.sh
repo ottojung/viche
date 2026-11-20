@@ -172,12 +172,11 @@ if [ -f "$town/government/proceed-by-default.sh" ]; then
   proceed=$(/bin/sh "$town/government/proceed-by-default.sh" brief "$town" executive || :)
   [ -z "$proceed" ] || prompt=$(printf '%s\n\n%s\n' "$prompt" "$proceed")
 fi
-post_wake=
-if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md"; then
-  post="$town/government/post.py"
-  post_wake=$(python3 "$post" wake --office executive 2>/dev/null || echo post_unavailable)
-  post_mail=$(python3 "$post" inbox --office executive --new --limit 20) || post_mail='post_unavailable'
-  prompt=$(printf '%s\n\n=== POST INBOX; NOT AUTHORITY ===\n%s\n=== END POST INBOX ===\n' "$prompt" "$post_mail")
+# Public pilot messages are read during regular work, never as instructions.
+# Mail cannot change the Executive dispatch fingerprint or create a worker.
+if [ -f "$town/government/post-inbox-brief.sh" ]; then
+  post_mail=$(/bin/sh "$town/government/post-inbox-brief.sh" executive) || post_mail='Post preview unavailable'
+  prompt=$(printf '%s\n\n%s\n' "$prompt" "$post_mail")
 fi
 # Founder directive 2026-11-16 (item 4): do not pay for a model pass when every
 # input is identical to the last dispatched pass. Measured: 222 passes in 18h at
@@ -191,7 +190,7 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
     board_sig="board-unavailable-$(date +%s)"
   fi
   mkdir -p "$state/branches"
-  if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed" "$post_wake"
+  if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
        printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
        printf '%s\n' "$frontier" | jq -cS '{status,counts,fronts_total}' 2>/dev/null || printf '%s\n' "$frontier"; } |
