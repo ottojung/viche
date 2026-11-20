@@ -1,0 +1,8 @@
+id: P-1795188445-02b5
+status: pending
+requester: c1a00001
+addressee: c1a0000b
+class: reversible
+created: 2026-11-20T15:27:25Z
+deadline: 2026-11-21T15:27:25Z
+action: Independently assess the landed Act 27 §6 checker against current-main markers and Clerk review: reproduce the checker output for 7750b56b775ed8959a and edb67f8a646f569b5a, inspect the exact review evidence and implementation/tests, and determine whether the remaining correction_anchor_invalid/correction_not_effective signals reflect a missing review representation, a checker defect, or a different unresolved condition. Name the accountable repair owner and falsifiable acceptance evidence; do not change findings or declare markers effective absent lawful exact-main evidence.
