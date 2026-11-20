@@ -14,6 +14,9 @@ python3 "$town/government/predict-scorer.py" || {
   echo "Viche: Act 22 calibration regeneration failed" >&2
   exit 1
 }
+if [ -f "$town/government/institutional-cases.py" ]; then
+  python3 "$town/government/institutional-cases.py" reconcile >/dev/null 2>&1 || true
+fi
 id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
 if [ -s "$state/liveness/unsafe-holds/executive" ]; then

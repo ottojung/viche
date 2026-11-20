@@ -10,6 +10,12 @@ mkdir -p "$root" "$(dirname "$cwd")"
 umask 077
 exec 9>"$root/dispatch.lock"
 flock -n 9 || exit 0
+# Keep the institutional-case index fresh and re-evaluate corrective cases on
+# every supervisor pass, including when this agent is already running; a
+# stale index or unprocessed clear observation must not wait for an idle agent.
+if [ -f "$town/government/institutional-cases.py" ]; then
+  python3 "$town/government/institutional-cases.py" reconcile >/dev/null 2>&1 || true
+fi
 if [ ! -f "$cwd/.git" ] && [ ! -d "$cwd/.git" ]; then
   [ ! -e "$cwd" ] || { echo 'Recovery worktree path occupied' >&2; exit 1; }
   git -C "$town" worktree add --detach "$cwd" HEAD
