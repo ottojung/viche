@@ -20,6 +20,9 @@ test "$(cut -f1 government/seats.tsv | sort -u | wc -l)" -eq "$(wc -l < governme
 printf '\nRunning tests/audit-act27-legacy-smoke.py\n'
 python3 tests/audit-act27-legacy-smoke.py
 
+printf '\nRunning tests/test_spying_source_allowlist.py\n'
+python3 tests/test_spying_source_allowlist.py
+
 for script in tests/*-smoke.sh tests/ballot-integrity.sh; do
     printf '\nRunning %s\n' "$script"
     dash "$script"
