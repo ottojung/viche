@@ -14,6 +14,32 @@ printf '## Act 32 — Institutional Knowledge and Communications Act (enacted fo
 printf 'Synthetic frozen baseline\n' > "$d/town/records/knowledge/baseline-20261119.json"
 cp "$repo/government/post.py" "$repo/government/post_guard.py" "$repo/government/post-inbox-brief.sh" \
    "$repo/government/knowledge-activation-verify.sh" "$d/town/government/"
+# Statistics dispatch now also requires a ready, source-attested preflight.
+# Supply a green fixture so this test keeps checking its intended property
+# (Post-outage independence), not the comparator gate itself.
+cp "$repo/government/statistics-preflight.sh" \
+   "$repo/government/statistics-evidence.py" "$d/town/government/"
+mkdir -p "$d/town/records/knowledge/statistics-preflight-20261120-sources"
+printf 'ready fixture\n' > "$d/town/records/knowledge/statistics-preflight-20261120-sources/src.json"
+sha=$(sha256sum "$d/town/records/knowledge/statistics-preflight-20261120-sources/src.json" | cut -d' ' -f1)
+size=$(stat -c %s "$d/town/records/knowledge/statistics-preflight-20261120-sources/src.json")
+python3 - "$sha" "$size" > "$d/town/records/knowledge/statistics-trial-preflight-20261120.json" <<'PY'
+import json, sys
+sha, size = sys.argv[1], int(sys.argv[2])
+gates = {k: {"status": "green"} for k in (
+    "verified_numerator", "frozen_resource_denominator",
+    "budget_cap_and_auto_disable", "executive_order", "judiciary_determination")}
+json.dump({
+    "schema": "viche-statistics-trial-preflight-1", "office": "statistics",
+    "readiness": "ready", "gates": gates,
+    "candidate_outcome": "x", "numerator": "x", "denominator_statistical": "x",
+    "negative_controls": ["x"], "observation_windows": "x", "comparison": "x",
+    "falsifiers": ["x"], "missingness": ["x"],
+    "denominator_resource": {"meter_available": True, "units": "usd",
+        "tokens": 1, "machine_time": 1, "wall_time": 1},
+    "sources": [{"snapshot": "src.json", "sha256": sha, "size_bytes": size}],
+}, sys.stdout, sort_keys=True)
+PY
 cat > "$d/town/government/branch-bootstrap.sh" <<'SH'
 #!/bin/sh
 exit 0
