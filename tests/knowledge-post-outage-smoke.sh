@@ -12,7 +12,7 @@ printf 'Synthetic reporting policy fixture\n' > "$d/town/government/AGENT-REPORT
 printf 'Synthetic governance fixture\n' > "$d/town/government/KNOWLEDGE-OFFICES.md"
 printf '## Act 32 — Institutional Knowledge and Communications Act (enacted for test)\n' > "$d/town/government/LAWS.md"
 printf 'Synthetic frozen baseline\n' > "$d/town/records/knowledge/baseline-20261119.json"
-cp "$repo/government/post.py" "$repo/government/post-inbox-brief.sh" \
+cp "$repo/government/post.py" "$repo/government/post_guard.py" "$repo/government/post-inbox-brief.sh" \
    "$repo/government/knowledge-activation-verify.sh" "$d/town/government/"
 cat > "$d/town/government/branch-bootstrap.sh" <<'SH'
 #!/bin/sh
