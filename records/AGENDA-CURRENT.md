@@ -583,7 +583,6 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
 - **Business:** no active bill owes a ballot, and `SUMMONED.txt` is empty. No
   manual case closure, legislative reform, external post, or Founder escalation
   is justified by this evidence cut.
-
 ## Clerk agenda update — 2026-11-20T17:22Z
 
 - **Founder intake:** Town Hall #302 was re-read through the existing Ministry
