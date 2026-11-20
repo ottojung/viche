@@ -5,10 +5,11 @@ runner=$(pwd -P)/government/knowledge-office-cycle.sh
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
 mkdir -p "$d/town/government" "$d/town/records/knowledge"
+cp government/knowledge-activation-verify.sh "$d/town/government/"
 printf '%s\n' '## Act 32 — Institutional Knowledge and Communications Act (enacted 2026-11-19)' \
     > "$d/town/government/LAWS.md"
 cat > "$d/town/records/knowledge/activation.json" <<'JSON'
-{"schema":"viche-knowledge-activation-v1","offices":{"statistics":{"enabled":false,"authorized_by":"act:32","not_before":0,"expires_at":4102444800}}}
+{"schema":"viche-knowledge-activation-v1","offices":{"statistics":{"enabled":false,"authorized_by":"act:32:statistics","not_before":0,"expires_at":4102444800}}}
 JSON
 now=$(date +%s)
 jq --argjson now "$now" '.offices.statistics.not_before=$now-30 | .offices.statistics.expires_at=$now+3600' "$d/town/records/knowledge/activation.json" > "$d/new"

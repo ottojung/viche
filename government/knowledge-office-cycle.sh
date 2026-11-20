@@ -16,21 +16,10 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' \
     "$town/government/LAWS.md" || exit 0
 # An enacted Act alone does not mass-dispatch four new agents. Require a
-# separate, audited activation record per office, with a hard expiry.
-activation=$town/records/knowledge/activation.json
-[ -s "$activation" ] || exit 0
-now=$(date +%s)
-jq -e --arg office "$office" --argjson now "$now" '
-    .schema=="viche-knowledge-activation-v1" and
-    (.offices[$office].enabled==true) and
-    (.offices[$office].authorized_by|type=="string") and
-    (.offices[$office].authorized_by|startswith("act:")) and
-    (.offices[$office].not_before|type=="number") and
-    (.offices[$office].expires_at|type=="number") and
-    ((.offices[$office].expires_at - .offices[$office].not_before) > 0) and
-    ((.offices[$office].expires_at - .offices[$office].not_before) <= 3888000) and
-    (.offices[$office].not_before <= $now) and
-    (.offices[$office].expires_at > $now)' "$activation" >/dev/null || exit 0
+# separate, audited activation record per office, proven to name THIS enacted
+# Act and THIS office, with a bounded hard expiry. The shared fail-closed
+# verifier is the same code boot.sh and appointments.sh use, so the three agree.
+/bin/sh "$town/government/knowledge-activation-verify.sh" "$office" || exit 0
 [ -s "$town/records/knowledge/baseline-20261119.json" ] || {
   echo "Knowledge: cannot activate without frozen prelaunch baseline" >&2
   exit 1
