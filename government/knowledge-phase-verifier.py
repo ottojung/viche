@@ -460,7 +460,10 @@ class Verifier:
                 errors.append("board review has no recording timestamp")
 
         # (2) Officer-attributed board comment citing this gate and commit.
-        comments = issue.get("comments", []) if isinstance(issue, dict) else []
+        # Live Antonina board uses `messages`; offline snapshots may use
+        # `comments`. Both carry `author` and `body`.
+        comments = (issue.get("messages", issue.get("comments", []))
+                    if isinstance(issue, dict) else [])
         if not isinstance(comments, list):
             comments = []
         prefix = artifact_commit[:7]

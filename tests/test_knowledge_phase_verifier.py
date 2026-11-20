@@ -119,7 +119,7 @@ class PhaseVerifierTest(unittest.TestCase):
                 "recordedAt": reviewed_at,
                 "rationale": "synthetic fixture",
             },
-            "comments": ([{"author": JUDGE, "body": comment}] if with_comment else []),
+            "messages": ([{"author": JUDGE, "body": comment}] if with_comment else []),
         }
         self._write_snapshot()
         return {"git_commit": commit, "git_path": rel, "sha256": sha(text)}, text
@@ -275,7 +275,7 @@ class PhaseVerifierTest(unittest.TestCase):
 
     def test_board_comment_by_officer_required(self):
         rec = self.gate()
-        self.snapshot["issues"]["issue-main"]["comments"] = []
+        self.snapshot["issues"]["issue-main"]["messages"] = []
         self._write_snapshot()
         rc, out = self.verify(rec, at=NB + 200)
         self.assertNotEqual(rc, 0)
