@@ -1,0 +1,63 @@
+{
+  "schema": "viche-knowledge-phase-gate-v1",
+  "gate_id": "statistics-initial-20261120",
+  "status": "draft_not_authorized",
+  "act": 32,
+  "act_bill_id": "institutional-knowledge-and-communications-act-v4",
+  "office": "statistics",
+  "phase": "initial",
+  "host": "billy-dev",
+  "predecessor": null,
+  "next_office": "foresight",
+  "created_at": "2026-11-20T18:20:00Z",
+  "created_epoch": 1795198800,
+  "not_before": 0,
+  "expires_at": 0,
+  "decision": "hold",
+  "hold_reason": "No legitimate authority or evidence exists yet. All four preconditions are unproven and no independent officer-signed, Git-anchored review has been filed. This record is a draft hold, NOT an activation order, activation.json authorization, Judiciary sign-off or Governor approval. Fail-closed refusal is the correct outcome until real evidence is filed.",
+  "preconditions": {
+    "baseline": {
+      "ok": false,
+      "note": "Frozen baseline is diagnostic, not a verified-outcome comparator (Act 32 D/E; statistics preflight found usable_as_comparator=false)."
+    },
+    "budgets": {
+      "ok": false,
+      "note": "Economy has no per-office token/machine/wall-time meter; no enforceable hard cap or automatic disable (Act 32 H)."
+    },
+    "executive_order": {
+      "ok": false,
+      "note": "No signed, reversible Statistics-only Executive activation order exists (Act 32 clause 9)."
+    },
+    "judiciary_check": {
+      "ok": false,
+      "note": "No independent Judiciary factual determination / review artifact is filed (Acts 15, 32 clause 9/K)."
+    }
+  },
+  "evidence": [
+    {
+      "name": "frozen-baseline",
+      "path": "records/knowledge/baseline-20261119.json",
+      "sha256": "1f7ce6153beb4e3391b2d5c387c93b386662c60414333ab477d2b557f97ea968",
+      "git": {
+        "commit": "a164fa5a71786f576f88391136919f30e758e21f",
+        "path": "records/knowledge/baseline-20261119.json"
+      },
+      "role": "diagnostic baseline (NOT a positive outcome comparator)"
+    },
+    {
+      "name": "activation-all-disabled",
+      "path": "records/knowledge/activation.json",
+      "sha256": "91329c75e7f72b1cbffff97b186e1b94dbc8abeabb9d1dc17172ec260ab7a6e4",
+      "git": {
+        "commit": "a164fa5a71786f576f88391136919f30e758e21f",
+        "path": "records/knowledge/activation.json"
+      },
+      "role": "authorization state: all four offices disabled"
+    }
+  ],
+  "evidence_digest": "sha256:be9c8999efd23cc836597325816a119db36b5020bd6f6be2e5090cc96d38712f",
+  "review": null,
+  "day30_review": null,
+  "note_30day": "Act 32 K / Founder mandate: a 30-day wait is NOT a precondition to launch the authorized Statistics trial; evidence may be collected prospectively. A day-30 Judiciary review is mandatory only before renewal; if missing, the gate automatically holds.",
+  "note_cutover": "No Post/Gazette migration or cutover is authorized here. A future cutover requires a separate Cutover Act (Act 32 N), separately reviewed code and independently evidenced read/reply."
+}
