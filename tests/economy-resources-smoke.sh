@@ -13,7 +13,7 @@ echo "janitor: $1 complete"
 STUB
 export VICHE_TOWN_ROOT="$d/town" VICHE_SEATS_ROOT="$d/seats" VICHE_STATE_ROOT="$d/state" \
   VICHE_ECONOMY_JANITOR="$d/janitor.sh" VICHE_ECONOMY_FS_OVERRIDE="$d/fs.json" VICHE_ECONOMY_CGROUP="$d/cg" \
-  VICHE_ECONOMY_NO_DU=1 MOCK_JANITOR_LOG="$d/janitor.log" HOME="$d/home"
+  VICHE_ECONOMY_NO_DU=1 VICHE_ECONOMY_TEST_LOAD=0 MOCK_JANITOR_LOG="$d/janitor.log" HOME="$d/home"
 NOW=1794830400
 : > "$d/janitor.log"
 res="python3 $repo/government/economy-resources.py"

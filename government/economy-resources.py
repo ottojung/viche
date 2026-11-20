@@ -168,10 +168,19 @@ def memory():
 
 
 def load_average():
-    try:
-        one, five, fifteen = os.getloadavg()
-    except OSError:
-        return {"status": "unknown"}
+    # Hermetic test fixture: live host load must not decide deterministic
+    # Economy threshold tests. Production has no override and is unchanged.
+    override = os.environ.get("VICHE_ECONOMY_TEST_LOAD")
+    if override is not None:
+        try:
+            one = five = fifteen = float(override)
+        except ValueError:
+            one, five, fifteen = os.getloadavg()
+    else:
+        try:
+            one, five, fifteen = os.getloadavg()
+        except OSError:
+            return {"status": "unknown"}
     cpus = os.cpu_count() or 1
     return {"load1": round(one, 2), "load5": round(five, 2), "load15": round(fifteen, 2), "cpus": cpus,
             "per_cpu": round(five / cpus, 2)}
