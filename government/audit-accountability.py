@@ -6,6 +6,7 @@ facts. The controller never declares an issue solved from agent completion alone
 """
 import argparse
 import fcntl
+import hashlib
 import re
 import json
 import os
@@ -71,16 +72,84 @@ def committed_confirmed_correction(case_id):
     pending = {}
     confirmed = set()
     effective = None
-    for idx, line in enumerate(p.stdout.splitlines(), 1):
+    marker = None
+    marker_reviewed = False
+    rows = []
+    decoded = []
+    for idx, raw_line in enumerate(p.stdout.splitlines(keepends=True), 1):
+        line = raw_line.rstrip("\r\n")
         try:
-            row = json.loads(line)
+            item = json.loads(line)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"committed correction row {idx} malformed") from exc
-        if not isinstance(row, dict) or row.get("case_id") != case_id or row.get("correction") is not True:
+        decoded.append((idx, line, raw_line.encode(), item))
+    marker_rows = [item for _, _, _, item in decoded
+                   if isinstance(item, dict) and item.get("type") == "legacy_no_identity"]
+    if len(marker_rows) > 1:
+        raise ValueError("duplicate legacy markers")
+    marker = marker_rows[0] if marker_rows else None
+    review_rows = [item for _, _, _, item in decoded
+                   if isinstance(item, dict) and item.get("type") == "legacy_no_identity_review"]
+    if marker is not None and len(review_rows) == 1:
+        review = review_rows[0]
+        marker_reviewed = (
+            review.get("marker_sha256") == hashlib.sha256(
+                json.dumps(marker, sort_keys=True).encode()).hexdigest()
+            and review.get("reviewer") in {"c1a00001", "c1e00008"}
+            and review.get("reviewer") != marker.get("signed_by")
+            and review.get("reviewer") != marker.get("sponsor")
+            and bool(review.get("independence_basis"))
+            and review.get("hashes_match") is True
+            and review.get("rows_unmodified") is True
+            and review.get("no_identity_claimed") is True)
+    for idx, line, raw_line, row in decoded:
+        if not isinstance(row, dict) or row.get("case_id") != case_id:
+            raise ValueError(f"committed correction row {idx} wrong case or type")
+        rows.append(row)
+        if row.get("type") == "legacy_no_identity":
+            if len(marker_rows) != 1 or marker is not row or case_id not in {
+                    "7750b56b775ed8959a", "edb67f8a646f569b5a"}:
+                raise ValueError("out-of-scope legacy marker")
+            if (row.get("case_id") != case_id or row.get("signed_by") not in
+                    {"c1e00008", "c1a00008"} or row.get("no_cycle_identity") is not True
+                    or row.get("verdict") is not None or row.get("correction") is True):
+                raise ValueError("malformed legacy marker")
+            continue
+        if row.get("type") == "legacy_no_identity_review":
+            if marker is None:
+                raise ValueError("legacy marker review precedes marker")
+            marker_reviewed = (
+                row.get("marker_sha256") == hashlib.sha256(
+                    json.dumps(marker, sort_keys=True).encode()).hexdigest()
+                and row.get("reviewer") in {"c1a00001", "c1e00008"}
+                and row.get("reviewer") != marker.get("signed_by")
+                and row.get("reviewer") != marker.get("sponsor")
+                and bool(row.get("independence_basis"))
+                and row.get("hashes_match") is True
+                and row.get("rows_unmodified") is True
+                and row.get("no_identity_claimed") is True)
+            continue
+        if row.get("correction") is not True:
             raise ValueError(f"committed correction row {idx} wrong case or type")
         token = row.get("cycle_id")
         if not valid_cycle_token(token):
+            if marker is not None and marker_reviewed:
+                cited = marker.get("rows")
+                item = next((x for x in cited if isinstance(x, dict) and
+                             x.get("position") == idx), None) if isinstance(cited, list) else None
+                if item and item.get("introducing_commit") == "2c6d695":
+                    blob = subprocess.run(["git", "-C", town, "show",
+                        f"{item['introducing_commit']}:records/oversight/corrections/{case_id}.jsonl"],
+                        capture_output=True, timeout=15)
+                    source = blob.stdout.splitlines(keepends=True)
+                    headline = raw_line
+                    if (blob.returncode == 0 and idx <= len(source) and
+                            hashlib.sha256(source[idx - 1]).hexdigest() == item.get("sha256") and
+                            source[idx - 1] == headline):
+                        continue
             raise ValueError(f"committed correction row {idx} missing valid cycle identity")
+        if not cycle_registered(token):
+            raise ValueError(f"committed correction row {idx} cycle identity unregistered")
         if row.get("confirmed") is False:
             if token in pending or token in confirmed:
                 raise ValueError("more than one correction filing in committed cycle")
@@ -109,16 +178,39 @@ def valid_cycle_token(token):
     return isinstance(token, str) and re.fullmatch(r"[0-9a-f]{32}", token) is not None
 
 
+def cycle_registered(token):
+    state = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state")) / "oversight"
+    try:
+        entries = []
+        for line in (state / "audit-cycle-identities.tsv").read_text().splitlines():
+            fields = line.split("\t")
+            if len(fields) != 2 or not fields[0].isdigit() or not valid_cycle_token(fields[1]):
+                return False
+            entries.append(fields[1])
+        return entries.count(token) == 1
+    except OSError:
+        return False
+
+
 def used_cycle_tokens(prior, case_id):
     """Read only explicit identities; legacy rows are deliberately unclassified."""
     tokens = set()
+    trail = correction_trail(case_id)
+    has_legacy_marker = any(row.get("type") == "legacy_no_identity" for row in trail)
+    if has_legacy_marker:
+        # This exact-HEAD read validates the marker, its independent review,
+        # every cited source-row hash and the prospective-token rules. A marker
+        # merely present in the mutable worktree cannot authorize a filing.
+        committed_confirmed_correction(case_id)
     for item in prior.get("history", []):
         if item.get("correction") and valid_cycle_token(item.get("cycle_id")):
             tokens.add(item["cycle_id"])
-    for item in correction_trail(case_id):
+    for item in trail:
         if item.get("correction"):
             token = item.get("cycle_id")
             if not valid_cycle_token(token):
+                if has_legacy_marker:
+                    continue
                 raise ValueError("authoritative correction trail has a correction without a valid cycle_id")
             tokens.add(token)
     return tokens
