@@ -91,44 +91,23 @@ def committed_confirmed_correction(case_id):
     review_rows = [item for _, _, _, item in decoded
                    if isinstance(item, dict) and item.get("type") == "legacy_no_identity_review"]
     if marker is not None and len(review_rows) == 1:
-        review = review_rows[0]
-        marker_reviewed = (
-            review.get("marker_sha256") == hashlib.sha256(
-                json.dumps(marker, sort_keys=True).encode()).hexdigest()
-            and review.get("reviewer") in {"c1a00001", "c1e00008"}
-            and review.get("reviewer") != marker.get("signed_by")
-            and review.get("reviewer") != marker.get("sponsor")
-            and bool(review.get("independence_basis"))
-            and review.get("hashes_match") is True
-            and review.get("rows_unmodified") is True
-            and review.get("no_identity_claimed") is True)
+        marker_reviewed = _effective_legacy_review(marker, review_rows[0], case_id)
     for idx, line, raw_line, row in decoded:
-        if not isinstance(row, dict) or row.get("case_id") != case_id:
+        if not isinstance(row, dict):
             raise ValueError(f"committed correction row {idx} wrong case or type")
         rows.append(row)
         if row.get("type") == "legacy_no_identity":
-            if len(marker_rows) != 1 or marker is not row or case_id not in {
-                    "7750b56b775ed8959a", "edb67f8a646f569b5a"}:
-                raise ValueError("out-of-scope legacy marker")
-            if (row.get("case_id") != case_id or row.get("signed_by") not in
-                    {"c1e00008", "c1a00008"} or row.get("no_cycle_identity") is not True
-                    or row.get("verdict") is not None or row.get("correction") is True):
-                raise ValueError("malformed legacy marker")
+            if len(marker_rows) != 1 or marker is not row:
+                raise ValueError("duplicate or misplaced legacy marker")
+            _validate_legacy_marker(row, case_id, idx, decoded, town)
             continue
         if row.get("type") == "legacy_no_identity_review":
             if marker is None:
                 raise ValueError("legacy marker review precedes marker")
-            marker_reviewed = (
-                row.get("marker_sha256") == hashlib.sha256(
-                    json.dumps(marker, sort_keys=True).encode()).hexdigest()
-                and row.get("reviewer") in {"c1a00001", "c1e00008"}
-                and row.get("reviewer") != marker.get("signed_by")
-                and row.get("reviewer") != marker.get("sponsor")
-                and bool(row.get("independence_basis"))
-                and row.get("hashes_match") is True
-                and row.get("rows_unmodified") is True
-                and row.get("no_identity_claimed") is True)
+            marker_reviewed = _effective_legacy_review(marker=marker, review=row, case_id=case_id)
             continue
+        if row.get("case_id") != case_id:
+            raise ValueError(f"committed correction row {idx} wrong case")
         if row.get("correction") is not True:
             raise ValueError(f"committed correction row {idx} wrong case or type")
         token = row.get("cycle_id")
@@ -137,14 +116,14 @@ def committed_confirmed_correction(case_id):
                 cited = marker.get("rows")
                 item = next((x for x in cited if isinstance(x, dict) and
                              x.get("position") == idx), None) if isinstance(cited, list) else None
-                if item and item.get("introducing_commit") == "2c6d695":
+                if item and item.get("introducing_commit", "").startswith("2c6d695"):
                     blob = subprocess.run(["git", "-C", town, "show",
                         f"{item['introducing_commit']}:records/oversight/corrections/{case_id}.jsonl"],
                         capture_output=True, timeout=15)
                     source = blob.stdout.splitlines(keepends=True)
                     headline = raw_line
                     if (blob.returncode == 0 and idx <= len(source) and
-                            hashlib.sha256(source[idx - 1]).hexdigest() == item.get("sha256") and
+                            hashlib.sha256(source[idx - 1]).hexdigest() == item.get("sha256_row_bytes_including_LF") and
                             source[idx - 1] == headline):
                         continue
             raise ValueError(f"committed correction row {idx} missing valid cycle identity")
@@ -163,6 +142,75 @@ def committed_confirmed_correction(case_id):
         else:
             raise ValueError(f"committed correction row {idx} lacks confirmed status")
     return effective
+
+
+def _validate_legacy_marker(marker, case_id, marker_position, decoded, town):
+    """Validate the enacted Act 27 §3 marker schema against introducing bytes."""
+    allowed = {"7750b56b775ed8959a", "edb67f8a646f569b5a"}
+    anchor_commit = "2c6d695298b855f1aebf42f3a972f2007eed31f8"
+    if case_id not in allowed or marker.get("case_id", case_id) != case_id:
+        raise ValueError("out-of-scope legacy marker")
+    signature = marker.get("signature")
+    if (not isinstance(signature, dict) or signature.get("filing_office") not in
+            {"judiciary", "auditor"} or not signature.get("officer")):
+        raise ValueError("legacy marker lacks filing-office signature attribution")
+    statement = marker.get("statement")
+    if (not isinstance(statement, str) or "no cycle identity" not in statement.lower()
+            or marker.get("verdict") is not None or marker.get("correction") is True
+            or marker.get("confirmed") is True):
+        raise ValueError("malformed legacy marker")
+    cited = marker.get("rows")
+    prior_rows = decoded[:marker_position - 1]
+    if not isinstance(cited, list) or len(cited) != len(prior_rows) or not cited:
+        raise ValueError("legacy marker must enumerate every prior row")
+    seen = set()
+    for (position, _, raw, item), citation in zip(prior_rows, cited):
+        if not isinstance(citation, dict):
+            raise ValueError("malformed legacy row citation")
+        source_commit = citation.get("introducing_commit")
+        if (citation.get("position") != position or position in seen or
+                source_commit != anchor_commit):
+            raise ValueError("legacy row citation does not cover ordered prior rows")
+        if (not isinstance(item, dict) or item.get("case_id") != case_id or
+                item.get("correction") is not True or valid_cycle_token(item.get("cycle_id"))):
+            raise ValueError("post-anchor or malformed row cannot be marked legacy")
+        ref = f"{source_commit}:records/oversight/corrections/{case_id}.jsonl"
+        source = subprocess.run(["git", "-C", town, "show", ref],
+                               capture_output=True, timeout=15)
+        if source.returncode:
+            raise ValueError("legacy introducing commit unavailable")
+        source_lines = source.stdout.splitlines(keepends=True)
+        digest = citation.get("sha256_row_bytes_including_LF")
+        if (position > len(source_lines) or not isinstance(digest, str) or
+                hashlib.sha256(source_lines[position - 1]).hexdigest() != digest or
+                source_lines[position - 1] != raw):
+            raise ValueError("legacy row hash mismatch or row was modified")
+        seen.add(position)
+
+
+def _effective_legacy_review(marker, review, case_id):
+    """A review row is effective only when it names this exact marker and satisfies §3(3)."""
+    signature = marker.get("signature", {}) if isinstance(marker, dict) else {}
+    reviewer = review.get("reviewer")
+    # Act 27 sponsor is c1a00007; signer officer is excluded along with the
+    # filing office. The normal path is Clerk c1a00001. Judiciary fallback
+    # requires a recorded Clerk-unavailability basis.
+    basis = review.get("independence_basis")
+    return (
+        review.get("case_id", case_id) == case_id
+        and review.get("marker_sha256") == hashlib.sha256(
+            json.dumps(marker, sort_keys=True).encode()).hexdigest()
+        and reviewer in {"c1a00001", "c1e00008"}
+        and reviewer != signature.get("officer")
+        and reviewer != "c1a00007"
+        and isinstance(basis, str) and bool(basis.strip())
+        and (reviewer != "c1e00008" or
+             (review.get("clerk_unavailable") is True and
+              isinstance(review.get("clerk_unavailability_ref"), str) and
+              bool(review["clerk_unavailability_ref"].strip())))
+        and review.get("hashes_match") is True
+        and review.get("rows_unmodified") is True
+        and review.get("no_identity_claimed") is True)
 
 
 def append_correction(case_id, record):

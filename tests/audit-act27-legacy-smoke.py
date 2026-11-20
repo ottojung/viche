@@ -55,20 +55,23 @@ class LegacyMarkerTests(unittest.TestCase):
         self.legacy_raw = raw
         # Act 27 hashes every exact JSONL row byte sequence at its introducing
         # commit, including each line terminator.
+        # The closed Act 27 allowlist is anchored at this introducing commit.
+        self.source_commit = "2c6d695298b855f1aebf42f3a972f2007eed31f8"
         rows = []
         for position, raw_row in enumerate(raw.splitlines(keepends=True), 1):
             digest = hashlib.sha256(raw_row).hexdigest()
-            rows.append({"position": position, "introducing_commit": "2c6d695",
-                         "sha256": "0" * 64 if bad_hash and position == 1 else digest})
+            rows.append({"position": position, "introducing_commit": self.source_commit,
+                         "sha256_row_bytes_including_LF": "0" * 64 if bad_hash and position == 1 else digest})
         appended = []
         if marker:
-            m = {"case_id": CASE, "type": "legacy_no_identity", "rows": rows,
-                 "signed_by": "c1e00008", "no_cycle_identity": True}
+            m = {"type": "legacy_no_identity", "rows": rows,
+                 "signature": {"filing_office": "judiciary", "officer": "c1e00008"},
+                 "statement": "These rows predate the anchor rule; no cycle identity exists or is asserted."}
             appended.append(m)
             if review:
                 appended.append({"case_id": CASE, "type": "legacy_no_identity_review",
                     "marker_sha256": hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest(),
-                    "reviewer": "c1a00001", "independence_basis": "not filer or sponsor",
+                    "reviewer": "c1a00001", "independence_basis": "Clerk is not filing office or sponsor.",
                     "hashes_match": True, "rows_unmodified": True, "no_identity_claimed": True})
         if post:
             appended.append({"case_id": CASE, "correction": True, "confirmed": False,
@@ -95,7 +98,7 @@ class LegacyMarkerTests(unittest.TestCase):
         try:
             original = audit.subprocess.run
             def run(args, **kwargs):
-                if len(args) > 4 and args[4].startswith("2c6d695:"):
+                if len(args) > 4 and args[4].startswith(self.source_commit + ":"):
                     return subprocess.CompletedProcess(args, 0, stdout=self.legacy_raw, stderr=b"")
                 return original(args, **kwargs)
             with patch.object(audit.subprocess, "run", side_effect=run):
