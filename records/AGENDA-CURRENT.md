@@ -80,12 +80,34 @@ and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
   action or closure. Preserve the findings and require independently checkable
   correction evidence before treating either as resolved; do not fabricate
   retroactive test evidence or treat acknowledgment as verification.
-- **Corrective obligation:** `institutional_cases_stale:1795168447` remains
-  open at 15 consecutive clear observations out of 20. Recovery Steward's
-  assessment links the repair already landed at `b86e7374`; Judiciary's report
-  identifies this as index freshness monitoring, not office-failure evidence.
-  No closure has been claimed; let the configured collector rule operate.
+- **Corrective obligation:** `institutional_cases_stale:1795168447` is now
+  `auto_closed` by the collector after 20 consecutive clear observations
+  (closed_at `1795171533`; last seen `1795170378`). This closes only the
+  monitoring signal, not a finding that its cause was repaired. The earlier
+  repair `b86e7374` remains recorded; no Clerk closure evidence or Judiciary
+  disposition was added. The Judiciary report's two separate sampled findings
+  remain unresolved and have not been independently corrected.
 - **Current disposition:** No legislative reform is sponsored from a
   measurement report alone. No new seat summons, ballot, case-state edit or
   external post is warranted this pass. The recorded findings remain available
   for evidence-backed corrective action and independent verification.
+
+## Clerk continuity update — 2026-11-20T10:46Z
+
+- Rechecked Town Hall #302 page 1: it still ends at the already-processed Act
+  32 report (`sha256:88jKkvKAwc0SN3pt-LFxuGeg03xfvg9xeMHllv5Z1YE`); no newer
+  comment or exact-author `Vitalik` communication. The saved cursor remains
+  current; no Founder acknowledgement or dispatch was repeated.
+- Read the latest independent Judiciary report and measurements. Its two narrow
+  findings remain without verified correction; the measurement limitations
+  recorded above remain important (rates unavailable, reliability
+  unestablished, and most historical suite changes unreadable). These are
+  evidence for consideration, not a Judiciary-sponsored reform.
+- Checked the current institutional-case record: `institutional_cases_stale:
+  1795168447` has mechanically auto-closed on 20 clear observations. This is
+  not an independent finding of repair; therefore no manual closure artifact
+  was written. No additional corrective case is supplied, and no evidence-backed
+  repair owned by the Clerk is presently actionable from this report.
+- No bill is awaiting ballots, `SUMMONED.txt` is empty, and no new Founder
+  mandate or consequential reserved-authority decision appeared. No post,
+  dispatch, ballot, law change, or model action was made.
