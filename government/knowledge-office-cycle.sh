@@ -124,7 +124,7 @@ EOF
 # overrun/expiry by the budget engine (never by the launcher timeout alone).
 reservation=
 if [ -s "$budget" ]; then
-  reservation=$(/bin/sh "$budget" reserve "$office") || {
+  reservation=$(/bin/sh "$budget" reserve "$office" "$id") || {
     echo "Viche $office: budget reservation refused; no dispatch" >&2
     exit 0
   }

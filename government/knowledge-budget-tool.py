@@ -28,6 +28,7 @@ import sqlite3
 import sys
 import time
 import urllib.parse
+import tempfile
 
 SCHEMA = "viche-knowledge-budget-v1"
 OFFICES = ("statistics", "foresight", "strategy", "spying")
@@ -72,6 +73,10 @@ def validate_config(cfg):
         db = metering.get("opencode_db")
         if not isinstance(db, str) or not db:
             errors.append("metering.opencode_db must be a non-empty string")
+    cpu_meter = cfg.get("cpu_meter")
+    if not isinstance(cpu_meter, dict) or cpu_meter.get("available") is not False or \
+            cpu_meter.get("source") != "unavailable":
+        errors.append("cpu_meter must explicitly remain unavailable until verified per-office backend attribution is implemented")
     for key, low, high in (("accounting_window_seconds", 1, MAX_WINDOW),
                            ("monitor_interval_seconds", 1, 300)):
         val = cfg.get(key)
@@ -148,15 +153,12 @@ def meter_columns(con):
     return {row[1] for row in con.execute("PRAGMA table_info(session_v2)")}
 
 
-def cpu_seconds(pid):
-    try:
-        raw = pathlib.Path("/proc/%s/stat" % pid).read_text()
-        rest = raw[raw.rfind(")") + 2:].split()
-        utime, stime, cutime, cstime = (int(x) for x in rest[11:15])
-        ticks = os.sysconf("SC_CLK_TCK")
-        return (utime + stime + cutime + cstime) / float(ticks), True
-    except (OSError, ValueError, IndexError):
-        return 0.0, False
+def cpu_seconds(_pid):
+    # OpenCode's runner PID is not the backend/service CPU attribution. Never
+    # substitute it for the Act 32 machine-time cap. Until a verified service
+    # cgroup/session attribution exists, CPU is explicitly unavailable and the
+    # engine refuses all activations that require this cap.
+    return None, False
 
 
 def snapshot(db, sid, pid):
@@ -172,7 +174,11 @@ def snapshot(db, sid, pid):
         con.close()
     tokens = {}
     for idx, name in enumerate(TOKEN_FIELDS):
-        value = row[idx] if row is not None else 0
+        if row is None:
+            raise OSError("authoritative session row is absent; usage is unknown")
+        value = row[idx]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise OSError("authoritative token counter is invalid")
         tokens[name.replace("tokens_", "")] = int(value or 0)
     tokens["total"] = sum(tokens[k] for k in ("input", "output", "reasoning",
                                               "cache_read", "cache_write"))
@@ -188,9 +194,9 @@ def snapshot(db, sid, pid):
         "tokens": tokens,
         "cost": cost,
         "cost_reported": reported,
-        "cpu_seconds": round(cpu, 3),
+        "cpu_seconds": cpu,
         "cpu_available": cpu_ok,
-        "time_updated": int(row[len(TOKEN_FIELDS) + 1]) if row is not None and row[len(TOKEN_FIELDS) + 1] is not None else None,
+        "time_updated_ms": int(row[len(TOKEN_FIELDS) + 1]) if row[len(TOKEN_FIELDS) + 1] is not None else None,
     }
 
 
@@ -201,20 +207,26 @@ def charges(reservations, now, window):
     totals = {"tokens_total": 0, "cpu_seconds": 0.0, "wall_seconds": 0}
     by_office = {office: {"tokens_total": 0, "cpu_seconds": 0.0, "wall_seconds": 0}
                  for office in OFFICES}
-    counted, skipped = [], []
+    counted = []
     for path in sorted(pathlib.Path(reservations).glob("*.json")):
         try:
             row = json.loads(path.read_text())
             state = row.get("state")
             created = int(row.get("created_at", 0))
-        except (OSError, ValueError, TypeError):
-            skipped.append(path.name)
-            continue
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            raise OSError("reservation record unreadable (%s): %s" % (path.name, exc))
+        if not isinstance(row, dict) or row.get("schema") != "viche-knowledge-budget-reservation-v1":
+            raise OSError("reservation record has invalid schema: %s" % path.name)
+        if row.get("state") not in ("reserved", "active", "held", "closed", "rolled_back", "rejected"):
+            raise OSError("reservation has unknown state: %s" % path.name)
+        if not isinstance(row.get("id"), str) or not isinstance(row.get("office"), str) or \
+                not isinstance(row.get("caps"), dict):
+            raise OSError("reservation lacks required identity/caps: %s" % path.name)
         if state == "rolled_back" or state == "rejected":
-            skipped.append(row.get("id", path.name))
             continue
-        if created > now + 60 or now - created > window:
-            skipped.append(row.get("id", path.name))
+        if created > now + 60:
+            raise OSError("reservation timestamp is in the future: %s" % path.name)
+        if state == "closed" and now - created > window:
             continue
         caps = row.get("caps") if isinstance(row.get("caps"), dict) else {}
         usage = row.get("usage") if isinstance(row.get("usage"), dict) else {}
@@ -222,8 +234,10 @@ def charges(reservations, now, window):
         source = usage if state == "closed" else (charge if state == "held" else caps)
         values = {}
         for key in CAP_KEYS:
-            value = source.get(key, caps.get(key, 0))
-            values[key] = float(value) if key == "cpu_seconds" else int(value or 0)
+            value = source.get(key, caps.get(key))
+            if value is None or isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+                raise OSError("reservation has unknown/invalid liability %s: %s" % (key, path.name))
+            values[key] = float(value) if key == "cpu_seconds" else int(value)
         office = row.get("office")
         for key in CAP_KEYS:
             totals[key] += values[key]
@@ -231,7 +245,7 @@ def charges(reservations, now, window):
                 by_office[office][key] += values[key]
         counted.append(row.get("id", path.name))
     totals["by_office"] = by_office
-    return totals, counted, skipped
+    return totals, counted, []
 
 
 def admit(cfg, agg, office):
@@ -247,8 +261,14 @@ def admit(cfg, agg, office):
 
 
 def overrun(caps, snap, wall):
-    tokens = snap.get("tokens", {}).get("total", 0) if snap else 0
-    cpu = snap.get("cpu_seconds", 0.0) if snap else 0.0
+    if not snap or snap.get("session_found") is not True:
+        raise ValueError("token meter row missing")
+    if snap.get("cpu_available") is not True or snap.get("cpu_seconds") is None:
+        raise ValueError("authoritative backend CPU meter unavailable")
+    tokens = snap.get("tokens", {}).get("delta_total")
+    cpu = snap.get("cpu_seconds")
+    if isinstance(tokens, bool) or not isinstance(tokens, int) or tokens < 0:
+        raise ValueError("per-run token delta unavailable")
     reasons = []
     if tokens >= caps["tokens_total"]:
         reasons.append("tokens_total")
@@ -289,6 +309,25 @@ def main(argv):
         if cmd == "snapshot":
             return emit(snapshot(args[0], args[1] if len(args) > 1 else "",
                                  args[2] if len(args) > 2 else ""), 0)
+        if cmd == "delta":
+            baseline = json.loads(args[0])
+            current = json.loads(args[1])
+            if current.get("session_found") is not True or baseline.get("session_found") is not True:
+                return fail("baseline/current meter row is absent", 2)
+            if baseline.get("session_id") != current.get("session_id"):
+                return fail("session identity changed", 2)
+            before = baseline.get("tokens", {})
+            after = current.get("tokens", {})
+            result = {}
+            for key in ("input", "output", "reasoning", "cache_read", "cache_write"):
+                a, b = before.get(key), after.get(key)
+                if isinstance(a, bool) or isinstance(b, bool) or not isinstance(a, int) or not isinstance(b, int) or b < a:
+                    return fail("token counter reset or invalid: %s" % key, 2)
+                result[key] = b - a
+            result["total"] = sum(result.values())
+            current["tokens"]["delta_total"] = result["total"]
+            current["tokens"]["delta"] = result
+            return emit(current, 0)
         if cmd == "aggregate":
             totals, counted, skipped = charges(args[0], int(args[2]), int(args[1]))
             totals["counted"] = counted
@@ -304,6 +343,43 @@ def main(argv):
             caps = json.loads(args[0])
             snap = json.loads(args[1]) if args[1] and args[1] != "null" else None
             return emit(overrun(caps, snap, float(args[2])), 0)
+        if cmd == "durable-write":
+            target = pathlib.Path(args[0])
+            target.parent.mkdir(parents=True, exist_ok=True)
+            payload = sys.stdin.buffer.read()
+            fd, temp = tempfile.mkstemp(prefix=".budget-tmp-", dir=str(target.parent))
+            try:
+                with os.fdopen(fd, "wb") as handle:
+                    handle.write(payload)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temp, target)
+                dirfd = os.open(str(target.parent), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+                try:
+                    os.fsync(dirfd)
+                finally:
+                    os.close(dirfd)
+            finally:
+                if os.path.exists(temp):
+                    os.unlink(temp)
+            return emit({"ok": True}, 0)
+        if cmd == "durable-mkdir":
+            target = pathlib.Path(args[0])
+            missing = []
+            cursor = target
+            while not cursor.exists():
+                missing.append(cursor)
+                cursor = cursor.parent
+            target.mkdir(parents=True, exist_ok=True)
+            # Persist new directory entries from the deepest parent outward.
+            for directory in reversed(missing):
+                for path in (directory, directory.parent):
+                    fd = os.open(str(path), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+                    try:
+                        os.fsync(fd)
+                    finally:
+                        os.close(fd)
+            return emit({"ok": True}, 0)
     except (IndexError, ValueError, TypeError, OSError, sqlite3.Error) as exc:
         return fail(str(exc), 2)
     return fail("unknown subcommand: %s" % cmd, 2)

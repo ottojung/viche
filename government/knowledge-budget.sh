@@ -26,7 +26,7 @@ log() { printf 'knowledge-budget: %s\n' "$*" >&2; }
 die() { log "$*"; exit 1; }
 
 init() {
-  mkdir -p "$ROOT" "$RES" || die 'cannot create budget state'
+  python3 "$TOOL" durable-mkdir "$RES" >/dev/null 2>&1 || die 'cannot durably create budget state directories'
   umask 077
 }
 
@@ -61,15 +61,12 @@ check_office() {
 
 atomic_write() {
   _aw_path=$1
-  _aw_dir=$(dirname "$_aw_path")
-  _aw_tmp=$(mktemp "$_aw_dir/.tmp.XXXXXXXX") || return 1
-  if cat > "$_aw_tmp"; then mv -f "$_aw_tmp" "$_aw_path"; else rm -f "$_aw_tmp"; return 1; fi
+  python3 "$TOOL" durable-write "$_aw_path"
 }
 
 atomic_cp() {
   _ac_from=$1; _ac_to=$2
-  _ac_tmp=$(mktemp "$(dirname "$_ac_to")/.tmp.XXXXXXXX") || return 1
-  if cat "$_ac_from" > "$_ac_tmp"; then mv -f "$_ac_tmp" "$_ac_to"; else rm -f "$_ac_tmp"; return 1; fi
+  cat "$_ac_from" | atomic_write "$_ac_to"
 }
 
 new_id() {
@@ -109,6 +106,12 @@ refresh_aggregate() {
   _ra_window=${1:-}
   [ -n "$_ra_window" ] || _ra_window=$(cfgs '.accounting_window_seconds')
   _ra_now=$(date +%s)
+  if [ -e "$ROOT/aggregate.json" ]; then
+    jq -e 'type=="object" and (.tokens_total|type=="number") and
+      (.cpu_seconds|type=="number") and (.wall_seconds|type=="number") and
+      (.counted|type=="array") and (.skipped|type=="array")' "$ROOT/aggregate.json" >/dev/null 2>&1 ||
+      die 'aggregate state is corrupt; refusing to release or recompute liability'
+  fi
   _ra_out=$(python3 "$TOOL" aggregate "$RES" "$_ra_window" "$_ra_now") ||
     die 'cannot compute aggregate budget'
   printf '%s\n' "$_ra_out" | atomic_write "$ROOT/aggregate.json"
@@ -177,9 +180,14 @@ finalize_locked() {
 # ---- reservation lifecycle ---------------------------------------------------
 
 do_reserve_locked() {
-  _dr_office=$1
+  _dr_office=$1; _dr_agent=$2
   cfg_load
   probe_or_die
+  # No trustworthy per-session backend CPU attribution exists on this host.
+  # The runner PID is not the OpenCode service CPU. This Act 32 hard cap is
+  # therefore unavailable and dispatch MUST remain disabled until a supported
+  # source is configured and verified.
+  die 'authoritative per-session backend CPU meter unavailable; activation blocked (runner CPU is not a substitute)'
   [ "$(cfgs ".offices.\"$_dr_office\".enabled")" = true ] ||
     die "office $_dr_office is disabled in the budget config; fail closed"
   _dr_open=$(res_find_open "$_dr_office")
@@ -196,13 +204,13 @@ do_reserve_locked() {
   _dr_interval=$(cfgs '.monitor_interval_seconds')
   _dr_action=$(cfgs '.overrun_action')
   _dr_db=$(db_path)
-  _dr_res=$(jq -cn --arg id "$_dr_id" --arg office "$_dr_office" --argjson now "$_dr_now" \
+  _dr_res=$(jq -cn --arg id "$_dr_id" --arg office "$_dr_office" --arg agent "$_dr_agent" --argjson now "$_dr_now" \
     --argjson caps "$_dr_caps" --arg hash "$_dr_hash" --arg db "$_dr_db" \
     --argjson window "$_dr_window" --argjson interval "$_dr_interval" --arg action "$_dr_action" \
     '{schema:"viche-knowledge-budget-reservation-v1",id:$id,office:$office,
       state:"reserved",created_at:$now,caps:$caps,config_sha256:$hash,meter_db:$db,
       accounting_window_seconds:$window,monitor_interval_seconds:$interval,overrun_action:$action,
-      meter:null,usage:null,agent_id:null,native_session_id:null,runner_pid:null,
+      meter:null,baseline:null,usage:null,agent_id:$agent,native_session_id:null,runner_pid:null,
       started_at:null,expires_at:null,charge:null,monitor_pid:null,
       history:[{at:$now,event:"reserved",office:$office}]}')
   res_write "$_dr_id" "$_dr_res"
@@ -219,21 +227,23 @@ do_start_locked() {
     die "reservation $_ds_id is not in reserved state"
 
   if ! _ds_meta=$(agent_status "$_ds_agent"); then
-    res_write "$_ds_id" "$(printf '%s\n' "$_ds_cur" | jq -c --argjson now "$(date +%s)" \
-      '.state="rolled_back" | .history += [{at:$now,event:"agent_status_unreadable_rollback"}]')"
     stop_or_kill "$_ds_agent" kill
+    hold_locked "$_ds_id" 'agent_status_unreadable_after_launch'
     refresh_aggregate "$(printf '%s\n' "$_ds_cur" | jq -r '.accounting_window_seconds')"
-    die 'agent status unreadable after launch; killed agent and rolled back reservation'
+    die 'agent status unreadable after launch; reservation held at full cap'
   fi
   _ds_sid=$(printf '%s\n' "$_ds_meta" | jq -r '.native_session_id // empty')
   _ds_pid=$(printf '%s\n' "$_ds_meta" | jq -r '.runner_pid // .pid // empty')
   _ds_db=$(printf '%s\n' "$_ds_cur" | jq -r '.meter_db')
-  if [ -z "$_ds_sid" ] || ! _ds_snap=$(python3 "$TOOL" snapshot "$_ds_db" "$_ds_sid" "$_ds_pid" 2>/dev/null); then
-    res_write "$_ds_id" "$(printf '%s\n' "$_ds_cur" | jq -c --argjson now "$(date +%s)" \
-      '.state="rolled_back" | .history += [{at:$now,event:"meter_unavailable_rollback"}]')"
+  _ds_expected=$(printf '%s\n' "$_ds_cur" | jq -r '.agent_id // ""')
+  if [ "$_ds_agent" != "$_ds_expected" ] || [ -z "$_ds_sid" ] ||
+     ! _ds_snap=$(python3 "$TOOL" snapshot "$_ds_db" "$_ds_sid" "$_ds_pid" 2>/dev/null) ||
+     [ "$(printf '%s\n' "$_ds_snap" | jq -r '.session_found')" != true ] ||
+     [ "$(printf '%s\n' "$_ds_snap" | jq -r '.cpu_available')" != true ]; then
     stop_or_kill "$_ds_agent" kill
+    hold_locked "$_ds_id" 'meter_or_session_binding_unknown_after_launch'
     refresh_aggregate "$(printf '%s\n' "$_ds_cur" | jq -r '.accounting_window_seconds')"
-    die 'token meter unreadable at start; killed agent and rolled back reservation'
+    die 'meter/session binding unknown after launch; reservation held at full cap'
   fi
   _ds_now=$(date +%s)
   _ds_expiry=$((_ds_now + $(printf '%s\n' "$_ds_cur" | jq -r '.caps.wall_seconds')))
@@ -251,8 +261,10 @@ mark_dispatched_locked() {
   _md_cur=$(res_read "$_md_id")
   [ "$(printf '%s\n' "$_md_cur" | jq -r '.state')" = reserved ] || return 0
   _md_now=$(date +%s)
+  _md_agent=$(printf '%s\n' "$_md_cur" | jq -r '.agent_id // ""')
+  [ -n "$_md_agent" ] || die 'reservation lacks exact agent identity'
   res_write "$_md_id" "$(printf '%s\n' "$_md_cur" | jq -c --argjson now "$_md_now" \
-    '.dispatch_attempted=true | .history += [{at:$now,event:"dispatch_attempted"}]')"
+    '.dispatch_attempted=true | .history += [{at:$now,event:"dispatch_attempted",agent_id:.agent_id}]')"
 }
 
 mark_dispatched() { init; with_lock mark_dispatched_locked "${1:-}"; }
@@ -378,6 +390,13 @@ guard() {
   _g_now=$(date +%s)
   _g_agg=$(python3 "$TOOL" aggregate "$RES" "$(cfgs '.accounting_window_seconds')" "$_g_now") ||
     die 'aggregate computation failed'
+  if [ -e "$ROOT/aggregate.json" ]; then
+    jq -e --argjson a "$_g_agg" '.tokens_total==$a.tokens_total and
+      .cpu_seconds==$a.cpu_seconds and .wall_seconds==$a.wall_seconds and
+      .counted==$a.counted' "$ROOT/aggregate.json" >/dev/null 2>&1 ||
+      die 'aggregate record is corrupt or divergent; refusing activation'
+  fi
+  die 'authoritative per-session backend CPU meter unavailable; activation blocked (runner CPU is not a substitute)'
   _g_adm=$(python3 "$TOOL" admit "$CONFIG" "$_g_agg" "$_g_office") || die 'admission check failed'
   [ "$(printf '%s\n' "$_g_adm" | jq -r '.admit')" = true ] ||
     die "budget exhausted: $(printf '%s\n' "$_g_adm" | jq -r '.reason')"
@@ -402,6 +421,8 @@ reconcile_locked() {
           # usage is genuinely unknown, so hold with a pessimistic full charge
           # and halt further dispatch until an audited resolution.
           hold_locked "$_rc_id" 'dispatch_attempted_without_meter_registration'
+        elif [ -z "$(jq -r '.agent_id // ""' "$_rc_f")" ]; then
+          hold_locked "$_rc_id" 'reserved_without_agent_identity'
         else
           res_write "$_rc_id" "$(jq -c --argjson now "$_rc_now" \
             '.state="rolled_back" | .history += [{at:$now,event:"orphaned_reservation_rollback"}]' "$_rc_f")"
