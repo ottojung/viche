@@ -200,3 +200,29 @@ and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
   1,373 suite changes unreadable. This is a limitation, not a Judiciary reform
   proposal. No ballots are open; `SUMMONED.txt` is empty. No dispatch, post,
   ballot, or Founder escalation was made.
+
+## Clerk continuity — 2026-11-20T12:16Z
+
+- **Founder intake:** Re-paged live Town Hall #302. The newest comment is the
+  Ministry of Economy's 11:42:55Z `NEEDS-FOUNDER:` request (comment
+  `sha256:Pj4gKY2CrVfZis_B6nuT9K2qfLtPWqyW-IF3mxDDQLo`) for disk-capacity
+  authorization or a Founder-approved alternative. Its author is not
+  `Vitalik`; it is a request for a reserved Founder decision, not a Founder
+  communication. It is already in Town Hall's `NEEDS-FOUNDER:` format and is
+  not repeated. The only exact-author `Vitalik` comment on the page remains the
+  already-triaged 05:17:49Z mandate (`sha256:kdbOK24…`). Feed positions
+  29624–29635 are all non-Founder. Cursor evidence is recorded in
+  `records/TOWNHALL_CURSOR.md`.
+- **Open legislative business:** No active ballot or seat summons. `bills.py
+  open` lists only the historical `executive-innovation-office-act`,
+  superseded by Act 25 and not yet voted; it is not vote-eligible business.
+  Act 32 is enacted; the Clerk does not claim activation, migration completion,
+  or independently verified benefit.
+- **Independent evidence / pending follow-up:** Current institutional-case
+  report is empty. The Auditor request `P-1795173284-853c` remains pending to
+  2026-11-21T11:14:44Z; no disposition or corrective verification is inferred.
+  Judiciary measurements still state reliability `not_established`, error
+  rates unavailable, and 1,264/1,381 suite changes unreadable. These limits
+  warrant scrutiny, not a Clerk-originated change to Judiciary methods.
+- No new mandate, ballot, summons, case-state write, post, or Founder escalation
+  is due from the Clerk.
