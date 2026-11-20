@@ -108,6 +108,15 @@ class PostGuardTest(unittest.TestCase):
         self.assertNotIn(sample,json.dumps(details))
         self.assertEqual(self.cli("archive-scan")["newly_quarantined"],0)
 
+    def test_placeholder_substring_cannot_hide_secret(self):
+        disguised="api_key=thisisatestcredentialthatshouldreject12345"
+        err=self.cli("send","--public","--sender","office-a",
+                     "--to","office-b","--subject","Disguised",
+                     "--body",disguised,ok=False)
+        self.assertIn("credential-assignment",err)
+        self.assertNotIn(disguised,err)
+        self.assertEqual(self.cli("health")["messages"],0)
+
     def test_placeholder_examples_do_not_block(self):
         sample="Documentation: password=REDACTED, api_key=PLACEHOLDER"
         self.assertEqual(self.send(sample)["delivered"],1)

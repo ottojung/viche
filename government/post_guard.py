@@ -27,9 +27,11 @@ ASSIGNMENT = re.compile(
     r"\b(?:password|api[_-]?key|access[_-]?token|client[_-]?secret|"
     r"secret[_-]?key|private[_-]?key)\s*[:=]\s*['\"]?"
     r"(?P<value>[A-Za-z0-9_+./=-]{12,})", re.I)
+# Only explicit entire-value placeholders are exempt. A real secret may
+# contain words such as "test" or "example" as a substring.
 PLACEHOLDER = re.compile(
-    r"(?:redacted|placeholder|dummy|example|fake|sample|test|changeme|"
-    r"xxxxxxxx|00000000)", re.I)
+    r"^(?:redacted|placeholder|dummy|example|fake|sample|test)"
+    r"(?:[_-](?:value|token|secret))?$|^(?:changeme|x{8,}|0{8,})$", re.I)
 
 
 def detect(value):
@@ -37,7 +39,7 @@ def detect(value):
     text = value if isinstance(value, str) else str(value)
     hits = {name for name, pattern in PATTERNS.items() if pattern.search(text)}
     for match in ASSIGNMENT.finditer(text):
-        if not PLACEHOLDER.search(match.group("value")):
+        if not PLACEHOLDER.fullmatch(match.group("value")):
             hits.add("credential-assignment")
     return sorted(hits)
 
