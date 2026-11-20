@@ -99,24 +99,37 @@ if grep -Eq '^## Act [0-9]+ — Integration Queue Act ' "$town/government/LAWS.m
     ) 9>"$integration_state/run.lock" >> "$integration_state/run.log" 2>&1 < /dev/null &
 fi
 
+# Non-parliamentary work must not be on the constitutional sitting critical
+# path. A failed/hung Executive, Judiciary, Innovation, Economy or collector
+# must not keep summoned voting seats from receiving their prompts.
+# Each task has a separate nonblocking lock, deadline and isolated log.
+nonblocking_office() {
+    key=$1
+    deadline=$2
+    shift 2
+    dir=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/boot-independent
+    mkdir -p "$dir" || { echo "Viche: cannot create independent task state for $key" >&2; return 0; }
+    (
+        flock -n 9 || exit 0
+        timeout "$deadline" "$@" || echo "Viche: independent $key task failed or timed out (deadline $deadline seconds)" >&2
+    ) 9>"$dir/$key.lock" >>"$dir/$key.log" 2>&1 < /dev/null &
+}
+
 # Independent Executive: no parliamentary summons required.
 if [ -f "$town/government/branch-liveness.sh" ]; then
-    /bin/sh "$town/government/branch-liveness.sh" executive ||
-        echo "Viche: Executive liveness investigation required" >&2
+    nonblocking_office executive 300 /bin/sh "$town/government/branch-liveness.sh" executive
 fi
 
 # The innovation office is an Executive unit ONLY after parliamentary enactment.
 if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
-    /bin/sh "$town/government/executive-innovation-cycle.sh" ||
-        echo "Viche: Executive Innovation Office needs recovery" >&2
+    nonblocking_office executive-innovation 300 /bin/sh "$town/government/executive-innovation-cycle.sh"
 fi
 
 # The Ministry of Economy is an Executive unit ONLY after enactment of Act 29. Its
 # funding refresh is deterministic and backgrounded; its agent is gated.
 if grep -Eq '^## Act [0-9]+ — Ministry of Economy Act ' "$town/government/LAWS.md"; then
     if [ -f "$town/government/executive-economy-cycle.sh" ]; then
-        /bin/sh "$town/government/executive-economy-cycle.sh" ||
-            echo "Viche: Ministry of Economy needs recovery" >&2
+        nonblocking_office economy 300 /bin/sh "$town/government/executive-economy-cycle.sh"
     fi
 fi
 
@@ -162,8 +175,7 @@ fi
 # Deterministic oversight continues even when every AI session is unavailable.
 # Failure of telemetry/auditing must not prevent unrelated reconciliation.
 if [ -f "$town/government/oversight-watch.sh" ]; then
-    /bin/sh "$town/government/oversight-watch.sh" ||
-        echo "Viche: watchdog cycle failed; investigate monitoring coverage" >&2
+    nonblocking_office oversight 180 /bin/sh "$town/government/oversight-watch.sh"
 fi
 # Independent feedback never holds up legislature, executive, or judiciary.
 # Serialize collectors, bound their runtime, and timestamp their evidence.
@@ -180,35 +192,29 @@ fi
 # Independent Judiciary: evidence and adjudication, not executive delivery,
 # proposing bills, or modifying its own measurement rules.
 if [ -f "$town/government/branch-liveness.sh" ]; then
-    /bin/sh "$town/government/branch-liveness.sh" judiciary ||
-        echo "Viche: Judiciary liveness investigation required" >&2
+    nonblocking_office judiciary 300 /bin/sh "$town/government/branch-liveness.sh" judiciary
 fi
 # Run the historic legislative Centre ONLY until lawful transfer.
 if ! grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     if [ -f "$town/government/innovation-centre-cycle.sh" ]; then
-        /bin/sh "$town/government/innovation-centre-cycle.sh" ||
-            echo "Viche: legislative Innovation Centre failed; investigate" >&2
+        nonblocking_office innovation-centre 300 /bin/sh "$town/government/innovation-centre-cycle.sh"
     fi
 fi
 if [ -f "$town/government/branch-health.sh" ]; then
-    /bin/sh "$town/government/branch-health.sh" ||
-        echo "Viche: independent branch readiness incident recorded" >&2
+    nonblocking_office branch-health 180 /bin/sh "$town/government/branch-health.sh"
 fi
 # Durable independent case routing persists even if every branch model fails.
 if [ -f "$town/government/institutional-cases.py" ]; then
-    python3 "$town/government/institutional-cases.py" reconcile ||
-        echo "Viche: corrective-case recording failed; investigate" >&2
+    nonblocking_office institutional-cases 180 python3 "$town/government/institutional-cases.py" reconcile
 fi
 # Act 18 §7: the Executive maintains the generated board-trail index; refresh it
 # each measurement window (throttled, non-fatal) so the Founder-visible status
 # map cannot silently go stale. Runs before the §5 lens that consumes it.
 if [ -f "$town/government/board-trail-refresh.sh" ]; then
-    /bin/sh "$town/government/board-trail-refresh.sh" ||
-        echo "Viche: board-trail refresh failed" >&2
+    nonblocking_office board-trail 180 /bin/sh "$town/government/board-trail-refresh.sh"
 fi
 if [ -f "$town/government/judiciary-measurements.py" ]; then
-    python3 "$town/government/judiciary-measurements.py" ||
-        echo "Viche: Judiciary self-measurement unavailable" >&2
+    nonblocking_office judiciary-measurements 180 python3 "$town/government/judiciary-measurements.py"
 fi
 
 # Founder directive 2026-11-16: ten-line daily digest on Town Hall, once per
