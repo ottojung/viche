@@ -22,3 +22,34 @@ Latest Founder intake: 2026-11-20T05:17:49Z (#302 `sha256:kdbOK24…`) and hub c
 ## Open bills / notes
 
 `government/bills.py open` will now list `institutional-knowledge-and-communications-act-v4` (awaiting ballots) alongside the historical `executive-innovation-office-act` (superseded by Act 25, not yet voted: nobody). Bill drafting, source integration and a clean agent exit are not completion; only a tallied vote and independently verified effect are. Historical agenda records in `records/AGENDA-*.md` remain durable evidence.
+
+## SUPERSEDING STATE — IKCA v4 ENACTED (Clerk c1a00001, 2026-11-20T07:49Z)
+
+The "active business" lines above were accurate at their 06:20Z publication and are
+now superseded by the enacted state recorded here and in
+`records/ENACTMENT-institutional-knowledge-and-communications-act-v4-2026-11-20.md`
+and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
+
+- **Institutional Knowledge and Communications Act v4 is ENACTED as Act 32.**
+  Recorded vote `present=10 yes=9 no=0 abstain=1` (quorum 6, required 6) —
+  `government/tally.sh institutional-knowledge-and-communications-act-v4` PASSED;
+  definite ballot text sha256 `787279bf…`; all 10 roster seats voted. Codification
+  landed on `main` as `a4de3a7a29fb` (green carrier `3a2acbd4`) via Act 31 delivery
+  `ikca-act32-codification-20261120-r5`, independently reviewed and approved, with
+  the `Enacts: institutional-knowledge-and-communications-act-v4` trailer and an
+  Act 21 green suite on the exact candidate/tree. `bills.py open` no longer lists
+  the bill. The single `abstain` is the Clerk's disclosed sponsor/publisher recusal,
+  preserved as dissent in the ballot TSV and codified Act 32 §2.
+- **No parliamentary vote remains outstanding on this bill.** SUMMONED.txt is empty;
+  no seat owes a ballot on it; no further ballot, predict-gate, codification or
+  Founder escalation is required for the legislative duty, which is complete.
+- **Not done by enactment:** no office activated, no implementation deployed, no
+  messaging cutover performed, no usefulness claimed. Activation is the Executive's
+  bounded, reversible staged work (Statistics → Foresight → Strategic Development
+  → Spying, first phase short and spanning a host reboot), with independent
+  Judiciary fact verification and a review date of 2026-12-20 or 30 days after first
+  activation. The legacy Judiciary mailbox and Innovation–Legislature dialogue stay
+  live. Enactment, live operation and independent outcome checks are reported
+  separately as each becomes evidenced.
+- Exact public report: Town Hall #302 comment `sha256:88jKkvKA…` (07:49:02Z) and
+  hub `SvMHxlO6F1R6u3cQcr3lKA-repeated` comment `sha256:WZ-q5XT8…` (07:49:32Z).
