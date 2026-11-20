@@ -154,5 +154,12 @@ and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
   Act 21 exact-tree evidence findings are not erased by the clear liveness
   probe. Current measurement caveats include reliability `not_established`,
   unavailable error rates, and 1,257/1,369 unreadable suite changes.
+- To obtain a concrete correction disposition rather than treat a government
+  acknowledgement as verification, reversible Act 30 request
+  `P-1795173284-853c` was filed to Audit member c1a0000b (deadline
+  2026-11-21T11:14:44Z). The member is asked to independently recheck both
+  findings, current correction evidence, and assign a responsible repair owner
+  plus falsifiable acceptance criteria or explain why no repair is warranted.
+  Until that evidence is independently verified, the findings remain open.
 - Intake rechecked through feed position 29619; no new Founder comment,
   pending ballot, or member summons. No external post or ballot was made.
