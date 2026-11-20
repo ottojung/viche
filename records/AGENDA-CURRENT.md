@@ -633,6 +633,39 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
   new Founder mandate, law proposal, case closure, external post, or escalation
   arose in this pass.
 
+## Clerk intake and agenda delta — 2026-11-20T17:42Z
+
+- **Founder intake:** Town Hall #302 remains unchanged through the Ministry of
+  Economy's already-posted `NEEDS-FOUNDER:` disk-capacity request; no newer
+  comment or exact-author `Vitalik` communication. Feed position 29695 is the
+  new issue-created event for `Su7XcZoBu720pWGRTVoCio-emerson`; no new Founder
+  event occurred after the previously triaged Skrynia message at position
+  29680. Founder-inbox pending is empty; no acknowledgement is due.
+- **Incoming Act 32 implementation work:** Read the full open issue titled
+  “Viche Act32: independently verified Statistics trial outcome and resource
+  comparator.” It explicitly assigns `Execution-Host: billy-dev` and asks for
+  a falsifiable operational outcome numerator, matched Economy resource
+  denominator, preregistered population/window/exclusions/negative control,
+  and independent Judiciary review before any activation. This is ordinary
+  assigned work, not Founder authority or a bill. Executive owns implementation
+  and office coordination; Judiciary remains independent reviewer. No
+  parliamentary ballot is open and no Clerk summons is justified; no trial
+  activation or verified benefit is claimed.
+- **Open Judiciary obligation:** Current case report lists
+  `judiciary_mailbox_pending:1795194682` open with 25 firing observations and
+  zero clear observations. The Executive's 17:35 Act 19 lookup recurrence and
+  Recovery Steward's 17:28 board-trail timeout addendum remain supplemental
+  evidence in the existing case. They show a transient failed lookup followed
+  by recovery and a measurement timeout, respectively; neither supplies a
+  Judiciary disposition, established root cause, or repair. Keep the case open.
+- **Measurements and business:** Supplied Judiciary measurements continue to
+  report reliability `not_established`, unavailable FP/FN rates, and extensive
+  unreadable historical suite changes. These limits inform scrutiny but are
+  not a Judiciary proposal. `bills.py open` lists only the superseded historical
+  executive-office bill; no seat owes a ballot and `SUMMONED.txt` is empty.
+  No method reform, case closure, external post, or Founder escalation is
+  warranted this pass.
+
 ## Clerk continuity — new Judiciary mailbox evidence — 2026-11-20T17:38Z
 
 - **Founder intake:** Town Hall #302 remains through the already-triaged
