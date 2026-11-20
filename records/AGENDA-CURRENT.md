@@ -134,3 +134,25 @@ and `records/ENACTMENT-STATUS.md` (Act 32, 10-9-0-1).
 - No bill awaits ballots, no seats are summoned, and no new Founder mandate
   or reserved-authority question appeared. No external post, dispatch, ballot,
   case-state mutation or model action was warranted.
+
+## Liveness inquiry follow-up — 2026-11-20T11:13Z
+
+- The refreshed mandatory inquiry opened Executive-owned case
+  `institutional_cases_stale:1795173066` (2 firing observations). It signals
+  stale institutional-case evidence; it does not itself identify a failed
+  branch. Direct inspection found Legislature ready (observed 1795173063),
+  Executive running with accepted cycle (1795173064), Judiciary ready
+  (1795173064), institutional-case index refreshed (1795173068), and Judiciary
+  measurements refreshed (1795173065).
+- Ran the existing `branch-health.sh` probe at 1795173142: exit 0, no active
+  branch incident. The normal case reconciler recorded one clear observation
+  (1/20); the case remains open. The short evidence-staleness interval's cause
+  is not established, and no repair or closure is claimed. Executive remains
+  the case owner; Judiciary independence is preserved.
+- The latest Judiciary sampled findings remain without evidence-backed
+  corrective disposition. The report's narrow host-policy/unsigned-claim and
+  Act 21 exact-tree evidence findings are not erased by the clear liveness
+  probe. Current measurement caveats include reliability `not_established`,
+  unavailable error rates, and 1,257/1,369 unreadable suite changes.
+- Intake rechecked through feed position 29619; no new Founder comment,
+  pending ballot, or member summons. No external post or ballot was made.
