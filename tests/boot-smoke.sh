@@ -17,6 +17,25 @@ cleanup() {
 trap 'cleanup' 0
 mkdir -p "$scratch/bin" "$scratch/seats" "$scratch/state" "$scratch/mock"
 
+# government/boot.sh now runs independent office tasks (including the Executive)
+# off the sitting critical path via nonblocking_office (the parliament-liveness
+# change). The executive-ran marker is therefore written asynchronously. Wait a
+# bounded time for it before asserting; the exact line-count assertions below
+# are unchanged, so a genuinely missing Executive still fails the test.
+wait_executive_ran() {
+    _want=$1
+    _i=0
+    while [ "$_i" -lt 30 ]; do
+        if [ -f "$scratch/mock/executive-ran" ]; then
+            _n=$(wc -l < "$scratch/mock/executive-ran")
+            if [ "$_n" -ge "$_want" ]; then return 0; fi
+        fi
+        _i=$((_i + 1))
+        sleep 1
+    done
+    return 0
+}
+
 # Run against a hermetic town copy. The live records/SUMMONED.txt must not change
 # what a routine sitting does, so clear the summons in the copy.
 git clone --quiet --no-hardlinks "$root" "$town"
@@ -160,6 +179,7 @@ PY
 centre=$(awk -F '\t' '$1=="innovation-centre" {print $2}' "$scratch/state/appointments/appointments.tsv")
 [ -n "$centre" ] && [ -f "$scratch/mock/$centre" ]
 [ "$(wc -l < "$scratch/mock/ran")" -ge $((seat_count+2)) ]
+wait_executive_ran 1
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 1 ]
 # A summons wakes legislative seats and must NOT suppress the independent Executive.
 summoned=$(sed -n '2p' "$town/government/seats.tsv" | cut -f1)
@@ -167,6 +187,7 @@ printf '%s\n' "$summoned" > "$town/records/SUMMONED.txt"
 /bin/sh "$town/constitution/boot.sh" --once
 [ "$(wc -l < "$scratch/mock/created")" -ge $((seat_count+2)) ]
 [ "$(wc -l < "$scratch/mock/ran")" -ge $((seat_count+3)) ]
+wait_executive_ran 2
 [ "$(wc -l < "$scratch/mock/executive-ran")" -eq 2 ]
 # A stray ballot checkout must not strand the government. Preserve its commit
 # and recover even if fetching origin also fails transiently.
