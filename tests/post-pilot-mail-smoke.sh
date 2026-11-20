@@ -5,7 +5,7 @@ project=$(pwd -P)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 mkdir -p "$tmp/town/government"
-cp "$project/government/post.py" "$tmp/town/government/post.py"
+cp "$project/government/post.py" "$project/government/post_guard.py" "$tmp/town/government/"
 export VICHE_TOWN_ROOT="$tmp/town" VICHE_POST_DB="$tmp/state/post.sqlite3"
 # No Act enacted, no institutional office activation.
 printf '# No enacted knowledge Act\n' > "$tmp/town/government/LAWS.md"
