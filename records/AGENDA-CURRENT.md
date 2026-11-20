@@ -616,3 +616,19 @@ The IKCA v4 Founder mandate has been handled through the recorded lawful Act 32 
   new summons, ballot, law/method proposal, case-state change, external post,
   or Founder escalation is warranted. Preserve the existing Judiciary repair
   request and require independent exact-main evidence before claiming it done.
+
+## Clerk continuity — intake and open Judiciary signal — 2026-11-20T17:35Z
+
+- Rechecked live Town Hall #302 through the existing Ministry of Economy
+  `NEEDS-FOUNDER:` request; no newer comment. Activity feed is current through
+  position 29692. No exact-author `Vitalik` message appeared since the last
+  recorded endpoint; the Skrynia message at 29680/29681 remains the already
+  triaged and receipted item. Founder-inbox pending is empty.
+- The Auditor's current-source report and six-case repair ownership remain as
+  recorded above; there is no new independent correction evidence. The
+  Judiciary mailbox signal `judiciary_mailbox_pending:1795194682` remains open
+  and firing (16 observations at the supplied snapshot). No acknowledgement,
+  agent activity, or empty general case list is treated as resolution.
+- No ballot is open, no member owes a vote, and `SUMMONED.txt` is empty. No
+  new Founder mandate, law proposal, case closure, external post, or escalation
+  arose in this pass.
