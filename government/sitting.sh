@@ -351,6 +351,23 @@ if [ -f "$town/government/handover.sh" ]; then
     /bin/sh "$town/government/handover.sh" show "$seat" "$appointed" || :
 fi
 
+# Act 22: expose due forecasts to their actual independent resolver during
+# already scheduled sittings. No Post wakeup, scripted score, or new agent call.
+# A withdrawn bill is not automatically a false forecast: exact outcome
+# evidence, not wishful calibration, controls the independent disposition.
+if [ "$seat" = "$clerk" ] || [ "$seat" = c1a0000b ]; then
+    if [ -f "$town/government/predict-due.py" ]; then
+        if due=$(timeout 15 python3 "$town/government/predict-due.py" 2>/dev/null); then
+            printf '%s\n%s\n%s\n' \
+                '=== ACT 22 PREDICTIONS REQUIRING INDEPENDENT RESOLUTION ===' \
+                "$due" \
+                '=== END ACT 22 DUE FORECASTS ==='
+        else
+            echo 'Act22 due forecast report unavailable; inspect ledger and retain obligations.'
+        fi
+    fi
+fi
+
 # The Founder policy is appended to each seat's generated launch prompt.
 [ -s "$town/government/AGENT-REPORTING-POLICY.md" ] || exit 1
 printf '\n'
