@@ -7,9 +7,10 @@ if the authoritative source is unreadable it exits non-zero and the POSIX-sh
 engine fails closed.
 
 Token usage is read from the Antonina-managed OpenCode service SQLite database
-(`session_v2`, keyed by the agent's native_session_id). CPU time is read from
-/proc for the agent's runner process (including reaped children). Wall time is
-computed by the shell from authoritative timestamps.
+(`session_v2`, keyed by the agent's native_session_id). Whole-host CPU busy
+ticks are read from /proc/stat BEFORE launch and thereafter; the difference
+is a deliberately pessimistic upper bound for every overlapping office, not
+attributable backend CPU. Wall time comes from monotonic session timers.
 
 Subcommands:
   validate CONFIG          validate source-controlled budget config; exit 0/1
@@ -74,9 +75,10 @@ def validate_config(cfg):
         if not isinstance(db, str) or not db:
             errors.append("metering.opencode_db must be a non-empty string")
     cpu_meter = cfg.get("cpu_meter")
-    if not isinstance(cpu_meter, dict) or cpu_meter.get("available") is not False or \
-            cpu_meter.get("source") != "unavailable":
-        errors.append("cpu_meter must explicitly remain unavailable until verified per-office backend attribution is implemented")
+    if (not isinstance(cpu_meter, dict) or cpu_meter.get("available") is not True
+            or cpu_meter.get("source") != "proc-stat-host-busy-upper-bound-v1"
+            or cpu_meter.get("attribution") != "conservative-whole-host-upper-bound"):
+        errors.append("CPU meter must explicitly use a whole-host busy-time upper bound")
     for key, low, high in (("accounting_window_seconds", 1, MAX_WINDOW),
                            ("monitor_interval_seconds", 1, 300)):
         val = cfg.get(key)
@@ -153,12 +155,74 @@ def meter_columns(con):
     return {row[1] for row in con.execute("PRAGMA table_info(session_v2)")}
 
 
-def cpu_seconds(_pid):
-    # OpenCode's runner PID is not the backend/service CPU attribution. Never
-    # substitute it for the Act 32 machine-time cap. Until a verified service
-    # cgroup/session attribution exists, CPU is explicitly unavailable and the
-    # engine refuses all activations that require this cap.
-    return None, False
+def host_cpu():
+    """Monotone WHOLE-HOST busy CPU seconds (not office CPU attribution).
+
+    Every CPU tick spent by a knowledge office's local backend is included,
+    regardless of the supervising runner PID or concurrent workload. Charging
+    all host busy ticks to EACH overlapping office is an intentionally
+    conservative upper bound. This costs more allowance, never less. A boot
+    change or unreadable proc file is fatal to the session meter.
+    """
+    import re
+    boot = pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    if not re.fullmatch(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}", boot):
+        raise OSError("host boot identity missing or malformed")
+    with pathlib.Path("/proc/stat").open() as proc:
+        line = proc.readline().strip().split()
+    if len(line) < 9 or line[0] != "cpu":
+        raise OSError("host aggregate CPU accounting unavailable")
+    fields = [int(x) for x in line[1:9]]
+    if any(x < 0 for x in fields):
+        raise OSError("host CPU counter is invalid")
+    hz = os.sysconf("SC_CLK_TCK")
+    if not isinstance(hz, int) or hz <= 0:
+        raise OSError("invalid host CPU tick rate")
+    # user,nice,system,irq,softirq,steal; guest is already part of user
+    # and idle/iowait are not CPU execution.
+    total = sum(fields[i] for i in (0, 1, 2, 5, 6, 7)) / hz
+    return {"cpu_seconds": total, "cpu_boot_id": boot,
+            "cpu_available": True, "cpu_source": "proc-stat-host-busy-upper-bound-v1",
+            "cpu_attribution": "conservative-whole-host-upper-bound"}
+
+
+def cpu_delta(baseline, current, previous=None):
+    """Reject reboot/reset or regression; label whole-host delta as upper bound."""
+    if not all(isinstance(x, dict) for x in (baseline, current)):
+        raise ValueError("CPU baseline/current sample missing")
+    if baseline.get("cpu_boot_id") != current.get("cpu_boot_id"):
+        raise ValueError("CPU host rebooted during reservation")
+    if (baseline.get("cpu_source") != "proc-stat-host-busy-upper-bound-v1"
+            or current.get("cpu_source") != baseline.get("cpu_source")):
+        raise ValueError("CPU source changed")
+    before, after = baseline.get("cpu_seconds"), current.get("cpu_seconds")
+    if (any(isinstance(x, bool) or not isinstance(x, (int, float)) or
+            not math.isfinite(x) for x in (before, after)) or after < before):
+        raise ValueError("CPU counter reset or unavailable")
+    if previous is not None:
+        if not isinstance(previous, dict) or previous.get("cpu_boot_id") != current.get("cpu_boot_id"):
+            raise ValueError("previous CPU meter identity lost")
+        old = previous.get("cpu_host_seconds")
+        if isinstance(old, bool) or not isinstance(old, (int, float)) or after < old:
+            raise ValueError("CPU counter regressed from last committed sample")
+    updated = dict(current)
+    updated["cpu_host_seconds"] = after
+    updated["cpu_seconds"] = max(0.0, after - before)
+    updated["cpu_upper_bound"] = True
+    # The native session can be reused and cannot be identified prelaunch.
+    # Absolute session tokens safely UPPER-bound this invocation's tokens.
+    # The overrun checker historically requires .tokens.delta_total, so
+    # expose the conservative bound under that field with explicit semantics.
+    tokens = updated.get("tokens")
+    if (not isinstance(tokens, dict)
+            or isinstance(tokens.get("total"), bool)
+            or not isinstance(tokens.get("total"), int) or tokens["total"] < 0):
+        raise ValueError("token session total missing; cannot charge upper bound")
+    if updated.get("session_found") is not True:
+        raise ValueError("native session is not measured")
+    updated["tokens"] = dict(tokens, delta_total=tokens["total"])
+    updated["token_accounting"] = "absolute-session-total-upper-bound"
+    return updated
 
 
 def snapshot(db, sid, pid):
@@ -184,7 +248,7 @@ def snapshot(db, sid, pid):
                                               "cache_read", "cache_write"))
     reported = bool(row is not None and row[len(TOKEN_FIELDS)] is not None)
     cost = float(row[len(TOKEN_FIELDS)] or 0) if reported else 0.0
-    cpu, cpu_ok = cpu_seconds(pid)
+    cpu = host_cpu()
     return {
         "available": True,
         "source": METER_SOURCE,
@@ -194,8 +258,11 @@ def snapshot(db, sid, pid):
         "tokens": tokens,
         "cost": cost,
         "cost_reported": reported,
-        "cpu_seconds": cpu,
-        "cpu_available": cpu_ok,
+        "cpu_seconds": cpu["cpu_seconds"],
+        "cpu_available": cpu["cpu_available"],
+        "cpu_boot_id": cpu["cpu_boot_id"],
+        "cpu_source": cpu["cpu_source"],
+        "cpu_attribution": cpu["cpu_attribution"],
         "time_updated_ms": int(row[len(TOKEN_FIELDS) + 1]) if row[len(TOKEN_FIELDS) + 1] is not None else None,
     }
 
@@ -268,7 +335,7 @@ def overrun(caps, snap, wall):
     tokens = snap.get("tokens", {}).get("delta_total")
     cpu = snap.get("cpu_seconds")
     if isinstance(tokens, bool) or not isinstance(tokens, int) or tokens < 0:
-        raise ValueError("per-run token delta unavailable")
+        raise ValueError("session token bound unavailable")
     reasons = []
     if tokens >= caps["tokens_total"]:
         reasons.append("tokens_total")
@@ -306,6 +373,11 @@ def main(argv):
             finally:
                 con.close()
             return emit({"ok": True, "source": METER_SOURCE}, 0)
+        if cmd == "cpu-meter":
+            return emit(host_cpu(), 0)
+        if cmd == "cpu-delta":
+            return emit(cpu_delta(json.loads(args[0]), json.loads(args[1]),
+                                  json.loads(args[2]) if len(args) > 2 else None), 0)
         if cmd == "snapshot":
             return emit(snapshot(args[0], args[1] if len(args) > 1 else "",
                                  args[2] if len(args) > 2 else ""), 0)

@@ -53,6 +53,20 @@ db_path() {
 probe_or_die() {
   python3 "$TOOL" probe "$(db_path)" >/dev/null 2>&1 ||
     die 'authoritative token metering unavailable; activation blocked (no unmeasured budget claimed)'
+  python3 "$TOOL" cpu-meter >/dev/null 2>&1 ||
+    die 'whole-host busy CPU meter unavailable; activation blocked'
+}
+
+cpu_adjust() {
+  _ca_base=$1
+  _ca_current=$2
+  _ca_previous=
+  [ "$#" -lt 3 ] || _ca_previous=$3
+  if [ -n "$_ca_previous" ] && [ "$_ca_previous" != null ]; then
+    python3 "$TOOL" cpu-delta "$_ca_base" "$_ca_current" "$_ca_previous"
+  else
+    python3 "$TOOL" cpu-delta "$_ca_base" "$_ca_current"
+  fi
 }
 
 check_office() {
@@ -61,7 +75,7 @@ check_office() {
 
 atomic_write() {
   _aw_path=$1
-  python3 "$TOOL" durable-write "$_aw_path"
+  python3 "$TOOL" durable-write "$_aw_path" >/dev/null
 }
 
 atomic_cp() {
@@ -163,10 +177,29 @@ finalize_locked() {
       hold_locked "$_f_id" 'meter_unreadable_at_finalize'; return 0
     fi
   fi
+  if [ "$(printf '%s\n' "$_f_snap" | jq -r '.cpu_upper_bound // false')" != true ]; then
+    _f_base=$(printf '%s\n' "$_f_cur" | jq -c '.cpu_baseline')
+    _f_previous=$(printf '%s\n' "$_f_cur" | jq -c '.meter')
+    if ! _f_snap=$(cpu_adjust "$_f_base" "$_f_snap" "$_f_previous"); then
+      hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_at_finalize'; return 0
+    fi
+  fi
   _f_started=$(printf '%s\n' "$_f_cur" | jq -r '.started_at')
   [ -n "$_f_wall" ] || _f_wall=$(( $(date +%s) - _f_started ))
   _f_agent=$(printf '%s\n' "$_f_cur" | jq -r '.agent_id // ""')
-  [ -z "$_f_agent" ] || stop_or_kill "$_f_agent" "$(printf '%s\n' "$_f_cur" | jq -r '.overrun_action')"
+  if [ -n "$_f_agent" ]; then
+    stop_or_kill "$_f_agent" "$(printf '%s\n' "$_f_cur" | jq -r '.overrun_action')"
+    # A kill request is NOT proof that a detached backend session stopped.
+    # Never release the reserved cap while it might still be consuming work.
+    if ! _f_status=$(agent_status "$_f_agent"); then
+      hold_locked "$_f_id" 'cannot_verify_agent_stopped'; return 0
+    fi
+    _f_state=$(printf '%s\n' "$_f_status" | jq -r '.state // "unknown"')
+    case "$_f_state" in
+      running|starting|recovering|unknown)
+        hold_locked "$_f_id" 'agent_still_active_or_unknown_after_stop'; return 0 ;;
+    esac
+  fi
   _f_usage=$(usage_from_snapshot "$_f_snap" "$_f_wall")
   _f_now=$(date +%s)
   _f_new=$(printf '%s\n' "$_f_cur" | jq -c --arg r "$_f_reason" --argjson u "$_f_usage" \
@@ -183,11 +216,12 @@ do_reserve_locked() {
   _dr_office=$1; _dr_agent=$2
   cfg_load
   probe_or_die
-  # No trustworthy per-session backend CPU attribution exists on this host.
-  # The runner PID is not the OpenCode service CPU. This Act 32 hard cap is
-  # therefore unavailable and dispatch MUST remain disabled until a supported
-  # source is configured and verified.
-  die 'authoritative per-session backend CPU meter unavailable; activation blocked (runner CPU is not a substitute)'
+  # Read WHOLE-HOST busy CPU BEFORE launch. Each overlapping office pays
+  # for all host activity, giving a conservative upper bound, not attribution.
+  _dr_cpu=$(python3 "$TOOL" cpu-meter) ||
+    die 'cannot record host CPU baseline before launch'
+  [ "$(printf '%s\n' "$_dr_cpu" | jq -r '.cpu_available')" = true ] ||
+    die 'host CPU baseline not available'
   [ "$(cfgs ".offices.\"$_dr_office\".enabled")" = true ] ||
     die "office $_dr_office is disabled in the budget config; fail closed"
   _dr_open=$(res_find_open "$_dr_office")
@@ -207,10 +241,13 @@ do_reserve_locked() {
   _dr_res=$(jq -cn --arg id "$_dr_id" --arg office "$_dr_office" --arg agent "$_dr_agent" --argjson now "$_dr_now" \
     --argjson caps "$_dr_caps" --arg hash "$_dr_hash" --arg db "$_dr_db" \
     --argjson window "$_dr_window" --argjson interval "$_dr_interval" --arg action "$_dr_action" \
+    --argjson cpu "$_dr_cpu" \
     '{schema:"viche-knowledge-budget-reservation-v1",id:$id,office:$office,
       state:"reserved",created_at:$now,caps:$caps,config_sha256:$hash,meter_db:$db,
       accounting_window_seconds:$window,monitor_interval_seconds:$interval,overrun_action:$action,
-      meter:null,baseline:null,usage:null,agent_id:$agent,native_session_id:null,runner_pid:null,
+      meter:null,baseline:null,cpu_baseline:$cpu,usage:null,
+      cpu_accounting:"whole-host-busy-upper-bound-not-per-office",
+      agent_id:$agent,native_session_id:null,runner_pid:null,
       started_at:null,expires_at:null,charge:null,monitor_pid:null,
       history:[{at:$now,event:"reserved",office:$office}]}')
   res_write "$_dr_id" "$_dr_res"
@@ -244,6 +281,12 @@ do_start_locked() {
     hold_locked "$_ds_id" 'meter_or_session_binding_unknown_after_launch'
     refresh_aggregate "$(printf '%s\n' "$_ds_cur" | jq -r '.accounting_window_seconds')"
     die 'meter/session binding unknown after launch; reservation held at full cap'
+  fi
+  _ds_cpu=$(printf '%s\n' "$_ds_cur" | jq -c '.cpu_baseline')
+  if ! _ds_snap=$(cpu_adjust "$_ds_cpu" "$_ds_snap"); then
+    stop_or_kill "$_ds_agent" kill
+    hold_locked "$_ds_id" 'cpu_reboot_or_baseline_invalid_after_launch'
+    die 'host CPU meter invalid after launch; full-cap hold'
   fi
   _ds_now=$(date +%s)
   _ds_expiry=$((_ds_now + $(printf '%s\n' "$_ds_cur" | jq -r '.caps.wall_seconds')))
@@ -345,9 +388,16 @@ monitor() {
     if ! _mo_snap=$(python3 "$TOOL" snapshot "$_mo_db" "$_mo_sid" "$_mo_pid" 2>/dev/null); then
       hold "$_mo_id" 'meter_unreadable'; exit 0
     fi
+    _mo_base=$(printf '%s\n' "$_mo_cur" | jq -c '.cpu_baseline')
+    _mo_previous=$(printf '%s\n' "$_mo_cur" | jq -c '.meter')
+    if ! _mo_snap=$(cpu_adjust "$_mo_base" "$_mo_snap" "$_mo_previous"); then
+      hold "$_mo_id" 'cpu_reboot_or_counter_regression'; exit 0
+    fi
     _mo_caps=$(printf '%s\n' "$_mo_cur" | jq -c '.caps')
     _mo_wall=$((_mo_now - $(printf '%s\n' "$_mo_cur" | jq -r '.started_at')))
-    _mo_ov=$(python3 "$TOOL" overrun "$_mo_caps" "$_mo_snap" "$_mo_wall")
+    if ! _mo_ov=$(python3 "$TOOL" overrun "$_mo_caps" "$_mo_snap" "$_mo_wall"); then
+      hold "$_mo_id" 'usage_overrun_check_failed'; exit 0
+    fi
     if [ "$(printf '%s\n' "$_mo_ov" | jq -r '.over')" = true ]; then
       _mo_action=$(printf '%s\n' "$_mo_cur" | jq -r '.overrun_action')
       stop_or_kill "$_mo_agent" "$_mo_action"
@@ -396,7 +446,8 @@ guard() {
       .counted==$a.counted' "$ROOT/aggregate.json" >/dev/null 2>&1 ||
       die 'aggregate record is corrupt or divergent; refusing activation'
   fi
-  die 'authoritative per-session backend CPU meter unavailable; activation blocked (runner CPU is not a substitute)'
+  python3 "$TOOL" cpu-meter >/dev/null 2>&1 ||
+    die 'whole-host busy CPU meter unavailable; activation blocked'
   _g_adm=$(python3 "$TOOL" admit "$CONFIG" "$_g_agg" "$_g_office") || die 'admission check failed'
   [ "$(printf '%s\n' "$_g_adm" | jq -r '.admit')" = true ] ||
     die "budget exhausted: $(printf '%s\n' "$_g_adm" | jq -r '.reason')"
