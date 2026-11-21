@@ -453,4 +453,57 @@ jq -e --arg c "$TWO_STEP" '.signals[]|select(.type=="correction_not_effective" a
 if jq -e --arg c "$TWO_STEP" '.signals[]|select((.type=="corrected_finding" or .type=="unresolved_finding") and .case_id==$c)' "$scratch/check" >/dev/null; then
  echo 'Unanchored two-step history changed original inconclusive verdict' >&2;exit 1
 fi
+# Excess same-cycle correction after a legacy (cycle-unidentified)
+# confirmation is refused fail-closed (Act 17 §2.6.1 finality). Mirrors the
+# real pattern: two corrections tied to one frozen draw with no distinct
+# documented cycle; later corrections must not be accepted on that chain.
+CASE5=505050505050505050
+printf '{"case_id":"%s","population":"ignored_work","id":"305","at":2000000000}\n' "$CASE5" \
+    > "$scratch/state/oversight/random/cases/$CASE5.json"
+TOKEN21=ecececececececececececececececec
+VICHE_AUDIT_CYCLE_ID=$TOKEN21
+printf '%s\n' "$TOKEN21" > "$scratch/state/oversight/current-audit-cycle"
+printf '2000000021\t%s\n' "$TOKEN21" >> "$scratch/state/oversight/audit-cycle-identities.tsv"
+export VICHE_AUDIT_CYCLE_ID
+python3 "$CTRL" report --case "$CASE5" --verdict not_assigned --evidence "initial legacy-chain case" >/dev/null
+legacy_outcomes="$scratch/state/oversight/random/outcomes/$CASE5.json"
+python3 - "$legacy_outcomes" <<'PY'
+import json,sys
+p=sys.argv[1]; d=json.load(open(p))
+d["history"]=[{"correction":True,"confirmed":True,"verdict":"finding",
+               "supersedes":"not_assigned","cycle_id":None,"at":1792738483}]
+d["verdict"]="finding"; d["correction_pending"]=False
+json.dump(d,open(p,"w"))
+PY
+if python3 "$CTRL" report --case "$CASE5" --verdict not_assigned --evidence "excess legacy correction" \
+    --correction --cycle-id "$TOKEN21" --supersedes finding --auditor c1e00008 \
+    --reason_code excess --why_stronger "excess correction on unidentified legacy cycle" 2>/dev/null; then
+    echo "excess correction on legacy-identified chain accepted" >&2; exit 1
+fi
+# A correction repeating the cycle identity of the last confirmed correction
+# is refused ("finality"), even with a new current token.
+TOKEN22=b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1
+VICHE_AUDIT_CYCLE_ID=$TOKEN22
+printf '%s\n' "$TOKEN22" > "$scratch/state/oversight/current-audit-cycle"
+printf '2000000022\t%s\n' "$TOKEN22" >> "$scratch/state/oversight/audit-cycle-identities.tsv"
+export VICHE_AUDIT_CYCLE_ID
+TOKEN_A=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+VICHE_AUDIT_CYCLE_ID=$TOKEN_A
+printf '%s\n' "$TOKEN_A" > "$scratch/state/oversight/current-audit-cycle"
+printf '2000000023\t%s\n' "$TOKEN_A" >> "$scratch/state/oversight/audit-cycle-identities.tsv"
+export VICHE_AUDIT_CYCLE_ID
+python3 - "$legacy_outcomes" "$TOKEN_A" <<'PY'
+import json,sys
+p=sys.argv[1]; token=sys.argv[2]
+d=json.load(open(p))
+d["history"]=[{"correction":True,"confirmed":True,"verdict":"finding",
+               "supersedes":"not_assigned","cycle_id":token,"at":1792738483}]
+d["correction_finality_cycle_id"]=token
+json.dump(d,open(p,"w"))
+PY
+if python3 "$CTRL" report --case "$CASE5" --verdict not_assigned --evidence "same final cycle" \
+    --correction --cycle-id "$TOKEN_A" --supersedes finding --auditor c1e00008 \
+    --reason_code finality --why_stronger "repeat of confirmed correction cycle" 2>/dev/null; then
+    echo "same-cycle correction after confirmation accepted" >&2; exit 1
+fi
 echo 'Act 17 audit correction smoke passed'
