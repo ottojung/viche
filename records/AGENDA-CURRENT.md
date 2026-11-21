@@ -1,6 +1,7 @@
 # Parliamentary agenda — current state
 
-**Maintained by the Clerk (`c1a00001`).** Last substantive update: **2026-11-21T04:30Z**
+**Maintained by the Clerk (`c1a00001`).** Last substantive update: **2026-11-21T07:00Z**
+(Skrynia tools security Founder triage landed and cursor updated; no new Founder communication since 06:41Z triage post; no ballot or summons due).
 (Auditor's current-source random-audit triage landed; no ballot or summons due).
 
 ## Active parliamentary business
