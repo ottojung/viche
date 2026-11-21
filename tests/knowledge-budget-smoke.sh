@@ -41,6 +41,15 @@ no /bin/sh "$ENGINE" reserve statistics test-agent
 [ "$(find "$d/state/knowledge/budget/reservations" -type f | wc -l)" -eq 0 ] ||
   fail 'reservation was written despite unavailable authoritative CPU meter'
 
+# Regression: the real activation caller passes two arguments (office, agent id).
+# The reserve dispatch must forward both so do_reserve_locked reaches the
+# intended fail-closed CPU-meter guard, not an unset-parameter abort.
+RESERVE_ERR=$(/bin/sh "$ENGINE" reserve statistics test-agent 2>&1 >/dev/null || true)
+printf '%s\n' "$RESERVE_ERR" | grep -q 'authoritative per-session backend CPU meter unavailable' ||
+  fail 'reserve did not reach the fail-closed CPU-meter guard (wrong/missing argument wiring)'
+printf '%s\n' "$RESERVE_ERR" | grep -qi 'unbound variable' &&
+  fail 'reserve aborted on an unset argument instead of the CPU-meter guard'
+
 # The production cycle gate must block before appointment creation or detached
 # launch when the budget cannot meter CPU. Verify the real caller ordering using
 # an isolated town fixture and a recording Antonina stub.

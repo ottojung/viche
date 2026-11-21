@@ -528,7 +528,7 @@ shift || :
 case "$cmd" in
   config) config_cmd "$@";;
   guard) check_office "${1:-}"; guard "$1";;
-  reserve) check_office "${1:-}"; init; with_lock do_reserve_locked "$1";;
+  reserve) check_office "${1:-}"; init; with_lock do_reserve_locked "$1" "$2";;
   mark-dispatched) init; with_lock mark_dispatched_locked "${1:-}";;
   start) init; with_lock do_start_locked "${1:-}" "${2:-}"; launch_monitor "${1:-}"; printf 'active %s\n' "$1";;
   monitor) init; monitor "${1:-}";;
