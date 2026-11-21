@@ -48,9 +48,30 @@ if [ -s "$root/last-audit-dispatch" ]; then last=$(cat "$root/last-audit-dispatc
 case "$last" in ''|*[!0-9]*) last=0;; esac
 [ $((now-last)) -ge "$cadence" ] || exit 0
 
-evidence='No ordinary incident.'
-[ ! -s "$root/incident.json" ] || evidence=$(cat "$root/incident.json")
-[ ! -s "$root/random/incident.json" ] || evidence="$evidence $(cat "$root/random/incident.json")"
+# Operational repair (recovery-steward, 2026-11-21): the incident and frozen
+# sample reports can grow to tens of KB. Inlining them verbatim into the single
+# --prompt argument once exceeded the kernel per-argument limit ("antonina:
+# Argument list too long", E2BIG), so EVERY audit dispatch failed even after
+# the backend recovered. Persist the full evidence and the sampled cohort to
+# durable files and pass the agent only bounded pointers; the agent reads the
+# complete artifacts with its own tools. This changes no audit criterion.
+evidence_file="$root/audit-evidence.txt"
+{
+  printf '=== deterministic watchdog evidence ===\n'
+  if [ -s "$root/incident.json" ]; then
+    printf '\n--- oversight/incident.json ---\n'
+    cat "$root/incident.json"
+  else
+    printf '\n(oversight/incident.json absent)\n'
+  fi
+  if [ -s "$root/random/incident.json" ]; then
+    printf '\n--- oversight/random/incident.json ---\n'
+    cat "$root/random/incident.json"
+  else
+    printf '\n(oversight/random/incident.json absent)\n'
+  fi
+} > "$evidence_file.tmp" && mv "$evidence_file.tmp" "$evidence_file"
+evidence_ref="Full deterministic watchdog evidence (oversight incident and frozen-sample reports) is preserved at $evidence_file. Read that file with your tools before adjudicating; the inline copy is intentionally a bounded pointer so the dispatch argument cannot exceed the kernel limit."
 selection='Test-only no sample'
 if [ "${VICHE_AUDIT_SELECTION:-1}" = 1 ]; then
   # The audit cycle belongs to a FROZEN randomized draw, not each repeat
@@ -86,6 +107,11 @@ payload={"at":v["at"],"seed_after_snapshot":v["seed_after_snapshot"],
 print(hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest()[:32])
 ') || exit 1
 fi
+# Persist the frozen sampled cohort too (same bounded-pointer repair). The
+# full JSON is durable; the agent reads it rather than receiving it inline.
+selection_file="$root/audit-selection-$cycle_id.json"
+printf '%s\n' "$selection" > "$selection_file.tmp" && mv "$selection_file.tmp" "$selection_file"
+selection_ref="The frozen sampled case cohort is preserved at $selection_file. Read that file with your tools."
 
 prompt=$(cat <<EOF
 You are the independent Viche Judiciary under Act 4, accountable to
@@ -116,7 +142,7 @@ A later independent sample is a new cycle. This is not a retroactive
 adjudication of historical cycles or the contested PR #32 corrections.
 
 Current deterministic watchdog evidence:
-$evidence
+$evidence_ref
 MANDATORY CROSS-BRANCH CORRECTIVE CASES:
 $cases
 These are health observations, NOT verdicts or legislative authorizations.
@@ -163,7 +189,7 @@ successor_agent exactly from its reconciliation receipt, and a specific
 independent evidence_ref. A successful agent exit is NOT sufficient.
 If uncertain, retain the open case and report why.
 Randomized audit cases (bounded deep review):
-$selection
+$selection_ref
 
 For each sampled open issue, verify actual host assignment from its description
 and latest Founder comments, then investigate unjustified neglect if assigned.
