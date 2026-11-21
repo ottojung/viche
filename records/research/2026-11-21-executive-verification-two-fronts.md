@@ -36,5 +36,3 @@
 ## Open obligations preserved
 
 framed-dag completeness, space separation Omega(S(n)), excess-at-most-one all-n, increment-log-upper (verified true, elementary), FO(TC) (blocker identified), 6 blocked fronts. No theorem completion claimed.
-EOF
-echo written
