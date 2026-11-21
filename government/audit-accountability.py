@@ -349,6 +349,11 @@ def report(args):
         prior["details"] = pending.get("details", prior.get("details", ""))
         prior["correction_pending"] = False
         prior.pop("correction_cycle_id", None)
+        # Durable finality: a correction confirmed in this cycle may not be
+        # followed by another correction on the same cycle (Act 17 §2.6.1).
+        # Record the confirming cycle identity for the correction-path check.
+        prior["correction_finality_cycle_id"] = pending_cycle
+        prior["correction_finality_at"] = now
         if pending["verdict"] == "finding":
             prior.pop("corrected_from_finding", None)
         else:
@@ -374,6 +379,20 @@ def report(args):
             raise ValueError("one correction per case per cycle (finality)")
         if args.cycle_id in used_cycle_tokens(prior, args.case):
             raise ValueError("one correction per case per cycle (cycle_id already used)")
+        # Act 17 §2.6.1 ("finality"): confirmation clears correction_pending,
+        # so a second excess correction in the same cycle must be refused by
+        # durable cycle identity, not by the transient pending flag. A case
+        # whose earlier correction lacks a valid cycle identity is refused
+        # fail-closed: until a new registered dispatch records durable
+        # identity, an excess correction on an unidentified cycle is refused.
+        prior_corrections = [h for h in prior.get("history", []) if h.get("correction")]
+        if any(not valid_cycle_token(h.get("cycle_id")) for h in prior_corrections):
+            raise ValueError("one correction per case per cycle (durable cycle identity required)")
+        finality = prior.get("correction_finality_cycle_id")
+        if finality is not None and not valid_cycle_token(finality):
+            raise ValueError("one correction per case per cycle (durable cycle identity required)")
+        if finality is not None and args.cycle_id == finality:
+            raise ValueError("one correction per case per cycle (finality)")
         if args.evidence == prior.get("evidence_ref"):
             raise ValueError("correction evidence must be distinct from the original reference")
         if not args.why_stronger or not args.why_stronger.strip():
