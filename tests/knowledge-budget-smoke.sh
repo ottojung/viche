@@ -1,6 +1,6 @@
 #!/bin/sh
-# Act 32 H adversarial black-box tests. Production CPU attribution is presently
-# unsupported; the fail-closed gate must therefore prevent every live dispatch.
+# Act 32 H adversarial black-box tests: host busy CPU is a conservative
+# upper bound, NOT per-session attribution; reset/unreadable must fail closed.
 set -eu
 cd "$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)"
 TOOL=$(pwd -P)/government/knowledge-budget-tool.py
@@ -34,24 +34,26 @@ PY
 jq -e '[.offices[] | .enabled] | all(. == false)' government/knowledge-budget.conf >/dev/null ||
   fail 'shipped config did not default all offices disabled'
 
-# Production gate: real token meter exists, but no verified per-session backend
-# CPU attribution exists, so neither guard nor reservation may admit dispatch.
-no /bin/sh "$ENGINE" guard statistics
-no /bin/sh "$ENGINE" reserve statistics test-agent
-[ "$(find "$d/state/knowledge/budget/reservations" -type f | wc -l)" -eq 0 ] ||
-  fail 'reservation was written despite unavailable authoritative CPU meter'
+# Valid token telemetry plus host-wide busy CPU accounting admits a
+# PRELAUNCH reservation with durable CPU baseline before any agent exists.
+ok /bin/sh "$ENGINE" guard statistics
+rid=$(/bin/sh "$ENGINE" reserve statistics test-agent) || fail 'reservation denied'
+[ -n "$rid" ] && [ -s "$d/state/knowledge/budget/reservations/$rid.json" ] ||
+  fail 'prelaunch reservation missing'
+jq -e '.cpu_baseline.cpu_available==true and
+       .cpu_baseline.cpu_source=="proc-stat-host-busy-upper-bound-v1" and
+       (.cpu_baseline.cpu_boot_id|length)>20 and
+       .cpu_accounting=="whole-host-busy-upper-bound-not-per-office"' \
+    "$d/state/knowledge/budget/reservations/$rid.json" >/dev/null ||
+    fail 'prelaunch CPU upper-bound baseline missing'
+no /bin/sh "$ENGINE" reserve statistics second-agent
+# The test fixture has no launched agent, so its reservation may be removed.
+rm "$d/state/knowledge/budget/reservations/$rid.json" "$d/state/knowledge/budget/aggregate.json"
+ok /bin/sh "$ENGINE" guard statistics
+no /bin/sh "$ENGINE" reserve statistics
 
-# Regression: the real activation caller passes two arguments (office, agent id).
-# The reserve dispatch must forward both so do_reserve_locked reaches the
-# intended fail-closed CPU-meter guard, not an unset-parameter abort.
-RESERVE_ERR=$(/bin/sh "$ENGINE" reserve statistics test-agent 2>&1 >/dev/null || true)
-printf '%s\n' "$RESERVE_ERR" | grep -q 'authoritative per-session backend CPU meter unavailable' ||
-  fail 'reserve did not reach the fail-closed CPU-meter guard (wrong/missing argument wiring)'
-printf '%s\n' "$RESERVE_ERR" | grep -qi 'unbound variable' &&
-  fail 'reserve aborted on an unset argument instead of the CPU-meter guard'
-
-# The production cycle gate must block before appointment creation or detached
-# launch when the budget cannot meter CPU. Verify the real caller ordering using
+# The production cycle still blocks before appointment or detached launch
+# whenever token telemetry is absent. Verify the real caller ordering using
 # an isolated town fixture and a recording Antonina stub.
 mkdir -p "$d/cycle-town/government" "$d/cycle-town/records/knowledge" "$d/cycle-state" "$d/cycle-bin"
 cp government/knowledge-budget.conf government/knowledge-budget.sh government/knowledge-budget-tool.py \
@@ -62,7 +64,7 @@ printf 'baseline\n' > "$d/cycle-town/records/knowledge/baseline-20261119.json"
 cp "$DB" "$d/cycle-meter.db"
 python3 - "$d/cycle-town/government/knowledge-budget.conf" "$d/cycle-meter.db" <<'PY'
 import json,sys
-p=sys.argv[1]; c=json.load(open(p)); c['metering']['opencode_db']=sys.argv[2]; c['offices']['statistics']['enabled']=True; json.dump(c,open(p,'w'))
+p=sys.argv[1]; c=json.load(open(p)); c['metering']['opencode_db']=sys.argv[2]+'.missing'; c['offices']['statistics']['enabled']=True; json.dump(c,open(p,'w'))
 PY
 cat > "$d/cycle-bin/antonina" <<'SH'
 #!/bin/sh
@@ -101,7 +103,10 @@ no python3 "$TOOL" delta "$CUR" "$RESET"
 
 # Authoritative time_updated is explicitly milliseconds, never interpreted as
 # seconds or as a fabricated CPU signal.
-printf '%s\n' "$CUR" | jq -e '.time_updated_ms==1795197102261 and .cpu_available==false and .cpu_seconds==null' >/dev/null ||
+printf '%s\n' "$CUR" | jq -e '.time_updated_ms==1795197102261 and .cpu_available==true and
+    .cpu_source=="proc-stat-host-busy-upper-bound-v1" and
+    .cpu_attribution=="conservative-whole-host-upper-bound" and
+    .cpu_seconds>0 and (.cpu_boot_id|length)>20' >/dev/null ||
   fail 'meter units/provenance are ambiguous'
 
 # Any malformed/unknown reservation is a hard aggregate error, not skipped.
@@ -176,4 +181,4 @@ ok /bin/sh "$ENGINE" config rollback
 H2=$(sha256sum "$d/state/knowledge/budget/config.active.json" | awk '{print $1}')
 [ "$H1" = "$H2" ] || fail 'rollback was not byte-exact'
 
-echo 'knowledge budget: disabled defaults; missing SID, CPU, corruption, cumulative deltas, durable writes, and rollback fail closed/pass'
+echo 'knowledge budget: disabled defaults; host CPU reservations, missing SID, corruption, cumulative deltas, durability and rollback verified'
