@@ -283,8 +283,14 @@ def main() -> int:
     for au, d in sorted(per_author.items()):
         metrics = score_group(d["scored"])
         covered = len(d["scored"]) + d["unresolved"]
+        author_due = {e.get("id") for e in due if e.get("author") == au}
+        author_done = author_due & (scored_ids | unresolved_ids)
         metrics.update({"author": au, "registered": d["registered"],
                         "unresolved": d["unresolved"],
+                        "due": len(author_due),
+                        "due_resolved": len(author_done),
+                        "due_resolution_coverage": round(len(author_done)/len(author_due), 4)
+                        if author_due else None,
                         "due_unresolved": d["due_unresolved"],
                         "coverage": round(covered / d["registered"], 4)
                         if d["registered"] else None,
@@ -294,9 +300,16 @@ def main() -> int:
                         if d["scored"] else None})
         authors.append(metrics)
 
-    # Resolution coverage counts true/false and explicitly unresolved
-    # resolutions; due-but-not-yet-resolved entries remain uncovered.
+    # Legacy coverage counts all registrations, including those whose dates
+    # are in the future. Do not use this denominator for Act 32 §I, which
+    # specifically requires *DUE*-resolution coverage (future forecasts must
+    # not suppress the observed resolution rate).
     coverage = (len(scored) + len(unresolved)) / len(registered) if registered else None
+    due_ids = {e.get("id") for e in due}
+    due_done_ids = due_ids & (scored_ids | unresolved_ids)
+    due_scored_ids = due_ids & scored_ids
+    due_coverage = len(due_done_ids) / len(due_ids) if due_ids else None
+    due_scored_coverage = len(due_scored_ids) / len(due_ids) if due_ids else None
 
     # Act 20 §7 checkpoints live in the ledger as carried-forward statutory
     # records but are deliberately excluded from Brier scoring.
@@ -356,6 +369,8 @@ def main() -> int:
             "registered": len(registered), "rejected": len(rejected),
             "resolved_scored": n_scored, "unresolved": len(unresolved),
             "due": len(due), "due_unresolved": len(due_unresolved),
+            "due_resolved": len(due_done_ids),
+            "due_scored": len(due_scored_ids),
             "review_checkpoint": {
                 "total": len(definitions),
                 "registered": sum(1 for r in checkpoints if r.get("registered")),
@@ -369,6 +384,17 @@ def main() -> int:
             },
         },
         "coverage": (round(coverage, 4) if coverage is not None else None),
+        "due_resolution_coverage": (round(due_coverage, 4)
+                                    if due_coverage is not None else None),
+        "due_scored_coverage": (round(due_scored_coverage, 4)
+                               if due_scored_coverage is not None else None),
+        "act32_calibration_minimum_gate": {
+            "eligible": bool(due_coverage is not None and due_coverage >= 0.8
+                             and len(due_scored_ids) >= 2 and not defects),
+            "required_due_resolution_coverage": 0.8,
+            "required_scored_true_false": 2,
+            "note": "Passing numerical thresholds is not evidence of forecast independence or stable calibration."
+        },
         "brier": {"aggregate": (round(brier_agg, 6) if brier_agg is not None else None),
                   "per_prediction": [{"id": e.get("id"), "probability": p, "outcome": o,
                                       "brier": round((p - o) ** 2, 6)}
