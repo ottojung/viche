@@ -53,7 +53,8 @@ CONFIG = pathlib.Path(os.environ.get(
         os.environ.get("XDG_CONFIG_HOME", str(HOME / ".config")))) / "antonina" / "config.json")))
 COOLDOWNS = pathlib.Path(os.environ.get(
     "VICHE_ANTONINA_COOLDOWNS",
-    str(pathlib.Path(os.environ.get("XDG_STATE_HOME", HOME / ".local" / "state")) / "antonina" / "model-cooldowns")))
+    str(pathlib.Path(os.environ.get("ANTONINA_HOST_XDG_STATE_HOME",
+        os.environ.get("XDG_STATE_HOME", str(HOME / ".local" / "state")))) / "antonina" / "model-cooldowns")))
 MAX_MODELS = int(os.environ.get("VICHE_ECONOMY_MAX_MODELS", "32"))
 PROBE_FRESH_SECONDS = 14 * 86400
 PROBE_TIMEOUT = int(os.environ.get("VICHE_ECONOMY_PROBE_TIMEOUT", "120"))
