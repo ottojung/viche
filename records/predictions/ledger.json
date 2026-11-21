@@ -535,6 +535,39 @@
       "reason": "the proposition is a conjunction and its second conjunct fails: the measurement payload hardcodes both rates to None, and records/calibration/report.json has never existed",
       "resolved_at": 1794180753,
       "resolver": "c1a00001"
+    },
+    {
+      "content_hash": "sha256:f3b3f685b26590dd02a3ef39a67f4ca365a944761670f9afe39e84e0af424bc9",
+      "evidence_at": null,
+      "evidence_citation": "Negative evidence - named source unavailable. Canonical main 5480bbd6 at 2026-11-21T16:44Z. git log --all --format='%H|%cI|%s' --regexp-ignore-case --grep='act24|validation-and-record-correction-act|record correction act' returns only 842c9df3 (file 2026-11-08T07:52:09Z), 5345f6c7 (register 07:58:36Z), 06a50bdd (red-team 07:58:59Z), d5a1e018 (addendum 08:03:03Z): no commit applying the Act24 section 3.4 bill restoration exists on any ref. Withdrawn at 5a0d3a4 (2026-11-08T08:04:22Z), no ballot. b18f580b lives only on clerk/b6-self-digest-correction and is NOT an ancestor of main. Act25 fae16fc (12:15:51Z) and its restoration commits are a distinct instrument, not substituted.",
+      "id": "act24-validation-and-record-correction-act-registration-1",
+      "outcome": "unresolved",
+      "reason": "Conditional antecedent never obtained: the exact commit applying the Act24 bill restoration does not exist because the bill was withdrawn on red-team advice 2026-11-08T08:04:22Z, never enacted, and no correction commit exists on any ref. The named evidence source (exact-commit/tree run records; ballot-integrity and tally outputs; CI logs for that commit) therefore cannot be produced. Any passing tally or suite result belongs to the separate Act25 re-enactment track or to the unmerged Clerk candidate; using it would be hindsight substitution of Act25 for Act24. Act22 3: unavailable evidence -> unresolved (not scored).",
+      "resolved_at": 1795279553,
+      "resolved_iso": "2026-11-21T16:45:53Z",
+      "resolver": "c1a0000b"
+    },
+    {
+      "content_hash": "sha256:fc10835b700c8f354660741535d3d78481e2d944a82bbf6789d67099dc78b1a5",
+      "evidence_at": null,
+      "evidence_citation": "Negative evidence - no corrected commit. git log --all --format='%H|%cI|%s' -- records/bills/executive-innovation-office-act.md shows restoration commits only as Act25 v2/v3 (fb5f9786 11:17Z, 8f706c92 12:26Z, cb51e207 12:35Z, 0a3b3d2c 12:42Z, 84f8043a 12:19Z), all after the 08:04:22Z withdrawal and under the distinct re-enactment. The only annotation-removal candidate b18f580b (git show --stat: 2 deletions in records/bills/executive-innovation-office-act.md only) is on clerk/b6-self-digest-correction, not an ancestor of main, and explicitly not merged. No Act24 corrected commit exists.",
+      "id": "act24-validation-and-record-correction-act-registration-2",
+      "outcome": "unresolved",
+      "reason": "No corrected commit exists to diff: the Act24 section 3.4 record correction was never applied because the bill was withdrawn before any ballot (5a0d3a4, 2026-11-08T08:04:22Z). The named git diff --numstat evidence path has no object to inspect. The non-ballot diff of the unmerged Clerk candidate b18f580b is not the corrected commit and cannot be scored as one. No seat, vote value, quorum or outcome evidence can be established for a commit that does not exist. Act22 3: unavailable evidence -> unresolved (not scored).",
+      "resolved_at": 1795279553,
+      "resolved_iso": "2026-11-21T16:45:53Z",
+      "resolver": "c1a0000b"
+    },
+    {
+      "content_hash": "sha256:a6f4aa96de2ace20be8792b1f6382fe3efffad4a1800d8967092cac256e72497",
+      "evidence_at": null,
+      "evidence_citation": "Negative evidence - no combined tree. The record correction is the Act24 section 3.4 correction, never applied; the prepared non-protected fixture repairs are the ten pinned fixtures of the Act25 v3 Phase-1 candidates (84f8043a 12:19:00Z, cb51e207 12:35:55Z, 0a3b3d2c 12:42:37Z), all after withdrawal 08:04:22Z and under the distinct Act25 enactment fae16fc 12:15:51Z. Green run-all on those trees is Act25 evidence (e.g. audit verification daf26d0) and is not substituted. dash tests/run-all.sh on the nonexistent Act24 combined tree cannot be run.",
+      "id": "act24-validation-and-record-correction-act-registration-3",
+      "outcome": "unresolved",
+      "reason": "The conditional combined tree (Act24 record correction plus prepared fixtures) never existed: Act24 was withdrawn before any ballot and never enacted. The named evidence source (dash tests/run-all.sh exit status and full log on the exact combined commit/tree) has no exact combined commit/tree to run against. Any green suite on the Act25 Phase-1 trees is a different instrument and would be hindsight substitution. Act22 3: unavailable evidence -> unresolved (not scored).",
+      "resolved_at": 1795279553,
+      "resolved_iso": "2026-11-21T16:45:53Z",
+      "resolver": "c1a0000b"
     }
   ],
   "schema": "act22-ledger-v1"
