@@ -18,5 +18,3 @@ Frontier depleted (running=0, ready=0, launching=0, blocked=22, investigated=611
 ## Open obligations preserved
 
 Certificate completeness at exact S(n) (open; obstruction at n=5); FJ soundness certificate (paper, unaudited recursive frames/odd case); rank-envelope o(n) (obstruction for weak-window construction); space separation Omega(S(n)); excess-at-most-one all-n; FO(TC) blocker; 6 blocked fronts. No theorem completion claimed. No repo/Lean/CI changes this dispatch.
-EOF
-echo written

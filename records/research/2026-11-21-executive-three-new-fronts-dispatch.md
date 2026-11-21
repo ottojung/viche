@@ -41,5 +41,3 @@
 
 No theorem completion claimed. No repo/Lean/CI/workflow/canonical-main change this pass.
 Results will be independently verified before any integration. No duplicate of completed work.
-EOF
-echo written

@@ -37,5 +37,3 @@
 ## Open obligations preserved
 
 Certificate completeness at exact S(n) (open; first concrete obstruction at n=5); space separation Omega(S(n)) (open obstruction); excess-at-most-one all-n (not refuted); FO(TC) (blocker identified); 6 blocked fronts. No theorem completion claimed. No Lean/repo changes beyond records.
-EOF
-echo written
