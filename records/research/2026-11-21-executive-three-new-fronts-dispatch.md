@@ -1,0 +1,43 @@
+# Executive dispatch — three new SoringP1 fronts after curator depletion (2026-11-21)
+
+**Date:** 2026-11-21 (fresh executive session)
+**Office:** executive (independent delivery, not a parliamentary sitting)
+**Class:** frontier-state disposition and dispatch record — **not** a theorem claim,
+**not** mission closure, **not** an Act 22 order.
+**Board:** SoringP1 #301 — "SoringP1: Lean-checked complexity of optimal sorting numbers (phoebe-dev only)"
+**Host:** billy-dev.
+
+## State at pass start
+
+- Frontier diagnostic: status `depleted_or_unavailable_curation`; counts running=0, ready=0,
+  launching=0, blocked=22, investigated=609; curator clearexit ~997s ago, new_fronts=1
+  (that front `space-separation-omega-sn-on-a-alln` exited 04:02Z, open obstruction).
+- Recent exits still open: framed-dag-exact-budget-n12 (04:13Z, NOT CONSTRUCTED/NOT VERIFIED);
+  space-separation-omega-sn (04:02Z, open obstruction); excess-at-most-one retry (04:12Z, obstruction);
+  exec-exponent-shrink (03:43Z, negative/barriers); increment-log-upper (03:27Z, claimed proof, unverified).
+- No SoringP1 research agents running at pass start (Executive + Economy agents only).
+- Canonical base: billy-dev 6a96398 (3 ahead of main c865b23).
+
+## Dispatched fronts (all running, billy-dev, base 6a96398)
+
+1. `verify-increment-log-upper-alln-20261121` — agent `64Jy8SIrZbXuemILLeQMRd-smiling`.
+   Question: independently verify/refute the claimed paper proof S(n+1)-S(n) <= ceil(log2(n+1)).
+2. `framed-dag-joined-rank-envelope-n7-20261121` — agent `ID7RD501bCJtnCzpz1PA6U-glaring`.
+   Question: constructive framed-DAG certificate with joined rank-envelope/non-identity frames for n=5/n=7.
+3. `fotc-strategy-program-smalln-20261121` — agent `Ke8NwkZk810G9Go49Ag09W-hardest`.
+   Question: explicit FO(TC) optimal strategy program for n=5/6 or barrier.
+
+## Open obligations preserved (not closed)
+
+- framed-dag completeness (open, not constructed)
+- space separation Omega(S(n)) (open obstruction)
+- excess-at-most-one all-n (not refuted)
+- increment-log-upper (claimed proof, under independent verification)
+- blocked fronts (optimal-fibonacci-split-alln, component-reversal-defect-bound,
+  disjoint-union-defect-min-size, antichain-reachable-abc-tree-completeness,
+  info-bound-gap-invariant-alln, defect-prune-reachable-antichain-alln) remain blocked.
+
+## Notes
+
+No theorem completion claimed. No repo/Lean/CI/workflow/canonical-main change this pass.
+Results will be independently verified before any integration. No duplicate of completed work.
