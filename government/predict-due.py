@@ -22,8 +22,13 @@ def iso(epoch):
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--now",type=int,default=int(time.time()))
-    ap.add_argument("--limit",type=int,default=12)
+    ap.add_argument("--limit",type=int,default=50)
+    ap.add_argument("--offset",type=int,default=0)
+    ap.add_argument("--resolver",choices=("all","c1a00001","c1a0000b"),
+                    default="all")
     args=ap.parse_args()
+    if args.offset < 0:
+        raise SystemExit("predict-due: offset cannot be negative")
     if not 1 <= args.limit <= 50:
         raise SystemExit("predict-due: limit must be between 1 and 50")
     town=Path(os.environ.get("VICHE_TOWN_ROOT","/var/lib/lubko/wd/viche"))
@@ -53,19 +58,26 @@ def main():
             if r["id"] not in resolutions:
                 pending.append(r)
         pending.sort(key=lambda r:(r["resolution_date"],r["id"]))
+        def resolver(r):
+            return "c1a0000b" if r["author"]=="c1a00001" else "c1a00001"
+        assigned=[r for r in pending if args.resolver=="all" or
+                  resolver(r)==args.resolver]
+        page=assigned[args.offset:args.offset+args.limit]
         items=[]
-        for r in pending[:args.limit]:
+        for r in page:
             bill=town/"records/bills"/(r["bill_id"]+".md")
             withdrawn=False
             if bill.is_file() and not bill.is_symlink():
                 withdrawn="WITHDRAWN" in bill.read_text(errors="replace")[:200]
             items.append({
                 "id":r["id"],"author":r["author"],
-                "required_resolver":"c1a0000b" if r["author"]=="c1a00001" else "c1a00001",
+                "required_resolver":resolver(r),
                 "due_utc":r["resolution_date"],
                 "days_past_due":(day-datetime.date.fromisoformat(r["resolution_date"])).days,
-                "proposition":r["proposition"],
-                "evidence_source":r["evidence_source"],
+                "proposition":r["proposition"][:240],
+                "evidence_source":r["evidence_source"][:180],
+                "full_evidence_must_be_read_from_ledger":(
+                    len(r["proposition"])>240 or len(r["evidence_source"])>180),
                 "conditional_withdrawn_bill":withdrawn,
                 "caution":"Examine exact primary evidence. If unavailable or counterfactual, resolve UNRESOLVED with reason, not an invented Brier score."
             })
@@ -77,9 +89,13 @@ def main():
             "as_of_utc":iso(args.now),"integrity":"clean",
             "due":len(due),"scored":scored,"unresolved":unable,
             "awaiting_independent_resolution":len(pending),
+            "awaiting_assigned_resolution":len(assigned),
+            "resolver_filter":args.resolver,"offset":args.offset,
             "future_registered":len(future),
             "next_due_utc":min(future).isoformat() if future else None,
-            "items":items,"truncated":len(pending)>len(items),
+            "items":items,"truncated":args.offset+len(items)<len(assigned),
+            "next_offset":args.offset+len(items)
+                if args.offset+len(items)<len(assigned) else None,
             "no_auto_resolution":True,
             "review_note":"Clerk is Act 22 resolver except its own predictions; those require independent Audit c1a0000b. Report calibration coverage even when all cases are unresolved."
         },ensure_ascii=False,sort_keys=True))
