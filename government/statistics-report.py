@@ -41,6 +41,15 @@ def freeze(day):
     os.replace(tmp,snapshot)
     return data
 
+def gap_source(d):
+    """Derived, frozen evidence of unavailability; NEVER a primary outcome."""
+    path=STATE/"knowledge"/"statistics"/("snapshot-"+d["day"]+".json")
+    try:
+        raw=path.read_bytes()
+    except OSError:
+        return []
+    return ["file:"+str(path)+"#sha256="+hashlib.sha256(raw).hexdigest()]
+
 def report(d,kind):
     e=d["entries"]
     if kind=="outcomes":
@@ -61,6 +70,13 @@ def report(d,kind):
         ]
         topic="statistics/outcomes"
         sources=[e[x]["source"] for x in ("outcomes","judiciary") if "source" in e[x]]
+        if "source" not in e["outcomes"]:
+            lines += [
+                "Genuine outcome collector: UNAVAILABLE (not zero and not healthy).",
+                "Missing source reason: "+str(e["outcomes"].get("missing","unknown")),
+                "The frozen Statistics snapshot is derived missingness evidence only.",
+            ]
+            sources+=gap_source(d)
     else:
         r=e["resources"].get("data",{})
         lines=[
@@ -73,6 +89,13 @@ def report(d,kind):
         ]
         topic="statistics/resources"
         sources=[e["resources"]["source"]] if "source" in e["resources"] else []
+        if not sources:
+            lines += [
+                "Resource collector: UNAVAILABLE (not zero and not healthy).",
+                "Missing source reason: "+str(e["resources"].get("missing","unknown")),
+                "The frozen Statistics snapshot is derived missingness evidence only.",
+            ]
+            sources=gap_source(d)
     return topic,"\n".join(lines),sources
 
 def publish(d,kind,dry_run):

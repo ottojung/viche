@@ -167,6 +167,22 @@ if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \
     mkdir -p "$statistics_root"
     (
         flock -n 9 || exit 0
+        # Act 33's first-trial deterministic mode is a zero-model alternative
+        # to the unbounded in-flight LLM billing path. It still requires the
+        # exact signed activation, independent phase, pinned source bytes and
+        # a durable upfront whole-host CPU/wall budget reservation. A failed
+        # report burns its attempt for this UTC day, not the town's liveness.
+        if grep -Eq '^## Act 33 — Prospective Statistics Trial Clarification \(enacted ' "$town/government/LAWS.md"; then
+            mode=$(jq -r '.offices.statistics.trial_mode // ""'                 "$town/records/knowledge/activation.json" 2>/dev/null) || exit 0
+            if [ "$mode" = deterministic-v1 ]; then
+                [ -s "$town/government/statistics-bounded-trial.py" ] || exit 0
+                timeout -k 2 40 python3 "$town/government/statistics-bounded-trial.py" ||
+                    echo "Viche: bounded Statistics observation failed/held; next day only" >&2
+            else
+                echo "Viche: Act 33 Stats model spending has no per-request cap approval; no report" >&2
+            fi
+            exit 0
+        fi
         today=$(date -u +%Y-%m-%d)
         [ ! -s "$statistics_root/last-published-day" ] ||
           [ "$(cat "$statistics_root/last-published-day")" != "$today" ] || exit 0

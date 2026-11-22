@@ -58,6 +58,36 @@ Record known measurement errors and selective missingness. Publish data only
 when it changes meaningfully; publish corrections explicitly. May recommend
 investigations, but cannot determine wrongdoing or set Judiciary methods.
 
+### Act 33 first Statistics trial: bounded model-free alternative
+
+For the FIRST reversible Statistics-only measurement trial, an independently
+signed Executive activation may specify trial_mode deterministic-v1. This mode
+does NOT invoke Antonina or any model: the daily boot calls the exact pinned
+statistics-bounded-trial.py, and knowledge-office-cycle.sh makes no managed
+model dispatch for that office. It is a fallback until Economy proves a strict
+pre-provider-request token cap rather than an after-the-fact monitoring ceiling.
+
+This alternative needs enacted Act 33, a matching Judiciary phase PROCEED,
+an Executive order of at most 14 days, exact reviewed hashes for the runner,
+Statistics reporter, Post, Post guard, Economy budget code/config, and valid
+source-attested inputs. Before EVERY report attempt it durably prepays 0 model
+tokens, 256 ALL-HOST CPU seconds and 64 wall seconds into the SAME persistent
+45-day office/aggregate Economy budget ledger. The max four physically possible
+CPU cores, outer 40+2 second timeout, independent nested 20+2 second timeout
+and synchronous no-model Post publication bound the report even after a
+supervisor crash. Only a verified completed process and same-boot CPU reading
+may reduce this prepayment to the measured whole-host UPPER_BOUND; that is
+NEVER actual per-office CPU. A crash, unavailable meter, changed topology,
+corrupt source, unsettled agent or exhausted budget holds the full charge.
+No resetting cumulative liability by day or by renaming a trial.
+
+There is at most one durable attempt per UTC day; failures remain visible
+without retry storms or obstructing the Legislature, Judiciary or other offices.
+The reporter publishes measured inputs or explicit frozen UNAVAILABLE gaps, not
+invented zeros or claims of improved public outcomes. Publication and a zero
+model-call execution are NOT proof of marginal value, independent review, or
+authority to activate Foresight, Strategy, Spying or cut over private channels.
+
 ## foresight: Foresight Institute (functionally independent)
 
 Investigate uncertain trajectories, leading indicators, tail risks,
