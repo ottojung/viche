@@ -20,6 +20,15 @@ grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(en
 # Act and THIS office, with a bounded hard expiry. The shared fail-closed
 # verifier is the same code boot.sh and appointments.sh use, so the three agree.
 /bin/sh "$town/government/knowledge-activation-verify.sh" "$office" || exit 0
+# Under Act 33, a specifically reviewed deterministic Statistics trial uses
+# boot.sh's single daily, prepaid, bounded collector instead of ANY Antonina
+# agent session. The model budget is NOT strict for in-flight requests; never
+# bypass it by treating a retrospective kill as a hard billing ceiling.
+if [ "$office" = statistics ] &&
+   grep -Eq '^## Act 33 — Prospective Statistics Trial Clarification \(enacted ' "$town/government/LAWS.md" &&
+   jq -e '.offices.statistics.trial_mode == "deterministic-v1"'      "$town/records/knowledge/activation.json" >/dev/null 2>&1; then
+    exit 0
+fi
 # Act 32 H: fail-closed metered budget guard. When the budget engine is not
 # installed (legacy fixtures) there is no budget subsystem to gate on; when it
 # is installed, a missing/corrupt config, absent token meter, exhausted cap or
