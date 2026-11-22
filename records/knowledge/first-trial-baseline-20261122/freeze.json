@@ -1,0 +1,31 @@
+{
+  "boot_id": "f9ff8212-8012-4d2d-86e6-5d7f5dee2802",
+  "boot_unchanged_during_freeze": true,
+  "caveat": "Point-in-time copies of mutable live paths; reproducible only as these frozen bytes, not by re-reading live paths. Not authority, not an outcome measurement.",
+  "files": [
+    {
+      "name": "institutional-outcomes.latest.json",
+      "sha256": "1751fded0593932b526095cc91d48f6e3caa1da3974b660d00bcca7714e7de76",
+      "size_bytes": 1863
+    },
+    {
+      "name": "economy.resources.json",
+      "sha256": "c9246eae07659b93bc433ef2179d28c5f57738a8fd64896501cf7206253b055e",
+      "size_bytes": 2000
+    },
+    {
+      "name": "judiciary-measurements.json",
+      "sha256": "fa653395ed5b427923b6096413e434658f9ab8b32c39a5524ce298d97395ad06",
+      "size_bytes": 7025
+    },
+    {
+      "name": "institutional-cases.index.json",
+      "sha256": "387aa8b8320c241033a54f335de8204f3a1df70f9c5aae7f63d95e05854e81eb",
+      "size_bytes": 5582
+    }
+  ],
+  "frozen_at_epoch": 1795374061,
+  "host": "billy-dev",
+  "observer": "viche-executive (source-attested freeze; not verification)",
+  "schema": "viche-first-trial-baseline-freeze-1"
+}

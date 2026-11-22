@@ -1,0 +1,101 @@
+{
+  "schema": "viche-first-trial-source-dict-1",
+  "status": "DRAFT_GATES_PENDING",
+  "created_at": "2026-11-22T19:03:00Z",
+  "status_updated_at": "2026-11-22T19:10:00Z",
+  "status_note": "Both code deliveries are now landed on canonical main (c3b2beb4, fca4c493). verify-landed is green. The trial remains DRAFT pending Economy, Judiciary and preflight gates.",
+  "host": "billy-dev",
+  "authority": "Hash inventory for the DRAFT first Act 33 Statistics trial. Pinning bytes is evidence, not authorization. This dict does not enable any office or set any budget flag.",
+  "law": {
+    "act": 33,
+    "title": "Prospective Statistics Trial Clarification",
+    "bill_id": "act32-prospective-statistics-trial-amendment",
+    "bill_sha256": "65345025166713b43816b27ea2d982a87809df956c258ac022dca7a274528a9d",
+    "landing_commit": "e9719476"
+  },
+  "deliveries": {
+    "model_free": {
+      "slug": "delivery/act33-model-free-statistics-20261122",
+      "candidate_head": "9b89dc429da9ec626f409e8f924c527502688a03",
+      "review": "independent Act 31 reviewer approved; exact green tests",
+      "landing_observed": "landed on canonical main as c3b2beb481aa (Act 21 carrier 6dfc4f4a)"
+    },
+    "first_trial_preflight": {
+      "slug": "delivery/exec-act33-first-trial-preflight-20261122",
+      "candidate_head": "24c35964732e798c93174a5df7094c5448920ab1",
+      "review": "independent Act 31 reviewer approved; exact green tests",
+      "landing_observed": "landed on canonical main as fca4c49371043 (Act 21 carrier 5bd3b984); preflight verifier 4e4ca79d and gate 92f62e9a match pinned bytes"
+    }
+  },
+  "code_sources": {
+    "runner": {
+      "path": "government/statistics-bounded-trial.py",
+      "sha256": "12a9aafd3f386ccfd1c83a46277b86432525bf2974ac4c87d458a3a79c0d6321",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "report": {
+      "path": "government/statistics-report.py",
+      "sha256": "eee1c120fd2d1ca6e9d71a8b459209960b83e259cc16a96477255273b0884e62",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "post": {
+      "path": "government/post.py",
+      "sha256": "d0c7dd355b6e833b122090e845eb13c8d5aacba364da4f007b67f46a7d441b03",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "post_guard": {
+      "path": "government/post_guard.py",
+      "sha256": "e4a1406f49e0bf07d341aca6d2a9b8623fbf3572dc56f5f69703b7eed408c2f4",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "budget_tool": {
+      "path": "government/knowledge-budget-tool.py",
+      "sha256": "5ab458f01ce26fc093da66cf37f36489f4b53780dcb85b273aca1191b03df2aa",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "budget_config": {
+      "path": "government/knowledge-budget.conf",
+      "sha256": "4aeb7c89f6e38a9d7e0fbb0ea681325530c867df58106717d724687512edcf23",
+      "origin_commit": "9b89dc429da9ec626f409e8f924c527502688a03"
+    },
+    "preflight_gate": {
+      "path": "government/statistics-preflight.sh",
+      "sha256": "92f62e9a786bca9c82573392e88f9ba0d31e1354bfe7b9a1a39562123bc991fa",
+      "origin_commit": "24c35964732e798c93174a5df7094c5448920ab1"
+    },
+    "first_trial_verifier": {
+      "path": "government/statistics-first-trial.py",
+      "sha256": "4e4ca79dce3d6f943e6439a95562489e1a62d3f24c32cf93756587b0e8f07bfc",
+      "origin_commit": "24c35964732e798c93174a5df7094c5448920ab1"
+    }
+  },
+  "original_source_roots": {
+    "liveness_outcomes": "/var/lib/lubko/wd/viche-state/institutional-outcomes/latest.json",
+    "institutional_cases": "/var/lib/lubko/wd/viche-state/institutional-cases/index.json",
+    "audit_dispatch_events": "/var/lib/lubko/wd/viche-state/oversight/audit-dispatches.tsv",
+    "economy_resources": "/var/lib/lubko/wd/viche-state/economy/resources.json",
+    "judiciary_measurements": "/var/lib/lubko/wd/viche-state/branches/judiciary-measurements.json",
+    "host_cpu": "/proc/stat",
+    "host_boot": "/proc/sys/kernel/random/boot_id",
+    "post_archive": "/var/lib/lubko/wd/viche-state/post/post.sqlite3",
+    "budget_ledger": "/var/lib/lubko/wd/viche-state/knowledge/budget/reservations",
+    "budget_aggregate": "/var/lib/lubko/wd/viche-state/knowledge/budget/aggregate.json",
+    "activation": "records/knowledge/activation.json",
+    "phase_records": "records/knowledge/phases",
+    "law": "government/LAWS.md"
+  },
+  "baseline": {
+    "dir": "records/knowledge/first-trial-baseline-20261122",
+    "freeze_record": "freeze.json",
+    "manifest": "MANIFEST.sha256",
+    "boot_id": "f9ff8212-8012-4d2d-86e6-5d7f5dee2802",
+    "frozen_at_epoch": 1795374061,
+    "note": "Real point-in-time copies of mutable live paths, taken under one unchanged boot id. Reproducible only as these frozen bytes."
+  },
+  "activation_guard": {
+    "all_four_offices_must_be_disabled_while_draft": true,
+    "statistics_budget_config_must_be_disabled_while_draft": true,
+    "no_phase_gate_record_set_while_draft": true,
+    "executive_must_not_self_verify_judiciary_phase": true
+  }
+}
