@@ -69,6 +69,18 @@ jq -e '.state=="closed" and .meter.cpu_upper_bound==true and
   "$tmp/state/knowledge/budget/reservations/$r.json" >/dev/null || {
   echo 'Measured token overrun was not durably accounted' >&2; exit 1;
 }
+# The first agent exceeded its per-office 150-token allowance. Even though
+# the aggregate budget still has room, repeat office reservations in this
+# SAME accounting window MUST now be refused (cumulative office liability).
+if /bin/sh "$engine" reserve statistics too-many >/dev/null 2>&1; then
+  echo 'FAIL: spent office quota was silently reset by a new reservation' >&2
+  exit 1
+fi
+# Test the separate kill-failure outcome under a FRESH isolated budget
+# fixture. Do not delete or reset the first fixture's source-attested debit.
+# An ordinary production office must not restart until Economy allocates more.
+export VICHE_STATE_ROOT="$tmp/state-second"
+mkdir -p "$VICHE_STATE_ROOT"
 # A kill command that exits nonzero or leaves the backend running must
 # NEVER release the cap. Stop verification is independent of kill invocation.
 export TEST_KILL_FAIL=yes
@@ -79,14 +91,14 @@ r2=$(/bin/sh "$engine" reserve statistics test-agent-2)
 /bin/sh "$engine" start "$r2" test-agent-2 >/dev/null
 held=no
 for attempt in 1 2 3 4 5 6 7 8; do
-  state=$(jq -r '.state' "$tmp/state/knowledge/budget/reservations/$r2.json")
+  state=$(jq -r '.state' "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r2.json")
   if [ "$state" = held ]; then held=yes; break; fi
   sleep 1
 done
 [ "$held" = yes ] || { echo 'Failed termination released or stranded reservation' >&2; exit 1; }
 jq -e '.state=="held" and .charge.tokens_total==150 and
         .held_reason=="agent_still_active_or_unknown_after_stop"' \
-        "$tmp/state/knowledge/budget/reservations/$r2.json" >/dev/null || {
+        "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r2.json" >/dev/null || {
   echo 'Failed stop did not retain full reservation' >&2; exit 1;
 }
 if /bin/sh "$engine" reserve statistics agent-3 >/dev/null 2>&1; then
