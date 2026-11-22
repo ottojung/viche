@@ -1,0 +1,213 @@
+{
+  "active": [],
+  "auto_closed": [
+    {
+      "closed_at": 1794903454,
+      "id": "executive_unhealthy:1794898876"
+    },
+    {
+      "closed_at": 1794975901,
+      "id": "executive_unhealthy:1794970885"
+    },
+    {
+      "closed_at": 1794998162,
+      "id": "executive_unhealthy:1794993316"
+    },
+    {
+      "closed_at": 1795011648,
+      "id": "executive_unhealthy:1795006883"
+    },
+    {
+      "closed_at": 1795032490,
+      "id": "executive_unhealthy:1795027629"
+    },
+    {
+      "closed_at": 1795112272,
+      "id": "executive_unhealthy:1795107691"
+    },
+    {
+      "closed_at": 1795156327,
+      "id": "executive_unhealthy:1795150900"
+    },
+    {
+      "closed_at": 1794870745,
+      "id": "institutional_cases_stale:1794629070"
+    },
+    {
+      "closed_at": 1795168820,
+      "id": "institutional_cases_stale:1795159104"
+    },
+    {
+      "closed_at": 1795171533,
+      "id": "institutional_cases_stale:1795168447"
+    },
+    {
+      "closed_at": 1795174028,
+      "id": "institutional_cases_stale:1795173066"
+    },
+    {
+      "closed_at": 1795175327,
+      "id": "institutional_cases_stale:1795174217"
+    },
+    {
+      "closed_at": 1795177090,
+      "id": "institutional_cases_stale:1795175749"
+    },
+    {
+      "closed_at": 1795184208,
+      "id": "institutional_cases_stale:1795183058"
+    },
+    {
+      "closed_at": 1795186319,
+      "id": "institutional_cases_stale:1795184586"
+    },
+    {
+      "closed_at": 1795190767,
+      "id": "institutional_cases_stale:1795189230"
+    },
+    {
+      "closed_at": 1795194112,
+      "id": "institutional_cases_stale:1795193135"
+    },
+    {
+      "closed_at": 1795198037,
+      "id": "institutional_cases_stale:1795196624"
+    },
+    {
+      "closed_at": 1794886814,
+      "id": "judiciary_mailbox_pending:1794360911"
+    },
+    {
+      "closed_at": 1795190767,
+      "id": "judiciary_mailbox_pending:1795184019"
+    },
+    {
+      "closed_at": 1795198085,
+      "id": "judiciary_mailbox_pending:1795194682"
+    },
+    {
+      "closed_at": 1794870745,
+      "id": "judiciary_measurements_stale:1794629070"
+    },
+    {
+      "closed_at": 1795041093,
+      "id": "judiciary_unhealthy:1795036122"
+    },
+    {
+      "closed_at": 1795257174,
+      "id": "judiciary_unhealthy:1795256020"
+    },
+    {
+      "closed_at": 1795259106,
+      "id": "judiciary_unhealthy:1795257947"
+    },
+    {
+      "closed_at": 1795261036,
+      "id": "judiciary_unhealthy:1795259879"
+    },
+    {
+      "closed_at": 1795262975,
+      "id": "judiciary_unhealthy:1795261804"
+    },
+    {
+      "closed_at": 1795264885,
+      "id": "judiciary_unhealthy:1795263744"
+    },
+    {
+      "closed_at": 1795266820,
+      "id": "judiciary_unhealthy:1795265664"
+    },
+    {
+      "closed_at": 1795268790,
+      "id": "judiciary_unhealthy:1795267599"
+    },
+    {
+      "closed_at": 1795315116,
+      "id": "executive_stale:1795313512"
+    },
+    {
+      "closed_at": 1795373089,
+      "id": "executive_unhealthy:1795371910"
+    },
+    {
+      "closed_at": 1794870745,
+      "id": "innovation_stale:1794684118"
+    },
+    {
+      "closed_at": 1795204456,
+      "id": "institutional_cases_stale:1795202839"
+    },
+    {
+      "closed_at": 1795338963,
+      "id": "judiciary_mailbox_pending:1795337686"
+    },
+    {
+      "closed_at": 1795177090,
+      "id": "judiciary_measurements_stale:1795176125"
+    },
+    {
+      "closed_at": 1795345018,
+      "id": "judiciary_unhealthy:1795343853"
+    },
+    {
+      "closed_at": 1795177090,
+      "id": "outcomes_stale:1795176125"
+    }
+  ],
+  "auto_closed_count": 38,
+  "caveat": "operational health, not proof of delivery; a closed label without a case-bound closure artifact is listed as unresolved",
+  "count": 0,
+  "observed_at": 1795374039,
+  "total_obligations": 8,
+  "unresolved_without_closure_evidence": [
+    {
+      "id": "executive_unhealthy:1794131744",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "executive_unhealthy",
+      "state": "verified_closed"
+    },
+    {
+      "id": "innovation_stale:1793146340",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "innovation_stale",
+      "state": "verified_closed"
+    },
+    {
+      "id": "institutional_cases_stale:1794160464",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "institutional_cases_stale",
+      "state": "verified_closed"
+    },
+    {
+      "id": "judiciary_unhealthy:1793889525",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "judiciary_unhealthy",
+      "state": "verified_closed"
+    },
+    {
+      "id": "continuity_unverified_c1a00001:1793746004",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "continuity_unverified_c1a00001",
+      "state": "verified_closed"
+    },
+    {
+      "id": "continuity_unverified_executive:1793894047",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "continuity_unverified_executive",
+      "state": "verified_closed"
+    },
+    {
+      "id": "continuity_unverified_innovation-centre:1793083688",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "continuity_unverified_innovation-centre",
+      "state": "verified_closed"
+    },
+    {
+      "id": "legislature_unhealthy:1793889525",
+      "reason": "verified_closed without a case-bound closure artifact",
+      "signal": "legislature_unhealthy",
+      "state": "verified_closed"
+    }
+  ],
+  "unresolved_without_closure_evidence_count": 8
+}
