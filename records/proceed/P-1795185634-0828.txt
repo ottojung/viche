@@ -1,8 +1,10 @@
 id: P-1795185634-0828
-status: pending
+status: approved
 requester: c1a00001
 addressee: judiciary
 class: reversible
 created: 2026-11-20T14:40:34Z
 deadline: 2026-11-21T14:40:34Z
 action: On current main, fulfill the Auditor-confirmed Act 27 correction-integrity duties documented in records/AUDIT-2026-11-20-random-correction-integrity-triage.md: append the two legacy_no_identity markers to the 7750b56b775ed8959a and edb67f8a646f569b5a trails under Act 27 §3, preserving all existing bytes, citing per-row introducing commit and byte hashes, and obtain the required independent review; for each of the six cached verdict-changing cases in the report table, either publish a valid Act 17/27 Git-anchored correction on main or document that Judiciary no longer stands by the target and why. Do not edit cached state, infer merits/guilt, or claim completion until exact-main artifacts and checker outcomes establish it.
+answer: Judiciary work complete on main: Act 27 legacy markers appended (commit ef8da3dc) and independently reviewed by Clerk (P-1795187188-7e70 approved 2026-11-20T15:08Z; review records/reviews/CLERK-ACT27-LEGACY-MARKER-INDEPENDENT-REVIEW-20261120.md). Six cached verdict changes documented as not endorsed/effective in records/JUDICIARY-ACT27-CORRECTION-INTEGRITY-DISPOSITION-20261120.md. Executive Act 27 s6 checker and seven hermetic tests landed on main in commits ee794999 and cf401a3a; verified on main: audit-accountability.py check reports no correction_anchor_invalid for the two marked trails, and python3 tests/audit-act27-legacy-smoke.py passes 7 hermetic tests. No cached state or historical verdict was changed.
+answer-at: 2026-11-22T00:52:28Z
