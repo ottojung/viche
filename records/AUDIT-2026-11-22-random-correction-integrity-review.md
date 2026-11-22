@@ -17,7 +17,7 @@ reports are never treated as success.
 ## 1. Act 21 scripted compliance check (Act 15 §5)
 
 Command: `python3 government/audit-accountability.py check` on main, plus
-`sh tests/audit-act27-legacy-smoke.py` (7 tests, OK, exit 0, 2.74s).
+`python3 tests/audit-act27-legacy-smoke.py` (7 tests, OK, exit 0, 2.74s).
 
 - Act 27 legacy marker hermetic tests: **7/7 pass** on main.
 - Correction signals on main: **11 `correction_not_effective`** cases, **0
@@ -228,7 +228,7 @@ outstanding. This is a supplemental public receipt, not a finding.
   whether the constitution baseline claim holds (current main moved to 46a7c917).
 - **LEADING INDICATORS (not evidence of delivery):** agent exits, commit counts,
   the Act 27 marker presence, the Act 32 tool's existence, and the run of
-  `sh tests/audit-act27-legacy-smoke.py` (7 tests) — these show machinery, not
+  `python3 tests/audit-act27-legacy-smoke.py` (7 tests) — these show machinery, not
   outcome. The full `sh tests/run-all.sh` did not complete this cycle.
 - **Sampling limits:** 4-case random sample (2 ignored_work, 1 claimed_delivery,
   1 government_decision) out of universes of 86/345/40. A single pass cannot
