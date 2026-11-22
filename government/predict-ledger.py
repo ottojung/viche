@@ -61,12 +61,21 @@ def ledger_path() -> Path:
 
 def now_epoch() -> int:
     env = os.environ.get("VICHE_PREDICT_NOW")
-    if env is not None:
-        try:
-            return int(env)
-        except ValueError:
-            pass
-    return int(time.time())
+    if env is None:
+        return int(time.time())
+    # This synthetic clock is a TEST FIXTURE only. It must never authenticate
+    # backdated production predictions or resolutions (Act 22).
+    root = town_root().resolve()
+    ledger = ledger_path().resolve()
+    temp = Path("/tmp").resolve()
+    if (not os.environ.get("VICHE_TOWN_ROOT")
+            or not root.is_relative_to(temp)
+            or not ledger.is_relative_to(root)):
+        raise SystemExit("predict-ledger: REFUSED synthetic clock on a live ledger")
+    try:
+        return int(env)
+    except ValueError as exc:
+        raise SystemExit("predict-ledger: invalid synthetic clock") from exc
 
 
 def iso(epoch: int) -> str:
