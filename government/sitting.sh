@@ -357,7 +357,7 @@ fi
 # evidence, not wishful calibration, controls the independent disposition.
 if [ "$seat" = "$clerk" ] || [ "$seat" = c1a0000b ]; then
     if [ -f "$town/government/predict-due.py" ]; then
-        if due=$(timeout 15 python3 "$town/government/predict-due.py" 2>/dev/null); then
+        if due=$(timeout 15 python3 "$town/government/predict-due.py" --resolver "$seat" --limit 50 2>/dev/null); then
             printf '%s\n%s\n%s\n' \
                 '=== ACT 22 PREDICTIONS REQUIRING INDEPENDENT RESOLUTION ===' \
                 "$due" \

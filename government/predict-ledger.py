@@ -51,7 +51,7 @@ FALLBACK_RESOLVER = "c1a0000b"
 
 
 def town_root() -> Path:
-    return Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
+    return Path(os.environ.get("VICHE_TOWN_ROOT", str(Path(__file__).resolve().parent.parent)))
 
 
 def ledger_path() -> Path:
