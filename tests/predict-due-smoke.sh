@@ -39,4 +39,34 @@ if python3 "$tmp/government/predict-due.py" --now 90002 > "$tmp/agenda" 2>/dev/n
 fi
 jq -e '.integrity=="failed"' "$tmp/agenda" >/dev/null
 grep -q 'government/predict-due.py' "$repo/government/sitting.sh"
-echo 'Act22 due agenda: independent resolver, withdrawn plan, honest unresolved and integrity fail-closed passed'
+grep -q -- '--resolver "$seat"' "$repo/government/sitting.sh"
+# Tomorrow 17 come due: 15 authored by c1a00004 are Clerk-owned,
+# two authored by Clerk require Audit. No silently dropped twelfth+ items.
+export VICHE_PREDICT_LEDGER="$tmp/cohort.json"
+for n in $(seq 1 17); do
+  if [ "$n" -le 15 ]; then author=c1a00004; else author=c1a00001; fi
+  VICHE_PREDICT_NOW=90 python3 "$tmp/government/predict-ledger.py" register \
+    --bill "cohort-$n" --proposition "Check future cohort event $n" \
+    --resolution-date 1970-01-02 --probability 0.6 \
+    --evidence "independent:cohort-event-$n" --author "$author" >/dev/null
+done
+python3 "$tmp/government/predict-due.py" --now 90000 \
+  --resolver c1a00001 > "$tmp/clerk"
+python3 "$tmp/government/predict-due.py" --now 90000 \
+  --resolver c1a0000b > "$tmp/audit"
+jq -e '.awaiting_independent_resolution==17 and
+       .awaiting_assigned_resolution==15 and
+       (.items|length)==15 and .truncated==false and
+       (.items|all(.required_resolver=="c1a00001"))' "$tmp/clerk" >/dev/null
+jq -e '.awaiting_independent_resolution==17 and
+       .awaiting_assigned_resolution==2 and
+       (.items|length)==2 and .truncated==false and
+       (.items|all(.required_resolver=="c1a0000b"))' "$tmp/audit" >/dev/null
+python3 "$tmp/government/predict-due.py" --now 90000 \
+  --resolver c1a00001 --limit 8 --offset 0 > "$tmp/page1"
+python3 "$tmp/government/predict-due.py" --now 90000 \
+  --resolver c1a00001 --limit 8 --offset 8 > "$tmp/page2"
+jq -e '(.items|length)==8 and .truncated==true and .next_offset==8' "$tmp/page1" >/dev/null
+jq -e '(.items|length)==7 and .truncated==false and .next_offset==null' "$tmp/page2" >/dev/null
+test "$(wc -c < "$tmp/clerk")" -lt 32768
+echo 'Act22 due queue: independent resolver routing, all 17 due, pagination, withdrawn evidence and integrity pass'
