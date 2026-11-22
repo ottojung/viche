@@ -55,4 +55,25 @@ jq -e \
     ((.offices[$office].expires_at - .offices[$office].not_before) <= 3888000) and
     (.offices[$office].not_before <= $now) and
     (.offices[$office].expires_at > $now)
-  ' "$activation" >/dev/null
+  ' "$activation" >/dev/null || exit 1
+
+# Act 33 requires a separately authenticated Judiciary PROCEED before every
+# Statistics / successor dispatch. An enabled JSON flag and an act label alone
+# have never proved phase approval. The pointer only chooses the phase record;
+# the independent verifier checks its Git provenance and officer corroboration.
+if grep -Eq '^## Act 33 — Prospective Statistics Trial Clarification \(enacted ' "$laws"; then
+  record=$(jq -er --arg office "$office" '
+    .offices[$office].phase_gate_record |
+    select(type == "string" and
+           test("^records/knowledge/phases/[A-Za-z0-9_-]+[.]json$"))
+  ' "$activation") || exit 1
+  [ -s "$town/$record" ] || exit 1
+  jq -e --arg office "$office" --argjson act "$act_num" '
+    .schema=="viche-knowledge-phase-gate-v1" and
+    .office==$office and .act==$act and .decision=="proceed"
+  ' "$town/$record" >/dev/null 2>&1 || exit 1
+  [ -s "$town/government/knowledge-phase-gate.sh" ] || exit 1
+  # A missing or hung verifier denies only the office. Do not stop Parliament.
+  timeout 30 /bin/sh "$town/government/knowledge-phase-gate.sh" verify "$record" >/dev/null 2>&1 || exit 1
+fi
+exit 0
