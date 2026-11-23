@@ -466,10 +466,21 @@ class Verifier:
                 problems.append("safety.%s is not true" % key)
         if safety.get("stop_on_detection") is not False:
             problems.append("cap is stop-on-detection, not a strictly enforced hard cap")
-        for key in ("tokens_cap", "host_cpu_upper_bound"):
-            val = safety.get(key)
-            if not is_int(val) or val <= 0:
-                problems.append("safety.%s missing or non-positive" % key)
+        # The only currently demonstrated strict provider spending bound is
+        # zero: the first-trial deterministic runner has no model/provider
+        # request path. Requiring >0 token spending would reject the safe
+        # option and encourage falsely certifying the retrospective OpenCode
+        # monitor as a hard cap. Positive token spending needs separate
+        # separately verified per-request admission technology, NOT this gate.
+        if safety.get("execution_mode") != "deterministic-v1":
+            problems.append("only independently verified model-free first-trial mode is permitted")
+        if safety.get("provider_requests_max") != 0:
+            problems.append("first trial must permit exactly zero provider requests")
+        if not is_int(safety.get("tokens_cap")) or safety["tokens_cap"] != 0:
+            problems.append("model-free first-trial hard token cap must be exactly zero")
+        if (not is_int(safety.get("host_cpu_upper_bound"))
+                or safety["host_cpu_upper_bound"] <= 0):
+            problems.append("safety.host_cpu_upper_bound missing or non-positive")
         if safety.get("host_cpu_tag") != "UPPER_BOUND":
             problems.append("host CPU is not tagged UPPER_BOUND")
         if not nonempty(safety.get("negative_test_digest")):
