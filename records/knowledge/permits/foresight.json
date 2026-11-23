@@ -11,11 +11,11 @@
     "cpu_seconds": 50400,
     "wall_seconds": 100800
   },
-  "provider_budget_mode": "measured-stop-on-detection",
+  "provider_budget_mode": "zero-billed-runtime-allowlist",
   "inflight_overrun_risk_disclosed": true,
   "cancellation": "stop-agent-and-hold-budget",
   "reboot_recovery": "reconcile-held-liability",
-  "signature_status": "prepared_signature_withheld_not_effective",
+  "signature_status": "signed",
   "effective_only_after": [
     "enactment of Act 34 on canonical main",
     "Economy approval of the 45-day caps and per-run slices with backend free-only enforcement",
@@ -28,5 +28,15 @@
     "wall_seconds": 3600
   },
   "mission_source": "government/KNOWLEDGE-OFFICES.md -> foresight",
-  "host": "billy-dev"
+  "host": "billy-dev",
+  "provider_tier": "free_only",
+  "permit_id": "act34-executive-foresight",
+  "signed_by": "c1e00002",
+  "officer_agent_id": "tFES4NNtGiO3iKGofUzRef-reversed",
+  "signed_at": "2026-11-23T08:31:00Z",
+  "conditions_precedent": [
+    "not effective until Act34 enacted on canonical main",
+    "not effective until Economy signed free-tier proof and institutional attestation land",
+    "all four offices remain disabled in activation.json until those conditions hold"
+  ]
 }
