@@ -8,11 +8,13 @@ the failing invocation is appended to a durable JSONL so the underlying cause
 can be established from checkable bytes rather than a truncated, rotated log.
 """
 import base64
+import concurrent.futures
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +41,16 @@ def _int_env(name, default, low, high):
 
 RETRIES = _int_env("VICHE_BOARD_RETRIES", 3, 1, 10)
 BACKOFF = _int_env("VICHE_BOARD_RETRY_DELAY", 1, 0, 5)
+# Each `antonina board show` is a separate CLI process (~2-3s startup). With a
+# growing open-issue set the old serial loop exceeded the 300s executive-cycle
+# timeout (observed 4m12s for 89 issues), stalling the cycle and leaving the
+# executive health receipt stale. Fetch issues concurrently within a bounded
+# worker pool; the bound keeps backend load and memory predictable. 1 preserves
+# the historical serial behaviour exactly and is useful for deterministic tests.
+FETCH_WORKERS = _int_env("VICHE_BOARD_FETCH_WORKERS", 8, 1, 16)
+# Serialise append-only telemetry writes so concurrent failures stay one JSON
+# object per line rather than interleaving bytes from several threads.
+_telemetry_lock = threading.Lock()
 
 
 def _as_bytes(value):
@@ -68,9 +80,10 @@ def record_failure(command, last, attempts):
     }
     try:
         path = Path(ERROR_LOG)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, sort_keys=True) + "\n")
+        with _telemetry_lock:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record, sort_keys=True) + "\n")
         return str(path)
     except OSError as exc:
         return "telemetry-unavailable:" + str(exc)
@@ -141,21 +154,55 @@ def get_items():
     raise RuntimeError("board pagination incomplete")
 
 
+def _eligible_item(row, issue):
+    """Apply the unchanged eligibility rule to one issue; return an item or None."""
+    body = issue.get("body", "")
+    assigned = explicit(body) or any(
+        c.get("author") == "Vitalik"
+        and ("this issue" in c.get("body", "").lower()
+             or c.get("body", "").lower().startswith("execution host:"))
+        and explicit(c.get("body", ""))
+        for c in (issue.get("messages") or []))
+    if assigned and "legislature-only" not in body.lower() and not (
+        "permanent public conversation" in body.lower()
+        and "town hall" in row.get("title", "").lower()):
+        return {"number": row["number"], "title": row.get("title", "")}
+    return None
+
+
+def _fetch_all_issues(rows):
+    """Fetch all issue bodies within a bounded worker pool, in input order.
+
+    A failed/incomplete fetch still raises (via ``future.result()``) and still
+    aborts the whole discovery before any partial file is written, exactly as
+    the serial loop did. Only the wall-clock cost of independent CLI startups
+    changes; every request, retry and eligibility decision is identical.
+    """
+    if not rows:
+        return []
+    workers = min(FETCH_WORKERS, len(rows))
+    issues = [None] * len(rows)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [
+            pool.submit(invoke, "show", "--id", str(row["number"]),
+                        "--page", "1", "--json")
+            for row in rows
+        ]
+        # Iterate in submission order so output and first-failure semantics
+        # stay deterministic regardless of thread completion order.
+        for index, future in enumerate(futures):
+            issues[index] = future.result()
+    return issues
+
+
 def main():
+    rows = get_items()
+    issues = _fetch_all_issues(rows)
     items = []
-    for row in get_items():
-        issue = invoke("show", "--id", str(row["number"]), "--page", "1", "--json")
-        body = issue.get("body", "")
-        assigned = explicit(body) or any(
-            c.get("author") == "Vitalik"
-            and ("this issue" in c.get("body", "").lower()
-                 or c.get("body", "").lower().startswith("execution host:"))
-            and explicit(c.get("body", ""))
-            for c in (issue.get("messages") or []))
-        if assigned and "legislature-only" not in body.lower() and not (
-            "permanent public conversation" in body.lower()
-            and "town hall" in row.get("title", "").lower()):
-            items.append({"number": row["number"], "title": row.get("title", "")})
+    for row, issue in zip(rows, issues):
+        item = _eligible_item(row, issue)
+        if item is not None:
+            items.append(item)
     result = {"host": "billy-dev", "eligible": items, "count": len(items),
               "complete": True, "source": "board_description_and_founder_comments"}
     target = Path(STATE_ROOT) / "branches/eligible-issues.json"
