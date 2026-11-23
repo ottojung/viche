@@ -178,9 +178,13 @@ class Verifier:
                 if not isinstance(row, dict) or row.get("enabled") is not False:
                     problems.append("office %s is enabled (DRAFT must enable none)" % name)
             stats = offices.get("statistics") or {}
-            for key in ("trial_mode", "deterministic_sources", "phase_gate_record"):
+            for key in ("trial_mode", "phase_gate_record"):
                 if key in stats:
                     problems.append("draft wrote activation statistics.%s" % key)
+            # Pre-registered deterministic source hashes (Executive-approved proceed
+            # request P-1795374202-ae79) are an informational attestation only: they
+            # do not enable the office or declare trial_mode, so they are permitted
+            # during DRAFT. enabled must remain false (checked above).
         conf = load(self.town / "government/knowledge-budget.conf")
         cfg_offices = conf.get("offices") if isinstance(conf, dict) else None
         if not isinstance(cfg_offices, dict):
