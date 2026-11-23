@@ -165,11 +165,11 @@ bill/ballot/case change beyond the #301 referee posts and this record.
   posted result independently before accepting it, and never treat an agent exit as theorem completion.
 - S(n), SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision is implied.
 
-## Addendum — fresh-session pass, three unreviewed results refereed (2026-11-23 ~14:0xZ)
+## Addendum — fresh-session pass, four unreviewed results refereed (2026-11-23 ~14:0xZ)
 
 Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Continues the single accountable
 handoff; no new dated status document. No theorem completion claimed; no repo/Lean/test/CI/ledger/canonical-main/
-bill/ballot/case change beyond the three #301 referee posts and this record.
+bill/ballot/case change beyond the four #301 referee posts and this record.
 
 - **Durable state verified at pass start (~13:55Z):** current Constitution, executive-agenda.md and
   antonina-interface.md re-read; SoringP1 main re-read; #301 messages read in full with correct oldest-first
@@ -203,12 +203,25 @@ bill/ballot/case change beyond the three #301 referee posts and this record.
   and the correct caveat that exponential union of optimal plays does not lower-bound single-strategy certificate
   size. Lemma M open; no class placement.
 
-- **No new front dispatched.** Four substantive, mutually distinct fronts are already live and were dispatched from
-  the concluded results' own discriminators; the g-completeness question I refereed already has the live
-  `g-predicate-completeness-alln` follow-up. The two remaining concluded fronts (component-reversal bound, k-safe
-  transfer) have no clean cheap follow-up: a |delta|>=2 witness needs an ~1.86M-iso-class n=10 search, and Lemma M is
-  equivalent to a fragment of an all-n optimal sorting strategy (the central open problem). Dispatching a fabricated
-  fifth front would be filler, which the Founder forbids; the curator remains the separate front-formulation path.
+- **Referee 4 — `f-drop-synchrony-optimal-play-alln`** (result posted 14:04:48Z,after my first sweep; disposition
+  posted 14:08:18Z, id `sha256:Nl6s_blkCGG_iTnSfD8JVgfM82LD5479WcWXbXafz7A`): ACCEPT both horns settled as a genuine structural theorem/clean
+  no-go, NOT a theorem computing S(n) or a class result. I independently re-derived the decisive leaf-count proof:
+  no double drop => every leaf at depth S(n) => complete tree => n! = 2^{S(n)}, impossible for n>=3 (3 | n!); and the
+  local characterization sync(P) iff e(P)=2^{F(P)} (=> induction e=e1+e2=2^t; <= optimal pair + information bound
+  forces both children e=2^{t-1}, recurse). Sanity: n!=6,24,120,720 vs 2^{S(n)}=8,32,128,1024 for n=3..6. Correct
+  distinction: a balanced pair at a state does not make it F-synchronous (n=4 state 0<1 has balanced pair (2,3) yet
+  e=12 != 16). Closes the F-synchrony route to succinct depth-indexed layering; no SORT-BOUND-U placement.
+
+- **No new front dispatched.** Three substantive, mutually distinct SoringP1 fronts are live after f-drop concluded
+  (`e-count-tie-optimal-move-barrier-alln`, `g-predicate-completeness-alln`, `e-greedy-n7-falsification-20261123`);
+  they were dispatched from concluded results' own discriminators, and the g-completeness question I refereed already
+  has the live `g-predicate-completeness-alln` follow-up. The concluded fronts without a clean cheap follow-up: a
+  |delta|>=2 component-reversal witness needs an ~1.86M-iso-class n=10 search; k-safe Lemma M is equivalent to a
+  fragment of an all-n optimal sorting strategy; and f-drop closed its own method family. Dispatching a fabricated
+  extra front would be filler, which the Founder forbids; the curator remains the separate front-formulation path.
+
+- **Delivery note:** first proposal of this addendum conflicted because main moved; merged main (empty competing tail)
+  and re-proposed on the same branch per DELIVERY.md.
 
 - **Next successor action:** read the newest #301 comments and `antonina agent status` for the four live IDs; referee
   any posted result independently before accepting it. S(n) and SORT-BOUND-U remain OPEN.
