@@ -1,5 +1,7 @@
 # Economy — per-request admission/billing-bound feasibility (Act 32/33 Statistics trial)
 
+**This is a historical November 22 finding. The office-admission subdefect was subsequently corrected; see the dated correction below. The separate provider-level hard billing HOLD remains.**
+
 **Office:** Ministry of Economy (Act 29). **Date:** 2026-11-22T18:4xZ. **Type:** source-level +
 empirical technical evidence answering the Founder's 18:20Z assignment. **NOT** a law, ballot,
 gate approval, office enablement, Judiciary finding, or claim of a verified strict cap.
@@ -61,15 +63,15 @@ prompt "Count from 1 to 200, one number per line, then say DONE."; run with `--f
   `retryAfterMs≈22,902,000` (~6.4 h) — an account-level time quota, not a token cap. (Separate
   availability fact; `opencode-go` still served the test.)
 
-## 3. Required negative test — 399,000 existing used tokens
+## 3. Required negative test — 399,000 existing used tokens (historical behavior before cumulative office-cap correction)
 Ran the engine's own deterministic `admit` with an isolated aggregate (no live state):
 ```
 admit 399000 -> {"admit": true, "reason": "within caps"}
 admit 400000 -> {"admit": true}   admit 1200000 -> {"admit": true}
 ```
-At 399,000 used tokens the current gate **authorizes another Statistics reservation** (399k +
+At 399,000 used tokens the gate *at the time of this investigation* **authorized another Statistics reservation** (399k +
 400k = 799k < 1.6M aggregate). The office's own 400k cap is not checked at admission at all —
-only the aggregate. **Falsifier of "strict hard cap": achieved.** The next call is unbounded by
+only the aggregate. **Falsifier of the then-current office admission cap: achieved.** The next call was unbounded by
 anything the engine enforces before launch.
 
 ## 4. Quantitative maximum overrun (current implementation)
@@ -123,7 +125,7 @@ A genuine strict bound needs a provider/billing control outside this interface:
 None is available under my authority; I did not create accounts, hold credentials, or spend.
 
 ## 7. Disposition and role boundaries
-- **HOLD** the Act 32/33 Statistics first trial. The cap is **stop-on-detection, not a strict hard
+- **HOLD** the model-driven Act 32/33 Statistics first trial. The cap is **stop-on-detection, not a strict hard
   cap**; the 399k negative test and the measured continuation bypass refute a strict-cap claim.
 - No fix is submitted to Act 31 because no production-enforceable strict bound was demonstrated;
   a partial gate would be unverifiable and would violate "do not fake proof".
@@ -138,3 +140,20 @@ None is available under my authority; I did not create accounts, hold credential
   bundled binary strings.
 - Empirical: session `ses_dfb743e6affeOBILCRkWVdQDJB` in the read-only Antonina `session_v2`
   meter; `admit` outputs in §3. Reproducible negative test: `tests/knowledge-budget-admit-negative-20261122.sh`.
+
+## Dated correction — November 22, 2026 (after original measurement)
+
+The preceding negative result and source snapshot remain HISTORICAL
+evidence of the original Economy admission defect. Subsequent fix
+fix/economy-cumulative-office-cap-20261122 at 40545a71
+enforces BOTH cumulative per-office and aggregate caps with fail-closed
+by_office accounting. The updated negative test now rejects another full
+Statistics reservation after 399,000 tokens already charged to Statistics.
+The test executes the CURRENT repository rather than an old worktree.
+Thus section 3's original admit:true must not be described as the live state.
+The source provenance of that earlier measured result remains visible.
+This correction does NOT solve the independent OpenCode per-request
+continuation, post-kill billing, retries, or input token overspending risks
+(sections 2, 4-5). HOLD remains for model-using knowledge offices until
+a provable per-provider-request admission bound is demonstrated.
+The model-free Statistics trial is a separate zero-provider alternative.
