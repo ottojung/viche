@@ -110,8 +110,7 @@ case "$mode" in
                jq -cS '{overall, s: (.resources | map_values(.status)), needs: .needs_founder}' "$econ/resources.json" 2>/dev/null || :
              fi
              printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
-             git -C "$town" rev-parse HEAD; } |
-           /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
+             } | /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
           gate=dispatch
         else
           gate=skip
