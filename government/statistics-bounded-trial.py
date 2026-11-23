@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-"""Act 33: conservatively prepaid, model-free Statistics measurement attempt.
+"""RETIRED OFFICE MODE: conservatively prepaid legacy diagnostic probe.
 
-This is a deliberately narrow FIRST-trial fallback if OpenCode cannot enforce
+This fixed-metrics collector CANNOT substitute for an adaptive Statistics
+Bureau and cannot be activated as an office. The founder withdrew that design
+on 2026-11-23. This code is retained only for reproducible historic diagnostic
+and budget-failure tests; do not use its green tests as evidence of scientific
+institutional operation. Its activation verifier now rejects deterministic-v1.
+
+Historical original purpose was a narrow FIRST-trial fallback if OpenCode cannot enforce
 a strict in-flight model token cap. It does not authorize activation: the
 independent phase gate, enacted law, Executive order, budgets and source hashes
 must ALL have already been approved. The only subprocess doing institutional

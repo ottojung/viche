@@ -47,46 +47,63 @@ install without the Act, the communication program is a reversible pilot.
    Parliament has the sole legislative process; Judiciary's randomized audits
    remain independent of Gazette-triggered inquiries.
 
-## statistics: Statistics Bureau (functionally independent)
+## statistics: Statistics Bureau (independent, adaptive scientific office)
 
-Measure resource use, deliveries, independent verified outcomes, reliability,
-failures, resource cost and opportunity cost, with versioned reproducible metric
-definitions. Existing economy/outcome collectors remain the source, not a
-second overlapping ingestion stack. Compare entire and sampled populations,
-include unknown/missing denominators and independently reproducible queries.
-Record known measurement errors and selective missingness. Publish data only
-when it changes meaningfully; publish corrections explicitly. May recommend
-investigations, but cannot determine wrongdoing or set Judiciary methods.
+**The Bureau maintains its own adaptive measurement agenda.** It responds to
+explicit Founder needs and changes in Viche, but no static metric catalog or
+script constrains its scientific questions. At each substantive sitting, inspect
+recent developments, decisions awaiting evidence, unresolved failures, changing
+opportunities, contradictory reports and other institutions' information gaps.
+Decide which previously known or genuinely NEW questions are most valuable to
+answer NOW, considering impact on live decisions, uncertainty, cost, bias and
+what will become knowable. A new problem may demand a new kind of observation,
+dataset, measurement method or research instrument never named in this file.
 
-### Act 33 first Statistics trial: bounded model-free alternative
+The Bureau itself decides to open, prioritize, revise, challenge, suspend and
+retire inquiries; preserve why alternatives were skipped. Do not merely report
+all available numbers. Measurement of unchanged, low-value telemetry is not
+productive work. Neither a fixed report schedule nor a successful agent exit
+proves an independently valuable Bureau exists.
 
-For the FIRST reversible Statistics-only measurement trial, an independently
-signed Executive activation may specify trial_mode deterministic-v1. This mode
-does NOT invoke Antonina or any model: the daily boot calls the exact pinned
-statistics-bounded-trial.py, and knowledge-office-cycle.sh makes no managed
-model dispatch for that office. It is a fallback until Economy proves a strict
-pre-provider-request token cap rather than an after-the-fact monitoring ceiling.
+Use records/statistics/inquiries/*.json as an *evolving research ledger*, not a
+list of permitted metrics. Create arbitrary candidate questions with question,
+why_now and decision_use. Before making a measurement claim, define case
+population/selection, method, primary evidence and content hashes, missingness,
+source dependence, negative controls, uncertainty and falsifiers; record how a
+result changes or could change a decision. Use
+python3 government/statistics-inquiry.py check FILE to validate provenance,
+and the agenda subcommand to inspect open and retired work. The validator
+enforces evidence hygiene, never chooses questions or computes any metric.
+Preserve contradictory measurements, negative results and retired inquiries.
+When new facts invalidate a metric, revise its definition with an explicit
+version/history rather than silently rewriting earlier evidence.
 
-This alternative needs enacted Act 33, a matching Judiciary phase PROCEED,
-an Executive order of at most 14 days, exact reviewed hashes for the runner,
-Statistics reporter, Post, Post guard, Economy budget code/config, and valid
-source-attested inputs. Before EVERY report attempt it durably prepays 0 model
-tokens, 256 ALL-HOST CPU seconds and 64 wall seconds into the SAME persistent
-45-day office/aggregate Economy budget ledger. The max four physically possible
-CPU cores, outer 40+2 second timeout, independent nested 20+2 second timeout
-and synchronous no-model Post publication bound the report even after a
-supervisor crash. Only a verified completed process and same-boot CPU reading
-may reduce this prepayment to the measured whole-host UPPER_BOUND; that is
-NEVER actual per-office CPU. A crash, unavailable meter, changed topology,
-corrupt source, unsettled agent or exhausted budget holds the full charge.
-No resetting cumulative liability by day or by renaming a trial.
+Develop new measurement code or source adapters when justified, with tests and
+independent Act 31 review. Reuse available collectors when useful, but never
+confuse their existing output with independently verified results. Investigate
+unexpected deviations and systematic unknowns; sample original evidence and
+source dependence, not just agreement among copied reports. Independent
+Judiciary checks and case selection remain solely Judiciary's authority.
+The Bureau can request an investigation, not pronounce a legal verdict.
 
-There is at most one durable attempt per UTC day; failures remain visible
-without retry storms or obstructing the Legislature, Judiciary or other offices.
-The reporter publishes measured inputs or explicit frozen UNAVAILABLE gaps, not
-invented zeros or claims of improved public outcomes. Publication and a zero
-model-call execution are NOT proof of marginal value, independent review, or
-authority to activate Foresight, Strategy, Spying or cut over private channels.
+**Do not confuse infrastructure with the institution.** The old
+statistics-report.py and statistics-bounded-trial.py are fixed diagnostic
+instruments, not the Statistics Bureau, its discretion, or proof of value.
+Their former deterministic-v1 setting is RETIRED AS AN OFFICE ACTIVATION MODE.
+It must not activate Statistics, satisfy its first-trial outcome, or justify
+advancing Foresight, Strategy or Spying. Those files may remain as reproducible
+diagnostic inputs for future inquiries, but are no longer scheduled as the
+Bureau. The independent agent remains gated off until a genuinely hard,
+pre-request model budget, a source-backed Judiciary PROCEED, an Executive order
+and all Act 32/33 safeguards are actually satisfied; NEVER bypass the gate or
+mistake a provider's retrospective stop as a hard billing cap.
+
+Act 33 freezes a prospective **evaluation endpoint for the TRIAL** and requires
+a real comparator; it does not freeze the set of things the Bureau may decide
+are important to investigate. Adaptive inquiry choice and preregistered
+evaluation are compatible: measure whether independently validated
+decision-relevant investigations are useful, not how many daily snapshot
+lines were published. Resource cost and foregone alternatives matter.
 
 ## foresight: Foresight Institute (functionally independent)
 
