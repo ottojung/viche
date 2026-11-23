@@ -1,0 +1,104 @@
+{
+  "schema": "viche-knowledge-activation-v1",
+  "status": "PREPARED_ALL_OFFICES_DISABLED_PENDING_ACT34_AND_ECONOMY",
+  "note": "Genuine officer attribution recorded on board issue bpzNUUt9izRYOOcONcTy9K-implicate (approve review on exact original commit 7d705295, four officer comments). Enabling is a separate atomic hash-bound act to be done immediately when, and only when, Act34 is enacted and Economy evidence is independently verified. No artificial delay; no office enabled here.",
+  "economy_free_tier_evidence": {
+    "artifact_commit": "834f74f341950392acf58b9ef1a7af5185bbfaa1",
+    "report_sha256": "8c56e0418799d7f93677bd191958cd0c32632b2c0fd66746af84f502be126bba",
+    "attestation": {
+      "issue_id": "Jez3E93rZjZYPRxjO8kQjc-terrified",
+      "expected_reviewer": "c1e00012",
+      "officer_agent_id": "IJqzNHW7WrCxCPEiicnVGs-ensues"
+    },
+    "wrapper_sha256": "cb3ccc4a65253c01b9d67dbff5eaecfbeeae18f8bf84567a6c613b78f59b2629",
+    "negative_test_sha256": "a6d9ddc3f63a430527f4d03406f68dd1d4f3bda4f69cfced6cf0921dc5db4ac2",
+    "bounds_sha256": "12dfcdf5920f762b36d22140187a328dcc12a9daf8836211250c41d56fe8eaa2",
+    "status_note": "Economy comment exists but board approve review on the exact artifact commit is not yet recorded; Act30 P-1795422997-a21e filed. Control files not yet on canonical main. Gate will fail closed until these land; this manifest enables nothing."
+  },
+  "offices": {
+    "statistics": {
+      "enabled": false,
+      "authorized_by": "act:34:statistics",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/statistics.json",
+      "permit_sha256": "7f2fb479d5d3a9d5557bfe3d16ed3521588304fc8875d13fb3be113e3a0a5dee",
+      "permit_origin_commit": "7d705295af1423ac7d6b90e6f689aa7900fc309f",
+      "permit_attestation": {
+        "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+        "expected_reviewer": "c1e00002",
+        "officer_agent_id": "tFES4NNtGiO3iKGofUzRef-reversed"
+      },
+      "enable_only_after": [
+        "Act34 enacted on canonical main",
+        "Economy free-tier evidence independently attested and landed",
+        "one atomic hash-bound update of enabled:true for this office only"
+      ]
+    },
+    "foresight": {
+      "enabled": false,
+      "authorized_by": "act:34:foresight",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/foresight.json",
+      "permit_sha256": "936debbf17fa048ee333205c16e3611175c951880a9f27771d5b6e1f54a39b29",
+      "permit_origin_commit": "7d705295af1423ac7d6b90e6f689aa7900fc309f",
+      "permit_attestation": {
+        "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+        "expected_reviewer": "c1e00002",
+        "officer_agent_id": "tFES4NNtGiO3iKGofUzRef-reversed"
+      },
+      "enable_only_after": [
+        "Act34 enacted on canonical main",
+        "Economy free-tier evidence independently attested and landed",
+        "one atomic hash-bound update of enabled:true for this office only"
+      ]
+    },
+    "strategy": {
+      "enabled": false,
+      "authorized_by": "act:34:strategy",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/strategy.json",
+      "permit_sha256": "95ff88daa5cc56c20a9f7d2dc916a3b8ec3fe1a45eaf7327913ddf0f24746dca",
+      "permit_origin_commit": "7d705295af1423ac7d6b90e6f689aa7900fc309f",
+      "permit_attestation": {
+        "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+        "expected_reviewer": "c1e00002",
+        "officer_agent_id": "tFES4NNtGiO3iKGofUzRef-reversed"
+      },
+      "enable_only_after": [
+        "Act34 enacted on canonical main",
+        "Economy free-tier evidence independently attested and landed",
+        "one atomic hash-bound update of enabled:true for this office only"
+      ]
+    },
+    "spying": {
+      "enabled": false,
+      "authorized_by": "act:34:spying",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/spying.json",
+      "permit_sha256": "9c9c8286693346263ad068043d83254125181b4d34023f427ff46d12e99761ad",
+      "permit_origin_commit": "7d705295af1423ac7d6b90e6f689aa7900fc309f",
+      "permit_attestation": {
+        "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+        "expected_reviewer": "c1e00002",
+        "officer_agent_id": "tFES4NNtGiO3iKGofUzRef-reversed"
+      },
+      "enable_only_after": [
+        "Act34 enacted on canonical main",
+        "Economy free-tier evidence independently attested and landed",
+        "one atomic hash-bound update of enabled:true for this office only"
+      ]
+    }
+  }
+}
