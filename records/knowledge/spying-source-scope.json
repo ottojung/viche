@@ -1,0 +1,26 @@
+{
+  "captured_at": 1795419432,
+  "disclaimer": "Evidence-scope validation only; no independent outcome, founder preference, private data, law, ballot, or spending authority.",
+  "office": "spying",
+  "purpose": "observation",
+  "schema": "viche-spying-evidence-bundle-v1",
+  "sources": [
+    {
+      "evidence": {
+        "captured_at": 1795419432,
+        "note": "Live authoritative exact-author public Antonina board message, content not copied"
+      },
+      "ref": "antonina:sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0"
+    }
+  ],
+  "statements": [
+    {
+      "id": "public-founder-knowledge-expansion-20261120",
+      "kind": "observation",
+      "sources": [
+        "antonina:sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0"
+      ],
+      "text": "An exact-author public Founder communication is available in the verified institutional expansion issue; no inferred preference, no silence-as-approval and no authority from this observation."
+    }
+  ]
+}

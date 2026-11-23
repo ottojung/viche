@@ -10,6 +10,13 @@ mkdir -p "$town/government" "$town/records/knowledge" "$state/institutional-outc
 cp "$repo/government/statistics-bounded-trial.py" "$repo/government/knowledge-budget-tool.py" \
    "$repo/government/statistics-report.py" "$repo/government/post.py" "$repo/government/post_guard.py" \
    "$repo/government/knowledge-budget.conf" "$town/government/"
+# This smoke isolates the runner resource precharge from the separately
+# tested independent Act33 first-trial evidence gate.
+printf '#!/bin/sh\n[ "$1" = statistics ] && [ "$2" = first-trial ]\n' > "$town/government/statistics-preflight.sh"
+printf '# exact audited helper fixture\n' > "$town/government/statistics-first-trial.py"
+printf '# exact evidence fixture\n' > "$town/government/statistics-evidence.py"
+printf '#!/bin/sh\nexit 0\n' > "$town/government/knowledge-phase-gate.sh"
+printf '# exact phase verifier fixture\n' > "$town/government/knowledge-phase-verifier.py"
 cat > "$town/government/LAWS.md" <<'EOF'
 ## Act 32 — Institutional Knowledge and Communications Act (enacted 2026-11-20)
 ## Act 33 — Prospective Statistics Trial Clarification (enacted 2026-11-22)
@@ -34,7 +41,12 @@ root=Path(sys.argv[1])
 src={k:hashlib.sha256((root/"government"/f).read_bytes()).hexdigest()
      for k,f in (("runner","statistics-bounded-trial.py"),("report","statistics-report.py"),
                  ("post","post.py"),("post_guard","post_guard.py"),
-                 ("budget_tool","knowledge-budget-tool.py"),("budget_config","knowledge-budget.conf"))}
+                 ("budget_tool","knowledge-budget-tool.py"),("budget_config","knowledge-budget.conf"),
+                 ("trial_preflight","statistics-preflight.sh"),("trial_verifier","statistics-first-trial.py"),
+                 ("trial_evidence","statistics-evidence.py"),
+                 ("activation_gate","knowledge-activation-verify.sh"),
+                 ("phase_gate","knowledge-phase-gate.sh"),
+                 ("phase_verifier","knowledge-phase-verifier.py"))}
 now=int(time.time())
 (root/"records/knowledge/activation.json").write_text(json.dumps({
 "schema":"viche-knowledge-activation-v1",

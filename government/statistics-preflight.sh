@@ -88,6 +88,15 @@ case "$mode" in
     [ -s "$helper" ] || exit 1
     at=${VICHE_AT:-}
     if [ -n "$at" ]; then
+      # A fabricated future/past wall clock could make an expired or not-yet-
+      # valid Executive order appear active. Synthetic dates are allowed ONLY
+      # for an explicitly selected, isolated /tmp trial fixture, never the
+      # canonical billy-dev state or an arbitrary Git seat worktree.
+      real_town=$(cd "$town" && pwd -P) || exit 1
+      case "$real_town" in
+        /tmp/*) : ;;
+        *) echo 'Act33 preflight: synthetic time refused on live town' >&2; exit 1 ;;
+      esac
       python3 "$helper" verify "$town" "$att" "$at" >/dev/null 2>&1 || exit 1
     else
       python3 "$helper" verify "$town" "$att" >/dev/null 2>&1 || exit 1

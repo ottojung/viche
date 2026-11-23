@@ -103,10 +103,20 @@ def validate_config(cfg):
                 errors.append("offices.%s.enabled must be boolean" % office)
             ok, cap_errors = check_caps(entry.get("caps"), "offices.%s.caps" % office)
             errors.extend(cap_errors)
-            if ok:
-                for key in CAP_KEYS:
-                    if entry["caps"][key] <= 0:
-                        errors.append("offices.%s.caps.%s must be positive" % (office, key))
+            # Distinguish per-dispatch exposure from the cumulative 45-day
+            # budget. An optional per_run_caps keeps older Act32 fixtures
+            # byte-for-byte compatible; Act34 adaptive offices set it lower
+            # so their real work can repeat without draining an entire office
+            # allowance for one invocation.
+            if "per_run_caps" in entry:
+                run_ok, run_errors = check_caps(
+                    entry["per_run_caps"], "offices.%s.per_run_caps" % office)
+                errors.extend(run_errors)
+                if ok and run_ok:
+                    for key in CAP_KEYS:
+                        if entry["per_run_caps"][key] > entry["caps"][key]:
+                            errors.append("offices.%s.per_run_caps.%s exceeds 45-day cap"
+                                          % (office, key))
     aggregate = cfg.get("aggregate")
     if not isinstance(aggregate, dict):
         errors.append("aggregate must be an object")
@@ -316,14 +326,38 @@ def charges(reservations, now, window):
 
 
 def admit(cfg, agg, office):
+    """Reserve both per-office AND shared remaining liability, fail closed.
+
+    A per-run cap is NOT the 45-day spend allowance. At 399k tokens already
+    charged, a second 120k-token slice exceeds Statistics' 400k cumulative
+    cap and is REFUSED. At 120k charged, another 120k slice is admitted.
+    Pending/held sessions count their entire per-run liabilities, never an
+    optimistic partial reading. Defaults preserve legacy full-cap reservation.
+    """
     office_caps = cfg["offices"][office]["caps"]
+    run_caps = cfg["offices"][office].get("per_run_caps", office_caps)
     total_caps = cfg["aggregate"]["caps"]
+    by_office = agg.get("by_office")
+    previous = by_office.get(office) if isinstance(by_office, dict) else None
+    if not isinstance(previous, dict):
+        return {"admit": False, "reason": "missing per-office liability"}
     reasons = []
     for key in CAP_KEYS:
-        projected = agg.get(key, 0) + office_caps[key]
-        if projected > total_caps[key]:
+        global_used = agg.get(key)
+        office_used = previous.get(key)
+        if (any(isinstance(v, bool) or not isinstance(v, (int, float))
+                or not math.isfinite(v) or v < 0
+                for v in (global_used, office_used))):
+            reasons.append("%s accounting is missing or invalid" % key)
+            continue
+        projected_global = global_used + run_caps[key]
+        projected_office = office_used + run_caps[key]
+        if projected_global > total_caps[key]:
             reasons.append("%s projected %s exceeds aggregate cap %s" %
-                           (key, projected, total_caps[key]))
+                           (key, projected_global, total_caps[key]))
+        if projected_office > office_caps[key]:
+            reasons.append("%s projected %s exceeds %s office cap %s" %
+                           (key, projected_office, office, office_caps[key]))
     return {"admit": not reasons, "reason": "; ".join(reasons) or "within caps"}
 
 

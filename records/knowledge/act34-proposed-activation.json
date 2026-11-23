@@ -1,0 +1,52 @@
+{
+  "schema": "viche-knowledge-activation-v1",
+  "status": "PROPOSED_DISABLED_PENDING_ACT34_LAW_AND_ECONOMY_EVIDENCE",
+  "note": "All four offices disabled by default. This manifest is a proposal, not activation. Do not install as records/knowledge/activation.json until Act34 is enacted on canonical main, the operator gate e8b0e420 and run-slices fix 244eb66d have landed and passed review, Economy has approved the 45-day caps and backend free-only enforcement, and the Executive has converted the permits from prepared_signature_withheld to signed by exact hash. Enabling any office before those conditions is a bypass.",
+  "recheck_obligations": [
+    "budget_sha256 in each permit is the digest of records/knowledge/act34-proposed-knowledge-budget.conf; recompute against canonical government/knowledge-budget.conf when the byte-identical config lands",
+    "permit_sha256 values must be recomputed after any signature conversion and the activation rows updated atomically",
+    "no artificial delay: not_before is the real preparation timestamp; the lawful start is the moment all conditions hold, not a fixed future date"
+  ],
+  "offices": {
+    "statistics": {
+      "enabled": false,
+      "authorized_by": "act:34:statistics",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/statistics.json",
+      "permit_sha256": "3a70cc07ab3e7a031c21a984d587a87a8e450c80513b962c6e46d01d5500b463"
+    },
+    "foresight": {
+      "enabled": false,
+      "authorized_by": "act:34:foresight",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/foresight.json",
+      "permit_sha256": "fa21df2df23f861d8b1be65ef66a6b57126722c243c32ee7232c08c07d951fc6"
+    },
+    "strategy": {
+      "enabled": false,
+      "authorized_by": "act:34:strategy",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/strategy.json",
+      "permit_sha256": "1757d64088fe258d396b730d3414da3a272d6155fb07ef6fcd8987ff0925d70f"
+    },
+    "spying": {
+      "enabled": false,
+      "authorized_by": "act:34:spying",
+      "trial_mode": "adaptive-v1",
+      "signer": "c1e00002",
+      "not_before": 1795420969,
+      "expires_at": 1799308969,
+      "permit_ref": "records/knowledge/permits/spying.json",
+      "permit_sha256": "d04ffdfa69629265868813760c86207493cea4113a44fbe38fcea0ed2ba02448"
+    }
+  }
+}

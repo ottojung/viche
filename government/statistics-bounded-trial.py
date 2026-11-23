@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-"""Act 33: conservatively prepaid, model-free Statistics measurement attempt.
+"""RETIRED OFFICE MODE: conservatively prepaid legacy diagnostic probe.
 
-This is a deliberately narrow FIRST-trial fallback if OpenCode cannot enforce
+This fixed-metrics collector CANNOT substitute for an adaptive Statistics
+Bureau and cannot be activated as an office. The founder withdrew that design
+on 2026-11-23. This code is retained only for reproducible historic diagnostic
+and budget-failure tests; do not use its green tests as evidence of scientific
+institutional operation. Its activation verifier now rejects deterministic-v1.
+
+Historical original purpose was a narrow FIRST-trial fallback if OpenCode cannot enforce
 a strict in-flight model token cap. It does not authorize activation: the
 independent phase gate, enacted law, Executive order, budgets and source hashes
 must ALL have already been approved. The only subprocess doing institutional
@@ -128,6 +134,12 @@ def verified_order():
         "post_guard": TOWN / "government/post_guard.py",
         "budget_tool": TOWN / "government/knowledge-budget-tool.py",
         "budget_config": CONF,
+        "trial_preflight": TOWN / "government/statistics-preflight.sh",
+        "trial_verifier": TOWN / "government/statistics-first-trial.py",
+        "trial_evidence": TOWN / "government/statistics-evidence.py",
+        "activation_gate": TOWN / "government/knowledge-activation-verify.sh",
+        "phase_gate": TOWN / "government/knowledge-phase-gate.sh",
+        "phase_verifier": TOWN / "government/knowledge-phase-verifier.py",
         "runner": Path(__file__).resolve(),
     }
     if (not isinstance(hashes, dict) or set(hashes) != set(paths)
@@ -140,6 +152,19 @@ def verified_order():
                        env=dict(os.environ, VICHE_TOWN_ROOT=str(TOWN)))
     except (OSError, subprocess.SubprocessError) as exc:
         raise Denied("independent phase/activation gate is not green") from exc
+    # Act 33's additional, independently corroborated prospective design and
+    # Economy/Judiciary pretrial evidence gate MUST be checked at the point of
+    # actual Statistics work, not just in a standalone documentation script.
+    # Never pass an env-controlled synthetic date (VICHE_AT) to production.
+    try:
+        subprocess.run(["/bin/sh", str(TOWN / "government/statistics-preflight.sh"),
+                        "statistics", "first-trial"],
+                       check=True, capture_output=True, timeout=30,
+                       env={"VICHE_TOWN_ROOT": str(TOWN),
+                            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                            "LANG": "C.UTF-8", "PYTHONNOUSERSITE": "1"})
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise Denied("independent prospective Act33 first-trial preflight is not green") from exc
     return office
 
 

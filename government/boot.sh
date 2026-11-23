@@ -158,40 +158,35 @@ if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \
     done
 fi
 
-# A single frozen Statistics snapshot per UTC day, retried after crashes.
-# Data publication is not independent verification of outcomes.
-if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
-   [ -s "$town/government/statistics-report.py" ] &&
-   /bin/sh "$town/government/knowledge-activation-verify.sh" statistics; then
-    statistics_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/statistics
-    mkdir -p "$statistics_root"
-    (
-        flock -n 9 || exit 0
-        # Act 33's first-trial deterministic mode is a zero-model alternative
-        # to the unbounded in-flight LLM billing path. It still requires the
-        # exact signed activation, independent phase, pinned source bytes and
-        # a durable upfront whole-host CPU/wall budget reservation. A failed
-        # report burns its attempt for this UTC day, not the town's liveness.
-        if grep -Eq '^## Act 33 — Prospective Statistics Trial Clarification \(enacted ' "$town/government/LAWS.md"; then
-            mode=$(jq -r '.offices.statistics.trial_mode // ""'                 "$town/records/knowledge/activation.json" 2>/dev/null) || exit 0
-            if [ "$mode" = deterministic-v1 ]; then
-                [ -s "$town/government/statistics-bounded-trial.py" ] || exit 0
-                timeout -k 2 40 python3 "$town/government/statistics-bounded-trial.py" ||
-                    echo "Viche: bounded Statistics observation failed/held; next day only" >&2
-            else
-                echo "Viche: Act 33 Stats model spending has no per-request cap approval; no report" >&2
-            fi
-            exit 0
-        fi
-        today=$(date -u +%Y-%m-%d)
-        [ ! -s "$statistics_root/last-published-day" ] ||
-          [ "$(cat "$statistics_root/last-published-day")" != "$today" ] || exit 0
-        if timeout 180 python3 "$town/government/statistics-report.py"; then
-            printf '%s\n' "$today" > "$statistics_root/last-published-day"
-        else
-            echo "Viche: Statistics publication unavailable; retry next cycle" >&2
-        fi
-    ) 9>"$statistics_root/report.lock" >> "$statistics_root/report.log" 2>&1 < /dev/null &
+# The Statistics Bureau is an adaptive, staffed scientific office; its agent
+# alone selects current questions under the independently reviewed budget and
+# phase gates above. Legacy deterministic snapshots are diagnostic inputs,
+# never an alternative office and NEVER evidence of institutional activation.
+# Do not auto-publish a fixed metrics bundle as a surrogate for its work.
+
+# Act 34: first-use observations, not efficacy certification. No model is
+# invoked. Judiciary reviews actual operation within 48 hours, and a failed
+# collector never obstructs Legislature, Judiciary or Executive.
+# Inert unless Act 34 ENACTED and an Executive Git-reviewed permit
+# explicitly enables this office under the same Economy resource budget.
+if grep -Eq '^## Act 34 — Minimum Viable Knowledge Institutions Pilot Act \(enacted ' \
+     "$town/government/LAWS.md" &&
+   [ -s "$town/government/knowledge-minimal-pilot.py" ]; then
+    min_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/pilot
+    for office in statistics foresight strategy spying; do
+        jq -e --arg office "$office" '
+          .offices[$office].enabled == true and
+          .offices[$office].trial_mode == "deterministic-v1" and
+          .offices[$office].authorized_by == ("act:34:"+$office)
+        ' "$town/records/knowledge/activation.json" >/dev/null 2>&1 || continue
+        mkdir -p "$min_root/$office"
+        (
+            flock -n 9 || exit 0
+            timeout -k 2 38 python3 "$town/government/knowledge-minimal-pilot.py" \
+                "$office" --run ||
+              echo "Viche Act34 $office: model-free sample held; core town continues" >&2
+        ) 9>"$min_root/$office/lock" >>"$min_root/$office/log" 2>&1 < /dev/null &
+    done
 fi
 
 # Act 32 PUBLIC Post archive redaction scan: independent, bounded and

@@ -164,7 +164,8 @@ record={
  "sources":sources,"evidence_digest":digest,
  "safety":{"hard_cap":True,"strict_inflight":True,"stop_on_detection":False,
            "enforced":True,"accumulate_across_trials":True,
-           "tokens_cap":400000,"host_cpu_upper_bound":1800,"host_cpu_tag":"UPPER_BOUND",
+           "execution_mode":"deterministic-v1","provider_requests_max":0,
+           "tokens_cap":0,"host_cpu_upper_bound":1800,"host_cpu_tag":"UPPER_BOUND",
            "negative_test_digest":"sha256:fixture-negative-cap-test",
            "meter":"opencode-session-v2 plus proc-stat-host-busy-upper-bound"},
  "order":{"office":"statistics","act":33,"host":"billy-dev",
@@ -279,6 +280,21 @@ cp "$d/corr.good" "$corr/20261122.json"
 # --- unavailable / stop-on-detection cap, tampered artifacts --------------
 set_field safety.hard_cap false
 expect_deny 'unavailable hard cap' run_preflight statistics
+restore
+# A strictly prepaid zero-provider run must be accepted, but setting a
+# fictional positive provider budget may never pass as strict in-flight
+# enforcement (OpenCode continuations have empirically breached limits).
+set_field safety.tokens_cap 400000
+expect_deny 'positive provider token cap without per-request hard limit' run_preflight statistics
+restore
+set_field safety.execution_mode '"model-driven"'
+expect_deny 'LLM mode cannot use zero-provider clearance' run_preflight statistics
+restore
+set_field safety.provider_requests_max 1
+expect_deny 'one unbounded provider call is not permitted' run_preflight statistics
+restore
+del_field safety.execution_mode
+expect_deny 'missing explicit model-free execution mode' run_preflight statistics
 restore
 set_field safety.stop_on_detection true
 expect_deny 'stop-on-detection cap' run_preflight statistics

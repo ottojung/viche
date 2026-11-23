@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Once-daily, immutable source-attributed Town snapshot for Statistics Bureau.
+"""Legacy, optional, fixed diagnostic telemetry; NOT the Statistics Bureau.
 
-No new telemetry collection: reuse existing independent collectors. A frozen
-snapshot is retried with an identical idempotency key across crashes.
+Uses only predefined collectors. Never selects inquiry questions, counts as
+an independent bureau, proves its value, or satisfies institutional activation.
+The adaptive Bureau may consult these frozen inputs as evidence.
 """
 import argparse
 import datetime
@@ -58,6 +59,7 @@ def report(d,kind):
         g=o.get("git",{})
         b=o.get("board",{})
         lines=[
+            "DIAGNOSTIC ONLY — not an adaptive Bureau measurement or verified value.",
             "UTC day: "+d["day"],
             "Snapshot at epoch: "+str(o.get("observed_at","unknown")),
             "Agent executions (24h): "+str(a.get("total","unknown")),
@@ -80,6 +82,7 @@ def report(d,kind):
     else:
         r=e["resources"].get("data",{})
         lines=[
+            "DIAGNOSTIC ONLY — not an adaptive Bureau measurement or verified value.",
             "UTC day: "+d["day"],
             "Resource overall: "+str(r.get("overall","unknown")),
             "Sample time: "+str(r.get("at","unknown")),
@@ -102,10 +105,11 @@ def publish(d,kind,dry_run):
     topic,body,sources=report(d,kind)
     if not sources:
         raise RuntimeError("no observed sources for "+kind+"; refusing to fabricate")
+    # A legacy diagnostic must never impersonate the adaptive institution.
     args=[sys.executable,str(TOWN/"government/post.py"),"publish",
-          "--sender","statistics","--topic",topic,"--kind","observation",
-          "--subject",kind.title()+" snapshot "+d["day"],
-          "--body",body,"--condition","Frozen UTC daily snapshot from named collectors; "
+          "--sender","telemetry","--topic",topic,"--kind","observation",
+          "--subject","Auxiliary diagnostic "+kind.title()+" snapshot "+d["day"],
+          "--body",body,"--condition","Legacy diagnostic ONLY, NOT a Bureau inquiry. Frozen UTC daily snapshot from named collectors; "
           "source digest identifies the exact input. Missingness and selection caveats are explicit.",
           "--key","statistics:"+kind+":"+d["day"]]
     for src in sources:
