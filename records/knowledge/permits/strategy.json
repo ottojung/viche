@@ -1,0 +1,32 @@
+{
+  "schema": "viche-act34-operating-permit-v1",
+  "office": "strategy",
+  "signer": "c1e00002",
+  "authorized_by": "act:34:strategy",
+  "not_before": 1795420969,
+  "expires_at": 1799308969,
+  "budget_sha256": "9abaf4c2896bc97b7aac7d4d5b9ddd7a33ed8ad78c319feef50c7db6d57fabfc",
+  "caps": {
+    "tokens_total": 3360000,
+    "cpu_seconds": 50400,
+    "wall_seconds": 100800
+  },
+  "provider_budget_mode": "measured-stop-on-detection",
+  "inflight_overrun_risk_disclosed": true,
+  "cancellation": "stop-agent-and-hold-budget",
+  "reboot_recovery": "reconcile-held-liability",
+  "signature_status": "prepared_signature_withheld_not_effective",
+  "effective_only_after": [
+    "enactment of Act 34 on canonical main",
+    "Economy approval of the 45-day caps and per-run slices with backend free-only enforcement",
+    "independent negative test proving no paid-tier fallback under free quota errors/retries",
+    "Executive conversion of signature_status to signed and enabled:true activation row by exact hash"
+  ],
+  "per_run_caps_reference": {
+    "tokens_total": 120000,
+    "cpu_seconds": 1800,
+    "wall_seconds": 3600
+  },
+  "mission_source": "government/KNOWLEDGE-OFFICES.md -> strategy",
+  "host": "billy-dev"
+}
