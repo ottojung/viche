@@ -120,6 +120,13 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
     nonblocking_office executive 300 /bin/sh "$town/government/branch-liveness.sh" executive
 fi
 
+# The Founder-authorized perpetual P vs NP mission renews active leases and
+# reconciles external verdicts independently of agents, parliamentary sittings,
+# and other offices. Failures cannot obstruct Town liveness.
+if [ -s "$town/government/pnp-cycle.sh" ]; then
+    nonblocking_office pnp 150 /bin/sh "$town/government/pnp-cycle.sh"
+fi
+
 # The innovation office is an Executive unit ONLY after parliamentary enactment.
 if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     nonblocking_office executive-innovation 300 /bin/sh "$town/government/executive-innovation-cycle.sh"

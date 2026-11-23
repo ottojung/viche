@@ -24,7 +24,7 @@ def http_request(method, url, params=None):
     if params:
         url = url + "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, data=(b"" if method == "POST" else None),
-                                 method=method)
+                                 method=method, headers={"User-Agent": "curl/8.0"})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return r.status, r.read().decode("utf-8", "replace")
@@ -82,7 +82,7 @@ class Desk:
             if age < 6 * 3600:
                 with open(config.DOCS_CACHE, encoding="utf-8") as f:
                     return f.read()
-        req = urllib.request.Request(config.JOIN_URL)
+        req = urllib.request.Request(config.JOIN_URL, headers={"User-Agent": "curl/8.0"})
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 text = r.read().decode("utf-8", "replace")

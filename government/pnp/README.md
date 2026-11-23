@@ -2,8 +2,9 @@
 
 Deterministic coordination for the Founder's standing `pequalnp.com` mission.
 Python coordinates, Lean proves, Antonina manages all reasoning agents. This
-subsystem performs no reasoning and gives research workers no GitHub
-credentials.
+subsystem performs no reasoning and obtains GitHub credentials only inside
+its deterministic publishing commands. Research workers should not call
+authenticated GitHub mutation commands directly.
 
 ## Commands (stable interface)
 
@@ -44,6 +45,12 @@ Live desk instructions are re-read into `cache/join.txt` at startup; the stale
 30-minute beat comment in the upstream `tools/pnp.sh` is deliberately ignored
 (the live desk says 10 minutes).
 
-`python3 tests/pnp-pipeline.py` runs 17 offline mocked tests; no real desk
-claim, push or PR occurs in tests. Real Lean 4.36/Mathlib compilation is
-required before any live submission.
+`/bin/sh tests/pnp-pipeline-smoke.sh` runs both mocked tests and real local
+Git/GPG integration tests. None claims a live desk gap, pushes, or opens a
+real PR. Only a proof accepted by the upstream authoritative Lean checker
+under Lean 4.36 and pinned Mathlib may be submitted.
+
+The Viche boot cycle runs `government/pnp-cycle.sh` independently to renew
+leases every nine minutes and reconcile remote results without blocking
+other Town work. The standing Executive agenda continuously commissions
+useful mathematics; completing this setup does not close the mission.

@@ -94,7 +94,7 @@ class FakeGit:
     def pin_candidate(self, wt, path, data):
         self.calls.append(("pin", path))
 
-    def build(self, wt, module, runner=None):
+    def build(self, wt, module, statement, runner=None):
         return self.build_ok, "ok" if self.build_ok else "boom"
 
     def signed_commit(self, wt, base, message, signer=None):
@@ -231,6 +231,21 @@ class TestPublish(unittest.TestCase):
         self.assertEqual(h.created, 0)
         self.assertNotIn(("push", config.branch_for(GAP)), g.calls)
 
+    def test_pr_creation_network_error_keeps_recoverable_push(self):
+        class Outage(FakeGH):
+            def create_pr(self, branch, gap):
+                raise RuntimeError("temporary GitHub outage")
+        new_state()
+        g = FakeGit()
+        gh = Outage()
+        with self.assertRaises(publish.StopPublish):
+            publish.publish(GAP, candidate_file(), desk=FakeDesk(),
+                            git=g, gh=gh)
+        rec = state.load(GAP)
+        self.assertEqual(rec["state"], "PUSHED")
+        self.assertIsNone(rec["pr_number"])
+        self.assertEqual(rec["commit_sha"], SHA)
+
     def test_existing_pr_is_reused(self):
         new_state("LOCAL_CHECKED")
         g, h = FakeGit(remote=SHA), FakeGH(existing="77")
@@ -268,7 +283,7 @@ class TestPublish(unittest.TestCase):
             publish.publish(GAP, self.file, desk=FakeDesk(),
                             git=FakeGit(), gh=h)
         self.assertEqual(h.created, 0)
-        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(state.load(GAP)["state"], "PUSHED")
 
 
 class TestSignatureFields(unittest.TestCase):
@@ -317,6 +332,23 @@ class TestGitHubValidation(unittest.TestCase):
             self.assertEqual(len(problems), 2)
 
 
+class TestCli(unittest.TestCase):
+    def setUp(self):
+        fresh()
+
+    def test_submit_transitions_lease_to_ready_without_agent_git(self):
+        from government.pnp import cli
+        new_state("LEASED")
+        seen = []
+        def submit(gap_id, candidate):
+            seen.append((gap_id, candidate, state.load(gap_id)["state"]))
+            return {"pr": 17}
+        with mock.patch.object(cli.publish, "publish", side_effect=submit):
+            self.assertEqual(cli.cmd_submit(
+                type("Args", (), {"gap": GAP, "candidate": "/tmp/proof"})()), 0)
+        self.assertEqual(seen, [(GAP, "/tmp/proof", "CANDIDATE_READY")])
+
+
 class TestReconcile(unittest.TestCase):
     def setUp(self):
         fresh()
@@ -331,6 +363,29 @@ class TestReconcile(unittest.TestCase):
         r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
         self.assertEqual(r["state"], "ACCEPTED")
+
+    def test_signed_push_without_pr_is_recovered_to_one_pr(self):
+        from pathlib import Path
+        candidate = candidate_file()
+        new_state("PUSHED", commit_sha=SHA, base_sha="base1",
+                  worktree=str(Path(candidate).parent), path=Path(candidate).name,
+                  branch=config.branch_for(GAP))
+        gh = FakeGH()
+        gh.get_pr = lambda number: {"url": "https://example.test/pr/123",
+                                    "number": number}
+        gh.pr_comments = lambda number: []
+        g = FakeGit(remote=SHA)
+        # The retained candidate path in a real worktree is a Lean path;
+        # keep the test fixture identical to the expected module path.
+        Path(candidate).parent.joinpath(PATH).parent.mkdir(
+            parents=True, exist_ok=True)
+        Path(candidate).parent.joinpath(PATH).write_text(GOOD)
+        state.update(GAP, worktree=str(Path(candidate).parent), path=PATH)
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
+        self.assertEqual(r["state"], "PR_OPEN")
+        self.assertEqual(gh.created, 1)
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
+        self.assertEqual(gh.created, 1)
 
     def test_lease_410_becomes_stale(self):
         new_state("LEASED", lease_expires_at=time.time() - 1)
