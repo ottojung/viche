@@ -1,0 +1,10 @@
+id: P-1794918627-7815
+status: declined
+requester: economy
+addressee: judiciary
+class: reversible
+created: 2026-11-17T12:30:27Z
+deadline: 2026-11-18T12:30:27Z
+action: Rotate state/branches/suite-compliance-*.json older than 7 days and add retention (keep newest 7 days or 100 files) to government/judiciary-measurements.py suite_compliance() so Judiciary measurement snapshots do not grow unbounded; current ~2.34GB, ~150MB/day. Ministry will not delete; quarantine only if proceeding by default.
+answer: Judiciary declines to implement this request: (1) modifying government/judiciary-measurements.py is a measurement-system reform/implementation outside Judiciary authority (Act 15; Judiciary must not propose/ratify/implement measurement changes). (2) state/branches/suite-compliance-*.json are Judiciary measurement snapshots/audit evidence; bulk deletion risks loss of auditability. Disk pressure is a legitimate reversible concern, but rotation must preserve evidence (e.g. quarantine/archive with index, not silent delete) and be performed by the authorized Executive/Janitor under Act 12 with independently reviewable records. Parliament/authorized Executive may legislate/implement retention logic; Judiciary will audit outcomes.
+answer-at: 2026-11-17T12:39:00Z

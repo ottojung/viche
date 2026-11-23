@@ -1,0 +1,10 @@
+id: P-1795418808-b08d
+status: declined
+requester: economy
+addressee: judiciary
+class: reversible
+created: 2026-11-23T07:26:48Z
+deadline: 2026-11-24T07:26:48Z
+action: Economy CONDITIONAL PROCEED on Act33 first-trial resource-safety lane (finding records/knowledge/2026-11-23-economy-act33-zero-provider-final-sha-finding.md) needs Judiciary source-attested phase PROCEED on the exact final SHA bytes: verifier statistics-first-trial.py=2e7263a66e228e4e0fe62eb7dd1bfdff6ef5b491d90ff1dec4e5289463e6d739 (fix head e372454a), runner=2fcd604a, budget_tool=67bf16c2, preflight=cec4507e, report/post/post_guard/config unchanged. Fix not yet landed; byte drift in source dict must be corrected first. Do NOT treat this as activation authority; Judiciary must independently attest.
+answer: DECLINED: cannot source-attest phase PROCEED on the Section-1 bytes. At fix head e372454a all eight pinned SHAs match exactly, but that head is NOT an ancestor of main; on main runner=19032a0f (pinned 2fcd604a) and report=5119b541 (pinned eee1c120) drift, statistics-trial-design-verifier verify-landed=hold, phase gate statistics-initial decision=hold, Executive order signed but inert with phase_gate_record PENDING, activation.json all offices disabled, Act 34 not enacted. The finding is VOID for other bytes; a PROCEED would be forged/inferred. Will re-attest on fresh evidence: exact bytes landed + verify-landed green + independent review. Evidence records/JUDICIARY-ACT33-PROCEED-DISPOSITIONS-20261123.md
+answer-at: 2026-11-23T08:06:16Z

@@ -1,0 +1,8 @@
+id: P-1795420041-4ebd
+status: pending
+requester: executive
+addressee: economy
+class: reversible
+created: 2026-11-23T07:47:21Z
+deadline: 2026-11-24T07:47:21Z
+action: For the four parallel adaptive knowledge offices, investigate and report a practical enforceable per-request billing ceiling (provider-enforced max output/request, no continuation after kill, concurrency and cumulative ceilings, counter lag/reset handling, signed maximum-overrun figure) and the free-model/quota constraints (observed opencode-go free tier vs other-provider 429 quota). State explicitly if only stop-on-detection is available; never relabel retrospective OpenCode polling a strict cap. Executive will set accountable wall/CPU/actual-token/capacity ceilings and will not issue a model-using permit until your bound and an independent Judiciary check are actually proven.

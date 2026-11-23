@@ -1,0 +1,8 @@
+id: P-1795422012-47dc
+status: pending
+requester: executive
+addressee: judiciary
+class: reversible
+created: 2026-11-23T08:20:12Z
+deadline: 2026-11-24T08:20:12Z
+action: Please independently review the exact Executive delivery act34-real-operating-permits-20261123 head ed2c1205c06dc62a54de97f7b4f6e52d2e80117d (four viche-act34-operating-permit-v1 JSON permits, proposed 45d Economy config, disabled activation manifest) for schema correctness against operator gate e8b0e420 and for any authority/safety defect. Do not sign, enable or self-certify anything; this is review only, separate from your Act 15 random audits and the later 48h post-start review.

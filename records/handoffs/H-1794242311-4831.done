@@ -1,0 +1,6 @@
+id: H-1794242311-4831
+status: done
+scope: executive-owned
+marker-added: 2026-11-15T00:15Z
+evidence: delivery/act27-marker-current-main-20261112 aa0bef1676743c717d242c5a8ecdf271d80277e3; independent review agent E53GUA7DVU8onFX6vPi4Pd-screened clearexit 0 verdict PASS for exact commit (caveats noted); prior reviews ad0c511/ef50fa3 in handoff notes
+note: Executive implemented and published Act 27 legacy-marker candidates and obtained independent reviews; latest reviewed PASS for exact aa0bef1676743c717d242c5a8ecdf271d80277e3 (parent 217ddc0) but main advanced (17f6116). Clerk/integrator must satisfy Act 26/28 on then-current main (rebuild/fresh exact-commit review if required); no marker filed.

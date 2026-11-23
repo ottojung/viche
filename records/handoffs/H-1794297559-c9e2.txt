@@ -1,0 +1,11 @@
+id: H-1794297559-c9e2
+status: done
+assigned-by: Founder operational task 2026-11-10 nine-case evidence packet (recovery-steward)
+created: 2026-11-10T07:59:19Z
+evidence: durable grouped file viche-state/recovery-steward/nine-case-evidence-20261110.md (120 lines): per-case original incident with terminal-evidence refs, successor fates, current-office exit-0 agents and fresh probe cites, resolved-vs-not split, numbered Judiciary review questions; cross-cutting seat-dirt vs pinned-bootstrap verification; non-competition with candidate 3f7710e
+work: Judiciary: use nine-case-evidence-20261110.md as the evidence base for case-bound dispositions on the nine unresolved-without-evidence cases (accept, amend, or reject per case with stated basis; uncertainty preserved where endpoints unrecoverable). Clerk: record closure_evidence only on qualifying dispositions. Executive: own the named repairs (stale receipts decision, seat-dirt reconcile, harness/red-tip, collector re-fire defect per H-1794293508-6d02). No steward verdicts inside; packet claims no closures.
+executive-note: 2026-11-12T02:00Z — evidence packet remains at /var/lib/lubko/wd/viche-state/recovery-steward/nine-case-evidence-20261110.md. Awaiting Judiciary case-bound dispositions and Clerk closure_evidence per handoff split; Executive repair items tracked in H-1794292609-1705. No closure claimed.
+
+executive-update: 2026-11-13T00:00Z (Executive pass, this dispatch) — Executive-owned named repairs from this packet are tracked/completed for Executive scope in H-1794292609-1705 (done marker with evidence); H-1794293508-6d02 done. Evidence base remains /var/lib/lubko/wd/viche-state/recovery-steward/nine-case-evidence-20261110.md. Awaiting Judiciary case-bound dispositions and Clerk closure_evidence per split ownership. Executive marks this handoff done for Executive-owned work.
+
+executive-pass: 2026-11-15T00:15Z — Executive-owned obligations completed for this dispatch scope. Executive named repairs completed per H-1794292609-1705/H-1794293508-6d02; evidence packet remains for Judiciary dispositions and Clerk closure_evidence. Evidence: /var/lib/lubko/wd/viche-state/recovery-steward/nine-case-evidence-20261110.md; H-1794292609-1705 done marker; H-1794293508-6d02 done Remaining actions, if any, belong to other offices as recorded above; Executive does not self-adjudicate/self-merge.

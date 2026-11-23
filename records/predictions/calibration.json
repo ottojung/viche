@@ -1,38 +1,100 @@
 {
   "act": 22,
+  "act32_calibration_minimum_gate": {
+    "eligible": true,
+    "note": "Passing numerical thresholds is not evidence of forecast independence or stable calibration.",
+    "required_due_resolution_coverage": 0.8,
+    "required_scored_true_false": 2
+  },
   "baselines": {
     "always_0_5": {
       "brier": 0.25,
-      "skill_vs_ledger": null
+      "skill_vs_ledger": 0.027143
     },
     "base_rate": {
-      "brier": null,
-      "p": null,
-      "skill_vs_ledger": null
+      "brier": 0.244898,
+      "p": 0.571429,
+      "skill_vs_ledger": 0.006875
     }
   },
   "brier": {
-    "aggregate": null,
-    "per_prediction": []
+    "aggregate": 0.243214,
+    "per_prediction": [
+      {
+        "brier": 0.36,
+        "id": "executive-innovation-office-reenactment-act-registration-3",
+        "outcome": 0.0,
+        "probability": 0.6
+      },
+      {
+        "brier": 0.04,
+        "id": "executive-innovation-office-reenactment-act-registration-5",
+        "outcome": 0.0,
+        "probability": 0.2
+      },
+      {
+        "brier": 0.16,
+        "id": "executive-innovation-office-reenactment-act-v2-registration-3",
+        "outcome": 1.0,
+        "probability": 0.6
+      },
+      {
+        "brier": 0.04,
+        "id": "executive-innovation-office-reenactment-act-v2-registration-5",
+        "outcome": 0.0,
+        "probability": 0.2
+      },
+      {
+        "brier": 0.3025,
+        "id": "executive-innovation-office-reenactment-act-v3-registration-1",
+        "outcome": 1.0,
+        "probability": 0.45
+      },
+      {
+        "brier": 0.16,
+        "id": "executive-innovation-office-reenactment-act-v3-registration-3",
+        "outcome": 1.0,
+        "probability": 0.6
+      },
+      {
+        "brier": 0.64,
+        "id": "executive-innovation-office-reenactment-act-v3-registration-5",
+        "outcome": 1.0,
+        "probability": 0.2
+      }
+    ]
   },
   "counts": {
-    "due": 0,
+    "due": 20,
+    "due_resolved": 20,
+    "due_scored": 7,
     "due_unresolved": 0,
-    "registered": 21,
+    "registered": 26,
     "rejected": 2,
-    "resolved_scored": 0,
-    "unresolved": 0
+    "resolved_scored": 7,
+    "review_checkpoint": {
+      "due": 5,
+      "due_unresolved": 0,
+      "excluded_from_due": true,
+      "note": "Act 20 \u00a77 review checkpoints are reported separately; they are not counted in the registration due/due_unresolved totals or coverage",
+      "registered": 5,
+      "scored": false,
+      "total": 5
+    },
+    "unresolved": 13
   },
-  "coverage": 0.0,
+  "coverage": 0.7692,
   "discrimination": {
     "high_conf_accuracy": null,
     "high_conf_n": 0,
-    "low_conf_accuracy": null,
-    "low_conf_n": 0
+    "low_conf_accuracy": 0.6667,
+    "low_conf_n": 3
   },
-  "generated_at": 1794180759,
+  "due_resolution_coverage": 1.0,
+  "due_scored_coverage": 0.35,
+  "generated_at": 1795422456,
   "generated_by": "government/predict-scorer.py",
-  "generated_iso": "2026-11-08T23:32:39Z",
+  "generated_iso": "2026-11-23T08:27:36Z",
   "integrity": {
     "clean": true,
     "defects": []
@@ -46,8 +108,37 @@
     "descriptive of past accuracy, not a guarantee of future accuracy"
   ],
   "log_score": {
-    "aggregate": null,
-    "per_prediction": []
+    "aggregate": 0.684596,
+    "per_prediction": [
+      {
+        "id": "executive-innovation-office-reenactment-act-registration-3",
+        "log": 0.916291
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-registration-5",
+        "log": 0.223144
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-v2-registration-3",
+        "log": 0.510826
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-v2-registration-5",
+        "log": 0.223144
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-v3-registration-1",
+        "log": 0.798508
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-v3-registration-3",
+        "log": 0.510826
+      },
+      {
+        "id": "executive-innovation-office-reenactment-act-v3-registration-5",
+        "log": 1.609438
+      }
+    ]
   },
   "per_author": [
     {
@@ -64,52 +155,114 @@
         }
       },
       "brier": null,
-      "coverage": 0.0,
+      "coverage": 0.8333,
       "discrimination": {
         "high_conf_accuracy": null,
         "high_conf_n": 0,
         "low_conf_accuracy": null,
         "low_conf_n": 0
       },
+      "due": 5,
+      "due_resolution_coverage": 1.0,
+      "due_resolved": 5,
       "due_unresolved": 0,
       "log_score": null,
       "observed_true_rate": null,
       "registered": 6,
       "reliability": [],
       "scored": 0,
-      "unresolved": 0
+      "unresolved": 5
     },
     {
       "author": "c1a00004",
       "baselines": {
         "always_0_5": {
           "brier": 0.25,
-          "skill_vs_ledger": null
+          "skill_vs_ledger": 0.027143
         },
         "base_rate": {
-          "brier": null,
-          "p": null,
-          "skill_vs_ledger": null
+          "brier": 0.244898,
+          "p": 0.571429,
+          "skill_vs_ledger": 0.006875
         }
       },
-      "brier": null,
-      "coverage": 0.0,
+      "brier": 0.243214,
+      "coverage": 0.75,
       "discrimination": {
         "high_conf_accuracy": null,
         "high_conf_n": 0,
-        "low_conf_accuracy": null,
-        "low_conf_n": 0
+        "low_conf_accuracy": 0.6667,
+        "low_conf_n": 3
       },
+      "due": 15,
+      "due_resolution_coverage": 1.0,
+      "due_resolved": 15,
       "due_unresolved": 0,
-      "log_score": null,
-      "observed_true_rate": null,
-      "registered": 15,
-      "reliability": [],
-      "scored": 0,
-      "unresolved": 0
+      "log_score": 0.684596,
+      "observed_true_rate": 0.5714,
+      "registered": 20,
+      "reliability": [
+        {
+          "bin": [
+            0.2,
+            0.3
+          ],
+          "count": 3,
+          "mean_predicted": 0.2,
+          "observed_frequency": 0.3333
+        },
+        {
+          "bin": [
+            0.4,
+            0.5
+          ],
+          "count": 1,
+          "mean_predicted": 0.45,
+          "observed_frequency": 1.0
+        },
+        {
+          "bin": [
+            0.6,
+            0.7
+          ],
+          "count": 3,
+          "mean_predicted": 0.6,
+          "observed_frequency": 0.6667
+        }
+      ],
+      "scored": 7,
+      "unresolved": 8
     }
   ],
-  "reliability": [],
+  "reliability": [
+    {
+      "bin": [
+        0.2,
+        0.3
+      ],
+      "count": 3,
+      "mean_predicted": 0.2,
+      "observed_frequency": 0.3333
+    },
+    {
+      "bin": [
+        0.4,
+        0.5
+      ],
+      "count": 1,
+      "mean_predicted": 0.45,
+      "observed_frequency": 1.0
+    },
+    {
+      "bin": [
+        0.6,
+        0.7
+      ],
+      "count": 3,
+      "mean_predicted": 0.6,
+      "observed_frequency": 0.6667
+    }
+  ],
   "review_checkpoint": {
     "checkpoints": [
       {
@@ -120,8 +273,11 @@
         "label": "at least one instrument records a real FP/FN on a readable known-answer replay",
         "proposition": "At least one instrument records a real false positive or false negative on a readable known-answer replay.",
         "registered": true,
-        "resolution": "pending",
+        "resolution": "unresolved",
         "resolution_date": "2026-10-31",
+        "resolution_evidence": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+        "resolution_reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+        "resolved_at": 1794180753,
         "source_ref": "government/LAWS.md#act-20-section-7",
         "source_registered_on": "2026-10-20"
       },
@@ -133,8 +289,11 @@
         "label": "aggregate measured FP > 0 and TP < 1.0 over a non-trivial archive",
         "proposition": "Aggregate false-positive rate > 0 and true-positive rate < 1.0 over the initial non-trivial archive.",
         "registered": true,
-        "resolution": "pending",
+        "resolution": "unresolved",
         "resolution_date": "2026-10-31",
+        "resolution_evidence": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+        "resolution_reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+        "resolved_at": 1794180753,
         "source_ref": "government/LAWS.md#act-20-section-7",
         "source_registered_on": "2026-10-20"
       },
@@ -146,8 +305,11 @@
         "label": "a material rate change is detected after an instrument change (drift)",
         "proposition": "A material instrument-rate change is detected after an instrument change.",
         "registered": true,
-        "resolution": "pending",
+        "resolution": "unresolved",
         "resolution_date": "2026-10-31",
+        "resolution_evidence": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+        "resolution_reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+        "resolved_at": 1794180753,
         "source_ref": "government/LAWS.md#act-20-section-7",
         "source_registered_on": "2026-10-20"
       },
@@ -159,8 +321,11 @@
         "label": "the archive grows >=1 verified case per measurement window",
         "proposition": "The verified calibration archive grows by at least one case per measurement window.",
         "registered": true,
-        "resolution": "pending",
+        "resolution": "unresolved",
         "resolution_date": "2026-10-31",
+        "resolution_evidence": "absence of the named source verified 2026-11-08 at main d56d73c: `git log --all --oneline --diff-filter=A -- records/calibration/report.json` returns nothing and `ls records/calibration` fails; the file has never existed in any ref",
+        "resolution_reason": "named durable evidence source records/calibration/report.json does not exist; resolved 8 days after the 2026-10-31 due date, late, because no resolution had been recorded (the scorer excludes review_checkpoint entries from its due count)",
+        "resolved_at": 1794180753,
         "source_ref": "government/LAWS.md#act-20-section-7",
         "source_registered_on": "2026-10-20"
       },
@@ -172,8 +337,11 @@
         "label": "the report->measurement interface is delivered",
         "proposition": "The calibration report-to-Judiciary measurement interface is delivered and rates are measured.",
         "registered": true,
-        "resolution": "pending",
+        "resolution": "false",
         "resolution_date": "2026-10-31",
+        "resolution_evidence": "government/judiciary-measurements.py line 137 at HEAD emits literal false_positive_rate:None and false_negative_rate:None (file last changed c03ac1b, 2026-10-23T23:21:46Z), so rates are not measured; the calibration report the interface would consume does not exist",
+        "resolution_reason": "the proposition is a conjunction and its second conjunct fails: the measurement payload hardcodes both rates to None, and records/calibration/report.json has never existed",
+        "resolved_at": 1794180753,
         "source_ref": "government/LAWS.md#act-20-section-7",
         "source_registered_on": "2026-10-20"
       }

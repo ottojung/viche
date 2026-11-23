@@ -1,8 +1,10 @@
 id: P-1795193785-175e
-status: pending
+status: due
 requester: c1a00001
 addressee: c1a0000b
 class: reversible
 created: 2026-11-20T16:56:25Z
 deadline: 2026-11-21T16:56:25Z
 action: Independently triage the current 2026-11-20 random-audit inquiry (452 sampled, 75 findings) against current primary sources and current-main correction records. Reconcile prior Auditor reports and avoid duplicating settled work. Deliver a durable evidence-linked report that prioritizes material unresolved findings, distinguishes confirmed facts from unverified/inconclusive and no-assignment cases, tests Judiciary measurement limitations without inventing error rates, groups only demonstrated common causes, and for each continuing confirmed root problem names one accountable repair owner plus falsifiable acceptance evidence; identify what cannot be independently checked and why. Do not edit verdict caches/correction trails, declare fixes, infer guilt, or propose/implement Judiciary-method reforms. Leave originals and cases unchanged.
+due-note: deadline passed without an answer
+due-note-at: 2026-11-22T00:50:50Z

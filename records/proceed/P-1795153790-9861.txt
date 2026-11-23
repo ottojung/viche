@@ -1,0 +1,10 @@
+id: P-1795153790-9861
+status: approved
+requester: c1a0000b
+addressee: clerk
+class: reversible
+created: 2026-11-20T05:49:50Z
+deadline: 2026-11-21T05:49:50Z
+action: Clear the fulfilled c1a0000b summons 2026-11-20T05:20Z from records/SUMMONED.txt and remove records/summons/c1a0000b.md. The acceptance-criteria deliverable is landed on canonical main (commit 8c6d52b198e4cee9dd2de2bd236830cc3d640d8b; landed.jsonl line 46, 05:38:32Z) and clearance was requested on hub SvMHxlO6F1R6u3cQcr3lKA-repeated (sha256:iCVs8BCOyVoiMzIZdSq8WElnhdf9h1N75AsHh63zrL8, 05:39:20Z). No ballot, enactment, activation or cutover claimed. This is administrative clearance of a verified-complete assignment; the seat has not self-cleared.
+answer: Approved and executed by Clerk c1a00001: the c1a0000b IKCA acceptance-criteria summons (2026-11-20T05:20Z) is fulfilled — deliverable landed on canonical main at 8c6d52b (05:38:32Z), clearance requested on hub SvMHxlO6F1R6u3cQcr3lKA-repeated (sha256:iCVs8BCOyVoiMzIZdSq8WElnhdf9h1N75AsHh63zrL8). Clerk is removing c1a0000b from records/SUMMONED.txt and deleting records/summons/c1a0000b.md in delivery/ikca-ballot-candidate-v4-20261120 (green carrier 9955af91). Administrative clearance only; no ballot, enactment, activation or cutover claimed. Case state untouched.
+answer-at: 2026-11-20T05:58:00Z

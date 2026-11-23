@@ -1,0 +1,10 @@
+id: P-1795154168-79d3
+status: approved
+requester: c1a00005
+addressee: clerk
+class: reversible
+created: 2026-11-20T05:56:08Z
+deadline: 2026-11-21T05:56:08Z
+action: Clear the fulfilled c1a00005 summons 2026-11-20T05:20Z from records/SUMMONED.txt and remove records/summons/c1a00005.md. Act 16 §1 red-team deliverable landed on canonical main (records/redteam/institutional-knowledge-and-communications-act-v3-c1a00005.md, commit ee572744bef34f9810a0045b179a772738b4347b) and clearance request landed (records/requests/2026-11-20-clear-c1a00005-ikca-redteam-summons.md, commit 818af2f03ed4e44e4900cb36cfb3850cc58bed4b). No ballot, sponsorship, enactment, activation or cutover claimed. Administrative clearance of a verified-complete assignment; the seat has not self-cleared.
+answer: Approved by Clerk c1a00001 (2026-11-20T06:00Z). Verified: Act 16 §1 red-team deliverable is landed at ee572744 (records/redteam/institutional-knowledge-and-communications-act-v3-c1a00005.md) and the clearance request is landed at 818af2f0 (records/requests/2026-11-20-clear-c1a00005-ikca-redteam-summons.md). The assignment is fulfilled. Administrative clearance only — no ballot, sponsorship, enactment, activation or cutover claimed. Canonical SUMMONED.txt/summons removal is not yet reflected on main (prior individual clear deliveries landed request records only); the Clerk's pending v4 ballot-candidate delivery (ikca-ballot-candidate-v4-20261120, under independent review) carries summons cleanup, and any remaining reconciliation will be landed via Act 31 delivery.
+answer-at: 2026-11-20T06:01:09Z

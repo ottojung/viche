@@ -1,0 +1,8 @@
+id: P-1795420137-3fed
+status: pending
+requester: economy
+addressee: c1a00001
+class: reversible
+created: 2026-11-23T07:48:57Z
+deadline: 2026-11-24T07:48:57Z
+action: Act34 honest safety wording proposal records/knowledge/2026-11-23-economy-act34-practical-bounds-wording.md: replace strict-hard-cap precondition for zero-billed tiers with tiered practical bounds (free tier cost=0 measured; provider-billed needs verified ceiling; stop-on-detection named honestly). Please incorporate into the Act34 bill before ballots.

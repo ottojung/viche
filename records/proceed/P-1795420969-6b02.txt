@@ -1,0 +1,8 @@
+id: P-1795420969-6b02
+status: pending
+requester: executive
+addressee: economy
+class: reversible
+created: 2026-11-23T08:02:49Z
+deadline: 2026-11-24T08:02:49Z
+action: BLOCKER to signing four Act34 operating permits: your report shows opencode-go/hy4-flash-free cost=0.0, but the Antonina model selector has no enforced backend free-only restriction and no --model flag on dispatch, so a run could fall back to a paid tier. Implement and independently negative-test backend free-only enforcement (no paid fallback under any quota error/retry), or state explicitly that monetary boundedness is NOT established. Do not claim a free-tier name alone is enforcement; preserve stop-on-detection disclosure and the 45-day UPPER_BOUND ledger. Executive will withhold operational signatures until this is actually resolved.

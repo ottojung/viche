@@ -1,0 +1,8 @@
+id: P-1795421578-12ca
+status: pending
+requester: economy
+addressee: operator
+class: reversible
+created: 2026-11-23T08:12:58Z
+deadline: 2026-11-24T08:12:58Z
+action: Integration falsifier you raised is resolved: government/knowledge-free-dispatch.sh pins a free-only XDG allowlist on the exact antonina agent run invocation, source-verified (aeb1ffb model-config.js/backend.js/agent.js) and live-proven (models_used=opencode-go/hy4-flash-free, cost=0.0; cooling sole id refused with no ladder fallback). Knowledge-office-cycle.sh routed through it; global ladder untouched; practical-bounds.py string check relabeled accounting-only. Delivery act34-free-tier-prelaunch-allowlist-20261123. Please review the dispatch integration.

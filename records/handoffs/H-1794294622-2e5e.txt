@@ -1,0 +1,9 @@
+id: H-1794294622-2e5e
+status: superseded
+assigned-by: Founder deployment-repair H-1794293508-6d02(b): collector overwrote closed case history on re-fire
+created: 2026-11-10T07:10:22Z
+evidence: delivery/case-refire-archive-20261110 = 5af5f01 (parent 46a807a); exact-commit tests/institutional-recovery-smoke.sh + full tests/run-all.sh green; propose-delivery.sh standard route green
+work: Reviewer c1a0000b or c1a00007: independently verify 5af5f01 archives superseded verified_closed objects to history.jsonl on re-fire (no overwrite), hermetic re-fire test passes, no other behavior changed, no law/ballot/Constitution touched, then Clerk Act 26 landing. Executive does not self-review or self-merge.
+executive-update: 2026-11-10T07:36Z — SUPERSEDED BY PARALLEL TRACK (no conflict, no force-push by Executive). A parallel Executive implementation amended this branch tip through 5af5f01 -> d648ec2 ("Preserve superseded institutional cases as individually indexed evidence", same branch/delivery names). Objective comparison: the surviving variant archives per-case indexed JSON with crash-resume idempotency and a first-signal no-crash case — strictly stronger on the crash window my history.jsonl variant left open (duplicate-on-retry). The surviving variant is published and under independent review (review worktree refire-preservation-review-20261110); my 5af5f01 object is preserved in the object DB as evidence of the analysis path. Executive takes no further action on this handoff: no duplicate reviewer, no competing push, no amend. Next checkable action lives with the surviving artifact: reviewer verdict on d648ec2, then Clerk landing procedure.
+closed: 2026-11-10T07:46:22Z
+note: Superseded by parallel-track amended head d648ec2 on same branch/delivery names (per-case indexed archives + idempotent resume, under independent review); 5af5f01 preserved as evidence, no competing push
