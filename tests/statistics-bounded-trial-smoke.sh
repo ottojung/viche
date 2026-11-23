@@ -24,6 +24,13 @@ print("dummy fixture Statistics report without a model or network")
 PY
 printf '# A pinned inert Post fixture; not invoked in the trial smoke\n' > "$town/government/post.py"
 cp "$repo/government/knowledge-budget.conf" "$town/government/knowledge-budget.conf"
+# This smoke isolates the runner resource precharge from the separately
+# tested independent Act33 first-trial evidence gate.
+printf '#!/bin/sh\n[ "$1" = statistics ] && [ "$2" = first-trial ]\n' > "$town/government/statistics-preflight.sh"
+printf '# exact audited helper fixture\n' > "$town/government/statistics-first-trial.py"
+printf '# exact evidence fixture\n' > "$town/government/statistics-evidence.py"
+printf '#!/bin/sh\nexit 0\n' > "$town/government/knowledge-phase-gate.sh"
+printf '# exact phase verifier fixture\n' > "$town/government/knowledge-phase-verifier.py"
 python3 - "$town/government/knowledge-budget.conf" <<'BUDGET_ENABLED'
 import json,sys
 p=sys.argv[1];c=json.load(open(p));c["offices"]["statistics"]["enabled"]=True
@@ -36,7 +43,12 @@ root=Path(sys.argv[1])
 a={}
 for name,rel in (("runner","statistics-bounded-trial.py"),("report","statistics-report.py"),
                  ("post","post.py"),("post_guard","post_guard.py"),
-                 ("budget_tool","knowledge-budget-tool.py"),("budget_config","knowledge-budget.conf")):
+                 ("budget_tool","knowledge-budget-tool.py"),("budget_config","knowledge-budget.conf"),
+                 ("trial_preflight","statistics-preflight.sh"),("trial_verifier","statistics-first-trial.py"),
+                 ("trial_evidence","statistics-evidence.py"),
+                 ("activation_gate","knowledge-activation-verify.sh"),
+                 ("phase_gate","knowledge-phase-gate.sh"),
+                 ("phase_verifier","knowledge-phase-verifier.py")):
  a[name]=hashlib.sha256((root/"government"/rel).read_bytes()).hexdigest()
 now=int(time.time())
 (root/"records/knowledge/activation.json").write_text(json.dumps({

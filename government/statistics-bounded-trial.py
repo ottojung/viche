@@ -128,6 +128,12 @@ def verified_order():
         "post_guard": TOWN / "government/post_guard.py",
         "budget_tool": TOWN / "government/knowledge-budget-tool.py",
         "budget_config": CONF,
+        "trial_preflight": TOWN / "government/statistics-preflight.sh",
+        "trial_verifier": TOWN / "government/statistics-first-trial.py",
+        "trial_evidence": TOWN / "government/statistics-evidence.py",
+        "activation_gate": TOWN / "government/knowledge-activation-verify.sh",
+        "phase_gate": TOWN / "government/knowledge-phase-gate.sh",
+        "phase_verifier": TOWN / "government/knowledge-phase-verifier.py",
         "runner": Path(__file__).resolve(),
     }
     if (not isinstance(hashes, dict) or set(hashes) != set(paths)
@@ -140,6 +146,19 @@ def verified_order():
                        env=dict(os.environ, VICHE_TOWN_ROOT=str(TOWN)))
     except (OSError, subprocess.SubprocessError) as exc:
         raise Denied("independent phase/activation gate is not green") from exc
+    # Act 33's additional, independently corroborated prospective design and
+    # Economy/Judiciary pretrial evidence gate MUST be checked at the point of
+    # actual Statistics work, not just in a standalone documentation script.
+    # Never pass an env-controlled synthetic date (VICHE_AT) to production.
+    try:
+        subprocess.run(["/bin/sh", str(TOWN / "government/statistics-preflight.sh"),
+                        "statistics", "first-trial"],
+                       check=True, capture_output=True, timeout=30,
+                       env={"VICHE_TOWN_ROOT": str(TOWN),
+                            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                            "LANG": "C.UTF-8", "PYTHONNOUSERSITE": "1"})
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise Denied("independent prospective Act33 first-trial preflight is not green") from exc
     return office
 
 
