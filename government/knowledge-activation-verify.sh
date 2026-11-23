@@ -57,6 +57,15 @@ jq -e \
     (.offices[$office].expires_at > $now)
   ' "$activation" >/dev/null || exit 1
 
+# A fixed telemetry reporter is NOT the independent adaptive Statistics Bureau.
+# Founder's 2026-11-23 correction invalidates deterministic-v1 as an OFFICE
+# activation mode. A manually invoked diagnostic does not authorize an office.
+if [ "$office" = statistics ] &&
+   jq -e '.offices.statistics.trial_mode == "deterministic-v1"' "$activation" >/dev/null 2>&1; then
+  echo "Statistics: diagnostic-only mode cannot authorize a Bureau" >&2
+  exit 1
+fi
+
 # Act 33 requires a separately authenticated Judiciary PROCEED before every
 # Statistics / successor dispatch. An enabled JSON flag and an act label alone
 # have never proved phase approval. The pointer only chooses the phase record;

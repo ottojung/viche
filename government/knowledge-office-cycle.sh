@@ -20,15 +20,10 @@ grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(en
 # Act and THIS office, with a bounded hard expiry. The shared fail-closed
 # verifier is the same code boot.sh and appointments.sh use, so the three agree.
 /bin/sh "$town/government/knowledge-activation-verify.sh" "$office" || exit 0
-# Under Act 33, a specifically reviewed deterministic Statistics trial uses
-# boot.sh's single daily, prepaid, bounded collector instead of ANY Antonina
-# agent session. The model budget is NOT strict for in-flight requests; never
-# bypass it by treating a retrospective kill as a hard billing ceiling.
-if [ "$office" = statistics ] &&
-   grep -Eq '^## Act 33 — Prospective Statistics Trial Clarification \(enacted ' "$town/government/LAWS.md" &&
-   jq -e '.offices.statistics.trial_mode == "deterministic-v1"'      "$town/records/knowledge/activation.json" >/dev/null 2>&1; then
-    exit 0
-fi
+# The founder rejected an automated metrics bundle as the Statistics Bureau.
+# A deterministic-v1 manifest is NOT an authorized model-driven office mode;
+# the shared activation verifier fails it closed. Do not launch a fixed script
+# or mark Statistics operational instead of conducting adaptive inquiries.
 # Act 32 H: fail-closed metered budget guard. When the budget engine is not
 # installed (legacy fixtures) there is no budget subsystem to gate on; when it
 # is installed, a missing/corrupt config, absent token meter, exhausted cap or
@@ -100,6 +95,23 @@ if [ -f "$town/government/post-inbox-brief.sh" ]; then
     mail='Public Post preview unavailable; continue other authorized work.'
   }
 fi
+# Research ledger provides context, NOT a command or list of legal metrics.
+# A damaged inquiry file must not freeze the entire Town: the agent can repair
+# it in its own worktree, and the runner never treats this index as authority.
+inquiry_brief=
+if [ "$office" = statistics ]; then
+    # Include both delivered inquiries and unfinished local work; otherwise a
+    # stale seat could keep reopening the same question during Act31 review.
+    canonical=$(timeout 12 python3 "$town/government/statistics-inquiry.py" agenda --root "$town" 2>&1 | head -c 8000) ||
+        canonical='Canonical inquiry index invalid: investigate independently.'
+    local_work=$(timeout 12 python3 "$town/government/statistics-inquiry.py" agenda --root "$cwd" 2>&1 | head -c 8000) ||
+        local_work='Agent inquiry index invalid: investigate independently.'
+    inquiry_brief=$(printf 'Delivered inquiries:
+%s
+Unmerged worktree:
+%s
+'          "$canonical" "$local_work")
+fi
 last=0
 [ ! -s "$root/last-dispatch" ] || last=$(cat "$root/last-dispatch")
 case "$last" in ''|*[!0-9]*) last=0;; esac
@@ -133,10 +145,18 @@ A publication is not evidence of substantive progress.
 === INCOMING MAIL (new, up to 25) ===
 $mail
 === END MAIL ===
+=== EXISTING STATISTICS INQUIRIES (for Statistics only; not a fixed metric catalog) ===
+$inquiry_brief
+=== END INQUIRIES ===
 $recovery
 You may send specific, actionable correspondence and publish only
 substantively new information. Prefer direct primary sources. Record
 provenance, counterarguments and a feasible falsification criterion.
+If you are Statistics: YOU must choose what matters to measure NOW. Propose
+a genuinely question-specific observation if the environment warrants
+one; revise/retire old questions if evidence no longer supports them. Do not
+simply repeat predefined resource/outcome/commit counts. Use primary sources
+and independently verifiable methods; no result is verified by saying it is.
 If nothing useful changed, finish quickly without publishing filler.
 EOF
 )
