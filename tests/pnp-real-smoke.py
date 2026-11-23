@@ -17,13 +17,13 @@ sys.path.insert(0, str(ROOT))
 TMP = tempfile.TemporaryDirectory(prefix="pnp-real-smoke-")
 os.environ["PNP_STATE_ROOT"] = str(pathlib.Path(TMP.name) / "state")
 
-from government.pnp import cli, config, github, state, gitctl  # noqa: E402
+from missions.pnp import cli, config, github, state, gitctl  # noqa: E402
 
 
 class FullPathSmoke(unittest.TestCase):
     def test_documented_cli_is_executable(self):
         result = subprocess.run([sys.executable,
-                                 str(ROOT / "government/pnp/cli.py"), "--help"],
+                                 str(ROOT / "missions/pnp/cli.py"), "--help"],
                                 capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("submit", result.stdout)

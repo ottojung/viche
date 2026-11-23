@@ -58,7 +58,7 @@ Correct pool-count example (read-only):
 
 ```sh
 antonina agent list --running --page 1 --limit 100 --json |
-  python3 -c 'import json,sys; d=json.load(sys.stdin); assert not d["unreadable"], "agent registry unreadable"; a=d["agents"]; print([(x["id"], x["title"]) for x in a if (x.get("cwd") or "").startswith("/home/lubko/soring301")])'
+  python3 -c 'import json,sys; d=json.load(sys.stdin); assert not d["unreadable"], "agent registry unreadable"; a=d["agents"]; print([(x["id"], x["title"]) for x in a if (x.get("cwd") or "").startswith("/home/lubko/task-worktree")])'
 ```
 
 ## Agents — MUTATING: use only when dispatching authorized work
@@ -89,9 +89,6 @@ antonina agent list --running --page 1 --limit 100 --json |
 - Stdout of `--json` should be parsed as one complete JSON value. CLI may
   print Node warnings to stderr; keep stderr separate, but do not discard
   CLI failures or parse truncated `head -c` output.
-- For SoringP1 #301: standing target five independent unary researchers on
-  billy-dev; independently choose worthwhile fronts and dispatch before
-  unrelated monitoring work. Never require a registry or standalone refill task.
 
 This contract describes interface behavior, not policy precedence. Follow the
 Founder's constitution, mandates, host assignment and `executive-agenda.md`.

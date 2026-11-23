@@ -18,19 +18,19 @@ Public key registered with GitHub; local noninteractive signing tested on 2026-1
 All proof artifacts are single UTF-8 .lean files at their EXACT desk-provided path.
 
 Implement the mission as one small, nonfatal subsystem in the Viche repository, suggested files:
-  government/pnp/{cli.py,desk.py,state.py,validate.py,publish.py,reconcile.py}
+  missions/pnp/{cli.py,desk.py,state.py,validate.py,publish.py,reconcile.py}
   tests/pnp-*.py
 and durable state under /var/lib/lubko/wd/viche-state/pnp/.
 Keep all shell scripts POSIX /bin/sh as required by Viche.
 Use Python for coordination; Lean proves mathematics; Antonina manages all AI workers. Do not introduce a new model backend, competing scheduler, or a new constitutional service. Use normal Act 31 delivery into Viche main.
 
 Define the stable operator interface:
-  python3 government/pnp/cli.py status
-  python3 government/pnp/cli.py acquire [--hard]
-  python3 government/pnp/cli.py beat <gap-id>
-  python3 government/pnp/cli.py release <gap-id> <reason>
-  python3 government/pnp/cli.py submit <gap-id> <candidate-file>
-  python3 government/pnp/cli.py reconcile
+  python3 missions/pnp/cli.py status
+  python3 missions/pnp/cli.py acquire [--hard]
+  python3 missions/pnp/cli.py beat <gap-id>
+  python3 missions/pnp/cli.py release <gap-id> <reason>
+  python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
+  python3 missions/pnp/cli.py reconcile
 The exact file structure can vary only if the commands and behaviors remain equally clear and tested.
 
 ## Responsibilities (do not conflate)

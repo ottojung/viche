@@ -120,11 +120,9 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
     nonblocking_office executive 300 /bin/sh "$town/government/branch-liveness.sh" executive
 fi
 
-# The Founder-authorized perpetual P vs NP mission renews active leases and
-# reconciles external verdicts independently of agents, parliamentary sittings,
-# and other offices. Failures cannot obstruct Town liveness.
-if [ -s "$town/government/pnp-cycle.sh" ]; then
-    nonblocking_office pnp 150 /bin/sh "$town/government/pnp-cycle.sh"
+# Task-independent lifecycle hooks. One failed mission cannot block the Town.
+if [ -s "$town/government/mission-cycle.sh" ]; then
+    nonblocking_office missions 180 /bin/sh "$town/government/mission-cycle.sh"
 fi
 
 # The innovation office is an Executive unit ONLY after parliamentary enactment.

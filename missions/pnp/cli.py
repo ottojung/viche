@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Stable operator interface for the PnP contribution workflow.
 
-    python3 government/pnp/cli.py status
-    python3 government/pnp/cli.py acquire [--hard]
-    python3 government/pnp/cli.py beat <gap-id>
-    python3 government/pnp/cli.py release <gap-id> <reason>
-    python3 government/pnp/cli.py submit <gap-id> <candidate-file>
-    python3 government/pnp/cli.py reconcile
+    python3 missions/pnp/cli.py status
+    python3 missions/pnp/cli.py acquire [--hard]
+    python3 missions/pnp/cli.py beat <gap-id>
+    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
+    python3 missions/pnp/cli.py reconcile
 """
 import argparse
 import json
@@ -16,10 +16,10 @@ import time
 
 if __package__ in (None, ""):
     # Support the required direct invocation:
-    #   python3 government/pnp/cli.py <command>
+    #   python3 missions/pnp/cli.py <command>
     sys.path.insert(0, os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "..")))
-    from government.pnp import (config, desk as desk_mod, publish,
+    from missions.pnp import (config, desk as desk_mod, publish,
                                 reconcile, state)
 else:
     from . import config, desk as desk_mod, publish, reconcile, state

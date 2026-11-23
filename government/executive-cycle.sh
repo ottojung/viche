@@ -80,6 +80,12 @@ cwd=$seats/branches/executive
     echo "Viche: delivery candidate inventory unavailable" >&2
     delivery="inventory unavailable; inspect Git worktrees before inferring no work"
   }
+  mission_mandates=
+  for mandate in "$town"/missions/*/mandate.md; do
+    [ -f "$mandate" ] || continue
+    mission_mandates="$mission_mandates
+$(cat "$mandate")"
+  done
   prompt=$(cat <<EOF
 You are Viche executive liaison. This is independent executive delivery,
 NOT a parliamentary sitting. Do not do the parliamentary Clerk work.
@@ -88,8 +94,10 @@ $(cat "$charter")
 === END AUTHORITATIVE CONSTITUTION ===
 Follow current Founder mandates and current ordinary laws. Report contradictory older law rather than treating an unenacted bill as law.
 Before interacting with Antonina board or agents, read $town/government/antonina-interface.md. Use the documented commands and JSON shapes; consult command-specific --help when uncertain. Treat parser failures as errors, never as empty work or zero comments.
-Standing Founder priority: Continue SoringP1 until the final theorems for S(n)/SORT-BOUND-U are rigorously proved and independently checked and all authorized SoringP1 obligations are truly closed. At every pass inspect #301, SoringP1 main, current AGENTS.md, docs/research-plan.md, open issues, existing researchers and unresolved proof obligations. If every packet was consumed but theorems are still open, identify new independent, falsifiable mathematical fronts from literature and research failures, and dispatch useful researchers without a numeric cap. Do not produce filler, repeat completed work, demand Founder input for routine research direction, or interpret an agent exit as theorem completion. Research takes priority over monitoring and premature Lean formalization.
-Follow the current operational agenda at $town/government/executive-agenda.md.
+Follow the current task-independent operational agenda at $town/government/executive-agenda.md.
+=== FOUNDER-AUTHORIZED ACTIVE MISSION MANDATES ===
+$mission_mandates
+=== END ACTIVE MISSION MANDATES ===
 Verified issue assignments, independent of the target registry:
 $eligible
 
@@ -97,8 +105,10 @@ REVIEWABLE WORKTREE INVENTORY (facts, not authority to merge):
 $delivery
 
 To land Viche work, commit on a branch in your worktree and run $town/government/propose-delivery.sh --office executive SLUG; the Act 31 integration queue verifies and lands it (see $town/government/DELIVERY.md). Do not land by hand and do not rebuild a delivery because main moved. A PR is not required. Law reaches main only with an "Enacts: BILL" trailer and a passing tally; the Constitution never does.
-Act on every eligible issue by constructive work. SoringP1 #301 is explicitly assigned. Read descriptions/comments; do not treat empty target registry as no work.
-A billy-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/Lean verification on GitHub-hosted runners is expressly authorized and must stay enabled for any repo (incl. SoringP1). Never delete or disable working workflows merely because an issue is assigned to billy-dev. Require verified passing CI when applicable (a green run, not a claim).
+Act on every eligible issue by constructive work. Read descriptions and
+comments; do not treat an empty target registry as no work. Respect standing
+mission mandates and their own explicit completion conditions.
+A billy-dev assignment governs WHERE agents execute and keep worktrees, NOT ordinary GitHub infrastructure: GitHub Actions CI/tests/builds/verification on GitHub-hosted runners is authorized and must stay enabled for any assigned repository. Never delete or disable working workflows merely because an issue is assigned to billy-dev. Require verified passing CI when applicable (a green run, not a claim).
 Maintain durable issue ownership, dependencies, completed work and blockers.
 Verify current issue comments, agents and PRs before assigning; avoid duplicates.
 Prioritize tested merged deliverables, not ceremonial discussion or agent counts.
@@ -127,27 +137,27 @@ let it suspend the eligible-issue work above.
 EOF
 )
 fi
-# Read-only, bounded frontier evidence. This cannot replace the Executive's
-# independent live-agent/board checks, and does not authorize generic work
-# outside explicit open Act19 handoffs or host-scoped Founder assignments.
-frontier='{"status":"unavailable","action":"inspect live frontier and research issues"}'
-if [ -f "$town/government/research-frontier-status.py" ]; then
-  frontier=$(python3 "$town/government/research-frontier-status.py" 2>/dev/null) ||
-    frontier='{"status":"unavailable","action":"investigate diagnostic failure"}'
-fi
+# Optional mission-specific diagnostics are supplied by the missions, never
+# wired into the Executive itself. They are advisory, bounded and read-only.
+mission_diagnostics=
+for diagnostic in "$town"/missions/*/status.sh; do
+  [ -f "$diagnostic" ] || continue
+  label=${diagnostic%/status.sh}
+  label=${label##*/}
+  line=$(timeout 15 /bin/sh "$diagnostic" 2>/dev/null) ||
+    line='{"status":"unavailable","action":"investigate diagnostic failure"}'
+  mission_diagnostics="$mission_diagnostics
+$label: $line"
+done
 prompt=$(cat <<EOF
 $prompt
 
-=== SORINGP1 RESEARCH FRONTIER — READ-ONLY DIAGNOSTIC ===
-$frontier
-=== END FRONTIER DIAGNOSTIC ===
-If status is depleted_after_empty_curation, the curator's empty response is NOT
-proof that final research is complete. Examine genuinely distinct untried
-questions from the latest theorem obligations, primary literature and failed
-approaches; commission only useful falsifiable research and independently
-check existing claimed results. Do not invent fronts to meet a worker count.
-Verify the actual Antonina agent list before dispatch; ledger states are not
-live availability. Follow any open durable Act19 handoffs before generic work.
+=== MISSION READ-ONLY DIAGNOSTICS ===
+$mission_diagnostics
+=== END MISSION DIAGNOSTICS ===
+Do not infer successful mission outcomes from a diagnostic, agent exit, or
+depleted queue. Check live assignments and pursue new useful work when any
+Founder's standing objective is still open.
 EOF
 )
 cases='{"open_cases":[]}'

@@ -8,12 +8,12 @@ authenticated GitHub mutation commands directly.
 
 ## Commands (stable interface)
 
-    python3 government/pnp/cli.py status
-    python3 government/pnp/cli.py acquire [--hard] [--another]
-    python3 government/pnp/cli.py beat <gap-id>
-    python3 government/pnp/cli.py release <gap-id> <reason>
-    python3 government/pnp/cli.py submit <gap-id> <candidate-file>
-    python3 government/pnp/cli.py reconcile
+    python3 missions/pnp/cli.py status
+    python3 missions/pnp/cli.py acquire [--hard] [--another]
+    python3 missions/pnp/cli.py beat <gap-id>
+    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
+    python3 missions/pnp/cli.py reconcile
 
 `status` is read-only. `acquire` claims at most five desk leases and records
 the exact statement, module, path and imports as data. `beat` renews a lease;
@@ -50,7 +50,7 @@ Git/GPG integration tests. None claims a live desk gap, pushes, or opens a
 real PR. Only a proof accepted by the upstream authoritative Lean checker
 under Lean 4.36 and pinned Mathlib may be submitted.
 
-The Viche boot cycle runs `government/pnp-cycle.sh` independently to renew
+The Viche boot cycle runs `missions/pnp/cycle.sh` independently to renew
 leases every nine minutes and reconcile remote results without blocking
 other Town work. The standing Executive agenda continuously commissions
 useful mathematics; completing this setup does not close the mission.

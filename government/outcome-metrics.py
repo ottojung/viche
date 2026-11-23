@@ -3,6 +3,7 @@
 import collections
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -23,6 +24,12 @@ def js(path):
     try:return json.loads(Path(path).read_text())
     except (ValueError,OSError):return None
 
+def project_label(title):
+    """Derive a label from the task title; do not hard-code assigned work."""
+    head = (title or "").strip().split(":", 1)[0].split(" ", 1)[0]
+    return head if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,47}", head) else "other"
+
+
 def agents():
     rows=[]
     for page in range(1,9):
@@ -40,8 +47,7 @@ def agents():
     outcomes=collections.Counter()
     for x in recent:
         title=x.get('title') or ''
-        projects['Viche' if title.startswith('Viche') else
-                 'SoringP1' if title.startswith('SoringP1') else 'other']+=1
+        projects[project_label(title)]+=1
         outcomes[x.get('state','unknown')]+=1
     return dict(window_seconds=WINDOW,total=len(recent),by_project=dict(projects),
                 by_process_outcome=dict(outcomes),
@@ -83,14 +89,17 @@ def branches():
     return result
 
 def research():
-    frontier=js(os.getenv('VICHE_SORING_FRONTIER',
-             '/home/lubko/.local/state/soringp1/frontier-ledger.json'))
-    if not isinstance(frontier,dict):return {'telemetry':'unavailable'}
-    return dict(telemetry='available',
-                states=dict(collections.Counter(x.get('status','unknown')
-                                  for x in frontier.get('fronts',[]))),
-                curator_running=bool(frontier.get('curator',{}).get('agent_id')),
-                caveat='curator proposals are not verified research results')
+    """Optional mission observations, one file per task, no special-cases."""
+    data={}
+    for path in sorted((STATE/'missions').glob('*/status.json')):
+        if not re.fullmatch(r'[a-z0-9-]+', path.parent.name):
+            continue
+        item=js(path)
+        if isinstance(item,dict):
+            data[path.parent.name]=item
+    return dict(telemetry='available' if data else 'unavailable',
+                missions=data, caveat='mission status is not verified delivery')
+
 
 def board():
     entries=json.loads(shell([CLI,'board','list','--state','open',
@@ -98,9 +107,7 @@ def board():
     if not isinstance(entries,list):raise ValueError('invalid board inventory')
     return dict(open_first_page=len(entries),
                 open_by_project=dict(collections.Counter(
-                    'Viche' if x.get('title','').startswith('Viche')
-                    else 'SoringP1' if x.get('title','').startswith('SoringP1')
-                    else 'other' for x in entries)),
+                    project_label(x.get('title','')) for x in entries)),
                 caveat='first page only; do not infer issues missing on this page were closed')
 
 def measure():
@@ -116,11 +123,6 @@ def measure():
     if any(v['telemetry']!='available' or v['readiness']=='unhealthy'
            for v in result.get('branches',{}).values()):
         alerts.append('branch_readiness_review')
-    r=result.get('research',{})
-    if r.get('telemetry')=='available' and not (r['states'].get('ready',0)
-         or r['states'].get('running',0) or r['states'].get('launching',0)
-         or r['curator_running']):
-        alerts.append('research_frontier_not_being_replenished')
     if any(result[k].get('telemetry')=='unavailable' for k in ('agents','git','board')):
         alerts.append('outcome_measurement_incomplete')
     result['signals_for_inquiry_not_verdicts']=alerts

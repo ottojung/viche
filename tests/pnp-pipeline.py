@@ -17,7 +17,7 @@ sys.path.insert(0, ROOT)
 TMP = tempfile.mkdtemp(prefix="pnp-tests-")
 os.environ["PNP_STATE_ROOT"] = os.path.join(TMP, "state")
 
-from government.pnp import config, desk, gitctl, github, publish, reconcile, state, validate  # noqa: E402
+from missions.pnp import config, desk, gitctl, github, publish, reconcile, state, validate  # noqa: E402
 
 GAP = "L-meta-582"
 PATH = "lean/PEqualNP/Outside/L_meta_582.lean"
@@ -337,7 +337,7 @@ class TestCli(unittest.TestCase):
         fresh()
 
     def test_submit_transitions_lease_to_ready_without_agent_git(self):
-        from government.pnp import cli
+        from missions.pnp import cli
         new_state("LEASED")
         seen = []
         def submit(gap_id, candidate):
