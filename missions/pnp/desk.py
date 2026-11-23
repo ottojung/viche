@@ -114,12 +114,18 @@ class Desk:
             raise DeskError("unexpected desk next shape")
         gap = data.get("gap")
         lease = data.get("lease")
-        if gap is None or lease is None:
-            # A genuinely empty frontier is a documented outcome; anything
-            # else (missing keys) is a protocol error, never "no gaps".
-            if "gap" in data and "lease" in data:
+        if gap is None:
+            # join.txt: "If `gap` is null, every step is taken right now:
+            # wait a few minutes and ask again."  That documented empty-frontier
+            # answer omits `lease`, so an explicit null gap is no-gap regardless
+            # of whether a lease key is present.  A *missing* gap key or a
+            # malformed shape stays a protocol error: never turn a parser
+            # failure into "no gaps" (fail closed).
+            if "gap" in data:
                 return None
-            raise DeskError("desk next is missing gap/lease keys")
+            raise DeskError("desk next is missing gap key")
+        if lease is None:
+            raise DeskError("desk next offered a gap without a lease")
         if not isinstance(gap, dict):
             raise DeskError("desk gap is not an object")
         return {"gap": gap, "lease": lease}
