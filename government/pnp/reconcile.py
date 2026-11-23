@@ -3,6 +3,7 @@
 Queries remote ground truth (desk, fork, upstream PRs) before retrying.
 Never opens a PR itself and never mistakes a checker verdict for novelty.
 """
+import os
 import re
 import time
 
@@ -46,7 +47,9 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
 
     branch = rec.get("branch") or config.branch_for(gap_id)
-    remote = git.remote_branch_sha(branch)
+    remote = (git.remote_branch_sha(branch)
+              if rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN")
+              else None)
     if remote and rec["state"] == "SIGNED":
         if remote == rec.get("commit_sha"):
             state.transition(gap_id, "PUSHED")
@@ -58,8 +61,29 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
         state.update(gap_id, failure_reason="pushed branch missing at fork")
 
     number = rec.get("pr_number")
-    if not number:
+    if not number and rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN"):
         number = gh.pr_exists_for(branch, gap_id)
+    if not number and rec["state"] in ("SIGNED", "PUSHED"):
+        # A process can die after push and before gh pr create.  Do not
+        # strand a signed contribution indefinitely: finish idempotently
+        # from its preserved proof file and pinned commit.
+        candidate = os.path.join(rec.get("worktree") or "",
+                                 rec.get("path") or "")
+        if rec.get("worktree") and os.path.isfile(candidate):
+            try:
+                from . import publish
+                published = publish.publish(
+                    gap_id, candidate, desk=desk, git=git, gh=gh)
+                state.update(gap_id, last_reconcile=time.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+                return {"gap": gap_id, "result": "publish-recovered",
+                        "state": "PR_OPEN", "pr": published["pr"]}
+            except Exception as e:
+                state.update(gap_id, failure_reason=(
+                    "retry PR publication after push: %s" % e))
+        else:
+            state.update(gap_id, failure_reason=(
+                "signed publication recovery requires the preserved candidate"))
     if number:
         number = int(number)
         pr = gh.get_pr(number)
@@ -108,9 +132,10 @@ def reconcile_all(desk=None, gh=None, git=None):
         except Exception as e:                       # nonfatal by construction
             try:
                 rec = state.load(gap_id)
-                if rec and rec["state"] != "FAULT":
-                    state.transition(gap_id, "FAULT",
-                                     failure_reason="reconcile: %s" % e)
+                if rec:
+                    # Network or checker outages must not expire unrelated
+                    # running research: preserve current state and retry.
+                    state.update(gap_id, failure_reason="reconcile: %s" % e)
             except Exception:
                 pass
             results.append({"gap": gap_id, "result": "error", "detail": str(e)})

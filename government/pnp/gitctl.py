@@ -7,6 +7,7 @@ prompt can supply them.
 import os
 import shutil
 import subprocess
+import tempfile
 
 from . import config
 
@@ -90,21 +91,24 @@ def fresh_worktree(gap_id, base_sha, branch):
     return path
 
 
-def pin_candidate(worktree, path, candidate_bytes):
+def pin_candidate(worktree, path, candidate_bytes, correction=False):
     """Stage only the independently approved exact path as a new file."""
     target = os.path.join(worktree, path)
     if not target.startswith(os.path.join(worktree, "lean" + os.sep)):
         raise GitError("candidate path is outside lean/")
-    if os.path.exists(target):
+    if os.path.exists(target) and not correction:
         raise GitError("candidate path already exists at base")
+    if correction and not os.path.isfile(target):
+        raise GitError("correction requires the existing proof file")
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, "wb") as f:              # candidate is data, not code
         f.write(candidate_bytes)
     run(["git", "-C", worktree, "add", "--", path])
     staged = run(["git", "-C", worktree, "diff", "--cached",
                   "--name-status"]).stdout.splitlines()
-    if staged != ["A\t" + path]:
-        raise GitError("staged change is not exactly one added file: %r" %
+    expected_status = "M" if correction else "A"
+    if staged != [expected_status + "\t" + path]:
+        raise GitError("staged change is not exactly one proof file: %r" %
                        staged)
     other = run(["git", "-C", worktree, "status", "--porcelain"]).stdout
     other = [l for l in other.splitlines() if l[3:] != path]
@@ -112,21 +116,40 @@ def pin_candidate(worktree, path, candidate_bytes):
         raise GitError("unexpected additional worktree changes: %r" % other)
 
 
-def build(worktree, module, runner=None):
-    """Run the pinned Lean/Mathlib build.  Failure is never hidden."""
+def build(worktree, module, statement, runner=None):
+    """Use upstream's kernel checker, not merely a successful Lean build.
+
+    The checker rebuilds the proof and accepts only the exact pinned
+    statement with permitted axioms, under the repository's verifier.
+    """
     if runner is not None:
-        return runner(worktree, module)
-    toolchain = config.LEAN_TOOLCHAIN
-    p = run(["elan", "run", toolchain, "lake", "exe", "cache", "get"],
-            cwd=os.path.join(worktree, "lean"), check=False)
-    if p.returncode != 0:
-        return False, "Mathlib cache get failed: " + p.stderr[:400]
-    p = run(["elan", "run", toolchain, "lake", "build", module],
-            cwd=os.path.join(worktree, "lean"), check=False)
-    return p.returncode == 0, (p.stdout + p.stderr)[-1200:]
+        return runner(worktree, module, statement)
+    if not isinstance(statement, str) or not statement.strip():
+        return False, "missing authoritative gap statement"
+    shared = os.environ.get(
+        "PNP_SHARED_LAKE",
+        "/home/lubko/pequalnp-research-20261123/lean/.lake")
+    local = os.path.join(worktree, "lean", ".lake")
+    if os.path.isdir(shared) and not os.path.exists(local):
+        os.symlink(shared, local)
+    if not os.path.exists(os.path.join(worktree, "tools", "check-lean.mjs")):
+        return False, "upstream authoritative checker missing"
+    fd, statement_path = tempfile.mkstemp(prefix="pnp-statement-", suffix=".lean")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(statement)
+        source = os.path.join(worktree, "lean", *module.split(".")) + ".lean"
+        p = run(["/home/lubko/.local/bin/node", "tools/check-lean.mjs",
+                 source, statement_path], cwd=worktree, check=False)
+        last = p.stdout.rstrip().splitlines()[-1:]
+        accepted = p.returncode == 0 and any(
+            line.startswith("ACCEPTED") for line in last)
+        return accepted, (p.stdout + p.stderr)[-2000:]
+    finally:
+        os.unlink(statement_path)
 
 
-def signed_commit(worktree, base_sha, message, signer=None):
+def signed_commit(worktree, base_sha, message, signer=None, correction=False):
     """Create and cryptographically verify exactly one signed commit."""
     if signer is not None:
         return signer(worktree, base_sha, message)
@@ -139,8 +162,10 @@ def signed_commit(worktree, base_sha, message, signer=None):
     sha = run(["git", "-C", worktree, "rev-parse", "HEAD"]).stdout.strip()
     count = run(["git", "-C", worktree, "rev-list", "--count",
                  base_sha + "..HEAD"]).stdout.strip()
-    if count != "1":
+    if not correction and count != "1":
         raise GitError("expected exactly one new commit, got " + count)
+    if correction and int(count) < 2:
+        raise GitError("correction did not extend original commit history")
     fmt = run(["git", "-C", worktree, "log", "-1", "--format=" +
                "%G?%n%GF%n%an%n%ae%n%cn%n%ce"]).stdout.splitlines()
     check_commit_fields(fmt)

@@ -26,6 +26,12 @@ def _stop(gap_id, reason):
     raise StopPublish(reason)
 
 
+def _retry_later(gap_id, reason):
+    """Preserve signed/PUSHED state for transient outages, no PR mutation."""
+    state.update(gap_id, failure_reason=reason)
+    raise StopPublish(reason)
+
+
 def _open_gap_ids(desk):
     data = desk.status()
     return {g.get("id") for g in data.get("gaps", [])
@@ -60,7 +66,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     try:
         desk.docs()
     except Exception as e:
-        _stop(gap_id, "cannot re-read live desk docs: %s" % e)
+        _retry_later(gap_id, "cannot re-read live desk docs: %s" % e)
 
     # Fetch public metadata independently; never trust candidate metadata.
     if gap_id not in _open_gap_ids(desk) and not rec.get("pr_number"):
@@ -74,12 +80,13 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         digest = validate.validate(gap_meta, data)
     except validate.InvalidCandidate as e:
         _stop(gap_id, "candidate validation failed: %s" % e)
-    if rec.get("candidate_digest") and rec["candidate_digest"] != digest:
+    if (rec.get("candidate_digest") and
+            rec["candidate_digest"] != digest and not correction):
         _stop(gap_id, "candidate digest changed since local check")
     state.update(gap_id, candidate_digest=digest)
 
     # Renew the lease before submitting; 410 means someone else settled it.
-    if rec.get("lease") and not correction and not rec.get("pr_number"):
+    if rec.get("lease") and not correction and not resume and not rec.get("pr_number"):
         try:
             if desk.beat(rec["lease"]) == 410:
                 _stop(gap_id, "lease returned 410 at submission")
@@ -92,15 +99,22 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     if not resume:
-        base_sha = git.ensure_mirror()
+        latest_base = git.ensure_mirror()
+        base_sha = (rec.get("base_sha") if correction else latest_base)
+        if not base_sha:
+            _stop(gap_id, "correction has no pinned original base")
         state.update(gap_id, base_sha=base_sha, branch=branch)
         worktree = git.fresh_worktree(gap_id, base_sha, branch)
         state.update(gap_id, worktree=worktree)
         try:
-            git.pin_candidate(worktree, rec["path"], data)
+            if correction:
+                git.pin_candidate(worktree, rec["path"], data, correction=True)
+            else:
+                git.pin_candidate(worktree, rec["path"], data)
         except Exception as e:
             _stop(gap_id, "staging failed: %s" % e)
-        ok, log = git.build(worktree, rec["module"], runner=build_runner)
+        ok, log = git.build(worktree, rec["module"], rec["statement"],
+                            runner=build_runner)
         if not ok:
             _stop(gap_id, "pinned Lean/Mathlib build failed: %s" % log[-300:])
         if rec["state"] == "CANDIDATE_READY":
@@ -108,7 +122,12 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         state.intent(gap_id, "signed_commit",
                      {"base": base_sha, "path": rec["path"]})
         try:
-            sha = git.signed_commit(worktree, base_sha, gap_id, signer=signer)
+            if correction:
+                sha = git.signed_commit(worktree, base_sha, gap_id,
+                                        signer=signer, correction=True)
+            else:
+                sha = git.signed_commit(worktree, base_sha, gap_id,
+                                        signer=signer)
         except Exception as e:
             _stop(gap_id, "signed commit failed: %s" % e)
         state.clear_intent(gap_id)
@@ -132,10 +151,22 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     try:
         gh.identity()
     except Exception as e:
-        _stop(gap_id, "GitHub identity preflight failed: %s" % e)
+        _retry_later(gap_id, "GitHub identity preflight failed: %s" % e)
     remote = git.remote_branch_sha(branch)
     if remote == sha:
         pass                                   # already pushed: recover
+    elif correction and remote == rec.get("commit_sha"):
+        # The fork still carries the rejected, signed commit.  The new
+        # signed commit must descend from it; Git rejects non-FF pushes.
+        state.intent(gap_id, "push_correction",
+                     {"branch": branch, "sha": sha, "previous": remote})
+        try:
+            pushed = git.push_branch(branch, pusher=pusher)
+        except Exception as e:
+            _stop(gap_id, "correction push failed: %s" % e)
+        state.clear_intent(gap_id)
+        if pushed != sha:
+            _stop(gap_id, "correction push returned a different SHA")
     elif remote is not None:
         _stop(gap_id, "remote branch differs from our signed commit")
     elif rec["state"] == "PUSHED":
@@ -152,9 +183,12 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     if state.load(gap_id)["state"] == "SIGNED":
         state.transition(gap_id, "PUSHED", commit_sha=sha)
 
-    ver = gh.commit_verification(sha)
+    try:
+        ver = gh.commit_verification(sha)
+    except Exception as e:
+        _retry_later(gap_id, "GitHub verification unavailable: %s" % e)
     if ver.get("verified") is not True:
-        _stop(gap_id, "GitHub does not verify the commit; no PR opened")
+        _retry_later(gap_id, "GitHub signature not yet verified; no PR opened")
     if (ver.get("name") != config.AUTHOR_NAME or
             ver.get("email") != config.AUTHOR_EMAIL):
         _stop(gap_id, "GitHub commit identity mismatch; no PR opened")
@@ -166,7 +200,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         try:
             number = gh.create_pr(branch, gap_id)
         except Exception as e:
-            _stop(gap_id, "PR creation failed: %s" % e)
+            _retry_later(gap_id, "PR creation failed; reconcile before retry: %s" % e)
         state.clear_intent(gap_id)
     number = int(number)
     pr, problems = gh.validate_created(number, sha, rec["path"],

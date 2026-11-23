@@ -45,8 +45,12 @@ def commit_verification(sha):
 def pr_exists_for(branch, gap_id, api=None):
     """Search open and closed upstream PRs before ever creating one."""
     try:
+        from urllib.parse import quote
+        query = ("?state=all&head=" +
+                 quote(config.GH_USER + ":" + branch, safe="") +
+                 "&per_page=100")
         raw = (api() if api else gh("api", "repos/" + config.UPSTREAM +
-                                    "/pulls?state=all&per_page=100"))
+                                    "/pulls" + query))
     except Exception:
         raise
     prs = json.loads(raw) if isinstance(raw, str) else raw
@@ -60,10 +64,15 @@ def pr_exists_for(branch, gap_id, api=None):
 
 
 def create_pr(branch, gap_id):
-    return gh("pr", "create", "--repo", config.UPSTREAM,
-              "--base", config.BASE_REF,
-              "--head", config.GH_USER + ":" + branch,
-              "--title", gap_id, "--body", "").strip()
+    from urllib.parse import urlparse
+    url = gh("pr", "create", "--repo", config.UPSTREAM,
+             "--base", config.BASE_REF,
+             "--head", config.GH_USER + ":" + branch,
+             "--title", gap_id, "--body", "").strip()
+    suffix = urlparse(url).path.rstrip("/").split("/")
+    if len(suffix) < 2 or suffix[-2] != "pull" or not suffix[-1].isdigit():
+        raise GitHubError("gh returned an unexpected pull request URL")
+    return int(suffix[-1])
 
 
 def get_pr(number):
@@ -114,10 +123,12 @@ def validate_created(number, expected_sha, expected_path,
     if commits != expected:
         problems.append("PR commits are not the expected signed SHAs: %r" %
                         commits)
-    ver = commit_verification(expected_sha)
-    if ver.get("verified") is not True:
-        problems.append("GitHub commit verification is not true")
-    if (ver.get("name") != config.AUTHOR_NAME or
-            ver.get("email") != config.AUTHOR_EMAIL):
-        problems.append("GitHub commit identity mismatch")
+    for commit_sha in expected:
+        ver = commit_verification(commit_sha)
+        if ver.get("verified") is not True:
+            problems.append("GitHub commit verification is not true: " +
+                            commit_sha)
+        if (ver.get("name") != config.AUTHOR_NAME or
+                ver.get("email") != config.AUTHOR_EMAIL):
+            problems.append("GitHub commit identity mismatch: " + commit_sha)
     return pr, problems

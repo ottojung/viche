@@ -41,7 +41,7 @@ REQUEST_MIN_INTERVAL = 3.0           # be gentle with the desk
 
 # Desk gap ids are opaque but constrained (e.g. L-meta-582, L-gct-086).
 GAP_ID_RE = re.compile(r"^L-[a-z0-9]+(?:-[a-z0-9]+)*$")
-BRANCH_RE = re.compile(r"^pnp/[a-z0-9][a-z0-9/-]{0,80}$")
+BRANCH_RE = re.compile(r"^pnp/[a-z0-9][a-z0-9_/-]{0,80}$")
 RELEASE_REASONS = {
     "missing_lemma", "hypothesis_too_weak", "statement_seems_false",
     "does_not_elaborate", "out_of_time", "other", "exhausted", "submitted",

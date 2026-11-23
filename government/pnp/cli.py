@@ -10,10 +10,19 @@
 """
 import argparse
 import json
+import os
 import sys
 import time
 
-from . import config, desk as desk_mod, publish, reconcile, state
+if __package__ in (None, ""):
+    # Support the required direct invocation:
+    #   python3 government/pnp/cli.py <command>
+    sys.path.insert(0, os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "..")))
+    from government.pnp import (config, desk as desk_mod, publish,
+                                reconcile, state)
+else:
+    from . import config, desk as desk_mod, publish, reconcile, state
 
 
 def _printer(data):
@@ -56,12 +65,23 @@ def cmd_acquire(args):
     if answer is None:
         print("no claimable gap right now; retry later", file=sys.stderr)
         return 1
-    gap, lease = answer["gap"], answer["lease"]
+    gap, lease_data = answer["gap"], answer["lease"]
+    lease = lease_data.get("id") if isinstance(lease_data, dict) else lease_data
+    if not isinstance(lease, str) or not lease:
+        print("desk returned a malformed lease", file=sys.stderr)
+        return 2
     gid = gap.get("id")
     if not isinstance(gid, str) or not config.GAP_ID_RE.match(gid):
         print("desk returned a gap id failing the grammar", file=sys.stderr)
         return 2
     if state.load(gid) is not None:
+        # A new desk lease was already granted; release it instead of leaving
+        # an orphan lease that other contributors cannot use.
+        try:
+            d.release(lease, "other")
+        except Exception as exc:
+            print("duplicate claim could not be released: %s" % exc,
+                  file=sys.stderr)
         print("gap already has local state; not duplicating", file=sys.stderr)
         return 1
     rec = state.create(gid, state="DISCOVERED",
@@ -110,6 +130,17 @@ def cmd_release(args):
 
 
 def cmd_submit(args):
+    # The research worker supplies only a candidate file, never a Git
+    # history.  Move a leased gap to publication-ready deterministically.
+    rec = state.load(args.gap)
+    if not rec:
+        print("gap must be acquired by Viche before submission", file=sys.stderr)
+        return 2
+    if rec["state"] == "LEASED":
+        state.transition(args.gap, "RESEARCHING")
+        rec = state.load(args.gap)
+    if rec["state"] == "RESEARCHING":
+        state.transition(args.gap, "CANDIDATE_READY")
     try:
         result = publish.publish(args.gap, args.candidate)
     except publish.StopPublish as e:
