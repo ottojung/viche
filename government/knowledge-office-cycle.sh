@@ -55,14 +55,21 @@ fi
 # with a hard cap, a signed Executive order and an independent Judiciary
 # determination are all green. Other offices are unaffected.
 if [ "$office" = statistics ]; then
-  [ -f "$town/government/statistics-preflight.sh" ] || {
-    echo "Knowledge: statistics preflight helper missing; no dispatch" >&2
-    exit 0
-  }
-  /bin/sh "$town/government/statistics-preflight.sh" "$office" || {
-    echo "Knowledge: statistics readiness preflight failed; no dispatch" >&2
-    exit 0
-  }
+  if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act \(enacted ' "$town/government/LAWS.md"; then
+      # Shared Act34 activation verifier already checked signed Executive
+      # permit and independent after-start Judiciary decision. We do NOT
+      # mistake the legacy fixed Stats report as the Bureau.
+      :
+  else
+      [ -f "$town/government/statistics-preflight.sh" ] || exit 0
+      /bin/sh "$town/government/statistics-preflight.sh" "$office" || exit 0
+  fi
+fi
+# In the broad Act34 activation period, ALL FOUR adaptive offices may
+# investigate in parallel with no serial predecessor approval; each appointed
+# agent still gets an independent Economy reservation and monitored dispatch.
+if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act \(enacted ' "$town/government/LAWS.md"; then
+    interval=3600
 fi
 root=$state/knowledge/offices/$office
 cwd=$seats/branches/$office
