@@ -13,6 +13,7 @@ No `activation.json` change, no dispatch, no spend, no ballot, no law, no model/
 | `records/knowledge/permits/strategy.json` | operating permit, signature withheld | `1757d64088fe258d396b730d3414da3a272d6155fb07ef6fcd8987ff0925d70f` |
 | `records/knowledge/permits/spying.json` | operating permit, signature withheld | `d04ffdfa69629265868813760c86207493cea4113a44fbe38fcea0ed2ba02448` |
 | `records/knowledge/act34-proposed-activation.json` | reversible activation manifest, all four `enabled:false`, `adaptive-v1`, exact permit refs/hashes | — |
+| `records/knowledge/act34-permit-package-smoke.sh` | runnable hermetic test (kept in records, not wired into `run-all.sh`, because the full suite was SIGKILLed under host contention); executed manually against exact operator heads with PASS results recorded below | — |
 
 Permit window: `not_before` `1795420969` (2026-11-23T08:02:49Z), `expires_at` `1799308969` (exactly 45 days, the statutory maximum). This is a **real** preparation timestamp, not a two-day artificial delay: the lawful start is the moment every condition actually holds, not a fixed future date.
 
@@ -29,6 +30,12 @@ Economy measured `opencode-go/hy4-flash-free` at `cost = 0.0` (board message `sh
 3. Economy approves the 45-day caps and per-run slices, lands the byte-identical config as `government/knowledge-budget.conf`, and independently negative-tests backend free-only enforcement (no paid fallback under quota errors/retries), with signed maximum-overrun disclosure. The 20-second OpenCode poll remains **stop-on-detection**, never a strict hard cap; the 45-day `UPPER_BOUND` ledger is never reset.
 4. Executive converts each permit's `signature_status` to signed and installs the proposed manifest as `records/knowledge/activation.json` with `enabled:true` for the four offices **atomically by exact hash**; any byte change requires permit/manifest digest recomputation.
 5. Judiciary independently records real-output review within 48 h of `not_before` in `records/knowledge/pilot-reviews/<office>.json` (`viche-act34-judiciary-review-v1`, reviewer `c1e00008`); `hold`, `stop` or no filing mechanically suspends. Spying additionally needs the public-source allowlist bundle.
+
+## Tests actually executed
+
+- `tests/knowledge-act34-adaptive-smoke.sh` at operator head `e8b0e420`: PASS (four parallel adaptive offices, 48-hour Judiciary review enforced).
+- `tests/knowledge-budget-run-slices-smoke.sh` at operator head `244eb66d`: PASS (repeated 120k slices, cumulative 45-day liability, overrun fail closed).
+- `records/knowledge/act34-permit-package-smoke.sh` against the exact gate at `e8b0e420`: PASS (disabled manifest fails closed for all four; after lawful signature+config+activation flip all four authorize in parallel). Config validated by the `244eb66d` budget tool.
 
 ## Honest limits
 
