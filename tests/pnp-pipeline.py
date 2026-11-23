@@ -394,5 +394,50 @@ class TestReconcile(unittest.TestCase):
         self.assertEqual(state.load(GAP)["state"], "STALE")
 
 
+class TestDeskNextGap(unittest.TestCase):
+    """join.txt documents an explicit null gap as 'no gaps right now'."""
+
+    def setUp(self):
+        self.d = desk.Desk(min_interval=0, sleep=lambda _: None)
+
+    def call(self, data):
+        with mock.patch.object(self.d, "_call", return_value=(200, data)):
+            return self.d.next_gap()
+
+    def test_documented_empty_frontier_without_lease_key_is_no_gap(self):
+        self.assertIsNone(self.call({
+            "gap": None,
+            "note": "every open gap is held right now; ask again in a few minutes",
+            "retry_after_s": 300,
+        }))
+
+    def test_both_null_keys_is_no_gap(self):
+        self.assertIsNone(self.call({"gap": None, "lease": None}))
+
+    def test_hard_and_another_flags_still_use_next(self):
+        for flags in ({"hard": True}, {"another": True}):
+            with self.subTest(flags=flags):
+                with mock.patch.object(self.d, "_call", return_value=(200, {"gap": None})) as call:
+                    self.assertIsNone(self.d.next_gap(**flags))
+                self.assertEqual(call.call_args[0][1], "/next")
+                expected = {"handle": config.GH_USER}
+                expected.update({k: "1" for k in flags})
+                self.assertEqual(call.call_args[0][2], expected)
+
+    def test_offered_gap_requires_lease(self):
+        gap = {"id": "L-meta-1", "file": PATH, "module": MODULE}
+        self.assertEqual(self.call({"gap": gap, "lease": "L1"}),
+                         {"gap": gap, "lease": "L1"})
+        with self.assertRaises(desk.DeskError):
+            self.call({"gap": gap})
+
+    def test_malformed_answers_are_errors_not_empty_frontier(self):
+        for bad in ({}, {"lease": "L1"}, {"gap": "not-an-object", "lease": "L1"},
+                    "not-a-json-object"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(desk.DeskError):
+                    self.call(bad)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
