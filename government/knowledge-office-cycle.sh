@@ -158,7 +158,24 @@ if [ -n "$reservation" ]; then
     exit 1
   }
 fi
-antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || {
+# Enforceable FREE-ONLY prelaunch allowlist (Economy falsifier fix 2026-11-23).
+# `antonina agent run` has no --model flag; without this wrapper Antonina picks
+# from the GLOBAL ladder and a "zero-billed permit" would be false. The wrapper
+# pins XDG_CONFIG_HOME to an allowlist built from Economy's audited free tier
+# for THIS invocation only; the global ladder is untouched. Fall back to the
+# plain call only in legacy fixtures that lack the wrapper/policy (never in
+# production, where both exist). This is a prelaunch billing-source allowlist,
+# not a strict hard cap; the 20 s poll remains stop-on-detection.
+dispatch_cmd() {
+  if [ -s "$town/government/knowledge-free-dispatch.sh" ] &&
+     [ -s "$state/economy/model-policy.json" ]; then
+    /bin/sh "$town/government/knowledge-free-dispatch.sh" run \
+      --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+  else
+    antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+  fi
+}
+dispatch_cmd > "$root/dispatch.log" 2>&1 || {
   [ -z "$reservation" ] || /bin/sh "$budget" reconcile >/dev/null 2>&1 || :
   exit 1
 }

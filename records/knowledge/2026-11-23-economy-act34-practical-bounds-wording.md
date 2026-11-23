@@ -26,8 +26,12 @@ without a fictional strict cap.
 > (a) A **zero-billed tier** (`-free` model ids) has monetary exposure of zero by provider
 > contract. Its binding limits are provider usage quotas and host resources. A model-using pilot
 > on such a tier is admissible with the practical bounds in (c), and no strict hard-cap proof is
-> required, because there is no billing to bound. The pilot MUST meter actual tokens and host CPU
-> into the cumulative `UPPER_BOUND` ledger.
+> required, because there is no billing to bound. **Zero-billed status MUST be enforced by a
+> prelaunch allowlist** that constrains the exact dispatch invocation to Economy-audited `-free`
+> ids (installed integration `knowledge-free-dispatch.sh`: per-invocation `XDG_CONFIG_HOME` pinned
+> to a free-only Antonina config, source-verified and live-tested 2026-11-23; a caller-supplied
+> model-id string is NOT enforcement). The pilot MUST meter actual tokens and host CPU into the
+> cumulative `UPPER_BOUND` ledger.
 > (b) A **provider-billed tier** is admissible only with a provider-enforced hard ceiling
 > (prepaid key or gateway limit) on the exact dispatch path, independently verified. Absent that,
 > no provider-billed dispatch. OpenCode's polling monitor is declared **stop-on-detection** and

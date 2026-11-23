@@ -14,6 +14,16 @@ Honesty rules (deliberate, not a caveat to be hidden):
     billy-dev 2026-11-23: hy4-flash-free session cost=0.0 with real token use.
     The binding limits there are provider usage quotas (HTTP 429 time windows)
     and HOST resources (CPU/wall/inodes/concurrency), not money.
+  * ENFORCEMENT OF THE FREE TIER IS NOT A STRING CHECK. `billing_tier()` below
+    only classifies an id from Economy's audited policy for ACCOUNTING. The real
+    prelaunch constraint is `government/knowledge-free-dispatch.sh`, which pins
+    XDG_CONFIG_HOME to an allowlist config for the exact `antonina agent run`
+    invocation. Verified from installed Antonina aeb1ffb source
+    (agent-runtime/model-config.js + backend.js + cli/agent.js spawnRunner) and
+    by live test: allowlist {opencode-go/hy4-flash-free} -> agent models_used was
+    exactly that id, session cost=0.0; a cooling sole allowed model REFUSED
+    dispatch with NO fallback to the global ladder. This module does NOT itself
+    constrain which model Antonina launches.
   * OpenCode's 20-second token poll is STOP-ON-DETECTION only. It is never
     represented as a strict in-flight hard cap. cap_kind is always explicit.
   * A paid/provider-billed model is refused unless a provider-enforced hard
@@ -132,6 +142,7 @@ def exposure(profile, model_id):
         "model": str(model_id),
         "cap_kind": profile["cap_kind"],
         "strict_hard_cap": False,
+        "billing_enforcement": "government/knowledge-free-dispatch.sh XDG allowlist at prelaunch (NOT this string check)",
         "per_request_input_ceiling": inp,
         "per_request_output_ceiling": out,
         "continuation_multiplier": mult,
