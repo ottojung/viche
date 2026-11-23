@@ -1,0 +1,19 @@
+{
+  "schema": "viche-knowledge-practical-bounds-v1",
+  "note": "INERT TEMPLATE. Inert until an enacted amendment and a signed Executive permit. Does not enable any office, edit activation.json, or reset the 45-day UPPER_BOUND ledger. Copy to a permit-scoped path only under lawful authority.",
+  "cap_kind": "stop_on_detection",
+  "strict_hard_cap_claimed": false,
+  "monitor_interval_seconds": 20,
+  "max_concurrent_per_office": 1,
+  "max_input_tokens_per_request": 8192,
+  "max_output_tokens_per_request": 4096,
+  "max_continuations": 2,
+  "max_wall_seconds_per_invocation": 900,
+  "max_cpu_seconds_per_invocation": 300,
+  "per_office_caps": {"tokens_total": 400000, "cpu_seconds": 1800, "wall_seconds": 3600},
+  "aggregate_caps": {"tokens_total": 1600000, "cpu_seconds": 7200, "wall_seconds": 14400},
+  "accounting_window_seconds": 3888000,
+  "zero_billing_tiers": ["-free"],
+  "provider_hard_ceiling": null,
+  "enabled_offices": []
+}
