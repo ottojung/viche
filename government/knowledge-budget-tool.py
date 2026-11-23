@@ -316,14 +316,36 @@ def charges(reservations, now, window):
 
 
 def admit(cfg, agg, office):
+    """Reserve both per-office AND shared remaining liability, fail closed.
+
+    A per-run cap is not a lifetime spend limit. At 399k tokens already spent,
+    reserving another 400k would exceed the Statistics 400k allowance even
+    though the global allowance of 1.6M remains. The reservation ledger
+    counts held and active full liabilities, not optimistic observed usage.
+    """
     office_caps = cfg["offices"][office]["caps"]
     total_caps = cfg["aggregate"]["caps"]
+    by_office = agg.get("by_office")
+    previous = by_office.get(office) if isinstance(by_office, dict) else None
+    if not isinstance(previous, dict):
+        return {"admit": False, "reason": "missing per-office liability"}
     reasons = []
     for key in CAP_KEYS:
-        projected = agg.get(key, 0) + office_caps[key]
-        if projected > total_caps[key]:
+        global_used = agg.get(key)
+        office_used = previous.get(key)
+        if (any(isinstance(v, bool) or not isinstance(v, (int, float))
+                or not math.isfinite(v) or v < 0
+                for v in (global_used, office_used))):
+            reasons.append("%s accounting is missing or invalid" % key)
+            continue
+        projected_global = global_used + office_caps[key]
+        projected_office = office_used + office_caps[key]
+        if projected_global > total_caps[key]:
             reasons.append("%s projected %s exceeds aggregate cap %s" %
-                           (key, projected, total_caps[key]))
+                           (key, projected_global, total_caps[key]))
+        if projected_office > office_caps[key]:
+            reasons.append("%s projected %s exceeds %s office cap %s" %
+                           (key, projected_office, office, office_caps[key]))
     return {"admit": not reasons, "reason": "; ".join(reasons) or "within caps"}
 
 
