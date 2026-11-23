@@ -164,6 +164,31 @@ fi
 # never an alternative office and NEVER evidence of institutional activation.
 # Do not auto-publish a fixed metrics bundle as a surrogate for its work.
 
+# Act 34: first-use observations, not efficacy certification. No model is
+# invoked. Judiciary reviews actual operation within 48 hours, and a failed
+# collector never obstructs Legislature, Judiciary or Executive.
+# Inert unless Act 34 ENACTED and an Executive Git-reviewed permit
+# explicitly enables this office under the same Economy resource budget.
+if grep -Eq '^## Act 34 — Minimum Viable Knowledge Institutions Pilot Act \(enacted ' \
+     "$town/government/LAWS.md" &&
+   [ -s "$town/government/knowledge-minimal-pilot.py" ]; then
+    min_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/pilot
+    for office in statistics foresight strategy spying; do
+        jq -e --arg office "$office" '
+          .offices[$office].enabled == true and
+          .offices[$office].trial_mode == "deterministic-v1" and
+          .offices[$office].authorized_by == ("act:34:"+$office)
+        ' "$town/records/knowledge/activation.json" >/dev/null 2>&1 || continue
+        mkdir -p "$min_root/$office"
+        (
+            flock -n 9 || exit 0
+            timeout -k 2 38 python3 "$town/government/knowledge-minimal-pilot.py" \
+                "$office" --run ||
+              echo "Viche Act34 $office: model-free sample held; core town continues" >&2
+        ) 9>"$min_root/$office/lock" >>"$min_root/$office/log" 2>&1 < /dev/null &
+    done
+fi
+
 # Act 32 PUBLIC Post archive redaction scan: independent, bounded and
 # strictly nonblocking. Scanner failures are reported without silencing
 # constitutional, legislative or judicial duties.
