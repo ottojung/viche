@@ -185,7 +185,29 @@ if [ -n "$reservation" ]; then
     exit 1
   }
 fi
-antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || {
+# Under Act34 ALL model-using knowledge-agent dispatches MUST use the
+# Economy-audited free-only provider selector (or separately verified
+# provider-hard-capped path, not installed). A missing wrapper, policy or
+# allowed model is a DENIAL, never a fallback to Antonina's global ladder.
+# Before Act34 enactment, preserve legacy fixture/plain dispatch behavior.
+dispatch_cmd() {
+  if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act \(enacted ' "$town/government/LAWS.md"; then
+    if [ ! -s "$town/government/knowledge-free-dispatch.sh" ] ||
+       [ ! -s "$state/economy/model-policy.json" ]; then
+       echo 'Viche knowledge: missing free-only model selector/policy; DENY' >&2
+       return 1
+    fi
+    /bin/sh "$town/government/knowledge-free-dispatch.sh" run \
+        --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+  elif [ -s "$town/government/knowledge-free-dispatch.sh" ] &&
+       [ -s "$state/economy/model-policy.json" ]; then
+    /bin/sh "$town/government/knowledge-free-dispatch.sh" run \
+        --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+  else
+    antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
+  fi
+}
+dispatch_cmd > "$root/dispatch.log" 2>&1 || {
   [ -z "$reservation" ] || /bin/sh "$budget" reconcile >/dev/null 2>&1 || :
   exit 1
 }
