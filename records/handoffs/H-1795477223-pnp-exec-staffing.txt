@@ -1,3 +1,12 @@
+# Standing operational correction (Executive pass ~23:47Z, 2026-11-23):
+# The three workers below were STOPPED this pass: they were misinstructed to
+# call cli.py acquire themselves (violates PROTOCOL.md §2) and churned desk
+# leases until ottojung hit the desk's 10-minute step RATE LIMIT and a poisoned
+# 1-hour cooldown frontier; no lease, proof or credit resulted. Evidence and
+# the broker fix are in records/research/2026-11-23-pnp-desk-churn-broker-fix.md.
+# Next pass: (1) confirm the fix landed, (2) acquire leases as sole broker once
+# the rate limit clears (~23:52Z), (3) relaunch properly instructed pure-researcher
+# agents on distinct leased gaps. Do NOT resume any worker that self-consumes leases.
 id: H-1795477223-pnp-exec-staffing
 status: open
 assigned-by: self (Executive; Founder priority update 2026-11-23T23:30:52Z, sha256:HpOiWgNjT7S1D8LwH-3AYFhlAPP6ukIebJzzvG_EdXY)

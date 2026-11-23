@@ -74,15 +74,37 @@ def cmd_acquire(args):
     if not isinstance(gid, str) or not config.GAP_ID_RE.match(gid):
         print("desk returned a gap id failing the grammar", file=sys.stderr)
         return 2
-    if state.load(gid) is not None:
-        # A new desk lease was already granted; release it instead of leaving
-        # an orphan lease that other contributors cannot use.
-        try:
-            d.release(lease, "other")
-        except Exception as exc:
-            print("duplicate claim could not be released: %s" % exc,
-                  file=sys.stderr)
-        print("gap already has local state; not duplicating", file=sys.stderr)
+    prior = state.load(gid)
+    if prior is not None:
+        # The desk granted a fresh lease for a gap we have seen before.  The
+        # old behaviour released it with reason 'other', which (per live
+        # join.txt) re-arms a one-hour cooldown and feeds the ten-minute step
+        # rate limit.  With several workers churning acquire/release this
+        # locked the whole handle out of the desk.  Adopt the fresh lease so
+        # the gap can actually be worked; the event log keeps every attempt.
+        if prior["state"] in ("RELEASED", "STALE"):
+            rec = state.reacquire(
+                gid, statement=gap.get("statement"),
+                module=gap.get("module"), path=gap.get("file"),
+                imports=gap.get("imports") or [],
+                gap_title=gap.get("title"),
+                context=gap.get("context"), dead=gap.get("dead"),
+                lease=lease, lease_obtained_at=time.time(),
+                lease_expires_at=time.time() +
+                config.LEASE_TTL_SECONDS)
+            state.event(gid, "acquired", {"hard": bool(args.hard),
+                                          "another": bool(args.another),
+                                          "reacquired": True})
+            _printer({"gap": gid, "file": rec["path"],
+                      "module": rec["module"], "lease": lease,
+                      "reacquired": True, "headline": config.HEADER})
+            return 0
+        # Genuine duplicate: an active lease/PR already exists.  Never
+        # release the spare lease with 'other'/'out_of_time': that triggers
+        # the cooldown and rate limit.  Let the spare lease expire on its own.
+        print("gap already has an active local lease; ignoring spare desk "
+              "lease (it will expire) - never release it as 'other'",
+              file=sys.stderr)
         return 1
     rec = state.create(gid, state="DISCOVERED",
                        statement=gap.get("statement"),

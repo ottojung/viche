@@ -140,6 +140,40 @@ def transition(gap_id, new_state, **fields):
     return rec
 
 
+def reacquire(gap_id, **fields):
+    """Adopt a freshly granted desk lease for a gap with local history.
+
+    The desk may re-offer a gap that was previously released or went stale
+    once its cooldown expires.  Releasing that fresh lease back with reason
+    'other' (the old cli.py behaviour) re-arms the desk's one-hour cooldown
+    and feeds its ten-minute step rate limit; with several workers this
+    locked the whole handle out of the desk.  Reuse the new lease instead.
+    The append-only event log preserves every earlier attempt.
+    """
+    with lock(gap_id):
+        rec = load(gap_id)
+        if rec is None:
+            raise KeyError(gap_id)
+        if rec["state"] not in ("RELEASED", "STALE"):
+            raise ValueError("refusing to reacquire gap in state %s" %
+                             rec["state"])
+        previous = rec["state"]
+        lease_fields = ("lease", "lease_obtained_at", "lease_expires_at")
+        meta_fields = ("statement", "module", "path", "imports", "gap_title",
+                       "context", "dead")
+        for key in lease_fields + meta_fields:
+            if key in fields:
+                rec[key] = fields[key]
+        rec["failure_reason"] = None
+        rec["intent"] = None
+        rec["researchers"] = []
+        rec["state"] = "LEASED"
+        save(rec)
+        event(gap_id, "reacquired", {"previous_state": previous,
+                                     "lease": rec["lease"]})
+    return rec
+
+
 def update(gap_id, **fields):
     with lock(gap_id):
         rec = load(gap_id)
