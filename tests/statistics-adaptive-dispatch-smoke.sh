@@ -68,6 +68,14 @@ case "$2" in
   *) exit 97 ;;
 esac
 STUB
+# Test-only wrapper: the production launcher must use the free-only path.
+cat > "$t/government/knowledge-free-dispatch.sh" <<'STUB'
+#!/bin/sh
+[ "$1" = run ] || exit 2
+shift
+antonina agent run "$@"
+STUB
+chmod +x "$t/government/knowledge-free-dispatch.sh"
 chmod +x "$d/bin/antonina"
 export PATH="$d/bin:$PATH" DISPATCH_CAPTURE="$d/prompt"
 export VICHE_TOWN_ROOT="$t" VICHE_STATE_ROOT="$s" VICHE_SEATS_ROOT="$seat"

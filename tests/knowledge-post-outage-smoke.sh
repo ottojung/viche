@@ -68,6 +68,15 @@ case "$1 $2" in
   *) exit 5 ;;
 esac
 SH
+# This fixture tests Post independence, not free-model selection. Mock the
+# mandatory dispatch wrapper explicitly; production must never bypass it.
+cat > "$d/town/government/knowledge-free-dispatch.sh" <<'SH'
+#!/bin/sh
+[ "$1" = run ] || exit 2
+shift
+antonina agent run "$@"
+SH
+chmod +x "$d/town/government/knowledge-free-dispatch.sh"
 chmod +x "$d/bin/antonina"
 now=$(date +%s)
 jq -n --argjson now "$now" '{

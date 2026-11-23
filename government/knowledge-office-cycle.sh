@@ -165,6 +165,10 @@ EOF
 # Reserve the hard cap BEFORE the session exists. A refused reservation means
 # no dispatch at all; the live detached agent is then monitored and stopped on
 # overrun/expiry by the budget engine (never by the launcher timeout alone).
+[ -x "$town/government/knowledge-free-dispatch.sh" ] || {
+  echo "Viche $office: mandatory free-only dispatch wrapper unavailable; refusing dispatch" >&2
+  exit 1
+}
 reservation=
 if [ -s "$budget" ]; then
   reservation=$(/bin/sh "$budget" reserve "$office" "$id") || {
@@ -178,7 +182,7 @@ if [ -n "$reservation" ]; then
     exit 1
   }
 fi
-antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || {
+/bin/sh "$town/government/knowledge-free-dispatch.sh" run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || {
   [ -z "$reservation" ] || /bin/sh "$budget" reconcile >/dev/null 2>&1 || :
   exit 1
 }

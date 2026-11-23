@@ -51,5 +51,5 @@ if /bin/sh "$t/government/knowledge-activation-verify.sh" statistics >/dev/null 
 fi
 ! grep -q 'statistics-bounded-trial.py' "$repo/government/boot.sh"
 ! grep -q 'statistics-report.py' "$repo/government/boot.sh"
-grep -q 'antonina agent run' "$repo/government/knowledge-office-cycle.sh"
+grep -q 'knowledge-free-dispatch.sh.*run' "$repo/government/knowledge-office-cycle.sh"
 echo 'Statistics Bureau requires an independent adaptive agent; no telemetry-only activation'
