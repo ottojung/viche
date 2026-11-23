@@ -7,7 +7,9 @@ WITHIN 48h after start, and any HOLD/STOP blocks immediately. The gate itself
 is pure: no model, bills, file writes or mutable session side-effects.
 """
 import hashlib
+import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -38,6 +40,87 @@ def on_main(root, path):
     if hashlib.sha256(actual).digest() != hashlib.sha256(committed).digest():
         raise ValueError("unreviewed canonical bytes: " + rel)
     return hashlib.sha256(actual).hexdigest()
+
+
+def source_commit(root, ref, commit, expected_sha):
+    """Match the office-authored Git object to the reviewed current bytes."""
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{7,40}", commit):
+        raise ValueError("no verifiable original officer source commit")
+    path = root / ref
+    current = on_main(root, path)
+    if current != expected_sha:
+        raise ValueError("current officer artifact digest differs")
+    blob = subprocess.run(
+        ["git", "-C", str(root), "show", commit + ":" + ref],
+        check=True, capture_output=True, timeout=8).stdout
+    if hashlib.sha256(blob).hexdigest() != current:
+        raise ValueError("original officer commit and reviewed main differ")
+    return current
+
+
+def institutionally_attested(root, role, officer, ref, commit, digest,
+                             attestation, gate_id):
+    """Act32's existing genuine multi-channel officer authenticity check.
+
+    This is attribution of Executive/Economy/Judiciary ACTUAL actions, not
+    pre-launch Judiciary efficacy certification or a serial trial gate.
+    A self-labelled JSON signer is NEVER a signature on shared UID.
+    """
+    source_commit(root, ref, commit, digest)
+    if os.environ.get("VICHE_PHASE_ATTESTATION_JSON") and not str(root).startswith("/tmp/"):
+        raise ValueError("production must not accept caller-provided offline approval")
+    module = root / "government/knowledge-phase-verifier.py"
+    on_main(root, module)
+    spec = importlib.util.spec_from_file_location("act34_phase_verifier", module)
+    if spec is None or spec.loader is None:
+        raise ValueError("independent institutional verifier unavailable")
+    vmod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(vmod)
+    errors = vmod.Verifier(str(root)).validate_attestation(
+        attestation, gate_id=gate_id, officer_id=officer,
+        role=role, artifact_commit=commit)
+    if errors:
+        raise ValueError("unverified " + role + " action: " + "; ".join(errors)[:320])
+
+
+def require_audited_free_tier(root, record, permit):
+    """Only a verified FREE provider route has a demonstrated $0 exposure.
+
+    Model tokens still count against Economy's cumulative budget. Stop-on-
+    detection is NOT a hard in-flight token cap, and cannot license paid models.
+    """
+    mode = permit.get("provider_budget_mode")
+    if (mode != "zero-billed-runtime-allowlist" or
+            permit.get("inflight_overrun_risk_disclosed") is not True or
+            permit.get("provider_tier") != "free_only"):
+        raise ValueError("paid/unknown providers held; audited free tier only")
+    evidence = record.get("economy_free_tier_evidence")
+    if not isinstance(evidence, dict):
+        raise ValueError("independent Economy model-source control missing")
+    report_ref = "records/knowledge/2026-11-23-economy-free-tier-prelaunch-allowlist-finding.md"
+    institutionally_attested(
+        root, "economy", "c1e00012", report_ref,
+        evidence.get("artifact_commit"), evidence.get("report_sha256"),
+        evidence.get("attestation"), "act34-economy-free-provider-control")
+    for key, rel in (
+            ("wrapper_sha256", "government/knowledge-free-dispatch.sh"),
+            ("negative_test_sha256", "tests/knowledge-free-dispatch-smoke.sh"),
+            ("bounds_sha256", "government/knowledge-practical-bounds.py")):
+        if evidence.get(key) != on_main(root, root / rel):
+            raise ValueError("unverified Economy runtime control: " + rel)
+    # Economy's live catalogue must explicitly say 'free' for EVERY allowed
+    # model; a paid provider with a deceptive -free suffix must be refused.
+    state = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
+    policy = load(state / "economy/model-policy.json")
+    cat = load(state / "economy/catalogue.json")
+    models = cat.get("models") if isinstance(cat, dict) else None
+    allowed = policy.get("prefer") if isinstance(policy, dict) else None
+    if not isinstance(models, dict) or not isinstance(allowed, list) or not allowed:
+        raise ValueError("independent free-tier policy/catalogue unavailable")
+    if (any(not isinstance(mid, str) or not
+            re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+-free", mid) or
+            models.get(mid, {}).get("tier") != "free" for mid in allowed)):
+        raise ValueError("unapproved or provider-billed model in active policy")
 
 
 def check(office, root):
@@ -85,11 +168,17 @@ def check(office, root):
             or permit.get("expires_at") != values[1]
             or permit.get("budget_sha256") != budget_hash
             or permit.get("caps") != caps.get("caps")
-            or permit.get("provider_budget_mode") != "measured-stop-on-detection"
+            or permit.get("signature_status") != "signed"
+            or permit.get("provider_budget_mode") != "zero-billed-runtime-allowlist"
+            or permit.get("provider_tier") != "free_only"
             or permit.get("inflight_overrun_risk_disclosed") is not True
             or permit.get("cancellation") != "stop-agent-and-hold-budget"
             or permit.get("reboot_recovery") != "reconcile-held-liability"):
         raise ValueError("Executive permit is not bound to real active Economy budget")
+    institutionally_attested(
+        root, "executive", "c1e00002", ref, a.get("permit_origin_commit"),
+        permit_hash, a.get("permit_attestation"), "act34-executive-" + office)
+    require_audited_free_tier(root, record, permit)
     review_path = root / ("records/knowledge/pilot-reviews/" + office + ".json")
     # An early adverse Judiciary decision is immediately binding.
     if review_path.exists():
@@ -103,6 +192,14 @@ def check(office, root):
                 or not values[0] <= reviewed < values[0] + REVIEW
                 or reviewed > now):
             raise ValueError("uncorroborated or stale Judiciary disposition")
+        review_auth = root / ("records/knowledge/pilot-reviews/" + office + "-attestation.json")
+        on_main(root, review_auth)
+        auth = load(review_auth)
+        institutionally_attested(
+            root, "judiciary", "c1e00008",
+            "records/knowledge/pilot-reviews/" + office + ".json",
+            auth.get("artifact_commit"), hashlib.sha256(review_path.read_bytes()).hexdigest(),
+            auth.get("attestation"), "act34-judiciary-" + office)
         if rev.get("decision") != "proceed":
             raise ValueError("Judiciary HOLD/STOP")
     elif now >= values[0] + REVIEW:
@@ -120,7 +217,7 @@ def main():
     try:
         check(sys.argv[1], Path(sys.argv[2]).resolve())
         return 0
-    except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError) as exc:
+    except Exception as exc:  # every missing/corrupt institutional channel fails closed
         return fail(str(exc)[:300])
 
 
