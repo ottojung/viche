@@ -24,6 +24,16 @@ esac
 
 laws=$town/government/LAWS.md
 [ -s "$laws" ] || exit 1
+# Act34's explicit new ordinary-law permission supersedes the first-use
+# Act32/33 preflight circularity only for adaptive offices; it does NOT let an
+# unreviewed JSON enabled flag authorize a session. The gate checks the
+# enacted law and Git-committed Executive permit, Economy budget and 48-hour
+# Judiciary stop, with exact office/hash/term matching.
+if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act \(enacted ' "$laws"; then
+    [ -s "$town/government/knowledge-act34-gate.py" ] || exit 1
+    timeout 20 python3 "$town/government/knowledge-act34-gate.py" "$office" "$town"
+    exit $?
+fi
 
 # Require exactly one distinct enacted IKCA Act number. Ambiguity fails closed.
 act_nums=$(
