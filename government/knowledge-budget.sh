@@ -233,7 +233,7 @@ do_reserve_locked() {
   [ "$(printf '%s\n' "$_dr_adm" | jq -r '.admit')" = true ] ||
     die "budget exhausted: $(printf '%s\n' "$_dr_adm" | jq -r '.reason')"
   _dr_id=$(new_id)
-  _dr_caps=$(cfgj ".offices.\"$_dr_office\".caps")
+  _dr_caps=$(cfgj "(.offices.\"$_dr_office\".per_run_caps // .offices.\"$_dr_office\".caps)")
   _dr_hash=$(sha256sum "$CONFIG" | awk '{print $1}')
   _dr_interval=$(cfgs '.monitor_interval_seconds')
   _dr_action=$(cfgs '.overrun_action')
