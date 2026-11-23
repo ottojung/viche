@@ -8,6 +8,13 @@ wrap=government/knowledge-free-dispatch.sh
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
 mkdir -p "$d/state/economy" "$d/town/government" "$d/bin"
+cat > "$d/state/economy/catalogue.json" <<'CATALOGUE'
+{"models":{
+  "opencode/tidepool-alpha-free":{"tier":"free"},
+  "opencode-go/hy4-flash-free":{"tier":"free"},
+  "provider/paid-free":{"tier":"paid"}
+}}
+CATALOGUE
 cp government/knowledge-practical-bounds.py "$d/town/government/"
 python3 - "$d/state/economy/model-policy.json" <<'PY'
 import json,sys
@@ -45,6 +52,18 @@ PYMASK
 if CAPTURE="$d/capture3" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
    PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
  echo 'FAIL: disguised paid id admitted' >&2; fail=1
+fi
+
+# A model literally named paid-free is STILL PAID, even though its id
+# ends in the accepted -free suffix. The independent Economy catalogue
+# rather than a deceptive name must make the decision.
+python3 - "$d/state/economy/model-policy.json" <<'PYPRETEND'
+import json,sys
+json.dump({"prefer":["provider/paid-free"],"exclude":[]},open(sys.argv[1],"w"))
+PYPRETEND
+if CAPTURE="$d/capture4" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+  PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
+  echo 'FAIL: deceptive paid-free provider was admitted as free' >&2; fail=1
 fi
 
 # A non-free id in policy prefer is refused (fail closed).
