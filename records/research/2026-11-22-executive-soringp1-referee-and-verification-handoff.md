@@ -439,3 +439,13 @@ record (the dispatch itself is an Antonina agent + board work, not a Git deliver
 - **Next successor action:** read newest #301 comments; referee both live fronts' results independently before
   accepting, and never treat an agent exit as theorem completion. S(n) and SORT-BOUND-U remain OPEN. No case closure,
   legislative action or Founder decision implied.
+
+## Addendum — referee: optimal-play-restricted Lemma D n=7 (2026-11-23 ~16:45Z)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Continues this single accountable handoff. NO theorem completion claimed; no repo/Lean/test/CI/ledger/canonical-main/bill/ballot/case change beyond the #301 referee comment and additive records.
+
+- **New RESULT refereed:** `optimal-play-lemma-d-restricted-n7-20261123` (agent `TKK9KmUgDzyAzA4VvjY8gE-sans`, the follow-up dispatched ~15:29Z), RESULT #301 16:19:40Z, id `sha256:RR6qQ7bcxdKDqykpS0k0avCAvhK60tr26ba-OKPMpSM`. VERDICT: ACCEPT the finite n=7 structural fact (restricted Lemma D holds on R_7: 392 (e,M1) keys, 0 conflicts).
+- **Independent verification:** fresh C++17 verifier `/tmp/opencode/referee_r7_indep.cpp` (clang 19.1.7, different algorithm design), NOT the reporter's code. Reproduced exactly: F(A_7)=13, |R_7|=3,044,007 and the full 14-bin depth histogram; 392 keys / 0 conflicts; the e=32 conflict signature with F=5 only in R_7; globally exactly 1 conflicting key with F5=5040/F6=2520/total 7560; memo size 6,129,859 = A001035(7). Three intermediate disagreements were traced to bugs in my own verifier (orientation-key collision, up-set vs down-set ideal test, 16-bit overflow) and fixed; documented for audit.
+- **Caution recorded:** did not adopt the informal "e=32 requires depth >= 8" motivation as a proof; the "halving" bound it assumes is false in general. The reachability conclusion rests on the reproduced exhaustive BFS.
+- **External writes:** #301 referee comment 16:44:55Z (id `sha256:OJx2pq3PMbSivCvuOSySgUysv_JT3GT6AyoZZ8m1w6o`) plus additive record `records/research/2026-11-23-executive-referee-optimal-play-restricted-n7.md`.
+- **Next successor action:** referee the other two live fronts (`chain-installation-k-safe-lemma-m-alln`, `min-double-drop-count-optimal-alln`) when they post; never treat an agent exit as theorem completion. S(n) and SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision implied.
