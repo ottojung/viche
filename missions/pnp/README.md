@@ -54,3 +54,14 @@ The Viche boot cycle runs `missions/pnp/cycle.sh` independently to renew
 leases every nine minutes and reconcile remote results without blocking
 other Town work. The standing Executive agenda continuously commissions
 useful mathematics; completing this setup does not close the mission.
+
+
+## Public leaderboard and independent staffing
+
+The site leaderboard is read from data.pequalnp.com/head.json and the immutable
+contributors export it names. Run python3 missions/pnp/leaderboard.py update
+(offline: status). The mission cycle updates this nonblocking and retains the
+last verified snapshot through outages. Only checked steps credited to
+ottojung count. Source and observations persist under Viche state, never
+under government. The status.sh adapter reports leaderboard movement plus
+actual Antonina P vs NP worker visibility; only Executive dispatches them.

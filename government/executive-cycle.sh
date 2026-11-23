@@ -140,6 +140,7 @@ fi
 # Optional mission-specific diagnostics are supplied by the missions, never
 # wired into the Executive itself. They are advisory, bounded and read-only.
 mission_diagnostics=
+mission_dispatch_signature=
 for diagnostic in "$town"/missions/*/status.sh; do
   [ -f "$diagnostic" ] || continue
   label=${diagnostic%/status.sh}
@@ -148,6 +149,14 @@ for diagnostic in "$town"/missions/*/status.sh; do
     line='{"status":"unavailable","action":"investigate diagnostic failure"}'
   mission_diagnostics="$mission_diagnostics
 $label: $line"
+  # Compact stable signal: a change in staffing, checked output or mission
+  # state causes an Executive pass. Timestamps and full notes do not.
+  signal=$(printf '%s\n' "$line" | jq -cS '
+      if type=="object" then
+        (.dispatch_signal // {status,counts,by_state})
+      else . end' 2>/dev/null) || signal="unreadable"
+  mission_dispatch_signature="$mission_dispatch_signature
+$label:$signal"
 done
 prompt=$(cat <<EOF
 $prompt
@@ -206,7 +215,7 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
   if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
        printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
-       printf '%s\n' "$frontier" | jq -cS '{status,counts,fronts_total}' 2>/dev/null || printf '%s\n' "$frontier"; } |
+       printf '%s\n' "$mission_dispatch_signature"; } |
      /bin/sh "$town/government/dispatch-gate.sh" check executive "${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}" > "$state/branches/executive-gate.log"; then
     :
   else

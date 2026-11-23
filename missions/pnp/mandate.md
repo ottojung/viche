@@ -7,22 +7,78 @@ mission.** The bootstrap issue R4WYVaWyRxoD911soUtcAo-sciatic may be closed
 only after the independently checked delivery is deployed; the research
 mission must continue without any new setup project or Founder prompting.
 
-Every Executive research cycle, alongside existing SoringP1 obligations:
-inspect current ottojung P vs NP desk leases, research agents and submitted PRs;
-advance/research worthwhile public mathematical gaps and counterexamples;
-commission independent useful Antonina research, not redundant workers;
-route finished candidate proofs through the deterministic Viche publisher;
-follow checker verdicts, repair rejected proofs and record accepted outcomes.
-Do not equate local proof compilation, Git branch push, open PR, acceptance,
-or research novelty. Keep only useful work, without artificial agent caps,
-while preserving SoringP1 and other offices' resource entitlements.
+## Objective: lead the public, all-time contributor leaderboard
+
+The Founder explicitly defines the long-standing performance objective as:
+**maximize the account ottojung's position on pequalnp.com's public,
+all-time contributor leaderboard. Once ottojung is #1, maximize and
+continuously seek to INCREASE its lead in accepted, checked steps over #2.**
+Competing agents can improve at any time; assess and improve the real
+lead trajectory rather than claiming it can never fall. Tie-breaks are the
+website's published first-proof order; prefer a strictly positive step lead.
+
+The metric is **checked steps credited to ottojung in the site's published
+immutable contributor export**, not agents launched, files written, branches,
+PRs opened, GitHub Actions green, or locally compiling proofs. Refutations
+count when the site credits them. Leaderboard evidence and change history:
+  /var/lib/lubko/wd/viche-state/pnp/leaderboard/{latest.json,history.jsonl}
+  python3 missions/pnp/leaderboard.py status
+  /bin/sh missions/pnp/status.sh
+Treat unavailable/stale data as UNKNOWN, never zero. Recheck external credit
+after GitHub's authoritative checker has accepted/merged contributions.
+Current 2026-11-23 public baseline: ottojung absent/unranked (zero checked),
+first 53 checked steps, second 46. This is a baseline, NOT a fixed threshold:
+poll the live source and adapt to leaderboard movement.
+
+## Ownership, staffing, and continuity — Executive only
+
+**ONLY Viche Executive may create, start, restart, steer or retire research
+agents.** Founder's external assistants, maintenance automation, Judiciary,
+researchers and publisher do not launch research agents. The Founder may
+specify objectives and inspect the system without seeding worker sessions.
+Do not infer Executive staffing effectiveness from agents started by an
+external operator. Require evidence that Executive independently recognizes
+zero/insufficient useful staffing and replenishes it through Antonina.
+Record the Executive's decisions and worker assignments durably.
+
+For every Executive cycle:
+- Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes
+  since earlier measurements, plus desk leases, research experiments and PRs.
+- Dispatch and replenish **multiple genuinely independent mathematical
+  fronts** (Lean formalization, counterexample searching, proof reasoning,
+  desk gap claims and PR corrections as appropriate), allocating concurrency
+  by marginal verified contributions, host resource availability and current
+  independent tasks. ONE researcher is not a satisfactory steady state while
+  multiple valuable fronts are available. Do not hard-cap worker count or
+  spawn redundant agents just to increase a counter.
+- Take over the preexisting managed agents/worktrees under the roster
+  /var/lib/lubko/wd/viche-state/pnp/swarm/agents.json if useful, or retire them
+  and replace them yourself. Never expect an outside operator to restart them.
+  Check their actual Antonina states, output, remaining leases and dependencies.
+- Prefer claimable, well-scoped proofs with high expected accepted-step
+  throughput; keep a portfolio of harder/high-value results and rigorous
+  refutations where useful. Demand completed exact Lean proofs or reproducible
+  counterexamples, honest releases, and measurable progress. Track verified
+  accepted steps per time and resource use; avoid duplicate expensive builds.
+- When all desk leases are held or claim service is cooling, DO NOT go idle:
+  investigate published open claims and prepare proofs or bounded searches,
+  then promptly obtain official leases once available; never submit an
+  unleased gap against the project's rules.
+- Investigate any slowdown in credit rate or lost leadership: stalled workers,
+  model access, invalid checker, forgotten claims, unnecessary work, duplicate
+  efforts, excessive resources, or stalled upstream verdicts. Correct the
+  causes as part of normal Executive work without asking the Founder to
+  operate agents.
+
+Standing mission stays OPEN even while #1 or its lead is growing; this is
+an ongoing competition and never a one-time completion condition.
 
 Exact project rules and execution contract:
 missions/pnp/PROTOCOL.md.
 Operator interface from the canonical checkout:
 python3 missions/pnp/cli.py status|acquire|beat|release|submit|reconcile.
-Existing desk leases are renewed by the independently nonblocking
-missions/pnp/cycle.sh triggered from boot; the Executive still owns research,
+Desk lease reconciliation and public leaderboard observation are run
+by the independently nonblocking missions/pnp/cycle.sh from generic boot; the Executive still owns research,
 failed-work decisions and dispatch. Do not launch a competing scheduler.
 The publisher hardcodes Otto Jung <otto.jung@vauplace.com>, his GPG signing
 subkey 08AF2726387BD4A4C87DF1821BEDDF96D7B1BA2B and the exact fork and
