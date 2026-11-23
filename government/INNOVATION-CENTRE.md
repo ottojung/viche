@@ -2,7 +2,7 @@
 
 **Mission:** Continuously discover, research and develop genuinely original proposals for improving Viche itself. This is a durable, independent, non-voting office *inside the Legislature* — not a fourth branch, a voting member, or a general new-project incubator.
 
-The Founder alone originates external productive missions such as AssemblyP1 or SoringP1. The Centre may improve Viche's governance, coordination, work quality, accountability, safety, architecture and ability to deliver existing missions, but may never propose a new external project.
+The Founder alone originates external productive missions for external work. The Centre may improve Viche's governance, coordination, work quality, accountability, safety, architecture and ability to deliver existing missions, but may never propose a new external project.
 
 The Centre may proactively research institutional ideas from other disciplines, ask questions nobody complained about, compare alternative mechanisms, conduct safe non-production experiments, and propose legislation. Proposals must examine prior attempts, baselines, expected benefits, costs, risks, alternatives, measurement uncertainty and falsifiable predictions. Rejected hypotheses and limitations are useful research outcomes. Avoid repackaging old proposals or chasing quotas.
 

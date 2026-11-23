@@ -30,6 +30,7 @@ esac
 MOCK
 chmod +x "$scratch/bin/antonina"
 
+VICHE_OVERSIGHT_ISSUE_PATTERN=Kawun
 MOCK_BOARD='[{"number":1,"title":"Kawun: delivery"}]'
 LAST=2000000000
 PATH=$scratch/bin:$PATH
@@ -41,10 +42,10 @@ mkdir -p "$scratch/town/government"
 cp "$repo/tests/appointment-id-stub.sh" "$scratch/town/government/appointments.sh"
 VICHE_TOWN_ROOT=$scratch/town
 VICHE_STATE_ROOT=$scratch/state
-VICHE_KAWUN_REPO=$scratch/kawun
+VICHE_OVERSIGHT_REPO=$scratch/kawun
 VICHE_TOWNHALL_ID=302
 VICHE_OVERSIGHT_FETCH=0
-export VICHE_OVERSIGHT_NOW VICHE_TOWN_ROOT VICHE_STATE_ROOT VICHE_KAWUN_REPO
+export VICHE_OVERSIGHT_NOW VICHE_TOWN_ROOT VICHE_STATE_ROOT VICHE_OVERSIGHT_REPO
 export VICHE_TOWNHALL_ID VICHE_OVERSIGHT_FETCH
 
 kawun=$scratch/kawun

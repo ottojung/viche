@@ -14,9 +14,12 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
   "$repo/government/branch-liveness.sh" "$repo/government/executive-cycle.sh" \
   "$repo/government/office-continuity.sh" "$repo/government/handoff-queue.sh" \
   "$repo/government/predict-scorer.py" "$repo/government/eligible-work.py" \
-  "$repo/government/research-frontier-status.py" \
   "$repo/government/delivery-candidates.py" "$repo/government/AGENT-REPORTING-POLICY.md" \
   "$d/town/government/"
+mkdir -p "$d/town/missions/soringp1"
+cp "$repo/missions/soringp1/frontier-status.py" "$d/town/missions/soringp1/frontier-status.py"
+cp "$repo/missions/soringp1/mandate.md" "$d/town/missions/soringp1/mandate.md"
+cp "$repo/missions/soringp1/status.sh" "$d/town/missions/soringp1/status.sh"
 git -C "$d/town" init -q
 git -C "$d/town" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm town
 git -C "$d/town" update-ref refs/remotes/origin/main HEAD

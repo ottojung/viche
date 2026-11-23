@@ -4,7 +4,7 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
-script=$repo/government/research-frontier-status.py
+script=$repo/missions/soringp1/frontier-status.py
 SORING_FRONTIER_STATE=$d/missing.json python3 "$script" |
   jq -e '.status=="unavailable" and (.action|contains("do not infer zero work"))' >/dev/null
 printf 'not-json\n' > "$d/frontier.json"
@@ -31,5 +31,5 @@ PY
 SORING_FRONTIER_STATE=$d/frontier.json python3 "$script" |
  jq -e '.status=="fronts_claimed_or_ready_not_verified" and .counts.ready==1' >/dev/null
 # This tool is a diagnostic, never an action or a researcher dispatcher.
-grep -Fq 'READ-ONLY DIAGNOSTIC' "$repo/government/executive-cycle.sh"
+grep -Fq 'MISSION READ-ONLY DIAGNOSTICS' "$repo/government/executive-cycle.sh"
 echo 'Viche research frontier exhaustion diagnostic smoke passed'

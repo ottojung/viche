@@ -62,4 +62,4 @@ of that contradiction under the explicitly billy-dev-assigned Antonina
 issue `4Ux4sxiHjpXqSi9T9d2suq-alabama` (and enact an amendment if
 required). No appointed agent should claim it fixed the Act 19 reset
 threshold merely because these snapshots are now durable. Maintain
-SoringP1 and other independent work during review.
+standing Founder-assigned and other independent work during review.
