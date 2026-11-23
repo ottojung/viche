@@ -1,0 +1,109 @@
+{
+ "actions_this_pass": [],
+ "at": "2026-11-22T18:57:59Z",
+ "epoch": 1795373879,
+ "needs_founder": [
+  "NEEDS-FOUNDER: disk state is short (81.6% used, 40.8 GiB free, full in about 610 h) after the Janitor pipeline ran; free space on this box or approve removing a named directory."
+ ],
+ "overall": "short",
+ "policy": {
+  "action_interval_seconds": 21600,
+  "disk_hours_to_full": [
+   168,
+   72,
+   24
+  ],
+  "disk_used_pct": [
+   70,
+   80,
+   90
+  ],
+  "inode_used_pct": [
+   80,
+   90,
+   95
+  ],
+  "load_per_cpu": [
+   1.5,
+   3.0,
+   6.0
+  ],
+  "memory_headroom_bytes": [
+   3221225472,
+   2147483648,
+   1073741824
+  ],
+  "min_free_bytes_critical": 5368709120
+ },
+ "resources": {
+  "disk:state": {
+   "also": [
+    "seats",
+    "town",
+    "home",
+    "tmp"
+   ],
+   "avail_gib": 40.8,
+   "hours_to_full": 609.9,
+   "inode_used_pct": 27.3,
+   "mount": "/var/lib/lubko/wd/viche-state",
+   "status": "short",
+   "total_gib": 233.2,
+   "used_pct": 81.6
+  },
+  "load": {
+   "cpus": 4,
+   "load1": 2.09,
+   "load15": 2.94,
+   "load5": 2.8,
+   "per_cpu": 0.7,
+   "status": "ok"
+  },
+  "memory": {
+   "headroom_gib": 7.95,
+   "max_hits": 2166028,
+   "oom_kills": 6,
+   "status": "ok"
+  },
+  "model_funding": {
+   "free_available_now": 4,
+   "funding_risk": "none",
+   "status": "ok"
+  }
+ },
+ "town_owned_largest": [
+  {
+   "kb": 12776860,
+   "path": "/var/lib/lubko/wd/viche-state/quarantine"
+  },
+  {
+   "kb": 3539560,
+   "path": "/var/lib/lubko/wd/viche-state/branches"
+  },
+  {
+   "kb": 1578340,
+   "path": "/var/lib/lubko/wd/viche-seats/branches"
+  },
+  {
+   "kb": 221724,
+   "path": "/var/lib/lubko/wd/viche-state/executive"
+  },
+  {
+   "kb": 55416,
+   "path": "/var/lib/lubko/wd/viche-state/delivery"
+  },
+  {
+   "kb": 30368,
+   "path": "/var/lib/lubko/wd/viche-state/appointments"
+  },
+  {
+   "kb": 16508,
+   "path": "/var/lib/lubko/wd/viche-state/institutional-outcomes"
+  },
+  {
+   "kb": 15492,
+   "path": "/var/lib/lubko/wd/viche-state/liveness"
+  }
+ ],
+ "town_owned_total_kb": 18399484
+}

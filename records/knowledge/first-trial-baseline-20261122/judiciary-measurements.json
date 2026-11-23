@@ -1,0 +1,241 @@
+{
+  "board_trail": {
+    "authority": "Act 18 \u00a75",
+    "board_unreadable": [],
+    "caveat": "same-model procedural check; classification is a deterministic heuristic, not proof",
+    "completed_total": 8,
+    "content_standard_failures": 489,
+    "criteria": "records/PREREGISTERED-CRITERIA-2026-10-19.md (W2)",
+    "cycle_seconds": 86400,
+    "dangling_trails": 0,
+    "executive_index_present": true,
+    "fraction_terminal": 1.0,
+    "git_only_gaps": [],
+    "measurement_reliability": "not_established",
+    "oldest_gap_age_seconds": 0,
+    "originating_total": 8,
+    "per_issue": [
+      {
+        "act": "15",
+        "board_readable": true,
+        "chatter": 0,
+        "comments_total": 3,
+        "enacted_epoch": 1792241160,
+        "issue": "303",
+        "latest_iso": "2026-10-19T09:19:40Z",
+        "post_completion": 1,
+        "stage_markers": "verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "judiciary-independence"
+      },
+      {
+        "act": "14",
+        "board_readable": true,
+        "chatter": 83,
+        "comments_total": 98,
+        "enacted_epoch": 1792241160,
+        "issue": "307",
+        "latest_iso": "2026-11-05T04:34:24Z",
+        "post_completion": 97,
+        "stage_markers": "verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "innovation-centre-act"
+      },
+      {
+        "act": "16",
+        "board_readable": true,
+        "chatter": 0,
+        "comments_total": 2,
+        "enacted_epoch": 1792241160,
+        "issue": "308",
+        "latest_iso": "2026-10-19T09:19:51Z",
+        "post_completion": 2,
+        "stage_markers": "verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "epistemic-adversarialism-act"
+      },
+      {
+        "act": "18",
+        "board_readable": true,
+        "chatter": 95,
+        "comments_total": 138,
+        "enacted_epoch": 1792400760,
+        "issue": "312",
+        "latest_iso": "2026-11-03T10:39:54Z",
+        "post_completion": 127,
+        "stage_markers": "deployment,enactment,verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "board-reporting-act"
+      },
+      {
+        "act": "20",
+        "board_readable": true,
+        "chatter": 99,
+        "comments_total": 160,
+        "enacted_epoch": 1792454400,
+        "issue": "310",
+        "latest_iso": "2026-11-03T10:43:09Z",
+        "post_completion": 144,
+        "stage_markers": "enactment,verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "detector-calibration-act"
+      },
+      {
+        "act": "19",
+        "board_readable": true,
+        "chatter": 82,
+        "comments_total": 131,
+        "enacted_epoch": 1792417200,
+        "issue": "313",
+        "latest_iso": "2026-11-03T10:40:05Z",
+        "post_completion": 113,
+        "stage_markers": "enactment,verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "office-continuity-act"
+      },
+      {
+        "act": "21",
+        "board_readable": true,
+        "chatter": 88,
+        "comments_total": 143,
+        "enacted_epoch": 1792553100,
+        "issue": "314",
+        "latest_iso": "2026-11-03T10:43:48Z",
+        "post_completion": 112,
+        "stage_markers": "enactment",
+        "terminal": 1,
+        "type": "law",
+        "work": "change-quality-gate-act"
+      },
+      {
+        "act": "22",
+        "board_readable": true,
+        "chatter": 42,
+        "comments_total": 99,
+        "enacted_epoch": 1792554900,
+        "issue": "ErkrX8EKQJXF6fCQv5fzYl-cannon",
+        "latest_iso": "2026-11-10T06:04:30Z",
+        "post_completion": 97,
+        "stage_markers": "deployment,enactment,proposal,verification",
+        "terminal": 1,
+        "type": "law",
+        "work": "prediction-calibration-act"
+      }
+    ],
+    "readable_total": 8,
+    "stage_marker_missing": [],
+    "status": "measured",
+    "terminal_reached": 8
+  },
+  "counts": {
+    "finding": 84,
+    "reported": 482,
+    "sampled": 484,
+    "unreadable": 0,
+    "unreported": 2
+  },
+  "destination": "Legislature",
+  "false_negative_rate": null,
+  "false_positive_rate": null,
+  "institutional_outcomes": {
+    "agents": {
+      "by_process_outcome": {
+        "clearexit": 171,
+        "failed": 11,
+        "stopped": 3
+      },
+      "by_project": {
+        "SoringP1": 100,
+        "Viche": 85
+      },
+      "caveat": "process success does NOT prove work delivery or verification",
+      "total": 185,
+      "window_seconds": 86400
+    },
+    "board": {
+      "caveat": "first page only; do not infer issues missing on this page were closed",
+      "open_by_project": {
+        "SoringP1": 2,
+        "Viche": 18,
+        "other": 30
+      },
+      "open_first_page": 50
+    },
+    "branches": {
+      "executive": {
+        "age_seconds": 0,
+        "readiness": "running",
+        "telemetry": "available"
+      },
+      "innovation_centre": {
+        "age_seconds": 192,
+        "readiness": "ready",
+        "telemetry": "available"
+      },
+      "judiciary": {
+        "age_seconds": 200,
+        "readiness": "ready",
+        "telemetry": "available"
+      },
+      "legislature": {
+        "age_seconds": 4,
+        "readiness": "ready",
+        "telemetry": "available"
+      }
+    },
+    "delivery_verified_by_this_probe": false,
+    "git": {
+      "caveat": "merged history is not proof of independently verified impact",
+      "main_commits": 152,
+      "main_head": "e27c9b3efa0cc07e32abe0ac4e32c918c8947238",
+      "main_merge_commits": 0,
+      "most_recent": [
+        "1795372877",
+        "e27c9b3efa0cc07e32abe0ac4e32c918c8947238",
+        "Act 21 suite-status for 9f567c4f7540 (tests/run-all.sh green)"
+      ]
+    },
+    "no_prescriptive_quota": true,
+    "observed_at": 1795373680,
+    "research": {
+      "caveat": "curator proposals are not verified research results",
+      "curator_running": false,
+      "states": {
+        "blocked": 30,
+        "investigated": 667
+      },
+      "telemetry": "available"
+    },
+    "role": "descriptive evidence for independent branch review",
+    "signals_for_inquiry_not_verdicts": [
+      "research_frontier_not_being_replenished"
+    ]
+  },
+  "judiciary_independence": "non-voting independent measurement office (Act 15, enacted 2026-10-17)",
+  "kind": "Judiciary measurement, not legislation",
+  "measurement_reliability": "not_established",
+  "no_proposals": true,
+  "observed_at": 1795373880,
+  "suite_compliance": {
+    "change_count": 1783,
+    "compliant": 315,
+    "details_ref": "/var/lib/lubko/wd/viche-state/branches/suite-compliance-1795373880.json",
+    "details_sha256": "a7b743566222ab453b88c63adbe0982c961ebfe1857b70ea95d5a4fd368a7a36",
+    "green_suite_compliance_rate": 0.17666853617498599,
+    "main_red_episodes": 0,
+    "per_change_count": 1783,
+    "red_change_count": 0,
+    "red_chronology_unresolved": 1,
+    "red_chronology_unresolved_count": 1,
+    "status": "measured",
+    "unreadable": 1467,
+    "violations": 0,
+    "wall_seconds": 7.854668614920229
+  }
+}

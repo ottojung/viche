@@ -39,7 +39,7 @@ def agents():
     projects=collections.Counter()
     outcomes=collections.Counter()
     for x in recent:
-        title=x.get('title','')
+        title=x.get('title') or ''
         projects['Viche' if title.startswith('Viche') else
                  'SoringP1' if title.startswith('SoringP1') else 'other']+=1
         outcomes[x.get('state','unknown')]+=1
