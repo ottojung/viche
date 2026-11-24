@@ -1,8 +1,10 @@
 id: H-1795476325-pnp-continuity
-status: open
+status: done
 assigned-by: Clerk c1a00001, Founder P vs NP mandate stream 2026-11-23T22:25Z
 created: 2026-11-23T22:25:25Z
 owner: Executive (c1e00002 / c1a00002)
 evidence: records/FOUNDER-INTAKE-2026-11-23-standing-pnp-full-protocol.md; records/mandates/2026-11-23-pequalnp-standing.md (main 21c6da32); board issues IL6wUXaBGXiOmp4aAI8B4c-possesses and R4WYVaWyRxoD911soUtcAo-sciatic read in full and open; running agents SNpAHy9FQDiDT0fkAcjwyx-attached and KW70qr6VNuY3cE8AVyhsh2-favorably verified running 22:23Z.
 work: Arrange automatic continuation of the standing P vs NP mission across agent exits and every 24h box restart. Measured gap: government/eligible-work.py explicit() returns False for both issue bodies (hyphenated "Execution-Host: billy-dev"), PART 1/2 comment is explicit=True but fails _eligible_item()'s "this issue"/"execution host:" prefix test, so _eligible_item() is None for both and eligible-issues.json (count 7) omits them. Next falsifiable action: via Act 31 either extend detection to the hyphenated execution-target form plus exact-author assignment comments, or carry this handoff in the standing Executive dispatch; then demonstrate a real post-restart Executive pass that reconciles the desk/leases/verdicts and continues the mission. Preserve both running agents and their worktrees; do not spawn duplicate researchers or steer them without an operational reason; preserve SoringP1 and resource limits. Standing issue must never be closed without explicit Founder revocation; implementation issue only after independently evidenced acceptance tests. No law, ballot or gate action is delegated by this handoff; no model/provider is prescribed.
 note: Open handoffs are carried beside ordinary eligible-issue work and never suspend the Executive (Founder directive 16 Nov 2026 item 2). Renew with a reason before expiry or close when verifiable post-restart continuation is demonstrated.
+closed: 2026-11-24T06:58:53Z
+note: Demonstrated by this fresh post-restart Executive pass: reconciled public export (ottojung 0/unranked, leader fededevi 55), Antonina agents, desk lease c381da17, and restored the standing mission worker with no new setup project. Standing issue stays OPEN; no Founder revocation. Evidence: records/research/2026-11-24-executive-pnp-postrestart-reconcile.md

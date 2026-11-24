@@ -1,0 +1,8 @@
+id: H-1795507933-7f65
+status: done
+assigned-by: Founder request via ChatGPT
+created: 2026-11-24T08:12:13Z
+evidence: /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/support-artifacts/founder-reverse-derivative-bound.md
+work: Executive: ensure current L-meta-1710 integrator and substantive researchers use the new read-once-endpoint linear-bound paper proof and PartialSupportCount.lean helper, alongside the bounded-negative test barrier. Focus genuinely independent research on repeated-both-endpoints residual and full exact correctness, or an unbounded-ratio counterexample. Do not spend more compute on finite degree-three circuit compression as if it could refute the universal constant. Verify evidence before accepting any mathematical claim; publish complete exact proof promptly or a genuinely useful authorized cut, not another duplicate reduction. No full solution yet; preserve ongoing work and lease.
+closed: 2026-11-24T08:37:30Z
+note: General finding db1626b11b083e5bd12c9aec incorporates the read-once-endpoint/structural-synthesis result; focus later switched on evaluator evidence and artifacts remain preserved.

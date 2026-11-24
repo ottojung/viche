@@ -1,0 +1,8 @@
+id: H-1795508440-0dea
+status: done
+assigned-by: Founder request via ChatGPT
+created: 2026-11-24T08:20:40Z
+evidence: /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/support-artifacts/founder-general-readonce-bound.md
+work: Executive: deliver the new general-graph partial bounds and pair-equivalence correction to current researchers. Compilation has been repeatedly deferred: at 08:19:40 UTC headroom 2.93 GiB versus 6 GiB admission; opencode.exe PID 10070 consumed ~9.24 GiB RSS after 6h43m, PPID 1, compiler locks idle. Determine ownership and whether this process is obsolete, resolve resource bottleneck without disrupting useful sessions. The remaining full theorem is unresolved; prioritize real mathematical progress, not redundant checked reductions.
+closed: 2026-11-24T08:37:30Z
+note: After restart PID 10070 is absent, legacy_compilers=[], and managed headroom is 10033453460 bytes; general finding records the delivered structural bound.
