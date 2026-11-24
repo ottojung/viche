@@ -221,3 +221,25 @@ with upstream CI. Do not submit unfinished proofs, placeholders or guesses.
 Executive must promptly delegate corrections shown in correction_needed, reusing
 the same open PR and the existing research artifacts. Do not treat a local check
 failure as a final external verdict; do not repeat rejected identical proof bytes.
+
+## Reusable proof infrastructure
+
+From the bound assignment directory run:
+`PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.proofs find`
+to find related checked upstream proof statements and tactics. Inspect a result
+using the same command with `source MODULE`. Direct import is legal only when
+the result explicitly marks it as allowed by the desk. Otherwise adapt the
+reasoning into local helper lemmas; never submit another proof unchanged.
+For an explicit small circuit truth-table row run `... proofs circuit --output
+candidate.lean` (the full command uses the same PYTHONPATH above). The generator
+independently checks every input, creates a statically validated candidate only
+for recognized shapes, and never submits or claims a lease. Review all clauses
+and use ordinary submit once confident. These are deterministic research tools,
+not institutional gates. Prefer using them before spending model turns on
+repeated Lean boilerplate.
+
+For small existential monotone edge-function circuits use the same command with
+`synthesize --output candidate.lean`. It searches shared star/biclique
+expressions, independently checks every Boolean input, enforces the gate
+budget, and emits a self-contained candidate. A failed search is not evidence
+of nonexistence. No generator claims a lease or publishes a proof.

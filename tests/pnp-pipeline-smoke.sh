@@ -6,3 +6,4 @@ cd "$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)"
 python3 tests/pnp-pipeline.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
+python3 tests/pnp-proof-tools.py
