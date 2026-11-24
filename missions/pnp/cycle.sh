@@ -11,3 +11,9 @@ cd "$town"
 python3 missions/pnp/leaderboard.py update || echo "PnP public leaderboard unavailable; retry next cycle" >&2
 # Handle existing leases and PRs regardless of leaderboard availability.
 python3 missions/pnp/cli.py reconcile
+# A 20-minute desk lease TTL cannot be maintained by a 24-hour boot hook.
+# Start (once per host) a bounded detached loop that renews active leases
+# between boots; it starts no agents and is not a competing scheduler.
+if [ -f "$town/missions/pnp/heartbeat.sh" ]; then
+    nohup /bin/sh "$town/missions/pnp/heartbeat.sh" </dev/null >/dev/null 2>&1 &
+fi
