@@ -194,3 +194,21 @@ and newly claimable ordinary work. After these allocation decisions,
 delegate substantive investigations rather than waiting in the coordinator
 session; finish the pass promptly so the next state change can trigger it.
 No polling sleep inside Executive reasoning. No new review or reporting gate.
+
+
+## Productive overlap while tools run
+
+All workers follow the canonical work-conserving attention rule in
+`/var/lib/lubko/wd/viche/government/AGENT-REPORTING-POLICY.md`. In particular,
+a bounded SAT search can run while its owner prepares the Lean witness
+verification, reasons about the graph, studies symmetry or derives a
+complementary search formulation. Do not run identical searches or poll a
+solver repeatedly without other useful work. Keep search scripts, job
+handles, logs and exit results in the bound assignment workspace, use
+unbuffered/progress output when supported, and retain a finite budget.
+Check the assignment guard and incorporate new evidence at natural
+checkpoints; do not start new work after the lease ends. Do not background
+unmanaged Lean: use the shared compiler and respect its resource admission.
+A complete candidate must be submitted promptly rather than waiting on an
+irrelevant experimental branch. Executive delivers actionable mathematical
+handoffs to the existing researcher promptly, preserving search progress.

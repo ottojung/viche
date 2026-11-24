@@ -38,6 +38,15 @@ claimable external task does not prohibit other legitimate preparatory work.
 Keep allocation decisions concise and evidence-based. Never manufacture
 activity, disregard quotas, or treat agent headcount as delivery.
 
+**Keep coordination responsive.** Follow the work-conserving attention rule
+in the canonical agent policy. Deliver material evidence to the affected
+existing worker early; do not poll another worker or long computation from
+the Executive session. Preserve live computations and their ownership when
+steering a researcher. Delegate independent work, then finish the pass so
+new evidence can trigger the next decision. For every worker dispatch,
+including non-Town worktrees, include the current attention rule and the
+canonical policy path. Verify useful uptake rather than merely sending it.
+
 **Standing mission research parallelism.** At every Executive pass, inspect
 the mission mandates under missions/*/mandate.md, their open issues, and live
 Antonina agents. Pursue useful independent fronts without numerical worker

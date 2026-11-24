@@ -215,3 +215,44 @@ These supersede any contrary text above or in older records.
     (`python3 government/integrator.py office YOU`): fix it and propose again.
     Any office may review another's delivery with
     `government/review-delivery.sh BRANCH HEAD approve|reject --office YOU --reason ...`.
+
+
+## Founder operational directive: work-conserving attention (24 November 2026)
+
+Optimize useful completed work per unit of elapsed time and scarce resources,
+not the number of simultaneous tools, tasks or agents.
+
+- A tool waiting for a long computation, remote check, reply or another
+  worker blocks only the work that actually depends on its result. If the
+  computation can safely run separately, start it once with a sensible
+  resource/time budget, identifiable ownership, durable output and a
+  completion/exit-status record. Prefer the existing managed job interface.
+  Do not spawn duplicate jobs after a tool timeout: establish whether the
+  first is still running. Never leave unbounded, unowned subprocesses.
+- While waiting, pursue the best independent useful action: develop a
+  complementary proof or implementation, prepare verification, investigate
+  a competing hypothesis, reuse existing results, resolve another assigned
+  dependency, or perform an independent part of the same task. If a result
+  can change the immediate next action, read it promptly. Otherwise inspect
+  at a natural checkpoint or after meaningful progress. Do not spend turns
+  on sleep/status/output/sleep loops, or on repeatedly reading unchanged
+  output. A long job can be valuable even before its output changes.
+- When a genuinely blocking operation has no safe productive alternative,
+  a bounded synchronous wait is appropriate. If no useful work remains,
+  preserve the exact job handle, result location and next action for
+  resumption through the existing owner, then finish the session. Do not
+  invent chores, repeatedly restart work or stop a promising computation
+  merely to obey a timer. This is not a requirement to parallelize dependent
+  writes, bypass checks, consume extra memory or start more agents.
+- Coordinators must keep their own attention available: promptly deliver
+  useful incoming evidence to existing workers, make allocation decisions
+  early, delegate long investigations, and return control rather than wait
+  for their completion. For a worker stuck in an observed wait loop, the
+  authorized owner should preserve its live job and context and give it a
+  focused alternative action. Use the existing agent lifecycle, not a new
+  dispatch service or reporting ceremony. Verify uptake from actual work,
+  not a sent message. Each owner remains responsible for jobs it starts.
+- On resumption, incorporate the newest relevant evidence and Founder
+  instructions before repeating a stale plan. A completed proof or other
+  delivery on the critical path takes priority over speculative parallel
+  work. Observe applicable lease, review, memory, funding and safety limits.
