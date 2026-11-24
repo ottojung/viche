@@ -8,7 +8,7 @@ restart after SIGNED, PUSHED or PR_OPEN never duplicates a branch or PR.
 import os
 import time
 
-from . import config, desk as desk_mod, gitctl, github, state, validate
+from . import config, desk as desk_mod, gitctl, github, state, validate, build_control
 
 
 class StopPublish(Exception):
@@ -29,6 +29,16 @@ def _stop(gap_id, reason):
 def _retry_later(gap_id, reason):
     """Preserve signed/PUSHED state for transient outages, no PR mutation."""
     state.update(gap_id, failure_reason=reason)
+    raise StopPublish(reason)
+
+
+def _candidate_failed(gap_id, reason):
+    rec = state.load(gap_id)
+    if rec["state"] in ("CANDIDATE_READY", "LOCAL_CHECKED"):
+        state.transition(gap_id, "RESEARCHING", candidate_digest=None,
+                         queued_lease=None, failure_reason=reason)
+    else:
+        state.update(gap_id, queued_lease=None, failure_reason=reason)
     raise StopPublish(reason)
 
 
@@ -68,9 +78,10 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     except Exception as e:
         _retry_later(gap_id, "cannot re-read live desk docs: %s" % e)
 
-    # Fetch public metadata independently; never trust candidate metadata.
-    if gap_id not in _open_gap_ids(desk) and not rec.get("pr_number"):
-        _stop(gap_id, "gap is not currently posted at the desk")
+    # The exact statement comes from the acquired lease. A status listing may
+    # be incomplete; use the authoritative beat instead of a redundant GET.
+    if not rec.get("lease") and not rec.get("pr_number"):
+        _stop(gap_id, "no live assignment or existing PR")
     gap_meta = {
         "id": gap_id, "file": rec.get("path"), "module": rec.get("module"),
         "statement": rec.get("statement"), "imports": rec.get("imports"),
@@ -79,46 +90,79 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     try:
         digest = validate.validate(gap_meta, data)
     except validate.InvalidCandidate as e:
-        _stop(gap_id, "candidate validation failed: %s" % e)
+        _candidate_failed(gap_id, "candidate validation failed: %s" % e)
     if (rec.get("candidate_digest") and
             rec["candidate_digest"] != digest and not correction):
-        _stop(gap_id, "candidate digest changed since local check")
+        _candidate_failed(gap_id, "candidate digest changed since local check")
     state.update(gap_id, candidate_digest=digest)
 
     # Renew the lease before submitting; 410 means someone else settled it.
     if rec.get("lease") and not correction and not resume and not rec.get("pr_number"):
         try:
             if desk.beat(rec["lease"]) == 410:
-                _stop(gap_id, "lease returned 410 at submission")
+                state.stale_lease(gap_id, rec["lease"], "lease returned 410 at submission")
+                raise StopPublish("lease returned 410 at submission")
         except StopPublish:
             raise
         except Exception as e:
-            _stop(gap_id, "lease renewal failed: %s" % e)
+            _retry_later(gap_id, "lease renewal failed: %s" % e)
         state.update(gap_id, lease_expires_at=time.time() +
                      config.LEASE_TTL_SECONDS)
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     if not resume:
-        latest_base = git.ensure_mirror()
-        base_sha = (rec.get("base_sha") if correction else latest_base)
-        if not base_sha:
-            _stop(gap_id, "correction has no pinned original base")
-        state.update(gap_id, base_sha=base_sha, branch=branch)
-        worktree = git.fresh_worktree(gap_id, base_sha, branch)
-        state.update(gap_id, worktree=worktree)
-        try:
-            if correction:
-                git.pin_candidate(worktree, rec["path"], data, correction=True)
-            else:
-                git.pin_candidate(worktree, rec["path"], data)
-        except Exception as e:
-            _stop(gap_id, "staging failed: %s" % e)
-        ok, log = git.build(worktree, rec["module"], rec["statement"],
-                            runner=build_runner)
-        if not ok:
-            _stop(gap_id, "pinned Lean/Mathlib build failed: %s" % log[-300:])
-        if rec["state"] == "CANDIDATE_READY":
-            state.transition(gap_id, "LOCAL_CHECKED", candidate_digest=digest)
+        base_sha = rec.get("base_sha")
+        worktree = rec.get("worktree")
+        reuse = (rec["state"] == "LOCAL_CHECKED" and not correction
+                 and hasattr(git, "reusable_checked_tree")
+                 and git.reusable_checked_tree(worktree, base_sha, rec["path"], data))
+        if not reuse:
+            try:
+                latest_base = git.ensure_mirror()
+            except Exception as e:
+                _retry_later(gap_id, "upstream checkout unavailable: %s" % e)
+            base_sha = rec.get("base_sha") or latest_base
+            if not base_sha:
+                _stop(gap_id, "correction has no pinned original base")
+            state.update(gap_id, base_sha=base_sha, branch=branch)
+            try:
+                worktree = git.fresh_worktree(gap_id, base_sha, branch)
+            except Exception as e:
+                _retry_later(gap_id, "publication checkout unavailable: %s" % e)
+            state.update(gap_id, worktree=worktree)
+            try:
+                if correction:
+                    git.pin_candidate(worktree, rec["path"], data, correction=True)
+                else:
+                    git.pin_candidate(worktree, rec["path"], data)
+            except Exception as e:
+                _stop(gap_id, "staging failed: %s" % e)
+            try:
+                ok, log = git.build(worktree, rec["module"], rec["statement"],
+                                    runner=build_runner)
+            except build_control.MemoryDeferred as e:
+                state.update(gap_id, publisher_memory_required=e.required)
+                _retry_later(gap_id, "resource deferred: %s" % e)
+            except Exception as e:
+                _retry_later(gap_id, "local build unavailable: %s" % e)
+            if not ok:
+                _candidate_failed(gap_id, "pinned Lean build failed: %s" % log[-300:])
+            if rec["state"] == "CANDIDATE_READY":
+                state.transition(gap_id, "LOCAL_CHECKED", candidate_digest=digest)
+        # A rival may settle the gap during a lengthy build. Renew immediately
+        # before signing/pushing, rather than publishing a known stale proof.
+        if not correction:
+            current = state.load(gap_id)
+            if current["state"] in ("STALE", "RELEASED") or current.get("lease") != rec.get("lease"):
+                raise StopPublish("gap settled during local build")
+            try:
+                live = desk.beat(current["lease"])
+            except Exception as e:
+                _retry_later(gap_id, "lease recheck failed: %s" % e)
+            if live == 410:
+                state.stale_lease(gap_id, current["lease"], "lease lost during build")
+                raise StopPublish("lease lost during build")
+            state.update(gap_id, lease_expires_at=time.time() + config.LEASE_TTL_SECONDS)
         state.intent(gap_id, "signed_commit",
                      {"base": base_sha, "path": rec["path"]})
         try:
@@ -196,6 +240,17 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     number = rec.get("pr_number") or gh.pr_exists_for(
         branch, gap_id, api=known_prs)
     if not number:
+        if not correction:
+            # Recheck only when resuming a signed/pushed proof: the old beat
+            # may no longer be live. Existing PRs can always be recovered.
+            if resume:
+                try:
+                    if desk.beat(rec["lease"]) == 410:
+                        _stop(gap_id, "lease ended before PR creation")
+                except StopPublish:
+                    raise
+                except Exception as exc:
+                    _retry_later(gap_id, "lease recheck failed: %s" % exc)
         state.intent(gap_id, "create_pr", {"branch": branch, "gap": gap_id})
         try:
             number = gh.create_pr(branch, gap_id)
@@ -215,10 +270,10 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     if state.load(gap_id)["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED"):
         state.transition(gap_id, "PR_OPEN", pr_number=number,
                          pr_url=pr.get("url"), external_verdict="pending",
-                         failure_reason=None)
+                         queued_lease=None, failure_reason=None)
     else:
         state.update(gap_id, pr_number=number, pr_url=pr.get("url"),
-                     external_verdict="pending")
+                     external_verdict="pending", queued_lease=None)
     state.event(gap_id, "published", {"sha": sha, "pr": number,
                                       "digest": digest})
     return {"gap": gap_id, "sha": sha, "pr": number, "url": pr.get("url"),

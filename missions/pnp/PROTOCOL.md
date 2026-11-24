@@ -75,9 +75,15 @@ native_decide, unsafe commands), and exactly one Lean proof file.
 Use a fresh isolated Git checkout/worktree based on a pinned upstream main SHA and
 a new branch unique to the leased gap. Never use untrusted candidate worktree Git hooks,
 configs, pre-existing branch, or commit history as submission input.
-Run the pinned Lean/Mathlib local build and the repository's strict checker (if executable
-in the trusted environment). Record hash and outcome; distinguish ordinary local build
-from authoritative upstream acceptance.
+Run the required pinned local Lean/Mathlib build once, in the publisher. Do not
+run a redundant full local authoritative checker; the PR receives that verdict
+from the upstream fleet. Record hash and outcome; distinguish the successful
+local build from authoritative upstream acceptance. A worker hands a complete
+candidate directly to the publisher via submit; no additional Executive approval
+or researcher-side full checker is needed. Snapshot the candidate and start a
+detached, per-gap locked deterministic publisher immediately. Recover interrupted
+publication via the normal mission cycle; a dead process cannot leave a held
+publisher lock. Failed source proofs can be corrected on the same live lease.
 Stage only the independently approved exact path. Verify one added file, no other
 changes, and exactly one new commit relative to the recorded base.
 Set author and committer explicitly:

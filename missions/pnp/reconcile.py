@@ -7,30 +7,30 @@ import os
 import re
 import time
 
-from . import config, desk as desk_mod, gitctl, github, state
+from . import config, desk as desk_mod, gitctl, github, state, frontier
 
 VERDICT = re.compile(r"\b(ACCEPTED|REJECTED|FAULT)\b")
 
 
-def _heartbeat(gap_id, rec, desk):
+def _heartbeat(gap_id, rec, desk, force=False):
     if not rec.get("lease") or rec["state"] not in (
             "LEASED", "RESEARCHING", "CANDIDATE_READY", "LOCAL_CHECKED"):
         return
     now = time.time()
     last = rec.get("lease_expires_at") or 0
-    if now < last - config.LEASE_TTL_SECONDS + config.BEAT_INTERVAL_SECONDS:
+    if not force and now < last - config.LEASE_TTL_SECONDS + config.BEAT_INTERVAL_SECONDS:
         return
     try:
         status = desk.beat(rec["lease"])
     except Exception:
         return
     if status == 410:
-        state.transition(gap_id, "STALE", failure_reason="lease returned 410")
+        state.stale_lease(gap_id, rec["lease"], "lease returned 410")
     else:
         state.update(gap_id, lease_expires_at=now + config.LEASE_TTL_SECONDS)
 
 
-def reconcile_gap(gap_id, desk=None, gh=None, git=None):
+def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     """Return a short summary; never raise for one bad gap."""
     desk = desk or desk_mod.Desk()
     gh = gh or github
@@ -38,13 +38,22 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
     rec = state.load(gap_id)
     if rec is None:
         return {"gap": gap_id, "result": "no-state"}
-    if rec["state"] in ("ACCEPTED", "REJECTED", "RELEASED", "STALE"):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
+            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
 
-    _heartbeat(gap_id, rec, desk)
+    # Missing from a complete fresh frontier is a reason to confirm, not a verdict.
+    _heartbeat(gap_id, rec, desk, force=frontier.missing(observed or {}, gap_id))
     rec = state.load(gap_id)
-    if rec["state"] in ("ACCEPTED", "REJECTED", "RELEASED", "STALE"):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
+            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
+
+    # A detached deterministic publisher owns a durable candidate. Recovery
+    # never starts a competing build or holds the short reconciliation pass.
+    from . import jobs
+    if jobs.resume(gap_id):
+        return {"gap": gap_id, "result": "publishing", "state": rec["state"]}
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     remote = (git.remote_branch_sha(branch)
@@ -101,22 +110,10 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
             verdict = sorted(verdicts)[-1][1]
             if verdict != "FAULT":
                 state.transition(gap_id, verdict,
-                                 external_verdict=verdict)
+                                 external_verdict=verdict, queued_lease=None)
             else:
                 state.update(gap_id, external_verdict="FAULT",
                              failure_reason="upstream checker FAULT; will recheck")
-    else:
-        # If the desk no longer lists the gap and nothing was submitted, it
-        # is genuinely gone; keep the research record.
-        if rec["state"] == "LEASED" or rec["state"] == "RESEARCHING":
-            try:
-                open_ids = {g.get("id") for g in desk.status().get("gaps", [])
-                            if isinstance(g, dict)}
-            except Exception:
-                open_ids = None
-            if open_ids is not None and gap_id not in open_ids:
-                state.transition(gap_id, "STALE",
-                                 failure_reason="gap no longer posted")
     rec = state.load(gap_id)
     state.update(gap_id, last_reconcile=time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                       time.gmtime()))
@@ -126,9 +123,11 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
 
 def reconcile_all(desk=None, gh=None, git=None):
     results = []
+    observed = frontier.load()
+    desk = desk or desk_mod.Desk()
     for gap_id in state.all_gaps():
         try:
-            results.append(reconcile_gap(gap_id, desk=desk, gh=gh, git=git))
+            results.append(reconcile_gap(gap_id, desk=desk, gh=gh, git=git, observed=observed))
         except Exception as e:                       # nonfatal by construction
             try:
                 rec = state.load(gap_id)

@@ -85,8 +85,13 @@ case "$mode" in
     readiness=ready
     agent_interval=43200
     case "$resource_level" in short|critical) agent_interval=7200 ;; esac
+    capacity_signal=unknown
+    if [ -s "$econ/resources.json" ]; then
+      capacity_signal=$(jq -cS '.capacity.dispatch_signal // "unknown"' "$econ/resources.json" 2>/dev/null) || capacity_signal=unknown
+    fi
+    previous_capacity=$(cat "$root/last-capacity-signal" 2>/dev/null || printf unknown)
     # Public Post content cannot change the Economy office's launch cadence.
-    if [ "$last" -eq 0 ] || [ $((now-last)) -ge "$agent_interval" ]; then
+    if [ "$last" -eq 0 ] || [ $((now-last)) -ge "$agent_interval" ] || [ "$capacity_signal" != "$previous_capacity" ]; then
       orders='No specific Executive order: keep the Town funded, research the free models, find waste.'
       [ ! -s "$econ/orders.md" ] || orders=$(cat "$econ/orders.md")
       report='{"note":"no funding report yet; the first refresh runs within the hour"}'
@@ -107,7 +112,7 @@ case "$mode" in
              printf '%s\n' "$report" | jq -cS 'del(.at,.backup,.probes_run,.previous_order)' 2>/dev/null || printf '%s\n' "$report"
              # Resources: only the status of each, so a percentage drifting by 0.1 does not wake the agent.
              if [ -s "$econ/resources.json" ]; then
-               jq -cS '{overall, s: (.resources | map_values(.status)), needs: .needs_founder}' "$econ/resources.json" 2>/dev/null || :
+               jq -cS '{overall, s: (.resources | map_values(.status)), needs: .needs_founder, capacity: .capacity.dispatch_signal}' "$econ/resources.json" 2>/dev/null || :
              fi
              printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
              } | /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
@@ -141,6 +146,11 @@ $report
 === LATEST RESOURCE REPORT (deterministic: disk, inodes, memory, load, Town-owned growth) ===
 $resources
 === END RESOURCE REPORT ===
+Report utilization, avoidable waste and resource-specific constraints independently.
+Do not prescribe agent counts, staffing increments, concurrency caps, staffing
+freezes or workload assignments. Retract inherited staffing recommendations
+from earlier reports. Only the Executive decides staffing and allocation.
+Report evidence and resource-cost mitigations, not a staffing plan.
 Your mandate is the availability of EVERY scarce resource, not only model funding
 (Act 29 section 6). government/economy-resources.py measures and forecasts and has
 already run the safe Janitor steps listed under actions_this_pass; you act on what
@@ -170,6 +180,7 @@ policy_file="$town/government/AGENT-REPORTING-POLICY.md"
         antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach > "$root/dispatch.log" 2>&1 || exit 1
         [ ! -f "$town/government/dispatch-gate.sh" ] || /bin/sh "$town/government/dispatch-gate.sh" commit economy
         printf '%s\n' "$now" > "$root/last-dispatch"
+        printf '%s\n' "$capacity_signal" > "$root/last-capacity-signal"
         last=$now
         readiness=dispatched
       else

@@ -169,6 +169,37 @@ depleted queue. Check live assignments and pursue new useful work when any
 Founder's standing objective is still open.
 EOF
 )
+# Economy's report is the resource authority; missing/stale evidence is not zero.
+economy_capacity='{"status":"unmeasured","action":"obtain fresh Economy report"}'
+if [ -s "$state/economy/resources.json" ]; then
+  economy_capacity=$(jq -c --argjson now "$(date +%s)" '
+    if (.epoch | type) == "number" and $now >= .epoch and ($now-.epoch) <= 3600
+    then {at,overall,capacity,resources: {memory:.resources.memory,load:.resources.load,model_funding:.resources.model_funding}}
+    else {status:"stale",action:"obtain fresh Economy report"} end' "$state/economy/resources.json" 2>/dev/null) || economy_capacity='{"status":"unmeasured"}'
+fi
+economy_signature=$(printf '%s\n' "$economy_capacity" | jq -cS '.capacity.dispatch_signal // {status}' 2>/dev/null) || economy_signature=unreadable
+prompt=$(cat <<EOF
+$prompt
+
+=== MINISTRY OF ECONOMY: RESOURCE CAPACITY AND WASTE ===
+$economy_capacity
+=== END ECONOMY REPORT ===
+The Ministry reports resource facts; staffing recommendations in older reports
+are not authoritative. You alone decide staffing. Allocate independent work
+early in this pass, before lengthy reviews. Optimize verified delivery, not
+headcount. CPU contention constrains CPU-heavy local jobs, not automatically
+model-bound reasoning or independent research. Keep these fronts in flight
+while bounding expensive builds/searches and peak memory/disk usage.
+Use each measured resource dimension and model quota separately. Missing
+measurements are unknown, not zero. With useful work pending, expand and
+replenish until a workload-specific constraint or marginal output justifies
+otherwise; explain the actual constraint and mitigate it. No numerical worker
+cap or artificial resource consumption. Preserve existing safety and funding
+policy. Do not wait for one worker or a long review before assigning other
+independent work. Delegate long investigations rather than monopolizing
+the Executive coordinator. Only the Executive dispatches workers.
+EOF
+)
 cases='{"open_cases":[]}'
 if [ -f "$town/government/institutional-cases.py" ]; then
   cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
@@ -215,7 +246,7 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
   if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
        printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
-       printf '%s\n' "$mission_dispatch_signature"; } |
+       printf '%s\n' "$mission_dispatch_signature" "$economy_signature"; } |
      /bin/sh "$town/government/dispatch-gate.sh" check executive "${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}" > "$state/branches/executive-gate.log"; then
     :
   else

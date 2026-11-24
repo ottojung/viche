@@ -29,6 +29,7 @@ EMPTY = {
     "lean_toolchain": config.LEAN_TOOLCHAIN,
     "researchers": [],
     "candidate_digest": None,
+    "queued_lease": None,
     "branch": None,
     "worktree": None,
     "commit_sha": None,
@@ -172,6 +173,10 @@ def reacquire(gap_id, **fields):
                     "commit_sha", "pr_number", "pr_url", "external_verdict"):
             rec[key] = None
         rec["failure_reason"] = None
+        rec["queued_lease"] = None
+        rec["publisher_retry_at"] = None
+        rec["publisher_failures"] = 0
+        rec["publisher_memory_required"] = None
         rec["intent"] = None
         rec["researchers"] = []
         rec["state"] = "LEASED"
@@ -179,6 +184,18 @@ def reacquire(gap_id, **fields):
         event(gap_id, "reacquired", {"previous_state": previous,
                                      "lease": rec["lease"]})
     return rec
+
+
+def stale_lease(gap_id, lease, reason):
+    """Do not invalidate a reacquired or already-published gap on an old reply."""
+    with lock(gap_id):
+        rec = load(gap_id)
+        if not rec or rec.get("lease") != lease or "STALE" not in config.ALLOWED.get(rec["state"], set()):
+            return False
+        rec.update(state="STALE", failure_reason=reason)
+        save(rec)
+        event(gap_id, "state", {"to": "STALE", "fields": {"failure_reason": reason}})
+        return True
 
 
 def update(gap_id, **fields):

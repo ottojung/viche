@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import tempfile
 
-from . import config
+from . import config, build_control, compile as compiler
 
 UPSTREAM_URL = "https://github.com/" + config.UPSTREAM + ".git"
 FORK_URL = "git@github.com:" + config.FORK + ".git"
@@ -37,7 +37,7 @@ def check_commit_fields(fmt):
 
 def run(argv, cwd=None, check=True):
     p = subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE, text=True)
+                       stderr=subprocess.PIPE, text=True, timeout=90)
     if check and p.returncode != 0:
         raise GitError("%s failed (%d): %s" %
                        (" ".join(argv[:4]), p.returncode,
@@ -116,37 +116,71 @@ def pin_candidate(worktree, path, candidate_bytes, correction=False):
         raise GitError("unexpected additional worktree changes: %r" % other)
 
 
-def build(worktree, module, statement, runner=None):
-    """Use upstream's kernel checker, not merely a successful Lean build.
+def prepare_build_cache(worktree):
+    """Share pinned dependency packages, never another proof's mutable .lake."""
+    seed = os.environ.get("PNP_SHARED_LAKE",
+                          "/home/lubko/pequalnp-research-20261123/lean/.lake")
+    lean = os.path.join(worktree, "lean")
+    for name in ("lean-toolchain", "lake-manifest.json"):
+        with open(os.path.join(lean, name), "rb") as a, \
+             open(os.path.join(os.path.dirname(seed), name), "rb") as b:
+            if a.read() != b.read():
+                raise GitError("pinned dependency cache differs: " + name)
+    local = os.path.join(lean, ".lake")
+    if os.path.islink(local):
+        raise GitError("publication checkout must not share mutable build state")
+    os.makedirs(local, exist_ok=True)
+    packages = os.path.join(seed, "packages")
+    if not os.path.isdir(packages):
+        raise GitError("pinned Mathlib package cache unavailable")
+    dest = os.path.join(local, "packages")
+    if not os.path.lexists(dest):
+        os.symlink(packages, dest)
 
-    The checker rebuilds the proof and accepts only the exact pinned
-    statement with permitted axioms, under the repository's verifier.
+
+def build(worktree, module, statement, runner=None):
+    """One required local build; authoritative verdict comes from the PR.
+
+    No local checker directory lock or second verifier build. The upstream
+    checker independently judges the exact statement and allowed axioms.
     """
     if runner is not None:
         return runner(worktree, module, statement)
     if not isinstance(statement, str) or not statement.strip():
         return False, "missing authoritative gap statement"
-    shared = os.environ.get(
-        "PNP_SHARED_LAKE",
-        "/home/lubko/pequalnp-research-20261123/lean/.lake")
-    local = os.path.join(worktree, "lean", ".lake")
-    if os.path.isdir(shared) and not os.path.exists(local):
-        os.symlink(shared, local)
-    if not os.path.exists(os.path.join(worktree, "tools", "check-lean.mjs")):
-        return False, "upstream authoritative checker missing"
-    fd, statement_path = tempfile.mkstemp(prefix="pnp-statement-", suffix=".lean")
+    prepare_build_cache(worktree)
+    lock_fd = os.environ.get("PNP_PUBLISH_LOCK_FD")
+    inherited = (int(lock_fd),) if lock_fd else ()
+    with tempfile.TemporaryFile() as output:
+        code = compiler.run(["lake", "build", "+" + module],
+                            cwd=os.path.join(worktree, "lean"),
+                            heavy=True, publication=True,
+                            output=output, inherited=inherited)
+        output.seek(max(0, output.tell() - 8000))
+        log = output.read().decode("utf-8", "replace")
+    if code and ("error: PEqualNP/" not in log and "error: ./PEqualNP/" not in log):
+        raise GitError("local build interrupted: " + log[-600:])
+    return code == 0, log[-2000:]
+
+
+def reusable_checked_tree(worktree, base_sha, path, data):
+    """Reuse only the publisher's exact successful pinned build, never worker output."""
+    if not worktree or not base_sha:
+        return False
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(statement)
-        source = os.path.join(worktree, "lean", *module.split(".")) + ".lean"
-        p = run(["/home/lubko/.local/bin/node", "tools/check-lean.mjs",
-                 source, statement_path], cwd=worktree, check=False)
-        last = p.stdout.rstrip().splitlines()[-1:]
-        accepted = p.returncode == 0 and any(
-            line.startswith("ACCEPTED") for line in last)
-        return accepted, (p.stdout + p.stderr)[-2000:]
-    finally:
-        os.unlink(statement_path)
+        if run(["git", "-C", worktree, "rev-parse", "HEAD"]).stdout.strip() != base_sha:
+            return False
+        if run(["git", "-C", worktree, "status", "--porcelain"]).stdout.splitlines() != ["A  " + path]:
+            return False
+        # Staged and working copies must both match the validated bytes.
+        with open(os.path.join(worktree, path), "rb") as f:
+            if f.read() != data:
+                return False
+        if run(["git", "-C", worktree, "diff", "--quiet"], check=False).returncode != 0:
+            return False
+        return True
+    except (OSError, GitError, subprocess.SubprocessError):
+        return False
 
 
 def signed_commit(worktree, base_sha, message, signer=None, correction=False):
