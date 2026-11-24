@@ -122,6 +122,8 @@ def acquire(args, d, report=True):
                for k in ("statement", "module", "file")):
         print("desk returned incomplete assignment metadata", file=sys.stderr)
         return 2
+    from missions.pnp import brief
+    desk_notes = brief.acquisition(gap, answer)
     prior = state.load(gid)
     if prior is not None:
         # The desk granted a fresh lease for a gap we have seen before.  The
@@ -136,7 +138,7 @@ def acquire(args, d, report=True):
                 module=gap.get("module"), path=gap.get("file"),
                 imports=gap.get("imports") or [],
                 gap_title=gap.get("title"),
-                context=gap.get("context"), dead=gap.get("dead"),
+                context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
                 acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
                 lease=lease, lease_obtained_at=time.time(),
                 lease_expires_at=time.time() +
@@ -166,7 +168,7 @@ def acquire(args, d, report=True):
                        module=gap.get("module"), path=gap.get("file"),
                        imports=gap.get("imports") or [],
                        gap_title=gap.get("title"),
-                       context=gap.get("context"), dead=gap.get("dead"),
+                       context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
                        acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
                        lease=lease, lease_obtained_at=time.time(),
                        lease_expires_at=time.time() +
@@ -244,6 +246,10 @@ def cmd_guard(args):
             try:
                 rec = state.load(gap)
                 if rec and rec.get("lease") == lease:
+                    from missions.pnp import brief
+                    packet = brief.read(rec)
+                    if packet:
+                        result["desk_notes"] = packet
                     advice = support.read(rec)
                     if advice:
                         result["research_advice"] = advice

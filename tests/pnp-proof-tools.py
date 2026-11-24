@@ -49,6 +49,17 @@ class ProofTools(unittest.TestCase):
         bad = dict(meta, statement=meta["statement"].replace("≤ 3","≤ 2"))
         self.assertIsNone(synthesis.candidate(bad)["candidate"])
 
+    def test_minimum_star_cover_has_no_duplicate_edges(self):
+        # Two intersecting full stars, plus a disconnected edge. Greedy
+        # maximal stars can pay for an edge twice; exact assignment cannot.
+        edges={(0,1),(0,2),(0,3),(1,4),(1,5),(6,7)}
+        gates,out=synthesis.star_cover(8,edges)
+        self.assertEqual(len(gates),8)
+        self.assertTrue(synthesis.verify(8,edges,gates,out))
+        gates,out=synthesis.synthesize(8,edges)
+        self.assertLessEqual(len(gates),8)
+        self.assertTrue(synthesis.verify(8,edges,gates,out))
+
     def test_sat_exact_against_independent_two_variable_enumeration(self):
         import itertools
         # Independently enumerate all functions realizable with up to two

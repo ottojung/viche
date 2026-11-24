@@ -22,6 +22,7 @@ EMPTY = {
     "gap_title": None,
     "context": None,
     "dead": None,
+    "desk_notes": {},
     "lease": None,
     "lease_obtained_at": None,
     "lease_expires_at": None,
@@ -163,7 +164,7 @@ def reacquire(gap_id, **fields):
         previous = rec["state"]
         lease_fields = ("lease", "lease_obtained_at", "lease_expires_at")
         meta_fields = ("statement", "module", "path", "imports", "gap_title",
-                       "context", "dead", "acquisition_hard", "acquisition_prs")
+                       "context", "dead", "desk_notes", "acquisition_hard", "acquisition_prs")
         for key in lease_fields + meta_fields:
             if key in fields:
                 rec[key] = fields[key]
