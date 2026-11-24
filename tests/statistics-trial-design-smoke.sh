@@ -60,6 +60,28 @@ fail=0
 expect_pass 'coherent DRAFT' run verify-draft --boot-id "$boot"
 expect_pass 'all pinned bytes landed' run verify-landed
 expect_pass 'no mechanical blockers' run no-go --boot-id "$boot"
+
+# Informational deterministic-source preregistration is allowed during DRAFT
+# only with the exact six-field shape and valid hashes. Current source bytes are
+# checked separately by verify-landed against the authoritative source dict.
+cp "$town/records/knowledge/activation.json" "$d/activation.good"
+python3 - "$town" <<'PY'
+import json,sys,os
+t=sys.argv[1]; p=os.path.join(t,"records/knowledge/activation.json")
+d=json.load(open(p)); d["offices"]["statistics"]["deterministic_sources"]["runner"]="not-a-sha256"
+json.dump(d,open(p,"w"))
+PY
+expect_deny 'draft deterministic source malformed hash' run verify-draft --boot-id "$boot"
+cp "$d/activation.good" "$town/records/knowledge/activation.json"
+python3 - "$town" <<'PY'
+import json,sys,os
+t=sys.argv[1]; p=os.path.join(t,"records/knowledge/activation.json")
+d=json.load(open(p)); del d["offices"]["statistics"]["deterministic_sources"]["post"]
+json.dump(d,open(p,"w"))
+PY
+expect_deny 'draft deterministic source set incomplete' run verify-draft --boot-id "$boot"
+cp "$d/activation.good" "$town/records/knowledge/activation.json"
+
 out=$(run no-go --boot-id "$boot")
 printf '%s\n' "$out" | grep -q 'external_gates_required' || { echo 'FAIL: external gates not reported' >&2; fail=1; }
 printf '%s\n' "$out" | grep -q 'must NOT self-verify' || { echo 'FAIL: judiciary self-verify warning missing' >&2; fail=1; }

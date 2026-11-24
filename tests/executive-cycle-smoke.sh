@@ -10,10 +10,7 @@ printf 'Founder charter fixture\n' > "$scratch/charter"
 printf '%s\n' c1a00002 > "$scratch/town/records/SUMMONED.txt"
 cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.py"
 mkdir -p "$scratch/town/missions/soringp1"
-cp "$repo/missions/soringp1/frontier-status.py" "$scratch/town/missions/soringp1/frontier-status.py"
 cp "$repo/missions/soringp1/mandate.md" "$scratch/town/missions/soringp1/mandate.md"
-cp "$repo/missions/soringp1/status.manual.sh" "$scratch/town/missions/soringp1/status.sh"
-printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"clearexit","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"
 cp "$repo/government/AGENT-REPORTING-POLICY.md" "$scratch/town/government/AGENT-REPORTING-POLICY.md"
@@ -39,8 +36,8 @@ case "$1 $2" in
     fi ;;
   "agent run")
     case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"SoringP1"*"research-plan.md"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"depleted_after_empty_curation"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"No work is authorized on SoringP1"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"research-plan.md"*|*"depleted_after_empty_curation"*) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac
@@ -55,8 +52,7 @@ VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/charter
 MODE=idle MODEL=test-provider/example
 OUTPUT=$scratch/dispatched
-SORING_FRONTIER_STATE=$scratch/frontier.json
-export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT SORING_FRONTIER_STATE
+export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION MODE MODEL OUTPUT
 MOCK_STATE=$scratch
 MOCK_STATE=$MOCK_STATE
 export MOCK_STATE
