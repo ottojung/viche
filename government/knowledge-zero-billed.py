@@ -130,6 +130,16 @@ def load_verified(path, now=None, snapshot_path=None):
             raise ValueError("provider snapshot shows nonzero cost: " + mid)
         if "write" in cache and not _zero(cache.get("write")):
             raise ValueError("provider snapshot shows nonzero cache-write cost: " + mid)
+        if provider == "opencode-go":
+            # Economy's common four-office scope may include internal
+            # institutional context. Do not admit training, non-ZDR or
+            # region-restricted Go models without a distinct reviewed scope.
+            privacy = rec.get("go")
+            if (not isinstance(privacy, dict)
+                    or privacy.get("training") is not False
+                    or privacy.get("zdr") is not True
+                    or privacy.get("limited_regions") is not False):
+                raise ValueError("Go data-handling scope not approved: " + mid)
     return data
 
 
@@ -172,7 +182,9 @@ def negative_acceptance_digest(paths):
         "opencode/hy4-flash-free:nonzero-cost",
         "opencode/hy4-flash-free:expired-evidence",
         "opencode/hy4-flash-free:unknown-billing-dimension",
-        "opencode-go/hy4-flash-free:missing-or-wrong-go-source")
+        "opencode-go/hy4-flash-free:missing-or-wrong-go-source",
+        "opencode-go/iceman-contributor-free:training-enabled",
+        "opencode-go/beam-free:non-zdr-or-region-restricted")
     payload = {"rejected_ids": names,
                "controls": {name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
                             for name, path in sorted(paths.items())}}
@@ -180,13 +192,35 @@ def negative_acceptance_digest(paths):
                                      separators=(",", ":")).encode()).hexdigest()
 
 
-def build_allowlist(policy_path, prefer_path, catalogue_path, output_path, snapshot_path=None):
-    """Build Antonina's per-invocation config from exact verified IDs."""
-    policy = json.loads(Path(prefer_path).read_text(encoding="utf-8"))
-    catalogue = json.loads(Path(catalogue_path).read_text(encoding="utf-8"))
-    if not isinstance(catalogue, dict) or not isinstance(catalogue.get("models"), dict):
-        raise ValueError("Economy catalogue missing/invalid")
-    ids = verified_subset(policy_path, policy.get("prefer"), catalogue.get("models"), snapshot_path)
+def global_config_path(env=None):
+    """Same host/config resolution as Antonina model-config.js."""
+    env = os.environ if env is None else env
+    service = env.get("ANTONINA_OPENCODE_XDG_CONFIG_HOME")
+    host = env.get("ANTONINA_HOST_XDG_CONFIG_HOME")
+    xdg = env.get("XDG_CONFIG_HOME")
+    base = host if service and xdg == service and host else xdg
+    return Path(base or (Path(env.get("HOME", str(Path.home()))) / ".config")) / "antonina/config.json"
+
+
+def authorized_models(path):
+    """Read the durable authorized ladder, with no catalogue dependency."""
+    config = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(config, dict) or not isinstance(config.get("models"), list):
+        raise ValueError("authorized Antonina config is malformed")
+    ids = []
+    for entry in config["models"]:
+        if not isinstance(entry, dict) or not isinstance(entry.get("comment"), str):
+            raise ValueError("authorized Antonina model entry is malformed")
+        mid = entry.get("model")
+        if not isinstance(mid, str) or not MODEL_ID.fullmatch(mid) or mid in ids:
+            raise ValueError("authorized Antonina model identity is malformed")
+        ids.append(mid)
+    return ids
+
+
+def build_allowlist(policy_path, global_path, output_path, snapshot_path=None):
+    """Intersect the reviewed exact-ID policy and durable authorization."""
+    ids = verified_subset(policy_path, authorized_models(global_path), snapshot_path=snapshot_path)
     entries = [{"model": mid, "variant": "low",
                 "comment": "Economy exact-ID zero-cost policy; source-attested provider metadata"}
                for mid in ids]

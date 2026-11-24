@@ -143,23 +143,14 @@ fi
 # locks so they cannot block Parliament or Judiciary or each other.
 if grep -Eq '^## Act [0-9]+ — Institutional Knowledge and Communications Act \(enacted ' "$town/government/LAWS.md" &&
    [ -s "$town/government/knowledge-office-cycle.sh" ]; then
-    # Act 32 H: after a crash or box restart, reconcile in-flight reservations
-    # before any new dispatch. Deterministic, bounded and fail-closed.
+    # The office cycle validates its own permit and reconciles/guards the
+    # budget before dispatch. Do not perform any board read or metering on
+    # the shared boot path. Each office owns its bounded independent task.
     if [ -s "$town/government/knowledge-budget.sh" ]; then
-        /bin/sh "$town/government/knowledge-budget.sh" reconcile ||
-            echo "Viche: knowledge budget reconciliation failed" >&2
+        nonblocking_office knowledge-budget 300 /bin/sh "$town/government/knowledge-budget.sh" reconcile
     fi
-    knowledge_root=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}/knowledge/offices
     for office in statistics foresight strategy spying; do
-        # Same fail-closed verifier as appointments and the office cycle: a
-        # forged, wrong-Act, wrong-office or expired activation dispatches nothing.
-        /bin/sh "$town/government/knowledge-activation-verify.sh" "$office" || continue
-        mkdir -p "$knowledge_root/$office"
-        (
-            flock -n 9 || exit 0
-            timeout 900 /bin/sh "$town/government/knowledge-office-cycle.sh" "$office" ||
-                echo "Viche: $office knowledge office failed; see its log" >&2
-        ) 9>"$knowledge_root/$office/cycle.lock" >> "$knowledge_root/$office/cycle.log" 2>&1 < /dev/null &
+        nonblocking_office "knowledge-$office" 900 /bin/sh "$town/government/knowledge-office-cycle.sh" "$office"
     done
 fi
 

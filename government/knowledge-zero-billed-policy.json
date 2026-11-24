@@ -91,15 +91,6 @@
         "cache_read": 0
       }
     },
-    "opencode-go/beam-free": {
-      "provider": "opencode-go",
-      "provider_model": "beam-free",
-      "cost": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0
-      }
-    },
     "opencode-go/hy4-flash-free": {
       "provider": "opencode-go",
       "provider_model": "hy4-flash-free",
@@ -117,15 +108,6 @@
         "output": 0,
         "cache_read": 0
       }
-    },
-    "opencode-go/iceman-contributor-free": {
-      "provider": "opencode-go",
-      "provider_model": "iceman-contributor-free",
-      "cost": {
-        "input": 0,
-        "output": 0,
-        "cache_read": 0
-      }
     }
   },
   "go_source": {
@@ -133,6 +115,6 @@
     "retrieved_at": "2026-11-24T17:56:06Z",
     "sha256": "cf7019172f53d12c175f499934678c51bf161f66a93362a124e24b750d538767",
     "snapshot_ref": "records/economy/evidence/2026-11-24-go-provider-models.json",
-    "note": "First-party Go route; the provider payload identifies the model owner as opencode. Go identity is bound by the specific Go endpoint, not inferred from the model name."
+    "note": "First-party Go route; the provider payload identifies the model owner as opencode. Go identity is bound by the specific Go endpoint, not inferred from the model name. Shared knowledge-office scope admits only non-training, ZDR, non-region-restricted Go routes; Beam and Iceman excluded by Economy data-handling finding."
   }
 }

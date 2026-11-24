@@ -8,7 +8,7 @@ repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
 town="$d/town"; state="$d/state"
-mkdir -p "$town/government" "$town/records/economy/evidence" "$town/records/knowledge/permits" \
+mkdir -p "$d/global/antonina" "$town/government" "$town/records/economy/evidence" "$town/records/knowledge/permits" \
   "$town/records/knowledge/pilot-reviews" "$state/economy" \
   "$state/appointments" "$state/board" "$d/bin"
 for f in knowledge-act34-gate.py knowledge-phase-verifier.py \
@@ -40,6 +40,14 @@ EOF
 cat > "$state/economy/model-policy.json" <<'EOF'
 {"prefer":["opencode-go/hy4-flash-free","opencode/hy4-flash-free"]}
 EOF
+cat > "$d/global/antonina/config.json" <<'EOF'
+{"models":[{"model":"opencode-go/hy4-flash-free","comment":"fixture","variant":"low"},{"model":"opencode/hy4-flash-free","comment":"fixture","variant":"low"}]}
+EOF
+cat > "$state/appointments/appointments.log" <<'EOF'
+2026-11-22T00:00:00Z	executive	-	exec-agent
+2026-11-22T00:00:00Z	economy	-	econ-agent
+2026-11-22T00:00:00Z	judiciary	-	jud-agent
+EOF
 cat > "$state/economy/catalogue.json" <<'EOF'
 {"models":{"opencode-go/hy4-flash-free":{"tier":"free"},"opencode/hy4-flash-free":{"tier":"free"},
  "provider/paid-free":{"tier":"free"}}}
@@ -64,7 +72,7 @@ case "$1 $2" in
 esac
 EOF
 chmod +x "$d/bin/antonina"
-cat > "$town/records/economy/2026-11-24-act34-zero-billed-verification.md" <<'EOF'
+cat > "$town/records/economy/2026-11-24-act34-fresh-verification.md" <<'EOF'
 Economy exact-path zero-cost control verification fixture.
 EOF
 python3 - "$town" <<'PY'
@@ -141,8 +149,9 @@ def att(role,agent,issue):
  return {"issue_id":issue,"expected_reviewer":role,"officer_agent_id":agent}
 permit=json.loads((root/"records/knowledge/permits/statistics.json").read_text())
 evidence={"artifact_commit":commit,
+ "report_ref":"records/economy/2026-11-24-act34-fresh-verification.md",
  "report_sha256":hashlib.sha256(
-  (root/"records/economy/2026-11-24-act34-zero-billed-verification.md").read_bytes()).hexdigest(),
+  (root/"records/economy/2026-11-24-act34-fresh-verification.md").read_bytes()).hexdigest(),
  **permit["enforcement_evidence"],
  "attestation":att("c1e00012","econ-agent","economy-test-issue")}
 data["economy_free_tier_evidence"]=evidence
@@ -154,7 +163,8 @@ act.write_text(json.dumps(data))
 def issue(reviewer, gate_ids):
  return {"review":{"commit":commit,"verdict":"approve","reviewer":reviewer,
   "recordedAt":"2026-11-23T08:00:00Z"},
-  "messages":[{"author":reviewer,"body":g+" "+commit[:12]+" reviewed"}
+  "messages":[{"author":reviewer,"body":g+" "+commit[:12]+" reviewed",
+               "createdAt":"2026-11-23T08:00:01Z"}
               for g in gate_ids]}
 (state/"board/executive-test-issue.json").write_text(json.dumps(
  issue("c1e00002",["act34-executive-"+x for x in offices])))
@@ -164,10 +174,39 @@ PY
 git -C "$town" add .
 git -C "$town" commit -qm 'Second commitment: independently corroborated officer actions'
 export VICHE_TOWN_ROOT="$town" VICHE_STATE_ROOT="$state" PATH="$d/bin:$PATH"
+export XDG_CONFIG_HOME="$d/global"
 for office in statistics foresight strategy spying; do
  /bin/sh "$town/government/knowledge-activation-verify.sh" "$office"
 done
 echo 'PASS: FOUR broad adaptive offices, independent Exec+Economy board review/comment, Git source and agent appointment proof'
+# The signing officers rotate and old agents may disappear. Board approvals
+# remain attributable to the officer at their action times.
+printf '%s\n' '2026-11-23T09:00:00Z	executive	exec-agent	exec-successor' \
+ '2026-11-23T09:00:00Z	economy	econ-agent	econ-successor' >> "$state/appointments/appointments.log"
+printf 'executive\texec-successor\neconomy\tecon-successor\njudiciary\tjud-agent\n' > "$state/appointments/appointments.tsv"
+rm "$state/economy/catalogue.json" "$state/economy/model-policy.json"
+for office in statistics foresight strategy spying; do
+ /bin/sh "$town/government/knowledge-activation-verify.sh" "$office"
+done
+echo 'PASS: rotation and unavailable discovery cannot revoke recorded authorization'
+# A later appointee cannot appropriate an earlier agent's approval.
+cp "$town/records/knowledge/activation.json" "$d/original-activation.json"
+python3 - "$town/records/knowledge/activation.json" <<'PYROTATE'
+from pathlib import Path
+import json,sys
+p=Path(sys.argv[1]);d=json.loads(p.read_text())
+d["offices"]["statistics"]["permit_attestation"]["officer_agent_id"]="exec-successor"
+p.write_text(json.dumps(d))
+PYROTATE
+git -C "$town" add records/knowledge/activation.json
+git -C "$town" commit -qm 'Negative fixture: later appointee claims earlier approval'
+if /bin/sh "$town/government/knowledge-activation-verify.sh" statistics >/dev/null 2>&1; then
+ echo 'FAIL: wrong historical appointee accepted' >&2;exit 1
+fi
+cp "$d/original-activation.json" "$town/records/knowledge/activation.json"
+git -C "$town" add records/knowledge/activation.json
+git -C "$town" commit -qm 'Restore real historical attribution'
+
 # Act34 requires enforcement evidence and the digest on EACH permit. Remove
 # them from a source-committed permit and update its activation hash; the gate
 # must still refuse before the institutional-attestation stage.
@@ -203,12 +242,12 @@ if /bin/sh "$town/government/knowledge-activation-verify.sh" statistics >/dev/nu
 fi
 cp "$d/review-good.json" "$state/board/executive-test-issue.json"
 # A bogus paid provider whose model id ENDS in -free is NEVER free.
-cp "$state/economy/model-policy.json" "$d/policy-good.json"
-echo '{"prefer":["provider/paid-free"]}' > "$state/economy/model-policy.json"
+cp "$d/global/antonina/config.json" "$d/policy-good.json"
+echo '{"models":[{"model":"provider/paid-free","comment":"fixture","variant":"low"}]}' > "$d/global/antonina/config.json"
 if /bin/sh "$town/government/knowledge-activation-verify.sh" statistics >/dev/null 2>&1; then
  echo 'FAIL: billable provider with -free-looking id accepted' >&2;exit 1
 fi
-cp "$d/policy-good.json" "$state/economy/model-policy.json"
+cp "$d/policy-good.json" "$d/global/antonina/config.json"
 # Mutated uncommitted activation cannot grant authority.
 python3 - "$town/records/knowledge/activation.json" <<'PY'
 from pathlib import Path
