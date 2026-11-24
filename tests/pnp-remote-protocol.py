@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from missions.pnp import config
 from missions.pnp.remote import protocol as p
 from missions.pnp.remote.spool import Spool
+from missions.pnp.remote import runner
 
 GAP = {"id":"L-meta-1", "file":"lean/PEqualNP/Meta/T.lean",
        "module":"PEqualNP.Meta.T","statement":"True","imports":[]}
@@ -65,6 +66,36 @@ class Tests(unittest.TestCase):
             s.cancel(ident)
             self.assertEqual(s.run_one(ident,runner,lambda:0),"obsolete")
             self.assertEqual(s.poll(ident)["status"],"obsolete")
+    def test_runner_pins_and_isolation(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            tool=root/"toolchain";(tool/"bin").mkdir(parents=True)
+            (tool/"bin/lean").touch()
+            lib=root/"lib";lib.mkdir()
+            m=root/"manifest.json"
+            cache={"base":"c"*40,"toolchain":config.LEAN_TOOLCHAIN,
+                   "image":"sha256:"+"a"*64,"toolchain_root":str(tool),
+                   "libraries":[str(lib)]}
+            m.write_text(json.dumps(cache));m.chmod(0o600)
+            self.assertEqual(runner.manifest(m),cache)
+            a=runner.command(cache,job(),root/"input.lean","test-name")
+            for flag in ("--network=none","--read-only","--cap-drop=all",
+                         "--pull=never","--http-proxy=false","--env-host=false",
+                         "--log-driver=none","--security-opt=no-new-privileges"):
+                self.assertIn(flag,a)
+            self.assertIn(str(lib)+":/deps/0:ro",a)
+            self.assertIn("8192m",a)
+            self.assertIn("600",a)
+            self.assertNotIn(str(Path.home())+":/root",a)
+            with self.assertRaises(ValueError):
+                runner.command(cache,dict(job(),base="d"*40),root/"input.lean","test")
+            m.chmod(0o666)
+            with self.assertRaises(ValueError):
+                runner.manifest(m)
+    def test_runner_obsolete_without_execution(self):
+        out=runner.run({},job(),SOURCE,lambda: True)
+        self.assertEqual(out["status"],"obsolete")
+        self.assertIsNone(out["exit_code"])
     def test_retryable_and_private(self):
         with tempfile.TemporaryDirectory() as d:
             s=Spool(Path(d)/"private");j=job();ident=s.submit(p.canonical(j))

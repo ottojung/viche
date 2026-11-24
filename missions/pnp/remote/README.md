@@ -27,3 +27,23 @@ replay and retention leakage. Host provisioning remains an operator task.
 The output status `elaborated` is diagnostic evidence only: it cannot set a
 gap to ACCEPTED, substitute for the upstream checker, or bypass the existing
 publication state machine. Infrastructure/resource errors remain retryable.
+
+## Operator-only isolated worker
+
+The optional local command `python3 -m missions.pnp.remote.runner --manifest
+MANIFEST --spool PRIVATE_DIR DIGEST` runs one already-staged request. It
+does not create a network service or transfer a bundle. Its operator-owned
+JSON manifest pins `base` (40-hex Git SHA), `toolchain`, `image` (local
+sha256 image ID), `toolchain_root` (absolute directory containing bin/lean),
+and `libraries` (ordered absolute compiled library directories matching the
+pinned checkout). These are trusted inputs, never supplied by the job.
+The operator must independently build and freeze the cache and verify its
+provenance before enabling the runner. Container mounts are read-only but
+do not prevent host processes from changing a cache.
+
+The rootless Podman command disallows pulls, networking, host environment and
+proxy inheritance, writable root filesystem and additional capabilities;
+mounts only the pinned toolchain, libraries, and one candidate; applies
+memory, CPU, PID and wall limits; caps captured diagnostics; and removes
+the private job container on cancellation or exit. It does not grant
+publication authority. No production worker or transport is installed.
