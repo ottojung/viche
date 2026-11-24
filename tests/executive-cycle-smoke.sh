@@ -12,7 +12,7 @@ cp "$repo/government/eligible-work.py" "$scratch/town/government/eligible-work.p
 mkdir -p "$scratch/town/missions/soringp1"
 cp "$repo/missions/soringp1/frontier-status.py" "$scratch/town/missions/soringp1/frontier-status.py"
 cp "$repo/missions/soringp1/mandate.md" "$scratch/town/missions/soringp1/mandate.md"
-cp "$repo/missions/soringp1/status.sh" "$scratch/town/missions/soringp1/status.sh"
+cp "$repo/missions/soringp1/status.manual.sh" "$scratch/town/missions/soringp1/status.sh"
 printf '{"fronts":[{"id":"completed-front","status":"investigated"}],"curator":{"exit_state":"clearexit","added":0,"last_finished_at":1000}}\n' > "$scratch/frontier.json"
 cp "$repo/government/handoff-queue.sh" "$scratch/town/government/handoff-queue.sh"
 cp "$repo/government/predict-scorer.py" "$scratch/town/government/predict-scorer.py"

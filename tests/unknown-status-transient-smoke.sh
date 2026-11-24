@@ -19,7 +19,7 @@ cp "$repo/government/appointments.sh" "$repo/government/branch-bootstrap.sh" \
 mkdir -p "$d/town/missions/soringp1"
 cp "$repo/missions/soringp1/frontier-status.py" "$d/town/missions/soringp1/frontier-status.py"
 cp "$repo/missions/soringp1/mandate.md" "$d/town/missions/soringp1/mandate.md"
-cp "$repo/missions/soringp1/status.sh" "$d/town/missions/soringp1/status.sh"
+cp "$repo/missions/soringp1/status.manual.sh" "$d/town/missions/soringp1/status.sh"
 git -C "$d/town" init -q
 git -C "$d/town" -c user.name=test -c user.email=test@example.test commit --allow-empty -qm town
 git -C "$d/town" update-ref refs/remotes/origin/main HEAD
