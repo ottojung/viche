@@ -110,10 +110,12 @@ for attempt in 1 2 3 4 5 6 7 8; do
   sleep 1
 done
 [ "$held" = yes ] || { echo 'Failed termination released or stranded reservation' >&2; exit 1; }
-jq -e '.state=="held" and .charge.tokens_total==150 and
+# The failed stop must retain the cap AND the 185-token overrun already
+# observed on the meter; entering held may never erase measured debt.
+jq -e '.state=="held" and .charge.tokens_total>=185 and
         .held_reason=="agent_still_active_or_unknown_after_stop"' \
         "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r2.json" >/dev/null || {
-  echo 'Failed stop did not retain full reservation' >&2; exit 1;
+  echo 'Failed stop did not retain full reservation and observed overrun' >&2; exit 1;
 }
 if /bin/sh "$engine" reserve statistics agent-3 >/dev/null 2>&1; then
   echo 'Another agent was admitted over still-running held session' >&2; exit 1
