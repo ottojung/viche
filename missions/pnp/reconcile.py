@@ -20,7 +20,10 @@ def current_verdict(comments, sha, resolve_repo=None):
     resolve_repo = resolve_repo or github.repository_id
     verdicts = []
     for comment in comments:
-        if comment.get("author_id") != config.CHECKER_ID:
+        legacy = comment.get("author_id") == config.CHECKER_ID
+        intake = (comment.get("author_id") == config.CHECKER_INTAKE_BOT_ID
+                  and comment.get("app_id") == config.CHECKER_INTAKE_APP_ID)
+        if not (legacy or intake):
             continue
         body = comment.get("body") or ""
         match = VERDICT.search(body)
@@ -152,6 +155,17 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     if number:
         number = int(number)
         pr = gh.get_pr(number)
+        # Revalidate the durable PR reference on every reconciliation. A gap
+        # may have many competing submissions; neither title nor a matching
+        # SHA alone identifies our contribution.
+        if (pr.get("author_id") != config.CONTRIBUTOR_ID
+                or pr.get("head_repo_id") != config.FORK_ID
+                or pr.get("base_repo_id") != config.UPSTREAM_ID
+                or pr.get("base_ref") != config.BASE_REF
+                or pr.get("head_ref") != branch
+                or pr.get("title") != gap_id):
+            state.update(gap_id, failure_reason="reconcile: PR identity mismatch")
+            return {"gap": gap_id, "result": "invalid-pr", "state": rec["state"]}
         if rec["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED") and pr.get("head_sha") == rec.get("commit_sha"):
             validated, problems = gh.validate_created(number, rec["commit_sha"], rec["path"],
                 expected_commits=rec.get("expected_commits") or [rec["commit_sha"]])
