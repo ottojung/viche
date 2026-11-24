@@ -84,6 +84,8 @@ def record(name):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("file", type=Path, nargs="?")
+    p.add_argument("--wait", metavar="ID", help="retrieve a submitted Lean check; exit reflects elaboration")
+    p.add_argument("--timeout", type=int, default=1100, help="maximum wait in seconds for --wait")
     p.add_argument("--availability", action="store_true", help="report current checkout's remote availability and queue")
     p.add_argument("--scratch", action="store_true", help="check an intermediate Lean file (not a complete proof)")
     p.add_argument("--async", dest="asynchronous", action="store_true")
@@ -92,6 +94,15 @@ def main():
     a = p.parse_args()
     sys.path.insert(0,str(ROOT))
     try:
+        if a.wait:
+            proc=subprocess.run([RELAY,"wait",a.wait,str(a.timeout)],stdout=subprocess.PIPE)
+            if proc.returncode:
+                sys.stdout.buffer.write(proc.stdout)
+                return proc.returncode
+            receipt=json.loads(proc.stdout)
+            result=receipt["result"]
+            print(json.dumps(result,ensure_ascii=False))
+            return 0 if result["status"]=="elaborated" and result["exit_code"]==0 else 1
         binding=current()
         status=availability(binding[2])
         if a.availability:
@@ -99,7 +110,7 @@ def main():
             record("remote-availability")
             return 0 if status.get("base_available") else 1
         if a.file is None:
-            p.error("FILE required (or --availability)")
+            p.error("FILE required (or --availability / --wait)")
         if not status.get("base_available"):
             p.exit(1, "Remote service or exact base unavailable; use local Lean.\n")
         protocol=load_protocol()

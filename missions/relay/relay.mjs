@@ -323,7 +323,10 @@ async function main(){
   if(arg){
    if(!/^[0-9a-f]{40}$/.test(arg))throw Error('status base must be a 40-hex SHA');
    summary.base=arg;summary.base_available=delta!==null&&delta>=-120&&delta<=180&&(r.capabilities?.lean_bases||[]).includes(arg);
-   summary.queue=r.entries.filter(e=>['ack','running'].includes(e.state)).length;
+   summary.running=r.entries.filter(e=>e.state==='running').length;
+   summary.queued=r.entries.filter(e=>e.state==='ack').length;
+   summary.queue=summary.running+summary.queued;
+   summary.parallel=r.capabilities?.max_parallel_lean||1;
   }else summary.capabilities=r.capabilities||null;
   console.log(JSON.stringify(summary));return 0;
  }

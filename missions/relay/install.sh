@@ -22,3 +22,18 @@ exec "$HOME/.local/bin/python3" "$HOME/.local/share/viche/relay/pnp-remote-check
 EOF
 chmod 700 "$HOME/.local/bin/pnp-remote-check.tmp"
 mv "$HOME/.local/bin/pnp-remote-check.tmp" "$HOME/.local/bin/pnp-remote-check"
+# On billy-dev install the Executive role-dispatch entry point as well.
+if [ -f "$src/../pnp/role_prompt.py" ]; then
+  cp "$src/../pnp/role_prompt.py" "$dest/role_prompt.py.tmp"
+  chmod 600 "$dest/role_prompt.py.tmp"
+  mv "$dest/role_prompt.py.tmp" "$dest/role_prompt.py"
+  cat > "$HOME/.local/bin/pnp-role-dispatch.tmp" <<'EOF'
+#!/bin/sh
+if [ -f /var/lib/lubko/wd/viche/missions/pnp/role_prompt.py ]; then
+  exec "$HOME/.local/bin/python3" /var/lib/lubko/wd/viche/missions/pnp/role_prompt.py "$@"
+fi
+exec "$HOME/.local/bin/python3" "$HOME/.local/share/viche/relay/role_prompt.py" "$@"
+EOF
+  chmod 700 "$HOME/.local/bin/pnp-role-dispatch.tmp"
+  mv "$HOME/.local/bin/pnp-role-dispatch.tmp" "$HOME/.local/bin/pnp-role-dispatch"
+fi

@@ -63,8 +63,8 @@ def instructions(role):
             f"Remote Lean: run {RELAY} --availability once for this checkout. "
             f"If available, use {RELAY} --async FILE.lean for a complete candidate or "
             f"{RELAY} --scratch --async FILE.lean for an intermediate Lean check; "
-            "continue mathematics while it runs, then ~/.local/bin/marceline-request wait ID 1100. "
-            "Read nested result.status and diagnostics. Use local managed Lean for small checks or unavailable/busy remote; "
+            "continue mathematics while it runs, then ~/.local/bin/pnp-remote-check --wait ID. "
+            "Read compiler status and diagnostics. Use local managed Lean for small checks or unavailable/busy remote; "
             "do not run the same build twice. Remote elaboration is not upstream acceptance and never delays submit."
         )
     return text

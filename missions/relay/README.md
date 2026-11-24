@@ -36,12 +36,11 @@ pnp-remote-check --availability
 pnp-remote-check path/to/candidate.lean
 pnp-remote-check --async path/to/candidate.lean
 pnp-remote-check --scratch --async path/to/Scratch.lean
-marceline-request wait REQUEST_ID 1100
+pnp-remote-check --wait REQUEST_ID
 ```
 
 The helper checks your immutable live assignment, packs the exact source and
-checks the advertised pinned base before transmitting anything. Use --scratch for intermediate files, including unfinished proofs; scratch success is not proof acceptance. A blocking
-check exits 0 only for successful elaboration. Async submission exits 0
+checks the advertised pinned base before transmitting anything. Use --scratch for intermediate files, including unfinished proofs; scratch success is not proof acceptance. A blocking check or --wait exits 0 only for successful elaboration; --wait prints the compiler result directly. Async submission exits 0
 when queued. If the packer or matching cache is unavailable, use the local
 managed compiler; never wait for remote infrastructure before publishing a
 complete candidate.
@@ -55,7 +54,7 @@ marceline-dev.
 
 ```sh
 marceline-request submit lean-check /private/path/JOB.request
-marceline-request wait REQUEST_ID 1100
+pnp-remote-check --wait REQUEST_ID
 # or blocking:
 marceline-request lean-check /private/path/JOB.request
 ```
