@@ -68,17 +68,25 @@ with tempfile.TemporaryDirectory() as tmp:
                 "agents":[{"id":str(i),"title":"Viche P vs NP: proof",
                            "state":"running"} for i in range(n)],
                 "unreadable":[]}),stderr="")
-    with patch.object(status.subprocess, "run", return_value=roster(3)):
-        full = status.snapshot()
-    with patch.object(status.subprocess, "run", return_value=roster(0)):
-        empty = status.snapshot()
+    with patch.object(status, "STATE", Path(tmp)), \
+         patch.object(status.frontier, "load", return_value={
+             "complete": True, "ordinary": 0, "offerable": 0, "gaps": {}}), \
+         patch.object(status.focus, "current", return_value=None), \
+         patch.object(status.support, "targets", return_value=[]), \
+         patch.object(status.frontier.build_control, "busy", return_value=False), \
+         patch.object(status.frontier.build_control, "legacy_compilers", return_value=[]), \
+         patch.object(status.frontier.build_control, "headroom", return_value=0):
+        with patch.object(status.subprocess, "run", return_value=roster(3)):
+            full = status.snapshot()
+        with patch.object(status.subprocess, "run", return_value=roster(0)):
+            empty = status.snapshot()
+        with patch.object(status.subprocess, "run",
+                          side_effect=FileNotFoundError("antonina")):
+            unknown = status.snapshot()
     assert full["workers"]["count"] == 3
     assert empty["workers"]["count"] == 0
     assert full["dispatch_signal"] != empty["dispatch_signal"]
-    assert "restore multiple" in empty["action"]
-    with patch.object(status.subprocess, "run",
-                      side_effect=FileNotFoundError("antonina")):
-        unknown = status.snapshot()
+    assert empty["action"].startswith("Executive")
     assert unknown["workers"]["count"] is None
     assert unknown["workers"]["coverage"] == "unavailable"
     assert unknown["dispatch_signal"] != empty["dispatch_signal"]
