@@ -159,11 +159,11 @@ def validate(gap, candidate_bytes):
             break
         seen_imports.append(m.group(1))
         n += 1
-    if not seen_imports or seen_imports[0] != "Mathlib":
-        _reject("first import must be Mathlib")
+    if not seen_imports:
+        _reject("at least one allowed import is required")
     allowed_imports = {"Mathlib"} | set(imports)
     for imp in seen_imports:
-        if imp not in allowed_imports:
+        if imp not in allowed_imports and not re.fullmatch(r"Mathlib(?:\.[A-Za-z][A-Za-z0-9_]*)+", imp):
             _reject("unapproved import: " + imp)
     rest = "\n".join(lines[n:])
     if re.search(r"(?<![\w.])import\b", rest):
@@ -179,17 +179,48 @@ def validate(gap, candidate_bytes):
     if tokens(m.group(1)) != tokens(statement):
         _reject("theorem statement differs from the posted statement")
 
-    # Helpers must live in a namespace derived from the module; no stray
-    # declarations outside it, and the theorem must be last.
-    namespaces = re.findall(r"(?m)^namespace\s+([A-Za-z0-9_.]+)\s*$", code)
-    for ns in namespaces:
-        if not (ns == module or ns == module + "_aux" or
-                ns.startswith(module + ".")):
-            _reject("helper namespace is not derived from the module")
-    if namespaces:
-        if not re.search(r"(?m)^end\s+" + re.escape(module) +
-                         r"(?:_aux|\.[A-Za-z0-9_.]+)?\s*$", code):
-            _reject("namespace is not closed with its name")
+    # Upstream permits relative nested namespaces, but the root must
+    # belong to the module. Lean namespace names are relative, so forcing
+    # every nested name to be fully qualified duplicates the root.
+    stack = []
+    seen_theorem = False
+    own = lambda ns: (ns == module or ns.startswith(module + ".")
+                     or ns == module + "_aux" or ns.startswith(module + "_aux."))
+    for line in lines[n:]:
+        if not line.strip():
+            continue
+        if seen_theorem:
+            if re.match(r"^\s*(namespace|section|end|mutual)\b", line):
+                _reject("scope command after theorem")
+            continue
+        scope = re.match(r"^(namespace|section|end|mutual)(?:[ \t]+([A-Za-z_][A-Za-z0-9_.]*))?[ \t]*$", line)
+        if scope:
+            kind, name = scope.groups()
+            if kind == "namespace":
+                if not name or name.startswith("_root_") or (not stack and not own(name)):
+                    _reject("helper namespace is not derived from the module")
+                stack.append((kind, name))
+            elif kind in ("section", "mutual"):
+                if not stack or (kind == "mutual" and name):
+                    _reject("scope outside helper namespace")
+                stack.append((kind, name))
+            else:
+                if not stack or stack[-1][1] != name:
+                    _reject("scope end does not match")
+                stack.pop()
+            continue
+        if re.match(r"^\s*(namespace|section|end|mutual)\b",line):
+            _reject("scope commands must stand alone at column zero")
+        if stack:
+            continue
+        if re.match(r"^theorem\s+" + re.escape(module) + r"\s*:",line):
+            seen_theorem = True
+            continue
+        if line.startswith("open ") or SET_OPTION.fullmatch(line):
+            continue
+        _reject("declaration or command outside helper namespace")
+    if stack or not seen_theorem:
+        _reject("unclosed helper scope or theorem not at top level")
     tail = code[m.end():]
     if re.search(r"(?<![\w.])(lemma|theorem|def|abbrev|axiom|namespace)\b",
                  tail):

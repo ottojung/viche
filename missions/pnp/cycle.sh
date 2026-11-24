@@ -22,6 +22,10 @@ nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/suppo
 nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.lock" \
     timeout 25 python3 -m missions.pnp.brief --refresh \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.log" 2>&1 &
+# Independent cheap generators do not wait for a model or the compiler.
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof-preflight.lock" \
+    timeout 30 python3 -m missions.pnp.preflight --scan \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof-preflight.log" 2>&1 &
 # Renew leases and recover queued publications before the optional score poll.
 python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile

@@ -98,6 +98,8 @@ def main():
     if ns.refresh:
         print(json.dumps(refresh()))
         return
+    from . import tools
+    tools.record("brief")
     gap,lease=assignment.resolve()
     rec=state.load(gap)
     if not support.active(rec) or rec["lease"]!=lease:
