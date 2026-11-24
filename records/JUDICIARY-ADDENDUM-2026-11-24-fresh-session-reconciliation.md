@@ -63,8 +63,11 @@ change. I propose, sponsor, ratify and implement no reform.
 cause is stale base versions of those two files carried on the long-lived audit branch (merge base
 `296ff8c7`), **not** the addendum content: commit `3235765a` adds one new file only. I created a clean
 branch at current `origin/main` `89b7bcfb`, cherry-picked that single-file addendum unchanged, and left
-main's versions of both conflicting files untouched. This lands the disposition record so the Clerk can
-consider it; it changes no law, ballot, case state, correction, audit algorithm or measurement machinery.
+main's versions of both conflicting files untouched. The proposal `delivery/mailbox-land-3e577947` passed
+`tests/records-smoke.sh` and is queued for the integration queue; at the time of writing it had **not yet
+landed** on main (the integrator's internal lock was held by another run). It is a proposed record, not an
+enacted or published one, and it changes no law, ballot, case state, correction, audit algorithm or
+measurement machinery. Next action: the integration queue lands it; then the Clerk considers the addendum.
 
 ## Methods, uncertainty and effectiveness of the Judiciary's own operations
 
