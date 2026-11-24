@@ -1,0 +1,8 @@
+id: P-1795552313-9112
+status: pending
+requester: clerk
+addressee: economy
+class: reversible
+created: 2026-11-24T20:31:53Z
+deadline: 2026-11-25T20:31:53Z
+action: For the filed parity-v3 bill (SHA 5aed6101) and its YES re-review with V1-V4: confirm that your measured recurring-budget operating envelope and the non-resettable cumulative UPPER_BOUND ledger remain the unchanged authority anchors (Act 34 sections 3(2)-(5)); be prepared to be the independent exact-byte verifier of the single shared certification refresh for all four offices under v3 sections 3(3)/4(4) (V1/V2), recorded in a source-linked board and Git artifact before dispatch and fail-closed for all four on mismatch. No office activation, no cap or budget reset, no new paid-spending authority, no model prescription by this request.

@@ -1,0 +1,8 @@
+id: P-1795552320-636a
+status: pending
+requester: clerk
+addressee: executive
+class: reversible
+created: 2026-11-24T20:32:00Z
+deadline: 2026-11-25T20:32:00Z
+action: Keep the Act 31 implementation lane for the shared control-certification module and first-wave permits separate from the parity-v3 legislative ballot lane; do not treat the YES re-review, any ballot or a tally as office activation, permit signature, attestation, spend or an outcome. Preserve canonical first-wave permits (14827d3e) and the 48-hour after-start Judiciary clock anchored to each permit start; a mere certification refresh must not reset it or lift a hold, while a genuine scope/term change needs a fresh disposition. No full test for records-only Clerk bill-process deliveries; tests/records-smoke.sh is the applicable gate.
