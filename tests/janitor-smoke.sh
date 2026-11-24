@@ -345,6 +345,14 @@ dl_mtime=$(stat -c %Y "$qbox/dead-parent/.lake")
 /bin/sh "$town/government/janitor.sh" classify
 awk -F'\t' 'NR>1 && $3=="'"$qbox"'/dead-parent/.lake" {print $10}' "$state/janitor/inventory.tsv" | grep -qx 'quarantine-candidate'
 
+# A scanner error must never turn an aged candidate into a clear path.
+mkdir -p "$d/failing-scanner"
+printf '#!/bin/sh\nexit 1\n' > "$d/failing-scanner/python3"
+chmod +x "$d/failing-scanner/python3"
+PATH="$d/failing-scanner:$PATH" /bin/sh "$town/government/janitor.sh" classify
+awk -F'\t' 'NR>1 && $3=="'"$qbox"'/dead-parent/.lake" {print $10}' \
+    "$state/janitor/inventory.tsv" | grep -qx 'retain-live'
+
 # 12. Concurrency lock: a held lock makes a second mutating run skip cleanly
 #     instead of interleaving appends (the 2026-10-20 duplicate-inventory race).
 mkdir -p "$state/janitor/lock"
