@@ -1,0 +1,43 @@
+{
+  "schema": "viche-act34-judiciary-review-v1",
+  "office": "strategy",
+  "reviewer": "c1e00008",
+  "reviewed_at": 1795551268,
+  "permit_sha256": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1",
+  "permit_start": 1795544516,
+  "statutory_deadline": 1795717316,
+  "decision": "proceed",
+  "handoff": "H-1795550506-92c3",
+  "landed_commit": "14827d3eed8acb64d64f4f327d55516daa2336ad",
+  "scope": "Act 34 §4(1) independent after-start review of real output, safety and faults. This is a safety disposition, NOT an efficacy finding or a renewal verdict.",
+  "efficacy_claim": false,
+  "sources": [
+    {"path": "government/LAWS.md", "claim": "Act 34 §4(1); Act 32 §3 (no new spending or project-scope authority)."},
+    {"path": "records/knowledge/activation.json", "sha256": "677fd5483c6d4915c9621c436e9bfde8b55c914ea67cb31dbf49957fca1997cf", "claim": "permit bound by hash."},
+    {"path": "records/knowledge/permits/strategy.json", "sha256": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1", "claim": "reversible office permit, hash-bound."},
+    {"path": "government/knowledge-budget.conf", "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6", "claim": "measured caps and native meter path."},
+    {"path": "government/knowledge-free-dispatch.sh", "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a", "claim": "free-only allowlist pinned on dispatch path."},
+    {"path": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md", "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc", "claim": "Economy zero-billed control attestation; digest b5f40a2a..."},
+    {"path": "records/knowledge/outcomes/strategy-outcome-definition-20261124.md", "commit": "6d347895", "claim": "first Strategy record (delivery/strategy-outcome-definition-20261124): after-start outcome endpoint, negative controls, one advisory brief D-001; not a permit, law, budget change or outcome."},
+    {"path": "state/knowledge/budget/reservations/r1795549310-fUfef5Jf.json", "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24", "claim": "native-metered closed reservation; tokens 2,509,129, CPU 3,100.0 UPPER_BOUND, wall 773, cost 0.0."},
+    {"path": "state/knowledge/budget/aggregate.json", "sha256": "9ee7eede92678d20060839ecbaf7bd2becb5e4907aa73877a0801bce59ece595", "claim": "cumulative 45-day ledger, not reset."}
+  ],
+  "findings": {
+    "authorization": "Act 34 §2 permit present and hash-bound; knowledge-act34-gate.py strategy exits 0 (permit, Economy attestation, control hashes).",
+    "zero_billed_runtime_selection": "Free-only allowlist on exact dispatch path; native session cost 0.0. No paid spend observed or authorized.",
+    "native_metering": "opencode-service-session-v2; native session ses_df0ebb0d6ffeGmk3YfcV9o4Vl2 found; tokens absolute-session-total-upper-bound; CPU whole-host UPPER_BOUND.",
+    "cumulative_debt": "Included in the shared 45-day UPPER_BOUND ledger; not reset. D-001 documents that per_run_caps == caps blocks a second dispatch; referred to Executive/Economy.",
+    "source_boundaries": "No external source classes consumed; record explicitly excludes Post/agent-exit/commit/forecast counts as outcomes and creates no new spending, access or project scope.",
+    "actual_work": "Declares an after-start decision-brief endpoint with eligible population, do-nothing comparator, negative controls, independent numerator and resource denominator, plus one advisory brief (D-001) on the cap issue; no outcome claimed.",
+    "faults": "Reservation closed agent_terminal_clearexit with evidence preserved; no safety fault, authority spillover or billing overrun observed."
+  },
+  "referrals": [
+    "Executive/Economy: D-001 concerns per_run_caps == caps and the measured recurring envelope; Strategy only advises. I neither sign permits nor alter budget."
+  ],
+  "limitations": [
+    "Safety review only; no efficacy or marginal-value claim (Act 34 §§4(3), 5).",
+    "No outcome has been observed or independently validated; endpoint declaration is not an outcome.",
+    "Whole-host CPU is a conservative bound, not measured per-office CPU.",
+    "First record not yet on main (additive delivery branch) at review time."
+  ]
+}

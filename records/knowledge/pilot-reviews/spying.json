@@ -1,0 +1,45 @@
+{
+  "schema": "viche-act34-judiciary-review-v1",
+  "office": "spying",
+  "reviewer": "c1e00008",
+  "reviewed_at": 1795551268,
+  "permit_sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec",
+  "permit_start": 1795544516,
+  "statutory_deadline": 1795717316,
+  "decision": "hold",
+  "handoff": "H-1795550506-92c3",
+  "landed_commit": "14827d3eed8acb64d64f4f327d55516daa2336ad",
+  "scope": "Act 34 §4(1) independent after-start review of real output, safety and faults. This is a safety disposition, NOT an efficacy finding or a permanent fault verdict.",
+  "efficacy_claim": false,
+  "sources": [
+    {"path": "government/LAWS.md", "claim": "Act 34 §2(2)/(4): Spying only authorized public sources; no authority spillover."},
+    {"path": "records/knowledge/activation.json", "sha256": "677fd5483c6d4915c9621c436e9bfde8b55c914ea67cb31dbf49957fca1997cf", "claim": "permit bound by hash."},
+    {"path": "records/knowledge/permits/spying.json", "sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec", "claim": "reversible office permit, hash-bound."},
+    {"path": "government/spying_source_allowlist.py", "sha256": "56eb85634c7bd9c3108934cf8a2cc9b8b23e46771b39b6ca18f49398bbc827fb", "claim": "fail-closed source validation: exact-author Vitalik, public GitHub, authorized project sources; secret/private/injection/authority-promotion screens."},
+    {"path": "records/knowledge/spying-source-scope.json", "sha256": "7e6a774f9c876a9f7f5e0fa21e298cc37a7091c806544c352752488cfc0ba532", "claim": "one exact-author Vitalik observation, no inference promoted to authority."},
+    {"path": "government/knowledge-free-dispatch.sh", "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a", "claim": "free-only allowlist pinned on dispatch path."},
+    {"path": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md", "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc", "claim": "Economy zero-billed control attestation."},
+    {"path": "state/knowledge/budget/reservations/r1795549312-5XZhL8gg.json", "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d", "claim": "native session found, 0 tokens, CPU 1,969.39 UPPER_BOUND, wall 484, cost 0.0, closed agent_terminal_unknown."},
+    {"path": "state/knowledge/budget/aggregate.json", "sha256": "9ee7eede92678d20060839ecbaf7bd2becb5e4907aa73877a0801bce59ece595", "claim": "cumulative 45-day ledger includes this reservation; not reset."},
+    {"path": "records/handoffs/H-1795551096-c02b.txt", "claim": "reports runtime 2053b6a deployed and recovery runner state no longer falsely reports unknown."}
+  ],
+  "findings": {
+    "authorization": "Act 34 §2 permit present and hash-bound; knowledge-act34-gate.py spying exits 0 (permit, Economy attestation, control hashes, source-scope bundle present).",
+    "zero_billed_runtime_selection": "Free-only allowlist on dispatch path; native session cost 0.0 with 0 tokens. No paid spend observed or authorized.",
+    "native_metering": "opencode-service-session-v2; native session ses_df0ebaea2ffe9ktjxffgoS6DGo found (session_found true); tokens 0 from the native meter; CPU whole-host UPPER_BOUND. Zero here is a metered result, not an imputed absence.",
+    "cumulative_debt": "Reservation is charged in the shared 45-day UPPER_BOUND ledger (CPU 1,969.39s, wall 484s) and is not reset.",
+    "source_boundaries": "Live preflight spying_source_allowlist.py preflight returned ALLOW with zero reasons: one pinned exact-author Vitalik message (issue SvMHxlO6F1R6u3cQcr3lKA-repeated), one observation, no inference promoted to authorization, no secret-bearing or private source. No Spying inference log exists because no result was produced, so no publication-time source violation is observed; this is absence of evidence, not a clean audit of output.",
+    "actual_work": "No first record or result produced. Unlike the other three offices, there is no durable output to review for epistemic discipline.",
+    "faults": "Reservation closed agent_terminal_unknown after a model-recovery interruption (0 tokens). A separate Antonina status-reporting fix is reported deployed in H-1795551096-c02b (runtime 2053b6a); I did not independently verify its effect on this run and do not prejudge the failure as a substantive or source/billing fault."
+  },
+  "referrals": [
+    "Executive/Economy: re-authorize Spying only under a new permit after a real metered output is produced and the status-recovery fix is independently verified; preserve the zero-billed and source-scope controls. I neither sign permits nor alter budget."
+  ],
+  "disposition_reason": "Fail-closed, reversible HOLD: no result plus an unresolved (though likely status-related) interruption does not support continuing under the current permit; a HOLD suspends dispatch until a new permit and is not a permanent stop or a fault verdict.",
+  "limitations": [
+    "Safety review only; no efficacy claim and no conclusion that Spying is useful or permanently unsafe.",
+    "The status-fix deployment is taken from a later handoff report, not independently verified by this review.",
+    "Whole-host CPU is a conservative bound, not measured per-office CPU.",
+    "No output existed to audit for source promotion or secret leakage beyond the preflight."
+  ]
+}

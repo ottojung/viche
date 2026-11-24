@@ -1,0 +1,44 @@
+{
+  "schema": "viche-act34-judiciary-review-v1",
+  "office": "statistics",
+  "reviewer": "c1e00008",
+  "reviewed_at": 1795551268,
+  "permit_sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342",
+  "permit_start": 1795544516,
+  "statutory_deadline": 1795717316,
+  "decision": "proceed",
+  "handoff": "H-1795550506-92c3",
+  "landed_commit": "14827d3eed8acb64d64f4f327d55516daa2336ad",
+  "scope": "Act 34 §4(1) independent after-start review of real output, safety and faults. This is a safety disposition, NOT an efficacy finding or a renewal verdict.",
+  "efficacy_claim": false,
+  "sources": [
+    {"path": "government/LAWS.md", "claim": "Act 34 enacted; §4(1) 48h review and §3 tiered billing bound."},
+    {"path": "records/knowledge/activation.json", "sha256": "677fd5483c6d4915c9621c436e9bfde8b55c914ea67cb31dbf49957fca1997cf", "claim": "permit and Economy free-tier evidence bound by hash."},
+    {"path": "records/knowledge/permits/statistics.json", "sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342", "claim": "reversible office permit, hash-bound."},
+    {"path": "government/knowledge-budget.conf", "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6", "claim": "measured caps, native meter path, 45-day accounting window."},
+    {"path": "government/knowledge-free-dispatch.sh", "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a", "claim": "XDG_CONFIG_HOME pinned to free-only allowlist on the exact dispatch path."},
+    {"path": "government/knowledge-zero-billed.py", "sha256": "54c77efc3739a67c8945eb7fc4f7b379d5070ae20ee1aee6c474ad454636be92", "claim": "exact zero-price model selection verifier."},
+    {"path": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md", "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc", "claim": "Economy board-attested zero-billed control; negative-acceptance digest b5f40a2a..."},
+    {"path": "records/statistics/inquiries/act34-activation-reliability.json", "sha256": "e0e2a96e9b34f83351b1c707c757873b3bbf8810dcadbb9037e0a0f549457b6f", "commit": "7dbfcdc0275e57c08df0edd8bd18f34dc8506c41", "claim": "first Statistics record: byte-level chain consistency, negative controls, no value claim."},
+    {"path": "state/knowledge/budget/reservations/r1795549284-UbpN96al.json", "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12", "claim": "native-metered closed reservation; tokens 3,257,367, CPU 3,549.29 UPPER_BOUND, wall 871, cost 0.0."},
+    {"path": "state/knowledge/budget/aggregate.json", "sha256": "9ee7eede92678d20060839ecbaf7bd2becb5e4907aa73877a0801bce59ece595", "claim": "cumulative 45-day ledger, charges accumulate, not reset."}
+  ],
+  "findings": {
+    "authorization": "Act 34 §2 permit present and hash-bound to activation.json; knowledge-act34-gate.py statistics exits 0 (permit, Economy free-tier attestation and control hashes verified).",
+    "zero_billed_runtime_selection": "Free-only allowlist built from exact reviewed zero-price IDs and pinned on the dispatch path; a '-free' name is not relied upon as enforcement. Native session cost 0.0, cost_reported true. No paid spend observed or authorized.",
+    "native_metering": "opencode-service-session-v2 reading the Antonina opencode.db; native session ses_df0ebb036ffe2rOgJIHpehC8oU found; tokens absolute-session-total-upper-bound; CPU whole-host UPPER_BOUND. Not estimates or imputed zeros.",
+    "cumulative_debt": "Aggregate ledger (8,930,153 tokens / 11,779.8 CPU-s / 2,919 wall-s) accumulates over 3,888,000s and is not reset by restart or rename. per_run_caps == caps blocks a second dispatch under current bytes; referred to Executive/Economy, not altered here.",
+    "source_boundaries": "Statistics does not consume external source classes; its inquiry uses frozen canonical primary copies and names negative controls and correlated provenance.",
+    "actual_work": "One source-linked measurement of permit/config/Economy-attestation consistency with explicit missingness (cumulative usage UNKNOWN, CPU UPPER_BOUND), negative controls and a single-dispatch configuration finding; it disclaims authorization and value verdicts.",
+    "faults": "Reservation closed agent_terminal_on_reconcile with evidence preserved; no safety fault, authority spillover or billing overrun observed."
+  },
+  "referrals": [
+    "Executive/Economy: per_run_caps == caps prevents repeat dispatch; fix in the measured recurring envelope under lawful review. I neither sign permits nor alter budget."
+  ],
+  "limitations": [
+    "Safety review only; no efficacy, calibration or marginal-value claim (Act 34 §§4(3), 5).",
+    "Gate/attestation check is institutional, not cryptographic (shared UID).",
+    "Whole-host CPU is a conservative bound, not measured per-office CPU.",
+    "Snapshot is as of reviewed_at; later permit/config changes require a fresh disposition."
+  ]
+}

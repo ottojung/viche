@@ -1,0 +1,44 @@
+{
+  "schema": "viche-act34-judiciary-review-v1",
+  "office": "foresight",
+  "reviewer": "c1e00008",
+  "reviewed_at": 1795551268,
+  "permit_sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+  "permit_start": 1795544516,
+  "statutory_deadline": 1795717316,
+  "decision": "proceed",
+  "handoff": "H-1795550506-92c3",
+  "landed_commit": "14827d3eed8acb64d64f4f327d55516daa2336ad",
+  "scope": "Act 34 §4(1) independent after-start review of real output, safety and faults. This is a safety disposition, NOT an efficacy finding or a renewal verdict.",
+  "efficacy_claim": false,
+  "sources": [
+    {"path": "government/LAWS.md", "claim": "Act 34 §4(1); Act 22 ledger is the sole scoreable forecast register (Act 32 §2)."},
+    {"path": "records/knowledge/activation.json", "sha256": "677fd5483c6d4915c9621c436e9bfde8b55c914ea67cb31dbf49957fca1997cf", "claim": "permit bound by hash."},
+    {"path": "records/knowledge/permits/foresight.json", "sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8", "claim": "reversible office permit, hash-bound."},
+    {"path": "government/knowledge-budget.conf", "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6", "claim": "measured caps and native meter path."},
+    {"path": "government/knowledge-free-dispatch.sh", "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a", "claim": "free-only allowlist pinned on dispatch path."},
+    {"path": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md", "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc", "claim": "Economy zero-billed control attestation; digest b5f40a2a..."},
+    {"path": "records/foresight/2026-11-24-initial-conditional-forecasts.md", "commit": "d5862a55", "claim": "first Foresight record (delivery/foresight-initial-forecasts-20261124): three conditional Act 22 forecasts, baselines, falsifiers, rival explanations; disclaims accuracy/calibration/value."},
+    {"path": "records/predictions/ledger.json", "claim": "sole scoreable register; three hash-bound registrations at 19:53Z, verify integrity clean."},
+    {"path": "state/knowledge/budget/reservations/r1795549314-NF0T6ySo.json", "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c", "claim": "native-metered closed reservation; tokens 3,163,657, CPU 3,161.12 UPPER_BOUND, wall 791, cost 0.0."},
+    {"path": "state/knowledge/budget/aggregate.json", "sha256": "9ee7eede92678d20060839ecbaf7bd2becb5e4907aa73877a0801bce59ece595", "claim": "cumulative 45-day ledger, not reset."}
+  ],
+  "findings": {
+    "authorization": "Act 34 §2 permit present and hash-bound; knowledge-act34-gate.py foresight exits 0 (permit, Economy attestation, control hashes).",
+    "zero_billed_runtime_selection": "Free-only allowlist on exact dispatch path, exact reviewed zero-price IDs; native session cost 0.0. No paid spend observed or authorized.",
+    "native_metering": "opencode-service-session-v2; native session ses_df0ebad98ffeKQ4xQ8XMOt47cw found; tokens absolute-session-total-upper-bound; CPU whole-host UPPER_BOUND.",
+    "cumulative_debt": "Included in the shared 45-day UPPER_BOUND ledger; not reset. per_run_caps == caps blocks a second dispatch; referred to Executive/Economy.",
+    "source_boundaries": "Forecasts bind by hash to committed Act 22 ledger entries (the sole scoreable register); no parallel scoreboard; named evidence sources produced by other parties; self-reference declared.",
+    "actual_work": "Three conditional forecasts with probabilities, resolution dates, baselines, falsifiers and rival explanations; interventions recorded separately; no accuracy, calibration or usefulness claim. Record is additive and on a delivery branch, pending normal integration.",
+    "faults": "Reservation closed agent_terminal_clearexit with evidence preserved; no safety fault, authority spillover or billing overrun observed."
+  },
+  "referrals": [
+    "Executive/Economy: measured recurring envelope needed because per_run_caps == caps prevents a second dispatch; I neither sign permits nor alter budget."
+  ],
+  "limitations": [
+    "Safety review only; no efficacy/calibration/marginal-value claim (Act 34 §§4(3), 5; Act 32 amendment I).",
+    "No forecast has resolved; a registration is not an outcome.",
+    "Whole-host CPU is a conservative bound, not measured per-office CPU.",
+    "First record not yet on main (additive delivery branch) at review time."
+  ]
+}
