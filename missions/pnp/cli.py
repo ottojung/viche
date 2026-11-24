@@ -233,6 +233,13 @@ def cmd_guard(args):
         gap, lease = assignment.resolve(args.gap, args.lease)
         result = frontier.checkpoint(gap, lease)
         if result["decision"] == "continue":
+            from missions.pnp import focus
+            chosen = focus.current()
+            rec = state.load(gap)
+            if chosen and rec and focus.key(chosen) != (gap, lease) and rec["state"] in ("LEASED","RESEARCHING"):
+                result = {"decision":"wait","reason":"focus switched; preserve work and finish cooperatively",
+                          "research_focus":chosen["gap_id"]}
+        if result["decision"] == "continue":
             # Advisory only; an unavailable evidence channel must not stop work.
             try:
                 rec = state.load(gap)

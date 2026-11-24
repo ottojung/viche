@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp import allocator, assignment, cli, config, desk, focus, staff, state
+from missions.pnp import allocator, assignment, cli, config, desk, focus, portfolio, staff, state, support
 
 NOW = 10000
 
@@ -225,6 +225,78 @@ class Tests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     staff.dispatch(a["gap_id"],[("x","prove")])
             run.assert_not_called()
+
+    def portfolio_fixture(self, **fields):
+        now = time.time()
+        a = self.add(acquisition_hard=True,lease_obtained_at=now-1500,
+                     lease_expires_at=now+1200)
+        b = self.add("L-meta-2",acquisition_hard=False,lease_obtained_at=now-1500,
+                     lease_expires_at=now+1200, **fields)
+        mem = {"focus":list(focus.key(a))}
+        state.atomic_write(allocator.memory_path(), json.dumps(mem))
+        return a,b,mem
+
+    def test_portfolio_switch_parks_previous_focus_and_keeps_lease(self):
+        a,b,mem = self.portfolio_fixture()
+        self.assertEqual(len(portfolio.view()["leases"]),2)
+        decision=portfolio.submit("switch",b["gap_id"],support.attempt(b),
+                                  "checked lemma and witness","a requires new theorem; b has explicit witness",
+                                  a["gap_id"],support.attempt(a))
+        portfolio.apply_switch(mem,time.time())
+        self.assertEqual(mem["focus"],list(focus.key(b)))
+        self.assertEqual(mem["parked"],{a["gap_id"]:a["lease"]})
+        self.assertEqual(mem["last_switch"]["id"],decision["id"])
+        self.assertEqual(state.load(a["gap_id"])["state"],"LEASED")
+        d=Desk()
+        mem["observations"]={a["gap_id"]:{"lease":a["lease"],"staffed":True,"absent_since":time.time()-1000}}
+        self.assertEqual(allocator.retire(d,mem,time.time(),(set(),set())),[])
+        self.assertFalse(d.releases)
+        portfolio.apply_switch(mem,time.time())
+        self.assertEqual(mem["focus"],list(focus.key(b)))
+
+    def test_portfolio_rejects_switch_after_source_reacquired(self):
+        a,b,mem=self.portfolio_fixture()
+        portfolio.submit("switch",b["gap_id"],support.attempt(b),"lemma","b substantially easier",
+                         a["gap_id"],support.attempt(a))
+        state.transition(a["gap_id"],"STALE")
+        state.reacquire(a["gap_id"],lease="replacement",lease_expires_at=time.time()+1200)
+        portfolio.apply_switch(mem,time.time())
+        self.assertTrue(mem["last_switch"]["outcome"].startswith("obsolete"))
+        self.assertEqual(mem["focus"],list(focus.key(a)))
+
+    def test_evaluator_releases_with_other_and_refills(self):
+        a,b,mem=self.portfolio_fixture()
+        mem.update(last_null_hard=time.time(),last_null_ordinary=time.time())
+        portfolio.submit("release",b["gap_id"],support.attempt(b),"failed proof routes","requires independent major lower bound")
+        d=Desk()
+        self.assertEqual(portfolio.apply_release(d,mem,time.time()),[b["gap_id"]])
+        self.assertEqual(d.releases,[(b["lease"],"other")])
+        self.assertEqual(state.load(b["gap_id"])["state"],"RELEASED")
+        self.assertNotIn("last_null_ordinary",mem)
+        self.assertEqual(portfolio.apply_release(d,mem,time.time()),[])
+        self.assertEqual(len(d.releases),1)
+
+    def test_evaluator_protects_queued_candidate_and_hard_minimum(self):
+        a,b,mem=self.portfolio_fixture()
+        state.update(a["gap_id"],lease_obtained_at=time.time())
+        with self.assertRaises(ValueError):
+            portfolio.submit("release",a["gap_id"],support.attempt(a),"evidence","reason")
+        portfolio.submit("release",b["gap_id"],support.attempt(b),"evidence","reason")
+        state.update(b["gap_id"],state="CANDIDATE_READY",queued_lease=b["lease"])
+        d=Desk()
+        self.assertEqual(portfolio.apply_release(d,mem,time.time()),[])
+        self.assertFalse(d.releases)
+        self.assertTrue(mem["last_release"]["outcome"].startswith("obsolete"))
+
+    def test_evaluator_does_not_release_reacquired_lease(self):
+        a,b,mem=self.portfolio_fixture()
+        portfolio.submit("release",b["gap_id"],support.attempt(b),"evidence","reason")
+        state.transition(b["gap_id"],"STALE")
+        state.reacquire(b["gap_id"],lease="fresh",lease_expires_at=time.time()+1200)
+        d=Desk()
+        self.assertEqual(portfolio.apply_release(d,mem,time.time()),[])
+        self.assertFalse(d.releases)
+        self.assertEqual(state.load(b["gap_id"])["lease"],"fresh")
 
     def test_duplicate_never_churns(self):
         self.add()

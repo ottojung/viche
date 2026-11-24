@@ -10,6 +10,7 @@ from . import assignment, config, focus, gitctl, state
 from .proofs import corpus
 
 ROLES = ("knowledge", "methods", "flow")
+DECISION_ROLES = ("portfolio", "lease-evaluation")
 PREFIX = "Viche P vs NP support:"
 KINDS = (*ROLES, "checked")
 LIVE = ("LEASED", "RESEARCHING")
@@ -173,7 +174,7 @@ def roles(agent):
     title = agent.get("title") or ""
     if not isinstance(title, str) or not title.startswith(PREFIX):
         return []
-    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES))
+    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES + DECISION_ROLES))
 
 
 def main():

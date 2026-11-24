@@ -371,3 +371,44 @@ If the Executive abandons a focus, release it honestly and move to the next.
 Do not rotate simply because another promising gap arrives; never leave
 all reserves unattended until their leases expire. The automated heartbeat
 renews the whole pool.
+
+## Independent portfolio decisions (Founder priority; supersedes no-preemption)
+
+Executive must maintain two distinct useful researcher roles, independently of
+the proof swarm: `Viche P vs NP support: portfolio` and
+`Viche P vs NP support: lease-evaluation`. Use separate Antonina agents.
+Portfolio is needed with two or more held gaps; lease-evaluation with any held
+gap. When a pass finishes, replenish on new assignments or meaningful new
+mathematical evidence; avoid idle polling. Both use:
+`python3 -m missions.pnp.portfolio inspect`
+from the canonical checkout. It returns every held research lease, exact
+statement, immutable attempt, competition, remaining time and artifact paths.
+
+Portfolio researcher compares ALL held problems, including progress on the
+current focus. Study proof corpus, actual partial proofs, obstacles, remaining
+Lean work, competitor activity, and remaining lease time. Choose expected
+accepted steps per remaining resource-hour. Switch only for a substantially
+more promising concrete route, accounting for discarded progress and
+handoff cost. No switching based solely on titles, arbitrary timer, or
+ordinary/hard label. Record specific comparative arguments and evidence.
+Directly decide, without Executive approval:
+`python3 -m missions.pnp.portfolio switch NEW NEW_ATTEMPT --from-gap OLD --from-attempt OLD_ATTEMPT --reason 'comparative mathematical argument' --evidence 'artifact paths or exact checked lemmas'`
+If the current focus is better, keep it and deliver useful findings instead.
+A switch parks the old lease without releasing it, and Executive promptly
+moves the proof swarm to the new focus, preserving artifacts. Do not launch
+agents yourself.
+
+Lease evaluator independently investigates the least promising held problems.
+Develop actual confidence: inspect exact claim, previous attempts and useful
+reductions, identify why plausible routes fail or require major new results,
+weigh expected yield and replacement opportunity. Consider progress by the
+active proof swarm before abandoning its focus. A difficult label, age or
+one unsuccessful tactic is insufficient. If a lease is genuinely not worth
+holding, directly decide:
+`python3 -m missions.pnp.portfolio release GAP ATTEMPT --reason 'specific mathematical obstacles and opportunity cost' --evidence 'checked lemmas, failed route artifacts or reproducible experiments'`
+The allocator executes the documented reason other, preserves artifacts,
+protects queued/publishing candidates, honors hard-step minimum holding time,
+and refills the slot. No additional review or approval. Never release
+merely because a reserve is unstaffed. Both evaluators finish their passes
+rather than manufacturing activity. The Executive alone staffs and retires
+agents, and immediately obeys a valid focus decision.

@@ -7,7 +7,7 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, config, desk, frontier, focus, jobs, state, status
+from . import assignment, cli, config, desk, frontier, focus, jobs, state, status, portfolio
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120
@@ -128,6 +128,9 @@ def retire(d, mem, now, roster):
         gap, lease = rec["gap_id"], rec["lease"]
         if rec["state"] not in ("LEASED", "RESEARCHING"):
             continue
+        # An intentionally parked former focus is a reserve, not abandoned.
+        if mem.get("parked", {}).get(gap) == lease:
+            continue
         old = observations.get(gap, {})
         if old.get("lease") != lease:
             old = {"lease": lease}
@@ -209,7 +212,15 @@ def tick(d=None, now=None):
     mem["observed_at"] = now
     try:
         roster = bound_roster()
-        released = retire(d, mem, now, roster)
+        portfolio.apply_switch(mem, now)
+        released = portfolio.apply_release(d, mem, now)
+        released.extend(retire(d, mem, now, roster))
+        # Make a focus decision visible before potentially slow desk I/O.
+        selected = focus.choose([state.load(g) for g in state.all_gaps()], mem.get("focus"), roster[0] if roster else (), time.time())
+        mem["focus"] = list(focus.key(selected)) if selected else None
+        if selected:
+            mem.setdefault("parked", {}).pop(selected["gap_id"], None)
+        state.atomic_write(memory_path(), json.dumps(mem, sort_keys=True)+"\n")
         if released:
             print("released abandoned", released, flush=True)
         # Read the cheap snapshot ourselves, independent of slow Executive.
@@ -224,6 +235,8 @@ def tick(d=None, now=None):
         records = cli.held_records()
         selected = focus.choose([state.load(g) for g in state.all_gaps()], mem.get("focus"), roster[0] if roster else (), now)
         mem["focus"] = list(focus.key(selected)) if selected else None
+        if selected:
+            mem.setdefault("parked", {}).pop(selected["gap_id"], None)
         return {"released": released, "acquired": acquired,
                 "held": len(records), "focus": selected["gap_id"] if selected else None}
     finally:

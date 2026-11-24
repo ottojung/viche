@@ -124,7 +124,17 @@ def snapshot():
     scouts = w.pop("support", [])
     covered = {role for agent in scouts for role in agent["roles"]}
     useful = bool(active or corrections or w["count"] or ordinary or observed.get("offerable"))
-    missing_support = sorted(set(support.ROLES) - covered) if useful and w["coverage"] == "complete" else []
+    needed = set(support.ROLES) if useful else set()
+    if active:
+        needed.add("lease-evaluation")
+    if len(active) > 1:
+        needed.add("portfolio")
+    missing_support = sorted(needed - covered) if w["coverage"] == "complete" else []
+    try:
+        memory = json.loads((STATE / "pnp/allocator.json").read_text())
+        decisions = {k: memory.get("last_"+k) for k in ("switch","release")}
+    except (OSError, ValueError, AttributeError):
+        decisions = {}
     findings = []
     for target in support.targets():
         findings.extend(a for a in target["advice"] if a.get("coordinate"))
@@ -145,6 +155,7 @@ def snapshot():
         "leaderboard": score, "workers": w,
         "research_support": {"agents": scouts, "coverage_missing": missing_support,
                              "coordination_findings": findings,
+                             "portfolio_decisions": decisions,
                              "action": "Executive owns staffing and material steering; support findings are advisory and arrive directly in worker guards."},
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
@@ -194,7 +205,8 @@ def snapshot():
             "corrections": corrections, "unstaffed": unstaffed,
             "support": sorted((str(a["id"]), ",".join(a["roles"])) for a in scouts),
             "missing_support": missing_support,
-            "support_findings": sorted(a["id"] for a in findings), "obsolete_workers": sorted(stale_workers),
+            "support_findings": sorted(a["id"] for a in findings),
+            "portfolio_decisions": {k: v.get("id") for k,v in decisions.items() if isinstance(v,dict)}, "obsolete_workers": sorted(stale_workers),
             "unbound": sorted(str(a["id"]) for a in w["agents"] if not a["bound"])},
         "caveat": "Only public checked steps count; local activity is not proof."}
 
