@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from .. import assignment, state
-from . import corpus, circuit, synthesis, search, fragments
+from . import corpus, circuit, synthesis, search, fragments, rows, bank
 
 
 def main():
@@ -24,12 +24,39 @@ def main():
     sat.add_argument("specification", type=Path)
     sat.add_argument("--seconds", type=float, default=30)
     sat.add_argument("--checkpoint", type=Path)
+    rv = sub.add_parser("rows", help="verify multi-output explicit-row circuit")
+    rv.add_argument("specification",type=Path)
+    rv.add_argument("witness",type=Path)
+    rs = sub.add_parser("row-search",help="bounded multi-output explicit-row SAT/CEGIS")
+    rs.add_argument("specification",type=Path)
+    rs.add_argument("--seconds",type=float,default=30)
+    rs.add_argument("--checkpoint",type=Path)
+    bk = sub.add_parser("bank",help="generate exact monotone bipartite neighborhood-bank row constraints")
+    bk.add_argument("specification",type=Path)
+    bk.add_argument("--output",type=Path)
     share = sub.add_parser("share", help="snapshot a reusable Lean source for peers")
     share.add_argument("file",type=Path)
     share.add_argument("--message",required=True)
     listing = sub.add_parser("fragments")
     listing.add_argument("--all-attempts",action="store_true")
     args = p.parse_args()
+    from .. import tools
+    tools.record("proofs-"+args.command)
+    if args.command in ("rows","row-search","bank"):
+        try:
+            raw=json.loads(args.specification.read_text())
+            if args.command=="rows":
+                result=rows.verify(raw,json.loads(args.witness.read_text()))
+            elif args.command=="row-search":
+                result=rows.solve(raw,args.seconds,args.checkpoint)
+            else:
+                result=bank.generate(raw)
+                if args.output:
+                    with args.output.open("x") as f:json.dump(result,f,indent=2)
+        except (OSError,ValueError) as exc:
+            p.error(str(exc))
+        print(json.dumps(result,ensure_ascii=False,indent=2))
+        return
     if args.command in ("share","fragments"):
         try:
             result = (fragments.share(args.file,args.message) if args.command=="share"

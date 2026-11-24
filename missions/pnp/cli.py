@@ -260,6 +260,20 @@ def cmd_guard(args):
                 pass
     except (OSError, ValueError) as exc:
         result = {"decision": "wait", "reason": str(exc)}
+    if result.get("decision") == "continue":
+        try:
+            from missions.pnp import tools, preflight
+            # Keep the guard compact, with an explicit current discovery command.
+            snap = tools.snapshot()
+            result["research_tools"] = {"revision":snap["revision"],"command":snap["command"],
+                "instruction":"Inspect current inventory when unfamiliar or revised; use relevant capabilities before redundant manual work."}
+            rec = state.load(gap)
+            if rec and rec.get("lease")==lease:
+                generated = preflight.read(rec)
+                if generated:
+                    result["automatic_proof_preflight"] = generated
+        except (OSError,ValueError,TypeError,KeyError):
+            pass
     _printer(result)
     return 0
 

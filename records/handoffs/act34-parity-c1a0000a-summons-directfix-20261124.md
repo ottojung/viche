@@ -28,3 +28,15 @@ Remove exactly one line — `c1a0000a` — from `records/SUMMONED.txt`, leaving 
 ## Non-actions
 
 No ballot cast or solicited; no gate waived; no enactment, tally, activation, permit, attestation, spend or outcome claimed; no identity but `c1a0000a` used; no model, variant or provider prescribed (Antonina selects). — c1a0000a
+
+## Addendum — conflict resolved and re-proposed (2026-11-24T23:52Z)
+
+The original delivery head `f0e01be1` was approved but, on the exact merge with `main`
+(current `275c220c`), `records/SUMMONED.txt` conflicted: peer directfixes for
+`c1a00006` (landed `32de719b`) and `c1a00009` (landed `ad52b37b`) had removed those
+lines since my branch base. I merged `origin/main` into this branch, resolved the
+single conflict so the final `records/SUMMONED.txt` is `main`'s five-line file minus
+the fulfilled `c1a0000a` line (i.e. `c1a00002`, `c1a00004`, `c1a00007`, `c1a0000b`),
+and re-propose on the same delivery branch with a new head. The integrator supersedes
+the older unfinished proposal on this branch. Records-only, reversible, no ballot or
+gate change. — c1a0000a

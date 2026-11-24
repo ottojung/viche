@@ -1,0 +1,160 @@
+"""Live research capability discovery. Advisory, never an admission gate."""
+import argparse
+import hashlib
+import importlib.util
+import json
+import re
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+PREFIX = "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp."
+
+
+def present(path):
+    return (ROOT / path).is_file()
+
+
+def inventory():
+    # Only advertise capabilities whose implementation exists at this revision.
+    rows = []
+    def add(path, use, purpose, when):
+        if present(path):
+            rows.append({"command": PREFIX + use, "purpose": purpose, "when": when})
+    add("brief.py", "brief", "Exact leased statement, original sketch, parent cuts and siblings",
+        "At entry; before independent mathematics.")
+    add("proofs/__main__.py", "proofs find [QUERY]", "Retrieve checked analogous proofs and structural hints",
+        "Before proving a lemma from scratch; inspect source, not just scores.")
+    add("proofs/__main__.py", "proofs source MODULE", "Retrieve checked source text",
+        "For a plausible related proof; verify hypotheses and permitted imports.")
+    add("proofs/circuit.py", "proofs circuit --output NEW.lean", "Validate prescribed finite circuit and emit candidate",
+        "Explicit circuit or finite truth-table claim.")
+    add("proofs/synthesis.py", "proofs synthesize --output NEW.lean", "Generate small graph-edge monotone circuits",
+        "Existential circuit construction; exact star cover when integrated.")
+    add("proofs/search.py", "proofs search SPEC.json --seconds 60 --checkpoint ROWS.json",
+        "Bounded SAT/CEGIS with full independent witness checks",
+        "Finite gate-budget or truth-table problem; UNSAT is not a Lean refutation.")
+    add("proofs/rows.py", "proofs rows SPEC.json WITNESS.json",
+        "Independent bitset verification of multi-output specified rows and disjunctive constraints",
+        "Large-input finite witness with prescribed rows; full correctness requires a proved row reduction.")
+    add("proofs/rows.py", "proofs row-search SPEC.json --seconds 60 --checkpoint ROWS.json",
+        "Bounded SAT/CEGIS for 64 inputs, 96 gates, multiple outputs and existential row groups",
+        "Specified finite positive/negative rows; UNSAT is encoding evidence, not a Lean verdict.")
+    add("proofs/bank.py", "proofs bank GRAPH.json --output SPEC.json",
+        "Exact monotone bipartite bank constraints using maximal independent sets",
+        "Neighborhood bank on incident pairs and independent sets, optional OR output and masked edge.")
+    add("adapter/__main__.py", "adapter detect --limit 8 --emit-candidates",
+        "Detect candidate adaptations from checked corpus",
+        "Related theorem or stronger bound; verify and compile resulting candidates.")
+    add("adapter/__main__.py", "adapter closure SOURCE.lean --target DECL --emit",
+        "Extract candidate declaration dependency closure",
+        "Large reusable mathematical proof core; inspect scope and dependencies.")
+    add("adapter/__main__.py", "adapter adapt SOURCE.lean --output NEW.lean",
+        "Adapt a related checked proof to the bound statement",
+        "Proof family with small changes; exact statement and Lean verification required.")
+    add("metrics.py", "metrics", "Observed acquisition, submission and acceptance funnel",
+        "Measure bottlenecks and credited outcomes; lease-slot hours are not compute hours.")
+    add("bench/__main__.py", "bench --json --no-results", "Retrospective generator benchmark",
+        "Engineering improvement to reusable proof production, not proof of a live claim.")
+    add("proofs/fragments.py", "proofs fragments --all-attempts", "List durable checked/unverified source fragments",
+        "Before rebuilding a helper; read status, check in the pinned context.")
+    add("proofs/fragments.py", "proofs share FILE --message RESULT", "Snapshot reusable helper for peers",
+        "When a useful intermediate Lean result exists; don't wait for full proof.")
+    add("preflight.py", "preflight", "Read automatic cheap generator results for this attempt",
+        "At entry or when guard reports a candidate; review and submit exact proof.")
+    add("compile.py", "compile --light -- lake env lean Scratch.lean",
+        "Managed scratch validation; use narrow imports if possible",
+        "Small proof iteration, explicit local file.")
+    add("compile.py", "compile -- lake build +MODULE", "Managed full build",
+        "Check exact completed candidate; avoid duplicate work.")
+    add("support.py", "support finding --evidence ARTIFACT --message RESULT",
+        "Deliver substantive evidence directly to peers",
+        "When a result, false premise or useful reusable route is found.")
+    add("cli.py", "cli guard", "Assignment validity, new tool revision and peer evidence",
+        "At natural checkpoints, especially after expensive work.")
+    add("cli.py", "cli submit GAP FILE", "Queue exact completed proof for publication",
+        "Immediately when complete; never wait for an extra review.")
+    return rows
+
+
+def snapshot():
+    rows = inventory()
+    # Hash actual relevant source bytes so that updates to existing tools are
+    # visible, not just new filenames. Do not hash the whole repository.
+    h = hashlib.sha256(json.dumps(rows,sort_keys=True).encode())
+    files = [ROOT / "tools.py", ROOT / "compile.py", ROOT / "brief.py",
+             ROOT / "preflight.py"]
+    for package in ("proofs", "adapter", "bench", "remote"):
+        files += sorted((ROOT/package).glob("*.py"))
+    for p in files:
+        try:
+            h.update(str(p.relative_to(ROOT)).encode())
+            h.update(p.read_bytes())
+        except OSError:
+            continue
+    return {"revision":h.hexdigest()[:16],"command":PREFIX+"tools",
+            "capabilities":rows,
+            "sat_dependency_available":importlib.util.find_spec("pysat") is not None,
+            "remote_build_available":False,
+            "note":"Only implemented tools are listed. Heuristic candidates and SAT results are not kernel verdicts. Use --help for exact syntax. Do not delay publication to run irrelevant tools."}
+
+
+def record(name, cwd=None):
+    """Best-effort, idempotent evidence of actual invocation, not a report/gate."""
+    from . import assignment, state, support
+    if not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", name):
+        return
+    try:
+        bound = assignment.binding(cwd)
+        label = assignment.worker_label(cwd)
+        if not bound or not label:
+            return
+        rec = state.load(bound[0])
+        if not support.active(rec) or rec["lease"] != bound[1]:
+            return
+        path = support.directory(rec)/"tool-use"/label/(name+".json")
+        # Record the most recent invocation only. No arguments, source,
+        # credentials, or unbounded logs.
+        state.atomic_write(str(path),json.dumps(
+            {"tool":name,"at":time.time(),"attempt":support.attempt(rec)})+"\n")
+    except (OSError,ValueError,TypeError,KeyError,AttributeError):
+        pass
+
+
+def usage(rec):
+    from . import support
+    if not support.active(rec):
+        return {}
+    result = {}
+    try:
+        for path in (support.directory(rec)/"tool-use").glob("*/*.json"):
+            try:
+                obj=json.loads(path.read_text())
+                if obj.get("attempt")==support.attempt(rec) and obj.get("tool")==path.stem:
+                    result.setdefault(path.parent.name,{})[path.stem]=obj["at"]
+            except (OSError,ValueError,TypeError,KeyError,AttributeError):
+                continue
+    except OSError:
+        pass
+    return result
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--usage",action="store_true",help="Observed invocations on current live assignments")
+    args=p.parse_args()
+    if args.usage:
+        from . import state, support
+        rows={}
+        for gap in state.all_gaps():
+            rec=state.load(gap)
+            if support.active(rec):
+                rows[gap]=usage(rec)
+        print(json.dumps(rows,ensure_ascii=False,indent=2))
+    else:
+        record("inventory")
+        print(json.dumps(snapshot(),ensure_ascii=False,indent=2))
+
+
+if __name__=="__main__":
+    main()

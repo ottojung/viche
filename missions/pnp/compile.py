@@ -88,6 +88,8 @@ def main(argv=None):
             print("RESOURCE DEFERRED:", exc, file=sys.stderr)
             return 75
     args = ns.args[1:] if ns.args[:1] == ["--"] else ns.args
+    from . import tools
+    tools.record("compile-light" if ns.light else "compile-full")
     def interrupted(signum, frame):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, interrupted)
