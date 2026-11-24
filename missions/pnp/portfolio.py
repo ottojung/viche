@@ -21,11 +21,13 @@ def path(kind):
     return Path(config.STATE_ROOT, "portfolio-" + kind + ".json")
 
 
-def record(gap, attempt):
+def record(gap, attempt, allow_correction=False):
     if not config.GAP_ID_RE.fullmatch(gap):
         raise ValueError("invalid gap")
     rec = state.load(gap)
-    if not support.active(rec) or rec.get("queued_lease") or support.attempt(rec) != attempt:
+    eligible = support.active(rec) or (allow_correction and focus.correction(rec)
+        and isinstance(rec.get("lease"), str) and isinstance(rec.get("statement"), str))
+    if not eligible or rec.get("queued_lease") or support.attempt(rec) != attempt:
         raise ValueError("no matching live research lease")
     return rec
 
@@ -69,8 +71,21 @@ def view():
                      "competition": observed.get("gaps", {}).get(item["gap"]),
                      "artifacts": state.gap_dir(item["gap"]),
                      "focus": bool(chosen and focus.key(chosen) == focus.key(rec))})
+    corrections = []
+    for gap in state.all_gaps():
+        rec = state.load(gap)
+        if not focus.correction(rec) or not rec.get("lease") or not isinstance(rec.get("statement"), str):
+            continue
+        corrections.append({"gap": gap, "attempt": support.attempt(rec),
+                            "title": rec.get("gap_title"), "statement": rec["statement"],
+                            "pr_url": rec.get("pr_url"), "revision": rec.get("commit_sha"),
+                            "local_check_status": rec.get("local_check_status"),
+                            "external_verdict": rec.get("external_verdict"),
+                            "artifacts": state.gap_dir(gap),
+                            "worktree": rec.get("worktree"),
+                            "focus": bool(chosen and focus.key(chosen) == focus.key(rec))})
     return {"focus": chosen["gap_id"] if chosen else None,
-            "leases": rows, "worker_roster_coverage":roster["coverage"]}
+            "leases": rows, "corrections": corrections, "worker_roster_coverage":roster["coverage"]}
 
 
 def text_field(value, name):
@@ -80,10 +95,10 @@ def text_field(value, name):
 
 
 def submit(kind, gap, attempt, evidence, reason, current=None, current_attempt=None):
-    rec = record(gap, attempt)
+    rec = record(gap, attempt, allow_correction=(kind == "switch"))
     evidence, reason = text_field(evidence, "evidence"), text_field(reason, "reason")
     if kind == "switch":
-        old = record(current, current_attempt)
+        old = record(current, current_attempt, allow_correction=True)
         selected = focus.current()
         if not selected or focus.key(selected) != focus.key(old) or current == gap:
             raise ValueError("focus changed; reassess the actual portfolio")
@@ -97,6 +112,11 @@ def submit(kind, gap, attempt, evidence, reason, current=None, current_attempt=N
     obj = {"kind": kind, "gap": gap, "attempt": attempt, "evidence": evidence,
            "reason": reason, "from": current, "from_attempt": current_attempt,
            "at": time.time()}
+    if kind == "switch":
+        # A correction is tied to the precise published revision, not merely
+        # a still-identical statement and old lease.
+        obj["to_revision"] = rec.get("commit_sha") if focus.correction(rec) else None
+        obj["from_revision"] = old.get("commit_sha") if focus.correction(old) else None
     obj["id"] = hashlib.sha256(json.dumps(obj, sort_keys=True).encode()).hexdigest()[:24]
     # One pending decision per independent evaluator. Atomic latest decision;
     # the allocator consumes it once and records the result.
@@ -132,8 +152,12 @@ def apply_switch(mem, now):
     if not obj:
         return
     try:
-        old = record(obj["from"], obj["from_attempt"])
-        new = record(obj["gap"], obj["attempt"])
+        old = record(obj["from"], obj["from_attempt"], allow_correction=True)
+        new = record(obj["gap"], obj["attempt"], allow_correction=True)
+        for rec, field in ((old,"from_revision"),(new,"to_revision")):
+            revision = rec.get("commit_sha") if focus.correction(rec) else None
+            if revision != obj.get(field):
+                raise ValueError("correction revision changed")
         chosen = focus.current()
         if not chosen or focus.key(chosen) != focus.key(old):
             raise ValueError("source focus changed")
