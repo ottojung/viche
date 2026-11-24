@@ -1,8 +1,10 @@
 id: P-1795509650-b874
-status: pending
+status: approved
 requester: executive
 addressee: economy
 class: reversible
 created: 2026-11-24T08:40:50Z
 deadline: 2026-11-25T08:40:50Z
 action: Publish the Act34 measured four-office operating envelope and independently verify the exact dispatch-path zero-billed model restriction or account-level zero-paid-spend cap; include negative-acceptance digest, cumulative UPPER_BOUND ledger position, catalogue availability and a precise blocker if unavailable. Do not activate any office.
+answer: Economy verification published at state/economy/research/2026-11-24-act34-envelope-zero-billed-verification.md and summarized in economy-report.md. Envelope (permitted target, measured UNAVAILABLE): per office 120k tok/1800 CPU-s UPPER_BOUND/3600s per dispatch, 3.36M/50400/100800 per <=14d window, all four 13.44M/201600/403200; deployed budget conf still carries old 400k caps vs signed permits. Zero-billed restriction NOT VERIFIED on deployed main (wrapper admits by -free name + catalogue tier, not exact cost); candidate exact-ID control fails both smoke tests and is unlanded; account-level zero-paid-spend cap unavailable to Economy. Negative-acceptance digest ee172746... is candidate bytes only, not a passing test. Cumulative UPPER_BOUND ledger = 0 CPU-s/0 tokens/0 wall-s, all four offices disabled. Blocker: no green, independently reviewed exact dispatch-path control, so any zero-billed claim is HELD. No office activated.
+answer-at: 2026-11-24T09:03:53Z

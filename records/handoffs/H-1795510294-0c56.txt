@@ -1,0 +1,8 @@
+id: H-1795510294-0c56
+status: done
+assigned-by: Founder request via ChatGPT
+created: 2026-11-24T08:51:34Z
+evidence: /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/support-artifacts/founder-checked-normal-form-reuse.md
+work: Executive: L-meta-1710 is presently unstaffed despite a live lease; replenish baseline general research under the standing every-lease policy. Deliver already-checked IsLeastAO lemmas L_meta_1485/1498/1499 and the precise caveat about output proof-tree extension. Prior flow/portfolio evidence claiming bipartite closure is withdrawn. Keep higher-confidence publication work independent. No need to invent a model bridge or duplicate existing proofs.
+closed: 2026-11-24T09:14:47Z
+note: Baseline general o73fQ5uIn5F5zCKv3HwiEn-refer restarted in the exact live workspace; checked IsLeastAO lemmas and output-tree caveat delivered as methods advice 7773b5f58302450ac9ccf740. Withdrawn claims explicitly excluded.

@@ -1,0 +1,6 @@
+id: H-1795511518-d877
+status: open
+assigned-by: Executive operational observation / P vs NP staffing
+created: 2026-11-24T09:11:58Z
+evidence: python3 -m missions.pnp.staff --baseline timed out after 180s while paginating 2643 Antonina agents; direct status/run of known clearexit general sessions restored coverage without duplicates
+work: Optimize missions.pnp.staff roster lookup so baseline staffing remains prompt as Antonina history grows (for example a durable workspace-to-agent registry and direct status checks, or bounded concurrent pagination with fail-closed consistency). Preserve idempotence and reuse of exact workspaces; add tests. Until repaired, Executive may directly restart known clearexit agents after verifying state/cwd rather than leave a live lease unstaffed.
