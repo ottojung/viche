@@ -178,9 +178,23 @@ class Verifier:
                 if not isinstance(row, dict) or row.get("enabled") is not False:
                     problems.append("office %s is enabled (DRAFT must enable none)" % name)
             stats = offices.get("statistics") or {}
-            for key in ("trial_mode", "deterministic_sources", "phase_gate_record"):
+            for key in ("trial_mode", "phase_gate_record"):
                 if key in stats:
                     problems.append("draft wrote activation statistics.%s" % key)
+            # A DRAFT may carry informational source preregistration, but it
+            # must have the exact six-field shape and valid hashes. These hashes
+            # are not authority and may be historical; verify-landed checks the
+            # authoritative current source dict. enabled=false is checked above.
+            if "deterministic_sources" in stats:
+                pinned = stats["deterministic_sources"]
+                required = {"runner", "report", "post", "post_guard",
+                            "budget_tool", "budget_config"}
+                if not isinstance(pinned, dict) or set(pinned) != required:
+                    problems.append("draft deterministic_sources must pin exactly the reviewed source set")
+                else:
+                    for key, digest in pinned.items():
+                        if not isinstance(digest, str) or not SHA_RE.fullmatch(digest):
+                            problems.append("draft deterministic source %s has no valid sha256" % key)
         conf = load(self.town / "government/knowledge-budget.conf")
         cfg_offices = conf.get("offices") if isinstance(conf, dict) else None
         if not isinstance(cfg_offices, dict):
