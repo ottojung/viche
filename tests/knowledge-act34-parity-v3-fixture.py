@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import socket
 import time
 from pathlib import Path
 
@@ -135,7 +136,7 @@ def build(repo, town, state, variant="valid"):
     now = int(os.environ.get("ACT34_FIXTURE_NOW", str(int(time.time()))))
     start, expires = now - 120, now + 14 * 86400
     cert = {
-        "schema": "viche-act34-control-certification-v1",
+        "schema": "wrong-schema" if variant == "wrong-cert-schema" else "viche-act34-control-certification-v1",
         "certification_id": CERT_ID, "control_set": CONTROL_SET,
         "gate_id": GATE_ID, "not_before": now - 60, "expires_at": now + 86400,
         "policy_digest": policy_digest,
@@ -159,6 +160,10 @@ def build(repo, town, state, variant="valid"):
             "budget_sha256": budget_sha,
             "caps": (dict(budget["offices"][office]["caps"], tokens_total=1)
                      if variant == "wrong-caps" else budget["offices"][office]["caps"]),
+            "per_run_caps": (dict(budget["offices"][office].get("per_run_caps", budget["offices"][office]["caps"]), tokens_total=1)
+                             if variant == "wrong-per-run-caps" else budget["offices"][office].get("per_run_caps", budget["offices"][office]["caps"])),
+            "host": "wrong-host" if variant == "wrong-host" else socket.gethostname(),
+            "mission_source": "government/KNOWLEDGE-OFFICES.md -> " + ("wrong-office" if variant == "wrong-mission" else office),
             "provider_budget_mode": "zero-billed-runtime-allowlist",
             "provider_tier": "free_only", "signature_status": "signed",
             "inflight_overrun_risk_disclosed": True,
@@ -184,7 +189,7 @@ def build(repo, town, state, variant="valid"):
             put(town / "records/knowledge/pilot-reviews" / (office + ".json"), {
                 "schema": "viche-act34-judiciary-review-v1", "office": office,
                 "reviewer": "c1e00008", "permit_sha256": permits[office],
-                "decision": "hold" if variant == "hold" else "proceed",
+                "decision": "hold" if variant.startswith("hold") else "proceed",
                 "reviewed_at": effective_start + 10,
             })
             put(town / "records/knowledge/pilot-reviews" / (office + "-attestation.json"),
@@ -267,6 +272,24 @@ def build(repo, town, state, variant="valid"):
         put(town / "government/knowledge-zero-billed-policy.json", policy)
         git(town, "add", ".")
         git(town, "commit", "-qm", "Synthetic committed policy change")
+
+    if variant in ("hold-local-missing", "hold-committed-deletion"):
+        for office in OFFICES:
+            (town / "records/knowledge/pilot-reviews" / (office + ".json")).unlink()
+            (town / "records/knowledge/pilot-reviews" / (office + "-attestation.json")).unlink()
+        if variant == "hold-committed-deletion":
+            git(town, "add", "-A")
+            git(town, "commit", "-qm", "Synthetic deletion of same-permit HOLD")
+    if variant in ("canonical-evidence", "conflicting-evidence"):
+        activation = read(town / "records/knowledge/activation.json")
+        activation["economy_free_tier_evidence"] = dict(activation[EVIDENCE_KEY])
+        if variant == "canonical-evidence":
+            del activation[EVIDENCE_KEY]
+        else:
+            activation["economy_free_tier_evidence"]["certification_sha256"] = "0" * 64
+        put(town / "records/knowledge/activation.json", activation)
+        git(town, "add", ".")
+        git(town, "commit", "-qm", "Synthetic canonical shared evidence migration")
 
     if variant == "repair":
         # Comment-only repair of one bound control; one Economy refresh; no

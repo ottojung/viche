@@ -62,6 +62,8 @@ check_case() {
 check_case pre-enactment fail ''
 # All four offices, independent board/appointment corroboration and both snapshots.
 check_case valid pass ''
+check_case canonical-evidence pass ''
+check_case conflicting-evidence fail 'conflicting shared certification evidence'
 # One comment-only control repair: one Economy refresh, no permit byte changes.
 check_case repair pass ''
 python3 - "$d/case-valid/facts.json" "$d/case-repair/facts.json" <<'PY'
@@ -77,12 +79,18 @@ check_case policy-digest fail 'policy digest'
 # Certification authenticity, freshness and identity.
 check_case missing-cert fail ''
 check_case stale-cert fail 'validity window'
+check_case wrong-cert-schema fail 'validity window'
 check_case forged-board fail 'unverified economy'
 # Authority and old safeguards are not relaxed by the amendment.
 check_case wrong-identity fail 'wrong-identity'
 check_case wrong-signer fail 'budget/authority'
 check_case wrong-caps fail 'budget/authority'
+check_case wrong-per-run-caps fail 'budget/authority'
+check_case wrong-host fail 'budget/authority'
+check_case wrong-mission fail 'budget/authority'
 check_case hold fail 'HOLD'
+check_case hold-local-missing fail 'committed Judiciary disposition or attestation missing'
+check_case hold-committed-deletion fail 'same-permit Judiciary disposition was deleted'
 check_case no-review-48h fail '48h'
 
 (cd "$repo" && /bin/sh tests/knowledge-act34-adaptive-smoke.sh)

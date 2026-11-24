@@ -29,6 +29,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import socket
 import sys
 import time
 
@@ -186,14 +187,44 @@ def attest(root, role, officer, ref, commit, digest, attestation, gate_id):
         raise ValueError("unverified %s action: %s" % (role, "; ".join(errors)[:250]))
 
 
+def tracked(root, rel):
+    """Absence on disk is not absence from the committed authority."""
+    listing = subprocess.run(
+        ["git", "-C", str(root), "ls-tree", "-z", "HEAD", "--", rel],
+        check=True, capture_output=True, timeout=8).stdout
+    return bool(listing)
+
+
+def prior_deleted_review(root, rel, permit_sha):
+    # A committed deletion is not a new after-start window for the same
+    # permit. Check the last first-parent deletion, not arbitrary reflogs.
+    deletion = subprocess.run(
+        ["git", "-C", str(root), "log", "--first-parent", "--no-renames",
+         "--diff-filter=D", "-1", "--format=%H", "HEAD", "--", rel],
+        check=True, capture_output=True, text=True, timeout=8).stdout.strip()
+    if not deletion:
+        return False
+    raw = subprocess.run(
+        ["git", "-C", str(root), "show", deletion + "^:" + rel],
+        check=True, capture_output=True, timeout=8).stdout
+    old = json.loads(raw)
+    if not isinstance(old, dict) or not isinstance(old.get("permit_sha256"), str):
+        raise ValueError("deleted historical Judiciary evidence unreadable")
+    return old["permit_sha256"] == permit_sha
+
+
 def legacy_checks(root, office, a, permit, permit_sha, start, now):
     """Keep Executive, Judiciary and Spying checks; no HOLD bypass or clock reset."""
     attest(root, "executive", "c1e00002", a.get("permit_ref"),
            a.get("permit_origin_commit"), permit_sha, a.get("permit_attestation"),
            "act34-executive-" + office)
     review_rel = "records/knowledge/pilot-reviews/%s.json" % office
-    review_path = root / review_rel
-    if review_path.exists():
+    auth_rel = "records/knowledge/pilot-reviews/%s-attestation.json" % office
+    review_path, auth_path = root / review_rel, root / auth_rel
+    review_tracked, auth_tracked = tracked(root, review_rel), tracked(root, auth_rel)
+    if review_tracked or auth_tracked or review_path.exists() or auth_path.exists():
+        if not (review_tracked and auth_tracked and review_path.is_file() and auth_path.is_file()):
+            raise ValueError("committed Judiciary disposition or attestation missing")
         review_sha = committed(root, review_rel)
         rev = load_json(root, review_rel)
         reviewed = rev.get("reviewed_at")
@@ -202,7 +233,6 @@ def legacy_checks(root, office, a, permit, permit_sha, start, now):
                 or rev.get("permit_sha256") != permit_sha or type(reviewed) is not int
                 or not start <= reviewed < start + REVIEW or reviewed > now):
             raise ValueError("uncorroborated or stale Judiciary disposition")
-        auth_rel = "records/knowledge/pilot-reviews/%s-attestation.json" % office
         committed(root, auth_rel)
         auth = load_json(root, auth_rel)
         attest(root, "judiciary", "c1e00008", review_rel,
@@ -210,8 +240,11 @@ def legacy_checks(root, office, a, permit, permit_sha, start, now):
                "act34-judiciary-" + office)
         if rev.get("decision") != "proceed":
             raise ValueError("Judiciary HOLD/STOP")
-    elif now >= start + REVIEW:
-        raise ValueError("Judiciary review missing 48h after original permit start")
+    else:
+        if prior_deleted_review(root, review_rel, permit_sha):
+            raise ValueError("same-permit Judiciary disposition was deleted")
+        if now >= start + REVIEW:
+            raise ValueError("Judiciary review missing 48h after original permit start")
     if office == "spying" and not (root / "records/knowledge/spying-source-scope.json").is_file():
         raise ValueError("Spying source-scope bundle absent")
 
@@ -265,6 +298,9 @@ def check(office, root):
             or permit.get("authorized_by") != "act:34:" + office
             or permit.get("not_before") != start or permit.get("expires_at") != expires
             or permit.get("budget_sha256") != budget_sha or permit.get("caps") != caps.get("caps")
+            or permit.get("per_run_caps") != caps.get("per_run_caps", caps.get("caps"))
+            or permit.get("host") != socket.gethostname()
+            or permit.get("mission_source") != "government/KNOWLEDGE-OFFICES.md -> " + office
             or permit.get("signature_status") != "signed"
             or permit.get("provider_budget_mode") != "zero-billed-runtime-allowlist"
             or permit.get("provider_tier") != "free_only"
@@ -279,7 +315,8 @@ def check(office, root):
 
     cert_sha = committed(root, CERT_REF)
     cert = load_json(root, CERT_REF)
-    if (cert.get("certification_id") != CERT_ID or cert.get("control_set") != CONTROL_SET
+    if (cert.get("schema") != "viche-act34-control-certification-v1"
+            or cert.get("certification_id") != CERT_ID or cert.get("control_set") != CONTROL_SET
             or cert.get("gate_id") != GATE_ID or type(cert.get("not_before")) is not int
             or type(cert.get("expires_at")) is not int
             or not cert["not_before"] <= now < cert["expires_at"]):
@@ -317,6 +354,13 @@ def check(office, root):
     # Certification evidence lives outside the certification record and outside
     # the untouched legacy Economy evidence field; no self-referential hash.
     evidence = activation.get(EVIDENCE_KEY)
+    ordinary_evidence = activation.get("economy_free_tier_evidence")
+    # During mixed legacy/certified migration retain the legacy report.
+    # Once migrated, accept the canonical field expressly named in v3.
+    if isinstance(ordinary_evidence, dict) and "certification_ref" in ordinary_evidence:
+        if evidence is not None and evidence != ordinary_evidence:
+            raise ValueError("conflicting shared certification evidence")
+        evidence = ordinary_evidence
     if (not isinstance(evidence, dict)
             or evidence.get("certification_ref") != CERT_REF
             or evidence.get("certification_sha256") != cert_sha):
