@@ -26,13 +26,24 @@ PY
 python3 - "$d/town/government/knowledge-budget.conf" "$DB" <<'PY'
 import json,sys
 p=sys.argv[1]; c=json.load(open(p)); c['metering']['opencode_db']=sys.argv[2]
-for x in c['offices'].values(): x['enabled']=True
+for x in c['offices'].values():
+    x['enabled']=False
+    x['caps']={'tokens_total':400000,'cpu_seconds':1800,'wall_seconds':3600}
+    x.pop('per_run_caps',None)
+c['aggregate']['caps']={'tokens_total':1600000,'cpu_seconds':7200,'wall_seconds':14400}
 json.dump(c,open(p,'w'))
 PY
 
-# All shipped office activations are disabled.
-jq -e '[.offices[] | .enabled] | all(. == false)' government/knowledge-budget.conf >/dev/null ||
-  fail 'shipped config did not default all offices disabled'
+# A disabled test office must deny admission. Production activation is lawful
+# mutable state, not a permanent expectation of the test suite.
+no /bin/sh "$ENGINE" guard statistics
+no /bin/sh "$ENGINE" reserve statistics test-agent
+python3 - "$d/town/government/knowledge-budget.conf" <<'PYENABLE'
+import json,sys
+p=sys.argv[1];c=json.load(open(p))
+for x in c['offices'].values(): x['enabled']=True
+json.dump(c,open(p,'w'))
+PYENABLE
 
 # Valid token telemetry plus host-wide busy CPU accounting admits a
 # PRELAUNCH reservation with durable CPU baseline before any agent exists.
