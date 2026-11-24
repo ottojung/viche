@@ -3,7 +3,7 @@
 #
 # Two independent halves:
 #   1. Funding refresh: deterministic, no model call (it probes FREE models only).
-#      Keeps the Antonina model list in tier order: free, contributor, paid, Luna.
+#      Keeps the Antonina model list in tier order: free, contributor, Luna, paid.
 #      Runs in the background under a lock, every 6h (hourly while funding is
 #      at risk), and never blocks any other office.
 #   2. The Ministry's agent: researches free models, ranks them within the free
@@ -134,8 +134,8 @@ Read your mandate at $town/government/MINISTRY-OF-ECONOMY.md and the CANONICAL
 $town/government/LAWS.md (Acts 29 and 30 in particular). Your working files are
 in $econ; your worktree is $cwd.
 Model order is tiered and enforced by government/economy-models.py: free models
-first, then contributor models, then paid models, and Luna models (and every
-paid model) at the very bottom. You steer within a tier through
+first, then contributor models, then Luna, then paid models at the bottom.
+All configured models request low reasoning effort. You steer within a tier through
 $econ/model-policy.json; you never put a paid model above a free one.
 === EXECUTIVE ORDERS ===
 $orders

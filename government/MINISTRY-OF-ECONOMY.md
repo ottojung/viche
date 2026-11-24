@@ -14,8 +14,10 @@ Antonina tries the models in `~/.config/antonina/config.json` in order. That ord
 
 1. **Free models first**: any model whose id carries a `-free` component (for example `opencode/beam-free`). They cost nothing, so the Town spends them first.
 2. **Contributor-plan models next**: kept, never auto-added.
-3. **Paid models after that**: kept as a fallback, never auto-added, never ahead of a free model.
-4. **Luna models last of all** (`openai/gpt-6-luna` and every other `luna` id): paid, and always at the very bottom, after every other paid model. Luna is a last resort, never a default.
+3. **Luna models next**: after free and contributor models, before paid fallback models.
+4. **Paid OpenCode models last**: only explicitly authorized paid models; never automatically add paid models.
+
+Every configured model must request the low reasoning variant. A model that rejects low is not retried at a higher or unspecified effort.
 
 `government/economy-models.py` enforces this deterministically each refresh: whatever order anyone proposes, a paid or Luna model is never placed above a free one, a missing free model may be dropped, but an explicitly configured contributor, paid or Luna fallback is never deleted by a catalogue omission, free-tier policy or list-length cap, and an unprobed free model is not added. Catalogue discovery and free probes use the same authenticated OpenCode service as Antonina. An absent provider is not evidence that authorized fallback funding has been revoked. Only the Founder removes configured nonfree models. You do not hand-edit the config; you steer through `state/economy/model-policy.json` and the script writes it.
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Act 29: the Ministry of Economy keeps the Antonina model list ordered
-# free -> contributor -> paid -> Luna, adds only free models that answered a probe,
+# free -> contributor -> Luna -> paid, adds only free models that answered a probe,
 # and never leaves Antonina with an empty or rejected list.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
@@ -13,7 +13,7 @@ cat > "$d/bin/opencode" <<'MOCK'
 [ "$1" = run ] || exit 9
 echo "$3" >> "$MOCK_PROBES"
 case "$3" in
-  *gamma-free) printf '{"type":"error","part":{"message":"quota"}}\n'; exit 0 ;;
+  *gamma-free#low) printf '{"type":"error","part":{"message":"quota"}}\n'; exit 0 ;;
   *) printf '{"type":"text","part":{"text":"OK"}}\n' ;;
 esac
 MOCK
@@ -49,7 +49,7 @@ EOF
 cat > "$VICHE_ANTONINA_CONFIG" <<'EOF'
 {"models":[
  {"model":"openai/gpt-6","comment":"paid"},
- {"model":"openai/gpt-6-luna","comment":"Luna must be last"},
+ {"model":"openai/gpt-6-luna","comment":"Luna before paid"},
  {"model":"opencode/alpha-free","comment":"free"},
  {"model":"opencode-go/glm-contributor","comment":"contributor plan"},
  {"model":"opencode/vanished-free","comment":"was free once"}
@@ -70,10 +70,10 @@ before=$(cat "$VICHE_ANTONINA_CONFIG")
 $eco plan | jq -e '.after == ["opencode/alpha-free","opencode/glm-contributor","opencode/gpt-6","opencode/gpt-6-luna"] or (.after | length) > 0' >/dev/null
 test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$before"
 
-# Refresh: free first (alpha, then probed-OK beta), contributor, paid, Luna LAST.
+# Refresh: free first (alpha, then probed-OK beta), contributor, Luna, paid LAST.
 $eco refresh --probe-limit 10 > "$d/refresh.out"
 jq -e '.changed == true and .funding_risk == "none" and .free_available_now == 2' "$d/refresh.out" >/dev/null
-test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode-go/glm-contributor,openai/gpt-6,openai/gpt-6-luna'
+test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
 jq -e '.keep_me == "yes"' "$VICHE_ANTONINA_CONFIG" >/dev/null                 # unrelated config keys survive
 jq -e '.models[0].comment == "free"' "$VICHE_ANTONINA_CONFIG" >/dev/null       # existing comments survive
 jq -e '.models[1].comment | test("Ministry of Economy")' "$VICHE_ANTONINA_CONFIG" >/dev/null
@@ -88,7 +88,7 @@ done
 grep -q 'alpha-free' "$d/probes.log"; grep -q 'beta-free' "$d/probes.log"; grep -q 'gamma-free' "$d/probes.log"
 if grep -q 'delta-free\|gpt-6\|claude-x' "$d/probes.log"; then echo 'probed a model it must not' >&2; exit 1; fi
 r=$d/state/economy/report.json
-jq -e '.order[0].tier == "free" and .order[-1].tier == "luna" and (.paid_before_free_violations | length) == 0' "$r" >/dev/null
+jq -e '.order[0].tier == "free" and .order[-1].tier == "paid" and (.paid_before_free_violations | length) == 0' "$r" >/dev/null
 jq -e '[.dropped[] | select(.model == "opencode/vanished-free" and .why == "not in catalogue")] | length == 1' "$r" >/dev/null
 jq -e '[.dropped[] | select(.model == "opencode/gamma-free" and (.why | startswith("probe failed")))] | length == 1' "$r" >/dev/null
 jq -e '[.dropped[] | select(.model == "opencode/delta-free" and (.why | startswith("excluded by policy")))] | length == 1' "$r" >/dev/null
@@ -103,7 +103,7 @@ test "$(ls "$VICHE_ANTONINA_CONFIG".bak-* | wc -l)" -eq "$n_bak"
 # Policy preference reorders within a tier but never across tiers.
 printf '{"prefer":["opencode/beta-free","openai/gpt-6-luna","openai/gpt-6"],"exclude":[{"model":"opencode/delta-free","reason":"rate limit 5/day","until":9999999999}]}\n' > "$d/state/economy/model-policy.json"
 VICHE_ECONOMY_NOW=1794837600 $eco refresh | jq -e '.changed == true' >/dev/null
-test "$(order)" = 'opencode/beta-free,opencode/alpha-free,opencode-go/glm-contributor,openai/gpt-6,openai/gpt-6-luna'
+test "$(order)" = 'opencode/beta-free,opencode/alpha-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
 $eco check
 
 # Funding risk follows live cooldowns: one free model cooling = elevated, both = high, and the report says when one returns.
@@ -152,19 +152,19 @@ test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
 printf '{"models":["openai/gpt-6-luna","opencode/alpha-free","openai/gpt-6"]}\n' > "$VICHE_ANTONINA_CONFIG"
 printf '{}\n' > "$d/state/economy/model-policy.json"
 VICHE_ECONOMY_NOW=1794837700 $eco refresh >/dev/null
-test "$(jq -r '[.models[] | (.model // .)] | join(",")' "$VICHE_ANTONINA_CONFIG")" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6,openai/gpt-6-luna'   # delta is free again once the exclusion is lifted
+test "$(jq -r '[.models[] | (.model // .)] | join(",")' "$VICHE_ANTONINA_CONFIG")" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6-luna,openai/gpt-6'   # delta is free again once the exclusion is lifted
 
 # A partial or unauthenticated catalogue must never erase authorized fallbacks.
 # Even a small configured list cap must reserve their slots.
 grep -vE '^(openai/|opencode-go/)' "$d/catalogue.txt" > "$d/partial.txt"
 printf '%s\n' opencode/a opencode/b opencode/c >> "$d/partial.txt"
 VICHE_OPENCODE_MODELS="$d/partial.txt" VICHE_ECONOMY_MAX_MODELS=3 $eco refresh --probe-limit 0 >/dev/null
-test "$(order)" = 'opencode/alpha-free,openai/gpt-6,openai/gpt-6-luna'
+test "$(order)" = 'opencode/alpha-free,openai/gpt-6-luna,openai/gpt-6'
 jq -e '.fallback_eligible_now == 0 and (.fallback_missing_from_catalogue|length)==2' "$r" >/dev/null
 # When authenticated catalogue returns, eligibility recovers without manual re-add.
 $eco refresh --probe-limit 0 >/dev/null
 jq -e '.fallback_eligible_now == 2 and (.fallback_missing_from_catalogue|length)==0' "$r" >/dev/null
-test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6,openai/gpt-6-luna'
+test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6-luna,openai/gpt-6'
 # Service discovery and free probes share Antonina's isolated XDG roots.
 python3 - "$repo" <<'PYTEST'
 import importlib.util, pathlib, sys
@@ -176,4 +176,10 @@ assert e["XDG_CONFIG_HOME"]==str(root/"config")
 assert e["XDG_DATA_HOME"]==str(root/"data")
 assert e["XDG_STATE_HOME"]==str(root/"state")
 PYTEST
+jq -e 'all(.models[]; .variant == "low")' "$VICHE_ANTONINA_CONFIG" >/dev/null
+# Repair effort even when order is already correct.
+jq 'del(.models[0].variant)' "$VICHE_ANTONINA_CONFIG" > "$d/without-low"
+mv "$d/without-low" "$VICHE_ANTONINA_CONFIG"
+$eco refresh --probe-limit 0 | jq -e '.changed == true' >/dev/null
+jq -e 'all(.models[]; .variant == "low")' "$VICHE_ANTONINA_CONFIG" >/dev/null
 echo 'economy models smoke passed'

@@ -17,9 +17,9 @@ Tiers, best first (a model's tier is decided by this table, not by the agent):
                  added to the list after a probe succeeds; probes are free.
   1 contributor  "-contributor" models of opencode-go: included with the
                  contributor plan. Never auto-added, only kept.
-  2 paid         every other model. Never auto-added, only kept.
-  3 luna         any "luna" model (openai/gpt-6-luna, ...): paid, and kept at the
-                 very bottom, after every other paid model.
+  2 luna         authorized Luna models, before paid fallbacks.
+  3 paid         every other paid model. Never auto-added, only kept.
+All configured models request the low reasoning variant.
 
 Commands
   refresh [--probe-limit N] [--no-apply]   catalogue + probes + plan + apply + report
@@ -58,7 +58,7 @@ COOLDOWNS = pathlib.Path(os.environ.get(
 MAX_MODELS = int(os.environ.get("VICHE_ECONOMY_MAX_MODELS", "32"))
 PROBE_FRESH_SECONDS = 14 * 86400
 PROBE_TIMEOUT = int(os.environ.get("VICHE_ECONOMY_PROBE_TIMEOUT", "120"))
-TIER_NAMES = ["free", "contributor", "paid", "luna"]
+TIER_NAMES = ["free", "contributor", "luna", "paid"]
 
 
 def now():
@@ -66,15 +66,15 @@ def now():
 
 
 def tier_of(model):
-    """The tier table. Luna wins over every other rule: it always sorts last."""
+    """The tier table. Luna precedes paid fallbacks, after free and contributor."""
     name = model.lower()
     if "luna" in name:
-        return 3
+        return 2
     if re.search(r"(^|[-/])free($|[-/])", name):
         return 0
     if "contributor" in name:
         return 1
-    return 2
+    return 3
 
 
 def atomic_write(path, text):
@@ -154,7 +154,7 @@ def update_catalogue(ids, current):
 def probe(model):
     prompt = "Reply with the single word OK and nothing else."
     try:
-        done = subprocess.run(["opencode", "run", "-m", model, "--format", "json", prompt],
+        done = subprocess.run(["opencode", "run", "-m", model + "#low", "--format", "json", prompt],
                               capture_output=True, text=True, timeout=PROBE_TIMEOUT, cwd="/tmp", env=service_env())
     except subprocess.TimeoutExpired:
         return False, "timeout after %ds" % PROBE_TIMEOUT
@@ -270,8 +270,8 @@ def apply_order(cfg, final, probes, dropped, current):
         if entry is None:
             entry = {"model": model, "comment": "Ministry of Economy %s: free model, probe answered OK." % stamp}
         elif isinstance(entry, str):
-            entry = {"model": entry}
-        new_entries.append(entry)
+            entry = {"model": entry, "comment": ""}
+        new_entries.append({**entry, "variant": "low"})
     updated = dict(cfg)
     updated["models"] = new_entries
     backup = CONFIG.with_name(CONFIG.name + ".bak-" + str(current))
@@ -345,7 +345,7 @@ def refresh(args):
     free_candidates = [m for m in ids if tier_of(m) == 0 and m not in pol["exclude"]]
     probes, ran = run_probes(free_candidates, args.probe_limit, current)
     before, final, dropped = plan_order(cfg, ids, probes, pol, current)
-    changed = before != final
+    changed = before != final or any(not isinstance(e, dict) or e.get("variant") != "low" for e in cfg["models"])
     backup = None
     if changed and not args.no_apply:
         backup = apply_order(cfg, final, probes, dropped, current)
@@ -373,7 +373,10 @@ def main(argv):
         for first, second in bad:
             print("tier violation: %s (%s) is ahead of %s (%s)" % (
                 first, TIER_NAMES[tier_of(first)], second, TIER_NAMES[tier_of(second)]))
-        return 1 if bad else 0
+        missing_low = [entry_model(e) for e in read_config()["models"] if not isinstance(e, dict) or e.get("variant") != "low"]
+        for model in missing_low:
+            print("low reasoning variant required: " + model)
+        return 1 if bad or missing_low else 0
     if args.command == "plan":
         cfg = read_config()
         ids = fetch_catalogue()
