@@ -63,6 +63,31 @@ PROBE_FRESH_SECONDS = 14 * 86400
 PROBE_TIMEOUT = int(os.environ.get("VICHE_ECONOMY_PROBE_TIMEOUT", "120"))
 TIER_NAMES = ["free", "contributor", "luna", "paid"]
 
+# Antonina's runtime rules, mirrored here so Economy's health reporting means
+# what the agent will actually do. Sources in the installed release:
+# agent-runtime/src/model-config.js, model-failover.js, model-cooldowns.js,
+# model-health.js. These are observations of runtime behaviour, not authority
+# to add or remove a configured model.
+MODEL_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+VARIANT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+HARD_COOLDOWN_REASONS = {"quota_exhausted", "rate_limited"}
+MAX_PROVIDER_COOLDOWN_SECONDS = 7 * 86400
+MODEL_HEALTH_WINDOW_SECONDS = 10 * 60
+MODEL_HEALTH_DISTINCT_AGENTS = 2
+MODEL_HEALTH_EVENT_RE = re.compile(r"^\d{13}-[a-f0-9]{16}\.json$")
+MAX_COOLDOWN_FILES = 200
+MAX_MODEL_HEALTH_EVENTS = 1500
+MODEL_HEALTH = pathlib.Path(os.environ.get(
+    "VICHE_ANTONINA_MODEL_HEALTH", str(COOLDOWNS.parent / "model-health")))
+RUNTIME_FAILURE_MODES = [
+    "quota_exhausted/rate_limited: shared hard cooldown, other configured models are tried",
+    "model_unavailable or provider auth/billing failure: permanent per-agent exclusion, invisible in shared cooldown files",
+    "unsupported #low variant: provider.no-route marks the model unavailable at launch",
+    "stalled request with no tokens: transient penalty, model stays in the last-resort lottery",
+    "provider-wide exclusion: every configured model of that provider is skipped together",
+    "all configured models excluded: Antonina refuses dispatch; no automatic paid fallback",
+]
+
 
 def now():
     return int(os.environ.get("VICHE_ECONOMY_NOW", time.time()))
@@ -109,6 +134,52 @@ def read_config():
 
 def entry_model(entry):
     return entry if isinstance(entry, str) else entry.get("model", "")
+
+
+def config_problems(entries):
+    """The exact shape Antonina's configuredModels() accepts from config.json.
+
+    This is checked locally *before* publishing as well as through the installed
+    CLI: `antonina agent model select` only prints the first model, so a pass
+    there does not prove that later entries are usable at runtime.
+    """
+    problems = []
+    seen = set()
+    for index, entry in enumerate(entries):
+        model = entry_model(entry)
+        if not isinstance(model, str) or not MODEL_ID_RE.match(model):
+            problems.append("models[%d] is not a valid Antonina model id: %r" % (index, model))
+            continue
+        if model in seen:
+            problems.append("duplicate configured model: " + model)
+        seen.add(model)
+        if isinstance(entry, dict):
+            if not isinstance(entry.get("comment"), str):
+                problems.append("models[%d].comment must be a string" % index)
+            variant = entry.get("variant")
+            if variant is not None and (not isinstance(variant, str) or not VARIANT_RE.match(variant)):
+                problems.append("models[%d].variant is invalid: %r" % (index, variant))
+        elif isinstance(entry, str):
+            problems.append("models[%d] must be an object with a string comment" % index)
+        else:
+            problems.append("models[%d] is neither a string nor an object" % index)
+    return problems
+
+
+def repair_entries(entries):
+    """Normalize entries without ever changing which models are authorized."""
+    repaired = []
+    for entry in entries:
+        if isinstance(entry, str):
+            repaired.append({"model": entry, "comment": ""})
+        elif isinstance(entry, dict):
+            record = dict(entry)
+            if not isinstance(record.get("comment"), str):
+                record["comment"] = ""
+            repaired.append(record)
+        else:
+            repaired.append(entry)
+    return repaired
 
 
 def service_env():
@@ -221,6 +292,11 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
         if grandfathered:
             wanted[tier].append(model)
             return
+        # Catalogue ids may carry : or # suffixes that Antonina's config
+        # rejects outright. Never publish a config the runtime cannot load.
+        if not MODEL_ID_RE.match(model):
+            dropped.append((model, "not a valid Antonina config id"))
+            return
         if model not in in_catalogue:
             dropped.append((model, "not in catalogue"))
             return
@@ -267,7 +343,11 @@ def violations(models):
 
 
 def apply_order(cfg, final, probes, dropped, current):
-    existing = {entry_model(e): e for e in cfg["models"]}
+    repaired = repair_entries(cfg["models"])
+    problems = config_problems(repaired)
+    if problems:
+        raise SystemExit("Refusing to publish an invalid Antonina config: " + "; ".join(problems))
+    existing = {entry_model(e): e for e in repaired}
     stamp = datetime.datetime.fromtimestamp(current, datetime.timezone.utc).strftime("%Y-%m-%d")
     new_entries = []
     for model in final:
@@ -307,23 +387,89 @@ def apply_order(cfg, final, probes, dropped, current):
 
 
 def cooldown_state(models, current):
-    out = {}
+    """Hard cooldowns Antonina actually honours, plus entries it ignores.
+
+    Antonina's model-cooldowns.js refuses files with the wrong reason, name,
+    model id, size or an implausibly distant `until`. Counting one of those as
+    a real cooldown would understate funding; counting a soft transient
+    penalty as hard would misstate failover, because the runtime still uses
+    softly penalised models in its last-resort lottery.
+    """
+    active = {}
+    ignored = []
     if COOLDOWNS.is_dir():
-        for path in COOLDOWNS.glob("*.json"):
+        for path in sorted(COOLDOWNS.glob("*.json"))[:MAX_COOLDOWN_FILES]:
             data = load(path, {})
-            until = data.get("until", 0)
-            if data.get("model") in models and until > current:
-                out[data["model"]] = {"reason": data.get("reason"), "until": int(until)}
-    return out
+            model = data.get("model") if isinstance(data, dict) else None
+            if not isinstance(model, str) or model not in models:
+                continue
+            reason = data.get("reason")
+            until = data.get("until")
+            why = None
+            if not MODEL_ID_RE.match(model) or path.name != model.replace("/", "@") + ".json":
+                why = "filename or model id mismatch"
+            elif reason not in HARD_COOLDOWN_REASONS:
+                why = "not a hard provider cooldown"
+            elif isinstance(until, bool) or not isinstance(until, (int, float)):
+                why = "until is not a number"
+            elif not current < until <= current + MAX_PROVIDER_COOLDOWN_SECONDS + 60:
+                why = "until outside the runtime bound"
+            try:
+                size = path.stat().st_size
+            except OSError:
+                size = None
+            if size is None or size > 1024:
+                why = "unreadable or oversized"
+            if why:
+                ignored.append({"model": model, "file": path.name, "why": why})
+                continue
+            active[model] = {"reason": reason, "until": int(until)}
+    return active, ignored
+
+
+def soft_unhealthy(models, current):
+    """Fleet-wide soft signal from Antonina model-health observations.
+
+    Two distinct agents failing unrecognisedly on one model within ten minutes
+    put it in the runtime's last-resort lottery. It is health evidence, never
+    a reason to revoke authorization or to change the funding ladder.
+    """
+    by_model = {}
+    if MODEL_HEALTH.is_dir():
+        events = [p for p in MODEL_HEALTH.glob("*.json") if MODEL_HEALTH_EVENT_RE.match(p.name)]
+        for path in sorted(events, reverse=True)[:MAX_MODEL_HEALTH_EVENTS]:
+            try:
+                if path.stat().st_size > 1024:
+                    continue
+            except OSError:
+                continue
+            data = load(path, {})
+            model = data.get("model")
+            agent = data.get("agent_id")
+            at = data.get("at")
+            if not isinstance(model, str) or model not in models:
+                continue
+            if not isinstance(agent, str) or not agent:
+                continue
+            if isinstance(at, bool) or not isinstance(at, (int, float)):
+                continue
+            if not current - MODEL_HEALTH_WINDOW_SECONDS <= at <= current + 5:
+                continue
+            by_model.setdefault(model, set()).add(agent)
+    return {m: sorted(agents) for m, agents in by_model.items()
+            if len(agents) >= MODEL_HEALTH_DISTINCT_AGENTS}
 
 
 def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, current, catalogue_ids):
-    cooling = cooldown_state(set(final), current)
+    cooling, ignored_cooldowns = cooldown_state(set(final), current)
+    soft = soft_unhealthy(set(final), current)
     free = [m for m in final if tier_of(m) == 0]
     free_available = [m for m in free if m in catalogue_ids and m not in cooling]
     fallback_eligible = [m for m in final if tier_of(m) != 0 and m in catalogue_ids and m not in cooling]
     missing_fallback = [m for m in final if tier_of(m) != 0 and m not in catalogue_ids]
     returns = sorted(v["until"] for m, v in cooling.items() if m in free)
+    failover_depth = len(free_available) + len(fallback_eligible)
+    providers = sorted({m.split("/", 1)[0] for m in free_available})
     return {
         "at": datetime.datetime.fromtimestamp(current, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "order": [{"model": m, "tier": TIER_NAMES[tier_of(m)]} for m in final],
@@ -336,6 +482,12 @@ def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, cur
         "model_eligibility_note": "Catalogue presence and no known cooldown are not proof of a successful invocation.",
         "next_free_returns_at": returns[0] if (returns and not free_available) else None,
         "cooling": cooling,
+        "cooldown_ignored": ignored_cooldowns,
+        "soft_unhealthy": {m: {"agents": a} for m, a in sorted(soft.items())},
+        "failover_depth_now": failover_depth,
+        "free_providers_now": providers,
+        "provider_concentration": len(providers) <= 1 and len(free_available) > 0,
+        "runtime_failure_modes": RUNTIME_FAILURE_MODES,
         "changed": changed,
         "previous_order": cfg_before,
         "dropped": [{"model": m, "why": why} for m, why in dropped],
@@ -344,6 +496,8 @@ def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, cur
         "backup": backup,
         "paid_before_free_violations": [list(v) for v in violations(final)],
         "funding_risk": "none" if len(free_available) >= 2 else ("high" if not free_available else "elevated"),
+        "failover_risk": ("high" if failover_depth < 2 else
+                          ("elevated" if len(providers) <= 1 else "none")),
     }
 
 
@@ -378,7 +532,9 @@ def refresh(args):
     free_candidates = [m for m in ids if tier_of(m) == 0 and m not in pol["exclude"]]
     probes, ran = run_probes(free_candidates, args.probe_limit, current)
     before, final, dropped = plan_order(cfg, ids, probes, pol, current)
-    changed = before != final or any(not isinstance(e, dict) or e.get("variant") != "low" for e in cfg["models"])
+    repaired = repair_entries(cfg["models"])
+    changed = (before != final or repaired != cfg["models"]
+               or any(not isinstance(e, dict) or e.get("variant") != "low" for e in repaired))
     backup = None
     if changed and not args.no_apply:
         backup = apply_order(cfg, final, probes, dropped, current)
@@ -404,14 +560,18 @@ def main(argv):
     if args.command == "refresh":
         return refresh(args)
     if args.command == "check":
-        bad = violations([entry_model(e) for e in read_config()["models"]])
+        entries = read_config()["models"]
+        bad = violations([entry_model(e) for e in entries])
         for first, second in bad:
             print("tier violation: %s (%s) is ahead of %s (%s)" % (
                 first, TIER_NAMES[tier_of(first)], second, TIER_NAMES[tier_of(second)]))
-        missing_low = [entry_model(e) for e in read_config()["models"] if not isinstance(e, dict) or e.get("variant") != "low"]
+        missing_low = [entry_model(e) for e in entries if not isinstance(e, dict) or e.get("variant") != "low"]
         for model in missing_low:
             print("low reasoning variant required: " + model)
-        return 1 if bad or missing_low else 0
+        problems = config_problems(entries)
+        for problem in problems:
+            print("invalid Antonina config: " + problem)
+        return 1 if bad or missing_low or problems else 0
     if args.command == "plan":
         cfg = read_config()
         ids = fetch_catalogue()

@@ -6,7 +6,7 @@ set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
-mkdir -p "$d/bin" "$d/state" "$d/cfg" "$d/cool"
+mkdir -p "$d/bin" "$d/state" "$d/cfg" "$d/cool" "$d/health"
 cat > "$d/bin/opencode" <<'MOCK'
 #!/bin/sh
 # opencode run -m MODEL --format json PROMPT
@@ -33,8 +33,8 @@ MOCK
 chmod +x "$d/bin/opencode" "$d/bin/antonina"
 export PATH="$d/bin:$PATH" MOCK_PROBES="$d/probes.log" HOME="$d/home" \
   VICHE_STATE_ROOT="$d/state" VICHE_ANTONINA_CONFIG="$d/cfg/config.json" \
-  VICHE_ANTONINA_COOLDOWNS="$d/cool" VICHE_OPENCODE_MODELS="$d/catalogue.txt" \
-  VICHE_ECONOMY_NOW=1794830400
+  VICHE_ANTONINA_COOLDOWNS="$d/cool" VICHE_ANTONINA_MODEL_HEALTH="$d/health" \
+  VICHE_OPENCODE_MODELS="$d/catalogue.txt" VICHE_ECONOMY_NOW=1794830400
 : > "$d/probes.log"
 eco="python3 $repo/government/economy-models.py"
 order() { jq -r '[.models[].model] | join(",")' "$VICHE_ANTONINA_CONFIG"; }
@@ -113,14 +113,39 @@ VICHE_ECONOMY_NOW=1794837600 $eco refresh | jq -e '.changed == true' >/dev/null
 test "$(order)" = 'opencode/beta-free,opencode/alpha-free,opencode/vanished-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
 $eco check
 
-# Funding risk follows live cooldowns: one free model cooling = elevated, both = high, and the report says when one returns.
-printf '{"model":"opencode/alpha-free","reason":"quota","until":1794900000}\n' > "$d/cool/a.json"
-printf '{"model":"opencode/beta-free","reason":"quota","until":1794800000}\n' > "$d/cool/b.json"   # already over
-VICHE_ECONOMY_NOW=1794837600 $eco refresh | jq -e '.funding_risk == "elevated" and .free_available_now == 1' >/dev/null
-printf '{"model":"opencode/beta-free","reason":"quota","until":1794880000}\n' > "$d/cool/b.json"
-VICHE_ECONOMY_NOW=1794837600 $eco refresh | jq -e '.funding_risk == "high" and .free_available_now == 0' >/dev/null
-jq -e '.next_free_returns_at == 1794880000 and (.cooling | length) == 2' "$r" >/dev/null
-rm -f "$d/cool/a.json" "$d/cool/b.json"
+# Funding risk follows only the hard cooldowns Antonina honours: one free model cooling = elevated, both = high.
+rm -f "$d/cool"/*.json
+printf '{"model":"opencode/alpha-free","reason":"quota_exhausted","until":1794900000}\n' > "$d/cool/opencode@alpha-free.json"
+printf '{"model":"opencode/beta-free","reason":"quota_exhausted","until":1794800000}\n' > "$d/cool/opencode@beta-free.json"   # already over
+VICHE_ECONOMY_NOW=1794837600 $eco refresh --probe-limit 0 | jq -e '.funding_risk == "elevated" and .free_available_now == 1' >/dev/null
+printf '{"model":"opencode/beta-free","reason":"quota_exhausted","until":1794880000}\n' > "$d/cool/opencode@beta-free.json"
+VICHE_ECONOMY_NOW=1794837600 $eco refresh --probe-limit 0 | jq -e '.funding_risk == "high" and .free_available_now == 0' >/dev/null
+jq -e '.next_free_returns_at == 1794880000 and (.cooling | length) == 2 and (.cooldown_ignored | length) == 0' "$r" >/dev/null
+
+# Adversarial cooldowns: future, soft, misnamed, oversized and malformed files carry no authority.
+printf '{"model":"opencode/alpha-free","reason":"quota_exhausted","until":9999999999}\n' > "$d/cool/opencode@alpha-free.json"
+printf '{"model":"opencode/beta-free","reason":"transient_backend","until":1794880000}\n' > "$d/cool/opencode@beta-free.json"
+printf '{"model":"opencode/beta-free","reason":"rate_limited","until":1794880000}\n' > "$d/cool/wrong-name.json"
+python3 - "$d/cool/opencode@vanished-free.json" <<'PY'
+import sys
+open(sys.argv[1], "w").write('{"model":"opencode/vanished-free","reason":"quota_exhausted","until":1794880000}' + ' ' * 1200)
+PY
+printf '{broken\n' > "$d/cool/opencode@gamma-free.json"
+VICHE_ECONOMY_NOW=1794837600 $eco refresh --probe-limit 0 | jq -e '.funding_risk == "none" and .free_available_now == 2' >/dev/null
+jq -e '(.cooling | length) == 0 and (.cooldown_ignored | length) == 4' "$r" >/dev/null
+jq -e '[.cooldown_ignored[] | select(.why == "until outside the runtime bound")] | length == 1' "$r" >/dev/null
+jq -e '[.cooldown_ignored[] | select(.why == "not a hard provider cooldown")] | length == 1' "$r" >/dev/null
+jq -e '[.cooldown_ignored[] | select(.why == "filename or model id mismatch")] | length == 1' "$r" >/dev/null
+jq -e '[.cooldown_ignored[] | select(.why == "unreadable or oversized")] | length == 1' "$r" >/dev/null
+rm -f "$d/cool"/*.json
+
+# Fleet-wide soft health is a last-resort warning, never a reason to revoke authorization.
+printf '{"agent_id":"agent-one","model":"opencode/alpha-free","at":1794837500}\n' > "$d/health/1794837500000-aaaaaaaaaaaaaaaa.json"
+printf '{"agent_id":"agent-two","model":"opencode/alpha-free","at":1794837550}\n' > "$d/health/1794837550000-bbbbbbbbbbbbbbbb.json"
+VICHE_ECONOMY_NOW=1794837600 $eco refresh --probe-limit 0 | jq -e '.funding_risk == "none" and .free_available_now == 2' >/dev/null
+jq -e '.soft_unhealthy["opencode/alpha-free"].agents == ["agent-one","agent-two"]' "$r" >/dev/null
+jq -e '[.order[].model | select(. == "opencode/alpha-free")] | length == 1' "$r" >/dev/null
+rm -f "$d/health"/*.json
 
 # The catalogue disappearing never damages the list.
 snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
@@ -195,6 +220,40 @@ jq 'del(.models[0].variant)' "$VICHE_ANTONINA_CONFIG" > "$d/without-low"
 mv "$d/without-low" "$VICHE_ANTONINA_CONFIG"
 $eco refresh --probe-limit 0 | jq -e '.changed == true' >/dev/null
 jq -e 'all(.models[]; .variant == "low")' "$VICHE_ANTONINA_CONFIG" >/dev/null
+
+# Writer invariant: only Economy writes the global ladder; the Act34 wrapper pins an isolated dir.
+for f in "$repo"/government/*; do
+  [ -f "$f" ] || continue
+  grep -q 'antonina/config.json' "$f" || continue
+  case "$(basename "$f")" in
+    economy-models.py|knowledge-free-dispatch.sh|MINISTRY-OF-ECONOMY.md|daily-digest.py) : ;;
+    *) echo "unexpected global-config reference in $(basename "$f")" >&2; exit 1 ;;
+  esac
+done
+
+# Adversarial: a catalogue id with # is never published (Antonina rejects it).
+cp "$d/catalogue.txt" "$d/weird.txt"
+printf 'opencode/odd-free-x#fast\n' >> "$d/weird.txt"
+printf '{"models":[{"model":"opencode/alpha-free","comment":"free","variant":"low"}]}\n' > "$VICHE_ANTONINA_CONFIG"
+VICHE_OPENCODE_MODELS="$d/weird.txt" $eco refresh --probe-limit 0 >/dev/null
+case ",$(order)," in *',opencode/odd-free-x#fast,'*) echo 'published an invalid runtime id' >&2; exit 1 ;; esac
+jq -e '[.dropped[] | select(.model == "opencode/odd-free-x#fast" and .why == "not a valid Antonina config id")] | length == 1' "$r" >/dev/null
+
+# An invalid authorized entry fails closed; it is never silently deleted.
+printf '{"models":[{"model":"opencode/alpha-free","comment":"free"},{"model":"opencode/alpha-free","comment":"dup"}]}\n' > "$VICHE_ANTONINA_CONFIG"
+snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
+rc=0; $eco check > "$d/bad.out" 2>/dev/null || rc=$?
+test "$rc" -eq 1
+grep -q 'duplicate configured model' "$d/bad.out"
+rc=0; $eco refresh --probe-limit 0 2>/dev/null || rc=$?
+test "$rc" -ne 0
+test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
+
+# A missing comment is repaired rather than treated as a reason to revoke.
+printf '{"models":[{"model":"opencode/alpha-free"}]}\n' > "$VICHE_ANTONINA_CONFIG"
+$eco refresh --probe-limit 0 >/dev/null
+jq -e '.models[0].comment == "" and .models[0].variant == "low"' "$VICHE_ANTONINA_CONFIG" >/dev/null
+
 # A copied checkout with inherited HOME and no fixture overrides cannot
 # execute discovery or modify any config.
 before=$(cat "$VICHE_ANTONINA_CONFIG")
