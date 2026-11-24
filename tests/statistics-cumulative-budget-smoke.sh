@@ -15,6 +15,9 @@ import json,sys
 p=sys.argv[1]
 c=json.load(open(p))
 c["offices"]["statistics"]["enabled"]=True
+# Keep this intentionally small regression cap independent of the live permit.
+c["offices"]["statistics"]["caps"]["cpu_seconds"]=1800
+c["offices"]["statistics"].pop("per_run_caps",None)
 open(p,"w").write(json.dumps(c))
 PY
 export VICHE_TOWN_ROOT="$town" VICHE_STATE_ROOT="$state"
@@ -39,7 +42,7 @@ try:
 except m.Denied as e:
  assert "Statistics cpu_seconds hard allowance exhausted" in str(e),str(e)
 else:
- raise AssertionError("cumulative 160*12 > 1800 cap allowed")
+ raise AssertionError("cumulative 256*8 > 1800 cap allowed")
 agg=json.loads((root/"aggregate.json").read_text())
 assert agg["by_office"]["statistics"]["cpu_seconds"]==7*256
 assert agg["tokens_total"]==0
