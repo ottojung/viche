@@ -56,7 +56,13 @@ specify objectives and inspect the system without seeding worker sessions.
 Do not infer Executive staffing effectiveness from agents started by an
 external operator. Require evidence that Executive independently recognizes
 zero/insufficient useful staffing and replenishes it through Antonina.
-Record the Executive's decisions and worker assignments durably.
+Record the Executive's decisions and worker assignments durably in existing
+mission state and operational logs. Routine allocation, replenishment and
+focus decisions do not need a new records/research report, Git commit, delivery,
+integration, or review; preserve the evidence and decision reason in the
+mission's existing durable state instead. Only material outcomes, consequential
+orders and actual changes to the software or law require the usual delivery
+process. No duplicate records or artificial approval gates.
 
 For every Executive cycle:
 - Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes

@@ -103,8 +103,15 @@ among fronts, resolve shared constraints and dependencies, arrange required
 verification, and integrate verified findings. Challenge a dead end when
 evidence changes the allocation decision; delegate the mathematical or
 technical investigation rather than doing it yourself.
-Log concise evidence-bearing progress into that mission's issue and records
-ONLY when material information has changed. Work with versatile research agents:
+Ordinary staffing, focus switches, lease replenishment, support coverage and
+resource allocation are operational decisions, not Git deliverables. Their
+authoritative durable mission state, assignment metadata and existing logs
+already provide the audit trail. Record a concise timestamped reason alongside
+a decision if the reason is not already in those artifacts. Never write a
+dated allocation report, create a delivery branch, or request integration
+solely to repeat those facts. Submit actual code/law changes, verified material
+outcomes and consequential orders through the applicable ordinary procedure.
+Publish material changes only; no duplicate record for state already durable. Work with versatile research agents:
 give them ownership of a hard question, freedom to investigate and pivot,
 and an objective acceptance criterion rather than a fixed procedural script.
 

@@ -34,6 +34,7 @@ Environment
 """
 import argparse
 import datetime
+import fcntl
 import json
 import os
 import pathlib
@@ -55,6 +56,8 @@ COOLDOWNS = pathlib.Path(os.environ.get(
     "VICHE_ANTONINA_COOLDOWNS",
     str(pathlib.Path(os.environ.get("ANTONINA_HOST_XDG_STATE_HOME",
         os.environ.get("XDG_STATE_HOME", str(HOME / ".local" / "state")))) / "antonina" / "model-cooldowns")))
+LIVE_TOWN = pathlib.Path("/var/lib/lubko/wd/viche")
+LIVE_STATE = pathlib.Path("/var/lib/lubko/wd/viche-state")
 MAX_MODELS = int(os.environ.get("VICHE_ECONOMY_MAX_MODELS", "32"))
 PROBE_FRESH_SECONDS = 14 * 86400
 PROBE_TIMEOUT = int(os.environ.get("VICHE_ECONOMY_PROBE_TIMEOUT", "120"))
@@ -213,10 +216,9 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
             return
         seen.add(model)
         tier = tier_of(model)
-        # Catalogue omissions and temporary free-tier policy must never
-        # revoke an explicitly configured fallback. Only the operator can
-        # remove that authorization. Runtime cooldowns still apply.
-        if grandfathered and tier != 0:
+        # Authorization is durable. Discovery, failed probes, temporary policy
+        # and capacity limits may never remove any configured model.
+        if grandfathered:
             wanted[tier].append(model)
             return
         if model not in in_catalogue:
@@ -230,7 +232,7 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
             if result is not None and not result.get("ok") and current - result.get("at", 0) < PROBE_FRESH_SECONDS:
                 dropped.append((model, "probe failed: " + str(result.get("detail", ""))))
                 return
-            if result is None and not grandfathered:
+            if not result or not result.get("ok"):
                 return  # unprobed newcomers wait for their probe
         elif not grandfathered:
             return  # contributor/paid/luna models are only ever kept, never auto-added
@@ -246,11 +248,14 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
         prefer = pol["prefer"]
         p = prefer.index(model) if model in prefer else len(prefer)
         c = configured.index(model) if model in configured else len(configured)
-        return (p, c, model)
+        return (model in pol["exclude"], p, c, model)
 
     fallback = [m for tier in (1, 2, 3) for m in sorted(wanted[tier], key=rank)]
-    # Limit discovered free models, never evict an authorized fallback.
-    final = sorted(wanted[0], key=rank)[:max(0, MAX_MODELS - len(fallback))] + fallback
+    # The size limit applies to additions, never existing authorization.
+    existing_free = [m for m in wanted[0] if m in configured]
+    additions = [m for m in wanted[0] if m not in configured]
+    room = max(0, MAX_MODELS - len(existing_free) - len(fallback))
+    final = sorted(existing_free + sorted(additions, key=rank)[:room], key=rank) + fallback
     if not final:
         raise SystemExit("plan would leave Antonina with no models; refusing")
     return configured, final, dropped
@@ -274,18 +279,30 @@ def apply_order(cfg, final, probes, dropped, current):
         new_entries.append({**entry, "variant": "low"})
     updated = dict(cfg)
     updated["models"] = new_entries
-    backup = CONFIG.with_name(CONFIG.name + ".bak-" + str(current))
-    shutil.copy2(CONFIG, backup)
-    atomic_write(CONFIG, json.dumps(updated, indent=2) + "\n")
-    os.chmod(CONFIG, 0o600)
-    try:
-        listed = subprocess.run(["antonina", "agent", "model", "select"], capture_output=True, text=True, timeout=60)
-        ok = listed.returncode == 0 and final[0] in listed.stdout
-    except (OSError, subprocess.TimeoutExpired):
-        ok = os.environ.get("VICHE_ECONOMY_SKIP_VALIDATE") == "1"
-    if not ok and os.environ.get("VICHE_ECONOMY_SKIP_VALIDATE") != "1":
-        shutil.copy2(backup, CONFIG)
-        raise SystemExit("Antonina rejected the new model list; previous config restored from " + str(backup))
+    if not set(existing).issubset(final):
+        raise SystemExit("Refusing to revoke an authorized model")
+    # Validate a candidate outside the live configuration. A failed or hung
+    # validator must never transiently publish a candidate or restore stale bytes.
+    with tempfile.TemporaryDirectory(prefix=".model-candidate-", dir=CONFIG.parent) as scratch:
+        candidate = pathlib.Path(scratch) / "antonina" / "config.json"
+        atomic_write(candidate, json.dumps(updated, indent=2) + "\n")
+        env = dict(os.environ, VICHE_ANTONINA_CONFIG=str(candidate),
+                   XDG_CONFIG_HOME=scratch, ANTONINA_HOST_XDG_CONFIG_HOME=scratch)
+        try:
+            listed = subprocess.run(["antonina", "agent", "model", "select"],
+                                    capture_output=True, text=True, timeout=60, env=env)
+            ok = listed.returncode == 0 and final[0] in listed.stdout.splitlines()
+        except (OSError, subprocess.TimeoutExpired):
+            ok = False
+        if not ok and os.environ.get("VICHE_ECONOMY_SKIP_VALIDATE") != "1":
+            raise SystemExit("Antonina rejected candidate; live config untouched")
+    with CONFIG.with_name(CONFIG.name + ".write.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if read_config() != cfg:
+            raise SystemExit("Configuration changed during discovery; live config untouched")
+        backup = CONFIG.with_name(CONFIG.name + ".bak-" + str(time.time_ns()))
+        shutil.copy2(CONFIG, backup)
+        atomic_write(CONFIG, json.dumps(updated, indent=2) + "\n")
     return str(backup)
 
 
@@ -303,7 +320,7 @@ def cooldown_state(models, current):
 def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, current, catalogue_ids):
     cooling = cooldown_state(set(final), current)
     free = [m for m in final if tier_of(m) == 0]
-    free_available = [m for m in free if m not in cooling]
+    free_available = [m for m in free if m in catalogue_ids and m not in cooling]
     fallback_eligible = [m for m in final if tier_of(m) != 0 and m in catalogue_ids and m not in cooling]
     missing_fallback = [m for m in final if tier_of(m) != 0 and m not in catalogue_ids]
     returns = sorted(v["until"] for m, v in cooling.items() if m in free)
@@ -311,6 +328,7 @@ def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, cur
         "at": datetime.datetime.fromtimestamp(current, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "order": [{"model": m, "tier": TIER_NAMES[tier_of(m)]} for m in final],
         "free_models": len(free),
+        "free_missing_from_catalogue": [m for m in free if m not in catalogue_ids],
         "free_available_now": len(free_available),
         "fallback_eligible_now": len(fallback_eligible),
         "fallback_eligible_models": fallback_eligible,
@@ -330,6 +348,21 @@ def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, cur
 
 
 def refresh(args):
+    # Smoke tests and temporary checkouts must never probe or rewrite the
+    # production Antonina service, even when inherited HOME is real.
+    canonical = (pathlib.Path(__file__).resolve().parent.parent == LIVE_TOWN
+                 and STATE.resolve() == LIVE_STATE
+                 and pathlib.Path(os.environ.get("VICHE_TOWN_ROOT", str(LIVE_TOWN))).resolve() == LIVE_TOWN)
+    if not canonical:
+        fixture = all(os.environ.get(k) for k in (
+            "VICHE_ANTONINA_CONFIG", "VICHE_ANTONINA_COOLDOWNS", "VICHE_OPENCODE_MODELS"))
+        live_config = pathlib.Path.home() / ".config/antonina/config.json"
+        live_cooldowns = pathlib.Path.home() / ".local/state/antonina/model-cooldowns"
+        if (not fixture or CONFIG.resolve() == live_config.resolve()
+                or COOLDOWNS.resolve() == live_cooldowns.resolve()
+                or STATE.resolve() == LIVE_STATE):
+            print("economy: noncanonical refresh skipped before discovery or writes", file=sys.stderr)
+            return 1
     current = now()
     ROOT.mkdir(parents=True, exist_ok=True)
     cfg = read_config()
@@ -349,7 +382,9 @@ def refresh(args):
     backup = None
     if changed and not args.no_apply:
         backup = apply_order(cfg, final, probes, dropped, current)
-    report = build_report(final, before, dropped, new_free, ran, changed and not args.no_apply, backup, current, ids)
+    report = build_report(before if args.no_apply else final, before, dropped, new_free, ran, changed and not args.no_apply, backup, current, ids)
+    if args.no_apply:
+        report["proposed_order"] = final
     atomic_write(ROOT / "report.json", json.dumps(report, sort_keys=True, indent=1) + "\n")
     print(json.dumps({"changed": report["changed"], "free_available_now": report["free_available_now"],
                       "funding_risk": report["funding_risk"]}, sort_keys=True))

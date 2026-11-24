@@ -20,6 +20,13 @@ MOCK
 cat > "$d/bin/antonina" <<'MOCK'
 #!/bin/sh
 [ "$1 $2 $3" = 'agent model select' ] || exit 9
+if [ -n "${MOCK_LIVE_CONFIG:-}" ]; then
+  [ "$VICHE_ANTONINA_CONFIG" != "$MOCK_LIVE_CONFIG" ] || exit 8
+  cmp "$MOCK_LIVE_CONFIG" "$MOCK_EXPECTED_LIVE" || exit 8
+  if [ "${MOCK_CONCURRENT_EDIT:-0}" = 1 ]; then
+    printf '%s\n' '{"models":[{"model":"openai/gpt-6-luna","variant":"low"}],"concurrent":true}' > "$MOCK_LIVE_CONFIG"
+  fi
+fi
 [ "${MOCK_ANTONINA_REJECT:-0}" = 0 ] || exit 1
 jq -r '.models[].model' "$VICHE_ANTONINA_CONFIG"
 MOCK
@@ -73,15 +80,15 @@ test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$before"
 # Refresh: free first (alpha, then probed-OK beta), contributor, Luna, paid LAST.
 $eco refresh --probe-limit 10 > "$d/refresh.out"
 jq -e '.changed == true and .funding_risk == "none" and .free_available_now == 2' "$d/refresh.out" >/dev/null
-test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
+test "$(order)" = 'opencode/alpha-free,opencode/vanished-free,opencode/beta-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
 jq -e '.keep_me == "yes"' "$VICHE_ANTONINA_CONFIG" >/dev/null                 # unrelated config keys survive
 jq -e '.models[0].comment == "free"' "$VICHE_ANTONINA_CONFIG" >/dev/null       # existing comments survive
-jq -e '.models[1].comment | test("Ministry of Economy")' "$VICHE_ANTONINA_CONFIG" >/dev/null
+jq -e '.models[2].comment | test("Ministry of Economy")' "$VICHE_ANTONINA_CONFIG" >/dev/null
 $eco check
 ls "$VICHE_ANTONINA_CONFIG".bak-* >/dev/null
 
 # Never auto-added: paid, contributor and Luna models from the catalogue; probe failures; excluded; stale entries dropped.
-for m in anthropic/claude-x opencode/zeta opencode/eta opencode/theta opencode/gamma-free opencode/delta-free opencode/vanished-free; do
+for m in anthropic/claude-x opencode/zeta opencode/eta opencode/theta opencode/gamma-free opencode/delta-free; do
   case ",$(order)," in *",$m,"*) echo "unexpected model $m" >&2; exit 1 ;; esac
 done
 # Probes ran only for free, non-excluded candidates; none for paid or excluded models.
@@ -89,7 +96,7 @@ grep -q 'alpha-free' "$d/probes.log"; grep -q 'beta-free' "$d/probes.log"; grep 
 if grep -q 'delta-free\|gpt-6\|claude-x' "$d/probes.log"; then echo 'probed a model it must not' >&2; exit 1; fi
 r=$d/state/economy/report.json
 jq -e '.order[0].tier == "free" and .order[-1].tier == "paid" and (.paid_before_free_violations | length) == 0' "$r" >/dev/null
-jq -e '[.dropped[] | select(.model == "opencode/vanished-free" and .why == "not in catalogue")] | length == 1' "$r" >/dev/null
+jq -e '.free_missing_from_catalogue == ["opencode/vanished-free"]' "$r" >/dev/null
 jq -e '[.dropped[] | select(.model == "opencode/gamma-free" and (.why | startswith("probe failed")))] | length == 1' "$r" >/dev/null
 jq -e '[.dropped[] | select(.model == "opencode/delta-free" and (.why | startswith("excluded by policy")))] | length == 1' "$r" >/dev/null
 
@@ -103,7 +110,7 @@ test "$(ls "$VICHE_ANTONINA_CONFIG".bak-* | wc -l)" -eq "$n_bak"
 # Policy preference reorders within a tier but never across tiers.
 printf '{"prefer":["opencode/beta-free","openai/gpt-6-luna","openai/gpt-6"],"exclude":[{"model":"opencode/delta-free","reason":"rate limit 5/day","until":9999999999}]}\n' > "$d/state/economy/model-policy.json"
 VICHE_ECONOMY_NOW=1794837600 $eco refresh | jq -e '.changed == true' >/dev/null
-test "$(order)" = 'opencode/beta-free,opencode/alpha-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
+test "$(order)" = 'opencode/beta-free,opencode/alpha-free,opencode/vanished-free,opencode-go/glm-contributor,openai/gpt-6-luna,openai/gpt-6'
 $eco check
 
 # Funding risk follows live cooldowns: one free model cooling = elevated, both = high, and the report says when one returns.
@@ -124,12 +131,18 @@ test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
 jq -e 'has("error")' "$r" >/dev/null
 
 # Antonina rejecting the new list restores the previous config.
-printf '{"exclude":[{"model":"opencode/beta-free","reason":"test","until":9999999999}]}\n' > "$d/state/economy/model-policy.json"
-rc=0; MOCK_ANTONINA_REJECT=1 $eco refresh 2>/dev/null || rc=$?
+printf '{"prefer":["opencode/vanished-free"],"exclude":[{"model":"opencode/beta-free","reason":"test","until":9999999999}]}\n' > "$d/state/economy/model-policy.json"
+cp "$VICHE_ANTONINA_CONFIG" "$d/live-before.json"
+rc=0; MOCK_LIVE_CONFIG="$VICHE_ANTONINA_CONFIG" MOCK_EXPECTED_LIVE="$d/live-before.json" MOCK_ANTONINA_REJECT=1 $eco refresh 2>/dev/null || rc=$?
 test "$rc" -ne 0
 test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
 
-# Without any usable model the Ministry refuses to write an empty list.
+# Validation is outside live config; a concurrent authorized change is not lost.
+rc=0; MOCK_LIVE_CONFIG="$VICHE_ANTONINA_CONFIG" MOCK_EXPECTED_LIVE="$d/live-before.json" MOCK_CONCURRENT_EDIT=1 $eco refresh 2>/dev/null || rc=$?
+test "$rc" -ne 0
+jq -e '.concurrent == true and (.models|length)==1' "$VICHE_ANTONINA_CONFIG" >/dev/null
+
+# Without any catalogued model the existing authorized model is still preserved.
 cat > "$d/catalogue2.txt" <<'EOF'
 opencode/gamma-free
 openai/gpt-7
@@ -145,8 +158,8 @@ EOF
 printf '{"models":[{"model":"opencode/gone-free"}]}\n' > "$VICHE_ANTONINA_CONFIG"
 snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
 rc=0; VICHE_OPENCODE_MODELS="$d/catalogue2.txt" $eco refresh 2>/dev/null || rc=$?
-test "$rc" -ne 0
-test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
+test "$rc" -eq 0
+test "$(order)" = opencode/gone-free
 
 # A config whose models are bare strings is understood.
 printf '{"models":["openai/gpt-6-luna","opencode/alpha-free","openai/gpt-6"]}\n' > "$VICHE_ANTONINA_CONFIG"
@@ -159,7 +172,7 @@ test "$(jq -r '[.models[] | (.model // .)] | join(",")' "$VICHE_ANTONINA_CONFIG"
 grep -vE '^(openai/|opencode-go/)' "$d/catalogue.txt" > "$d/partial.txt"
 printf '%s\n' opencode/a opencode/b opencode/c >> "$d/partial.txt"
 VICHE_OPENCODE_MODELS="$d/partial.txt" VICHE_ECONOMY_MAX_MODELS=3 $eco refresh --probe-limit 0 >/dev/null
-test "$(order)" = 'opencode/alpha-free,openai/gpt-6-luna,openai/gpt-6'
+test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6-luna,openai/gpt-6'
 jq -e '.fallback_eligible_now == 0 and (.fallback_missing_from_catalogue|length)==2' "$r" >/dev/null
 # When authenticated catalogue returns, eligibility recovers without manual re-add.
 $eco refresh --probe-limit 0 >/dev/null
@@ -182,4 +195,9 @@ jq 'del(.models[0].variant)' "$VICHE_ANTONINA_CONFIG" > "$d/without-low"
 mv "$d/without-low" "$VICHE_ANTONINA_CONFIG"
 $eco refresh --probe-limit 0 | jq -e '.changed == true' >/dev/null
 jq -e 'all(.models[]; .variant == "low")' "$VICHE_ANTONINA_CONFIG" >/dev/null
+# A copied checkout with inherited HOME and no fixture overrides cannot
+# execute discovery or modify any config.
+before=$(cat "$VICHE_ANTONINA_CONFIG")
+(unset VICHE_OPENCODE_MODELS; $eco refresh) && exit 1
+test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$before"
 echo 'economy models smoke passed'
