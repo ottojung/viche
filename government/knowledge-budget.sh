@@ -133,6 +133,16 @@ refresh_aggregate() {
 
 agent_status() { antonina agent status --id "$1" --json 2>/dev/null; }
 
+# The reservation is pinned to ONE authoritative native meter session. Antonina
+# may recover a different session between provider invocations; reading a stale
+# or replacement row must never release or merge across identities.
+agent_session_matches() {
+  _as_meta=$1; _as_expected=$2
+  [ -n "$_as_expected" ] || return 1
+  [ "$(printf '%s\n' "$_as_meta" | jq -r '.native_session_id // empty')" = "$_as_expected" ] || return 1
+  return 0
+}
+
 stop_or_kill() {
   _sk_agent=$1; _sk_action=$2
   if [ "$_sk_action" = stop ]; then antonina agent stop --id "$_sk_agent" >/dev/null 2>&1 || :; fi
@@ -147,13 +157,18 @@ merge_usage_snapshots() {
   _ms_a=$1; _ms_b=$2
   [ -n "$_ms_a" ] && [ "$_ms_a" != null ] || { printf '%s\n' "$_ms_b"; return 0; }
   [ -n "$_ms_b" ] && [ "$_ms_b" != null ] || { printf '%s\n' "$_ms_a"; return 0; }
+  # Capture BOTH originals before selecting the token winner. Selecting first
+  # and then reading .cpu_seconds/.cost from the chosen object loses the other
+  # input's maxima whenever that input is not the token winner.
   printf '%s\n' "$_ms_a" | jq -ce --argjson b "$_ms_b" '
-    ((.tokens.total // 0)) as $at | (($b.tokens.total // 0)) as $bt |
+    (.tokens.total // 0) as $at | ($b.tokens.total // 0) as $bt |
+    (.cpu_seconds // 0) as $ac | ($b.cpu_seconds // 0) as $bc |
+    (.cost // 0) as $ao | ($b.cost // 0) as $bo |
     (if $bt > $at then $b else . end)
     | .tokens.total = (if $bt > $at then $bt else $at end)
     | .tokens.delta_total = (if $bt > $at then $bt else $at end)
-    | .cpu_seconds = ([.cpu_seconds // 0, $b.cpu_seconds // 0] | max)
-    | .cost = ([.cost // 0, $b.cost // 0] | max)'
+    | .cpu_seconds = (if $bc > $ac then $bc else $ac end)
+    | .cost = (if $bo > $ao then $bo else $ao end)'
 }
 
 usage_from_snapshot() {
@@ -228,7 +243,7 @@ wait_for_binding() {
 # ---- terminal state transitions (all assume the lock is held) ----------------
 
 hold_locked() {
-  _h_id=$1; _h_reason=$2
+  _h_id=$1; _h_reason=$2; _h_obs=${3:-}; _h_wall=${4:-}
   _h_cur=$(res_read "$_h_id")
   case "$(printf '%s\n' "$_h_cur" | jq -r '.state')" in
     held|closed|rolled_back|rejected) return 0;;
@@ -236,12 +251,60 @@ hold_locked() {
   _h_agent=$(printf '%s\n' "$_h_cur" | jq -r '.agent_id // ""')
   [ -z "$_h_agent" ] || stop_or_kill "$_h_agent" kill
   _h_caps=$(printf '%s\n' "$_h_cur" | jq -c '.caps')
+  # A hold must never ERASE debt already measured. Keep the caps as the floor
+  # and add any observed snapshot (an overrun reading may not be persisted yet)
+  # plus the reservation's own last committed meter as independent maxima.
+  _h_previous=$(printf '%s\n' "$_h_cur" | jq -c '.meter // null')
+  _h_snap=null
+  _h_usage=null
+  [ -n "$_h_obs" ] || _h_obs=$_h_previous
+  if [ -n "$_h_obs" ] && [ "$_h_obs" != null ]; then
+    if [ -z "$_h_wall" ]; then
+      _h_started=$(printf '%s\n' "$_h_cur" | jq -r '.started_at // 0')
+      if [ "$_h_started" -gt 0 ]; then
+        _h_wall=$(( $(date +%s) - _h_started ))
+      else
+        _h_wall=0
+      fi
+    fi
+    _h_snap=$(merge_usage_snapshots "$_h_obs" "$_h_previous")
+    _h_usage=$(usage_from_snapshot "$_h_snap" "$_h_wall")
+  fi
+  _h_charge=$(printf '%s\n' "$_h_cur" | jq -ce --argjson c "$_h_caps" \
+    --argjson u "$_h_usage" --argjson s "$_h_snap" \
+    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0)] | max),
+      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0)] | max),
+      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0), (.usage.wall_seconds // 0)] | max)}')
   _h_now=$(date +%s)
-  _h_new=$(printf '%s\n' "$_h_cur" | jq -c --arg r "$_h_reason" --argjson now "$_h_now" --argjson c "$_h_caps" \
+  _h_new=$(printf '%s\n' "$_h_cur" | jq -c --arg r "$_h_reason" --argjson now "$_h_now" \
+    --argjson c "$_h_charge" --argjson s "$_h_snap" --argjson u "$_h_usage" \
     '.state="held" | .charge=$c | .held_at=$now | .held_reason=$r |
+     (if $s==null then . else .meter=$s | .usage=$u end) |
      .history += [{at:$now,event:"held",reason:$r}]')
   res_write "$_h_id" "$_h_new"
   refresh_aggregate "$(printf '%s\n' "$_h_cur" | jq -r '.accounting_window_seconds // empty')"
+}
+
+# A held reservation may predate the liability-preserving hold path. Upgrade
+# its charge to any debt already measured on its meter without re-stopping the
+# agent or changing the recorded hold reason.
+tighten_held_locked() {
+  _th_id=$1
+  _th_cur=$(res_read "$_th_id")
+  [ "$(printf '%s\n' "$_th_cur" | jq -r '.state')" = held ] || return 0
+  _th_caps=$(printf '%s\n' "$_th_cur" | jq -c '.caps')
+  _th_previous=$(printf '%s\n' "$_th_cur" | jq -c '.meter // null')
+  [ "$_th_previous" != null ] || return 0
+  _th_wall=$(printf '%s\n' "$_th_cur" | jq -r '.usage.wall_seconds // 0')
+  _th_usage=$(usage_from_snapshot "$_th_previous" "$_th_wall")
+  _th_charge=$(printf '%s\n' "$_th_cur" | jq -ce --argjson c "$_th_caps" \
+    --argjson u "$_th_usage" --argjson s "$_th_previous" \
+    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0)] | max),
+      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0)] | max),
+      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0)] | max)}')
+  _th_new=$(printf '%s\n' "$_th_cur" | jq -c --argjson c "$_th_charge" '.charge=$c')
+  res_write "$_th_id" "$_th_new"
+  refresh_aggregate "$(printf '%s\n' "$_th_cur" | jq -r '.accounting_window_seconds // empty')"
 }
 
 finalize_locked() {
@@ -251,13 +314,15 @@ finalize_locked() {
   _f_db=$(printf '%s\n' "$_f_cur" | jq -r '.meter_db')
   _f_sid=$(printf '%s\n' "$_f_cur" | jq -r '.native_session_id // ""')
   _f_pid=$(printf '%s\n' "$_f_cur" | jq -r '.runner_pid // ""')
+  # Initialise the CPU baseline and last observed meter unconditionally, before
+  # any caller-supplied (possibly pre-adjusted) snapshot is used or merged.
+  _f_base=$(printf '%s\n' "$_f_cur" | jq -c '.cpu_baseline')
+  _f_previous=$(printf '%s\n' "$_f_cur" | jq -c '.meter // null')
   if [ -z "$_f_snap" ]; then
     if ! _f_snap=$(python3 "$TOOL" snapshot "$_f_db" "$_f_sid" "$_f_pid" 2>/dev/null); then
       hold_locked "$_f_id" 'meter_unreadable_at_finalize'; return 0
     fi
   fi
-  _f_base=$(printf '%s\n' "$_f_cur" | jq -c '.cpu_baseline')
-  _f_previous=$(printf '%s\n' "$_f_cur" | jq -c '.meter')
   if [ "$(printf '%s\n' "$_f_snap" | jq -r '.cpu_upper_bound // false')" != true ]; then
     if ! _f_snap=$(cpu_adjust "$_f_base" "$_f_snap" "$_f_previous"); then
       hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_at_finalize'; return 0
@@ -271,13 +336,22 @@ finalize_locked() {
     # A kill request is NOT proof that a detached backend session stopped.
     # Never release the reserved cap while it might still be consuming work.
     if ! _f_status=$(agent_status "$_f_agent"); then
-      hold_locked "$_f_id" 'cannot_verify_agent_stopped'; return 0
+      hold_locked "$_f_id" 'cannot_verify_agent_stopped' "$_f_snap" "$_f_wall"; return 0
+    fi
+    # The pinned native session is the ONLY authoritative meter for this run.
+    # A recovered/changed/missing identity means the reading is not for this
+    # reservation: hold conservatively, never close or merge across sessions.
+    if ! agent_session_matches "$_f_status" "$_f_sid"; then
+      hold_locked "$_f_id" 'native_session_identity_changed_at_stop' "$_f_snap" "$_f_wall"; return 0
     fi
     _f_state=$(printf '%s\n' "$_f_status" | jq -r '.state // "unknown"')
     case "$_f_state" in
       running|starting|recovering|unknown)
-        hold_locked "$_f_id" 'agent_still_active_or_unknown_after_stop'; return 0 ;;
+        hold_locked "$_f_id" 'agent_still_active_or_unknown_after_stop' "$_f_snap" "$_f_wall"; return 0 ;;
     esac
+    # Wall liability runs through the VERIFIED stop, not the earlier snapshot.
+    _f_wall_end=$(( $(date +%s) - _f_started ))
+    if [ "$_f_wall_end" -gt "$_f_wall" ]; then _f_wall=$_f_wall_end; fi
     # Stopping the agent is not proof that all usage was already committed:
     # the provider can flush token accounting to the authoritative meter AFTER
     # the process is gone. Re-read the pinned session now that termination is
@@ -285,11 +359,11 @@ finalize_locked() {
     # stop stays a full-cap hold, never an optimistic release.
     _f_after=
     if ! _f_after=$(python3 "$TOOL" snapshot "$_f_db" "$_f_sid" "$_f_pid" 2>/dev/null); then
-      hold_locked "$_f_id" 'meter_unreadable_after_stop'; return 0
+      hold_locked "$_f_id" 'meter_unreadable_after_stop' "$_f_snap" "$_f_wall"; return 0
     fi
     if [ "$(printf '%s\n' "$_f_after" | jq -r '.cpu_upper_bound // false')" != true ]; then
       if ! _f_after=$(cpu_adjust "$_f_base" "$_f_after" "$_f_previous"); then
-        hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_after_stop'; return 0
+        hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_after_stop' "$_f_snap" "$_f_wall"; return 0
       fi
     fi
     _f_snap=$(merge_usage_snapshots "$_f_snap" "$_f_after")
@@ -478,13 +552,17 @@ monitor() {
     if ! _mo_meta=$(agent_status "$_mo_agent"); then
       hold "$_mo_id" 'status_unreadable'; exit 0
     fi
+    _mo_sid=$(printf '%s\n' "$_mo_cur" | jq -r '.native_session_id // ""')
+    # Never meter or release a different session recovered by Antonina.
+    if ! agent_session_matches "$_mo_meta" "$_mo_sid"; then
+      hold "$_mo_id" 'native_session_identity_changed_on_monitor'; exit 0
+    fi
     _mo_mstate=$(printf '%s\n' "$_mo_meta" | jq -r '.state // "unknown"')
     case "$_mo_mstate" in
       running) :;;
       *) finalize "$_mo_id" "agent_terminal_$_mo_mstate"; exit 0;;
     esac
     _mo_db=$(printf '%s\n' "$_mo_cur" | jq -r '.meter_db')
-    _mo_sid=$(printf '%s\n' "$_mo_cur" | jq -r '.native_session_id')
     _mo_pid=$(printf '%s\n' "$_mo_cur" | jq -r '.runner_pid // ""')
     if ! _mo_snap=$(python3 "$TOOL" snapshot "$_mo_db" "$_mo_sid" "$_mo_pid" 2>/dev/null); then
       hold "$_mo_id" 'meter_unreadable'; exit 0
@@ -497,7 +575,7 @@ monitor() {
     _mo_caps=$(printf '%s\n' "$_mo_cur" | jq -c '.caps')
     _mo_wall=$((_mo_now - $(printf '%s\n' "$_mo_cur" | jq -r '.started_at')))
     if ! _mo_ov=$(python3 "$TOOL" overrun "$_mo_caps" "$_mo_snap" "$_mo_wall"); then
-      hold "$_mo_id" 'usage_overrun_check_failed'; exit 0
+      hold "$_mo_id" 'usage_overrun_check_failed' "$_mo_snap" "$_mo_wall"; exit 0
     fi
     if [ "$(printf '%s\n' "$_mo_ov" | jq -r '.over')" = true ]; then
       _mo_action=$(printf '%s\n' "$_mo_cur" | jq -r '.overrun_action')
@@ -507,7 +585,7 @@ monitor() {
       exit 0
     fi
     update_meter "$_mo_id" "$_mo_snap" "$_mo_wall" || {
-      hold "$_mo_id" 'state_write_failed'; exit 0
+      hold "$_mo_id" 'state_write_failed' "$_mo_snap" "$_mo_wall"; exit 0
     }
   done
 }
@@ -591,6 +669,10 @@ reconcile_locked() {
         if ! _rc_meta=$(agent_status "$_rc_agent"); then
           hold_locked "$_rc_id" 'status_unreadable_on_reconcile'; continue
         fi
+        _rc_sid=$(jq -r '.native_session_id // ""' "$_rc_f")
+        if ! agent_session_matches "$_rc_meta" "$_rc_sid"; then
+          hold_locked "$_rc_id" 'native_session_identity_changed_on_reconcile'; continue
+        fi
         _rc_mstate=$(printf '%s\n' "$_rc_meta" | jq -r '.state // "unknown"')
         case "$_rc_mstate" in
           running)
@@ -614,8 +696,15 @@ reconcile_locked() {
         _rc_db=$(jq -r '.meter_db' "$_rc_f")
         _rc_sid=$(jq -r '.native_session_id // ""' "$_rc_f")
         _rc_pid=$(jq -r '.runner_pid // ""' "$_rc_f")
+        tighten_held_locked "$_rc_id"
         if [ -n "$_rc_agent" ] && _rc_meta=$(agent_status "$_rc_agent"); then
           [ "$(printf '%s\n' "$_rc_meta" | jq -r '.state // "unknown"')" = running ] && continue
+          # A held debt must not be released against a different/recovered
+          # session row; the hold stays until an operator resolves identity.
+          if ! agent_session_matches "$_rc_meta" "$_rc_sid"; then
+            log "held $_rc_id: native session identity changed; keeping full hold"
+            continue
+          fi
           if _rc_snap=$(python3 "$TOOL" snapshot "$_rc_db" "$_rc_sid" "$_rc_pid" 2>/dev/null); then
             res_write "$_rc_id" "$(jq -c '.state="active"' "$_rc_f")"
             finalize_locked "$_rc_id" 'reconciled_terminal' "$_rc_snap" ''

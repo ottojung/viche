@@ -76,3 +76,37 @@ new smoke, `knowledge-host-cpu-lifecycle-smoke.sh`, `knowledge-budget-smoke.sh`,
 `knowledge-budget-negative-20261122.sh` T8 fails identically before and after
 the patch: this worktree's config has `statistics.enabled=true`, while the
 test's comment assumes disabled shipped defaults. Pre-existing, not touched.
+
+## Follow-up review (handoff H-1795551682-b28e)
+
+Further review of `bbbd8f49` found four remaining defects in the same engine;
+all repaired in an incremental commit on the same isolated branch:
+
+1. **Cross-metric maxima.** `merge_usage_snapshots` selected the token winner
+   before reading `.cpu_seconds`/`.cost` from the chosen object, so when the
+   second input won tokens the first input's CPU/cost maxima were lost. Both
+   inputs are now captured into `$ac/$bc/$ao/$bo` before selection.
+2. **Observed liability on entry to held.** `hold_locked` charged only caps and
+   dropped an overrun snapshot that had been measured but not yet persisted;
+   it also discarded the record's last committed meter. Holds now take the
+   component-wise max of caps, observed snapshot and prior meter, and persist
+   the observed meter/usage. `tighten_held_locked` upgrades legacy held records
+   on reconcile without re-stopping or changing the hold reason. The lifecycle
+   smoke's failed-stop assertion was strengthened from `==150` to `>=185` to
+   reflect the retained overrun debt.
+3. **Session identity at stop / monitor / reconcile.** Added
+   `agent_session_matches`; a recovered, changed or missing native session id
+   now holds conservatively at `finalize_locked` (at verified stop), `monitor`
+   and both `reconcile_locked` branches instead of closing or merging against
+   a different session row.
+4. **Wall through verified stop.** `finalize_locked` now extends wall liability
+   to `now - started_at` measured after termination is confirmed, taking the
+   max with any earlier (monitor-supplied) wall value.
+
+`_f_base`/`_f_previous` are initialised at function entry, before any caller
+supplied pre-adjusted snapshot is used or merged.
+
+No budgets, caps, config, permits, source restrictions, stop/expiry checks or
+`knowledge-budget-tool.py` were changed. No live state, credentials, agents or
+model dispatch were used; all fixtures are private temp directories behind the
+`suite-env.sh` barrier.

@@ -17,12 +17,13 @@ mkdir -p "$town/government" "$tmp/bin"
 cp "$repo/government/knowledge-budget.conf" "$town/government/config.template"
 
 # Per-case authoritative meter with the exact session_v2 schema the tool reads.
-mkdb() { # path, token count
-  python3 - "$1" "$2" <<'PY'
+mkdb() { # path, token count, [reported cost]
+  python3 - "$1" "$2" "${3:-0.0}" <<'PY'
 import sqlite3,sys
 c=sqlite3.connect(sys.argv[1])
 c.execute('create table session_v2 (id text primary key,tokens_input int,tokens_output int,tokens_reasoning int,tokens_cache_read int,tokens_cache_write int,cost real,time_updated int)')
-c.execute("insert into session_v2 values ('sid',?,0,0,0,0,0.0,1795279700000)",(int(sys.argv[2]),))
+c.execute("insert into session_v2 values ('sid',?,0,0,0,0,?,1795279700000)",
+          (int(sys.argv[2]),float(sys.argv[3])))
 c.commit()
 PY
 }
@@ -78,7 +79,15 @@ cat > "$tmp/bin/antonina" <<'SH'
 #!/bin/sh
 case "$1 $2" in
   'agent status')
-    cat "$TEST_AGENT_STATE"
+    case "${TEST_MODE:-}" in
+      identity_change)
+        printf '{"state":"running","native_session_id":"other-session"}\n'
+        ;;
+      still_running)
+        printf '{"state":"running","native_session_id":"sid"}\n'
+        ;;
+      *) cat "$TEST_AGENT_STATE" ;;
+    esac
     ;;
   'agent kill'|'agent stop')
     printf '%s\n' "$*" >> "$TEST_AGENT_KILLS"
@@ -94,8 +103,14 @@ PY
       unreadable_after_stop)
         mv "$TEST_DB" "$TEST_DB.moved"
         ;;
+      wall_marker)
+        sleep 2
+        date +%s > "$TEST_WALL_MARK"
+        ;;
     esac
-    printf '{"state":"clearexit","native_session_id":"sid"}\n' > "$TEST_AGENT_STATE"
+    if [ "${TEST_MODE:-}" != still_running ]; then
+      printf '{"state":"clearexit","native_session_id":"sid"}\n' > "$TEST_AGENT_STATE"
+    fi
     ;;
   *) exit 17 ;;
 esac
@@ -180,4 +195,117 @@ jq -e '.state=="held" and .charge.tokens_total==1000 and
   fail 'missing session identity was not held at full cap'
 echo 'T5 ok'
 
-echo 'PASS: terminal accounting keeps late commits, fail-closed holds and observed overrun debt'
+echo '--- T6: cross-metric maxima survive token-winner selection ---'
+s6=$tmp/s6; db6=$tmp/m6.db
+mkdb "$db6" 100 7.0; mkcfg "$s6" "$db6" 1000
+export VICHE_STATE_ROOT="$s6" TEST_DB="$db6" TEST_MODE=late_commit
+rid=$(/bin/sh "$engine" reserve statistics cross-metric-agent)
+python3 "$tmp/mkactive.py" "$s6/knowledge/budget/reservations/$rid.json" "$tool" "$db6" sid cross-metric-agent 100 -1
+# The previously observed meter wins TOKENS (500 vs 180), while the current
+# post-stop snapshot wins CPU (via a zeroed baseline) and reported cost (7.0).
+# Selecting the token winner first would drop the other input's CPU and cost.
+host_cpu=$(python3 "$tool" snapshot "$db6" sid 123 | jq -r '.cpu_seconds')
+python3 - "$s6/knowledge/budget/reservations/$rid.json" <<'PY'
+import json,sys
+p=sys.argv[1]; a=json.load(open(p))
+a['cpu_baseline']['cpu_seconds']=0.0
+a['meter']['tokens']['total']=500
+a['meter']['tokens']['delta_total']=500
+a['meter']['cpu_seconds']=0.5
+a['meter']['cost']=0.0
+json.dump(a,open(p,'w'))
+PY
+/bin/sh "$engine" reconcile >/dev/null
+jq -e --argjson h "$host_cpu" '.state=="closed" and .usage.tokens_total>=500 and
+        .meter.cpu_seconds>=($h - 2) and .meter.cost>=7' \
+  "$s6/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'token-winner selection lost the other input CPU/cost maxima'
+echo 'T6 ok'
+
+echo '--- T7: changed native_session_id at verified stop holds conservatively ---'
+s7=$tmp/s7; db7=$tmp/m7.db
+mkdb "$db7" 100; mkcfg "$s7" "$db7" 1000
+export VICHE_STATE_ROOT="$s7" TEST_DB="$db7" TEST_MODE=identity_change
+rid=$(/bin/sh "$engine" reserve statistics changed-stop-agent)
+python3 "$tmp/mkactive.py" "$s7/knowledge/budget/reservations/$rid.json" "$tool" "$db7" sid changed-stop-agent 100 -1
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .held_reason=="native_session_identity_changed_at_stop" and
+        .charge.tokens_total>=100' \
+  "$s7/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'changed identity at stop released or merged across sessions'
+echo 'T7 ok'
+
+echo '--- T8: changed native_session_id on reconcile holds conservatively ---'
+s8=$tmp/s8; db8=$tmp/m8.db
+mkdb "$db8" 100; mkcfg "$s8" "$db8" 1000
+export VICHE_STATE_ROOT="$s8" TEST_DB="$db8" TEST_MODE=identity_change
+rid=$(/bin/sh "$engine" reserve statistics changed-reconcile-agent)
+python3 "$tmp/mkactive.py" "$s8/knowledge/budget/reservations/$rid.json" "$tool" "$db8" sid changed-reconcile-agent 100 3600
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .held_reason=="native_session_identity_changed_on_reconcile" and
+        .charge.tokens_total>=100' \
+  "$s8/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'changed identity on reconcile did not hold'
+echo 'T8 ok'
+
+echo '--- T9: changed native_session_id on monitor holds conservatively ---'
+s9=$tmp/s9; db9=$tmp/m9.db
+mkdb "$db9" 100; mkcfg "$s9" "$db9" 1000
+export VICHE_STATE_ROOT="$s9" TEST_DB="$db9" TEST_MODE=identity_change
+rid=$(/bin/sh "$engine" reserve statistics changed-monitor-agent)
+python3 "$tmp/mkactive.py" "$s9/knowledge/budget/reservations/$rid.json" "$tool" "$db9" sid changed-monitor-agent 100 3600
+jq '.monitor_interval_seconds=1' "$s9/knowledge/budget/reservations/$rid.json" > "$tmp/r9.json"
+mv "$tmp/r9.json" "$s9/knowledge/budget/reservations/$rid.json"
+/bin/sh "$engine" monitor "$rid" >/dev/null 2>&1 &
+held=no
+for attempt in 1 2 3 4 5 6 7 8; do
+  if [ "$(jq -r '.state' "$s9/knowledge/budget/reservations/$rid.json")" = held ]; then held=yes; break; fi
+  sleep 1
+done
+[ "$held" = yes ] || fail 'monitor did not hold on changed session identity'
+jq -e '.held_reason=="native_session_identity_changed_on_monitor" and .charge.tokens_total>=100' \
+  "$s9/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'monitor hold did not retain observed liability'
+echo 'T9 ok'
+
+echo '--- T10: held overrun is not released against a different session ---'
+s10=$tmp/s10; db10=$tmp/m10.db
+mkdb "$db10" 100; mkcfg "$s10" "$db10" 150
+export VICHE_STATE_ROOT="$s10" TEST_DB="$db10" TEST_MODE=identity_change
+rid=$(/bin/sh "$engine" reserve statistics held-identity-agent)
+python3 "$tmp/mkheld.py" "$s10/knowledge/budget/reservations/$rid.json" "$tool" "$db10" sid held-identity-agent 185
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .charge.tokens_total>=185 and
+        .held_reason=="agent_still_active_or_unknown_after_stop"' \
+  "$s10/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'held overrun was released against a changed session'
+echo 'T10 ok'
+
+echo '--- T11: an overrun snapshot not yet persisted survives entry to held ---'
+s11=$tmp/s11; db11=$tmp/m11.db
+mkdb "$db11" 1800; mkcfg "$s11" "$db11" 1000
+export VICHE_STATE_ROOT="$s11" TEST_DB="$db11" TEST_MODE=still_running
+rid=$(/bin/sh "$engine" reserve statistics unpersisted-overrun-agent)
+python3 "$tmp/mkactive.py" "$s11/knowledge/budget/reservations/$rid.json" "$tool" "$db11" sid unpersisted-overrun-agent 100 -1
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .charge.tokens_total>=1800 and .meter.tokens.total>=1800' \
+  "$s11/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'entering held erased an unpersisted overrun observation'
+echo 'T11 ok'
+
+echo '--- T12: wall time is measured through the verified stop ---'
+s12=$tmp/s12; db12=$tmp/m12.db
+mkdb "$db12" 100; mkcfg "$s12" "$db12" 1000
+export VICHE_STATE_ROOT="$s12" TEST_DB="$db12" TEST_MODE=wall_marker TEST_WALL_MARK="$tmp/wall.mark"
+rid=$(/bin/sh "$engine" reserve statistics wall-agent)
+python3 "$tmp/mkactive.py" "$s12/knowledge/budget/reservations/$rid.json" "$tool" "$db12" sid wall-agent 100 -1
+/bin/sh "$engine" reconcile >/dev/null
+mark=$(cat "$TEST_WALL_MARK")
+started=$(jq -r '.started_at' "$s12/knowledge/budget/reservations/$rid.json")
+min_wall=$((mark - started))
+jq -e --argjson w "$min_wall" '.state=="closed" and .usage.wall_seconds>=$w' \
+  "$s12/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'wall liability stopped at snapshot time instead of the verified stop'
+echo 'T12 ok'
+
+echo 'PASS: terminal accounting keeps late commits, cross-metric maxima, session identity, observed debt and wall through stop'
