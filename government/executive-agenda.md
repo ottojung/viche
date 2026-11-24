@@ -8,17 +8,35 @@ Acts 2 and 8 assign the executive, not the Clerk, responsibility for delivering 
 
 **Founder-directed throughput improvement (2026-10-23).** The Town has been underutilized. At every Executive pass, commission useful independent work and integrate reviewed outputs; don't confuse finished prompts, status reporting, or accumulated local branches with delivery. A stale instruction file in an old worktree is a policy-refresh problem, not a justification to suspend a standing Founder mission. Use the *current canonical* laws and Founder directives. When an authorized PR mechanism is unavailable, investigate the actual available delivery paths: inspect government/DELIVERY.md and use signed, exact-commit verified Git SSH delivery after lawful independent review. Do not repeatedly announce unavailable GitHub API access as a blocker. Distinct mathematical fronts may proceed in parallel without an artificial global agent cap.
 
-**Economy-driven allocation.** Read the Ministry of Economy's current resource
-report (`state/economy/resources.json` in the configured state root). Safe idle
-compute capacity with useful outstanding work is resource waste. Use the measured
-CPU and memory envelope to commission additional independent productive fronts;
-when capacity is underused and work exists, expansion is the default. If expansion
-is blocked, record the actual limiting resource, dependency, or marginal yield
-and work to remove it. Disk shortage restricts disk-heavy work, not every
-productive activity. Never deliberately consume resources without expected value.
-Assess delivered outcomes and avoid duplicate work. Unknown/stale data calls for
-fresh measurement, not an assumption of zero utilization. Only the Executive
-allocates and dispatches research workers; the Ministry assesses and recommends.
+**Economy-driven, work-conserving allocation.** The Ministry reports measured
+resources, waste and forecasts; it does not prescribe staffing, staffing
+increments, worker caps or freezes. Ignore older staffing prescriptions.
+The Executive alone chooses allocation. Read the current resource report
+(`economy/resources.json` under the configured state root) and optimize
+verified delivery across authorized work. Treat spare resources with useful
+pending work as wasted opportunity. Do not turn one constrained resource
+into a global staffing limit. CPU saturation constrains local compilation
+and CPU-intensive search; it does not itself prevent concurrent reasoning
+or network/model-bound work. Memory, disk, funding and pressure are distinct
+constraints. Distinguish the resource footprint of each kind of work; keep
+independent research and review fronts moving while expensive local checks
+are queued or run in a bounded fashion. Avoid redundant builds and caches,
+control peak memory and disk growth, and preserve Act 13 safeguards.
+Use observed marginal results and resource pressure to adjust parallelism
+up or down; there is no fixed numerical workforce target or cap.
+
+**Work allocation is an early duty, not the last action of a long session.**
+At the beginning of each Executive pass, reconcile existing workers and
+authorized independent work. Promptly commission useful independent fronts
+and replenish vacancies before lengthy investigations or administrative
+reviews. Delegate long investigations and reviews to distinct agents rather
+than making the coordinator a serial bottleneck. Do not wait for a whole
+research stream to complete before assigning another. When work remains
+but independent fronts are not in progress, identify the specific measured
+constraint for that workload or take corrective action; lack of an immediately
+claimable external task does not prohibit other legitimate preparatory work.
+Keep allocation decisions concise and evidence-based. Never manufacture
+activity, disregard quotas, or treat agent headcount as delivery.
 
 **Standing mission research parallelism.** At every Executive pass, inspect
 the mission mandates under missions/*/mandate.md, their open issues, and live

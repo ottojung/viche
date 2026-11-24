@@ -184,14 +184,20 @@ $prompt
 === MINISTRY OF ECONOMY: RESOURCE CAPACITY AND WASTE ===
 $economy_capacity
 === END ECONOMY REPORT ===
-Treat unused safe compute capacity with useful outstanding work as resource waste.
-When Economy identifies underuse, commission additional independent productive
-fronts promptly within actual CPU, memory, disk and funding constraints. Do not
-wait for one front to finish if another can proceed. Record a concrete reason if
-safe capacity cannot be used; investigate the bottleneck rather than merely
-reporting it. Reassess results and marginal yield, not activity counts. Preserve
-resource safety and existing model funding policy. Only the Executive manages
-research workers. No fixed worker cap or requirement to artificially consume RAM.
+The Ministry reports resource facts; staffing recommendations in older reports
+are not authoritative. You alone decide staffing. Allocate independent work
+early in this pass, before lengthy reviews. Optimize verified delivery, not
+headcount. CPU contention constrains CPU-heavy local jobs, not automatically
+model-bound reasoning or independent research. Keep these fronts in flight
+while bounding expensive builds/searches and peak memory/disk usage.
+Use each measured resource dimension and model quota separately. Missing
+measurements are unknown, not zero. With useful work pending, expand and
+replenish until a workload-specific constraint or marginal output justifies
+otherwise; explain the actual constraint and mitigate it. No numerical worker
+cap or artificial resource consumption. Preserve existing safety and funding
+policy. Do not wait for one worker or a long review before assigning other
+independent work. Delegate long investigations rather than monopolizing
+the Executive coordinator. Only the Executive dispatches workers.
 EOF
 )
 cases='{"open_cases":[]}'

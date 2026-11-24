@@ -210,6 +210,22 @@ def cpu_counter():
         return None
 
 
+def pressure():
+    """Cgroup pressure-stall measurements; unavailable is not zero."""
+    result = {}
+    for resource in ("cpu", "memory", "io"):
+        try:
+            values = {}
+            for line in (CGROUP / (resource + ".pressure")).read_text().splitlines():
+                kind, *fields = line.split()
+                fields = dict(field.split("=", 1) for field in fields)
+                values[kind] = float(fields["avg60"])
+            result[resource] = values
+        except (OSError, ValueError, KeyError):
+            result[resource] = None
+    return result
+
+
 def capacity_assessment(resources, counter, previous, current, pol):
     """Report potential resource waste separately from scarcity/safety status.
 
@@ -240,6 +256,8 @@ def capacity_assessment(resources, counter, previous, current, pol):
     disks = [v for k, v in resources.items() if k.startswith("disk:")]
     disk_mode = ("unknown" if not disks else "blocked" if any(v["status"] == "critical" for v in disks)
                  else "disk-light-only" if any(v["status"] in ("short", "watch") for v in disks) else "normal")
+    # Distinct resources constrain distinct workloads. This summary is
+    # not an admission decision, an agent quota, or a global stop signal.
     reasons = []
     if disk_mode in ("blocked", "unknown"):
         reasons.append("disk safety or visibility")
@@ -258,7 +276,20 @@ def capacity_assessment(resources, counter, previous, current, pol):
         status = "underused"
     else:
         status = "no_clear_spare_capacity"
-    signal = {"status": status, "disk_mode": disk_mode,
+    cpu_state = ("unknown" if cpu is None else
+                 "spare" if spare_cpu >= 1.0 and cpu / sample["cpus"] <= .70 else
+                 "busy")
+    if resources.get("load", {}).get("status") in ("short", "critical"):
+        cpu_state = "contended"
+    memory_state = ("unknown" if spare_mem is None else
+                    "pressure" if new_oom or mem.get("status") != "ok" else
+                    "spare" if spare_mem >= 2.0 else "limited")
+    funding_state = ("unknown" if not isinstance(free, int) else
+                     "unavailable" if free < 1 else "available")
+    stalls = pressure()
+    dimensions = {"cpu": cpu_state, "memory": memory_state,
+                  "disk": disk_mode, "model_funding": funding_state}
+    signal = {"status": status, "dimensions": dimensions,
               "spare_cpu_band": int(spare_cpu) if spare_cpu is not None else None,
               "spare_memory_band": int(spare_mem // 2) if spare_mem is not None else None,
               "constraints": reasons}
@@ -267,9 +298,10 @@ def capacity_assessment(resources, counter, previous, current, pol):
             "cpu_spare_cores": round(spare_cpu, 2) if spare_cpu is not None else None,
             "memory_headroom_gib": headroom, "memory_reserve_gib": reserve,
             "memory_spare_gib": round(spare_mem, 2) if spare_mem is not None else None,
-            "disk_mode": disk_mode, "constraints": reasons, "dispatch_signal": signal,
-            "action": ("Potential resource waste: Executive should expand useful independent work within the measured resource envelope, or record the concrete constraint. Assess verified output, not worker count."
-                       if status == "underused" else "Assess capacity and constraints; do not manufacture load or spend to occupy resources.")}
+            "disk_mode": disk_mode, "constraints": reasons,
+            "dimensions": dimensions, "pressure_avg60_pct": stalls,
+            "recent_oom": new_oom, "dispatch_signal": signal,
+            "interpretation": "Resource observations only. Each constraint is specific to the resource; the Executive determines workload allocation. Neither saturation nor free capacity implies a worker count."}
 
 
 def growth_sizes(current, urgent):

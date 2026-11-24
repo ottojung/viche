@@ -146,9 +146,11 @@ $report
 === LATEST RESOURCE REPORT (deterministic: disk, inodes, memory, load, Town-owned growth) ===
 $resources
 === END RESOURCE REPORT ===
-Treat safely underused compute with useful outstanding work as resource waste.
-Investigate the capacity assessment, recommend concrete increases in productive
-parallelism to the Executive, and verify the resulting throughput.
+Report utilization, avoidable waste and resource-specific constraints independently.
+Do not prescribe agent counts, staffing increments, concurrency caps, staffing
+freezes or workload assignments. Retract inherited staffing recommendations
+from earlier reports. Only the Executive decides staffing and allocation.
+Report evidence and resource-cost mitigations, not a staffing plan.
 Your mandate is the availability of EVERY scarce resource, not only model funding
 (Act 29 section 6). government/economy-resources.py measures and forecasts and has
 already run the safe Janitor steps listed under actions_this_pass; you act on what
