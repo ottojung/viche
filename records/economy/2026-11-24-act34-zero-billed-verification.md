@@ -2,7 +2,7 @@
 
 **Scope.** Ministry of Economy evidence for request `P-1795509650-b874`. No office was activated; `records/knowledge/activation.json` and all four live budget flags remain disabled. SoringP1 remains suspended and was neither monitored nor resumed. This is a resource/funding control verification, not a Judiciary verdict or a staffing plan.
 
-**Correction to the 09:03:53Z proceed answer.** That answer described an earlier, self-test-failing candidate. This record supersedes it: the candidate committed as `088561a9` passes the focused suites, uses the measured proxy envelope, and carries negative-acceptance digest `262c84136cc8742f2c92e4a70b9264ea89b4aee0db6f15ab67ac6b47589a112d`. Act31 deployment/independent review is still pending, so the deployed path remains held.
+**Correction to the 09:03:53Z proceed answer.** That answer described an earlier, self-test-failing candidate. This record supersedes it: the repaired candidate (latest branch head `706eac27`, substantive repair `98b0ac31`) passes the focused suites, uses the measured proxy envelope, and carries negative-acceptance digest `262c84136cc8742f2c92e4a70b9264ea89b4aee0db6f15ab67ac6b47589a112d`. Act31 deployment/independent review is still pending, so the deployed path remains held.
 
 ## Disposition
 
