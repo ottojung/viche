@@ -25,7 +25,18 @@ PY
 cat > "$tmp/bin/antonina" <<'SH'
 #!/bin/sh
 case "$1 $2" in
-  'agent status') cat "$TEST_AGENT_STATE" ;;
+  'agent status')
+    if [ -n "${TEST_DELAY_CALLS:-}" ]; then
+      _n=$(cat "$TEST_DELAY_COUNT" 2>/dev/null || printf '0\n')
+      _n=$((_n + 1))
+      printf '%s\n' "$_n" > "$TEST_DELAY_COUNT"
+      if [ "$_n" -le "$TEST_DELAY_CALLS" ]; then
+        printf '{"state":"starting","native_session_id":null}\n'
+        exit 0
+      fi
+    fi
+    cat "$TEST_AGENT_STATE"
+    ;;
   'agent kill')
     printf '%s\n' "$*" >> "$TEST_AGENT_KILLS"
     if [ "$TEST_KILL_FAIL" = yes ]; then exit 1; fi
@@ -104,4 +115,88 @@ jq -e '.state=="held" and .charge.tokens_total==150 and
 if /bin/sh "$engine" reserve statistics agent-3 >/dev/null 2>&1; then
   echo 'Another agent was admitted over still-running held session' >&2; exit 1
 fi
-echo 'whole-host CPU and tokens: active overrun, verified stop, failed-kill hold and no replay passed'
+
+# Delayed native-session binding: `antonina agent run --detach` acknowledges
+# only the runner claim; the native session id and its meter row appear on a
+# later status poll. The bounded pre-lock wait must let this legitimate
+# starting runner bind instead of killing it and consuming the whole
+# reservation. Full liability stays charged at caps until binding is verified,
+# and the wall deadline is NOT pushed out by the wait.
+export TEST_KILL_FAIL=no
+python3 - "$db" <<'PY'
+import sqlite3,sys
+con=sqlite3.connect(sys.argv[1])
+con.execute("update session_v2 set tokens_input=100,time_updated=1795279850000 where id='sid'")
+con.commit()
+PY
+# One monitor interval here is 5s; still far below the 3600s wall cap.
+python3 - "$tmp/fixture/government/knowledge-budget.conf" <<'PY'
+import json,sys
+p=sys.argv[1]; c=json.load(open(p)); c['monitor_interval_seconds']=5; json.dump(c,open(p,'w'))
+PY
+export VICHE_STATE_ROOT="$tmp/state-delayed"
+mkdir -p "$VICHE_STATE_ROOT"
+export TEST_DELAY_CALLS=2
+export TEST_DELAY_COUNT="$tmp/delay-count-delayed"
+: > "$TEST_DELAY_COUNT"
+printf '{"state":"running","native_session_id":"sid"}\n' > "$TEST_AGENT_STATE"
+export TEST_AGENT_KILLS="$tmp/kills-delayed"
+: > "$TEST_AGENT_KILLS"
+r3=$(/bin/sh "$engine" reserve statistics delayed-agent)
+/bin/sh "$engine" mark-dispatched "$r3"
+result3=$(/bin/sh "$engine" start "$r3" delayed-agent)
+[ "$result3" = "active $r3" ] || { echo "delayed-binding start failed: $result3" >&2; exit 1; }
+[ ! -s "$TEST_AGENT_KILLS" ] || { echo 'Starting runner was killed during binding wait' >&2; exit 1; }
+jq -e '.state=="active" and .native_session_id=="sid" and .agent_id=="delayed-agent" and
+        .expires_at==(.created_at + .caps.wall_seconds)' \
+  "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r3.json" >/dev/null || {
+  echo 'Delayed binding did not activate with conservative creation-based expiry' >&2; exit 1; }
+python3 "$town/government/knowledge-budget-tool.py" aggregate \
+  "$VICHE_STATE_ROOT/knowledge/budget/reservations" 3888000 "$(date +%s)" |
+  jq -e '.tokens_total==150 and .by_office.statistics.tokens_total==150' >/dev/null || {
+  echo 'Full per-run liability was not retained through binding' >&2; exit 1; }
+unset TEST_DELAY_CALLS
+
+# Missing native session (delay never resolves) still fails closed: the runner
+# is stopped and the full cap is held, never activated on an unknown binding.
+python3 - "$tmp/fixture/government/knowledge-budget.conf" <<'PY'
+import json,sys
+p=sys.argv[1]; c=json.load(open(p)); c['monitor_interval_seconds']=2; json.dump(c,open(p,'w'))
+PY
+export VICHE_STATE_ROOT="$tmp/state-missing"
+mkdir -p "$VICHE_STATE_ROOT"
+export TEST_DELAY_CALLS=999
+export TEST_DELAY_COUNT="$tmp/delay-count-missing"
+: > "$TEST_DELAY_COUNT"
+printf '{"state":"running","native_session_id":"sid"}\n' > "$TEST_AGENT_STATE"
+export TEST_AGENT_KILLS="$tmp/kills-missing"
+: > "$TEST_AGENT_KILLS"
+r4=$(/bin/sh "$engine" reserve statistics unbound-agent)
+/bin/sh "$engine" mark-dispatched "$r4"
+if /bin/sh "$engine" start "$r4" unbound-agent >/dev/null 2>&1; then
+  echo 'FAIL: missing native-session binding was accepted' >&2; exit 1
+fi
+jq -e '.state=="held" and .charge.tokens_total==150 and
+        .held_reason=="meter_or_session_binding_unknown_after_launch"' \
+  "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r4.json" >/dev/null || {
+  echo 'Missing binding did not hold at full cap' >&2; exit 1; }
+grep -q 'agent kill' "$TEST_AGENT_KILLS" || {
+  echo 'Missing binding did not stop the runner' >&2; exit 1; }
+
+# Unknown meter (sid present but no authoritative meter row) also fails closed.
+unset TEST_DELAY_CALLS
+export VICHE_STATE_ROOT="$tmp/state-unmetered"
+mkdir -p "$VICHE_STATE_ROOT"
+printf '{"state":"running","native_session_id":"absent-session"}\n' > "$TEST_AGENT_STATE"
+export TEST_AGENT_KILLS="$tmp/kills-unmetered"
+: > "$TEST_AGENT_KILLS"
+r5=$(/bin/sh "$engine" reserve statistics unmetered-agent)
+/bin/sh "$engine" mark-dispatched "$r5"
+if /bin/sh "$engine" start "$r5" unmetered-agent >/dev/null 2>&1; then
+  echo 'FAIL: unmetered native session was accepted' >&2; exit 1
+fi
+jq -e '.state=="held" and .charge.tokens_total==150 and
+        .held_reason=="meter_or_session_binding_unknown_after_launch"' \
+  "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r5.json" >/dev/null || {
+  echo 'Unknown meter did not hold at full cap' >&2; exit 1; }
+echo 'whole-host CPU and tokens: active overrun, verified stop, failed-kill hold, delayed binding, missing/unknown fail-closed and no replay passed'

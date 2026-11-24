@@ -146,6 +146,68 @@ usage_from_snapshot() {
       cost:.cost,cost_reported:.cost_reported,source:.source,at:.at}'
 }
 
+# ---- pre-lock native-session/meter binding wait -------------------------------
+#
+# `antonina agent run ... --detach` acknowledges only the runner claim. The
+# authoritative native_session_id (and its meter row) can appear on a later
+# status poll. Polling for that binding happens OUTSIDE the shared accounting
+# flock, so other seats are never blocked by a starting runner. The wait is
+# bounded to one monitor interval or 20 seconds, and never past the reservation's
+# conservative hard wall deadline (created_at + wall_seconds). Full per-run
+# liability is retained throughout: the reservation stays `reserved` and is
+# charged at caps by aggregate(). do_start_locked re-verifies exact agent
+# identity and meter under the lock and still holds/stops if binding is unknown.
+binding_ready() {
+  _br_agent=$1; _br_db=$2
+  if ! _br_meta=$(agent_status "$_br_agent"); then return 1; fi
+  # Mirror do_start_locked's authoritative checks exactly: exact agent id is
+  # enforced by the caller, here we require the native session id and a live
+  # meter row. No agent state predicate is invented here.
+  _br_sid=$(printf '%s\n' "$_br_meta" | jq -r '.native_session_id // empty')
+  [ -n "$_br_sid" ] || return 1
+  _br_pid=$(printf '%s\n' "$_br_meta" | jq -r '.runner_pid // .pid // empty')
+  if ! _br_snap=$(python3 "$TOOL" snapshot "$_br_db" "$_br_sid" "$_br_pid" 2>/dev/null); then
+    return 1
+  fi
+  [ "$(printf '%s\n' "$_br_snap" | jq -r '.session_found')" = true ] || return 1
+  [ "$(printf '%s\n' "$_br_snap" | jq -r '.cpu_available')" = true ] || return 1
+  return 0
+}
+
+wait_for_binding() {
+  _wb_id=$1; _wb_agent=$2
+  _wb_cur=$(res_read "$_wb_id")
+  [ "$(printf '%s\n' "$_wb_cur" | jq -r '.state')" = reserved ] || return 0
+  _wb_expected=$(printf '%s\n' "$_wb_cur" | jq -r '.agent_id // ""')
+  [ "$_wb_agent" = "$_wb_expected" ] || return 0
+  _wb_db=$(printf '%s\n' "$_wb_cur" | jq -r '.meter_db')
+  _wb_interval=$(printf '%s\n' "$_wb_cur" | jq -r '.monitor_interval_seconds // 20')
+  case "$_wb_interval" in ''|*[!0-9]*) _wb_interval=20;; esac
+  [ "$_wb_interval" -gt 0 ] || _wb_interval=20
+  _wb_created=$(printf '%s\n' "$_wb_cur" | jq -r '.created_at')
+  _wb_wall=$(printf '%s\n' "$_wb_cur" | jq -r '.caps.wall_seconds')
+  _wb_hard_deadline=$((_wb_created + _wb_wall))
+  _wb_now=$(date +%s)
+  [ "$_wb_hard_deadline" -gt "$_wb_now" ] || return 0
+  _wb_allowance=$((_wb_hard_deadline - _wb_now))
+  [ "$_wb_allowance" -lt "$_wb_interval" ] || _wb_allowance=$_wb_interval
+  [ "$_wb_allowance" -le 20 ] || _wb_allowance=20
+  if binding_ready "$_wb_agent" "$_wb_db"; then return 0; fi
+  _wb_deadline=$((_wb_now + _wb_allowance))
+  log "awaiting native session/meter binding for $_wb_agent (<=${_wb_allowance}s; full cap retained)"
+  while :; do
+    _wb_now=$(date +%s)
+    [ "$_wb_now" -lt "$_wb_deadline" ] || break
+    sleep 1
+    if binding_ready "$_wb_agent" "$_wb_db"; then
+      log "native session/meter binding established for $_wb_agent"
+      return 0
+    fi
+  done
+  log "native session/meter binding still unknown for $_wb_agent; locked start will hold at full cap"
+  return 0
+}
+
 # ---- terminal state transitions (all assume the lock is held) ----------------
 
 hold_locked() {
@@ -289,7 +351,11 @@ do_start_locked() {
     die 'host CPU meter invalid after launch; full-cap hold'
   fi
   _ds_now=$(date +%s)
-  _ds_expiry=$((_ds_now + $(printf '%s\n' "$_ds_cur" | jq -r '.caps.wall_seconds')))
+  # The hard wall deadline is anchored at reservation creation, never pushed
+  # out by a delayed native-session binding. The pre-lock wait therefore only
+  # consumes the original wall budget; it can never extend the reservation.
+  _ds_created=$(printf '%s\n' "$_ds_cur" | jq -r '.created_at')
+  _ds_expiry=$((_ds_created + $(printf '%s\n' "$_ds_cur" | jq -r '.caps.wall_seconds')))
   _ds_new=$(printf '%s\n' "$_ds_cur" | jq -c --arg a "$_ds_agent" --arg s "$_ds_sid" \
     --arg p "$_ds_pid" --argjson now "$_ds_now" --argjson ex "$_ds_expiry" --argjson snap "$_ds_snap" \
     '.state="active" | .agent_id=$a | .native_session_id=$s | .runner_pid=$p |
@@ -581,7 +647,16 @@ case "$cmd" in
   guard) check_office "${1:-}"; guard "$1";;
   reserve) check_office "${1:-}"; init; with_lock do_reserve_locked "$1" "$2";;
   mark-dispatched) init; with_lock mark_dispatched_locked "${1:-}";;
-  start) init; with_lock do_start_locked "${1:-}" "${2:-}"; launch_monitor "${1:-}"; printf 'active %s\n' "$1";;
+  start)
+    init
+    _st_id=${1:-}; _st_agent=${2:-}
+    # Bound the native-session/meter binding wait OUTSIDE the flock; full-cap
+    # liability is retained until do_start_locked re-verifies under the lock.
+    wait_for_binding "$_st_id" "$_st_agent"
+    with_lock do_start_locked "$_st_id" "$_st_agent"
+    launch_monitor "$_st_id"
+    printf 'active %s\n' "$_st_id"
+    ;;
   monitor) init; monitor "${1:-}";;
   reconcile) init; with_lock reconcile_locked;;
   resolve) init; with_lock resolve_locked "${1:-}" "${2:-}";;
