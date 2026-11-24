@@ -147,6 +147,33 @@ if CAPTURE="$d/capture6" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
 fi
 cp "$d/billing-good.json" "$d/town/government/knowledge-zero-billed-policy.json"
 
+# A new provider billing object (for example image/audio pricing) is unknown,
+# not implicitly free. Refuse even when the familiar text prices stay zero.
+python3 - "$d/town/records/economy/evidence/provider-snapshot.json" "$d/town/government/knowledge-zero-billed-policy.json" <<'PYDIM'
+import hashlib,json,sys
+snapshot,policy=sys.argv[1:]
+d=json.load(open(snapshot))
+d["data"][1]["cost"]["image"]={"input":{"price":0.1}}
+blob=json.dumps(d,sort_keys=True,separators=(",",":")).encode();open(snapshot,"wb").write(blob)
+b=json.load(open(policy))
+b["source"]["sha256"]=hashlib.sha256(blob).hexdigest();b["snapshot_sha256"]=b["source"]["sha256"]
+json.dump(b,open(policy,"w"))
+PYDIM
+if CAPTURE="$d/capture8" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
+  echo 'FAIL: unknown provider billing dimension admitted' >&2; fail=1
+fi
+# Restore the exact fixture snapshot and policy for the digest calculation.
+python3 - "$d/town/records/economy/evidence/provider-snapshot.json" "$d/town/government/knowledge-zero-billed-policy.json" <<'PYRESTORE'
+import hashlib,json,sys
+snapshot,policy=sys.argv[1:]
+d=json.load(open(snapshot));d["data"][1]["cost"].pop("image",None)
+blob=json.dumps(d,sort_keys=True,separators=(",",":")).encode();open(snapshot,"wb").write(blob)
+b=json.load(open(policy))
+b["source"]["sha256"]=hashlib.sha256(blob).hexdigest();b["snapshot_sha256"]=b["source"]["sha256"]
+json.dump(b,open(policy,"w"))
+PYRESTORE
+
 cmp -s "$d/global/antonina/config.json" "$d/global-before.json" ||
   { echo 'FAIL: rejected dispatch modified global config' >&2; fail=1; }
 [ "$fail" -eq 0 ] || { echo 'knowledge free dispatch smoke: FAILED' >&2; exit 1; }
@@ -155,9 +182,12 @@ python3 - "$PWD/government/knowledge-zero-billed.py" "$wrap" \
   government/knowledge-zero-billed-policy.json government/knowledge-practical-bounds.py \
   tests/knowledge-free-dispatch-smoke.sh government/knowledge-act34-gate.py \
   government/knowledge-office-cycle.sh \
-  "$d/town/records/economy/evidence/provider-snapshot.json" <<'PYDIGEST'
-import importlib.util,sys
+  records/economy/evidence/2026-11-24-provider-models.json <<'PYDIGEST'
+import datetime,importlib.util,sys
 spec=importlib.util.spec_from_file_location("zb",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+# Validate the committed evidence as of publication; the runtime gate uses the
+# real clock and the fixture above separately proves expiry fails closed.
+m.load_verified(sys.argv[3],now=datetime.datetime(2026,11,24,9,0,tzinfo=datetime.timezone.utc),snapshot_path=sys.argv[8])
 paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7],"provider_snapshot":sys.argv[8]}
-print("NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
+print("PRODUCTION_NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
 PYDIGEST

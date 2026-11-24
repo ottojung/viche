@@ -92,7 +92,10 @@ def load_verified(path, now=None, snapshot_path=None):
         rec = by_id.get(provider_model)
         if not isinstance(rec, dict) or rec.get("owned_by") != provider:
             raise ValueError("provider snapshot exact model missing: " + mid)
-        text = rec.get("cost", {}).get("text", {})
+        provider_cost = rec.get("cost")
+        if not isinstance(provider_cost, dict) or set(provider_cost) != {"text"}:
+            raise ValueError("unknown provider billing dimension: " + mid)
+        text = provider_cost.get("text", {})
         inp = text.get("input", {}) if isinstance(text, dict) else {}
         out = text.get("output", {}) if isinstance(text, dict) else {}
         cache = inp.get("cache", {}) if isinstance(inp, dict) else {}
@@ -144,6 +147,7 @@ def negative_acceptance_digest(paths):
         "openai/gpt-6-luna",
         "opencode/hy4-flash-free:nonzero-cost",
         "opencode/hy4-flash-free:expired-evidence",
+        "opencode/hy4-flash-free:unknown-billing-dimension",
         "opencode-go/hy4-flash-free:gateway-only-omitted")
     payload = {"rejected_ids": names,
                "controls": {name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
