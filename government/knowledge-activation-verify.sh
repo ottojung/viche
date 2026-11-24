@@ -31,6 +31,22 @@ laws=$town/government/LAWS.md
 # Judiciary stop, with exact office/hash/term matching.
 if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act \(enacted ' "$laws"; then
     [ -s "$town/government/knowledge-act34-gate.py" ] || exit 1
+    activation=$town/records/knowledge/activation.json
+    permit_ref=$(jq -er --arg office "$office" '
+      .offices[$office].permit_ref | select(type == "string")
+    ' "$activation") || exit 1
+    permit=$town/$permit_ref
+    [ -s "$permit" ] || exit 1
+    # The v3 verifier is opt-in per durable Executive permit and is unavailable
+    # until the exact Act 35 text is genuinely enacted. Legacy bytes/path stay intact.
+    if jq -e '.control_certification != null' "$permit" >/dev/null 2>&1; then
+      if grep -Eq '^## Act 35 — Knowledge Offices Ordinary Funding and Operations Parity Act 2026 \(enacted ' "$laws"; then
+        [ -s "$town/government/knowledge-act34-certified-gate.py" ] || exit 1
+        timeout 30 python3 "$town/government/knowledge-act34-certified-gate.py" "$office" "$town"
+        exit $?
+      fi
+      exit 1
+    fi
     timeout 20 python3 "$town/government/knowledge-act34-gate.py" "$office" "$town"
     exit $?
 fi
