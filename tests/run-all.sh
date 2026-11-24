@@ -17,19 +17,28 @@ test -s government/seats.tsv
 awk -F '\t' 'NF != 3 || $1 !~ /^[0-9a-f]+$/ { exit 1 }' government/seats.tsv
 test "$(cut -f1 government/seats.tsv | sort -u | wc -l)" -eq "$(wc -l < government/seats.tsv)"
 
-printf '\nRunning tests/audit-act27-legacy-smoke.py\n'
-python3 tests/audit-act27-legacy-smoke.py
+run_test() {
+    label=$1; shift
+    started=$(date +%s)
+    printf '\nRunning %s\n' "$label"
+    rc=0
+    "$@" || rc=$?
+    elapsed=$(($(date +%s) - started))
+    if [ "$rc" -ne 0 ]; then
+        printf 'FAIL: %s (exit=%s, elapsed=%ss)\n' "$label" "$rc" "$elapsed" >&2
+        exit "$rc"
+    fi
+    printf 'PASS: %s (elapsed=%ss)\n' "$label" "$elapsed"
+}
 
-printf '\nRunning tests/test_spying_source_allowlist.py\n'
-python3 tests/test_spying_source_allowlist.py
+run_test tests/audit-act27-legacy-smoke.py python3 tests/audit-act27-legacy-smoke.py
+run_test tests/test_spying_source_allowlist.py python3 tests/test_spying_source_allowlist.py
 
 # Preserve the formerly excluded Economy 399k token regression in every
 # exact-candidate suite, not just as a separately run characterization test.
-printf '\nRunning tests/knowledge-budget-admit-negative-20261122.sh\n'
-dash tests/knowledge-budget-admit-negative-20261122.sh
+run_test tests/knowledge-budget-admit-negative-20261122.sh dash tests/knowledge-budget-admit-negative-20261122.sh
 
 for script in tests/*-smoke.sh tests/ballot-integrity.sh; do
-    printf '\nRunning %s\n' "$script"
-    dash "$script"
+    run_test "$script" dash "$script"
 done
 echo 'All Viche tests passed'

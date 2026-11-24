@@ -78,20 +78,49 @@ git -C "$town" worktree add --quiet --detach "$checkout" "$sha" ||
 [ "$(git -C "$checkout" rev-parse HEAD^{tree})" = "$tree" ] ||
     { echo "suite-status: checkout tree mismatch" >&2; exit 2; }
 
-# Run each replay in that immutable source checkout; emit an exit code and an
-# output digest. Flaky-red reruns use the SAME original source revision.
+# A hung test must not own the integrator indefinitely. An explicit
+# deadline is a failed run, never a green result or an exemption. The
+# short records suite has a smaller default; test fixtures may shorten
+# either deadline but cannot remove the upper bound.
+case "$suite" in tests/records-smoke.sh) limit=120;; *) limit=1800;; esac
+seconds=${SUITE_STATUS_TIMEOUT_SECONDS:-$limit}
+case "$seconds" in ''|*[!0-9]*) echo 'suite-status: invalid deadline' >&2; exit 2;; esac
+[ "${#seconds}" -le 4 ] && [ "$seconds" -ge 1 ] && [ "$seconds" -le "$limit" ] ||
+    { echo 'suite-status: deadline outside allowed bound' >&2; exit 2; }
+
+# Run each replay in the immutable source checkout. Stream output to a
+# unique attempt file so the failing test is observable before the suite
+# returns. Preserve the existing normalized output digest (command
+# substitution strips trailing newlines). Publish the completed log
+# atomically and retain unfinished progress evidence on interruption.
 run_once() {
-    out=$(cd "$checkout" && VICHE_TOWN_ROOT="$checkout" /bin/sh "$verifier_dir/suite-env.sh" /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
-    hash=$(printf '%s' "$out" | sha256sum | cut -d ' ' -f1)
-    # Act 31: the integrator keeps the output so a proposer can see why a
-    # candidate was red. The recorded digest is of this same output.
+    attempt=$1
+    raw=$scratch/run-$attempt.log
     if [ -n "${SUITE_STATUS_LOG_DIR:-}" ]; then
-        printf '%s\n' "$out" > "$SUITE_STATUS_LOG_DIR/suite-$hash.log" 2>/dev/null || :
+        raw=$(mktemp "$SUITE_STATUS_LOG_DIR/progress-$sha-run$attempt.XXXXXXXX") ||
+            { echo 'suite-status: cannot retain live verification evidence' >&2; return 2; }
+    fi
+    rc=0
+    (cd "$checkout" && VICHE_TOWN_ROOT="$checkout" timeout -k 5 "$seconds" /bin/sh "$verifier_dir/suite-env.sh" /bin/sh "$suite") > "$raw" 2>&1 || rc=$?
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+        printf '\nsuite-status: attempt %s ended with status %s (deadline %ss)\n' "$attempt" "$rc" "$seconds" >> "$raw"
+    fi
+    out=$(cat "$raw") || return 2
+    hash=$(printf '%s' "$out" | sha256sum | cut -d ' ' -f1)
+    if [ -n "${SUITE_STATUS_LOG_DIR:-}" ]; then
+        logtmp=$(mktemp "$SUITE_STATUS_LOG_DIR/.suite-$hash.XXXXXXXX") || return 2
+        if ! printf '%s\n' "$out" > "$logtmp" ||
+           ! mv -f "$logtmp" "$SUITE_STATUS_LOG_DIR/suite-$hash.log"; then
+            rm -f "$logtmp"
+            echo 'suite-status: cannot retain complete verification evidence' >&2
+            return 2
+        fi
+        rm -f "$raw"
     fi
     printf '%s\t%s\n' "$rc" "$hash"
 }
 
-first=$(run_once)
+first=$(run_once 1)
 rc1=$(printf '%s' "$first" | cut -f1)
 h1=$(printf '%s' "$first" | cut -f2)
 r1=red; [ "$rc1" -eq 0 ] && r1=green
@@ -100,7 +129,7 @@ if [ "$rc1" -eq 0 ]; then
     result=green
     runs="[{\"run\":1,\"result\":\"$r1\",\"exit\":$rc1,\"output_sha256\":\"$h1\"}]"
 else
-    second=$(run_once)
+    second=$(run_once 2)
     rc2=$(printf '%s' "$second" | cut -f1)
     h2=$(printf '%s' "$second" | cut -f2)
     r2=red; [ "$rc2" -eq 0 ] && r2=green

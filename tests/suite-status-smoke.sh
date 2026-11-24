@@ -41,6 +41,19 @@ n=$((n + 1))
 printf '%s\n' "$n" > "$SUITE_STATUS_SMOKE_COUNTER"
 [ "$n" -ge 2 ]
 EOF
+cat > "$town/tests/stream.sh" <<'EOF'
+#!/bin/sh
+set -eu
+printf 'fixture started\n'
+IFS= read -r token < "$SUITE_STATUS_SMOKE_FIFO"
+[ "$token" = release ]
+printf 'fixture completed\n'
+EOF
+cat > "$town/tests/deadline.sh" <<'EOF'
+#!/bin/sh
+echo 'intentional hang fixture'
+sleep 20
+EOF
 SUITE_STATUS_SMOKE_COUNTER=$scratch/flaky.count
 export SUITE_STATUS_SMOKE_COUNTER
 git -C "$town" add -A
@@ -108,6 +121,51 @@ fi
 if run --suite tests/probe.sh --commit HEAD~2 >/dev/null 2>&1; then
   echo "FAIL: accepted test absent from verified commit" >&2; exit 1
 fi
+
+# Stream a real in-flight exact-revision attempt before allowing completion.
+mkdir -p "$scratch/suite-logs"
+SUITE_STATUS_LOG_DIR=$scratch/suite-logs
+SUITE_STATUS_SMOKE_FIFO=$scratch/stream.fifo
+export SUITE_STATUS_LOG_DIR SUITE_STATUS_SMOKE_FIFO
+mkfifo "$SUITE_STATUS_SMOKE_FIFO"
+run --suite tests/stream.sh >/dev/null &
+stream_pid=$!
+deadline=$(($(date +%s) + 30))
+seen=no
+while [ "$(date +%s)" -lt "$deadline" ]; do
+    for log in "$SUITE_STATUS_LOG_DIR"/progress-*; do
+        if [ -f "$log" ] && grep -Fxq 'fixture started' "$log"; then seen=yes; break; fi
+    done
+    [ "$seen" = no ] || break
+    kill -0 "$stream_pid" 2>/dev/null || break
+    sleep .05
+done
+if [ "$seen" != yes ]; then
+    kill "$stream_pid" 2>/dev/null || :
+    wait "$stream_pid" 2>/dev/null || :
+    echo 'FAIL: no live exact-suite progress file' >&2; exit 1
+fi
+printf 'release\n' > "$SUITE_STATUS_SMOKE_FIFO"
+wait "$stream_pid"
+check_result green
+hash=$(jq -r '.runs[0].output_sha256' "$town/records/suite-status.json")
+test "$hash" = "$(printf 'fixture started\nfixture completed' | sha256sum | cut -d' ' -f1)"
+grep -Fxq 'fixture completed' "$SUITE_STATUS_LOG_DIR/suite-$hash.log"
+test -z "$(find "$SUITE_STATUS_LOG_DIR" -name 'progress-*' -print -quit)"
+
+# A hanging test is bounded and cannot be recorded green. Both exact
+# attempts remain recorded under the existing flaky-red policy.
+if SUITE_STATUS_TIMEOUT_SECONDS=1 run --suite tests/deadline.sh >/dev/null 2>&1; then
+    echo 'FAIL: deadline treated as green' >&2; exit 1
+fi
+check_result red
+jq -e '(.runs|length)==2 and all(.runs[]; .result=="red" and (.exit==124 or .exit==137))' "$town/records/suite-status.json" >/dev/null
+hash=$(jq -r '.runs[-1].output_sha256' "$town/records/suite-status.json")
+grep -q 'deadline 1s' "$SUITE_STATUS_LOG_DIR/suite-$hash.log"
+if SUITE_STATUS_TIMEOUT_SECONDS=0 run --suite tests/green.sh >/dev/null 2>&1; then
+    echo 'FAIL: disabled deadline' >&2; exit 1
+fi
+unset SUITE_STATUS_LOG_DIR SUITE_STATUS_SMOKE_FIFO
 
 test "$(git -C "$town" worktree list --porcelain | grep -c '^worktree ')" -eq 1
 test "$(git -C "$town" status --porcelain -- tests/probe.sh)" = ' M tests/probe.sh'
