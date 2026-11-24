@@ -4,10 +4,25 @@
 set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
+mode=${1:-normal}
+case "$mode" in normal|executive) ;; *) exit 2 ;; esac
 for mission in "$town"/missions/*; do
     [ -d "$mission" ] || continue
     name=${mission##*/}
     case "$name" in ''|*[!a-z0-9-]*) continue ;; esac
+    if [ "$mode" = executive ]; then
+        [ -f "$mission/executive.sh" ] && [ -s "$mission/mandate.md" ] || continue
+        dir=$state/missions/$name
+        mkdir -p "$dir" || continue
+        # Executive's standing, deterministic duties only. No model turn,
+        # other office, or mission hook may serialize this delegated path.
+        (
+            flock -n 9 || exit 0
+            timeout -k 5 240 /bin/sh "$mission/executive.sh" ||
+                echo "Viche: delegated Executive duty $name deferred; retry" >&2
+        ) 9>"$dir/executive.lock" >>"$dir/executive.log" 2>&1 </dev/null &
+        continue
+    fi
     [ -f "$mission/cycle.sh" ] || [ -f "$mission/status.sh" ] || continue
     dir=$state/missions/$name
     mkdir -p "$dir" || continue

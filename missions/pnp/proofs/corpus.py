@@ -76,6 +76,41 @@ def update(db, mirror=gitctl.MIRROR, revision="refs/remotes/upstream/main"):
     return sha
 
 
+def shape(s):
+    """Heuristic skeleton, NOT a semantic implication or alpha-equivalence test."""
+    s = re.sub(r"\((\d+) : ℕ\)", r"\1", s)
+    s = s.replace("Bool.false", "false").replace("Bool.true", "true")
+    s = re.sub(r"\b(x\d+|[a-z]|[CDGH]|h[a-z0-9]+)\b", "V", s)
+    return re.sub(r"[()\s]", "", s)
+
+
+def hypotheses(s):
+    parts = []
+    depth = 0
+    start = 0
+    for i,c in enumerate(s):
+        if c in "([{⟨":
+            depth += 1
+        elif c in ")]}⟩":
+            depth -= 1
+        elif c == "→" and depth == 0:
+            parts.append(s[start:i])
+            start = i+1
+    return parts, s[start:]
+
+
+def structural_hint(query, stmt):
+    qh, qc = hypotheses(query)
+    sh, sc = hypotheses(stmt)
+    # Variables are intentionally relaxed, so even a perfect score is only a
+    # suggestion to instantiate and verify the actual theorem.
+    haystack = shape(query)
+    matched = sum(bool(shape(h)) and shape(h) in haystack for h in sh)
+    same = bool(shape(qc)) and shape(qc) == shape(sc)
+    return {"same_conclusion_shape": same, "hypotheses_matched": matched,
+            "hypotheses_total": len(sh)}
+
+
 def search(db, query, allowed=(), limit=8):
     q = terms(query)
     rows = list(db.execute("select path,blob,statement,tactics,imports from proof"))
@@ -86,12 +121,16 @@ def search(db, query, allowed=(), limit=8):
     found = []
     for row, d in zip(rows, doc_terms):
         rank = score(d)
-        if rank <= 0:
-            continue
         path, blob, stmt, tactics, imports = row
+        hint = structural_hint(query, stmt)
+        if rank <= 0 and not hint["same_conclusion_shape"]:
+            continue
+        rank += (8 if hint["same_conclusion_shape"] else 0)
+        if hint["hypotheses_total"]:
+            rank += 2 * hint["hypotheses_matched"] / hint["hypotheses_total"]
         module = path.removeprefix("lean/").removesuffix(".lean").replace("/", ".")
         found.append({"path": path, "blob": blob, "module": module,
-                      "score": round(rank, 4), "statement": stmt,
+                      "score": round(rank, 4), "statement": stmt, "structural_hint": hint,
                       "tactics": json.loads(tactics), "imports": json.loads(imports),
                       "direct_import_allowed": module in allowed})
     return sorted(found, key=lambda r: (-r["score"], r["path"]))[:limit]

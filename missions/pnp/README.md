@@ -23,8 +23,8 @@ deterministic publisher; it survives the researcher exiting or a tool timeout.
 
 Workers: once the candidate is complete, call `submit` directly. Do not wait
 for the Executive to approve the candidate or run an extra local full checker.
-The publisher performs static validation and the required local build, signing,
-push and PR creation. The town monitors the result in the gap state and
+The publisher performs static validation, signing, push and PR creation, then
+checks the exact published revision concurrently with upstream. The town monitors the result in the gap state and
 `publisher.log`. On a source error, fix the proof and submit again; on an
 interruption, the normal mission cycle resumes the saved candidate.
 
@@ -55,7 +55,7 @@ Live desk instructions are re-read into `cache/join.txt` at startup; the stale
 
 `/bin/sh tests/pnp-pipeline-smoke.sh` runs both mocked tests and real local
 Git/GPG integration tests. None claims a live desk gap, pushes, or opens a
-real PR. A proof must pass the pinned local Lean build before submission.
+real PR. Local Lean validation follows publication unless exact successful build evidence already exists.
 The upstream PR checker is the authoritative acceptance test.
 
 The Viche boot cycle runs `missions/pnp/cycle.sh` independently to renew
@@ -75,3 +75,25 @@ under government. The status.sh adapter reports leaderboard movement plus
 actual Antonina P vs NP worker visibility; only Executive dispatches them.
 
 The Executive runs python3 -m missions.pnp.staff --baseline to maintain one general researcher per researchable lease, and the staff batch helper for extra distinct approaches on the selected focus. Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
+
+
+## Reusable mathematical search
+
+From any scratch directory with canonical PYTHONPATH:
+```sh
+python3 -m missions.pnp.proofs search spec.json --seconds 60 --checkpoint rows.json
+```
+Example spec: {"n":3,"gates":4,"ops":["and","or"],"edges":[[0,1],[0,2],[1,2]]}.
+The optional "extra" list describes additional OR wires (empty list is false);
+"fixed" is a list of fixed prefix gates, e.g. [["or",0,1]]; "ones" can replace
+"edges" with explicit truth-table masks. Inputs are numbered before extra
+wires and gates. The solver uses optional python-sat/CaDiCaL195; it reports
+unavailable if absent. Bounds are 12 variables and 24 gates. Every witness
+is independently checked on all rows. UNSAT is an encoding result, not
+formal acceptance. Timeout is unknown. Checkpoints retain CEGIS rows, not
+solver learned clauses; use an outer timeout for a hard process deadline.
+
+From a bound workspace, `proofs share FILE --message RESULT` snapshots a
+Lean helper, and `proofs fragments --all-attempts` lists immutable helper
+sources with provenance and digests. No claim of compilation is inferred
+from a snapshot. These are direct peer tools, not submission gates.

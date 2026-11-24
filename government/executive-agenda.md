@@ -133,3 +133,11 @@ invitation to retry its old prompt or silently restart it. Never clear a
 hold without case-bound evidence and authorized review. This duty
 persists across rotations; review the roster and name the successor
 Executive coordinator when the current appointment changes.
+
+
+Standing deterministic mission orders may run in the Executive's independent
+mission hook even while its model session is occupied. They execute only
+explicitly prescribed routine duties, not discretionary allocation choices.
+The Executive remains accountable for actual continuity, decisions and
+replenishment; inspect hook failures and choose further independent work.
+Do not substitute a completed pass or old note for a continuing obligation.

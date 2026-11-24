@@ -123,6 +123,9 @@ fi
 # Task-independent lifecycle hooks. One failed mission cannot block the Town.
 if [ -s "$town/government/mission-cycle.sh" ]; then
     nonblocking_office missions 180 /bin/sh "$town/government/mission-cycle.sh"
+    # Standing mechanical Executive orders must run even when its reasoning
+    # session is occupied with another responsibility. Hooks are task-local.
+    nonblocking_office executive-missions 30 /bin/sh "$town/government/mission-cycle.sh" executive
 fi
 
 # The innovation office is an Executive unit ONLY after parliamentary enactment.

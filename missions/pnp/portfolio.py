@@ -45,7 +45,23 @@ def view():
                     "log_command": "antonina agent log --id " + a["id"] + " --lines 50"}
                    for a in roster["agents"] if a.get("id") and a.get("cwd")
                    and support.assignment.binding(Path(a["cwd"])) == focus.key(rec)]
-        rows.append({**item, "workers":workers,"title": rec.get("gap_title"),
+        # Exited workers' actual findings/logs remain useful to the evaluator.
+        # Staffing receipts are attempt-scoped; never relabel an old lease.
+        prior = {}
+        try:
+            for line in Path(state.events_path(item["gap"])).read_text().splitlines():
+                event = json.loads(line)
+                detail = event.get("detail", {})
+                if event.get("kind") != "staffing" or detail.get("attempt") != item["attempt"]:
+                    continue
+                for worker in detail.get("workers", []):
+                    aid = worker.get("agent")
+                    if isinstance(aid,str):
+                        prior[aid] = {**worker, "at":event.get("at"),
+                                      "log_command":"antonina agent log --id "+aid+" --lines 50"}
+        except (OSError,ValueError,TypeError,AttributeError):
+            pass
+        rows.append({**item, "workers":workers, "staffing_history":list(prior.values()),"title": rec.get("gap_title"),
                      "hard": rec.get("acquisition_hard"),
                      "candidate_queued": bool(rec.get("queued_lease")),
                      "remaining_seconds": max(0, round(rec["lease_expires_at"]-time.time())),

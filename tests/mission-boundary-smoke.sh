@@ -42,3 +42,23 @@ done
 [ -s "$d/state/missions/alpha/cycle.lock" ] || [ -f "$d/state/missions/alpha/cycle.lock" ]
 [ -f "$d/state/missions/bravo/cycle.lock" ]
 echo 'Task-independent mission dispatch and error isolation passed'
+
+cat > "$d/town/missions/alpha/executive.sh" <<'HOOK'
+#!/bin/sh
+printf '%s\n' "executive alpha ran" > "$VICHE_STATE_ROOT/alpha-executive"
+HOOK
+echo 'standing order' > "$d/town/missions/alpha/mandate.md"
+cat > "$d/town/missions/bravo/executive.sh" <<'HOOK'
+#!/bin/sh
+touch "$VICHE_STATE_ROOT/bravo-unauthorized"
+HOOK
+VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+    /bin/sh "$d/town/government/mission-cycle.sh" executive
+n=0
+while [ ! -f "$d/state/alpha-executive" ] && [ "$n" -lt 50 ]; do
+    sleep .04
+    n=$((n+1))
+done
+[ "$(cat "$d/state/alpha-executive")" = "executive alpha ran" ]
+[ ! -e "$d/state/bravo-unauthorized" ]
+echo 'Executive standing orders are independent and require a mission mandate'

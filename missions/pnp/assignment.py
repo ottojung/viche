@@ -78,12 +78,12 @@ def first_attempt(gap):
 
 def prepare(gap, checkout=True, worker=None, base=None):
     """Executive calls once per assignment. Never relabel an old checkout."""
-    from . import gitctl
+    from . import gitctl, focus
     if not isinstance(gap, str) or not config.GAP_ID_RE.fullmatch(gap):
         raise ValueError("invalid gap")
     with state.lock(gap):
         rec = state.load(gap)
-        if not rec or rec.get("state") not in ("LEASED", "RESEARCHING") or not rec.get("lease"):
+        if not rec or (rec.get("state") not in ("LEASED", "RESEARCHING") and not focus.correction(rec)) or not rec.get("lease"):
             raise ValueError("no live research assignment")
         lease = rec["lease"]
         root = Path(state.gap_dir(gap))
@@ -125,7 +125,7 @@ def prepare(gap, checkout=True, worker=None, base=None):
         finally:
             os.close(fd)
         latest = state.load(gap)
-        if not latest or latest.get("lease") != lease or latest.get("state") not in ("LEASED", "RESEARCHING"):
+        if not latest or latest.get("lease") != lease or (latest.get("state") not in ("LEASED", "RESEARCHING") and not focus.correction(latest)):
             raise ValueError("assignment ended during checkout preparation")
     return {"gap": gap, "cwd": str(path), "guard": "python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py guard",
             "compile": "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile"}
