@@ -14,19 +14,19 @@ VERDICT = re.compile(
     r"\*\*(ACCEPTED|REJECTED|FAULT|REFUSED) \([^\n]*\)\*\*", re.M)
 
 
-def current_verdict(comments, sha):
+def current_verdict(comments, sha, resolve_repo=None):
     if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
         return None
+    resolve_repo = resolve_repo or github.repository_id
     verdicts = []
     for comment in comments:
-        if comment.get("author") != "LiorDagan":
+        if comment.get("author_id") != config.CHECKER_ID:
             continue
         body = comment.get("body") or ""
         match = VERDICT.search(body)
-        if (match and sha.startswith(match[1]) and
-                any(re.search(r"^Run: https://github\.com/" + re.escape(repo) +
-                              r"/actions/runs/[0-9]+$", body, re.M)
-                    for repo in config.UPSTREAM_NAMES)):
+        link = re.search(r"^Run: https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9_.-]+)/actions/runs/[0-9]+$", body, re.M)
+        if (match and sha.startswith(match[1]) and link and
+                resolve_repo(link[1]) == config.UPSTREAM_ID):
             verdicts.append((comment.get("created_at", ""), match[2]))
     return max(verdicts)[1] if verdicts else None
 
@@ -167,7 +167,7 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
         state.update(gap_id, pr_number=number, pr_url=pr.get("url"))
         current = state.load(gap_id)
         if current["state"] in ("PR_OPEN", "REJECTED") and not current.get("queued_lease") and pr.get("head_sha") == current.get("commit_sha"):
-            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"))
+            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"), gh.repository_id)
             # A checker success is not a merged contribution; a competitor
             # can win before the merge. Never apply an old revision's verdict.
             with state.lock(gap_id):

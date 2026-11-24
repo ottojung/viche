@@ -98,7 +98,7 @@ class Desk:
 
     def status(self):
         """Read-only.  Never infer an empty frontier from a parser failure."""
-        _, data = self._call("GET", "/status", {"handle": config.GH_USER})
+        _, data = self._call("GET", "/status", {"handle": config.DESK_HANDLE})
         if not isinstance(data, dict) or "open_gaps" not in data:
             raise DeskError("unexpected desk status shape")
         return data
@@ -109,7 +109,7 @@ class Desk:
 
     def _next_gap(self, hard=False, another=False):
         """Private wire operation; only the locked, recording broker calls it."""
-        params = {"handle": config.GH_USER}
+        params = {"handle": config.DESK_HANDLE}
         if hard:
             params["hard"] = "1"
         if another:

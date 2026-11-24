@@ -59,11 +59,13 @@ class FullPathSmoke(unittest.TestCase):
         def fake_gh(*args):
             calls.append(args)
             return "https://github.com/brilliant-hq/pequalnp-proofs/pull/10023\n"
-        with patch.object(github, "gh", fake_gh):
+        with patch.object(github, "gh", fake_gh), \
+                patch.object(github, "identity", return_value="new-login"), \
+                patch.object(github, "repository_name", side_effect=lambda i: "new-owner/proofs" if i == config.UPSTREAM_ID else "new-login/proofs"):
             self.assertEqual(github.create_pr("pnp/l_meta_582", "L-meta-582"),
                              10023)
-        self.assertEqual(calls[0][2:4], ("--repo", config.UPSTREAM))
-        self.assertIn("ottojung:pnp/l_meta_582", calls[0])
+        self.assertEqual(calls[0][2:4], ("--repo", "new-owner/proofs"))
+        self.assertIn("new-login:pnp/l_meta_582", calls[0])
 
     def test_publisher_lock_survives_parent_and_recovers_after_exit(self):
         gap = "L-meta-93286"

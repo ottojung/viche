@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import time
 
-from . import assignment, config, focus, gitctl, state
+from . import assignment, config, focus, gitctl, github, state
 from .proofs import corpus
 
 ROLES = ("knowledge", "methods", "flow")
@@ -197,7 +197,7 @@ def scan(refresh=False):
                         (directory(rec) / "checked.json").unlink(missing_ok=True)
                 continue
             hit = hits[0]
-            evidence = "https://github.com/" + config.UPSTREAM + "/blob/" + revision + "/" + hit["path"]
+            evidence = "https://github.com/" + github.repository_name(config.UPSTREAM_ID) + "/blob/" + revision + "/" + hit["path"]
             # Keep evidence IDs stable as upstream adds unrelated commits.
             old = next((a for a in item["advice"] if a["kind"] == "checked"), None)
             marker = "Proof blob " + hit["blob"] + "."

@@ -40,7 +40,7 @@ interruption, the normal mission cycle resumes the saved candidate.
   commit. `git verify-commit`, `%G?` in {G,U}, exact `%GF`, author and
   committer must all pass before push.
 - Identity is checked before mutation. Push goes only to
-  `ottojung/pequalnp-proofs`; PR only to `open-goat/pequalnp-proofs`
+  the pinned fork repository ID; PR only to the pinned upstream repository ID
   base `main`. Existing PRs are reused; no merge/close/settings/deletes.
 - GitHub commit verification must be true and commit identity correct before
   a PR is opened; post-create validation stops automation on any discrepancy.

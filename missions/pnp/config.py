@@ -6,13 +6,16 @@ file.  Only the operator CLI may choose a gap id and a local candidate path.
 import os
 import re
 
-UPSTREAM = "open-goat/pequalnp-proofs"
+# Numeric GitHub identities are immutable across account/repository renames.
 UPSTREAM_ID = 1468025030
-UPSTREAM_NAMES = (UPSTREAM, "brilliant-hq/pequalnp-proofs")
-FORK = "ottojung/pequalnp-proofs"
 FORK_ID = 1469318535
+CONTRIBUTOR_ID = 121908118
+CHECKER_ID = 275416420
 BASE_REF = "main"
-GH_USER = "ottojung"
+
+# The external desk and public scoreboard identify participants by handle,
+# not GitHub numeric ID. This is the authorized mission's credit target.
+DESK_HANDLE = "ottojung"
 
 AUTHOR_NAME = "Otto Jung"
 AUTHOR_EMAIL = "otto.jung@vauplace.com"
@@ -20,7 +23,7 @@ SIGNING_KEY = "08AF2726387BD4A4C87DF1821BEDDF96D7B1BA2B!"
 
 DESK_BASE = "https://pequalnp.com/desk"
 JOIN_URL = "https://pequalnp.com/join.txt"
-HEADER = "https://pequalnp.com/a/" + GH_USER
+HEADER = "https://pequalnp.com/a/" + DESK_HANDLE
 
 STATE_ROOT = os.environ.get(
     "PNP_STATE_ROOT", "/var/lib/lubko/wd/viche-state/pnp"

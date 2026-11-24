@@ -122,7 +122,10 @@ class FakeGH:
         self.created = 0
 
     def identity(self):
-        return config.GH_USER
+        return "renamed-contributor"
+
+    def repository_id(self, name):
+        return config.UPSTREAM_ID if name in ("old-owner/proofs", "new-owner/proofs") else 999
 
     def commit_verification(self, sha):
         return {"sha": sha, "verified": self.verified,
@@ -400,8 +403,30 @@ class TestSignatureFields(unittest.TestCase):
 
 
 class TestGitHubValidation(unittest.TestCase):
+    def test_renamed_account_and_impostor(self):
+        import json
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.CONTRIBUTOR_ID, "login": "new-login"})):
+            self.assertEqual(github.identity(), "new-login")
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": 999, "login": config.DESK_HANDLE})):
+            with self.assertRaises(github.GitHubError):
+                github.identity()
+
+    def test_discover_repository_by_id_not_name(self):
+        import json
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.UPSTREAM_ID, "full_name": "future-owner/future-name"})) as call:
+            self.assertEqual(github.repository_name(config.UPSTREAM_ID), "future-owner/future-name")
+            self.assertEqual(call.call_args.args[1], "repositories/" + str(config.UPSTREAM_ID))
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.FORK_ID, "full_name": "other/proofs", "owner_id": 999})):
+            with self.assertRaises(github.GitHubError):
+                github.repository_name(config.FORK_ID)
+
+
     def test_repository_rename_and_identity(self):
-        pr = {"author": config.GH_USER, "head_repo": config.FORK,
+        pr = {"author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID, "head_repo": "renamed-contributor/proofs",
               "head_repo_id": config.FORK_ID, "base_repo": "renamed/project",
               "base_repo_id": config.UPSTREAM_ID, "head_sha": SHA, "base_ref": "main"}
         with mock.patch.object(github, "get_pr", return_value=pr), \
@@ -410,12 +435,12 @@ class TestGitHubValidation(unittest.TestCase):
              mock.patch.object(github, "commit_verification", return_value={
                  "verified": True, "name": config.AUTHOR_NAME, "email": config.AUTHOR_EMAIL}):
             self.assertEqual(github.validate_created(1, SHA, PATH)[1], [])
-            pr.update(base_repo=config.UPSTREAM, base_repo_id=999)
+            pr.update(base_repo="new-owner/proofs", base_repo_id=999)
             self.assertIn("base repo is not upstream", github.validate_created(1, SHA, PATH)[1])
 
     def test_post_create_checks(self):
-        pr = {"number": 1, "author": config.GH_USER,
-              "head_repo": config.FORK, "base_repo": config.UPSTREAM,
+        pr = {"number": 1, "author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID,
+              "head_repo": "renamed-contributor/proofs", "base_repo": "new-owner/proofs",
               "head_repo_id": config.FORK_ID, "base_repo_id": config.UPSTREAM_ID,
               "head_sha": SHA,
               "base_ref": "main", "url": "u"}
@@ -550,9 +575,9 @@ class TestCli(unittest.TestCase):
         self.assertEqual(state.load(GAP)["lease"], "active-lease")
 
 
-def verdict_comment(sha, verdict, author="LiorDagan", date="2026"):
-    return {"author": author, "created_at": date,
-            "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/brilliant-hq/pequalnp-proofs/actions/runs/123" % (sha[:10], verdict)}
+def verdict_comment(sha, verdict, author="renamed-checker", date="2026"):
+    return {"author": author, "author_id": config.CHECKER_ID if author != "other" else 999, "created_at": date,
+            "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/old-owner/proofs/actions/runs/123" % (sha[:10], verdict)}
 
 
 class TestReconcile(unittest.TestCase):
@@ -610,10 +635,15 @@ class TestReconcile(unittest.TestCase):
 
     def test_renamed_checker_link(self):
         c = verdict_comment(SHA, "ACCEPTED")
-        c["body"] = c["body"].replace("brilliant-hq/pequalnp-proofs", config.UPSTREAM)
-        self.assertEqual(reconcile.current_verdict([c], SHA), "ACCEPTED")
-        c["body"] = c["body"].replace(config.UPSTREAM, "unrelated/pequalnp-proofs")
-        self.assertIsNone(reconcile.current_verdict([c], SHA))
+        resolve = FakeGH().repository_id
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["body"] = c["body"].replace("old-owner/proofs", "new-owner/proofs")
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["body"] = c["body"].replace("new-owner/proofs", "unrelated/proofs")
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["body"] = c["body"].replace("unrelated/proofs", "new-owner/proofs")
+        c["author_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
 
     def test_old_or_untrusted_verdict_ignored(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
@@ -727,7 +757,7 @@ class TestDeskNextGap(unittest.TestCase):
                 with mock.patch.object(self.d, "_call", return_value=(200, {"gap": None})) as call:
                     self.assertIsNone(self.d._next_gap(**flags))
                 self.assertEqual(call.call_args[0][1], "/next")
-                expected = {"handle": config.GH_USER}
+                expected = {"handle": config.DESK_HANDLE}
                 expected.update({k: "1" for k in flags})
                 self.assertEqual(call.call_args[0][2], expected)
 

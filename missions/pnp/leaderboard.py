@@ -14,7 +14,11 @@ import sys
 import tempfile
 
 BASE = "https://data.pequalnp.com/"
-OWNER = "ottojung"
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from missions.pnp import config
+
+OWNER = config.DESK_HANDLE
 PATH_RE = re.compile(r"data/contributors\.[0-9a-f]{8,64}\.json\Z")
 
 
