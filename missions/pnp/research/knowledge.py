@@ -50,10 +50,49 @@ def db():
       node TEXT REFERENCES object(id), attempt TEXT, worker TEXT, at REAL,
       PRIMARY KEY(node,attempt)
     );
+    CREATE TABLE IF NOT EXISTS origin(
+      node TEXT REFERENCES object(id), family TEXT, provenance TEXT,
+      PRIMARY KEY(node,family,provenance)
+    );
+    CREATE TABLE IF NOT EXISTS obligation_key(
+      key TEXT PRIMARY KEY, node TEXT REFERENCES object(id)
+    );
+    CREATE TABLE IF NOT EXISTS migration(name TEXT PRIMARY KEY);
+    CREATE INDEX IF NOT EXISTS origin_family ON origin(family,node);
+    CREATE INDEX IF NOT EXISTS origin_provenance ON origin(provenance);
     CREATE INDEX IF NOT EXISTS object_family ON object(family,kind);
     CREATE INDEX IF NOT EXISTS edge_target ON edge(target);
     """)
+    migrate(c)
     return c
+
+def obligation_identity(statement,detail,base,deps):
+    try:meta=json.loads(detail)
+    except (ValueError,TypeError):meta=detail
+    return digest(canon([statement,meta,base,sorted(set(deps))]).encode())
+
+def migrate(c):
+    # Preserve existing node IDs and receipts. New exact obligations reuse
+    # the first canonical node independent of their origin or family.
+    if not c.execute("SELECT 1 FROM migration WHERE name='origin-v1'").fetchone():
+        with c:
+            c.execute("INSERT OR IGNORE INTO origin SELECT id,family,provenance FROM object")
+            rows=c.execute("SELECT id,statement,detail,base FROM object WHERE kind='obligation' ORDER BY created,id").fetchall()
+            for row in rows:
+                deps=[r[0] for r in c.execute("SELECT target FROM edge WHERE source=? AND relation='requires'",(row["id"],))]
+                key=obligation_identity(row["statement"],row["detail"],row["base"],deps)
+                c.execute("INSERT OR IGNORE INTO obligation_key VALUES(?,?)",(key,row["id"]))
+            c.execute("INSERT OR IGNORE INTO migration VALUES('origin-v1')")
+    if not c.execute("SELECT 1 FROM migration WHERE name='fts-v1'").fetchone():
+        try:
+            with c:
+                c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS object_fts USING fts5(id UNINDEXED, statement, detail, provenance, family)")
+                c.execute("DELETE FROM object_fts")
+                c.execute("INSERT INTO object_fts SELECT id,statement,detail,provenance,family FROM object")
+                c.execute("""CREATE TRIGGER IF NOT EXISTS object_fts_add AFTER INSERT ON object BEGIN
+                    INSERT INTO object_fts VALUES(new.id,new.statement,new.detail,new.provenance,new.family); END""")
+                c.execute("INSERT OR IGNORE INTO migration VALUES('fts-v1')")
+        except sqlite3.OperationalError:pass
 
 def family(text):
     s = text.lower()
@@ -73,6 +112,11 @@ def store_artifact(path):
     p = Path(path)
     with p.open("rb") as f:
         data = f.read(MAX_ARTIFACT+1)
+    if not data or len(data)>MAX_ARTIFACT:
+        raise ValueError("artifact empty or exceeds 512 KiB")
+    return store_bytes(data)
+
+def store_bytes(data):
     if not data or len(data)>MAX_ARTIFACT:
         raise ValueError("artifact empty or exceeds 512 KiB")
     h = digest(data)
@@ -116,19 +160,37 @@ def add(c, kind, fam, statement, detail, provenance, file=None, base=None, deps=
             if not row:raise ValueError("unknown dependency "+dep)
             if kind=="obligation" and (row["kind"]!="obligation" or row["base"]!=base):
                 raise ValueError("Lean obligations require same-base obligation dependencies")
+        key=obligation_identity(statement,detail,base,deps) if kind=="obligation" else None
+        if key:
+            canonical=c.execute("SELECT node FROM obligation_key WHERE key=?",(key,)).fetchone()
+            if canonical:
+                oid=canonical[0]
+                c.execute("INSERT OR IGNORE INTO origin VALUES(?,?,?)",(oid,fam,provenance))
+                return oid
+            # Concurrent independent requests for the same exact theorem
+            # must not manufacture orphan nodes when the key races.
+            oid=key[:32]
         c.execute("INSERT OR IGNORE INTO object VALUES(?,?,?,?,?,?,?,?,?)",
                   (oid,kind,fam,statement,detail,provenance,h,base,time.time()))
         for dep in deps:
             c.execute("INSERT OR IGNORE INTO edge VALUES(?,?,?)",(oid,dep,"requires"))
+        if key:
+            c.execute("INSERT OR IGNORE INTO obligation_key VALUES(?,?)",(key,oid))
+            oid=c.execute("SELECT node FROM obligation_key WHERE key=?",(key,)).fetchone()[0]
+        c.execute("INSERT OR IGNORE INTO origin VALUES(?,?,?)",(oid,fam,provenance))
     return oid
 
 def get(c, oid):
     row=c.execute("SELECT * FROM object WHERE id=?",(oid,)).fetchone()
     if not row:raise ValueError("unknown object "+oid)
     obj=dict(row)
+    obj["origins"]=[dict(r) for r in c.execute("SELECT family,provenance FROM origin WHERE node=? ORDER BY family,provenance",(oid,))]
     obj["dependencies"]=[r[0] for r in c.execute("SELECT target FROM edge WHERE source=? AND relation='requires' ORDER BY target",(oid,))]
     obj["links"]=[dict(r) for r in c.execute("SELECT source,target,relation FROM edge WHERE source=? OR target=?",(oid,oid))]
-    obj["checks"]=[dict(r) for r in c.execute("SELECT base,artifact,source_digest,result,checked FROM proof WHERE node=?",(oid,))]
+    obj["checks"]=[dict(r) for r in c.execute("SELECT base,artifact,source_digest,result,checked FROM proof WHERE node=? ORDER BY checked DESC",(oid,))]
+    for check in obj["checks"]:
+        p=root()/"artifacts"/check["source_digest"]
+        if p.is_file():check["source_path"]=str(p)
     obj["assignments"]=[dict(r) for r in c.execute("SELECT attempt,worker,at FROM assignment WHERE node=?",(oid,))]
     if obj["artifact"]:obj["artifact_path"]=str(artifact(obj["artifact"]))
     return obj
@@ -137,17 +199,36 @@ def words(s):
     return set(re.findall(r"[a-z0-9_]+",s.lower()))
 
 def search(c, query="", fam=None, kinds=None, limit=12):
-    q=words(query)
+    q=words(query);args=[];where=[]
+    if fam:
+        where.append("EXISTS(SELECT 1 FROM origin o WHERE o.node=object.id AND o.family=?)")
+        args.append(fam)
+    if kinds:
+        where.append("object.kind IN ("+",".join("?" for _ in kinds)+")")
+        args.extend(kinds)
+    cond=(" AND "+" AND ".join(where)) if where else ""
+    fields="object.id,object.kind,object.family,object.statement,object.detail,object.provenance,object.created"
+    # FTS shortlist; exact token overlap is still used for final reranking.
+    candidates=None
+    if q:
+        try:
+            terms=" OR ".join('"'+x+'"' for x in sorted(q)[:64])
+            candidates=c.execute("SELECT "+fields+" FROM object_fts JOIN object ON object.id=object_fts.id "
+                "WHERE object_fts MATCH ?"+cond+" ORDER BY bm25(object_fts,0.0,4.0,1.0,0.5,0.5) LIMIT ?",
+                [terms]+args+[max(100,limit*10)]).fetchall()
+        except sqlite3.OperationalError:pass
+    if candidates is None:
+        candidates=c.execute("SELECT "+fields+" FROM object WHERE 1=1"+cond,args).fetchall()
     rows=[]
-    for row in c.execute("SELECT id,kind,family,statement,detail,provenance,created FROM object"):
-        if fam and row["family"]!=fam:continue
-        if kinds and row["kind"] not in kinds:continue
+    typed={"lemma","technique","obstruction","counterexample","reduction","certificate","obligation"}
+    for row in candidates:
         overlap=q & words(" ".join(str(row[k]) for k in ("statement","detail","provenance","family")))
         if q and not overlap:continue
         score=len(overlap)/(len(q) or 1)
-        rows.append((score,row["created"],dict(row)))
-    rows.sort(key=lambda x:(x[0],x[1]),reverse=True)
-    return [dict(row,score=round(score,3)) for score,_,row in rows[:limit]]
+        rows.append((score,row["kind"] in typed,row["created"],dict(row)))
+    rows.sort(key=lambda x:(x[0],x[1],x[2]),reverse=True)
+    return [dict(row,score=round(score,3)) for score,_,__,row in rows[:limit]]
+
 
 def record_finding(rec, d):
     fam=family((rec.get("gap_title") or "")+" "+(rec.get("statement") or ""))
@@ -161,23 +242,36 @@ def record_fragment(rec, info, path):
         return add(c,"fragment",fam,info["message"],"Imported fragment: reported status only; independently recheck.",
                    f"{rec['gap_id']} / {info.get('attempt')} / {info['digest']}",path,info.get("base"))
 
+def belongs(c,oid,prefix):
+    return any(row[0].startswith(prefix) for row in c.execute("SELECT provenance FROM origin WHERE node=?",(oid,)))
+
 def relevant(rec):
-    # Cheap bounded advisory output, no corpus refresh or compiler work.
+    # Prioritize exact-gap findings even when family classifiers disagree.
     if not (Path(config.STATE_ROOT)/"research/knowledge.sqlite").exists():return {}
     fam=family((rec.get("gap_title") or "")+" "+(rec.get("statement") or ""))
     with closing(db()) as c:
-        rows=search(c,rec.get("gap_title") or rec.get("statement") or "",fam,limit=6)
-        result=[{"id":r["id"],"kind":r["kind"],"statement":r["statement"][:500]} for r in rows]
-        # Exact-target obligations plus family knowledge are separately visible.
-        nodes=[dict(r) for r in c.execute("SELECT id,statement,base FROM object WHERE kind='obligation' AND provenance LIKE ?",
-                                        (rec["gap_id"]+" / %",))]
-        for node in nodes:
-            node["statement"]=node["statement"][:600]
-            node["verified"] = any(json.loads(x[0]).get("status")=="kernel_checked" for x in
-                                    c.execute("SELECT result FROM proof WHERE node=?",(node["id"],)))
-        return {"family":fam,"knowledge":result,"obligations":nodes[:20],
+        prefix=rec["gap_id"]+" / "
+        exact=c.execute("""SELECT DISTINCT object.id,object.kind,object.statement,object.created
+           FROM object JOIN origin ON origin.node=object.id
+           WHERE origin.provenance LIKE ? AND object.kind NOT IN ('finding','fragment','obligation')
+           ORDER BY object.created DESC LIMIT 6""",(prefix+"%",)).fetchall()
+        typed=("lemma","technique","obstruction","counterexample","reduction","certificate")
+        related=search(c,rec.get("gap_title") or rec.get("statement") or "",fam,typed,limit=4)
+        raw=search(c,rec.get("gap_title") or rec.get("statement") or "",fam,("finding","fragment"),limit=3)
+        result=[];seen=set()
+        for r in [*exact,*related,*raw]:
+            if r["id"] in seen:continue
+            seen.add(r["id"]);result.append({"id":r["id"],"kind":r["kind"],"statement":r["statement"][:500]})
+        from . import obligations
+        nodes=[]
+        for node in obligations.ready(c):
+            if not belongs(c,node["id"],prefix):continue
+            nodes.append({"id":node["id"],"statement":node["statement"][:600],"base":node["base"],
+                          "verified":node["status"]=="checked","status":node["status"],"dependencies":node["dependencies"]})
+        return {"family":fam,"knowledge":result[:10],"obligations":nodes[:20],
                 "command":"pnp-research knowledge find --family "+fam,
                 "obligation_command":"pnp-research obligations ready --family "+fam}
+
 
 def link(c, source, target, relation):
     if relation not in ("supports","blocks","counterexample_to","instantiates","reduces_to"):
@@ -241,7 +335,7 @@ def main():
     a.add_argument("--provenance",required=True);a.add_argument("--file");a.add_argument("--base")
     a.add_argument("--requires",action="append",default=[])
     a=sub.add_parser("find");a.add_argument("query",nargs="?",default="");a.add_argument("--family")
-    a.add_argument("--kind",action="append",choices=KINDS);a.add_argument("--limit",type=int,default=12)
+    a.add_argument("--kind",action="append",choices=KINDS);a.add_argument("--limit",type=int,default=12);a.add_argument("--full",action="store_true")
     a=sub.add_parser("show");a.add_argument("id")
     a=sub.add_parser("link");a.add_argument("source");a.add_argument("target");a.add_argument("relation")
     sub.add_parser("ingest");sub.add_parser("stats")
@@ -249,7 +343,10 @@ def main():
     with closing(db()) as c:
         if args.cmd=="add":
             out={"id":add(c,args.kind,args.family,args.statement,args.detail,args.provenance,args.file,args.base,args.requires)}
-        elif args.cmd=="find":out=search(c,args.query,args.family,args.kind,max(1,min(100,args.limit)))
+        elif args.cmd=="find":
+            out=search(c,args.query,args.family,args.kind,max(1,min(100,args.limit)))
+            if not args.full:
+                out=[{**r,"statement":r["statement"][:500],"detail":r["detail"][:350]} for r in out]
         elif args.cmd=="show":out=get(c,args.id)
         elif args.cmd=="link":out=link(c,args.source,args.target,args.relation)
         elif args.cmd=="ingest":out=ingest(c)

@@ -9,7 +9,9 @@ from unittest.mock import patch
 import itertools
 import json
 from missions.pnp import config,state
-from missions.pnp.research import knowledge as k,obligations as o,star,yield_model as y
+from missions.pnp.research import knowledge as k,obligations as o,star,yield_model as y,adoption,async_check,certificate,playbook
+from missions.pnp import assignment,staff,continuity,support
+import os
 
 class Research(unittest.TestCase):
     def setUp(self):
@@ -60,6 +62,68 @@ class Research(unittest.TestCase):
             self.assertEqual(len(z["cover"]),size)
             self.assertLessEqual(len(z["gates"]),len(E)+size-1)
         self.assertEqual(star.verify(2,[(0,1)],[("or",0,1)],2)["status"],"counterexample")
+    def test_exact_cross_origin_dedup(self):
+        a=self.obligation("True")
+        b=k.add(self.c,"obligation","another-family","True",k.canon({"imports":["Mathlib"]}),
+                "L-meta-19 / another attempt",base=self.base)
+        self.assertEqual(a,b)
+        self.assertEqual(len(k.get(self.c,a)["origins"]),2)
+        self.assertTrue(k.belongs(self.c,a,"L-meta-19 / "))
+        self.assertEqual(o.fork(self.c,a,self.base),{a:a})
+        self.assertEqual(len(k.search(self.c,"True",fam="another-family")),1)
+    def test_role_delivery_and_adoption(self):
+        rec=state.create("L-meta-5",state="LEASED",lease="fixture",statement="True",
+                         lease_expires_at=__import__("time").time()+600)
+        p=Path(assignment.prepare(rec["gap_id"],checkout=False,worker="general")["cwd"])
+        p.mkdir(parents=True)
+        class Result:
+            stdout='{"state":"running"}'
+        with patch.object(staff.subprocess,"run",return_value=Result()) as wire:
+            staff.antonina("run","--id","agent-fixture","--cwd",str(p),"--prompt","Exact task","--detach","--json")
+            prompt=wire.call_args.args[0]
+            self.assertIn("YOUR ROLE: general",prompt[prompt.index("--prompt")+1])
+            self.assertIn("pnp-research start",prompt[prompt.index("--prompt")+1])
+        with patch.dict(os.environ,{"ANTONINA_AGENT_ID":"agent-fixture","ANTONINA_INVOCATION_ID":"turn"}):
+            self.assertEqual(adoption.current_role(),"general")
+            adoption.record("start",__import__("time").time(),0)
+            adoption.record("knowledge find",__import__("time").time(),0)
+        result=adoption.report()
+        self.assertEqual(result["roles"]["general"]["discovered"],1)
+        self.assertEqual(result["roles"]["general"]["successful_use"],1)
+    def test_independent_roles_and_obligation_fronts(self):
+        rec=state.create("L-meta-9",state="LEASED",lease="fixture",statement="True",
+                         lease_expires_at=__import__("time").time()+600)
+        oid=k.add(self.c,"obligation","test","True",k.canon({"imports":["Mathlib"]}),
+                  "L-meta-9 / prior attempt",base=self.base)
+        self.assertIn("ob-"+oid,[x[0] for x in continuity.focus_plans(rec,[])])
+        self.assertEqual(set(continuity.required_support([])),{"method","tool"})
+        self.assertEqual(support.roles({"cwd":str(Path(config.STATE_ROOT)/"swarm/independent/method"),"title":"independent worker"}),["method"])
+    def test_async_receipt_identity(self):
+        oid=self.obligation("True")
+        body=k.store_bytes(b"by trivial")
+        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,"source")
+        ident={x:job[x] for x in ("job","base","toolchain","attempt","source_sha256")}
+        ident["origin"]={"gap":None,"attempt":"method-research"}
+        async_check.table(self.c)
+        with self.c:self.c.execute("INSERT INTO pending_check VALUES(?,?,?,?,?,?,NULL,0,'queued',NULL)",
+             (job["job"],oid,self.base,body,job["source_sha256"],k.canon(ident)))
+        row=async_check.snapshot(self.c,job["job"])
+        result={**job,"status":"elaborated","exit_code":0,
+                "diagnostic":"'"+o.symbol(oid)+"' does not depend on any axioms"}
+        self.assertEqual(async_check.proof_result(self.c,row,result)["status"],"kernel_checked")
+        bad={**result,"base":"b"*40}
+        self.assertEqual(async_check.proof_result(self.c,row,bad)["status"],"not_verified")
+        self.assertEqual(o.checked_body(self.c,oid,self.base),"by trivial")
+    def test_large_certificate(self):
+        edges=[(p,13+l) for p in range(13) for l in range(13) if (p-l)%13 in (0,1,3,9)]
+        meta=certificate.graph_meta({"n":26,"edges":edges,"bound":64})
+        r=certificate.render(meta)
+        self.assertEqual(r["status"],"generated")
+        self.assertEqual(r["gates"],64)
+        self.assertIn("L.Perm R := by decide",r["candidate"])
+        self.assertNotIn("∀ b0 b1",r["candidate"])
+        # No generated proof is claimed kernel-checked before verification.
+        self.assertEqual(r["verification"]["status"],"verified")
     def test_archive_ingest(self):
         archive=Path(config.STATE_ROOT).parent/"quarantine"/"L-meta-2-20261124100000"
         archive.mkdir(parents=True)

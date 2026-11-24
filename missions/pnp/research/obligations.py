@@ -2,6 +2,7 @@
 import argparse
 from contextlib import closing
 import hashlib
+import os
 import base64
 import json
 from pathlib import Path
@@ -76,6 +77,15 @@ def checked_body(c,node,base):
         if d.get("status")=="kernel_checked":return k.artifact(row["artifact"]).read_text()
     raise ValueError("unresolved dependency "+node)
 
+def declaration_options(meta):
+    opts=meta.get("options",{})
+    if not isinstance(opts,dict) or set(opts)-{"maxHeartbeats","maxRecDepth","synthInstance.maxSize","synthInstance.maxHeartbeats"}:
+        raise ValueError("invalid Lean options")
+    if any(type(v) is not int or v<0 or v>10_000_000 for v in opts.values()):
+        raise ValueError("invalid Lean option value")
+    return "".join(f"set_option {k} {v} in\n" for k,v in sorted(opts.items()))
+
+
 def build(c,oid,body=None):
     nodes=plan(c,oid); base=nodes[-1]["base"]
     imports=set(); lines=[]
@@ -83,7 +93,7 @@ def build(c,oid,body=None):
         meta=json.loads(o["detail"])
         imports.update(meta["imports"])
         text=body if o["id"]==oid and body is not None else checked_body(c,o["id"],base)
-        lines.append(f"theorem {symbol(o['id'])} : {o['statement']} :=\n{text}\n")
+        lines.append(declaration_options(meta)+f"theorem {symbol(o['id'])} : {o['statement']} :=\n{text}\n")
     src="\n".join("import "+x for x in sorted(imports))+"\n\n"+"\n".join(lines)
     return src+"\n#print axioms "+symbol(oid)+"\n"
 
@@ -95,7 +105,7 @@ def candidate(c,oid,rec,base):
     module=rec["module"];namespace=module+"_aux"
     for node in nodes:
         imports.update(json.loads(node["detail"])["imports"])
-        lines.append(f"lemma {symbol(node['id'])} : {node['statement']} :=\n{checked_body(c,node['id'],base)}\n")
+        lines.append(declaration_options(json.loads(node["detail"]))+f"lemma {symbol(node['id'])} : {node['statement']} :=\n{checked_body(c,node['id'],base)}\n")
     src="\n".join("import "+x for x in sorted(imports,key=lambda x:(x!="Mathlib",x)))
     src+="\n\nnamespace "+namespace+"\n"+"\n".join(lines)+"\nend "+namespace+"\n\n"
     src+=f"theorem {module} : {rec['statement']} := by\n  exact {namespace}.{symbol(oid)}\n"
@@ -128,7 +138,7 @@ def solve(c,oid,path,local=False,method=False):
     if obj["base"]!=base:raise ValueError("obligation requires another exact base")
     bodyhash=k.store_artifact(path)
     raw=k.artifact(bodyhash).read_text();clean_body(raw)
-    src=build(c,oid,raw);sourcehash=hashlib.sha256(src.encode()).hexdigest()
+    src=build(c,oid,raw);sourcehash=k.store_bytes(src.encode())
     if method:
         proc,result=method_check(base,oid,src)
     else:
@@ -154,28 +164,34 @@ def solve(c,oid,path,local=False,method=False):
         and verify_output(result.get("diagnostic",""),oid))
     result={"status":"kernel_checked" if ok else "not_verified","compiler":result,
             "stderr":proc.stderr[-1000:],"gap":rec["gap_id"] if rec else None,
-            "attempt":support.attempt(rec) if rec else "method-research"}
+            "attempt":support.attempt(rec) if rec else "method-research",
+            "submit_agent":os.environ.get("ANTONINA_AGENT_ID"),"collect_agent":os.environ.get("ANTONINA_AGENT_ID")}
     with c:
-        c.execute("INSERT OR REPLACE INTO proof VALUES(?,?,?,?,?,?)",
-                  (oid,base,bodyhash,sourcehash,k.canon(result),time.time()))
+        prev=c.execute("SELECT result FROM proof WHERE node=? AND base=? AND artifact=?",(oid,base,bodyhash)).fetchone()
+        if ok or not prev or json.loads(prev[0]).get("status")!="kernel_checked":
+            c.execute("INSERT OR REPLACE INTO proof VALUES(?,?,?,?,?,?)",
+                      (oid,base,bodyhash,sourcehash,k.canon(result),time.time()))
     return result
 
 def ready(c,base=None,family=None):
-    rows=[]
-    for row in c.execute("SELECT id FROM object WHERE kind='obligation' ORDER BY created"):
-        obj=k.get(c,row["id"])
-        if base and obj["base"]!=base or family and obj["family"]!=family:continue
-        try:
-            checked_body(c,obj["id"],obj["base"]); status="checked"
-        except ValueError:
-            try:
-                for dep in obj["dependencies"]:checked_body(c,dep,obj["base"])
-                status="ready"
-            except ValueError:status="blocked"
-        rows.append({"id":obj["id"],"symbol":symbol(obj["id"]),"statement":obj["statement"],
-                     "family":obj["family"],"base":obj["base"],"status":status,
-                     "dependencies":obj["dependencies"],"assignments":obj["assignments"]})
+    rows=[];checked=set()
+    try:
+        verified=c.execute("SELECT node,base,artifact FROM proof WHERE json_extract(result,'$.status')='kernel_checked'").fetchall()
+    except Exception:
+        verified=[row for row in c.execute("SELECT node,base,artifact,result FROM proof")
+                  if json.loads(row["result"]).get("status")=="kernel_checked"]
+    for row in verified:
+        if (k.root()/"artifacts"/row["artifact"]).is_file():checked.add((row["node"],row["base"]))
+    for row in c.execute("SELECT id,statement,family,base FROM object WHERE kind='obligation' ORDER BY created"):
+        obj=dict(row)
+        if base and obj["base"]!=base:continue
+        if family and not c.execute("SELECT 1 FROM origin WHERE node=? AND family=?",(obj["id"],family)).fetchone():continue
+        deps=[r[0] for r in c.execute("SELECT target FROM edge WHERE source=? AND relation='requires' ORDER BY target",(obj["id"],))]
+        status="checked" if (obj["id"],obj["base"]) in checked else "ready" if all((d,obj["base"]) in checked for d in deps) else "blocked"
+        rows.append({**obj,"symbol":symbol(obj["id"]),"status":status,"dependencies":deps,
+                     "assignments":[dict(r) for r in c.execute("SELECT attempt,worker,at FROM assignment WHERE node=?",(obj["id"],))]})
     return rows
+
 
 def fork(c, oid, base):
     mapping={}
@@ -185,7 +201,7 @@ def fork(c, oid, base):
         for a,b in mapping.items():stmt=stmt.replace(symbol(a),symbol(b))
         new=k.add(c,"obligation",old["family"],stmt,old["detail"],old["provenance"]+" / rebased from "+old["id"],
                   base=base,deps=deps)
-        k.link(c,new,old["id"],"instantiates")
+        if new!=old["id"]:k.link(c,new,old["id"],"instantiates")
         mapping[old["id"]]=new
     return mapping
 
@@ -202,13 +218,17 @@ def main():
     a=sub.add_parser("request");a.add_argument("--statement",required=True);a.add_argument("--family")
     a.add_argument("--requires",action="append",default=[]);a.add_argument("--import",dest="imports",action="append",default=[])
     a.add_argument("--base",help="independent method research on an exact public upstream revision");a.add_argument("--provenance")
-    a=sub.add_parser("ready");a.add_argument("--family");a.add_argument("--base")
+    a=sub.add_parser("ready");a.add_argument("--family");a.add_argument("--base");a.add_argument("--current",action="store_true");a.add_argument("--full",action="store_true")
     a=sub.add_parser("fork");a.add_argument("id")
-    a=sub.add_parser("body");a.add_argument("id");a.add_argument("--output",required=True)
+    a=sub.add_parser("body");a.add_argument("id");a.add_argument("--output",required=True);a.add_argument("--for-node")
     a=sub.add_parser("assign");a.add_argument("id");a.add_argument("worker")
     a=sub.add_parser("solve");a.add_argument("id");a.add_argument("body");a.add_argument("--local",action="store_true");a.add_argument("--method",action="store_true")
+    a.add_argument("--async",dest="asynchronous",action="store_true");a.add_argument("--wall",type=int,default=600);a.add_argument("--rss-mib",type=int,default=8192)
+    a=sub.add_parser("collect");a.add_argument("id");a.add_argument("--poll",action="store_true");a.add_argument("--timeout",type=int,default=1100)
+    sub.add_parser("pending");sub.add_parser("reconcile")
+    a=sub.add_parser("reuse");a.add_argument("old");a.add_argument("new");a.add_argument("--method",action="store_true");a.add_argument("--async",dest="asynchronous",action="store_true")
     a=sub.add_parser("assemble");a.add_argument("id");a.add_argument("--output",required=True);a.add_argument("--candidate",action="store_true")
-    a=sub.add_parser("show");a.add_argument("id")
+    a=sub.add_parser("show");a.add_argument("id");a.add_argument("--full",action="store_true")
     a=p.parse_args()
     with closing(k.db()) as c:
         if a.cmd=="request":
@@ -224,15 +244,35 @@ def main():
             oid=k.add(c,"obligation",fam,a.statement,k.canon({"imports":sorted(set(imports))}),
                       prov,base=b,deps=a.requires)
             out={"id":oid,"symbol":symbol(oid),"statement":a.statement}
-        elif a.cmd=="ready":out=ready(c,a.base,a.family)
-        elif a.cmd=="show":out=k.get(c,a.id)
+        elif a.cmd=="ready":
+            out=ready(c,a.base,a.family)
+            if a.current:
+                r,w,b=binding();out=[dict(x,same_base=x["base"]==b) for x in out if k.belongs(c,x["id"],r["gap_id"]+" / ")]
+            if not a.full:out=[dict(x,statement=x["statement"][:450]) for x in out]
+        elif a.cmd=="show":
+            out=k.get(c,a.id)
+            if not a.full:
+                for check in out["checks"]:
+                    r=json.loads(check["result"]);compiler=r.get("compiler") or {}
+                    check["result"]={"status":r.get("status"),"compiler_status":compiler.get("status"),
+                        "elapsed_ms":compiler.get("elapsed_ms"),"diagnostic":compiler.get("diagnostic","")[-1500:],
+                        "submit_agent":r.get("submit_agent")}
+
         elif a.cmd=="fork":
             r,w,b=binding();out=fork(c,a.id,b)
         elif a.cmd=="body":
             obj=k.get(c,a.id)
             text=checked_body(c,a.id,obj["base"])
+            if a.for_node:
+                mapping={}
+                for new in plan(c,a.for_node):
+                    for link in new["links"]:
+                        if link["source"]==new["id"] and link["relation"]=="instantiates":
+                            mapping[link["target"]]=new["id"]
+                if mapping.get(a.id)!=a.for_node:raise ValueError("target is not a fork of this node")
+                for old,new in mapping.items():text=text.replace(symbol(old),symbol(new))
             with Path(a.output).open("x") as f:f.write(text)
-            out={"path":a.output,"base":obj["base"]}
+            out={"path":a.output,"base":obj["base"],"recheck":bool(a.for_node)}
         elif a.cmd=="assign":
             r,w,b=binding();o=k.get(c,a.id)
             if o["base"]!=b:raise ValueError("base mismatch")
@@ -241,7 +281,35 @@ def main():
                 owner=c.execute("SELECT worker FROM assignment WHERE node=? AND attempt=?",(a.id,support.attempt(r))).fetchone()[0]
                 if owner!=a.worker:raise ValueError("already assigned to "+owner+"; coordinate with Executive")
             out={"assigned":a.id,"worker":a.worker}
-        elif a.cmd=="solve":out=solve(c,a.id,a.body,a.local,a.method)
+        elif a.cmd=="solve":
+            if a.asynchronous:
+                from . import async_check
+                if a.local:raise ValueError("async uses remote Lean")
+                out=async_check.submit(c,a.id,a.body,a.method,a.wall,a.rss_mib)
+            else:out=solve(c,a.id,a.body,a.local,a.method)
+        elif a.cmd=="collect":
+            from . import async_check
+            out=async_check.collect(c,a.id,1 if a.poll else a.timeout)
+        elif a.cmd=="pending":
+            from . import async_check
+            out=async_check.pending(c)
+        elif a.cmd=="reconcile":
+            from . import async_check
+            out=async_check.reconcile(c)
+        elif a.cmd=="reuse":
+            old=k.get(c,a.old);text=checked_body(c,a.old,old["base"])
+            mapping={}
+            for new in plan(c,a.new):
+                for link in new["links"]:
+                    if link["source"]==new["id"] and link["relation"]=="instantiates":mapping[link["target"]]=new["id"]
+            if a.old!=a.new and mapping.get(a.old)!=a.new:raise ValueError("new node is not a fork of old")
+            for src,dst in mapping.items():text=text.replace(symbol(src),symbol(dst))
+            with tempfile.NamedTemporaryFile(mode="w",suffix=".body") as f:
+                f.write(text);f.flush()
+                if a.asynchronous:
+                    from . import async_check
+                    out=async_check.submit(c,a.new,f.name,a.method)
+                else:out=solve(c,a.new,f.name,method=a.method)
         else:
             if a.candidate:
                 r,w,b=binding();text=candidate(c,a.id,r,b)
@@ -250,6 +318,8 @@ def main():
             with p.open("x") as f:f.write(text)
             out={"path":str(p),"sha256":k.digest(text.encode()),"note":"Final candidate needs the normal submit/check pipeline; graph verification is not upstream acceptance."}
     print(json.dumps(out,ensure_ascii=False,indent=2))
-    return 1 if a.cmd=="solve" and out["status"]!="kernel_checked" else 0
+    if a.cmd=="collect":return 0 if out["status"]=="kernel_checked" else 75 if out["status"] in ("pending","submitting") else 1
+    if a.cmd in ("solve","reuse") and not a.asynchronous:return 0 if out["status"]=="kernel_checked" else 1
+    return 0
 
 if __name__=="__main__":raise SystemExit(main())

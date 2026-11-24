@@ -11,6 +11,7 @@ from .proofs import corpus
 
 ROLES = ("knowledge", "methods", "flow")
 DECISION_ROLES = ("portfolio", "lease-evaluation")
+FAMILY_ROLES = ("method", "tool")
 PREFIX = "Viche P vs NP support:"
 KINDS = (*ROLES, "checked")
 LIVE = ("LEASED", "RESEARCHING")
@@ -223,10 +224,16 @@ def scan(refresh=False):
 
 
 def roles(agent):
+    try:
+        cwd=Path(agent.get("cwd") or "").resolve()
+        for role in FAMILY_ROLES:
+            if cwd==Path(config.STATE_ROOT,"swarm","independent",role).resolve():
+                return [role]
+    except (OSError,ValueError,TypeError):pass
     title = agent.get("title") or ""
     if not isinstance(title, str) or not title.startswith(PREFIX):
         return []
-    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES + DECISION_ROLES))
+    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES + DECISION_ROLES + FAMILY_ROLES))
 
 
 def main():

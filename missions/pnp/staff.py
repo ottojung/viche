@@ -28,8 +28,27 @@ _REUSABLE = frozenset(("idle", "clearexit", "stopped", "killed", "failed"))
 
 
 def antonina(*args):
+    # All deterministic Executive dispatch paths use this wire. Inject exactly
+    # one short role playbook at the actual invocation, including restarts.
+    args=list(args);did=None
+    if args[:1]==["run"] and all(x in args for x in ("--id","--cwd","--prompt")):
+        from .research import playbook, adoption
+        path=Path(args[args.index("--cwd")+1])
+        label=assignment.worker_label(path)
+        role=playbook.role_for(label,label=="general") if label else None
+        if path.parent.name in ("standing-support","independent") and path.name in playbook.ROLES:
+            role=path.name
+        if role:
+            i=args.index("--prompt")+1
+            if not args[i].startswith("YOUR ROLE:"):
+                args[i]=playbook.guide(role)+"\n\n"+args[i]
+            did=adoption.planned(args[args.index("--id")+1],path,role,args[i])
     result = subprocess.run(["antonina", "agent", *args], capture_output=True,
                             text=True, timeout=30, check=True)
+    if did:
+        try:
+            if json.loads(result.stdout).get("state")=="running":adoption.confirmed(did)
+        except (ValueError,AttributeError):pass
     return result.stdout.strip()
 
 
@@ -122,11 +141,6 @@ def prompt(rec, approach, general=False):
            f"and local diagnostic {rec.get('local_check_log', '')[-2000:]}. Correct the same "
            "PR through submit; no new PR. Use the saved candidate in the gap state directory. "
            if focus.correction(rec) else "")
-        + " Cumulative research: run pnp-research knowledge find --family FAMILY (or query exact terms); "
-          "use pnp-research obligations ready and show ID for exact Lean dependencies. "
-          "A reusable method, failed route or checked fragment should be recorded with its evidence, not lost when the lease ends. "
-          "Request exact Lean lemmas via pnp-research obligations request --statement TYPE; "
-          "solve ID BODY checks it and all dependencies. Coordinate assignments through Executive; don't duplicate a claimed node. "
         + f"Assigned approach: {approach}"
     )
 
@@ -195,12 +209,23 @@ def dispatch(gap, plans, agents=None, locked=False):
                     # lemmas on the same base. Do not reset existing worktrees.
                     general_path = (Path(state.gap_dir(gap)) / "attempts" /
                                     assignment.attempt_id(rec["lease"]) / "workers/general/path")
-                    if label != "general" and (general_path / ".git").exists():
+                    if label.startswith("ob-"):
+                        from .research import knowledge
+                        from contextlib import closing
+                        with closing(knowledge.db()) as c:
+                            base=knowledge.get(c,label[3:])["base"]
+                    elif label != "general" and (general_path / ".git").exists():
                         base = subprocess.check_output(["git","-C",str(general_path),"rev-parse","HEAD"],
                                                        text=True,timeout=5).strip()
                     else:
                         base = gitctl.ensure_mirror()
-                assignment.prepare(gap, worker=label, base=base)
+                chosen_base=base
+                if label.startswith("ob-"):
+                    from .research import knowledge
+                    from contextlib import closing
+                    with closing(knowledge.db()) as c:
+                        chosen_base=knowledge.get(c,label[3:])["base"]
+                assignment.prepare(gap, worker=label, base=chosen_base)
                 if not current_matches(rec, label == "general"):
                     break
                 reusable = next((a for a in existing if a.get("state") in ("idle", "clearexit")), None)
@@ -218,6 +243,16 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if answer.get("state") != "running":
                     raise ValueError("agent launch not confirmed")
                 results.append({"worker": label, "status": "started", "id": agent_id})
+                if label.startswith("ob-"):
+                    try:
+                        from .research import knowledge
+                        from contextlib import closing
+                        import time
+                        with closing(knowledge.db()) as c,c:
+                            c.execute("INSERT OR REPLACE INTO assignment VALUES(?,?,?,?)",
+                                      (label[3:],support.attempt(rec),label,time.time()))
+                    except Exception:pass
+
             except (OSError, ValueError, subprocess.SubprocessError, gitctl.GitError) as exc:
                 results.append({"worker": label, "status": "deferred", "detail": str(exc)[:300]})
         # A staffing/replenishment decision is routine, not a Git delivery.
