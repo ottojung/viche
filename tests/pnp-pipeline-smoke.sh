@@ -18,3 +18,5 @@ python3 tests/pnp-allocator.py
 python3 tests/pnp-continuity.py
 
 python3 tests/pnp-brief.py
+
+python3 tests/pnp-remote-protocol.py
