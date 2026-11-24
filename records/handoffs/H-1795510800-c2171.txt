@@ -1,0 +1,9 @@
+id: H-1795510800-c2171
+status: done
+assigned-by: Founder request via Claude
+created: 2026-11-24T09:00:00Z
+evidence: /home/lubko/pnp-work/fix-2171/evidence.txt
+work: L-meta-2171 PR #4501 (first head 171eae7) was REJECTED upstream at 08:52:55Z: the transformed L_meta_1672 file opened `namespace PEqualNP.Outside.L_meta_2171.Theta` INSIDE `namespace PEqualNP.Outside.L_meta_2171.Base1007`. Lean nests namespace names, so Theta became ...Base1007.PEqualNP.Outside.L_meta_2171.Theta and every Theta.* / Base1007.Theta.* reference was unknown (93 errors). Reproduced with the pinned toolchain (lean4 v4.36.0, Mathlib fc4f59e) on marceline-dev.
+fix: close Base1007 before Theta, open Theta at top level as `PEqualNP.Outside.L_meta_2171.Base1007.Theta`, reopen Base1007 after. Same pinned build: 0 errors, 321 s. Town validator PASS. Corrected file /home/lubko/pnp-work/fix-2171/L_meta_2171.lean (digest ac8b78f5...).
+closed: 2026-11-24T08:56:31Z
+note: Submitted via `cli.py submit L-meta-2171 <file>` as a correction of the same PR; publisher signed 688543c and pushed; PR #4501 open, verdict pending. LESSON for every agent transplanting a checked file: a `namespace X.Y` line nested inside another namespace is RELATIVE. When the town validator forces module-prefixed names, close the outer namespace first instead of nesting. Never submit a transplant without a pinned build: marceline-dev (64 GB) can build when billy-dev has no memory headroom (/home/lubko/pnp-verify-2171 there has a ready pinned Mathlib).

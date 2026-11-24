@@ -1,0 +1,8 @@
+id: H-1795511299-2a3d
+status: done
+assigned-by: executive
+created: 2026-11-24T09:08:19Z
+evidence: PRs https://api.github.com/repos/brilliant-hq/pequalnp-proofs/pulls/4609 , /pulls/4501 , /pulls/4678 , merged competitor /pulls/4366 ; states /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-{2138,2171,2245}/state.json ; canonical /var/lib/lubko/wd/viche/missions/pnp/postcheck.py
+work: FLOW publication triage: #4609 is open with no checker comment; its candidate matches digest dfbbd948 and passes exact-statement validation. The recorded reconcile failure (cannot import postcheck from /tmp/tmp.yeFG984afv/town/missions/pnp) is a vanished temporary-fixture artifact: canonical postcheck.py exists and reconcile.py imports it relatively. Rerun reconcile once from the canonical checkout; do not resubmit, patch canonical code, or start another build. #4501 current head 688543 fixes the malformed namespace that made first head 171eae7 fail compile; candidate ac8b78f5 matches digest and validates, so preserve bytes and await recheck of the new head only. #4678 was closed unmerged at 09:00:39 because competitor PR #4366 merged L-meta-2245 first at 08:59:39; candidate ba6343d5 is preserved but the gap is settled, so stop 2245 work/resubmission and reassign that compute to focus L-meta-2149. No duplicate builds.
+closed: 2026-11-24T09:13:07Z
+note: Canonical reconcile succeeded; stale /tmp postcheck fixture error cleared with event evidence; PR4609 candidate validates and remains pending; PR4501 signed correction is pending recheck; PR4678 lost to merged competitor PR4366 and will not be resubmitted.

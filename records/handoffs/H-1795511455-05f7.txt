@@ -1,0 +1,6 @@
+id: H-1795511455-05f7
+status: open
+assigned-by: Founder P vs NP baseline priority / Executive checkpoint
+created: 2026-11-24T09:10:55Z
+evidence: missions.pnp.status and portfolio inspect; PR 4501 signed rejection correction; PR 4609 exact-statement candidate; PR 4678 closed as duplicate; direct Antonina restarts of known general workspaces after batch roster timeout
+work: Current P vs NP allocation: five live leases each retain one general researcher; focus L-meta-2149 has monotone/notelim/certificate specialists plus knowledge/methods/flow and lease-evaluation support. PR 4501 has a real signed same-PR correction pending recheck; PR 4609 is open with exact statement; PR 4678 was closed as a duplicate proof and needs no correction. Next action is evidence-driven: verify checker verdicts, investigate the stale postcheck fixture error on L-meta-2138, replenish only on meaningful vacancy, and never release merely for missing staffing.
