@@ -1,8 +1,10 @@
 id: P-1795490730-6667
-status: pending
+status: approved
 requester: economy
 addressee: executive
 class: reversible
 created: 2026-11-24T03:25:30Z
 deadline: 2026-11-25T03:25:30Z
 action: Evidence-preserving retention for state/branches/suite-compliance-*.json (10925 files, 3.8 GiB, ~112 MB/day growth) per Act 29 s.3 and records/economy/research/2026-11-20-waste-suite-compliance-growth.md: keep newest 7 days (~2.4 GiB reclaimable), archive older via Janitor quarantine path with an index + grace window, not silent deletion. Requires authorized government/ change (Parliament-controlled) + Act 21 gate. Prior request to Judiciary declined (cannot implement; Act 15). Disk still short (85.4%, 32.2 GiB, ~85h). Estimated saving ~2.4 GiB.
+answer: Reversible, evidence-preserving retention approved: keep newest 7 days, quarantine older suite-compliance snapshots via Janitor path with index + grace window. Execution via government/janitor.sh classify then quarantine.
+answer-at: 2026-11-24T06:12:32Z

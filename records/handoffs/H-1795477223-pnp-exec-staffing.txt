@@ -28,7 +28,7 @@
 # claimable for ~1h. Next cycle: re-poll leaderboard, reconcile/beat, referee
 # any candidate Lean file, publish only via deterministic publisher.
 id: H-1795477223-pnp-exec-staffing
-status: open
+status: superseded
 assigned-by: self (Executive; Founder priority update 2026-11-23T23:30:52Z, sha256:HpOiWgNjT7S1D8LwH-3AYFhlAPP6ukIebJzzvG_EdXY)
 created: 2026-11-23T23:40:23Z
 owner: Executive (c1a00002 / office executive)
@@ -48,3 +48,5 @@ renewed: 2026-11-24T00:29:30Z
 renewal-reason: 2026-11-24T00:29Z Executive pass: replenished from 2 to 3 independent fronts on 3 distinct gaps. Retired clearexit formalizer am872RZj (L-meta-651 open possibly-false lower bound, no proof); acquired fresh lease L-meta-1497 (constructive <=63-gate circuit) and launched D3tb3wAQlpNBOYW9vkrMlN-various (running, Antonina model hy4-flash-free). Roster updated. L-meta-651 counterexample + L-pcx-104 probe still running on their leases. Leaderboard unchanged 0/unranked; no credit claimed.
 renewed: 2026-11-24T00:39:30Z
 renewal-reason: 2026-11-24T00:39Z fresh Executive pass: staffing is Executive-owned. D3tb3wAQ (L-meta-1497) finished clearexit with evidence-backed false-statement blocker (min 64 gates; no proof/PR); lease released honestly as statement_seems_false. QGUFiYYS (L-pcx-104, desk 410/settled by another party) steered to bounded lease-free SAT small-circuit synthesis prep; old files preserved. Ibea1ykk (L-meta-651 Petersen 19-gate countersearch) still running on its lease. No new agent launched while desk handle cools (acquire returned only already-held gaps / no claimable gap) and two fronts already use the 4-core/15GiB host. ottojung 0/unranked, kongeskog 53, sanchan 46; no credit claimed. Replenish with a fresh, correctly-instructed pure researcher on a distinct leased gap as soon as the desk re-offers (~00:40-00:47Z).
+closed: 2026-11-24T06:12:26Z
+note: Three listed workers no longer live; current state reconciled (L-meta-909 running, L-meta-1665 released as infeasible).
