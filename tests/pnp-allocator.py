@@ -51,6 +51,9 @@ class Tests(unittest.TestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
         self.addCleanup(self.tmp.cleanup)
+        mirror = patch.object(staff.gitctl, "ensure_mirror", return_value="a" * 40)
+        mirror.start()
+        self.addCleanup(mirror.stop)
 
     def add(self, gap="L-meta-1", **extra):
         fields = dict(state="LEASED", lease="lease-"+gap, lease_obtained_at=NOW-1800,
