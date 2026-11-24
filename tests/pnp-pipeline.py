@@ -398,6 +398,23 @@ class TestCli(unittest.TestCase):
             self.assertEqual(f.read(), GOOD)
         self.assertEqual(state.load(GAP)["queued_lease"], "lease-1")
 
+    def test_publication_retry_backoff_preserves_candidate(self):
+        from missions.pnp import jobs
+        new_state("LEASED")
+        with mock.patch.object(jobs, "launch"):
+            jobs.submit(GAP, candidate_file())
+        jobs.defer(GAP, "old-lease")
+        self.assertIsNone(state.load(GAP).get("publisher_retry_at"))
+        jobs.defer(GAP, "lease-1")
+        rec = state.load(GAP)
+        self.assertEqual(rec["publisher_failures"], 1)
+        self.assertGreater(rec["publisher_retry_at"], time.time())
+        with mock.patch.object(jobs, "launch") as launch:
+            self.assertTrue(jobs.resume(GAP))
+            launch.assert_not_called()
+        self.assertTrue(os.path.isfile(jobs.candidate_path(GAP)))
+        self.assertEqual(rec["state"], "CANDIDATE_READY")
+
     def test_concurrent_publisher_lock_prevents_duplicate_launch(self):
         from missions.pnp import jobs
         new_state("LEASED")

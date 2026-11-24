@@ -156,6 +156,8 @@ def build(worktree, module, statement, runner=None):
            if not (k.startswith("LEAN_") or k.startswith("LAKE_")
                    or k in ("PEQUALNP_IN_QUEUE", "PEQUALNP_REAL_LAKE"))}
     # Use the upstream build queue and content-addressed artifact cache.
+    # Its shell sets LEAN_NUM_THREADS from build-jobs.conf; constrain that
+    # independently of the number of model-bound researchers.
     # Never inherit an untrusted worker's Lake search path/options.
     # Retain the publisher lock across an orphaned build subprocess, too.
     lock_fd = os.environ.get("PNP_PUBLISH_LOCK_FD")
@@ -171,11 +173,14 @@ def build(worktree, module, statement, runner=None):
             while True:
                 if build_control.obsolete():
                     raise build_control.BuildDeferred("publication assignment ended")
+                reason = build_control.memory_reason(proc.pid)
+                if reason:
+                    raise build_control.BuildDeferred(reason)
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise GitError("local Lean build timed out; retry")
                 try:
-                    code = proc.wait(timeout=min(3, remaining))
+                    code = proc.wait(timeout=min(0.5, remaining))
                     break
                 except subprocess.TimeoutExpired:
                     continue

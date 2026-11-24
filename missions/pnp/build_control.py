@@ -2,6 +2,7 @@
 import contextlib
 import fcntl
 import os
+from pathlib import Path
 import time
 
 from . import config, state
@@ -45,6 +46,13 @@ def slot(timeout=600):
                 raise BuildDeferred("publication assignment ended")
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                free = headroom()
+                if free is not None and free < MAX_BUILD_RSS + RESERVE:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                    if time.monotonic() >= deadline:
+                        raise BuildDeferred("insufficient memory for full publication build")
+                    time.sleep(2)
+                    continue
                 break
             except BlockingIOError:
                 if time.monotonic() >= deadline:
@@ -72,3 +80,48 @@ def busy():
         return None
     finally:
         os.close(fd)
+
+
+GIB = 1024 ** 3
+RESERVE = 2 * GIB
+MAX_BUILD_RSS = 6 * GIB
+
+
+def headroom(root=Path("/sys/fs/cgroup")):
+    """Conservative cgroup headroom, excluding reclaimable inactive file cache."""
+    try:
+        limit = int((root / "memory.max").read_text())
+        current = int((root / "memory.current").read_text())
+        stats = dict(line.split() for line in
+                     (root / "memory.stat").read_text().splitlines())
+        return max(0, limit - current + int(stats.get("inactive_file", "0")))
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def group_rss(group, proc=Path("/proc")):
+    """Sum RSS in our own process group; no arbitrary process selection."""
+    rss = 0
+    page = os.sysconf("SC_PAGE_SIZE")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            fields = (entry / "stat").read_text().rsplit(")", 1)[1].split()
+            if int(fields[2]) == group:
+                rss += max(0, int(fields[21])) * page
+        except (OSError, ValueError, IndexError):
+            continue
+    return rss
+
+
+def memory_reason(group):
+    free = headroom()
+    if free is not None and free < RESERVE:
+        return "host memory reserve threatened"
+    try:
+        if group_rss(group) > MAX_BUILD_RSS:
+            return "publication build exceeded 6 GiB RSS budget"
+    except OSError:
+        pass
+    return None

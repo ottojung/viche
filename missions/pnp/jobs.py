@@ -3,6 +3,7 @@ import fcntl
 import os
 import subprocess
 import sys
+import time
 
 from . import config, publish, state, validate
 
@@ -66,7 +67,8 @@ def submit(gap, source):
                              failure_reason=None)
         elif rec["state"] == "CANDIDATE_READY":
             state.update(gap, candidate_digest=digest, failure_reason=None)
-        state.update(gap, queued_lease=rec["lease"])
+        state.update(gap, queued_lease=rec["lease"],
+                     publisher_retry_at=None, publisher_failures=0)
         launch(gap, fd)
         return {"gap": gap, "status": "publishing", "digest": digest}
     finally:
@@ -80,6 +82,8 @@ def resume(gap):
             not rec.get("queued_lease") or rec["queued_lease"] != rec["lease"] or
             not os.path.isfile(candidate_path(gap))):
         return False
+    if (rec.get("publisher_retry_at") or 0) > time.time():
+        return True
     fd = claim(gap)
     if fd is None:
         return True
@@ -90,21 +94,39 @@ def resume(gap):
         os.close(fd)
 
 
+def defer(gap, lease):
+    """Bound retries without turning transient outages into failed proofs."""
+    rec = state.load(gap)
+    if (not rec or rec.get("lease") != lease or rec["state"] not in READY
+            or rec.get("queued_lease") != lease):
+        return
+    attempts = min(8, (rec.get("publisher_failures") or 0) + 1)
+    delay = min(900, 30 * 2 ** (attempts - 1))
+    state.update(gap, publisher_failures=attempts,
+                 publisher_retry_at=time.time() + delay)
+
+
 def run(gap, fd):
+    lease = None
     try:
         os.environ["PNP_PUBLISH_LOCK_FD"] = str(fd)
         rec = state.load(gap)
         if rec["state"] not in READY or rec.get("queued_lease") != rec["lease"]:
             return
         os.environ["PNP_PUBLISH_GAP"] = gap
-        os.environ["PNP_PUBLISH_LEASE"] = rec.get("lease") or ""
+        lease = rec.get("lease")
+        os.environ["PNP_PUBLISH_LEASE"] = lease or ""
         result = publish.publish(gap, candidate_path(gap))
         print(result, flush=True)
     except publish.StopPublish as exc:
         print("publication stopped:", exc, flush=True)
+        if lease:
+            defer(gap, lease)
     except Exception as exc:
         # Preserve the pending candidate for the ordinary recovery cycle.
         print("publication interrupted:", exc, flush=True)
+        if lease:
+            defer(gap, lease)
     finally:
         os.close(fd)
 

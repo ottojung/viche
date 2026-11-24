@@ -102,7 +102,7 @@ class FullPathSmoke(unittest.TestCase):
 
     def test_publication_slot_and_confirmed_obsolescence(self):
         with tempfile.TemporaryDirectory() as tmp:
-            with patch.object(config, "CACHE_DIR", tmp):
+            with patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=16 * build_control.GIB):
                 self.assertFalse(build_control.busy())
                 with build_control.slot(timeout=0):
                     self.assertTrue(build_control.busy())
@@ -116,6 +116,24 @@ class FullPathSmoke(unittest.TestCase):
             self.assertFalse(build_control.obsolete("L-meta-1", "old"))
         with patch.object(state, "load", return_value={"state": "LEASED", "lease": "new"}):
             self.assertTrue(build_control.obsolete("L-meta-1", "old"))
+
+    def test_memory_reserve_and_process_group_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "memory.max").write_text(str(14 * build_control.GIB))
+            (root / "memory.current").write_text(str(13 * build_control.GIB))
+            (root / "memory.stat").write_text("inactive_file 1073741824\n")
+            self.assertEqual(build_control.headroom(root), 2 * build_control.GIB)
+            (root / "memory.max").write_text("max")
+            self.assertIsNone(build_control.headroom(root))
+        with patch.object(build_control, "headroom", return_value=build_control.GIB):
+            self.assertIn("reserve", build_control.memory_reason(1))
+        with patch.object(build_control, "headroom", return_value=None), patch.object(
+                build_control, "group_rss", return_value=7 * build_control.GIB):
+            self.assertIn("budget", build_control.memory_reason(1))
+        with patch.object(build_control, "headroom", return_value=None), patch.object(
+                build_control, "group_rss", return_value=0):
+            self.assertIsNone(build_control.memory_reason(1))
 
     def test_reuse_requires_exact_publisher_tree(self):
         with tempfile.TemporaryDirectory() as tmp:

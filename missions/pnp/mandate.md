@@ -122,3 +122,10 @@ for scratch development, then hand the full required candidate to submit.
 Avoid full local checker runs and redundant full Mathlib loads. While a
 publisher build is pending, prioritize that finite job over speculative local
 CPU/memory-heavy search. Keep independent model-bound reasoning productive.
+
+Full Mathlib/checklemma processes can exhaust the machine: the local full
+checker is NOT a publication prerequisite. Do not run it on billy-dev.
+Use the publisher for the required full build, not multiple simultaneous
+full-import Lean scratch processes. Use minimal scratch imports, bounded
+search subprocesses and small test inputs. A memory-deferred publisher
+preserves the proof and retries; do not start a competing full build.
