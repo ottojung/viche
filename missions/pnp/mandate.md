@@ -82,7 +82,11 @@ by the independently nonblocking missions/pnp/cycle.sh from generic boot; the Ex
 failed-work decisions and dispatch. Do not launch a competing scheduler.
 The publisher hardcodes Otto Jung <otto.jung@vauplace.com>, his GPG signing
 subkey 08AF2726387BD4A4C87DF1821BEDDF96D7B1BA2B and the exact fork and
-upstream PR destinations. Researchers must not open PRs with generic gh.
+upstream PR destinations. Researchers must not open PRs with generic gh. They must directly invoke
+`python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py submit GAP FILE` as soon as
+a complete candidate exists. No redundant local full checker, approval handoff,
+or waiting for an Executive cycle: the detached deterministic publisher checks
+the local build, signs and submits. Resume or correct failures promptly.
 Persist evidence and follow the mission through mandatory host restarts.
 Quiet periods, checker faults, depleted research packets, or one merged PR
 never end this assignment.

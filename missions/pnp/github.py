@@ -16,7 +16,7 @@ class GitHubError(Exception):
 
 def gh(*args):
     p = subprocess.run([config.GH_CLI] + list(args), stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE, text=True)
+                       stderr=subprocess.PIPE, text=True, timeout=45)
     if p.returncode != 0:
         raise GitHubError("gh %s failed: %s" %
                           (args[0] if args else "?", p.stderr.strip()[:400]))

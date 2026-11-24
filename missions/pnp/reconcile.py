@@ -38,13 +38,21 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
     rec = state.load(gap_id)
     if rec is None:
         return {"gap": gap_id, "result": "no-state"}
-    if rec["state"] in ("ACCEPTED", "REJECTED", "RELEASED", "STALE"):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
+            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
 
     _heartbeat(gap_id, rec, desk)
     rec = state.load(gap_id)
-    if rec["state"] in ("ACCEPTED", "REJECTED", "RELEASED", "STALE"):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
+            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
+
+    # A detached deterministic publisher owns a durable candidate. Recovery
+    # never starts a competing build or holds the short reconciliation pass.
+    from . import jobs
+    if jobs.resume(gap_id):
+        return {"gap": gap_id, "result": "publishing", "state": rec["state"]}
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     remote = (git.remote_branch_sha(branch)
@@ -101,7 +109,7 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None):
             verdict = sorted(verdicts)[-1][1]
             if verdict != "FAULT":
                 state.transition(gap_id, verdict,
-                                 external_verdict=verdict)
+                                 external_verdict=verdict, queued_lease=None)
             else:
                 state.update(gap_id, external_verdict="FAULT",
                              failure_reason="upstream checker FAULT; will recheck")

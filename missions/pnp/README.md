@@ -17,8 +17,16 @@ authenticated GitHub mutation commands directly.
 
 `status` is read-only. `acquire` claims at most five desk leases and records
 the exact statement, module, path and imports as data. `beat` renews a lease;
-`release` returns it honestly. `submit` runs the deterministic publisher;
+`release` returns it honestly. `submit` snapshots and immediately starts the
+deterministic publisher; it survives the researcher exiting or a tool timeout.
 `reconcile` recovers after interruption without duplicating submissions.
+
+Workers: once the candidate is complete, call `submit` directly. Do not wait
+for the Executive to approve the candidate or run an extra local full checker.
+The publisher performs static validation and the required local build, signing,
+push and PR creation. The town monitors the result in the gap state and
+`publisher.log`. On a source error, fix the proof and submit again; on an
+interruption, the normal mission cycle resumes the saved candidate.
 
 ## Safety invariants
 
@@ -47,8 +55,8 @@ Live desk instructions are re-read into `cache/join.txt` at startup; the stale
 
 `/bin/sh tests/pnp-pipeline-smoke.sh` runs both mocked tests and real local
 Git/GPG integration tests. None claims a live desk gap, pushes, or opens a
-real PR. Only a proof accepted by the upstream authoritative Lean checker
-under Lean 4.36 and pinned Mathlib may be submitted.
+real PR. A proof must pass the pinned local Lean build before submission.
+The upstream PR checker is the authoritative acceptance test.
 
 The Viche boot cycle runs `missions/pnp/cycle.sh` independently to renew
 leases every nine minutes and reconcile remote results without blocking

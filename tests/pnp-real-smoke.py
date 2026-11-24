@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 TMP = tempfile.TemporaryDirectory(prefix="pnp-real-smoke-")
 os.environ["PNP_STATE_ROOT"] = str(pathlib.Path(TMP.name) / "state")
 
-from missions.pnp import cli, config, github, state, gitctl  # noqa: E402
+from missions.pnp import cli, config, github, state, gitctl, jobs  # noqa: E402
 
 
 class FullPathSmoke(unittest.TestCase):
@@ -62,6 +62,43 @@ class FullPathSmoke(unittest.TestCase):
                              10023)
         self.assertEqual(calls[0][2:4], ("--repo", config.UPSTREAM))
         self.assertIn("ottojung:pnp/l_meta_582", calls[0])
+
+    def test_publisher_lock_survives_parent_and_recovers_after_exit(self):
+        gap = "L-meta-93286"
+        state.create(gap, state="LEASED", lease="test-lease")
+        fd = jobs.claim(gap)
+        self.assertIsNotNone(fd)
+        p = subprocess.Popen([sys.executable, "-c",
+                              "import sys; sys.stdin.read()"],
+                             pass_fds=(fd,), stdin=subprocess.PIPE)
+        os.close(fd)
+        try:
+            self.assertIsNone(jobs.claim(gap))
+        finally:
+            p.kill()
+            p.wait(timeout=5)
+            p.stdin.close()
+        again = jobs.claim(gap)
+        self.assertIsNotNone(again)
+        os.close(again)
+
+    def test_dependency_cache_does_not_inherit_checker_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            seed = root / "seed/lean/.lake"
+            seed.mkdir(parents=True)
+            (seed / "packages").mkdir()
+            (seed / "check.lock").mkdir()
+            work = root / "work/lean"
+            work.mkdir(parents=True)
+            for name in ("lean-toolchain", "lake-manifest.json"):
+                (seed.parent / name).write_text("pinned")
+                (work / name).write_text("pinned")
+            with patch.dict(os.environ, {"PNP_SHARED_LAKE": str(seed)}):
+                gitctl.prepare_build_cache(str(work.parent))
+            self.assertFalse((work / ".lake").is_symlink())
+            self.assertTrue((work / ".lake/packages").is_symlink())
+            self.assertFalse((work / ".lake/check.lock").exists())
 
     def test_real_signed_git_commit(self):
         # CI environments intentionally lack Otto Jung's private signing key.

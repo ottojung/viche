@@ -263,7 +263,7 @@ class TestPublish(unittest.TestCase):
         with self.assertRaises(publish.StopPublish):
             publish.publish(GAP, self.file, desk=FakeDesk(),
                             git=FakeGit(build_ok=False), gh=FakeGH())
-        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
 
     def test_bad_candidate_stops_before_git(self):
         new_state()
@@ -272,14 +272,40 @@ class TestPublish(unittest.TestCase):
             publish.publish(GAP, candidate_file(GOOD.replace("norm_num", "sorry")),
                             desk=FakeDesk(), git=g, gh=FakeGH())
         self.assertNotIn(("push", config.branch_for(GAP)), g.calls)
-        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
 
     def test_lease_410_stops(self):
         new_state()
         with self.assertRaises(publish.StopPublish):
             publish.publish(GAP, self.file, desk=FakeDesk(beat=410),
                             git=FakeGit(), gh=FakeGH())
-        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(state.load(GAP)["state"], "STALE")
+
+    def test_failed_proof_can_be_corrected_without_losing_lease(self):
+        new_state()
+        d, g, h = FakeDesk(), FakeGit(build_ok=False), FakeGH()
+        with self.assertRaises(publish.StopPublish):
+            publish.publish(GAP, self.file, desk=d, git=g, gh=h)
+        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
+        self.assertIsNone(state.load(GAP)["candidate_digest"])
+        state.transition(GAP, "CANDIDATE_READY")
+        g.build_ok = True
+        result = publish.publish(GAP, self.file, desk=d, git=g, gh=h)
+        self.assertEqual(result["pr"], 123)
+        self.assertEqual(h.created, 1)
+
+    def test_gap_settled_during_build_never_pushes(self):
+        new_state()
+        d, g, h = FakeDesk(), FakeGit(), FakeGH()
+        def beat(lease):
+            d.beats.append(lease)
+            return 200 if len(d.beats) == 1 else 410
+        d.beat = beat
+        with self.assertRaises(publish.StopPublish):
+            publish.publish(GAP, self.file, desk=d, git=g, gh=h)
+        self.assertEqual(state.load(GAP)["state"], "STALE")
+        self.assertEqual(h.created, 0)
+        self.assertFalse(any(c[0] == "push" for c in g.calls))
 
     def test_github_verification_false_means_no_pr(self):
         new_state()
@@ -341,17 +367,32 @@ class TestCli(unittest.TestCase):
     def setUp(self):
         fresh()
 
-    def test_submit_transitions_lease_to_ready_without_agent_git(self):
-        from missions.pnp import cli
+    def test_submit_snapshots_and_launches_without_agent_git(self):
+        from missions.pnp import cli, jobs
         new_state("LEASED")
         seen = []
-        def submit(gap_id, candidate):
-            seen.append((gap_id, candidate, state.load(gap_id)["state"]))
-            return {"pr": 17}
-        with mock.patch.object(cli.publish, "publish", side_effect=submit):
+        def launch(gap_id, fd):
+            seen.append((gap_id, state.load(gap_id)["state"]))
+        with mock.patch.object(jobs, "launch", side_effect=launch):
             self.assertEqual(cli.cmd_submit(
-                type("Args", (), {"gap": GAP, "candidate": "/tmp/proof"})()), 0)
-        self.assertEqual(seen, [(GAP, "/tmp/proof", "CANDIDATE_READY")])
+                type("Args", (), {"gap": GAP, "candidate": candidate_file()})()), 0)
+            self.assertEqual(seen, [(GAP, "CANDIDATE_READY")])
+            self.assertTrue(jobs.resume(GAP))
+        with open(jobs.candidate_path(GAP)) as f:
+            self.assertEqual(f.read(), GOOD)
+        self.assertEqual(state.load(GAP)["queued_lease"], "lease-1")
+
+    def test_concurrent_publisher_lock_prevents_duplicate_launch(self):
+        from missions.pnp import jobs
+        new_state("LEASED")
+        fd = jobs.claim(GAP)
+        try:
+            with mock.patch.object(jobs, "launch") as launch:
+                self.assertEqual(jobs.submit(GAP, candidate_file())["status"],
+                                 "publishing")
+                launch.assert_not_called()
+        finally:
+            os.close(fd)
 
     def test_reacquire_adopts_fresh_lease_without_releasing(self):
         """A re-offered released/stale gap must be re-leased, not handed back.

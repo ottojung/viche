@@ -29,6 +29,7 @@ EMPTY = {
     "lean_toolchain": config.LEAN_TOOLCHAIN,
     "researchers": [],
     "candidate_digest": None,
+    "queued_lease": None,
     "branch": None,
     "worktree": None,
     "commit_sha": None,
@@ -172,6 +173,7 @@ def reacquire(gap_id, **fields):
                     "commit_sha", "pr_number", "pr_url", "external_verdict"):
             rec[key] = None
         rec["failure_reason"] = None
+        rec["queued_lease"] = None
         rec["intent"] = None
         rec["researchers"] = []
         rec["state"] = "LEASED"

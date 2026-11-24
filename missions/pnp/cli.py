@@ -20,9 +20,9 @@ if __package__ in (None, ""):
     sys.path.insert(0, os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "..")))
     from missions.pnp import (config, desk as desk_mod, publish,
-                                reconcile, state)
+                                reconcile, state, jobs)
 else:
-    from . import config, desk as desk_mod, publish, reconcile, state
+    from . import config, desk as desk_mod, publish, reconcile, state, jobs
 
 
 def _printer(data):
@@ -152,23 +152,11 @@ def cmd_release(args):
 
 
 def cmd_submit(args):
-    # The research worker supplies only a candidate file, never a Git
-    # history.  Move a leased gap to publication-ready deterministically.
-    rec = state.load(args.gap)
-    if not rec:
-        print("gap must be acquired by Viche before submission", file=sys.stderr)
-        return 2
-    if rec["state"] == "LEASED":
-        state.transition(args.gap, "RESEARCHING")
-        rec = state.load(args.gap)
-    if rec["state"] == "RESEARCHING":
-        state.transition(args.gap, "CANDIDATE_READY")
     try:
-        result = publish.publish(args.gap, args.candidate)
-    except publish.StopPublish as e:
-        print("PUBLISH STOPPED: " + str(e), file=sys.stderr)
+        _printer(jobs.submit(args.gap, args.candidate))
+    except (publish.StopPublish, jobs.validate.InvalidCandidate, OSError) as exc:
+        print("PUBLISH STOPPED: " + str(exc), file=sys.stderr)
         return 1
-    _printer(result)
     return 0
 
 

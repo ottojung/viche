@@ -1,0 +1,111 @@
+"""Durable one-command publication, independent of agent/tool timeouts."""
+import fcntl
+import os
+import subprocess
+import sys
+
+from . import config, publish, state, validate
+
+READY = ("CANDIDATE_READY", "LOCAL_CHECKED", "SIGNED", "PUSHED", "REJECTED")
+
+
+def candidate_path(gap):
+    return os.path.join(state.gap_dir(gap), "candidate.lean")
+
+
+def claim(gap):
+    fd = os.open(os.path.join(state.gap_dir(gap), ".publisher.lock"),
+                 os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    return fd
+
+
+def launch(gap, fd):
+    """The child inherits the lock; death releases it, including SIGKILL."""
+    log = os.path.join(state.gap_dir(gap), "publisher.log")
+    with open(log, "ab") as out:
+        subprocess.Popen([sys.executable, "-m", "missions.pnp.jobs", gap,
+                          str(fd)], cwd=os.path.dirname(os.path.dirname(
+                              os.path.dirname(os.path.abspath(__file__)))),
+                         stdin=subprocess.DEVNULL, stdout=out, stderr=out,
+                         pass_fds=(fd,), start_new_session=True)
+
+
+def submit(gap, source):
+    rec = state.load(gap)
+    if not rec:
+        raise publish.StopPublish("no acquired gap")
+    if rec["state"] == "PR_OPEN":
+        return {"gap": gap, "pr": rec["pr_number"], "url": rec["pr_url"]}
+    fd = claim(gap)
+    if fd is None:
+        return {"gap": gap, "status": "publishing"}
+    try:
+        rec = state.load(gap)
+        if rec["state"] not in ("LEASED", "RESEARCHING") + READY:
+            raise publish.StopPublish("gap not publishable: " + rec["state"])
+        with open(source, "rb") as f:
+            data = f.read(config.MAX_FILE_BYTES + 1)
+        meta = {"id": gap, "file": rec["path"], "module": rec["module"],
+                "statement": rec["statement"], "imports": rec["imports"]}
+        digest = validate.validate(meta, data)
+        if rec["state"] in ("SIGNED", "PUSHED") and digest != rec["candidate_digest"]:
+            raise publish.StopPublish("signed proof is immutable")
+        # Snapshot before acknowledging; never depend on a researcher file
+        # that may change or vanish on agent exit.
+        state.atomic_write(candidate_path(gap), data.decode("utf-8"))
+        if rec["state"] == "LEASED":
+            state.transition(gap, "RESEARCHING")
+            rec = state.load(gap)
+        if rec["state"] == "RESEARCHING":
+            state.transition(gap, "CANDIDATE_READY", candidate_digest=digest,
+                             failure_reason=None)
+        elif rec["state"] == "CANDIDATE_READY":
+            state.update(gap, candidate_digest=digest, failure_reason=None)
+        state.update(gap, queued_lease=rec["lease"])
+        launch(gap, fd)
+        return {"gap": gap, "status": "publishing", "digest": digest}
+    finally:
+        # Do not unlock explicitly: the child owns this open description.
+        os.close(fd)
+
+
+def resume(gap):
+    rec = state.load(gap)
+    if (not rec or rec["state"] not in READY or
+            not rec.get("queued_lease") or rec["queued_lease"] != rec["lease"] or
+            not os.path.isfile(candidate_path(gap))):
+        return False
+    fd = claim(gap)
+    if fd is None:
+        return True
+    try:
+        launch(gap, fd)
+        return True
+    finally:
+        os.close(fd)
+
+
+def run(gap, fd):
+    try:
+        os.environ["PNP_PUBLISH_LOCK_FD"] = str(fd)
+        rec = state.load(gap)
+        if rec["state"] not in READY or rec.get("queued_lease") != rec["lease"]:
+            return
+        result = publish.publish(gap, candidate_path(gap))
+        print(result, flush=True)
+    except publish.StopPublish as exc:
+        print("publication stopped:", exc, flush=True)
+    except Exception as exc:
+        # Preserve the pending candidate for the ordinary recovery cycle.
+        print("publication interrupted:", exc, flush=True)
+    finally:
+        os.close(fd)
+
+
+if __name__ == "__main__":
+    run(sys.argv[1], int(sys.argv[2]))

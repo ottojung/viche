@@ -5,6 +5,7 @@ committer and signing key are fixed in config.py; no candidate or worker
 prompt can supply them.
 """
 import os
+import signal
 import shutil
 import subprocess
 import tempfile
@@ -37,7 +38,7 @@ def check_commit_fields(fmt):
 
 def run(argv, cwd=None, check=True):
     p = subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE, text=True)
+                       stderr=subprocess.PIPE, text=True, timeout=90)
     if check and p.returncode != 0:
         raise GitError("%s failed (%d): %s" %
                        (" ".join(argv[:4]), p.returncode,
@@ -116,37 +117,64 @@ def pin_candidate(worktree, path, candidate_bytes, correction=False):
         raise GitError("unexpected additional worktree changes: %r" % other)
 
 
-def build(worktree, module, statement, runner=None):
-    """Use upstream's kernel checker, not merely a successful Lean build.
+def prepare_build_cache(worktree):
+    """Share pinned dependency packages, never another proof's mutable .lake."""
+    seed = os.environ.get("PNP_SHARED_LAKE",
+                          "/home/lubko/pequalnp-research-20261123/lean/.lake")
+    lean = os.path.join(worktree, "lean")
+    for name in ("lean-toolchain", "lake-manifest.json"):
+        with open(os.path.join(lean, name), "rb") as a, \
+             open(os.path.join(os.path.dirname(seed), name), "rb") as b:
+            if a.read() != b.read():
+                raise GitError("pinned dependency cache differs: " + name)
+    local = os.path.join(lean, ".lake")
+    if os.path.islink(local):
+        raise GitError("publication checkout must not share mutable build state")
+    os.makedirs(local, exist_ok=True)
+    packages = os.path.join(seed, "packages")
+    if not os.path.isdir(packages):
+        raise GitError("pinned Mathlib package cache unavailable")
+    dest = os.path.join(local, "packages")
+    if not os.path.lexists(dest):
+        os.symlink(packages, dest)
 
-    The checker rebuilds the proof and accepts only the exact pinned
-    statement with permitted axioms, under the repository's verifier.
+
+def build(worktree, module, statement, runner=None):
+    """One required local build; authoritative verdict comes from the PR.
+
+    No local checker directory lock or second verifier build. The upstream
+    checker independently judges the exact statement and allowed axioms.
     """
     if runner is not None:
         return runner(worktree, module, statement)
     if not isinstance(statement, str) or not statement.strip():
         return False, "missing authoritative gap statement"
-    shared = os.environ.get(
-        "PNP_SHARED_LAKE",
-        "/home/lubko/pequalnp-research-20261123/lean/.lake")
-    local = os.path.join(worktree, "lean", ".lake")
-    if os.path.isdir(shared) and not os.path.exists(local):
-        os.symlink(shared, local)
-    if not os.path.exists(os.path.join(worktree, "tools", "check-lean.mjs")):
-        return False, "upstream authoritative checker missing"
-    fd, statement_path = tempfile.mkstemp(prefix="pnp-statement-", suffix=".lean")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(statement)
-        source = os.path.join(worktree, "lean", *module.split(".")) + ".lean"
-        p = run(["/home/lubko/.local/bin/node", "tools/check-lean.mjs",
-                 source, statement_path], cwd=worktree, check=False)
-        last = p.stdout.rstrip().splitlines()[-1:]
-        accepted = p.returncode == 0 and any(
-            line.startswith("ACCEPTED") for line in last)
-        return accepted, (p.stdout + p.stderr)[-2000:]
-    finally:
-        os.unlink(statement_path)
+    prepare_build_cache(worktree)
+    shim = os.path.join(worktree, "tools", "bin", "lake")
+    env = {k: v for k, v in os.environ.items()
+           if not (k.startswith("LEAN_") or k.startswith("LAKE_")
+                   or k in ("PEQUALNP_IN_QUEUE", "PEQUALNP_REAL_LAKE"))}
+    # Use the upstream build queue and content-addressed artifact cache.
+    # Never inherit an untrusted worker's Lake search path/options.
+    # Retain the publisher lock across an orphaned build subprocess, too.
+    lock_fd = os.environ.get("PNP_PUBLISH_LOCK_FD")
+    inherited = (int(lock_fd),) if lock_fd else ()
+    with tempfile.TemporaryFile() as output:
+        proc = subprocess.Popen([shim, "build", "+" + module],
+                                cwd=os.path.join(worktree, "lean"),
+                                env=env, stdout=output, stderr=output,
+                                start_new_session=True, pass_fds=inherited)
+        try:
+            code = proc.wait(timeout=600)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait()
+            raise GitError("local Lean build timed out; retry without stale lock")
+        output.seek(max(0, output.tell() - 8000))
+        log = output.read().decode("utf-8", "replace")
+    if code and ("error: PEqualNP/" not in log and "error: ./PEqualNP/" not in log):
+        raise GitError("local build interrupted: " + log[-600:])
+    return code == 0, log[-2000:]
 
 
 def signed_commit(worktree, base_sha, message, signer=None, correction=False):
