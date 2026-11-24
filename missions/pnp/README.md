@@ -28,6 +28,18 @@ checks the exact published revision concurrently with upstream. The town monitor
 `publisher.log`. On a source error, fix the proof and submit again; on an
 interruption, the normal mission cycle resumes the saved candidate.
 
+## Optional remote Lean checking (billy-dev)
+
+The encrypted Marceline relay is available at `~/.local/bin/marceline-request`.
+Run `marceline-request status` for the heartbeat and available exact base SHAs.
+Once the canonical PnP remote packer is deployed, use `pnp-remote-check FILE.lean`
+from your bound workspace, or `pnp-remote-check --async FILE.lean` followed by
+`marceline-request wait REQUEST_ID 1100`. Read the nested Lean result, not just
+the transport exit status. See `missions/relay/README.md` (installed copy:
+`~/.local/share/viche/relay/README.md`). If the exact base is not available,
+continue with the managed local compiler. Do not delay publication or send
+arbitrary commands, credentials or raw lease data.
+
 ## Safety invariants
 
 - Publisher inputs are only a gap id and a local candidate file. Remote,
