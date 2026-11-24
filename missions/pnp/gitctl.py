@@ -34,6 +34,14 @@ def check_commit_fields(fmt):
 
 
 def run(argv, cwd=None, check=True):
+    if cwd is None:
+        # A publisher or reconciler may inherit the cwd of a worktree that was
+        # removed after publication. Git resolves its repository from the
+        # process cwd, so even remote-only commands such as `git ls-remote`
+        # then fail with "Unable to read current working directory". Run every
+        # git subprocess from a durable directory unless a caller pins one.
+        cwd = config.CACHE_DIR
+        os.makedirs(cwd, exist_ok=True)
     p = subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE, text=True, timeout=90)
     if check and p.returncode != 0:
