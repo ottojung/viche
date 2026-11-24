@@ -163,12 +163,24 @@ merge_usage_snapshots() {
   printf '%s\n' "$_ms_a" | jq -ce --argjson b "$_ms_b" '
     (.tokens.total // 0) as $at | ($b.tokens.total // 0) as $bt |
     (.cpu_seconds // 0) as $ac | ($b.cpu_seconds // 0) as $bc |
+    (.cpu_host_seconds // 0) as $ah | ($b.cpu_host_seconds // 0) as $bh |
     (.cost // 0) as $ao | ($b.cost // 0) as $bo |
-    (if $bt > $at then $b else . end)
-    | .tokens.total = (if $bt > $at then $bt else $at end)
-    | .tokens.delta_total = (if $bt > $at then $bt else $at end)
+    (.cost) as $a_cost | ($b.cost) as $b_cost |
+    (.cost_reported // false) as $ar | ($b.cost_reported // false) as $br |
+    ($bt > $at) as $b_tokens |
+    (if $b_tokens then $b else . end)
+    | .tokens.total = (if $b_tokens then $bt else $at end)
+    | .tokens.delta_total = (if $b_tokens then $bt else $at end)
     | .cpu_seconds = (if $bc > $ac then $bc else $ac end)
-    | .cost = (if $bo > $ao then $bo else $ao end)'
+    # Keep the greatest observed host counter so a later cpu-delta cannot
+    # accept a regressed/rebooted sample as a fresh one.
+    | .cpu_host_seconds = (if $bh > $ah then $bh else $ah end)
+    # cost and its reported flag travel together: the source of the greater
+    # cost is the source of the identity, never the token winner by accident.
+    | .cost = (if $bo > $ao then $b_cost else $a_cost end)
+    | .cost_reported = (if $bo > $ao then $br
+                        elif $ao > $bo then $ar
+                        else (if $b_tokens then $br else $ar end) end)'
 }
 
 usage_from_snapshot() {
@@ -176,6 +188,17 @@ usage_from_snapshot() {
   printf '%s\n' "$_us_snap" | jq -c --argjson w "$_us_wall" \
     '{tokens_total:.tokens.total,cpu_seconds:.cpu_seconds,wall_seconds:$w,
       cost:.cost,cost_reported:.cost_reported,source:.source,at:.at}'
+}
+
+# A held charge equal to the cap is only reserved liability. A charge above
+# the cap represents observed consumption: retain the WHOLE charge, not
+# just its excess. Independently preserve each dimension.
+retain_overrun_floor() {
+  printf '%s\n' "$1" | jq -ce --argjson r "$2" '
+    reduce ["tokens_total","cpu_seconds","wall_seconds"][] as $k (. ;
+      if ($r.charge[$k] // 0) > ($r.caps[$k] // 0) then
+        .[$k] = ([.[$k], $r.charge[$k]] | max)
+      else . end)'
 }
 
 # ---- pre-lock native-session/meter binding wait -------------------------------
@@ -272,9 +295,12 @@ hold_locked() {
   fi
   _h_charge=$(printf '%s\n' "$_h_cur" | jq -ce --argjson c "$_h_caps" \
     --argjson u "$_h_usage" --argjson s "$_h_snap" \
-    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0)] | max),
-      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0)] | max),
-      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0), (.usage.wall_seconds // 0)] | max)}')
+    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0),
+                      (.charge.tokens_total // 0)] | max),
+      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0),
+                     (.charge.cpu_seconds // 0)] | max),
+      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0), (.usage.wall_seconds // 0),
+                      (.charge.wall_seconds // 0)] | max)}')
   _h_now=$(date +%s)
   _h_new=$(printf '%s\n' "$_h_cur" | jq -c --arg r "$_h_reason" --argjson now "$_h_now" \
     --argjson c "$_h_charge" --argjson s "$_h_snap" --argjson u "$_h_usage" \
@@ -286,23 +312,38 @@ hold_locked() {
 }
 
 # A held reservation may predate the liability-preserving hold path. Upgrade
-# its charge to any debt already measured on its meter without re-stopping the
-# agent or changing the recorded hold reason.
+# its charge to the MAXIMUM of its caps, its existing charge floor, its meter
+# and any supplied explicit pessimistic usage. Never re-stop, never lower debt.
+# An optional reason records why a manual resolution retained the hold.
 tighten_held_locked() {
-  _th_id=$1
+  _th_id=$1; _th_reason=${2:-}; _th_usage=${3:-null}
   _th_cur=$(res_read "$_th_id")
   [ "$(printf '%s\n' "$_th_cur" | jq -r '.state')" = held ] || return 0
   _th_caps=$(printf '%s\n' "$_th_cur" | jq -c '.caps')
   _th_previous=$(printf '%s\n' "$_th_cur" | jq -c '.meter // null')
-  [ "$_th_previous" != null ] || return 0
-  _th_wall=$(printf '%s\n' "$_th_cur" | jq -r '.usage.wall_seconds // 0')
-  _th_usage=$(usage_from_snapshot "$_th_previous" "$_th_wall")
+  if [ "$_th_usage" = null ]; then
+    [ "$_th_previous" != null ] || return 0
+    _th_wall=$(printf '%s\n' "$_th_cur" | jq -r '.usage.wall_seconds // 0')
+    _th_usage=$(usage_from_snapshot "$_th_previous" "$_th_wall")
+  fi
   _th_charge=$(printf '%s\n' "$_th_cur" | jq -ce --argjson c "$_th_caps" \
     --argjson u "$_th_usage" --argjson s "$_th_previous" \
-    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0)] | max),
-      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0)] | max),
-      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0)] | max)}')
-  _th_new=$(printf '%s\n' "$_th_cur" | jq -c --argjson c "$_th_charge" '.charge=$c')
+    '{tokens_total: ([$c.tokens_total, ($u.tokens_total // 0), ($s.tokens.total // 0),
+                      (.charge.tokens_total // 0)] | max),
+      cpu_seconds: ([$c.cpu_seconds, ($u.cpu_seconds // 0), ($s.cpu_seconds // 0),
+                     (.charge.cpu_seconds // 0)] | max),
+      wall_seconds: ([$c.wall_seconds, ($u.wall_seconds // 0), (.usage.wall_seconds // 0),
+                      (.charge.wall_seconds // 0)] | max)}')
+  _th_now=$(date +%s)
+  _th_new=$(printf '%s\n' "$_th_cur" | jq -c --arg r "$_th_reason" --argjson now "$_th_now" \
+    --argjson c "$_th_charge" --argjson u "$_th_usage" --argjson old "$_th_cur" \
+    '.charge=$c |
+     (if $r == "" then . else .held_reason=$r end) |
+     (if $u == null then . else .usage=$u end) |
+     (if . == $old then . else
+       .history += [{at:$now,event:"held_charge_preserved",
+                    reason:(if $r == "" then "floor_retained" else $r end)}] end)')
+  [ "$(printf '%s\n' "$_th_cur" | jq -c .)" != "$_th_new" ] || return 0
   res_write "$_th_id" "$_th_new"
   refresh_aggregate "$(printf '%s\n' "$_th_cur" | jq -r '.accounting_window_seconds // empty')"
 }
@@ -346,7 +387,8 @@ finalize_locked() {
     fi
     _f_state=$(printf '%s\n' "$_f_status" | jq -r '.state // "unknown"')
     case "$_f_state" in
-      running|starting|recovering|unknown)
+      clearexit|failed|stopped|killed) :;;
+      *)
         hold_locked "$_f_id" 'agent_still_active_or_unknown_after_stop' "$_f_snap" "$_f_wall"; return 0 ;;
     esac
     # Wall liability runs through the VERIFIED stop, not the earlier snapshot.
@@ -372,6 +414,7 @@ finalize_locked() {
   # is a liability already incurred; a later re-read cannot erase it.
   _f_snap=$(merge_usage_snapshots "$_f_snap" "$_f_previous")
   _f_usage=$(usage_from_snapshot "$_f_snap" "$_f_wall")
+  _f_usage=$(retain_overrun_floor "$_f_usage" "$_f_cur")
   _f_now=$(date +%s)
   _f_new=$(printf '%s\n' "$_f_cur" | jq -c --arg r "$_f_reason" --argjson u "$_f_usage" \
     --argjson now "$_f_now" --argjson s "$_f_snap" \
@@ -500,18 +543,68 @@ resolve_locked() {
   _rs_started=$(printf '%s\n' "$_rs_cur" | jq -r '.started_at // 0')
   _rs_wall=0
   [ "$_rs_started" -gt 0 ] && _rs_wall=$(( $(date +%s) - _rs_started ))
-  if [ -n "$_rs_sid" ] && _rs_snap=$(python3 "$TOOL" snapshot "$_rs_db" "$_rs_sid" "$_rs_pid" 2>/dev/null); then
-    _rs_usage=$(usage_from_snapshot "$_rs_snap" "$_rs_wall")
-  else
-    # No verified meter observation: keep the pessimistic full-cap charge and
-    # say so. Resolution never fabricates a token reading or a cost.
-    _rs_usage=$(printf '%s\n' "$_rs_caps" | jq -c \
-      '{tokens_total:.tokens_total,cpu_seconds:.cpu_seconds,wall_seconds:.wall_seconds,
-        cost:0,cost_reported:false,source:"unmetered_pessimistic_charge",at:0}')
+  _rs_agent=$(printf '%s\n' "$_rs_cur" | jq -r '.agent_id // ""')
+  # Explicit pessimistic liability for every unresolved path. It is NOT a
+  # measured observation: cost_reported is false and no raw meter reading is
+  # presented as final usage. The floor includes debt already recorded.
+  _rs_pess=$(printf '%s\n' "$_rs_cur" | jq -c --argjson c "$_rs_caps" \
+    '{tokens_total: ([$c.tokens_total, (.charge.tokens_total // 0),
+                      (.meter.tokens.total // 0)] | max),
+      cpu_seconds: ([$c.cpu_seconds, (.charge.cpu_seconds // 0),
+                     (.meter.cpu_seconds // 0)] | max),
+      wall_seconds: ([$c.wall_seconds, (.charge.wall_seconds // 0),
+                      (.usage.wall_seconds // 0)] | max),
+      cost:0, cost_reported:false, source:"unmetered_pessimistic_charge", at:0}')
+  if [ -z "$_rs_agent" ]; then
+    tighten_held_locked "$_rs_id" 'operator_resolution_agent_missing' "$_rs_pess"; return 0
   fi
+  if [ -n "$_rs_agent" ]; then
+    if ! _rs_status=$(agent_status "$_rs_agent"); then
+      tighten_held_locked "$_rs_id" 'operator_resolution_status_unreadable' "$_rs_pess"; return 0
+    fi
+    if ! agent_session_matches "$_rs_status" "$_rs_sid"; then
+      tighten_held_locked "$_rs_id" 'operator_resolution_identity_unresolved' "$_rs_pess"; return 0
+    fi
+    _rs_mstate=$(printf '%s\n' "$_rs_status" | jq -r '.state // "unknown"')
+    case "$_rs_mstate" in
+      clearexit|failed|stopped|killed) :;;
+      *)
+        stop_or_kill "$_rs_agent" "$(printf '%s\n' "$_rs_cur" | jq -r '.overrun_action')"
+        if ! _rs_status=$(agent_status "$_rs_agent"); then
+          tighten_held_locked "$_rs_id" 'operator_resolution_status_unreadable' "$_rs_pess"; return 0
+        fi
+        if ! agent_session_matches "$_rs_status" "$_rs_sid"; then
+          tighten_held_locked "$_rs_id" 'operator_resolution_identity_unresolved' "$_rs_pess"; return 0
+        fi
+        _rs_mstate=$(printf '%s\n' "$_rs_status" | jq -r '.state // "unknown"')
+        case "$_rs_mstate" in
+          clearexit|failed|stopped|killed) :;;
+          *)
+            tighten_held_locked "$_rs_id" 'operator_resolution_agent_not_terminal' "$_rs_pess"; return 0 ;;
+        esac
+        ;;
+    esac
+    # Positively verified terminal: wall liability runs through that stop.
+    _rs_wall=$(( $(date +%s) - _rs_started ))
+  fi
+  _rs_previous=$(printf '%s\n' "$_rs_cur" | jq -c '.meter // null')
+  if [ -z "$_rs_sid" ] ||
+     ! _rs_snap=$(python3 "$TOOL" snapshot "$_rs_db" "$_rs_sid" "$_rs_pid" 2>/dev/null); then
+    tighten_held_locked "$_rs_id" 'operator_resolution_meter_unreadable' "$_rs_pess"; return 0
+  fi
+  _rs_base=$(printf '%s\n' "$_rs_cur" | jq -c '.cpu_baseline')
+  if [ "$(printf '%s\n' "$_rs_snap" | jq -r '.cpu_upper_bound // false')" != true ]; then
+    if ! _rs_snap=$(cpu_adjust "$_rs_base" "$_rs_snap" "$_rs_previous"); then
+      tighten_held_locked "$_rs_id" 'operator_resolution_cpu_invalid' "$_rs_pess"; return 0
+    fi
+  fi
+  _rs_snap=$(merge_usage_snapshots "$_rs_snap" "$_rs_previous")
+  _rs_usage=$(usage_from_snapshot "$_rs_snap" "$_rs_wall")
+  _rs_usage=$(retain_overrun_floor "$_rs_usage" "$_rs_cur")
   _rs_now=$(date +%s)
   _rs_new=$(printf '%s\n' "$_rs_cur" | jq -c --arg r "$_rs_reason" --argjson u "$_rs_usage" --argjson now "$_rs_now" \
-    '.state="closed" | .usage=$u | .charge=null | .closed_at=$now |
+    --argjson s "$_rs_snap" \
+    '.state="closed" | .usage=$u | .meter=$s | .charge=null | .closed_at=$now |
      .closed_reason=("operator_resolved:" + $r) | .resolved_by="operator" |
      .history += [{at:$now,event:"operator_resolved",reason:$r}]')
   res_write "$_rs_id" "$_rs_new"
@@ -595,6 +688,11 @@ _update_meter() {
   _um_id=$1; _um_snap=$2; _um_wall=$3
   _um_cur=$(res_read "$_um_id")
   [ "$(printf '%s\n' "$_um_cur" | jq -r '.state')" = active ] || return 0
+  _um_previous=$(printf '%s\n' "$_um_cur" | jq -c '.meter // null')
+  # A fresh read of a stale row must not replace a larger liability already
+  # observed on this reservation. Independent maxima also keep the greatest
+  # host CPU counter and the cost/reported-flag identity of the cost source.
+  _um_snap=$(merge_usage_snapshots "$_um_snap" "$_um_previous")
   _um_usage=$(usage_from_snapshot "$_um_snap" "$_um_wall")
   _um_new=$(printf '%s\n' "$_um_cur" | jq -c --argjson m "$_um_snap" --argjson u "$_um_usage" \
     '.meter=$m | .usage=$u')

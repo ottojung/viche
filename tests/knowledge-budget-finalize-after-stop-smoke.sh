@@ -17,13 +17,14 @@ mkdir -p "$town/government" "$tmp/bin"
 cp "$repo/government/knowledge-budget.conf" "$town/government/config.template"
 
 # Per-case authoritative meter with the exact session_v2 schema the tool reads.
-mkdb() { # path, token count, [reported cost]
+mkdb() { # path, token count, [reported cost | null for an unreported cost]
   python3 - "$1" "$2" "${3:-0.0}" <<'PY'
 import sqlite3,sys
 c=sqlite3.connect(sys.argv[1])
 c.execute('create table session_v2 (id text primary key,tokens_input int,tokens_output int,tokens_reasoning int,tokens_cache_read int,tokens_cache_write int,cost real,time_updated int)')
+cost=None if sys.argv[3]=='null' else float(sys.argv[3])
 c.execute("insert into session_v2 values ('sid',?,0,0,0,0,?,1795279700000)",
-          (int(sys.argv[2]),float(sys.argv[3])))
+          (int(sys.argv[2]),cost))
 c.commit()
 PY
 }
@@ -308,4 +309,151 @@ jq -e --argjson w "$min_wall" '.state=="closed" and .usage.wall_seconds>=$w' \
   fail 'wall liability stopped at snapshot time instead of the verified stop'
 echo 'T12 ok'
 
-echo 'PASS: terminal accounting keeps late commits, cross-metric maxima, session identity, observed debt and wall through stop'
+echo '--- T13: ordinary update merges maxima from a stale meter row ---'
+s13=$tmp/s13; db13=$tmp/m13.db
+# NULL cost -> cost_reported=false on the fresh read; the prior meter reported 5.
+mkdb "$db13" 100 null; mkcfg "$s13" "$db13" 1000
+export VICHE_STATE_ROOT="$s13" TEST_DB="$db13" TEST_MODE=still_running
+rid=$(/bin/sh "$engine" reserve statistics stale-update-agent)
+python3 "$tmp/mkactive.py" "$s13/knowledge/budget/reservations/$rid.json" "$tool" "$db13" sid stale-update-agent 100 3600
+host_cpu=$(python3 "$tool" snapshot "$db13" sid 123 | jq -r '.cpu_seconds')
+python3 - "$s13/knowledge/budget/reservations/$rid.json" <<'PY'
+import json,sys
+p=sys.argv[1]; a=json.load(open(p))
+a['monitor_interval_seconds']=1
+a['meter']['tokens']['total']=180
+a['meter']['tokens']['delta_total']=180
+a['meter']['cost']=5.0
+a['meter']['cost_reported']=True
+json.dump(a,open(p,'w'))
+PY
+/bin/sh "$engine" monitor "$rid" >/dev/null 2>&1 & mopid=$!
+updated=no
+for attempt in 1 2 3 4 5 6 7 8; do
+  if [ -n "$(jq -r '.usage // empty' "$s13/knowledge/budget/reservations/$rid.json")" ]; then
+    updated=yes; break
+  fi
+  sleep 1
+done
+kill "$mopid" 2>/dev/null || :
+[ "$updated" = yes ] || fail 'monitor never committed an ordinary update'
+jq -e --argjson h "$host_cpu" '.state=="active" and .meter.tokens.total>=180 and .usage.tokens_total>=180 and
+        .meter.cost>=5 and .meter.cost_reported==true and
+        .meter.cpu_host_seconds>=($h - 2)' \
+  "$s13/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'stale update lost observed tokens, cost identity or host counter'
+echo 'T13 ok'
+
+echo '--- T14: reconcile never lowers an existing held charge floor ---'
+s14=$tmp/s14; db14=$tmp/m14.db
+mkdb "$db14" 100; mkcfg "$s14" "$db14" 150
+export VICHE_STATE_ROOT="$s14" TEST_DB="$db14" TEST_MODE=still_running
+rid=$(/bin/sh "$engine" reserve statistics held-floor-agent)
+python3 "$tmp/mkheld.py" "$s14/knowledge/budget/reservations/$rid.json" "$tool" "$db14" sid held-floor-agent 185
+python3 - "$s14/knowledge/budget/reservations/$rid.json" <<'PY'
+import json,sys
+p=sys.argv[1]; a=json.load(open(p))
+a['charge']={'tokens_total':500,'cpu_seconds':9000,'wall_seconds':5000}
+json.dump(a,open(p,'w'))
+PY
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .charge.tokens_total>=500 and
+        .charge.cpu_seconds>=9000 and .charge.wall_seconds>=5000' \
+  "$s14/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'reconcile lowered an existing held charge floor'
+echo 'T14 ok'
+
+echo '--- T15: entering held never lowers an existing charge floor ---'
+s15=$tmp/s15; db15=$tmp/m15.db
+mkdb "$db15" 100; mkcfg "$s15" "$db15" 1000
+export VICHE_STATE_ROOT="$s15" TEST_DB="$db15" TEST_MODE=still_running
+rid=$(/bin/sh "$engine" reserve statistics active-floor-agent)
+python3 "$tmp/mkactive.py" "$s15/knowledge/budget/reservations/$rid.json" "$tool" "$db15" sid active-floor-agent 100 -1
+python3 - "$s15/knowledge/budget/reservations/$rid.json" <<'PY'
+import json,sys
+p=sys.argv[1]; a=json.load(open(p))
+a['charge']={'tokens_total':700,'cpu_seconds':9000,'wall_seconds':5000}
+json.dump(a,open(p,'w'))
+PY
+/bin/sh "$engine" reconcile >/dev/null
+jq -e '.state=="held" and .charge.tokens_total>=700 and
+        .charge.cpu_seconds>=9000 and .charge.wall_seconds>=5000' \
+  "$s15/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'entering held lowered an existing charge floor'
+echo 'T15 ok'
+
+echo '--- T16: manual resolution while running retains a pessimistic hold ---'
+s16=$tmp/s16; db16=$tmp/m16.db
+mkdb "$db16" 100; mkcfg "$s16" "$db16" 150
+export VICHE_STATE_ROOT="$s16" TEST_DB="$db16" TEST_MODE=still_running
+rid=$(/bin/sh "$engine" reserve statistics manual-running-agent)
+python3 "$tmp/mkheld.py" "$s16/knowledge/budget/reservations/$rid.json" "$tool" "$db16" sid manual-running-agent 185
+/bin/sh "$engine" resolve "$rid" 'operator asked while still active' >/dev/null
+jq -e '.state=="held" and .held_reason=="operator_resolution_agent_not_terminal" and
+        .charge.tokens_total>=185 and .usage.cost_reported==false and
+        .usage.source=="unmetered_pessimistic_charge"' \
+  "$s16/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'manual resolution closed a still-running agent or claimed a measurement'
+echo 'T16 ok'
+
+echo '--- T17: manual resolution with unresolved identity retains the hold ---'
+s17=$tmp/s17; db17=$tmp/m17.db
+mkdb "$db17" 100; mkcfg "$s17" "$db17" 150
+export VICHE_STATE_ROOT="$s17" TEST_DB="$db17" TEST_MODE=identity_change
+rid=$(/bin/sh "$engine" reserve statistics manual-identity-agent)
+python3 "$tmp/mkheld.py" "$s17/knowledge/budget/reservations/$rid.json" "$tool" "$db17" sid manual-identity-agent 185
+/bin/sh "$engine" resolve "$rid" 'operator asked after recovery' >/dev/null
+jq -e '.state=="held" and .held_reason=="operator_resolution_identity_unresolved" and
+        .charge.tokens_total>=185 and .usage.cost_reported==false and
+        .usage.source=="unmetered_pessimistic_charge"' \
+  "$s17/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'manual resolution released a hold on an unresolved session identity'
+echo 'T17 ok'
+
+echo '--- T18: terminal manual resolution uses the CPU-adjusted final snapshot ---'
+s18=$tmp/s18; db18=$tmp/m18.db
+mkdb "$db18" 120; mkcfg "$s18" "$db18" 1000
+export VICHE_STATE_ROOT="$s18" TEST_DB="$db18" TEST_MODE=terminal
+rid=$(/bin/sh "$engine" reserve statistics manual-terminal-agent)
+python3 "$tmp/mkheld.py" "$s18/knowledge/budget/reservations/$rid.json" "$tool" "$db18" sid manual-terminal-agent 100
+host_cpu=$(python3 "$tool" snapshot "$db18" sid 123 | jq -r '.cpu_seconds')
+python3 - "$s18/knowledge/budget/reservations/$rid.json" <<'PY'
+import json,sys
+p=sys.argv[1]; a=json.load(open(p))
+a['cpu_baseline']['cpu_seconds']=0.0
+json.dump(a,open(p,'w'))
+PY
+/bin/sh "$engine" resolve "$rid" 'operator confirmed terminal' >/dev/null
+jq -e --argjson h "$host_cpu" '.state=="closed" and .charge==null and
+        .usage.tokens_total>=120 and .usage.tokens_total<1000 and
+        .meter.cpu_upper_bound==true and .meter.cpu_seconds>=($h - 2) and
+        .usage.cpu_seconds>=($h - 2)' \
+  "$s18/knowledge/budget/reservations/$rid.json" >/dev/null ||
+  fail 'terminal resolution used a raw host CPU reading or lost the adjusted bound'
+echo 'T18 ok'
+
+echo '--- T19: terminal manual and automatic release retain the complete overrun ---'
+for method in resolve reconcile; do
+  s19=$tmp/s19-$method; db19=$tmp/m19-$method.db
+  mkdb "$db19" 90; mkcfg "$s19" "$db19" 100
+  export VICHE_STATE_ROOT="$s19" TEST_DB="$db19" TEST_MODE=terminal
+  printf '{"state":"clearexit","native_session_id":"sid"}\n' > "$TEST_AGENT_STATE"
+  rid=$(/bin/sh "$engine" reserve statistics floor-terminal-agent)
+  f=$s19/knowledge/budget/reservations/$rid.json
+  python3 "$tmp/mkheld.py" "$f" "$tool" "$db19" sid floor-terminal-agent 90
+  jq '.charge.tokens_total=150 | .charge.cpu_seconds=(.caps.cpu_seconds+100) |
+      .charge.wall_seconds=(.caps.wall_seconds+100)' "$f" > "$f.tmp"
+  mv "$f.tmp" "$f"
+  if [ "$method" = resolve ]; then
+    /bin/sh "$engine" resolve "$rid" 'terminal confirmation' >/dev/null
+  else
+    /bin/sh "$engine" reconcile >/dev/null
+  fi
+  jq -e '.state=="closed" and .usage.tokens_total==150 and
+    .usage.cpu_seconds>=.caps.cpu_seconds+100 and
+    .usage.wall_seconds>=.caps.wall_seconds+100' "$f" >/dev/null ||
+    fail "$method lost a previously observed overrun"
+done
+echo 'T19 ok'
+
+echo 'PASS: terminal accounting, held floors, manual resolution and adjusted final snapshots verified'
