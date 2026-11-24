@@ -184,6 +184,26 @@ def dispatch(gap, plans, agents=None):
                 results.append({"worker": label, "status": "started", "id": agent_id})
             except (OSError, ValueError, subprocess.SubprocessError, gitctl.GitError) as exc:
                 results.append({"worker": label, "status": "deferred", "detail": str(exc)[:300]})
+        # A staffing/replenishment decision is routine, not a Git delivery.
+        # The existing per-gap append-only event log is the durable record:
+        # timestamped, with the agent id receipt and the reason/approach.
+        # Adoptions of an already-running worker are not new decisions and add
+        # no entry, so idle passes do not amplify the trail.
+        started = {row["worker"]: row["id"] for row in results
+                   if row.get("status") == "started"}
+        if started:
+            workers = []
+            for label, approach in plans:
+                if label in started:
+                    workers.append({"label": label, "agent": started[label],
+                                    "approach": approach})
+            # Best effort: the worker is already dispatched. An audit append
+            # that fails must not surface as a failed dispatch (which could be
+            # replayed into a duplicate worker) or gate liveness.
+            try:
+                state.event(gap, "staffing", {"workers": workers})
+            except Exception as exc:
+                print("staffing event log unavailable: %s" % exc, file=sys.stderr)
         return results
     finally:
         os.close(fd)
