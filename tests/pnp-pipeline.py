@@ -206,6 +206,11 @@ class TestState(unittest.TestCase):
         self.assertIn("state", kinds)
         self.assertIn("update", kinds)
 
+    def test_reacquire_rejects_active_states(self):
+        new_state("LEASED")
+        with self.assertRaises(ValueError):
+            state.reacquire(GAP, lease="fresh")
+
 
 class TestPublish(unittest.TestCase):
     def setUp(self):
@@ -347,6 +352,58 @@ class TestCli(unittest.TestCase):
             self.assertEqual(cli.cmd_submit(
                 type("Args", (), {"gap": GAP, "candidate": "/tmp/proof"})()), 0)
         self.assertEqual(seen, [(GAP, "/tmp/proof", "CANDIDATE_READY")])
+
+    def test_reacquire_adopts_fresh_lease_without_releasing(self):
+        """A re-offered released/stale gap must be re-leased, not handed back.
+
+        Releasing with 'other' re-arms the desk's one-hour cooldown and the
+        ten-minute step rate limit; churning workers used to lock the handle
+        out of the desk entirely.
+        """
+        from missions.pnp import cli
+        args = type("Args", (), {"hard": False, "another": False})()
+        answer = {"gap": gap_meta(), "lease": "fresh-lease"}
+        for previous in ("RELEASED", "STALE"):
+            with self.subTest(previous=previous):
+                fresh()
+                new_state(previous, lease="old-lease",
+                          failure_reason="out_of_time",
+                          base_sha="old-base", branch="pnp/old",
+                          worktree="/tmp/old-wt", commit_sha="old-sha",
+                          pr_number=7, pr_url="https://old/pr/7",
+                          external_verdict="REJECTED")
+                fake = FakeDesk()
+                fake.next_gap = lambda **kw: answer
+                with mock.patch.object(cli.desk_mod, "Desk",
+                                       return_value=fake):
+                    self.assertEqual(cli.cmd_acquire(args), 0)
+                # Crucially, no 'other'/'out_of_time' release -> no cooldown.
+                self.assertEqual(fake.releases, [])
+                rec = state.load(GAP)
+                self.assertEqual(rec["state"], "LEASED")
+                self.assertEqual(rec["lease"], "fresh-lease")
+                self.assertIsNone(rec["failure_reason"])
+                # Reviewer finding: stale publish artifacts must be cleared so
+                # a fresh candidate can be checked and submitted without a
+                # false "candidate digest changed since local check" FAULT.
+                for stale in ("candidate_digest", "base_sha", "branch",
+                              "worktree", "commit_sha", "pr_number",
+                              "pr_url", "external_verdict"):
+                    self.assertIsNone(rec[stale], stale)
+
+    def test_active_lease_duplicate_is_not_released_into_cooldown(self):
+        from missions.pnp import cli
+        fresh()
+        new_state("RESEARCHING", lease="active-lease")
+        fake = FakeDesk()
+        fake.next_gap = lambda **kw: {"gap": gap_meta(),
+                                      "lease": "spare-lease"}
+        args = type("Args", (), {"hard": False, "another": False})()
+        with mock.patch.object(cli.desk_mod, "Desk", return_value=fake):
+            self.assertEqual(cli.cmd_acquire(args), 1)
+        self.assertEqual(fake.releases, [])
+        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
+        self.assertEqual(state.load(GAP)["lease"], "active-lease")
 
 
 class TestReconcile(unittest.TestCase):
