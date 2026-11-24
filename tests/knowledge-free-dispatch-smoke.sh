@@ -11,11 +11,22 @@ mkdir -p "$d/state/economy" "$d/town/government" "$d/bin"
 cat > "$d/state/economy/catalogue.json" <<'CATALOGUE'
 {"models":{
   "opencode/tidepool-alpha-free":{"tier":"free"},
+  "opencode/hy4-flash-free":{"tier":"free"},
   "opencode-go/hy4-flash-free":{"tier":"free"},
-  "provider/paid-free":{"tier":"paid"}
+  "opencode-go/hungerg-free":{"tier":"free"},
+  "provider/paid-free":{"tier":"free"}
 }}
 CATALOGUE
-cp government/knowledge-practical-bounds.py "$d/town/government/"
+cp government/knowledge-practical-bounds.py government/knowledge-zero-billed.py "$d/town/government/"
+cat > "$d/town/government/knowledge-zero-billed-policy.json" <<'BILLING'
+{"schema":"viche-zero-billed-model-policy-v1",
+ "source":{"url":"https://opencode.ai/inference/v1/models","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+ "review_after":"2099-01-01T00:00:00Z",
+ "models":{
+  "opencode/tidepool-alpha-free":{"provider":"opencode","provider_model":"tidepool-alpha-free","cost":{"input":0,"output":0,"cache_read":0}},
+  "opencode/hy4-flash-free":{"provider":"opencode","provider_model":"hy4-flash-free","cost":{"input":0,"output":0,"cache_read":0}}
+ }}
+BILLING
 # CI has no actual Antonina global config; create a sentinel and verify that
 # successful and rejected per-invocation dispatches never modify it.
 mkdir -p "$d/global/antonina"
@@ -26,7 +37,7 @@ export XDG_CONFIG_HOME
 
 python3 - "$d/state/economy/model-policy.json" <<'PY'
 import json,sys
-json.dump({"prefer":["opencode/tidepool-alpha-free","opencode-go/hy4-flash-free"],"exclude":[]},open(sys.argv[1],"w"))
+json.dump({"prefer":["opencode/tidepool-alpha-free","opencode/hy4-flash-free"],"exclude":[]},open(sys.argv[1],"w"))
 PY
 # Stub antonina records the env and args instead of dispatching.
 cat > "$d/bin/antonina" <<'EOF'
@@ -44,7 +55,7 @@ grep -q "XDG=$d/state/knowledge/free-allowlist ARGS=agent run --id fake --cwd /t
 python3 - "$d/state/knowledge/free-allowlist/antonina/config.json" <<'PY'
 import json,sys
 c=json.load(open(sys.argv[1]))
-assert [e['model'] for e in c['models']]==['opencode/tidepool-alpha-free','opencode-go/hy4-flash-free']
+assert [e['model'] for e in c['models']]==['opencode/tidepool-alpha-free','opencode/hy4-flash-free']
 assert all('-free' in e['model'] for e in c['models'])
 PY
 
@@ -63,8 +74,8 @@ if CAPTURE="$d/capture3" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
 fi
 
 # A model literally named paid-free is STILL PAID, even though its id
-# ends in the accepted -free suffix. The independent Economy catalogue
-# rather than a deceptive name must make the decision.
+# ends in -free AND the production-style name-derived catalogue says free.
+# Only absence from the exact provider-cost policy may reject it.
 python3 - "$d/state/economy/model-policy.json" <<'PYPRETEND'
 import json,sys
 json.dump({"prefer":["provider/paid-free"],"exclude":[]},open(sys.argv[1],"w"))
@@ -84,7 +95,56 @@ if CAPTURE="$d/capture2" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
   echo 'FAIL: non-free id admitted' >&2; fail=1
 fi
 
+# A secondary-catalogue-only free ID is omitted from the Act34 allowlist;
+# the primary-confirmed model still dispatches and the global ladder is untouched.
+python3 - "$d/state/economy/model-policy.json" <<'PYSECONDARY'
+import json,sys
+json.dump({"prefer":["opencode/hy4-flash-free","opencode-go/hy4-flash-free","opencode-go/hungerg-free"]},open(sys.argv[1],"w"))
+PYSECONDARY
+CAPTURE="$d/capture7" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+  PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach
+python3 - "$d/state/knowledge/free-allowlist/antonina/config.json" <<'PYOMIT'
+import json,sys
+c=json.load(open(sys.argv[1]));assert [e['model'] for e in c['models']]==['opencode/hy4-flash-free']
+PYOMIT
+
+# A reviewed exact ID with a nonzero provider cost is refused.
+cp "$d/town/government/knowledge-zero-billed-policy.json" "$d/billing-good.json"
+python3 - "$d/town/government/knowledge-zero-billed-policy.json" "$d/state/economy/model-policy.json" <<'PYCOST'
+import json,sys
+billing,policy=sys.argv[1:]
+b=json.load(open(billing))
+b["models"]["opencode/hy4-flash-free"]["cost"]["output"]=0.1
+json.dump(b,open(billing,"w"))
+json.dump({"prefer":["opencode/hy4-flash-free"]},open(policy,"w"))
+PYCOST
+if CAPTURE="$d/capture5" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
+  echo 'FAIL: nonzero provider cost admitted' >&2; fail=1
+fi
+cp "$d/billing-good.json" "$d/town/government/knowledge-zero-billed-policy.json"
+
+# Expired provider-cost evidence fails closed even for an exact free ID.
+python3 - "$d/town/government/knowledge-zero-billed-policy.json" <<'PYEXP'
+import json,sys
+p=sys.argv[1];b=json.load(open(p));b["review_after"]="2000-01-01T00:00:00Z";json.dump(b,open(p,"w"))
+PYEXP
+if CAPTURE="$d/capture6" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
+  echo 'FAIL: expired zero-cost evidence admitted' >&2; fail=1
+fi
+cp "$d/billing-good.json" "$d/town/government/knowledge-zero-billed-policy.json"
+
 cmp -s "$d/global/antonina/config.json" "$d/global-before.json" ||
   { echo 'FAIL: rejected dispatch modified global config' >&2; fail=1; }
 [ "$fail" -eq 0 ] || { echo 'knowledge free dispatch smoke: FAILED' >&2; exit 1; }
-echo 'knowledge free dispatch smoke: OK (XDG pinned, free-only allowlist, global untouched, fail-closed)'
+echo 'knowledge free dispatch smoke: OK (XDG pinned, exact-ID zero-cost allowlist, global untouched, fail-closed)'
+python3 - "$PWD/government/knowledge-zero-billed.py" "$wrap" \
+  government/knowledge-zero-billed-policy.json government/knowledge-practical-bounds.py \
+  tests/knowledge-free-dispatch-smoke.sh government/knowledge-act34-gate.py \
+  government/knowledge-office-cycle.sh <<'PYDIGEST'
+import importlib.util,sys
+spec=importlib.util.spec_from_file_location("zb",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7]}
+print("NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
+PYDIGEST

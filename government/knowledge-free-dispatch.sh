@@ -29,6 +29,8 @@ town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 policy="$state/economy/model-policy.json"
 catalogue="$state/economy/catalogue.json"
+billing="$town/government/knowledge-zero-billed-policy.json"
+billing_module="$town/government/knowledge-zero-billed.py"
 allow_dir="$state/knowledge/free-allowlist"
 allow_cfg="$allow_dir/antonina/config.json"
 
@@ -37,39 +39,22 @@ die() { log "$*"; exit 1; }
 
 [ -s "$policy" ] || die "Economy model policy missing"
 [ -s "$catalogue" ] || die "Economy provider catalogue missing; no paid fallback"
+[ -s "$billing" ] || die "Economy exact-ID zero-cost policy missing; no paid fallback"
+[ -f "$billing_module" ] || die "zero-cost policy verifier missing"
 [ -f "$town/government/knowledge-practical-bounds.py" ] || die "practical-bounds module missing"
 
-# Build the allowlist from Economy's audited, source-attested free tier only.
-# Every id must carry a '-free' component and appear in model-policy.json 'prefer'.
-# This is ALLOWLIST CONSTRUCTION from an authoritative record, not a billing
-# enforcement check here: enforcement is Antonina's config on the dispatch path.
-python3 - "$policy" "$catalogue" "$allow_dir" "$allow_cfg" <<'PY'
-import json, os, re, sys, tempfile
-policy, catalogue, allow_dir, allow_cfg = sys.argv[1:5]
-p = json.load(open(policy, encoding="utf-8"))
-cat = json.load(open(catalogue, encoding="utf-8"))
-if not isinstance(cat, dict) or not isinstance(cat.get("models"), dict):
-    raise SystemExit("audited Economy catalogue missing/invalid")
-prefer = p.get("prefer") or []
-if not prefer:
-    raise SystemExit("empty free-tier prefer list")
-for mid in prefer:
-    if not isinstance(mid, str) or not re.fullmatch(
-        r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+-free", mid):
-        raise SystemExit("non-free or malformed id in policy prefer")
-    if cat["models"].get(mid, {}).get("tier") != "free":
-        # An apparently free-looking ID CAN be billable; suffix alone is
-        # insufficient. Never silently fall through to the global ladder.
-        raise SystemExit("model id is not independently catalogued as free")
-entries = [{"model": mid, "comment": "Economy audited free tier 2026-11-23; source-attested in model-policy.json"} for mid in prefer]
-os.makedirs(os.path.dirname(allow_cfg), mode=0o700, exist_ok=True)
-os.chmod(allow_dir, 0o700)
-fd, tmp = tempfile.mkstemp(prefix=".free-allow-", dir=os.path.dirname(allow_cfg))
-with os.fdopen(fd, "w", encoding="utf-8") as fh:
-    json.dump({"models": entries}, fh, indent=2)
-    fh.write("\n")
-os.chmod(tmp, 0o600)
-os.replace(tmp, allow_cfg)
+# Build the allowlist from exact provider/model IDs with reviewed zero-cost
+# metadata. A -free name is necessary for the rotation but NEVER billing proof.
+python3 - "$billing_module" "$billing" "$policy" "$catalogue" "$allow_cfg" <<'PY'
+import importlib.util, sys
+sys.dont_write_bytecode = True
+module, billing, policy, catalogue, output = sys.argv[1:6]
+spec = importlib.util.spec_from_file_location("zero_billed", module)
+if spec is None or spec.loader is None:
+    raise SystemExit("zero-cost policy verifier unavailable")
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+mod.build_allowlist(billing, policy, catalogue, output)
 PY
 [ -s "$allow_cfg" ] || die "failed to build allowlist config"
 

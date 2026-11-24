@@ -8,12 +8,14 @@ repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
 town="$d/town"; state="$d/state"
-mkdir -p "$town/government" "$town/records/knowledge/permits" \
+mkdir -p "$town/government" "$town/records/economy" "$town/records/knowledge/permits" \
   "$town/records/knowledge/pilot-reviews" "$state/economy" \
   "$state/appointments" "$state/board" "$d/bin"
 for f in knowledge-act34-gate.py knowledge-phase-verifier.py \
   knowledge-activation-verify.sh knowledge-budget.conf \
-  knowledge-free-dispatch.sh knowledge-practical-bounds.py; do
+  knowledge-free-dispatch.sh knowledge-practical-bounds.py \
+  knowledge-zero-billed.py knowledge-zero-billed-policy.json \
+  knowledge-office-cycle.sh; do
  cp "$repo/government/$f" "$town/government/"
 done
 cp "$repo/tests/knowledge-free-dispatch-smoke.sh" "$town/tests-placeholder"
@@ -34,11 +36,11 @@ economy	econ-agent
 judiciary	jud-agent
 EOF
 cat > "$state/economy/model-policy.json" <<'EOF'
-{"prefer":["opencode-go/hy4-flash-free"]}
+{"prefer":["opencode/hy4-flash-free"]}
 EOF
 cat > "$state/economy/catalogue.json" <<'EOF'
-{"models":{"opencode-go/hy4-flash-free":{"tier":"free"},
- "provider/paid-free":{"tier":"paid"}}}
+{"models":{"opencode/hy4-flash-free":{"tier":"free"},
+ "provider/paid-free":{"tier":"free"}}}
 EOF
 # Fake read-only Antonina coordination surface. The source verifier itself is
 # real, and validates the board review, own-officer comment and live appointment.
@@ -60,11 +62,8 @@ case "$1 $2" in
 esac
 EOF
 chmod +x "$d/bin/antonina"
-cat > "$town/records/knowledge/2026-11-23-economy-free-tier-prelaunch-allowlist-finding.md" <<'EOF'
-Economy independently tested the per-invocation free-tier model selector:
- - The paid-free-looking model is refused by an Economy catalogue tier paid;
- - OpenCode continuations do not have hard token caps; free model cost measured 0.
- - This record certifies a MODEL SOURCE RESTRICTION, not a value outcome.
+cat > "$town/records/economy/2026-11-24-act34-zero-billed-verification.md" <<'EOF'
+Economy exact-path zero-cost control verification fixture.
 EOF
 python3 - "$town" <<'PY'
 import hashlib,json,sys,time
@@ -112,7 +111,7 @@ origin=$(git -C "$town" rev-parse HEAD)
 # Authority attested AFTER original source commit, not via a self-authored
 # source-commit hash embedded in the same file (that would be circular).
 python3 - "$town" "$state" "$origin" <<'PY'
-import hashlib,json,sys,time
+import hashlib,importlib.util,json,sys,time
 from pathlib import Path
 root, state, commit=Path(sys.argv[1]),Path(sys.argv[2]),sys.argv[3]
 act=root/"records/knowledge/activation.json"
@@ -121,11 +120,26 @@ def att(role,agent,issue):
  return {"issue_id":issue,"expected_reviewer":role,"officer_agent_id":agent}
 evidence={"artifact_commit":commit,
  "report_sha256":hashlib.sha256(
-  (root/"records/knowledge/2026-11-23-economy-free-tier-prelaunch-allowlist-finding.md").read_bytes()).hexdigest(),
+  (root/"records/economy/2026-11-24-act34-zero-billed-verification.md").read_bytes()).hexdigest(),
  "wrapper_sha256":hashlib.sha256((root/"government/knowledge-free-dispatch.sh").read_bytes()).hexdigest(),
  "bounds_sha256":hashlib.sha256((root/"government/knowledge-practical-bounds.py").read_bytes()).hexdigest(),
+ "zero_billed_policy_sha256":hashlib.sha256((root/"government/knowledge-zero-billed-policy.json").read_bytes()).hexdigest(),
+ "zero_billed_verifier_sha256":hashlib.sha256((root/"government/knowledge-zero-billed.py").read_bytes()).hexdigest(),
+ "gate_sha256":hashlib.sha256((root/"government/knowledge-act34-gate.py").read_bytes()).hexdigest(),
+ "cycle_sha256":hashlib.sha256((root/"government/knowledge-office-cycle.sh").read_bytes()).hexdigest(),
  "negative_test_sha256":hashlib.sha256((root/"tests/knowledge-free-dispatch-smoke.sh").read_bytes()).hexdigest(),
+ "negative_acceptance_digest":None,
  "attestation":att("c1e00012","econ-agent","economy-test-issue")}
+spec=importlib.util.spec_from_file_location("zb",root/"government/knowledge-zero-billed.py")
+zb=importlib.util.module_from_spec(spec);spec.loader.exec_module(zb)
+evidence["negative_acceptance_digest"]=zb.negative_acceptance_digest({
+ "wrapper":root/"government/knowledge-free-dispatch.sh",
+ "zero_billed_policy":root/"government/knowledge-zero-billed-policy.json",
+ "bounds":root/"government/knowledge-practical-bounds.py",
+ "negative_test":root/"tests/knowledge-free-dispatch-smoke.sh",
+ "verifier":root/"government/knowledge-zero-billed.py",
+ "gate":root/"government/knowledge-act34-gate.py",
+ "cycle":root/"government/knowledge-office-cycle.sh"})
 data["economy_free_tier_evidence"]=evidence
 for office in offices:
  row=data["offices"][office]
