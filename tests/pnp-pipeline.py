@@ -57,6 +57,43 @@ def candidate_file(content=GOOD):
     return p
 
 
+class TestGitRunCwd(unittest.TestCase):
+    def test_remote_only_git_uses_durable_cwd_when_unspecified(self):
+        # A deleted launcher worktree must not break `git ls-remote`, which
+        # resolves its repository from the process cwd even for a remote URL.
+        captured = {}
+
+        class FakeResult:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        def fake_run(argv, cwd=None, **kw):
+            captured["cwd"] = cwd
+            return FakeResult()
+
+        with mock.patch.object(gitctl.subprocess, "run", fake_run):
+            gitctl.run(["git", "ls-remote", "--heads", "url", "refs/heads/x"])
+        self.assertEqual(captured["cwd"], config.CACHE_DIR)
+        self.assertTrue(os.path.isdir(config.CACHE_DIR))
+
+    def test_explicit_cwd_is_respected(self):
+        captured = {}
+
+        class FakeResult:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        def fake_run(argv, cwd=None, **kw):
+            captured["cwd"] = cwd
+            return FakeResult()
+
+        with mock.patch.object(gitctl.subprocess, "run", fake_run):
+            gitctl.run(["git", "rev-parse", "HEAD"], cwd="/example/worktree")
+        self.assertEqual(captured["cwd"], "/example/worktree")
+
+
 class FakeDesk:
     def __init__(self, beat=200):
         self.beat_status = beat
@@ -122,7 +159,10 @@ class FakeGH:
         self.created = 0
 
     def identity(self):
-        return config.GH_USER
+        return "renamed-contributor"
+
+    def repository_id(self, name):
+        return config.UPSTREAM_ID if name in ("old-owner/proofs", "new-owner/proofs") else 999
 
     def commit_verification(self, sha):
         return {"sha": sha, "verified": self.verified,
@@ -400,9 +440,46 @@ class TestSignatureFields(unittest.TestCase):
 
 
 class TestGitHubValidation(unittest.TestCase):
+    def test_renamed_account_and_impostor(self):
+        import json
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.CONTRIBUTOR_ID, "login": "new-login"})):
+            self.assertEqual(github.identity(), "new-login")
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": 999, "login": config.DESK_HANDLE})):
+            with self.assertRaises(github.GitHubError):
+                github.identity()
+
+    def test_discover_repository_by_id_not_name(self):
+        import json
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.UPSTREAM_ID, "full_name": "future-owner/future-name"})) as call:
+            self.assertEqual(github.repository_name(config.UPSTREAM_ID), "future-owner/future-name")
+            self.assertEqual(call.call_args.args[1], "repositories/" + str(config.UPSTREAM_ID))
+        with mock.patch.object(github, "gh", return_value=json.dumps({
+            "id": config.FORK_ID, "full_name": "other/proofs", "owner_id": 999})):
+            with self.assertRaises(github.GitHubError):
+                github.repository_name(config.FORK_ID)
+
+
+    def test_repository_rename_and_identity(self):
+        pr = {"author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID, "head_repo": "renamed-contributor/proofs",
+              "head_repo_id": config.FORK_ID, "base_repo": "renamed/project",
+              "base_repo_id": config.UPSTREAM_ID, "head_sha": SHA, "base_ref": "main"}
+        with mock.patch.object(github, "get_pr", return_value=pr), \
+             mock.patch.object(github, "pr_files", return_value=[PATH]), \
+             mock.patch.object(github, "pr_commits", return_value=[SHA]), \
+             mock.patch.object(github, "commit_verification", return_value={
+                 "verified": True, "name": config.AUTHOR_NAME, "email": config.AUTHOR_EMAIL}):
+            self.assertEqual(github.validate_created(1, SHA, PATH)[1], [])
+            pr.update(base_repo="new-owner/proofs", base_repo_id=999)
+            self.assertIn("base repo is not upstream", github.validate_created(1, SHA, PATH)[1])
+
     def test_post_create_checks(self):
-        pr = {"number": 1, "author": config.GH_USER,
-              "head_repo": config.FORK, "base_repo": config.UPSTREAM,
+        pr = {"number": 1, "author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID,
+              "head_repo": "renamed-contributor/proofs", "base_repo": "new-owner/proofs",
+              "head_repo_id": config.FORK_ID, "base_repo_id": config.UPSTREAM_ID,
+              "head_sha": SHA,
               "base_ref": "main", "url": "u"}
         with mock.patch.object(github, "get_pr", return_value=pr), \
              mock.patch.object(github, "pr_files", return_value=[PATH]), \
@@ -535,9 +612,15 @@ class TestCli(unittest.TestCase):
         self.assertEqual(state.load(GAP)["lease"], "active-lease")
 
 
-def verdict_comment(sha, verdict, author="LiorDagan", date="2026"):
-    return {"author": author, "created_at": date,
-            "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/brilliant-hq/pequalnp-proofs/actions/runs/123" % (sha[:10], verdict)}
+def verdict_comment(sha, verdict, author="renamed-checker", date="2026"):
+    return {"author": author, "author_id": config.CHECKER_ID if author != "other" else 999, "created_at": date,
+            "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/old-owner/proofs/actions/runs/123" % (sha[:10], verdict)}
+
+
+def owned_pr_identity():
+    return {"author_id": config.CONTRIBUTOR_ID, "head_repo_id": config.FORK_ID,
+            "base_repo_id": config.UPSTREAM_ID, "base_ref": config.BASE_REF,
+            "head_ref": config.branch_for(GAP), "title": GAP}
 
 
 class TestReconcile(unittest.TestCase):
@@ -548,17 +631,91 @@ class TestReconcile(unittest.TestCase):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
                   branch=config.branch_for(GAP))
         gh = FakeGH(existing="123")
-        gh.get_pr = lambda n: {"url": "u", "number": n, "head_sha": SHA, "merged": True}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "number": n, "head_sha": SHA, "merged": True}
         gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
         g = FakeGit(remote=SHA)
         r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
         self.assertEqual(r["state"], "ACCEPTED")
 
+    def test_fault_adopts_existing_validated_pr_without_duplicate(self):
+        new_state("FAULT", commit_sha=SHA, branch=config.branch_for(GAP),
+                  queued_lease="lease-1", expected_commits=[SHA])
+        gh = FakeGH(existing=8143)
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
+        gh.pr_comments = lambda n: []
+        d = FakeDesk()
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertEqual(state.load(GAP)["pr_number"], 8143)
+        self.assertIsNone(state.load(GAP)["queued_lease"])
+        self.assertEqual(gh.created, 0)
+        self.assertEqual(d.releases, [("lease-1", "submitted")])
+
+    def test_release_retry_does_not_lose_pr(self):
+        new_state("FAULT", commit_sha=SHA, pending_pr_number=8143)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
+        gh.pr_comments = lambda n: []
+        d = FakeDesk()
+        with mock.patch.object(d, "release", side_effect=OSError("offline")):
+            reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertTrue(state.load(GAP)["release_pending"])
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertFalse(state.load(GAP)["release_pending"])
+        self.assertEqual(d.releases, [("lease-1", "submitted")])
+
+    def test_fault_does_not_adopt_wrong_pr(self):
+        new_state("FAULT", commit_sha=SHA, pending_pr_number=8143)
+        gh = FakeGH()
+        gh.validate_created = lambda *a, **k: ({}, ["head mismatch"])
+        d = FakeDesk()
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertIsNone(state.load(GAP)["pr_number"])
+        self.assertEqual(d.releases, [])
+
+    def test_renamed_checker_link(self):
+        c = verdict_comment(SHA, "ACCEPTED")
+        resolve = FakeGH().repository_id
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["body"] = c["body"].replace("old-owner/proofs", "new-owner/proofs")
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["body"] = c["body"].replace("new-owner/proofs", "unrelated/proofs")
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["body"] = c["body"].replace("unrelated/proofs", "new-owner/proofs")
+        c["author_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+
+    def test_intake_app_requires_both_numeric_ids(self):
+        c = verdict_comment(SHA, "ACCEPTED", author="pequalnp-intake[bot]")
+        c["author_id"] = config.CHECKER_INTAKE_BOT_ID
+        resolve = FakeGH().repository_id
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["app_id"] = config.CHECKER_INTAKE_APP_ID
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["app_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["app_id"] = config.CHECKER_INTAKE_APP_ID
+        c["author_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+
+    def test_competitor_pr_cannot_credit_our_gap(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "author_id": 999,
+                               "head_sha": SHA, "merged": True}
+        gh.pr_comments = mock.Mock(return_value=[verdict_comment(SHA, "ACCEPTED")])
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(r["result"], "invalid-pr")
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        gh.pr_comments.assert_not_called()
+
     def test_old_or_untrusted_verdict_ignored(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
         gh = FakeGH()
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
         gh.pr_comments = lambda n: [verdict_comment("b"*40, "REJECTED", date="2027"),
                                     verdict_comment(SHA, "ACCEPTED", author="other")]
         reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
@@ -570,7 +727,7 @@ class TestReconcile(unittest.TestCase):
     def test_checker_acceptance_without_merge_is_not_terminal(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
         gh = FakeGH()
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open", "merged": False}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open", "merged": False}
         gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
         reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
         self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
@@ -583,7 +740,7 @@ class TestReconcile(unittest.TestCase):
                   worktree=str(Path(candidate).parent), path=Path(candidate).name,
                   branch=config.branch_for(GAP))
         gh = FakeGH()
-        gh.get_pr = lambda number: {"url": "https://example.test/pr/123",
+        gh.get_pr = lambda number: {**owned_pr_identity(), "url": "https://example.test/pr/123",
                                     "number": number}
         gh.pr_comments = lambda number: []
         g = FakeGit(remote=SHA)
@@ -667,7 +824,7 @@ class TestDeskNextGap(unittest.TestCase):
                 with mock.patch.object(self.d, "_call", return_value=(200, {"gap": None})) as call:
                     self.assertIsNone(self.d._next_gap(**flags))
                 self.assertEqual(call.call_args[0][1], "/next")
-                expected = {"handle": config.GH_USER}
+                expected = {"handle": config.DESK_HANDLE}
                 expected.update({k: "1" for k in flags})
                 self.assertEqual(call.call_args[0][2], expected)
 

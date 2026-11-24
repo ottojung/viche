@@ -16,7 +16,7 @@ git -C "$town" config user.email fixture@example.invalid
 git -C "$town" config commit.gpgsign false
 git -C "$town" remote add origin "$remote"
 mkdir -p "$town/government" "$town/tests" "$town/records"
-cp "$repo/government/suite-status.sh" "$town/government/suite-status.sh"
+cp "$repo/government/suite-status.sh" "$repo/government/suite-env.sh" "$town/government/"
 printf '#!/bin/sh\nexit 0\n' > "$town/tests/records-smoke.sh"
 printf '#!/bin/sh\nexit 0\n' > "$town/tests/run-all.sh"
 printf 'canonical v1\n' > "$town/AGENTS.md"

@@ -187,9 +187,11 @@ These supersede any contrary text above or in older records.
    land it as in item 12. If you notice a defect in the Town's own machinery
    while doing this, it is yours to fix: fixing it is in scope for every seat
    and office, and logging it for someone else is not enough.
-10. **Ministry of Economy (Act 29).** Models are tried free first; paid models,
-    and Luna models last of all, are a last resort. Do not edit the Antonina
-    model list by hand; the Ministry of Economy and `government/economy-models.py`
+10. **Ministry of Economy (Act 29).** Models are tried in this order: free,
+    contributor, Luna, then authorized paid fallbacks, all at low effort.
+    Discovery, cooldowns and temporary health observations may not revoke
+    previously configured model authorization. Do not edit the Antonina model
+    list by hand; the Ministry of Economy and `government/economy-models.py`
     maintain it. Report waste you see to the Ministry through a request.
 11. **Always have bounded work (Founder directive).** An Executive office with no
     eligible board issue does not idle and does not restate old reports. It takes
@@ -271,3 +273,13 @@ creating a second agent on its worktree. Terminal failure recovery and
 unsafe holds remain governed by the existing continuity rules. This policy
 does not reset delegated research agents' sessions: their unfinished proof
 work may genuinely need context continuity.
+
+### Test and delivery liveness
+From a source worktree, run manual tests through the canonical
+`/bin/sh /var/lib/lubko/wd/viche/government/suite-env.sh /bin/sh tests/YOUR-TEST.sh`
+(or `suite-env.sh python3 tests/YOUR-TEST.py`). Use the canonical
+`/bin/sh /var/lib/lubko/wd/viche/government/propose-delivery.sh --office OFFICE SLUG`.
+The ordinary exact-candidate full suite runs at integration; targeted source
+checks are useful, but a second mandatory full source suite is not needed.
+Never run historical unisolated tests against production agent/model state or
+read live credentials from a test fixture.

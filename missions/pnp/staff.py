@@ -6,6 +6,7 @@ workspace, not mutable titles; uncertainty never authorizes duplicate starts.
 """
 import argparse
 import concurrent.futures
+import contextlib
 import fcntl
 import json
 import os
@@ -14,7 +15,7 @@ import re
 import subprocess
 import sys
 
-from . import assignment, config, focus, gitctl, state, support
+from . import assignment, brief, config, focus, gitctl, state, support
 
 # A full baseline used to paginate the whole (>2600 agent) registry once per
 # live gap. Fetch pages in bounded concurrent waves and let baseline reuse a
@@ -88,7 +89,12 @@ def prompt(rec, approach, general=False):
         "approach; communicate useful sublemmas and artifacts to the other researchers "
         "on this same gap. No unrelated gap acquisition, no direct desk or GitHub "
         "mutation, no agent launches. Use the local managed compiler and guard from "
-        "your bound cwd. Use the checked proof corpus where applicable. Preserve "
+        "your bound cwd. Use proofs find/source first and proofs search for bounded "
+        "finite circuit synthesis, with a durable CEGIS checkpoint. Verify any witness "
+        "on the full domain; solver UNSAT alone is not a Lean proof. Reuse peer source "
+        "fragments and previous attempts rather than restarting equivalent work. Use proofs share FILE "
+        "--message RESULT to snapshot a reusable Lean helper; proofs fragments --all-attempts "
+        "lists available helpers. Preserve "
         "work when the lease ends. When a complete exact proof exists, immediately "
         "invoke python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py submit GAP FILE "
         "with actual gap and file; never wait for an extra review. If the guard "
@@ -96,6 +102,11 @@ def prompt(rec, approach, general=False):
         f"Gap: {rec['gap_id']}\nStatement: {rec['statement']}\n"
         f"Imports: {json.dumps(rec.get('imports', []))}\n"
         f"Context: {rec.get('context') or ''}\n"
+        f"Desk proof sketch / cut ancestry / failed approaches (advisory): {json.dumps(brief.read(rec),ensure_ascii=False)}\n"
+        "Start by reading the exact supplied sketch, checked reduction sources, and solved siblings "
+        "with the current pinned upstream checkout. Do not redo known mathematics. "
+        "For shard assignments work only on the assigned range; do not infer a global refutation. "
+        "Use python3 -m missions.pnp.brief from the bound workspace for the full packet.\n"
         "Share substantial findings immediately from your bound cwd using "
         "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support finding "
         "--evidence 'artifact or checked lemma' --message 'specific result, blocker or next route'. "
@@ -107,36 +118,48 @@ def prompt(rec, approach, general=False):
            "and submit a complete proof directly. A focus change does not end your assignment. "
            if general else "You are a focused specialist. If focus moves, preserve your findings "
            "and finish cooperatively; the general researcher remains. ")
+        + (f"CORRECTION: existing PR {rec.get('pr_url')}; inspect the exact published proof "
+           f"and local diagnostic {rec.get('local_check_log', '')[-2000:]}. Correct the same "
+           "PR through submit; no new PR. Use the saved candidate in the gap state directory. "
+           if focus.correction(rec) else "")
         + f"Assigned approach: {approach}"
     )
 
 
 def current_matches(rec, general=False):
     latest = state.load(rec["gap_id"])
-    if not support.active(latest) or latest.get("queued_lease") or focus.key(latest) != focus.key(rec):
+    if not focus.eligible(latest) or latest.get("queued_lease") or focus.key(latest) != focus.key(rec):
         return False
     if general:
-        return True
+        return support.active(latest)
     selected = focus.current()
     return selected is not None and focus.key(selected) == focus.key(rec)
 
 
-def dispatch(gap, plans, agents=None):
+@contextlib.contextmanager
+def staffing_lock():
+    os.makedirs(config.STATE_ROOT, exist_ok=True)
+    fd = os.open(os.path.join(config.STATE_ROOT, "staff.lock"), os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+    finally:
+        os.close(fd)
+
+
+def dispatch(gap, plans, agents=None, locked=False):
     """adopt by exact cwd; ``agents`` may be a baseline's single snapshot."""
     rec = state.load(gap)
-    if not support.active(rec) or rec.get("queued_lease"):
-        raise ValueError("not a live research lease")
-    if not all(label == "general" or current_matches(rec) for label, _ in plans):
+    if not focus.eligible(rec) or rec.get("queued_lease"):
+        raise ValueError("not a live research or correction assignment")
+    if not all(current_matches(rec, label == "general") for label, _ in plans):
         raise ValueError("only the general researcher may be dispatched on a nonfocused lease")
     if not plans or len({label for label, _ in plans}) != len(plans):
         raise ValueError("distinct nonempty approach labels required")
     for label, approach in plans:
         if not re.fullmatch(r"[a-zA-Z0-9_-]{1,48}", label) or not approach.strip():
             raise ValueError("invalid worker label or empty approach")
-    os.makedirs(config.STATE_ROOT, exist_ok=True)
-    fd = os.open(os.path.join(config.STATE_ROOT, "staff.lock"), os.O_CREAT | os.O_RDWR, 0o600)
-    try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with (contextlib.nullcontext() if locked else staffing_lock()):
         # A direct dispatch still reads the roster itself; baseline passes a
         # snapshot it already fetched so N live gaps cost one pagination, not N.
         if agents is None:
@@ -184,9 +207,27 @@ def dispatch(gap, plans, agents=None):
                 results.append({"worker": label, "status": "started", "id": agent_id})
             except (OSError, ValueError, subprocess.SubprocessError, gitctl.GitError) as exc:
                 results.append({"worker": label, "status": "deferred", "detail": str(exc)[:300]})
+        # A staffing/replenishment decision is routine, not a Git delivery.
+        # The existing per-gap append-only event log is the durable record:
+        # timestamped, with the agent id receipt and the reason/approach.
+        # Adoptions of an already-running worker are not new decisions and add
+        # no entry, so idle passes do not amplify the trail.
+        started = {row["worker"]: row["id"] for row in results
+                   if row.get("status") == "started"}
+        if started:
+            workers = []
+            for label, approach in plans:
+                if label in started:
+                    workers.append({"label": label, "agent": started[label],
+                                    "approach": approach})
+            # Best effort: the worker is already dispatched. An audit append
+            # that fails must not surface as a failed dispatch (which could be
+            # replayed into a duplicate worker) or gate liveness.
+            try:
+                state.event(gap, "staffing", {"workers": workers, "attempt": support.attempt(rec)})
+            except Exception as exc:
+                print("staffing event log unavailable: %s" % exc, file=sys.stderr)
         return results
-    finally:
-        os.close(fd)
 
 
 GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact problem. "
@@ -196,7 +237,10 @@ GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact pro
                     "obstacles and viable next steps with all researchers and evaluators.")
 
 
-def baseline():
+def baseline(agents=None, locked=False):
+    if not locked:
+        with staffing_lock():
+            return baseline(agents, locked=True)
     live = []
     for gap in state.all_gaps():
         rec = state.load(gap)
@@ -209,14 +253,15 @@ def baseline():
     # reusing the snapshot here is safe because each live gap has a distinct
     # bound workspace and cannot collide with another gap's dispatch.
     try:
-        agents = roster()
+        if agents is None:
+            agents = roster()
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         return [{"gap": g, "status": "deferred", "detail": str(exc)[:300]} for g in live]
     out = []
     for gap in live:
         try:
             out.extend({"gap": gap, **row} for row in
-                       dispatch(gap, [("general", GENERAL_APPROACH)], agents=agents))
+                       dispatch(gap, [("general", GENERAL_APPROACH)], agents=agents, locked=True))
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             out.append({"gap": gap, "status": "deferred", "detail": str(exc)[:300]})
     return out

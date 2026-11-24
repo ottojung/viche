@@ -1,0 +1,82 @@
+{
+  "accounting_window_seconds": 3888000,
+  "aggregate": {
+    "caps": {
+      "cpu_seconds": 31948,
+      "tokens_total": 45280412,
+      "wall_seconds": 7988
+    }
+  },
+  "baseline": {
+    "label": "point-in-time diagnostic only (197 executions, 0 scored outcomes); NOT a frozen verified cost comparator under Act 32 v4 D",
+    "ref": "records/knowledge/baseline-20261119.json"
+  },
+  "cpu_meter": {
+    "attribution": "conservative-whole-host-upper-bound",
+    "available": true,
+    "reason": "Every host busy CPU second is pessimistically charged to every overlapping knowledge office; includes unrelated workloads. This is a bound, NOT measured per-office CPU usage.",
+    "source": "proc-stat-host-busy-upper-bound-v1"
+  },
+  "metering": {
+    "opencode_db": "/home/lubko/.local/state/antonina/opencode-service/opencode.db",
+    "source": "opencode-service-session-v2"
+  },
+  "monitor_interval_seconds": 20,
+  "note": "DRAFT RECURRING ENVELOPE - not installed, not signed, not activated. Cumulative caps (caps) UNCHANGED from the measured proxy-p95 envelope and the 45-day non-resettable ledger. per_run_caps are DISTINCT and smaller: tokens 3300000 / cpu 2200 whole-host UPPER_BOUND / wall 550 per office. Derived from the four closed first-wave reservations (see evidence/). Admission still charges the full per-run ceiling against both the office and aggregate 45-day ledger; debt is never reset. Host reality: 4 CPUs, so 2200 conservative CPU-s over 550 wall-s is at most ~4 fully-busy cores; 1 concurrent run per office. No paid tier, no data-scope change.",
+  "offices": {
+    "foresight": {
+      "caps": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "enabled": true,
+      "per_run_caps": {
+        "cpu_seconds": 2200,
+        "tokens_total": 3300000,
+        "wall_seconds": 550
+      }
+    },
+    "spying": {
+      "caps": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "enabled": true,
+      "per_run_caps": {
+        "cpu_seconds": 2200,
+        "tokens_total": 3300000,
+        "wall_seconds": 550
+      }
+    },
+    "statistics": {
+      "caps": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "enabled": true,
+      "per_run_caps": {
+        "cpu_seconds": 2200,
+        "tokens_total": 3300000,
+        "wall_seconds": 550
+      }
+    },
+    "strategy": {
+      "caps": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "enabled": true,
+      "per_run_caps": {
+        "cpu_seconds": 2200,
+        "tokens_total": 3300000,
+        "wall_seconds": 550
+      }
+    }
+  },
+  "overrun_action": "kill",
+  "schema": "viche-knowledge-budget-v1"
+}

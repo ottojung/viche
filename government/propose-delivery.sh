@@ -1,9 +1,9 @@
 #!/bin/sh
-# Agents publish signed, locally-tested branches for independent review
+# Agents publish clean, exact-head branches for independent review
 # without GitHub API tokens or PR creation permissions.
 # This script NEVER merges, enacts laws, edits ballots or changes the charter.
 #
-#   propose-delivery.sh --office OFFICE SHORT-SLUG
+#   propose-delivery.sh --office OFFICE [--verify] SHORT-SLUG
 #
 # OFFICE is who proposes (your seat id, or clerk, executive, judiciary, economy,
 # innovation-office, recovery-steward). The integration queue (Act 31,
@@ -13,20 +13,23 @@
 set -eu
 office=
 slug=
+verify=no
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --office) [ "$#" -ge 2 ] || exit 2; office=$2; shift 2 ;;
+        --verify) verify=yes; shift ;;
         -*) echo "unknown option: $1" >&2; exit 2 ;;
         *) [ -z "$slug" ] || { echo 'one slug only' >&2; exit 2; }; slug=$1; shift ;;
     esac
 done
 [ -n "$slug" ] && [ -n "$office" ] ||
-    { echo 'Usage: propose-delivery.sh --office OFFICE SHORT-SLUG' >&2; exit 2; }
+    { echo 'Usage: propose-delivery.sh --office OFFICE [--verify] SHORT-SLUG' >&2; exit 2; }
 printf '%s' "$office" | grep -Eqx '[a-z0-9][a-z0-9-]{0,63}' ||
     { echo 'OFFICE is lowercase letters, digits and hyphens' >&2; exit 2; }
 case "$slug" in
     ''|*[!a-z0-9-]*) echo 'Expected a lowercase alphanumeric/hyphen slug' >&2; exit 2 ;;
 esac
+verifier_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 repo=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 cwd=$(pwd -P)
@@ -56,10 +59,16 @@ if printf '%s\n' "$substantive" | grep -Eq '^(government/|tests/|constitution/|d
     suite=tests/run-all.sh
 fi
 [ -s "$cwd/$suite" ] || { echo "Missing applicable suite: $suite" >&2; exit 1; }
-# Source is clean at the exact HEAD verified above. CI on the proposed
-# ref is a second check, not an Act 21 substitute.
-if ! (cd "$cwd" && /bin/sh "$suite" > /dev/null); then
-    echo "Verification failed on $head: $suite" >&2; exit 1
+# Act 21/31 require the suite on the exact merged candidate, not this
+# different parent/tree. Retain the cheap records preflight and an explicit
+# opt-in source suite. A deferred run is never labelled green; the integrator
+# always selects and runs its own authoritative suite after independent review.
+verification="deferred:$suite"
+if [ "$suite" = tests/records-smoke.sh ] || [ "$verify" = yes ]; then
+    if ! (cd "$cwd" && /bin/sh "$verifier_dir/suite-env.sh" /bin/sh "$suite" > /dev/null); then
+        echo "Verification failed on $head: $suite" >&2; exit 1
+    fi
+    verification="$suite"
 fi
 [ "$(git -C "$cwd" rev-parse HEAD)" = "$head" ] &&
 [ -z "$(git -C "$cwd" status --porcelain)" ] ||
@@ -70,9 +79,13 @@ git -C "$cwd" push origin "HEAD:$target" ||
     { echo "Push to $target failed; no force push was attempted" >&2; exit 1; }
 mkdir -p "$state/delivery"
 printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "$(date -u +%FT%TZ)" "$branch" "$target" "$head" "$tree" "$suite" "$office" \
+    "$(date -u +%FT%TZ)" "$branch" "$target" "$head" "$tree" "$verification" "$office" \
     >> "$state/delivery/proposals.tsv"
-printf 'Proposed %s at %s for %s with green %s.\n' "$target" "$head" "$office" "$suite"
+if [ "$verification" = "$suite" ]; then
+    printf 'Proposed %s at %s for %s with green source %s.\n' "$target" "$head" "$office" "$suite"
+else
+    printf 'Proposed %s at %s for %s; %s deferred to exact-candidate integration gate.\n' "$target" "$head" "$office" "$suite"
+fi
 printf 'Comparison: https://github.com/ottojung/viche/compare/main...delivery/%s\n' "$slug"
 printf 'The integration queue lands it (Act 31); nothing else is needed from you.\n'
 printf 'Outcome: python3 %s/government/integrator.py office %s\n' "$repo" "$office"

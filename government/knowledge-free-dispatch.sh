@@ -27,36 +27,34 @@
 set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
-policy="$state/economy/model-policy.json"
-catalogue="$state/economy/catalogue.json"
 billing="$town/government/knowledge-zero-billed-policy.json"
 billing_module="$town/government/knowledge-zero-billed.py"
-billing_snapshot="$town/records/economy/evidence/${VICHE_ZERO_BILLED_SNAPSHOT:-2026-11-24-provider-models.json}"
 allow_dir="$state/knowledge/free-allowlist"
 allow_cfg="$allow_dir/antonina/config.json"
 
 log() { printf 'knowledge-free-dispatch: %s\n' "$*" >&2; }
 die() { log "$*"; exit 1; }
 
-[ -s "$policy" ] || die "Economy model policy missing"
-[ -s "$catalogue" ] || die "Economy provider catalogue missing; no paid fallback"
 [ -s "$billing" ] || die "Economy exact-ID zero-cost policy missing; no paid fallback"
-[ -s "$billing_snapshot" ] || die "Economy provider-cost snapshot missing; no paid fallback"
 [ -f "$billing_module" ] || die "zero-cost policy verifier missing"
 [ -f "$town/government/knowledge-practical-bounds.py" ] || die "practical-bounds module missing"
 
 # Build the allowlist from exact provider/model IDs with reviewed zero-cost
 # metadata. A -free name is necessary for the rotation but NEVER billing proof.
-python3 - "$billing_module" "$billing" "$policy" "$catalogue" "$allow_cfg" "$billing_snapshot" <<'PY'
-import importlib.util, sys
+python3 - "$billing_module" "$billing" "$allow_cfg" "$town" <<'PY'
+import importlib.util, json, re, sys
+from pathlib import Path
 sys.dont_write_bytecode = True
-module, billing, policy, catalogue, output, snapshot = sys.argv[1:7]
+module, billing, output, town = sys.argv[1:5]
 spec = importlib.util.spec_from_file_location("zero_billed", module)
 if spec is None or spec.loader is None:
     raise SystemExit("zero-cost policy verifier unavailable")
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
-mod.build_allowlist(billing, policy, catalogue, output, snapshot)
+ref = json.loads(Path(billing).read_text()).get("snapshot_ref")
+if not isinstance(ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", ref):
+    raise SystemExit("invalid reviewed provider snapshot reference")
+mod.build_allowlist(billing, mod.global_config_path(), output, Path(town) / ref)
 PY
 [ -s "$allow_cfg" ] || die "failed to build allowlist config"
 

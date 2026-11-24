@@ -19,6 +19,7 @@
 # Exit status: 0 if the recorded result is green, 1 if red (a standing incident).
 set -eu
 
+verifier_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 suite=${SUITE_STATUS_SUITE:-tests/run-all.sh}
 commit=${SUITE_STATUS_COMMIT:-HEAD}
@@ -80,7 +81,7 @@ git -C "$town" worktree add --quiet --detach "$checkout" "$sha" ||
 # Run each replay in that immutable source checkout; emit an exit code and an
 # output digest. Flaky-red reruns use the SAME original source revision.
 run_once() {
-    out=$(cd "$checkout" && VICHE_TOWN_ROOT="$checkout" /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
+    out=$(cd "$checkout" && VICHE_TOWN_ROOT="$checkout" /bin/sh "$verifier_dir/suite-env.sh" /bin/sh "$suite" 2>&1) && rc=0 || rc=$?
     hash=$(printf '%s' "$out" | sha256sum | cut -d ' ' -f1)
     # Act 31: the integrator keeps the output so a proposer can see why a
     # candidate was red. The recorded digest is of this same output.

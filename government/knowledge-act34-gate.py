@@ -80,7 +80,7 @@ def institutionally_attested(root, role, officer, ref, commit, digest,
     spec.loader.exec_module(vmod)
     errors = vmod.Verifier(str(root)).validate_attestation(
         attestation, gate_id=gate_id, officer_id=officer,
-        role=role, artifact_commit=commit)
+        role=role, artifact_commit=commit, historical=True)
     if errors:
         raise ValueError("unverified " + role + " action: " + "; ".join(errors)[:320])
 
@@ -99,18 +99,27 @@ def require_audited_free_tier(root, record, permit):
     evidence = record.get("economy_free_tier_evidence")
     if not isinstance(evidence, dict):
         raise ValueError("independent Economy model-source control missing")
-    report_ref = "records/economy/2026-11-24-act34-zero-billed-verification.md"
+    report_ref = evidence.get("report_ref", "records/economy/2026-11-24-act34-zero-billed-verification.md")
+    if not isinstance(report_ref, str) or not re.fullmatch(
+            r"records/economy/[A-Za-z0-9_.-]+[.]md", report_ref):
+        raise ValueError("invalid Economy attestation report reference")
     institutionally_attested(
         root, "economy", "c1e00012", report_ref,
         evidence.get("artifact_commit"), evidence.get("report_sha256"),
         evidence.get("attestation"), "act34-economy-free-provider-control")
+    billing_path = root / "government/knowledge-zero-billed-policy.json"
+    billing = load(billing_path)
+    snapshot_ref = billing.get("snapshot_ref")
+    if not isinstance(snapshot_ref, str) or not re.fullmatch(
+            r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", snapshot_ref):
+        raise ValueError("zero-billed provider snapshot ref invalid")
     controls = (
         ("wrapper_sha256", "government/knowledge-free-dispatch.sh"),
         ("negative_test_sha256", "tests/knowledge-free-dispatch-smoke.sh"),
         ("bounds_sha256", "government/knowledge-practical-bounds.py"),
         ("zero_billed_policy_sha256", "government/knowledge-zero-billed-policy.json"),
         ("zero_billed_verifier_sha256", "government/knowledge-zero-billed.py"),
-        ("provider_snapshot_sha256", "records/economy/evidence/2026-11-24-provider-models.json"),
+        ("provider_snapshot_sha256", snapshot_ref),
         ("gate_sha256", "government/knowledge-act34-gate.py"),
         ("cycle_sha256", "government/knowledge-office-cycle.sh"))
     for key, rel in controls:
@@ -128,19 +137,18 @@ def require_audited_free_tier(root, record, permit):
         raise ValueError("zero-billed policy verifier unavailable")
     zmod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(zmod)
-    state = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
-    policy = load(state / "economy/model-policy.json")
-    cat = load(state / "economy/catalogue.json")
-    models = cat.get("models") if isinstance(cat, dict) else None
-    allowed = policy.get("prefer") if isinstance(policy, dict) else None
-    if not isinstance(models, dict) or not isinstance(allowed, list) or not allowed:
-        raise ValueError("free-tier policy/catalogue unavailable")
-    billing_path = root / "government/knowledge-zero-billed-policy.json"
-    billing = load(billing_path)
-    snapshot_ref = billing.get("snapshot_ref")
-    if not isinstance(snapshot_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", snapshot_ref):
-        raise ValueError("zero-billed provider snapshot ref invalid")
-    zmod.verified_subset(billing_path, allowed, models, root / snapshot_ref)
+    # Economy discovery and optimization are not funding authorization.
+    # Intersect independently reviewed zero-price models with the durable
+    # configured ladder, never a volatile catalogue or preference subset.
+    allowed = zmod.authorized_models(zmod.global_config_path())
+    go = billing.get("go_source")
+    if go is not None:
+        go_ref = go.get("snapshot_ref") if isinstance(go, dict) else None
+        if not isinstance(go_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", go_ref):
+            raise ValueError("zero-billed Go snapshot ref invalid")
+        if on_main(root, root / go_ref) != go.get("sha256"):
+            raise ValueError("unverified Go snapshot bytes")
+    zmod.verified_subset(billing_path, allowed, snapshot_path=root / snapshot_ref)
     expected_digest = zmod.negative_acceptance_digest({
         "wrapper": root / "government/knowledge-free-dispatch.sh",
         "zero_billed_policy": root / "government/knowledge-zero-billed-policy.json",
@@ -149,7 +157,7 @@ def require_audited_free_tier(root, record, permit):
         "verifier": root / "government/knowledge-zero-billed.py",
         "gate": root / "government/knowledge-act34-gate.py",
         "cycle": root / "government/knowledge-office-cycle.sh",
-        "provider_snapshot": root / "records/economy/evidence/2026-11-24-provider-models.json"})
+        "provider_snapshot": root / snapshot_ref})
     if evidence.get("negative_acceptance_digest") != expected_digest:
         raise ValueError("negative-acceptance digest differs from exact controls")
 

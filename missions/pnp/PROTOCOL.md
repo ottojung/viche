@@ -7,8 +7,8 @@ Implementation issue: R4WYVaWyRxoD911soUtcAo-sciatic.
 The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop remains part of ordinary Viche Executive scheduling. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
 
 ## Precise interfaces
-Upstream: brilliant-hq/pequalnp-proofs, base branch main.
-Fork: ottojung/pequalnp-proofs.
+Upstream: GitHub repository ID 1468025030, base branch main.
+Fork: GitHub repository ID 1469318535, owned by contributor ID 121908118.
 Desk: https://pequalnp.com/desk with documented next/beat/release endpoints.
 Instructions: https://pequalnp.com/join.txt and upstream CONTRIBUTING.md (live version takes precedence).
 Authenticated CLI: /home/lubko/.local/bin/gh-pequalnp (loads public_repo token).
@@ -97,16 +97,15 @@ Use Git GPG signing subkey EXACTLY:
 No unsigned, unverified, alternate-key, alternate-name, or alternate-email commit
 may be pushed. Before push verify git verify-commit, %G? good signature, %GF exact
 signing subkey fingerprint, and inspect author/committer directly.
-Set push remote *internally* to ottojung/pequalnp-proofs only. Before any mutation,
-verify authenticated gh account is ottojung and allowed remote/branch.
+Resolve the pinned fork ID to its current GitHub routing name. Before mutation, verify the authenticated contributor ID and allowed remote/branch.
 Push the one signed commit as a new uniquely named branch. Verify GitHub API
 commit.verification.verified == true for the exact pushed SHA. If false, STOP
 without opening a PR and record the reason.
 Before opening PR, search upstream existing open/closed PRs for this exact
 head branch and gap ID. If already present, reuse its ID; never open duplicates.
-Only create PR to brilliant-hq/pequalnp-proofs, base main, title gap ID,
-head ottojung:<branch>. Then GET created PR and verify author == ottojung,
-head repo == ottojung/pequalnp-proofs, base repo == brilliant-hq/pequalnp-proofs,
+Only create PR to the pinned upstream repository ID, base main, title gap ID,
+head current authenticated login:<branch>. Then GET created PR and verify contributor ID,
+head repository ID == 1469318535, base repository ID == 1468025030,
 base ref == main, changed file list exactly one added proof, PR commit list
 contains exactly the expected signed SHA, GitHub verification == true.
 If post-create validation fails, report and stop automated mutations; do not
@@ -151,3 +150,5 @@ Only send substantial milestones or verified blockers to Founder-facing channels
 
 Do not report agent setup, branch push, an unmerged PR, or a merely local
 compilation as a mathematically accepted contribution.
+
+Account and repository names can change. Validate immutable GitHub IDs for contributor, checker, upstream and fork. Resolve current routing names by ID and validate checker run-link repository identity through GitHub. Recover existing PRs by verified signed revision even after a local FAULT. The desk handle is a separate credit-target setting, not an authentication identity.

@@ -51,6 +51,9 @@ class Tests(unittest.TestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
         self.addCleanup(self.tmp.cleanup)
+        mirror = patch.object(staff.gitctl, "ensure_mirror", return_value="a" * 40)
+        mirror.start()
+        self.addCleanup(mirror.stop)
 
     def add(self, gap="L-meta-1", **extra):
         fields = dict(state="LEASED", lease="lease-"+gap, lease_obtained_at=NOW-1800,
@@ -253,6 +256,54 @@ class Tests(unittest.TestCase):
         self.assertEqual(Path(runs[0][runs[0].index("--cwd") + 1]).resolve(),
                          path.resolve())
         self.assertFalse([c for c in calls if c[0] == "new"])
+
+    def test_staffing_decision_logged_once_in_existing_event_log(self):
+        """Routine staffing is a timestamped local event, never a Git delivery."""
+        rec = self.add(lease_expires_at=time.time() + 1200)
+        path, prepare = self.staffed(rec["gap_id"])
+        idle = {"id": "staff-agent-1", "cwd": str(path), "state": "clearexit"}
+        wire, _ = self.roster_wire({1: [idle]})
+        events = Path(state.events_path(rec["gap_id"]))
+        before = events.read_text()
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"],
+                                    [("general", "study checked lemmas")])
+        self.assertEqual([r["status"] for r in result], ["started"])
+        after = events.read_text()
+        self.assertTrue(after.startswith(before))
+        added = [json.loads(line) for line in after[len(before):].splitlines()]
+        self.assertEqual(len(added), 1)
+        event = added[0]
+        self.assertEqual(event["kind"], "staffing")
+        self.assertRegex(event["at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+        self.assertEqual(event["detail"]["workers"], [
+            {"label": "general", "agent": "staff-agent-1",
+             "approach": "study checked lemmas"}])
+        # Adopting an already-running worker is not a new decision: no entry.
+        running = {"id": "staff-agent-1", "cwd": str(path), "state": "running"}
+        wire, _ = self.roster_wire({1: [running]})
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"],
+                                    [("general", "study checked lemmas")])
+        self.assertEqual([r["status"] for r in result], ["already running"])
+        self.assertEqual(events.read_text(), after)
+        # No delivery branch, dated records/research report or integration.
+        self.assertFalse((Path(self.tmp.name) / "records").exists())
+
+    def test_staffing_log_failure_cannot_replay_a_started_worker(self):
+        """The audit append is best effort, never a dispatch liveness gate."""
+        rec = self.add(lease_expires_at=time.time() + 1200)
+        path, prepare = self.staffed(rec["gap_id"])
+        idle = {"id": "log-fail-agent", "cwd": str(path), "state": "clearexit"}
+        wire, calls = self.roster_wire({1: [idle]})
+        with prepare, patch.object(staff, "antonina", side_effect=wire), \
+             patch.object(staff.state, "event", side_effect=OSError("read-only state")):
+            result = staff.dispatch(rec["gap_id"], [("general", "prove")])
+        self.assertEqual([r["status"] for r in result], ["started"])
+        self.assertEqual(result[0]["id"], "log-fail-agent")
+        runs = [c for c in calls if c[0] == "run"]
+        self.assertEqual(len(runs), 1)                      # no replay
+        self.assertEqual(runs[0][runs[0].index("--id") + 1], "log-fail-agent")
 
     def test_baseline_idempotent_and_one_roster_fetch_per_pass(self):
         a = self.add(lease_expires_at=time.time() + 1200)

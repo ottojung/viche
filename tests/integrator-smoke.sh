@@ -16,7 +16,7 @@ git -C "$town" config user.email fixture@example.invalid
 git -C "$town" config commit.gpgsign false
 git -C "$town" remote add origin "$remote"
 mkdir -p "$town/government" "$town/tests" "$town/records" "$town/constitution"
-for f in suite-status.sh integrator.py propose-delivery.sh review-delivery.sh dispatch-gate.sh; do
+for f in suite-env.sh suite-status.sh integrator.py propose-delivery.sh review-delivery.sh dispatch-gate.sh; do
   cp "$repo/government/$f" "$town/government/$f"
 done
 # Suites: red when records/BREAK and records/ARM are both present (green on
@@ -33,6 +33,12 @@ printf 'row1\n' > "$town/records/ledger.tsv"
 printf '# Laws\n' > "$town/government/LAWS.md"
 printf 'charter\n' > "$town/constitution/CONSTITUTION.md"
 printf '#!/bin/sh\necho v1\n' > "$town/government/tool.sh"
+mkdir -p "$town/records/ballots" "$town/records/bills"
+printf 'c1a00001\tClerk\tfixture\nc1a00002\tA\tfixture\nc1a00003\tB\tfixture\nc1a00004\tC\tfixture\nc1a00005\tD\tfixture\n' > "$town/government/seats.tsv"
+printf 'Parallel vote fixture\n' > "$town/records/bills/parallel.md"
+printf 'New ballot fixture\n' > "$town/records/bills/parallel-new.md"
+digest=$(sha256sum "$town/records/bills/parallel.md" | cut -d ' ' -f1)
+printf 'c1a00001\tyes\t%s\n' "$digest" > "$town/records/ballots/parallel.tsv"
 git -C "$town" add -A
 git -C "$town" commit -qm baseline
 git -C "$town" push -q -u origin main
@@ -98,7 +104,10 @@ test "$(git -C "$remote" show main:records/ledger.tsv | wc -l)" -eq 2
 seat c
 printf '#!/bin/sh\necho v2\n' > "$tmp/c/government/tool.sh"
 git -C "$tmp/c" add -A; git -C "$tmp/c" commit -qm 'tool v2'
+before=$(wc -l < "$tmp/suite-runs")
 propose c executive tool
+test "$(wc -l < "$tmp/suite-runs")" -eq "$before"
+test "$(tail -1 "$state/delivery/proposals.tsv" | cut -f6)" = deferred:tests/run-all.sh
 head=$(git -C "$tmp/c" rev-parse HEAD)
 integrate
 test "$(st tool)" = reviewing
@@ -211,7 +220,113 @@ fi
 printf '[{"status":"landed"}]\n' > "$state/delivery/office/c1a00004.json"
 echo same | /bin/sh "$town/government/dispatch-gate.sh" check c1a00004 | grep -q inputs_changed
 
-# 10. Proposals from before Act 31 (no office column) are never picked up.
+# 10. Deferring the proposer suite cannot let red code land.
+seat redcode
+printf '#!/bin/sh\nexit 1\n' > "$tmp/redcode/tests/run-all.sh"
+git -C "$tmp/redcode" add -A; git -C "$tmp/redcode" commit -qm 'deliberately red code'
+if (cd "$tmp/redcode" && /bin/sh "$town/government/propose-delivery.sh" --office executive --verify red-source) >/dev/null 2>&1; then
+  echo 'Explicit source preflight accepted red' >&2; exit 1
+fi
+if git -C "$remote" show-ref --verify --quiet refs/heads/delivery/red-source; then
+  echo 'Failed source preflight pushed a ref' >&2; exit 1
+fi
+propose redcode executive red-code
+test "$(tail -1 "$state/delivery/proposals.tsv" | cut -f6)" = deferred:tests/run-all.sh
+integrate
+test "$(st red-code)" = reviewing
+/bin/sh "$town/government/review-delivery.sh" delivery/red-code "$(git -C "$tmp/redcode" rev-parse HEAD)" approve \
+  --office c1a00005 --reason 'fixture review' >/dev/null
+base_red=$(git -C "$remote" rev-parse main)
+integrate
+test "$(st red-code)" = red
+test "$(git -C "$remote" rev-parse main)" = "$base_red"
+
+# 11. Distinct concurrent votes append without rewriting existing evidence.
+seat vote_a
+seat vote_b
+printf 'c1a00002\tyes\t%s\n' "$digest" >> "$tmp/vote_a/records/ballots/parallel.tsv"
+printf 'c1a00003\tno\t%s\n' "$digest" >> "$tmp/vote_b/records/ballots/parallel.tsv"
+for v in vote_a vote_b; do git -C "$tmp/$v" add -A; git -C "$tmp/$v" commit -qm "$v"; done
+propose vote_a c1a00002 vote-a
+propose vote_b c1a00003 vote-b
+integrate
+test "$(st vote-a)" = landed
+test "$(st vote-b)" = landed
+git -C "$remote" show main:records/ballots/parallel.tsv > "$tmp/merged-ballots"
+printf 'c1a00001\tyes\t%s\nc1a00002\tyes\t%s\nc1a00003\tno\t%s\n' "$digest" "$digest" "$digest" > "$tmp/expected-ballots"
+cmp "$tmp/expected-ballots" "$tmp/merged-ballots"
+
+# An add/add conflict for the first two rows is also append-only.
+nd=$(sha256sum "$town/records/bills/parallel-new.md" | cut -d ' ' -f1)
+seat new_a
+seat new_b
+printf 'c1a00002\tyes\t%s\n' "$nd" > "$tmp/new_a/records/ballots/parallel-new.tsv"
+printf 'c1a00003\tno\t%s\n' "$nd" > "$tmp/new_b/records/ballots/parallel-new.tsv"
+for v in new_a new_b; do git -C "$tmp/$v" add -A; git -C "$tmp/$v" commit -qm "$v"; done
+propose new_a c1a00002 new-a
+propose new_b c1a00003 new-b
+integrate
+test "$(st new-a)" = landed
+test "$(st new-b)" = landed
+test "$(git -C "$remote" show main:records/ballots/parallel-new.tsv | wc -l)" -eq 2
+
+# Different votes by one seat cannot be reconciled automatically.
+seat conflict_a
+seat conflict_b
+printf 'c1a00004\tyes\t%s\n' "$digest" >> "$tmp/conflict_a/records/ballots/parallel.tsv"
+printf 'c1a00004\tno\t%s\n' "$digest" >> "$tmp/conflict_b/records/ballots/parallel.tsv"
+for v in conflict_a conflict_b; do git -C "$tmp/$v" add -A; git -C "$tmp/$v" commit -qm "$v"; done
+propose conflict_a c1a00004 conflict-a
+propose conflict_b c1a00004 conflict-b
+integrate
+test "$(st conflict-a)" = landed
+test "$(st conflict-b)" = conflict
+test "$(git -C "$remote" show main:records/ballots/parallel.tsv | grep -c '^c1a00004')" -eq 1
+
+# A branch attributed to another office cannot auto-resolve a new seat vote.
+seat wrong_a
+seat wrong_b
+printf 'c1a00004\tyes\t%s\n' "$nd" >> "$tmp/wrong_a/records/ballots/parallel-new.tsv"
+printf 'c1a00005\tyes\t%s\n' "$nd" >> "$tmp/wrong_b/records/ballots/parallel-new.tsv"
+for v in wrong_a wrong_b; do git -C "$tmp/$v" add -A; git -C "$tmp/$v" commit -qm "$v"; done
+propose wrong_a c1a00004 wrong-a
+propose wrong_b c1a00002 wrong-b
+integrate
+test "$(st wrong-a)" = landed
+test "$(st wrong-b)" = conflict
+
+# 12. Ready short records land before expensive code, and no more than one
+# full-suite candidate is attempted per pass. An aged candidate goes first.
+seat long_a
+seat long_b
+seat short_a
+printf 'a\n' > "$tmp/long_a/government/a-tool"
+printf 'b\n' > "$tmp/long_b/government/b-tool"
+printf 'record\n' > "$tmp/short_a/records/short-a.md"
+for v in long_a long_b short_a; do git -C "$tmp/$v" add -A; git -C "$tmp/$v" commit -qm "$v"; done
+propose long_a executive long-a
+propose long_b executive long-b
+integrate
+for v in long-a long-b; do
+  src=$(printf '%s' "$v" | tr - _)
+  /bin/sh "$town/government/review-delivery.sh" "delivery/$v" "$(git -C "$tmp/$src" rev-parse HEAD)" approve --office c1a00005 --reason 'fixture review' >/dev/null
+done
+propose short_a judiciary short-a
+integrate
+test "$(st short-a)" = landed
+test "$(st long-a)" = landed
+test "$(st long-b)" = approved
+test "$(tail -2 "$state/delivery/landed.jsonl" | jq -r .branch | tr '\n' ' ')" = 'delivery/short-a delivery/long-a '
+seat short_b
+printf 'record b\n' > "$tmp/short_b/records/short-b.md"
+git -C "$tmp/short_b" add -A; git -C "$tmp/short_b" commit -qm short-b
+propose short_b judiciary short-b
+VICHE_INTEGRATOR_NOW=$(( $(date +%s) + 3601 )) integrate
+test "$(st long-b)" = landed
+test "$(st short-b)" = landed
+test "$(tail -2 "$state/delivery/landed.jsonl" | jq -r .branch | tr '\n' ' ')" = 'delivery/long-b delivery/short-b '
+
+# 13. Proposals from before Act 31 (no office column) are never picked up.
 printf '2026-11-10T00:00:00Z\twork-x\trefs/heads/delivery/legacy\t%s\ttree\ttests/run-all.sh\n' "$head" \
   >> "$state/delivery/proposals.tsv"
 integrate

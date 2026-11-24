@@ -49,6 +49,9 @@ def obsolete(gap=None, lease=None):
         return not (rec.get("state") == "PR_OPEN"
                     and rec.get("commit_sha") == os.environ["PNP_POSTCHECK_SHA"]
                     and rec.get("local_check_status") == "pending")
+    from . import focus
+    if focus.correction(rec):
+        return False
     return rec.get("state") in ("STALE", "RELEASED", "ACCEPTED", "PR_OPEN")
 
 

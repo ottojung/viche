@@ -9,10 +9,8 @@ import shutil
 import subprocess
 import tempfile
 
-from . import config, build_control, compile as compiler
+from . import config, github, build_control, compile as compiler
 
-UPSTREAM_URL = "https://github.com/" + config.UPSTREAM + ".git"
-FORK_URL = "git@github.com:" + config.FORK + ".git"
 MIRROR = os.path.join(config.CACHE_DIR, "fork.git")
 
 
@@ -36,6 +34,14 @@ def check_commit_fields(fmt):
 
 
 def run(argv, cwd=None, check=True):
+    if cwd is None:
+        # A publisher or reconciler may inherit the cwd of a worktree that was
+        # removed after publication. Git resolves its repository from the
+        # process cwd, so even remote-only commands such as `git ls-remote`
+        # then fail with "Unable to read current working directory". Run every
+        # git subprocess from a durable directory unless a caller pins one.
+        cwd = config.CACHE_DIR
+        os.makedirs(cwd, exist_ok=True)
     p = subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE, text=True, timeout=90)
     if check and p.returncode != 0:
@@ -45,19 +51,27 @@ def run(argv, cwd=None, check=True):
     return p
 
 
+def upstream_url():
+    return "https://github.com/" + github.repository_name(config.UPSTREAM_ID) + ".git"
+
+
+def fork_url():
+    return "git@github.com:" + github.repository_name(config.FORK_ID) + ".git"
+
+
 def ensure_mirror():
     os.makedirs(config.CACHE_DIR, exist_ok=True)
     if not os.path.exists(os.path.join(MIRROR, "HEAD")):
-        run(["git", "clone", "--bare", "--quiet", FORK_URL, MIRROR])
+        run(["git", "clone", "--bare", "--quiet", fork_url(), MIRROR])
     # Upstream objects are needed to build from a pinned public base SHA.
-    run(["git", "--git-dir=" + MIRROR, "fetch", "--quiet", UPSTREAM_URL,
+    run(["git", "--git-dir=" + MIRROR, "fetch", "--quiet", upstream_url(),
          "+refs/heads/main:refs/remotes/upstream/main"])
     return run(["git", "--git-dir=" + MIRROR, "rev-parse",
                 "refs/remotes/upstream/main"]).stdout.strip()
 
 
 def remote_branch_sha(branch):
-    p = run(["git", "ls-remote", "--heads", FORK_URL,
+    p = run(["git", "ls-remote", "--heads", fork_url(),
              "refs/heads/" + branch], check=False)
     if p.returncode != 0:
         raise GitError("cannot check fork branch: " + p.stderr[:300])
@@ -217,7 +231,7 @@ def push_branch(branch, pusher=None):
         return pusher(branch)
     if not config.BRANCH_RE.match(branch):
         raise GitError("unsafe branch name")
-    p = run(["git", "--git-dir=" + MIRROR, "push", FORK_URL,
+    p = run(["git", "--git-dir=" + MIRROR, "push", fork_url(),
              "refs/heads/" + branch + ":refs/heads/" + branch], check=False)
     if p.returncode != 0:
         raise GitError("push failed: " + p.stderr.strip()[:400])

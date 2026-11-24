@@ -40,6 +40,7 @@ does not itself enact, sign, authorize, or enable any office.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -379,8 +380,52 @@ class Verifier:
                     return reg
         raise GateError("no authoritative appointment registry available")
 
+    def _appointment_at(self, role, timestamp, current):
+        """Resolve the officer at the board action, not at a later dispatch.
+
+        The appointment log records only after successful managed-agent
+        creation and registry installation. A later agent rotation or GC
+        cannot revoke the previous officer's already-recorded act.
+        """
+        try:
+            t = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if t.tzinfo is None or t.timestamp() > self.at + 5:
+                return None
+            root = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
+            rows = []
+            for line in (root / "appointments/appointments.log").read_text().splitlines():
+                cols = line.split("\t")
+                if len(cols) != 4 or cols[1] != role:
+                    continue
+                at = datetime.fromisoformat(cols[0].replace("Z", "+00:00"))
+                if at.tzinfo is None:
+                    return None
+                rows.append((at, cols[2], cols[3]))
+            # A crash between registry swap and append cannot establish a
+            # new appointment's authority. Earlier verified intervals remain.
+            if not rows:
+                return None
+            if any(a[0] > b[0] for a,b in zip(rows,rows[1:])):
+                return None
+            eligible = [i for i,row in enumerate(rows) if row[0] <= t]
+            if not eligible:
+                return None
+            i = eligible[-1]
+            at, old, appointed = rows[i]
+            # Refuse attribution in an interval whose successor does not
+            # identify its predecessor (missing transition/registry reset).
+            if i + 1 < len(rows):
+                if rows[i+1][1] != appointed:
+                    return None
+            elif current.get(role) != appointed:
+                return None
+            return appointed
+        except (AttributeError, TypeError, ValueError, OSError):
+            return None
+
     def validate_attestation(self, attestation: dict, *, gate_id: str,
-                             officer_id: str, role: str, artifact_commit: str) -> list:
+                             officer_id: str, role: str, artifact_commit: str,
+                             historical: bool = False) -> list:
         """Multi-channel corroboration that a real officer action produced the review.
 
         A Git blob with a Judiciary id in it is NOT a signature on a shared UID.
@@ -433,7 +478,11 @@ class Verifier:
             try:
                 issue = self._antonina_json("board", "show", "--id", issue_id,
                                             "--page", "1", "--json")
-                agent = self._antonina_json("agent", "status", "--id", agent_id, "--json")
+                # Act34 permits are durable officer acts, not leases on a
+                # particular conversation. Registry history is the third
+                # institutional channel and survives disposable sessions.
+                agent = None if historical else self._antonina_json(
+                    "agent", "status", "--id", agent_id, "--json")
             except GateError as exc:
                 return errors + [str(exc)]
             try:
@@ -475,18 +524,25 @@ class Verifier:
             body = str(c.get("body", c.get("text", "")))
             attributable = (token in author or role.lower() in author.lower())
             if attributable and gate_id in body and prefix in body:
+                if historical and self._appointment_at(role, c.get("createdAt"), appointments) != agent_id:
+                    continue
                 found = True
                 break
         if not found:
             errors.append("no officer-authored board comment citing gate id and review commit")
 
         # (3) Appointment + attributable managed-agent session.
-        if appointments.get(role) != agent_id:
-            errors.append("officer agent id does not match the authoritative appointment registry")
-        if not isinstance(agent, dict) or str(agent.get("id", "")) != agent_id:
-            errors.append("managed-agent session is not attributable to the officer agent id")
-        elif agent.get("state") not in ("idle", "running", "clearexit", "exited"):
-            errors.append("officer agent has no usable attributable session state")
+        if historical:
+            if not isinstance(review, dict) or self._appointment_at(
+                    role, review.get("recordedAt"), appointments) != agent_id:
+                errors.append("officer agent was not the appointed officer at the board review")
+        else:
+            if appointments.get(role) != agent_id:
+                errors.append("officer agent id does not match the authoritative appointment registry")
+            if not isinstance(agent, dict) or str(agent.get("id", "")) != agent_id:
+                errors.append("managed-agent session is not attributable to the officer agent id")
+            elif agent.get("state") not in ("idle", "running", "clearexit", "exited"):
+                errors.append("officer agent has no usable attributable session state")
         return errors
 
     # ---- gate verification ----------------------------------------------

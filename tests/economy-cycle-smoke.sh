@@ -42,8 +42,10 @@ set -eu
 case "$1 $2" in
   'agent status') printf '{"state":"%s"}\n' "$MODE" ;;
   'agent run')
-    case "$*" in *'MINISTRY OF ECONOMY'*'Act 29'*'Luna models'*'at the very bottom'*) : ;;
+    case "$*" in *'MINISTRY OF ECONOMY'*'Act 29'*'free models'*'contributor models'*'Luna'*'paid models at the bottom'*'low reasoning effort'*'model-policy.json'*) : ;;
       *) echo 'prompt lacks the Ministry mandate or the tier rule' >&2; exit 1 ;; esac
+    case "$*" in *'then Luna, then paid models at the bottom'*) : ;;
+      *) echo 'prompt lacks the exact tier order' >&2; exit 1 ;; esac
     case "$*" in *'LATEST FUNDING REPORT'*'funding_risk'*) : ;; *) echo 'no funding report in prompt' >&2; exit 1 ;; esac
     case "$*" in *'LATEST RESOURCE REPORT'*'availability of EVERY scarce resource'*'NEEDS-FOUNDER:'*) : ;;
       *) echo 'prompt lacks the resource report or the broadened mandate' >&2; exit 1 ;; esac
@@ -66,6 +68,11 @@ cycle() { /bin/sh "$g/executive-economy-cycle.sh"; }
 dispatches() { wc -l < "$d/runs"; }
 settle() { # wait for the backgrounded refresh to finish
   i=0; while [ "$i" -lt 50 ] && ! { [ -s "$d/refresh.log" ] || [ "${1:-}" = none ]; }; do sleep 0.1; i=$((i+1)); done
+  # The mocked refresh logs before the background process releases its lock.
+  # A simulated next six-hour interval must not race that previous refresh.
+  if [ -f "$d/state/executive/economy/refresh.lock" ]; then
+    flock -w 5 "$d/state/executive/economy/refresh.lock" true
+  fi
 }
 
 # Dormant: Act 29 is not enacted, so nothing runs and no state appears.

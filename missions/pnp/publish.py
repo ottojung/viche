@@ -55,6 +55,40 @@ def _read_candidate(path):
         return f.read()
 
 
+def release_submitted(gap_id, desk):
+    """A validated PR is tracked even if the desk release needs retry."""
+    rec = state.load(gap_id)
+    if not rec.get("release_pending"):
+        return
+    try:
+        desk.release(rec["lease"], "submitted")
+    except Exception as exc:
+        state.update(gap_id, failure_reason="release retry needed: %s" % exc)
+        return
+    state.update(gap_id, release_pending=False, failure_reason=None)
+
+
+def record_pr(gap_id, rec, number, pr, desk):
+    """Commit verified PR identity before attempting the separate desk effect."""
+    with state.lock(gap_id):
+        current = state.load(gap_id)
+        if (current.get("commit_sha") != rec.get("commit_sha") or
+                current.get("lease") != rec.get("lease") or
+                current["state"] not in ("SIGNED", "PUSHED", "LOCAL_CHECKED", "FAULT", "PR_OPEN")):
+            raise StopPublish("publication changed during PR verification")
+        release = bool(current.get("lease") and not current.get("pr_number")
+                       and not current.get("correction_from_sha"))
+        current.update(state="PR_OPEN", pr_number=number, pr_url=pr.get("url"),
+                       pending_pr_number=None, external_verdict="pending",
+                       queued_lease=None, failure_reason=None, correction_from_sha=None,
+                       release_pending=release or current.get("release_pending", False),
+                       intent=None)
+        state.save(current)
+        state.event(gap_id, "published", {"sha": current.get("commit_sha"),
+                                          "pr": number, "digest": current.get("candidate_digest")})
+    release_submitted(gap_id, desk)
+
+
 def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             build_runner=None, signer=None, pusher=None, known_prs=None):
     """Publish a complete statically validated candidate immediately. Idempotent."""
@@ -237,7 +271,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             ver.get("email") != config.AUTHOR_EMAIL):
         _stop(gap_id, "GitHub commit identity mismatch; no PR opened")
 
-    number = rec.get("pr_number") or gh.pr_exists_for(
+    number = rec.get("pr_number") or rec.get("pending_pr_number") or gh.pr_exists_for(
         branch, gap_id, api=known_prs)
     if not number:
         if not correction:
@@ -256,26 +290,14 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             number = gh.create_pr(branch, gap_id)
         except Exception as e:
             _retry_later(gap_id, "PR creation failed; reconcile before retry: %s" % e)
-        state.clear_intent(gap_id)
+        # Persist the observed number before any fallible validation call.
+        state.update(gap_id, pending_pr_number=int(number), intent=None)
     number = int(number)
     pr, problems = gh.validate_created(number, sha, rec["path"],
                                        expected_commits=expected_commits)
     if problems:
         _stop(gap_id, "post-create PR validation failed: " + "; ".join(problems))
-    if rec.get("lease") and not correction and not rec.get("pr_number"):
-        try:
-            desk.release(rec["lease"], "submitted")
-        except Exception as e:
-            state.update(gap_id, failure_reason="release retry needed: %s" % e)
-    if state.load(gap_id)["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED"):
-        state.transition(gap_id, "PR_OPEN", pr_number=number,
-                         pr_url=pr.get("url"), external_verdict="pending",
-                         queued_lease=None, failure_reason=None, correction_from_sha=None)
-    else:
-        state.update(gap_id, pr_number=number, pr_url=pr.get("url"),
-                     external_verdict="pending", queued_lease=None, correction_from_sha=None)
-    state.event(gap_id, "published", {"sha": sha, "pr": number,
-                                      "digest": digest})
+    record_pr(gap_id, state.load(gap_id), number, pr, desk)
     return {"gap": gap_id, "sha": sha, "pr": number, "url": pr.get("url"),
             "digest": digest}
 

@@ -87,9 +87,11 @@ printf '%s\n' \
   '## Act 43 — Institutional Knowledge and Communications Act (enacted 2026-11-20)' > "$laws"
 expect 1 'ambiguous IKCA Act number fails' statistics
 
-# Boot, appointments and the office cycle must all delegate to the one verifier
-# and none may retain the weak startswith("act:") predicate.
-for f in government/boot.sh government/appointments.sh government/knowledge-office-cycle.sh; do
+# The actual launch and appointment paths must use the same verifier.
+# Boot delegates independently to the office cycle, never checking the board
+# synchronously on Parliament's critical path.
+grep -q 'nonblocking_office "knowledge-\$office".*knowledge-office-cycle.sh' government/boot.sh
+for f in government/appointments.sh government/knowledge-office-cycle.sh; do
   grep -q 'knowledge-activation-verify.sh' "$f" || {
     echo "FAIL: $f does not use the shared verifier" >&2; exit 1;
   }
@@ -101,4 +103,4 @@ if grep -q 'startswith("act:")' government/knowledge-activation-verify.sh; then
   echo 'FAIL: shared verifier retains the weak act-prefix predicate' >&2; exit 1
 fi
 
-echo 'knowledge activation binding: forged/wrong-Act/wrong-office/expiry rejected; boot+appointments+cycle agree'
+echo 'knowledge activation binding: forged/wrong-Act/wrong-office/expiry rejected; independent boot, appointments+cycle agree'

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp.proofs import corpus, circuit, synthesis
+from missions.pnp.proofs import corpus, circuit, synthesis, search
 from missions.pnp import validate
 
 META = {"id": "L-meta-12345",
@@ -48,6 +48,57 @@ class ProofTools(unittest.TestCase):
         validate.validate(meta,r["candidate"].encode())
         bad = dict(meta, statement=meta["statement"].replace("≤ 3","≤ 2"))
         self.assertIsNone(synthesis.candidate(bad)["candidate"])
+
+    def test_minimum_star_cover_has_no_duplicate_edges(self):
+        # Two intersecting full stars, plus a disconnected edge. Greedy
+        # maximal stars can pay for an edge twice; exact assignment cannot.
+        edges={(0,1),(0,2),(0,3),(1,4),(1,5),(6,7)}
+        gates,out=synthesis.star_cover(8,edges)
+        self.assertEqual(len(gates),8)
+        self.assertTrue(synthesis.verify(8,edges,gates,out))
+        gates,out=synthesis.synthesize(8,edges)
+        self.assertLessEqual(len(gates),8)
+        self.assertTrue(synthesis.verify(8,edges,gates,out))
+
+    def test_sat_exact_against_independent_two_variable_enumeration(self):
+        import itertools
+        # Independently enumerate all functions realizable with up to two
+        # gates (including repeated inputs, NOT and any output wire).
+        functions = {0b1010,0b1100}
+        frontier = {(0b1010,0b1100)}
+        for budget in range(3):
+            if budget:
+                new=set()
+                for wires in frontier:
+                    values={15^a for a in wires}
+                    values.update(a&b for a in wires for b in wires)
+                    values.update(a|b for a in wires for b in wires)
+                    new.update(wires+(v,) for v in values)
+                    functions.update(values)
+                frontier=new
+            for truth in range(16):
+                raw={"n":2,"gates":budget,"ones":[r for r in range(4) if truth>>r&1]}
+                result=search.solve(raw,5)
+                if result["result"]=="unavailable":
+                    self.skipTest("optional SAT solver unavailable")
+                self.assertEqual(result["result"],"verified_witness" if truth in functions else "unsat_encoding",(raw,result))
+    def test_sat_checkpoint_and_fixed_prefix(self):
+        raw={"n":3,"gates":2,"edges":[[0,1],[0,2]],"ops":["and","or"],"fixed":[["or",2,1]]}
+        with tempfile.TemporaryDirectory() as tmp:
+            cp=Path(tmp,"rows.json")
+            r=search.solve(raw,5,cp)
+            if r["result"]=="unavailable":
+                self.skipTest("optional SAT solver unavailable")
+            self.assertEqual(r["result"],"verified_witness")
+            self.assertEqual(r["gates"][0],["or",2,1])
+            self.assertTrue(cp.exists())
+            self.assertEqual(search.solve(raw,5,cp)["result"],"verified_witness")
+            with self.assertRaises(ValueError):
+                search.solve(dict(raw,gates=3),5,cp)
+    def test_structural_hints_not_implication_verdicts(self):
+        hint=corpus.structural_hint("P → Q → R","Q → R")
+        self.assertTrue(hint["same_conclusion_shape"])
+        self.assertEqual(hint["hypotheses_matched"],1)
 
     def test_corpus_incremental_and_allowed_import(self):
         with tempfile.TemporaryDirectory() as tmp:

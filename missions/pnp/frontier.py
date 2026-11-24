@@ -48,7 +48,7 @@ def normalize(raw, now):
 
 
 def refresh():
-    url = config.DESK_BASE + "/status?" + urlencode({"handle": config.GH_USER})
+    url = config.DESK_BASE + "/status?" + urlencode({"handle": config.DESK_HANDLE})
     result = subprocess.run(["curl", "-fsS", "--max-time", "8", url],
                             capture_output=True, text=True, timeout=10, check=True)
     snapshot = normalize(json.loads(result.stdout), time.time())

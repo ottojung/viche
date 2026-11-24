@@ -29,9 +29,10 @@ audit=$(python3 "$ver" --town "$town" audit)
 printf '%s\n' "$audit" | grep -q '"ok": true'
 printf '%s\n' "$audit" | grep -q '"new_invocation_after_expiry": \[\]'
 
-# All four offices remain disabled by default in the authorization record.
-disabled=$(jq -r '[.offices[] | .enabled] | all(. == false)' "$town/records/knowledge/activation.json")
-[ "$disabled" = true ]
+# Verify the legacy draft independently of the later Act34 activation record.
+# Disabled activation and cross-office forgery are exercised in isolated
+# knowledge-activation-binding-smoke fixtures, not by assuming live inactivity.
+jq -e '.offices | keys == ["foresight","spying","statistics","strategy"]' "$town/records/knowledge/activation.json" >/dev/null
 
 # Wrapper carries no authority but locates the verifier deterministically.
 set +e
@@ -40,4 +41,4 @@ wrc=$?
 set -e
 [ "$wrc" -ne 0 ] || { echo 'wrapper failed open' >&2; exit 1; }
 
-echo 'knowledge phase-gate verifier smoke: OK (fail-closed hold, offices disabled)'
+echo 'knowledge phase-gate verifier smoke: OK (fail-closed legacy draft)'

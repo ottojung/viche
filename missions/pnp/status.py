@@ -126,9 +126,11 @@ def snapshot():
         if type(held) is int and type(parallel) is int and held < parallel:
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
+    from missions.pnp import continuity
+    missing_fronts = [p[0] for p in continuity.focus_plans(selected,w["agents"])] if w["coverage"]=="complete" else []
     coordination_due = bool(w["coverage"] == "complete" and (
         stale_workers or unstaffed or missing_general or off_focus or
-        (focus_gap and len(focus_workers) < 2)))
+        missing_fronts))
     # Support agents are never counted as leased researchers. Coverage is
     # a coordination signal, not an agent-number quota or a proof gate.
     scouts = w.pop("support", [])
@@ -139,7 +141,8 @@ def snapshot():
         needed.add("lease-evaluation")
     if len(active) > 1:
         needed.add("portfolio")
-    missing_support = sorted(needed - covered) if w["coverage"] == "complete" else []
+    complete = continuity.completed_roles(continuity.live(), selected)
+    missing_support = sorted(needed - covered - complete) if w["coverage"] == "complete" else []
     try:
         memory = json.loads((STATE / "pnp/allocator.json").read_text())
         decisions = {k: memory.get("last_"+k) for k in ("switch","release")}
@@ -163,13 +166,13 @@ def snapshot():
     return {
         "observed": len(rows), "by_state": by_state, "recent": rows[-12:],
         "leaderboard": score, "workers": w,
-        "research_support": {"agents": scouts, "coverage_missing": missing_support,
+        "research_support": {"agents": scouts, "completed_current_evidence": sorted(complete), "coverage_missing": missing_support,
                              "coordination_findings": findings,
                              "portfolio_decisions": decisions,
                              "action": "Executive owns staffing and material steering; support findings are advisory and arrive directly in worker guards."},
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
-        "research_focus": focus_gap, "focus_workers": focus_workers, "reserve_gaps": reserves,
+        "research_focus": focus_gap, "missing_focus_fronts": missing_fronts, "focus_workers": focus_workers, "reserve_gaps": reserves,
         "general_workers": general_workers, "missing_general": missing_general,
         "baseline_command":"python3 -m missions.pnp.staff --baseline",
         "focus_details": ({k: selected.get(k) for k in ("gap_title", "statement", "imports", "context")}

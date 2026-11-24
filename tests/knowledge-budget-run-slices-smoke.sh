@@ -19,6 +19,10 @@ p=Path(sys.argv[1])
 c=json.loads(p.read_text())
 c["metering"]["opencode_db"]=sys.argv[2]
 c["offices"]["statistics"]["enabled"]=True
+for office in c["offices"].values():
+    office["caps"]={"tokens_total":400000,"cpu_seconds":1800,"wall_seconds":3600}
+    office.pop("per_run_caps",None)
+c["aggregate"]["caps"]={"tokens_total":1600000,"cpu_seconds":7200,"wall_seconds":14400}
 c["offices"]["statistics"]["per_run_caps"]={
     "tokens_total":120000, "cpu_seconds":400,"wall_seconds":600}
 p.write_text(json.dumps(c))

@@ -173,6 +173,11 @@ Reconcile actionable allocation gaps and deliver useful handoffs first.
 Workers own their methods and experiments. Delegate substantive investigations;
 never sleep or poll worker computations in the Executive session. Make the
 coordination decisions, then finish the pass without waiting for their effects.
+Do not make a Git delivery or dated report for routine staffing, focus, resource
+allocation or replenishment. Existing mission state, assignment and operational
+logs are the durable record. Record a concise new rationale there when needed.
+Deliver only material outcomes, actual software/law changes and consequential
+orders; no separate integration to attest a routine operation.
 Do not infer successful mission outcomes from a diagnostic, agent exit, or
 depleted queue. Check live assignments and pursue new useful work when any
 Founder's standing objective is still open.

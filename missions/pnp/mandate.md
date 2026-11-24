@@ -56,7 +56,13 @@ specify objectives and inspect the system without seeding worker sessions.
 Do not infer Executive staffing effectiveness from agents started by an
 external operator. Require evidence that Executive independently recognizes
 zero/insufficient useful staffing and replenishes it through Antonina.
-Record the Executive's decisions and worker assignments durably.
+Record the Executive's decisions and worker assignments durably in existing
+mission state and operational logs. Routine allocation, replenishment and
+focus decisions do not need a new records/research report, Git commit, delivery,
+integration, or review; preserve the evidence and decision reason in the
+mission's existing durable state instead. Only material outcomes, consequential
+orders and actual changes to the software or law require the usual delivery
+process. No duplicate records or artificial approval gates.
 
 For every Executive cycle:
 - Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes
@@ -445,3 +451,47 @@ Do not generate empty progress reports. Evaluators use portfolio inspect to
 read these findings and the actual agent logs; they should seek clarification
 or more mathematical evidence when necessary, not impose an extra review gate.
 The allocator must never infer mathematical abandonment from agent absence.
+
+
+## Standing Executive continuity order (Founder priority, supersedes vacancy holds)
+
+The Executive's prescribed mechanical staffing duties run through the generic
+Executive mission hook independently of its reasoning session. This is the
+Executive executing a standing order, NOT the desk allocator, an external
+assistant, a support agent, or a new discretionary scheduler. The Executive
+retains lifecycle authority and chooses additional approaches, intervenes on
+duplicates, and resolves resource or model failures. Do not manually run the
+live hook from another office. The hook uses the same staffing lock as the
+Executive's interactive commands; only the existing allocator claims leases.
+
+Every researchable lease has an actively reasoning general researcher.
+A completed bounded pass is NOT a reason to leave a reserve empty. Reuse the
+workspace and prior findings; change approach or give the lease evaluator
+specific evidence of exhaustion. Only a valid release, publication, or
+demonstrated resource/model blocker ends this obligation. Prior records holding
+vacancies until a new idea appears are superseded. The standing allocation
+order also supplies an integrator and at least one independent alternative when
+those fronts are uncovered, and a correction owner when the selected PR needs repair.
+These are starting roles, never a maximum; the Executive chooses additional
+useful distinct approaches. Support passes are replenished on new assignments
+or substantive primary evidence, not identical status polling. No additional
+report, approval or publication gate is introduced.
+
+Use the shared bounded finite-search tool (proofs search) for suitable
+circuit questions. Verify every witness against the full truth table; an
+UNSAT search is only evidence for its exact encoding and is not a checked
+Lean refutation. For difficult transplanted/generated proofs, use managed
+compilation as early as useful, especially before risky publication, without
+requiring redundant full checks for a complete high-confidence proof.
+
+
+Parallel formalization: integrator identifies exact missing lemmas and splits
+them into independently testable pieces. Each specialist can snapshot a helper
+using `python3 -m missions.pnp.proofs share FILE --message RESULT` (from the
+bound workspace, with canonical PYTHONPATH). Peers retrieve paths and exact
+content digests with `proofs fragments --all-attempts`. These immutable
+sources survive agent exits and new leases; status is self-described, never
+an assertion of kernel checking. Use narrow scratch imports and the managed
+light queue when possible; the integrator checks the combined exact file.
+Proof reuse hints in `proofs find` include relaxed conclusion/hypothesis
+matches; a high score is NOT a proof of implication.

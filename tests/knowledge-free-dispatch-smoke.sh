@@ -45,12 +45,22 @@ printf '%s\n' '{"models":[{"model":"global-sentinel"}]}' > "$d/global/antonina/c
 cp "$d/global/antonina/config.json" "$d/global-before.json"
 XDG_CONFIG_HOME="$d/global"
 export XDG_CONFIG_HOME
-export VICHE_ZERO_BILLED_SNAPSHOT=provider-snapshot.json
+# The fixture's explicit global authorization is independent of the volatile
+# discovery preference. Only tests translate each desired authorized set.
+authorize_fixture() {
+ python3 - "$d/state/economy/model-policy.json" "$d/global/antonina/config.json" <<'PYAUTH'
+import json,sys
+ids=json.load(open(sys.argv[1]))["prefer"]
+json.dump({"models":[{"model":mid,"comment":"fixture","variant":"low"} for mid in ids]},open(sys.argv[2],"w"))
+PYAUTH
+ cp "$d/global/antonina/config.json" "$d/global-before.json"
+}
 
 python3 - "$d/state/economy/model-policy.json" <<'PY'
 import json,sys
 json.dump({"prefer":["opencode/tidepool-alpha-free","opencode/hy4-flash-free"],"exclude":[]},open(sys.argv[1],"w"))
 PY
+authorize_fixture
 # Stub antonina records the env and args instead of dispatching.
 cat > "$d/bin/antonina" <<'EOF'
 #!/bin/sh
@@ -68,18 +78,27 @@ python3 - "$d/state/knowledge/free-allowlist/antonina/config.json" <<'PY'
 import json,sys
 c=json.load(open(sys.argv[1]))
 assert [e['model'] for e in c['models']]==['opencode/tidepool-alpha-free','opencode/hy4-flash-free']
-assert all('-free' in e['model'] for e in c['models'])
+assert all('-free' in e['model'] and e['variant']=='low' for e in c['models'])
 PY
 
 # Global ladder is untouched (wrapper works from a temp state root only).
 cmp -s "$d/global/antonina/config.json" "$d/global-before.json" ||
   { echo 'FAIL: global config changed' >&2; fail=1; }
 
+# Destroy discovery metadata while retaining the durable authorization.
+printf '%s\n' 'invalid-json' > "$d/state/economy/catalogue.json"
+rm "$d/state/economy/model-policy.json"
+CAPTURE="$d/capture-no-discovery" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
+  PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach
+cmp "$d/global/antonina/config.json" "$d/global-before.json"
+test -s "$d/capture-no-discovery"
+
 # A disguised paid id containing -free mid-string must be refused.
 python3 - "$d/state/economy/model-policy.json" <<'PYMASK'
 import json,sys
 json.dump({"prefer":["provider/paid-free-trial"],"exclude":[]},open(sys.argv[1],"w"))
 PYMASK
+authorize_fixture
 if CAPTURE="$d/capture3" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
    PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
  echo 'FAIL: disguised paid id admitted' >&2; fail=1
@@ -92,6 +111,7 @@ python3 - "$d/state/economy/model-policy.json" <<'PYPRETEND'
 import json,sys
 json.dump({"prefer":["provider/paid-free"],"exclude":[]},open(sys.argv[1],"w"))
 PYPRETEND
+authorize_fixture
 if CAPTURE="$d/capture4" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
   echo 'FAIL: deceptive paid-free provider was admitted as free' >&2; fail=1
@@ -102,6 +122,7 @@ python3 - "$d/state/economy/model-policy.json" <<'PY'
 import json,sys
 json.dump({"prefer":["openai/gpt-6-luna"],"exclude":[]},open(sys.argv[1],"w"))
 PY
+authorize_fixture
 if CAPTURE="$d/capture2" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
   echo 'FAIL: non-free id admitted' >&2; fail=1
@@ -113,6 +134,7 @@ python3 - "$d/state/economy/model-policy.json" <<'PYSECONDARY'
 import json,sys
 json.dump({"prefer":["opencode/hy4-flash-free","opencode-go/hy4-flash-free","opencode-go/hungerg-free"]},open(sys.argv[1],"w"))
 PYSECONDARY
+authorize_fixture
 CAPTURE="$d/capture7" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
   PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach
 python3 - "$d/state/knowledge/free-allowlist/antonina/config.json" <<'PYOMIT'
@@ -130,6 +152,7 @@ b["models"]["opencode/hy4-flash-free"]["cost"]["output"]=0.1
 json.dump(b,open(billing,"w"))
 json.dump({"prefer":["opencode/hy4-flash-free"]},open(policy,"w"))
 PYCOST
+authorize_fixture
 if CAPTURE="$d/capture5" VICHE_TOWN_ROOT="$d/town" VICHE_STATE_ROOT="$d/state" \
    PATH="$d/bin:$PATH" /bin/sh "$wrap" run --id fake --cwd /tmp --prompt hi --detach >/dev/null 2>&1; then
   echo 'FAIL: nonzero provider cost admitted' >&2; fail=1
@@ -187,7 +210,38 @@ import datetime,importlib.util,sys
 spec=importlib.util.spec_from_file_location("zb",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 # Validate the committed evidence as of publication; the runtime gate uses the
 # real clock and the fixture above separately proves expiry fails closed.
-m.load_verified(sys.argv[3],now=datetime.datetime(2026,11,24,9,0,tzinfo=datetime.timezone.utc),snapshot_path=sys.argv[8])
+data=m.load_verified(sys.argv[3],now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=sys.argv[8])
+import json,pathlib,tempfile,hashlib
+expected={"opencode-go/"+mid for mid in ("hy4-flash-free","hungerg-free")}
+unsafe={"opencode-go/beam-free","opencode-go/iceman-contributor-free"}
+assert not (unsafe & set(data["models"]))
+assert expected <= set(data["models"])
+assert set(m.verified_subset(sys.argv[3],sorted(expected),snapshot_path=sys.argv[8])) == expected
+# Route mismatch and corrupted Go bytes cannot authorize a Go model.
+with tempfile.TemporaryDirectory() as td:
+    p=pathlib.Path(td)
+    primary=p/"primary.json";primary.write_bytes(pathlib.Path(sys.argv[8]).read_bytes())
+    go=p/pathlib.Path(data["go_source"]["snapshot_ref"]).name
+    go.write_bytes((pathlib.Path(sys.argv[8]).parent/go.name).read_bytes())
+    policy=p/"policy.json"
+    bad=json.loads(json.dumps(data));bad["go_source"]["url"]="https://opencode.ai/inference/v1/models"
+    policy.write_text(json.dumps(bad))
+    try:m.load_verified(policy,now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=primary)
+    except ValueError:pass
+    else:raise AssertionError("wrong Go route admitted")
+    # Exact zero price is insufficient for restricted data-handling routes.
+    for mid in unsafe:
+        bad=json.loads(json.dumps(data))
+        bad["models"][mid]={"provider":"opencode-go","provider_model":mid.split("/")[1],
+                           "cost":{"input":0,"output":0,"cache_read":0}}
+        policy.write_text(json.dumps(bad))
+        try:m.load_verified(policy,now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=primary)
+        except ValueError as exc:assert "data-handling scope" in str(exc)
+        else:raise AssertionError("unsafe Go data scope admitted")
+    policy.write_text(json.dumps(data));go.write_bytes(b"{}")
+    try:m.load_verified(policy,now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=primary)
+    except ValueError:pass
+    else:raise AssertionError("changed Go snapshot admitted")
 paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7],"provider_snapshot":sys.argv[8]}
 print("PRODUCTION_NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
 PYDIGEST

@@ -96,7 +96,8 @@ class SupportTests(unittest.TestCase):
             self.assertEqual({r["path"]: r["relation"] for r in support.matches(db, NEGATION)},
                              {"same": "opposite conclusion", "neg": "exact statement"})
 
-    def test_scan_is_advisory_and_stable(self):
+    @patch.object(support.github, "repository_name", return_value="fixture-owner/fixture-proofs")
+    def test_scan_is_advisory_and_stable(self, repository_name):
         with corpus.open_index() as db:
             db.execute("insert into proof values(?,?,?,?,?,?)",
                        ("lean/PEqualNP/Outside/L_meta_905.lean", "abc", NEGATION, "", "[]", "[]"))
@@ -105,7 +106,8 @@ class SupportTests(unittest.TestCase):
         note, = support.read(self.rec)
         self.assertTrue(note["coordinate"])
         self.assertIn("opposite conclusion", note["message"])
-        self.assertIn("rev1/lean/", note["evidence"])
+        self.assertEqual(note["evidence"], "https://github.com/fixture-owner/fixture-proofs/blob/rev1/lean/PEqualNP/Outside/L_meta_905.lean")
+        repository_name.assert_called_with(config.UPSTREAM_ID)
         with patch.object(corpus, "update", return_value="rev2"):
             support.scan()
         self.assertEqual(support.read(self.rec), [note])

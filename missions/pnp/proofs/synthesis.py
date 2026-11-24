@@ -23,6 +23,34 @@ def parse(statement):
     return n,bound,edges
 
 
+def star_cover(n, edges):
+    """Exact minimum vertex cover; assign every edge to one endpoint.
+
+    A cover of size k produces at most |E| + k - 1 binary gates. Never
+    duplicate an already covered edge just to complete a maximal star.
+    This is an upper bound, not a claim of globally optimal circuits.
+    """
+    vertices = sorted(set(itertools.chain.from_iterable(edges)))
+    centers = next(S for k in range(1,len(vertices)+1)
+                   for S in itertools.combinations(vertices,k)
+                   if all(a in S or b in S for a,b in edges))
+    stars = {v: [] for v in centers}
+    for a,b in sorted(edges):
+        v,w = (a,b) if a in stars else (b,a)
+        stars[v].append(w)
+    gates = []
+    def gate(op,a,b):
+        gates.append((op,a,b))
+        return n+len(gates)-1
+    def disjoin(xs):
+        r=xs[0]
+        for x in xs[1:]:
+            r=gate("or",r,x)
+        return r
+    outputs=[gate("and",v,disjoin(ns)) for v,ns in stars.items() if ns]
+    return gates,disjoin(outputs)
+
+
 def synthesize(n, edges):
     """Cover edges by stars or complete bipartite blocks; share OR subexpressions."""
     neighbors = {i:{b if a == i else a for a,b in edges if i in (a,b)}
@@ -37,7 +65,7 @@ def synthesize(n, edges):
             if right:
                 blocks.add((left,tuple(sorted(right))))
     blocks = sorted(blocks)
-    best = None
+    best = star_cover(n,edges)
     for strategy in range(3):
         gates, memo, remaining, outputs = [], {}, set(edges), []
         def gate(op,a,b):
@@ -72,10 +100,14 @@ def synthesize(n, edges):
 
 
 def verify(n,edges,gates,output):
+    if not 0 <= output < n+len(gates):
+        return False
     for mask in range(1<<n):
         w = [bool(mask & (1<<i)) for i in range(n)]
         for op,a,b in gates:
             if not (0 <= a < len(w) and 0 <= b < len(w)):
+                return False
+            if op not in ("and","or"):
                 return False
             w.append(w[a] and w[b] if op=="and" else w[a] or w[b])
         if w[output] != any(w[a] and w[b] for a,b in edges):

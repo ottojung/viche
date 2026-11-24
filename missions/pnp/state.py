@@ -22,6 +22,7 @@ EMPTY = {
     "gap_title": None,
     "context": None,
     "dead": None,
+    "desk_notes": {},
     "lease": None,
     "lease_obtained_at": None,
     "lease_expires_at": None,
@@ -34,6 +35,8 @@ EMPTY = {
     "worktree": None,
     "commit_sha": None,
     "pr_number": None,
+    "pending_pr_number": None,
+    "release_pending": False,
     "pr_url": None,
     "external_verdict": None,
     "failure_reason": None,
@@ -161,7 +164,7 @@ def reacquire(gap_id, **fields):
         previous = rec["state"]
         lease_fields = ("lease", "lease_obtained_at", "lease_expires_at")
         meta_fields = ("statement", "module", "path", "imports", "gap_title",
-                       "context", "dead", "acquisition_hard", "acquisition_prs")
+                       "context", "dead", "desk_notes", "acquisition_hard", "acquisition_prs")
         for key in lease_fields + meta_fields:
             if key in fields:
                 rec[key] = fields[key]
@@ -173,6 +176,8 @@ def reacquire(gap_id, **fields):
                     "commit_sha", "pr_number", "pr_url", "external_verdict"):
             rec[key] = None
         rec["failure_reason"] = None
+        rec["pending_pr_number"] = None
+        rec["release_pending"] = False
         rec["queued_lease"] = None
         rec["build_evidence"] = None
         rec["local_check_status"] = None

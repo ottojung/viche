@@ -2,6 +2,7 @@
 # Durable nonblocking P vs NP lease maintenance, invoked each Town boot cycle.
 # No agent/model starts here: the Executive assigns mathematical research.
 set -eu
+. "$(dirname "$0")/runtime.sh"
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-user/user1/guix-profile/bin:/run/current-system/profile/bin:${PATH:-/bin}
 [ -r "$town/missions/pnp/cli.py" ] || exit 0
@@ -18,6 +19,9 @@ mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache"
 nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/support-scan.lock" \
     timeout 120 python3 -m missions.pnp.support scan --refresh \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/support-scan.log" 2>&1 &
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.lock" \
+    timeout 25 python3 -m missions.pnp.brief --refresh \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.log" 2>&1 &
 # Renew leases and recover queued publications before the optional score poll.
 python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile

@@ -38,6 +38,7 @@ import json
 import os
 import pathlib
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -266,7 +267,8 @@ def capacity_assessment(resources, counter, previous, current, pol):
     if resources.get("load", {}).get("status") in ("short", "critical"):
         reasons.append("load pressure")
     free = funding.get("free_available_now")
-    if not isinstance(free, int) or free < 1 or funding.get("status") == "critical":
+    fallback = funding.get("fallback_eligible_now")
+    if not isinstance(free, int) or free < 1:
         reasons.append("free model availability")
     if reasons:
         status = "constrained"
@@ -284,8 +286,10 @@ def capacity_assessment(resources, counter, previous, current, pol):
     memory_state = ("unknown" if spare_mem is None else
                     "pressure" if new_oom or mem.get("status") != "ok" else
                     "spare" if spare_mem >= 2.0 else "limited")
-    funding_state = ("unknown" if not isinstance(free, int) else
-                     "unavailable" if free < 1 else "available")
+    funding_state = ("available" if isinstance(free, int) and free > 0 else
+                     "fallback_eligible" if isinstance(fallback, int) and fallback > 0 else
+                     "unavailable" if isinstance(free, int) and free == 0 and fallback == 0 else
+                     "unknown")
     stalls = pressure()
     dimensions = {"cpu": cpu_state, "memory": memory_state,
                   "disk": disk_mode, "model_funding": funding_state}
@@ -363,20 +367,49 @@ def record_sample(rows, fs, mem, current):
     return rows
 
 
+def _net_loss_rates(rows, label):
+    """Positive net-loss rates between consecutive samples; reclaim jumps excluded."""
+    rates = []
+    ordered = sorted(rows, key=lambda r: int(r.get("at", 0)))
+    for a, b in zip(ordered, ordered[1:]):
+        dt = (int(b["at"]) - int(a["at"])) / 3600.0
+        if dt <= 0:
+            continue
+        lost = a["fs"][label]["avail"] - b["fs"][label]["avail"]
+        if lost > 0:
+            rates.append(lost / dt)
+    return rates
+
+
 def forecast_hours(rows, label, avail_now, current):
-    """Hours until the filesystem is full at the rate observed over the last day (None: not shrinking)."""
+    """Hours until the filesystem is full at a robust recent net-loss rate.
+
+    A one-off reclamation inside the lookback leaves the oldest sample's free
+    space close to today's, so the naive endpoint rate looks tiny and inflates
+    the forecast.  Use the median of positive sub-window rates over the most
+    recent six hours (reclaims, where free space rises, are excluded).  Fall
+    back to the whole lookback and then to the single-sample two-point rate so
+    sparse histories and the smoke fixtures keep working.
+    """
     window = [r for r in rows if 7200 <= current - int(r.get("at", 0)) <= 86400 and label in r.get("fs", {})]
     if not window:
         window = [r for r in rows if 3600 <= current - int(r.get("at", 0)) <= 7200 and label in r.get("fs", {})]
     if not window:
         return None
+    for cutoff in (6 * 3600, None):
+        subset = ([r for r in window if current - int(r.get("at", 0)) <= cutoff]
+                  if cutoff is not None else window)
+        rates = _net_loss_rates(subset, label)
+        if len(rates) >= 2:
+            rate = statistics.median(rates)
+            if rate > 0:
+                return round(avail_now / rate, 1)
     then = min(window, key=lambda r: r["at"])
     hours = (current - then["at"]) / 3600.0
     lost = then["fs"][label]["avail"] - avail_now
     if hours <= 0 or lost <= 0:
         return None
-    rate = lost / hours
-    return round(avail_now / rate, 1)
+    return round(avail_now / (lost / hours), 1)
 
 
 # ---- evaluation -------------------------------------------------------------
@@ -415,7 +448,8 @@ def evaluate(pol, fs, mem, load_avg, funding, rows, current):
     risk = funding.get("funding_risk") if isinstance(funding, dict) else None
     resources["model_funding"] = {"status": {"none": "ok", "elevated": "watch", "high": "critical"}.get(risk, "ok"),
                                   "funding_risk": risk or "unknown",
-                                  "free_available_now": (funding or {}).get("free_available_now")}
+                                  "free_available_now": (funding or {}).get("free_available_now"),
+                                  "fallback_eligible_now": (funding or {}).get("fallback_eligible_now")}
     return resources
 
 
@@ -486,7 +520,10 @@ def needs_founder(resources, taken, previous):
             lines.append("NEEDS-FOUNDER: memory headroom is %.2f GiB (critical, Act 13); more memory or fewer concurrent seats."
                          % r["headroom_gib"])
         elif key == "model_funding" and r["status"] == "critical":
-            lines.append("NEEDS-FOUNDER: no free model is available now; the Town would fall back to paid models.")
+            if (r.get("fallback_eligible_now") or 0) > 0:
+                lines.append("NEEDS-FOUNDER: no free model is available now; previously authorized fallback models are eligible (invocation not verified).")
+            else:
+                lines.append("NEEDS-FOUNDER: no free model is available now and no eligible fallback is confirmed.")
     return lines
 
 

@@ -138,6 +138,9 @@ def stop_if_terminal(entry, expected, pending, now):
                         return None
                 except (OSError, ValueError):
                     pass
+            from . import focus
+            if not superseded and focus.correction(rec):
+                return None
             if rec.get("state") not in TERMINAL and not superseded:
                 return None
             # Recheck after acquiring the gap lock. A replaced PID or cwd

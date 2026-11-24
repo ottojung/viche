@@ -10,6 +10,11 @@ root=Path(sys.argv[1])
 spec=importlib.util.spec_from_file_location("budget",root/"government/knowledge-budget-tool.py")
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 cfg=json.loads((root/"government/knowledge-budget.conf").read_text())
+# Fixed adversarial accounting example, independent of lawful live budgets.
+for office in cfg["offices"].values():
+    office["caps"]={"tokens_total":400000,"cpu_seconds":1800,"wall_seconds":3600}
+    office.pop("per_run_caps",None)
+cfg["aggregate"]["caps"]={"tokens_total":1600000,"cpu_seconds":7200,"wall_seconds":14400}
 by={key:{k:0 for k in m.CAP_KEYS} for key in m.OFFICES}
 agg={k:0 for k in m.CAP_KEYS}
 agg["by_office"]=by

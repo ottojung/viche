@@ -14,17 +14,22 @@ VERDICT = re.compile(
     r"\*\*(ACCEPTED|REJECTED|FAULT|REFUSED) \([^\n]*\)\*\*", re.M)
 
 
-def current_verdict(comments, sha):
+def current_verdict(comments, sha, resolve_repo=None):
     if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
         return None
+    resolve_repo = resolve_repo or github.repository_id
     verdicts = []
     for comment in comments:
-        if comment.get("author") != "LiorDagan":
+        legacy = comment.get("author_id") == config.CHECKER_ID
+        intake = (comment.get("author_id") == config.CHECKER_INTAKE_BOT_ID
+                  and comment.get("app_id") == config.CHECKER_INTAKE_APP_ID)
+        if not (legacy or intake):
             continue
         body = comment.get("body") or ""
         match = VERDICT.search(body)
-        if (match and sha.startswith(match[1]) and
-                re.search(r"^Run: https://github\.com/brilliant-hq/pequalnp-proofs/actions/runs/[0-9]+$", body, re.M)):
+        link = re.search(r"^Run: https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9_.-]+)/actions/runs/[0-9]+$", body, re.M)
+        if (match and sha.startswith(match[1]) and link and
+                resolve_repo(link[1]) == config.UPSTREAM_ID):
             verdicts.append((comment.get("created_at", ""), match[2]))
     return max(verdicts)[1] if verdicts else None
 
@@ -47,6 +52,36 @@ def _heartbeat(gap_id, rec, desk, force=False):
         state.update(gap_id, lease_expires_at=now + config.LEASE_TTL_SECONDS)
 
 
+def recover_fault(gap_id, rec, desk, gh):
+    """Recover only an existing, fully validated PR; never create one here."""
+    if rec["state"] != "FAULT" or not rec.get("commit_sha"):
+        return False
+    from . import jobs, publish
+    fd = jobs.claim(gap_id)
+    if fd is None:
+        return False
+    try:
+        rec = state.load(gap_id)
+        if rec["state"] != "FAULT" or not rec.get("commit_sha"):
+            return False
+        number = rec.get("pr_number") or rec.get("pending_pr_number") or gh.pr_exists_for(
+            rec.get("branch") or config.branch_for(gap_id), gap_id)
+        if not number:
+            return False
+        number = int(number)
+        sha = rec["commit_sha"]
+        pr, problems = gh.validate_created(number, sha, rec["path"],
+                                           expected_commits=rec.get("expected_commits") or [sha])
+        if problems:
+            state.update(gap_id, pending_pr_number=number,
+                         failure_reason="PR recovery validation failed: " + "; ".join(problems))
+            return False
+        publish.record_pr(gap_id, rec, number, pr, desk)
+        return True
+    finally:
+        os.close(fd)
+
+
 def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     """Return a short summary; never raise for one bad gap."""
     desk = desk or desk_mod.Desk()
@@ -55,8 +90,17 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     rec = state.load(gap_id)
     if rec is None:
         return {"gap": gap_id, "result": "no-state"}
+    if rec.get("release_pending"):
+        from . import publish
+        publish.release_submitted(gap_id, desk)
+        rec = state.load(gap_id)
     if rec["state"] in ("ACCEPTED", "RELEASED", "STALE"):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
+
+    if rec["state"] == "FAULT":
+        if not recover_fault(gap_id, rec, desk, gh):
+            return {"gap": gap_id, "result": "unresolved-fault", "state": "FAULT"}
+        rec = state.load(gap_id)
 
     # Missing from a complete fresh frontier is a reason to confirm, not a verdict.
     _heartbeat(gap_id, rec, desk, force=frontier.missing(observed or {}, gap_id))
@@ -84,7 +128,7 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
         # Branch disappeared: do not silently re-push; record for inspection.
         state.update(gap_id, failure_reason="pushed branch missing at fork")
 
-    number = rec.get("pr_number")
+    number = rec.get("pr_number") or rec.get("pending_pr_number")
     if not number and rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN"):
         number = gh.pr_exists_for(branch, gap_id)
     if not number and rec["state"] in ("SIGNED", "PUSHED"):
@@ -111,14 +155,33 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     if number:
         number = int(number)
         pr = gh.get_pr(number)
+        # Revalidate the durable PR reference on every reconciliation. A gap
+        # may have many competing submissions; neither title nor a matching
+        # SHA alone identifies our contribution.
+        if (pr.get("author_id") != config.CONTRIBUTOR_ID
+                or pr.get("head_repo_id") != config.FORK_ID
+                or pr.get("base_repo_id") != config.UPSTREAM_ID
+                or pr.get("base_ref") != config.BASE_REF
+                or pr.get("head_ref") != branch
+                or pr.get("title") != gap_id):
+            state.update(gap_id, failure_reason="reconcile: PR identity mismatch")
+            return {"gap": gap_id, "result": "invalid-pr", "state": rec["state"]}
         if rec["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED") and pr.get("head_sha") == rec.get("commit_sha"):
-            state.transition(gap_id, "PR_OPEN", pr_number=number,
-                             pr_url=pr.get("url"),
-                             external_verdict="pending")
+            validated, problems = gh.validate_created(number, rec["commit_sha"], rec["path"],
+                expected_commits=rec.get("expected_commits") or [rec["commit_sha"]])
+            if problems:
+                state.update(gap_id, pending_pr_number=number,
+                             failure_reason="PR recovery validation failed: " + "; ".join(problems))
+                return {"gap": gap_id, "result": "invalid-pr", "state": rec["state"]}
+            from . import publish
+            publish.record_pr(gap_id, rec, number, validated, desk)
+        if rec["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED") and pr.get("head_sha") != rec.get("commit_sha"):
+            state.update(gap_id, pending_pr_number=number, failure_reason="PR recovery head mismatch")
+            return {"gap": gap_id, "result": "invalid-pr", "state": rec["state"]}
         state.update(gap_id, pr_number=number, pr_url=pr.get("url"))
         current = state.load(gap_id)
         if current["state"] in ("PR_OPEN", "REJECTED") and not current.get("queued_lease") and pr.get("head_sha") == current.get("commit_sha"):
-            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"))
+            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"), gh.repository_id)
             # A checker success is not a merged contribution; a competitor
             # can win before the merge. Never apply an old revision's verdict.
             with state.lock(gap_id):

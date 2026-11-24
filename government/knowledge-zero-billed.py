@@ -71,7 +71,29 @@ def load_verified(path, now=None, snapshot_path=None):
     records = snapshot.get("data") if isinstance(snapshot, dict) else None
     if not isinstance(records, list):
         raise ValueError("zero-billed provider snapshot schema invalid")
-    by_id = {row.get("id"): row for row in records if isinstance(row, dict)}
+    by_id = {"opencode": {row.get("id"): row for row in records if isinstance(row, dict)}}
+    go = data.get("go_source")
+    if go is not None:
+        if (not isinstance(go, dict)
+                or go.get("url") != "https://opencode.ai/inference/go/v1/models"
+                or not isinstance(go.get("sha256"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", go["sha256"])
+                or not isinstance(go.get("snapshot_ref"), str)
+                or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", go["snapshot_ref"])):
+            raise ValueError("zero-billed Go provider-cost source invalid")
+        go_time = _timestamp(go.get("retrieved_at"))
+        if go_time > now or go_time >= review_after:
+            raise ValueError("zero-billed Go provider-cost timestamps invalid")
+        # The two source snapshots share the evidence directory. Do not
+        # accept path traversal or a different provider's endpoint.
+        go_path = Path(snapshot_path).parent / pathlib.PurePosixPath(go["snapshot_ref"]).name
+        go_bytes = go_path.read_bytes()
+        if hashlib.sha256(go_bytes).hexdigest() != go["sha256"]:
+            raise ValueError("zero-billed Go snapshot digest mismatch")
+        go_data = json.loads(go_bytes)
+        if not isinstance(go_data, dict) or not isinstance(go_data.get("data"), list):
+            raise ValueError("zero-billed Go snapshot schema invalid")
+        by_id["opencode-go"] = {row.get("id"): row for row in go_data["data"] if isinstance(row, dict)}
     models = data.get("models")
     if not isinstance(models, dict) or not models:
         raise ValueError("zero-billed exact-ID policy empty")
@@ -89,8 +111,10 @@ def load_verified(path, now=None, snapshot_path=None):
             raise ValueError("unknown billing dimension: " + mid)
         if any(not _zero(cost[k]) for k in cost):
             raise ValueError("nonzero provider cost: " + mid)
-        rec = by_id.get(provider_model)
-        if not isinstance(rec, dict) or rec.get("owned_by") != provider:
+        rec = by_id.get(provider, {}).get(provider_model)
+        # Both first-party endpoints report the model owner as opencode;
+        # the route-specific source above binds which provider can use it.
+        if not isinstance(rec, dict) or rec.get("owned_by") != "opencode":
             raise ValueError("provider snapshot exact model missing: " + mid)
         provider_cost = rec.get("cost")
         if not isinstance(provider_cost, dict) or set(provider_cost) != {"text"}:
@@ -106,6 +130,16 @@ def load_verified(path, now=None, snapshot_path=None):
             raise ValueError("provider snapshot shows nonzero cost: " + mid)
         if "write" in cache and not _zero(cache.get("write")):
             raise ValueError("provider snapshot shows nonzero cache-write cost: " + mid)
+        if provider == "opencode-go":
+            # Economy's common four-office scope may include internal
+            # institutional context. Do not admit training, non-ZDR or
+            # region-restricted Go models without a distinct reviewed scope.
+            privacy = rec.get("go")
+            if (not isinstance(privacy, dict)
+                    or privacy.get("training") is not False
+                    or privacy.get("zdr") is not True
+                    or privacy.get("limited_regions") is not False):
+                raise ValueError("Go data-handling scope not approved: " + mid)
     return data
 
 
@@ -148,7 +182,9 @@ def negative_acceptance_digest(paths):
         "opencode/hy4-flash-free:nonzero-cost",
         "opencode/hy4-flash-free:expired-evidence",
         "opencode/hy4-flash-free:unknown-billing-dimension",
-        "opencode-go/hy4-flash-free:gateway-only-omitted")
+        "opencode-go/hy4-flash-free:missing-or-wrong-go-source",
+        "opencode-go/iceman-contributor-free:training-enabled",
+        "opencode-go/beam-free:non-zdr-or-region-restricted")
     payload = {"rejected_ids": names,
                "controls": {name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
                             for name, path in sorted(paths.items())}}
@@ -156,14 +192,36 @@ def negative_acceptance_digest(paths):
                                      separators=(",", ":")).encode()).hexdigest()
 
 
-def build_allowlist(policy_path, prefer_path, catalogue_path, output_path, snapshot_path=None):
-    """Build Antonina's per-invocation config from exact verified IDs."""
-    policy = json.loads(Path(prefer_path).read_text(encoding="utf-8"))
-    catalogue = json.loads(Path(catalogue_path).read_text(encoding="utf-8"))
-    if not isinstance(catalogue, dict) or not isinstance(catalogue.get("models"), dict):
-        raise ValueError("Economy catalogue missing/invalid")
-    ids = verified_subset(policy_path, policy.get("prefer"), catalogue.get("models"), snapshot_path)
-    entries = [{"model": mid,
+def global_config_path(env=None):
+    """Same host/config resolution as Antonina model-config.js."""
+    env = os.environ if env is None else env
+    service = env.get("ANTONINA_OPENCODE_XDG_CONFIG_HOME")
+    host = env.get("ANTONINA_HOST_XDG_CONFIG_HOME")
+    xdg = env.get("XDG_CONFIG_HOME")
+    base = host if service and xdg == service and host else xdg
+    return Path(base or (Path(env.get("HOME", str(Path.home()))) / ".config")) / "antonina/config.json"
+
+
+def authorized_models(path):
+    """Read the durable authorized ladder, with no catalogue dependency."""
+    config = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(config, dict) or not isinstance(config.get("models"), list):
+        raise ValueError("authorized Antonina config is malformed")
+    ids = []
+    for entry in config["models"]:
+        if not isinstance(entry, dict) or not isinstance(entry.get("comment"), str):
+            raise ValueError("authorized Antonina model entry is malformed")
+        mid = entry.get("model")
+        if not isinstance(mid, str) or not MODEL_ID.fullmatch(mid) or mid in ids:
+            raise ValueError("authorized Antonina model identity is malformed")
+        ids.append(mid)
+    return ids
+
+
+def build_allowlist(policy_path, global_path, output_path, snapshot_path=None):
+    """Intersect the reviewed exact-ID policy and durable authorization."""
+    ids = verified_subset(policy_path, authorized_models(global_path), snapshot_path=snapshot_path)
+    entries = [{"model": mid, "variant": "low",
                 "comment": "Economy exact-ID zero-cost policy; source-attested provider metadata"}
                for mid in ids]
     output = Path(output_path)

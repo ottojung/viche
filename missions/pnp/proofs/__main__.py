@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from .. import assignment, state
-from . import corpus, circuit, synthesis
+from . import corpus, circuit, synthesis, search, fragments
 
 
 def main():
@@ -20,7 +20,32 @@ def main():
     syn = sub.add_parser("synthesize")
     syn.add_argument("--output", type=Path)
     sub.add_parser("index")
+    sat = sub.add_parser("search", help="bounded finite circuit SAT/CEGIS search")
+    sat.add_argument("specification", type=Path)
+    sat.add_argument("--seconds", type=float, default=30)
+    sat.add_argument("--checkpoint", type=Path)
+    share = sub.add_parser("share", help="snapshot a reusable Lean source for peers")
+    share.add_argument("file",type=Path)
+    share.add_argument("--message",required=True)
+    listing = sub.add_parser("fragments")
+    listing.add_argument("--all-attempts",action="store_true")
     args = p.parse_args()
+    if args.command in ("share","fragments"):
+        try:
+            result = (fragments.share(args.file,args.message) if args.command=="share"
+                      else fragments.inventory(args.all_attempts))
+        except (OSError,ValueError) as exc:
+            p.error(str(exc))
+        print(json.dumps(result,ensure_ascii=False,indent=2))
+        return
+    if args.command == "search":
+        try:
+            result = search.solve(json.loads(args.specification.read_text()),
+                                  args.seconds, args.checkpoint)
+        except (OSError, ValueError) as exc:
+            p.error(str(exc))
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
     if args.command in ("find", "source", "index"):
         with corpus.open_index() as db:
             revision = corpus.update(db)
