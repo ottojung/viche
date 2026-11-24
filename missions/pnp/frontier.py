@@ -97,7 +97,9 @@ def checkpoint(gap, lease=None, now=None):
     if type(expiry) not in (float, int) or expiry <= now:
         return {"decision": "wait", "reason": "lease needs confirmation"}
     if status in ("CANDIDATE_READY", "LOCAL_CHECKED") and rec.get("queued_lease"):
-        return {"decision": "wait", "reason": "publisher owns candidate"}
+        return {"decision": "wait", "reason": (
+            "publisher needs more memory; preserve or simplify proof"
+            if not build_control.resource_ready(rec) else "publisher owns candidate")}
     return {"decision": "continue", "reason": "live local assignment",
             "publisher_build_busy": build_control.busy()}
 

@@ -8,7 +8,7 @@ restart after SIGNED, PUSHED or PR_OPEN never duplicates a branch or PR.
 import os
 import time
 
-from . import config, desk as desk_mod, gitctl, github, state, validate
+from . import config, desk as desk_mod, gitctl, github, state, validate, build_control
 
 
 class StopPublish(Exception):
@@ -140,6 +140,9 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             try:
                 ok, log = git.build(worktree, rec["module"], rec["statement"],
                                     runner=build_runner)
+            except build_control.MemoryDeferred as e:
+                state.update(gap_id, publisher_memory_required=e.required)
+                _retry_later(gap_id, "resource deferred: %s" % e)
             except Exception as e:
                 _retry_later(gap_id, "local build unavailable: %s" % e)
             if not ok:

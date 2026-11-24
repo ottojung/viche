@@ -129,3 +129,26 @@ Use the publisher for the required full build, not multiple simultaneous
 full-import Lean scratch processes. Use minimal scratch imports, bounded
 search subprocesses and small test inputs. A memory-deferred publisher
 preserves the proof and retries; do not start a competing full build.
+
+## Shared Lean compilation queue
+
+All P vs NP local Lean computation uses the shared queue, including research.
+From the Lean directory run:
+  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile --gap GAP --lease LEASE -- lake build +MODULE
+For small scratch files with narrow imports:
+  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile --light --gap GAP --lease LEASE -- lake env lean Scratch.lean
+Use heavy (the default) for any full Mathlib import or unknown memory demand.
+Do not invoke raw lean/lake/checklemma for research or start competing full
+builds. Up to two light compilations may overlap when memory permits; heavy builds
+are exclusive, and publication has admission priority. Exit 75 means a
+resource/lease deferral, not a rejected theorem. Do not busy-retry; pursue
+independent reasoning or simplify the proof. A heavy build may use available
+RAM above the host reserve without a fixed per-proof cap. A resource-blocked
+publisher preserves its candidate and waits for increased headroom or new
+proof bytes. Executive owns reassignment; no process kills of researchers.
+
+Research admission waits only briefly (at most 15 seconds) before returning
+75, so a queued compilation does not occupy an agent tool call indefinitely.
+Legacy raw PnP compiler processes are recognized as an admission constraint.
+The Executive must retire or cooperatively reassign obsolete workers rather
+than allow them to restart unnecessary full checkers.

@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from . import config, publish, state, validate
+from . import config, publish, state, validate, build_control
 
 READY = ("CANDIDATE_READY", "LOCAL_CHECKED", "SIGNED", "PUSHED", "REJECTED")
 
@@ -56,6 +56,9 @@ def submit(gap, source):
         digest = validate.validate(meta, data)
         if rec["state"] in ("SIGNED", "PUSHED") and digest != rec["candidate_digest"]:
             raise publish.StopPublish("signed proof is immutable")
+        if digest == rec.get("candidate_digest") and not build_control.resource_ready(rec):
+            return {"gap": gap, "status": "resource-deferred",
+                    "required_headroom": rec["publisher_memory_required"]}
         # Snapshot before acknowledging; never depend on a researcher file
         # that may change or vanish on agent exit.
         state.atomic_write(candidate_path(gap), data.decode("utf-8"))
@@ -68,7 +71,8 @@ def submit(gap, source):
         elif rec["state"] == "CANDIDATE_READY":
             state.update(gap, candidate_digest=digest, failure_reason=None)
         state.update(gap, queued_lease=rec["lease"],
-                     publisher_retry_at=None, publisher_failures=0)
+                     publisher_retry_at=None, publisher_failures=0,
+                     publisher_memory_required=None)
         launch(gap, fd)
         return {"gap": gap, "status": "publishing", "digest": digest}
     finally:
@@ -82,6 +86,8 @@ def resume(gap):
             not rec.get("queued_lease") or rec["queued_lease"] != rec["lease"] or
             not os.path.isfile(candidate_path(gap))):
         return False
+    if not build_control.resource_ready(rec):
+        return True
     if (rec.get("publisher_retry_at") or 0) > time.time():
         return True
     fd = claim(gap)

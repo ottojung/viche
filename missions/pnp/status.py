@@ -53,6 +53,7 @@ def snapshot():
                      "state": item.get("state"),
                      "pr_url": item.get("pr_url"),
                      "lease_expires_at": item.get("lease_expires_at"),
+                     "resource_deferred": bool(item.get("publisher_memory_required") and not frontier.build_control.resource_ready(item)) if item.get("state") in ("CANDIDATE_READY", "LOCAL_CHECKED") else False,
                      "failure_reason": item.get("failure_reason")})
     lb = leaderboard.load()
     stale = True
@@ -93,6 +94,9 @@ def snapshot():
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "publisher_build_busy": frontier.build_control.busy(),
+        "legacy_lean_compiler_pids": frontier.build_control.legacy_compilers(),
+        "lean_headroom_bytes": frontier.build_control.headroom(),
+        "resource_deferred_gaps": [r["gap"] for r in rows if r.get("resource_deferred")],
         "workers_on_terminal_gaps": stale_workers,
         "owned_by": "Viche Executive; other operators do not launch agents",
         "action": (

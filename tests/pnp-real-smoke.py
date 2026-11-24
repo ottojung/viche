@@ -8,6 +8,8 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -102,7 +104,7 @@ class FullPathSmoke(unittest.TestCase):
 
     def test_publication_slot_and_confirmed_obsolescence(self):
         with tempfile.TemporaryDirectory() as tmp:
-            with patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=16 * build_control.GIB):
+            with patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=16 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]):
                 self.assertFalse(build_control.busy())
                 with build_control.slot(timeout=0):
                     self.assertTrue(build_control.busy())
@@ -130,10 +132,111 @@ class FullPathSmoke(unittest.TestCase):
             self.assertIn("reserve", build_control.memory_reason(1))
         with patch.object(build_control, "headroom", return_value=None), patch.object(
                 build_control, "group_rss", return_value=7 * build_control.GIB):
-            self.assertIn("budget", build_control.memory_reason(1))
+            self.assertIsNone(build_control.memory_reason(1))
+            self.assertIn("light", build_control.memory_reason(1, heavy=False))
         with patch.object(build_control, "headroom", return_value=None), patch.object(
                 build_control, "group_rss", return_value=0):
             self.assertIsNone(build_control.memory_reason(1))
+
+    def test_light_shared_heavy_exclusive(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=12 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]):
+            with build_control.slot(timeout=0, heavy=False, publication=False):
+                with build_control.slot(timeout=0, heavy=False, publication=False):
+                    with self.assertRaises(build_control.BuildDeferred):
+                        with build_control.slot(timeout=0, heavy=False, publication=False):
+                            self.fail("third light build exceeds reserved capacity")
+                    with self.assertRaises(build_control.BuildDeferred):
+                        with build_control.slot(timeout=0, heavy=True):
+                            self.fail("heavy overlaps light")
+            with build_control.slot(timeout=0, heavy=True):
+                with self.assertRaises(build_control.BuildDeferred):
+                    with build_control.slot(timeout=0, heavy=False, publication=False):
+                        self.fail("light overlaps heavy")
+
+    def test_waiting_publisher_has_admission_priority(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=12 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]):
+            entered = threading.Event()
+            release = threading.Event()
+            errors = []
+            def publisher():
+                try:
+                    with build_control.slot(timeout=5):
+                        entered.set()
+                        release.wait(5)
+                except Exception as exc:
+                    errors.append(exc)
+                    entered.set()
+            with build_control.slot(timeout=0, heavy=True, publication=False):
+                thread = threading.Thread(target=publisher)
+                thread.start()
+                try:
+                    deadline = time.monotonic() + 3
+                    while time.monotonic() < deadline:
+                        fd = os.open(build_control.priority_path(), os.O_CREAT | os.O_RDWR, 0o600)
+                        try:
+                            import fcntl
+                            if not build_control.try_lock(fd, fcntl.LOCK_EX):
+                                break
+                        finally:
+                            os.close(fd)
+                        time.sleep(0.025)
+                    else:
+                        self.fail("publisher never took priority gate")
+                    self.assertFalse(entered.is_set())
+                    with self.assertRaises(build_control.BuildDeferred):
+                        with build_control.slot(timeout=0, heavy=False, publication=False):
+                            self.fail("new light build overtook publisher")
+                except BaseException:
+                    release.set()
+                    raise
+            try:
+                self.assertTrue(entered.wait(3))
+                self.assertFalse(errors)
+            finally:
+                release.set()
+                thread.join(5)
+
+    def test_legacy_compiler_and_unknown_memory_defer_admission(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp):
+            with patch.object(build_control, "headroom", return_value=12 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[123]):
+                with self.assertRaises(build_control.BuildDeferred):
+                    with build_control.slot(timeout=0):
+                        self.fail("legacy compiler overlaps managed build")
+            with patch.object(build_control, "headroom", return_value=None), patch.object(build_control, "legacy_compilers", return_value=[]):
+                with self.assertRaises(build_control.BuildDeferred):
+                    with build_control.slot(timeout=0):
+                        self.fail("unknown headroom allowed a heavy build")
+
+    def test_supervisor_reaps_its_own_memory_deferred_child(self):
+        from missions.pnp import compile as compiler
+        children = []
+        popen = subprocess.Popen
+        def spawn(*args, **kwargs):
+            proc = popen(*args, **kwargs)
+            children.append(proc)
+            return proc
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=10 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]), patch.object(build_control, "memory_reason", return_value="simulated pressure"), patch.object(compiler, "command", return_value=[sys.executable, "-c", "import time; time.sleep(30)"]), patch.object(compiler.subprocess, "Popen", side_effect=spawn):
+            with self.assertRaises(build_control.MemoryDeferred):
+                compiler.run(["lean", "scratch.lean"], timeout=3)
+            self.assertEqual(len(children), 1)
+            self.assertIsNotNone(children[0].poll())
+            self.assertFalse(build_control.busy())
+
+    def test_compiler_supervisor_success(self):
+        from missions.pnp import compile as compiler
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=10 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]), patch.object(compiler, "command", return_value=[sys.executable, "-c", "pass"]):
+            self.assertEqual(compiler.run(["lean", "scratch.lean"], timeout=3), 0)
+            self.assertFalse(build_control.busy())
+
+    def test_resource_blocked_waits_for_more_headroom(self):
+        rec = {"publisher_memory_required": 10 * build_control.GIB}
+        with patch.object(build_control, "headroom", return_value=9 * build_control.GIB):
+            self.assertFalse(build_control.resource_ready(rec))
+        with patch.object(build_control, "headroom", return_value=11 * build_control.GIB):
+            self.assertTrue(build_control.resource_ready(rec))
+        with patch.object(build_control, "headroom", return_value=None):
+            self.assertFalse(build_control.resource_ready(rec))
+        self.assertTrue(build_control.resource_ready({}))
 
     def test_reuse_requires_exact_publisher_tree(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -176,6 +176,7 @@ def reacquire(gap_id, **fields):
         rec["queued_lease"] = None
         rec["publisher_retry_at"] = None
         rec["publisher_failures"] = 0
+        rec["publisher_memory_required"] = None
         rec["intent"] = None
         rec["researchers"] = []
         rec["state"] = "LEASED"
