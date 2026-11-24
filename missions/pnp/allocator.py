@@ -7,12 +7,10 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, config, desk, frontier, focus, jobs, state, status, portfolio
+from . import assignment, cli, config, desk, frontier, focus, state, status, portfolio
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120
-ABANDONED_GRACE = 5 * 60
-HARD_MIN_AGE = 20 * 60
 
 
 def memory_path():
@@ -77,83 +75,6 @@ def bound_roster():
     return bindings, uncertain
 
 
-def abandonable(rec, now, absent, staffed):
-    if rec["state"] not in ("LEASED", "RESEARCHING") or rec.get("queued_lease"):
-        return False
-    if rec.get("intent") and rec["intent"].get("what") != "allocator_release":
-        return False
-    acquired = rec.get("lease_obtained_at")
-    if not isinstance(acquired, (int, float)):
-        return False
-    # A never-staffed reserve is intentional, not abandoned.
-    return staffed and now - acquired >= HARD_MIN_AGE and now - absent >= ABANDONED_GRACE
-
-
-def release_abandoned(rec, d, now, absent, staffed):
-    gap, lease = rec["gap_id"], rec["lease"]
-    # Exclude a publisher or a candidate being queued concurrently.
-    fd = jobs.claim(gap)
-    if fd is None:
-        return False
-    try:
-        with state.lock(gap):
-            latest = state.load(gap)
-            if not latest or latest.get("lease") != lease or not abandonable(latest, now, absent, staffed):
-                return False
-            roster = bound_roster()
-            if roster is None or (gap, lease) in roster[0] or gap in roster[1]:
-                return False
-            latest["intent"] = {"what": "allocator_release", "payload": {"lease": lease, "reason": "other"}}
-            state.save(latest)
-            d.release(lease, "other")
-            latest.update(state="RELEASED", failure_reason="other", intent=None)
-            state.save(latest)
-            state.event(gap, "state", {"to": "RELEASED", "fields": {"failure_reason": "other", "allocator": True}})
-            return True
-    finally:
-        os.close(fd)
-
-
-def retire(d, mem, now, roster):
-    if roster is None:
-        # An observation failure cannot count towards an absence.
-        for old in mem.get("observations", {}).values():
-            old.pop("absent_since", None)
-        return []
-    bound, uncertain = roster
-    observations = mem.setdefault("observations", {})
-    next_obs = {}
-    released = []
-    for rec in cli.held_records():
-        gap, lease = rec["gap_id"], rec["lease"]
-        if rec["state"] not in ("LEASED", "RESEARCHING"):
-            continue
-        # An intentionally parked former focus is a reserve, not abandoned.
-        if mem.get("parked", {}).get(gap) == lease:
-            continue
-        old = observations.get(gap, {})
-        if old.get("lease") != lease:
-            old = {"lease": lease}
-        if (gap, lease) in bound:
-            next_obs[gap] = {"lease": lease, "staffed": True}
-            continue
-        if gap in uncertain:
-            next_obs[gap] = {"lease": lease, "staffed": bool(old.get("staffed"))}
-            continue
-        absent = old.get("absent_since", now)
-        staffed = bool(old.get("staffed"))
-        next_obs[gap] = {"lease": lease, "absent_since": absent, "staffed": staffed}
-        if abandonable(rec, now, absent, staffed):
-            try:
-                if release_abandoned(rec, d, now, absent, staffed):
-                    released.append(gap)
-                    next_obs.pop(gap, None)
-            except Exception as exc:
-                print("abandoned release deferred:", gap, exc, flush=True)
-    mem["observations"] = next_obs
-    return released
-
-
 def fill(d, mem, now, snapshot):
     """Ordinary first, hard fallback, only documented allocator requests."""
     ordinary = snapshot.get("ordinary")
@@ -205,24 +126,19 @@ def tick(d=None, now=None):
     d = d or desk.Desk()
     now = time.time() if now is None else now
     mem = read_memory()
-    # A daemon restart or long sampling outage is not evidence of absence.
-    if now - mem.get("observed_at", 0) > POLL_SECONDS * 3:
-        for old in mem.get("observations", {}).values():
-            old.pop("absent_since", None)
+    mem.pop("parked", None)
+    mem.pop("observations", None)
     mem["observed_at"] = now
     try:
         roster = bound_roster()
         portfolio.apply_switch(mem, now)
         released = portfolio.apply_release(d, mem, now)
-        released.extend(retire(d, mem, now, roster))
         # Make a focus decision visible before potentially slow desk I/O.
         selected = focus.choose([state.load(g) for g in state.all_gaps()], mem.get("focus"), roster[0] if roster else (), time.time())
         mem["focus"] = list(focus.key(selected)) if selected else None
-        if selected:
-            mem.setdefault("parked", {}).pop(selected["gap_id"], None)
         state.atomic_write(memory_path(), json.dumps(mem, sort_keys=True)+"\n")
         if released:
-            print("released abandoned", released, flush=True)
+            print("released by evaluator", released, flush=True)
         # Read the cheap snapshot ourselves, independent of slow Executive.
         try:
             snapshot = frontier.refresh()
@@ -235,8 +151,6 @@ def tick(d=None, now=None):
         records = cli.held_records()
         selected = focus.choose([state.load(g) for g in state.all_gaps()], mem.get("focus"), roster[0] if roster else (), now)
         mem["focus"] = list(focus.key(selected)) if selected else None
-        if selected:
-            mem.setdefault("parked", {}).pop(selected["gap_id"], None)
         return {"released": released, "acquired": acquired,
                 "held": len(records), "focus": selected["gap_id"] if selected else None}
     finally:

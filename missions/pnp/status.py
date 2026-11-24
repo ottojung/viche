@@ -82,6 +82,7 @@ def snapshot():
         gid = bound[0] if bound else match.group(0) if match else None
         worker["gap"] = gid
         worker["bound"] = bool(bound)
+        worker["role"] = ("general" if worker.get("cwd") and assignment.general(Path(worker["cwd"])) else "specialist")
         worker["lease_current"] = None
         if bound:
             try:
@@ -105,8 +106,17 @@ def snapshot():
                       and r["state"] in ("LEASED", "RESEARCHING"))
     focus_workers = [a["id"] for a in w["agents"] if focus_gap and a["gap"] == focus_gap
                      and a["lease_current"] is True]
-    unstaffed = [focus_gap] if focus_gap and focus_gap not in staffed and w["coverage"] == "complete" else []
-    off_focus = sorted(a["id"] for a in w["agents"] if focus_gap and a["gap"] and a["gap"] != focus_gap and (a["gap_state"] in ("LEASED", "RESEARCHING") or a["gap"] in corrections))
+    researchable = {r["gap"] for r in rows if r["gap"] in active
+                    and r["state"] in ("LEASED","RESEARCHING") and not r["correction_queued"]}
+    general_workers = {g: [a["id"] for a in w["agents"] if a["gap"]==g
+                            and a["lease_current"] is True and a["role"]=="general"]
+                       for g in sorted(researchable)}
+    unstaffed = sorted(researchable-staffed) if w["coverage"] == "complete" else []
+    missing_general = sorted(g for g, ids in general_workers.items() if not ids) if w["coverage"]=="complete" else []
+    off_focus = sorted(a["id"] for a in w["agents"] if a["gap"]!=focus_gap
+                       and a["role"]!="general" and (a["gap"] in researchable or a["gap"] in corrections))
+    # Duplicate general sessions also violate one baseline per lease.
+    off_focus.extend(agent for ids in general_workers.values() for agent in sorted(ids)[1:])
     ordinary = observed.get("ordinary")
     # These are useful opportunities, not automatic staffing instructions.
     # Desk status only exposes title/competition, not individually offerable IDs.
@@ -117,7 +127,7 @@ def snapshot():
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
     coordination_due = bool(w["coverage"] == "complete" and (
-        stale_workers or unstaffed or off_focus or
+        stale_workers or unstaffed or missing_general or off_focus or
         (focus_gap and len(focus_workers) < 2)))
     # Support agents are never counted as leased researchers. Coverage is
     # a coordination signal, not an agent-number quota or a proof gate.
@@ -160,6 +170,8 @@ def snapshot():
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "research_focus": focus_gap, "focus_workers": focus_workers, "reserve_gaps": reserves,
+        "general_workers": general_workers, "missing_general": missing_general,
+        "baseline_command":"python3 -m missions.pnp.staff --baseline",
         "focus_details": ({k: selected.get(k) for k in ("gap_title", "statement", "imports", "context")}
                           if selected else None),
         "staff_command": ("python3 -m missions.pnp.staff " + focus_gap + " --worker LABEL=APPROACH"
@@ -175,10 +187,11 @@ def snapshot():
         "workers_on_terminal_gaps": stale_workers,
         "owned_by": "Viche Executive; other operators do not launch agents",
         "action": (
-            "Executive: retire obsolete workers cooperatively and concentrate useful research on research_focus. Preserve artifacts; reserve gaps need no workers."
+            "Executive: retire obsolete workers cooperatively, preserve one general researcher per live lease, and concentrate extra specialists on research_focus."
             if stale_workers else
-            "Executive must concentrate independent P vs NP researchers on research_focus "
-            "and coordinate submissions; reserve gaps intentionally have no workers."
+            "Executive: run the baseline_command now to fill missing general researchers on every live lease."
+            if missing_general else
+            "Executive must concentrate additional independent researchers on research_focus; every live lease keeps its general researcher."
             if not focus_workers else
             "Executive must parallelize distinct proof approaches on research_focus, "
             "not distribute researchers across reserve gaps."
@@ -198,7 +211,8 @@ def snapshot():
                             (score.get("runner_up") or {}).get("steps")],
             "workers": w["count"], "coverage": w["coverage"],
             "gaps": by_state, "active": sorted(active), "focus": focus_gap,
-            "off_focus": off_focus,
+            "off_focus": off_focus, "missing_general": missing_general,
+            "general_workers": general_workers,
             "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
             "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None,
             "hard_available": (observed.get("offerable") or 0) > (observed.get("ordinary") or 0) if observed else None,

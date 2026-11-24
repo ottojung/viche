@@ -236,7 +236,7 @@ def cmd_guard(args):
             from missions.pnp import focus
             chosen = focus.current()
             rec = state.load(gap)
-            if chosen and rec and focus.key(chosen) != (gap, lease) and rec["state"] in ("LEASED","RESEARCHING"):
+            if chosen and rec and focus.key(chosen) != (gap, lease) and rec["state"] in ("LEASED","RESEARCHING") and not assignment.general():
                 result = {"decision":"wait","reason":"focus switched; preserve work and finish cooperatively",
                           "research_focus":chosen["gap_id"]}
         if result["decision"] == "continue":
@@ -247,6 +247,9 @@ def cmd_guard(args):
                     advice = support.read(rec)
                     if advice:
                         result["research_advice"] = advice
+                    findings = support.findings(rec)
+                    if findings:
+                        result["research_findings"] = findings
             except (OSError, ValueError, TypeError, KeyError):
                 pass
     except (OSError, ValueError) as exc:

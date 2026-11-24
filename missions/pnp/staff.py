@@ -1,4 +1,4 @@
-"""Executive-invoked batch dispatch of independent approaches to ONE focus.
+"""Executive-invoked baseline staffing of every lease and focused specialists.
 
 Not an autonomous agent scheduler. The Executive supplies the mathematical
 approaches and invokes this helper. Existing workers are adopted by exact
@@ -13,7 +13,7 @@ import re
 import subprocess
 import sys
 
-from . import assignment, config, focus, gitctl, state
+from . import assignment, config, focus, gitctl, state, support
 
 
 def antonina(*args):
@@ -39,7 +39,7 @@ def roster():
         page += 1
 
 
-def prompt(rec, approach):
+def prompt(rec, approach, general=False):
     return (
         "Work on the exact current P vs NP assignment below, using the independent "
         "workspace already prepared for you. Pursue this distinct mathematical "
@@ -54,19 +54,37 @@ def prompt(rec, approach):
         f"Gap: {rec['gap_id']}\nStatement: {rec['statement']}\n"
         f"Imports: {json.dumps(rec.get('imports', []))}\n"
         f"Context: {rec.get('context') or ''}\n"
-        f"Assigned approach: {approach}"
+        "Share substantial findings immediately from your bound cwd using "
+        "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support finding "
+        "--evidence 'artifact or checked lemma' --message 'specific result, blocker or next route'. "
+        "Read research_findings in the guard output; use peer insights rather than duplicate work. "
+        "Evaluators rely on your actual findings and logs. "
+        + ("You are the persistent general researcher for this lease, whether focused or not. "
+           "Understand the exact statement, study existing proofs, pursue promising routes, "
+           "test assumptions and share concrete results. Continue productive mathematical work "
+           "and submit a complete proof directly. A focus change does not end your assignment. "
+           if general else "You are a focused specialist. If focus moves, preserve your findings "
+           "and finish cooperatively; the general researcher remains. ")
+        + f"Assigned approach: {approach}"
     )
 
 
-def current_matches(rec):
+def current_matches(rec, general=False):
+    latest = state.load(rec["gap_id"])
+    if not support.active(latest) or latest.get("queued_lease") or focus.key(latest) != focus.key(rec):
+        return False
+    if general:
+        return True
     selected = focus.current()
     return selected is not None and focus.key(selected) == focus.key(rec)
 
 
 def dispatch(gap, plans):
-    rec = focus.current()
-    if not rec or rec["gap_id"] != gap or rec["state"] not in ("LEASED", "RESEARCHING"):
-        raise ValueError("not the active leased research focus")
+    rec = state.load(gap)
+    if not support.active(rec) or rec.get("queued_lease"):
+        raise ValueError("not a live research lease")
+    if not all(label == "general" or current_matches(rec) for label, _ in plans):
+        raise ValueError("only the general researcher may be dispatched on a nonfocused lease")
     if not plans or len({label for label, _ in plans}) != len(plans):
         raise ValueError("distinct nonempty approach labels required")
     for label, approach in plans:
@@ -80,7 +98,7 @@ def dispatch(gap, plans):
         base = None
         results = []
         for label, approach in plans:
-            if not current_matches(rec):
+            if not current_matches(rec, label == "general"):
                 break
             try:
                 # A single upstream fetch per batch, rather than per worker.
@@ -96,7 +114,7 @@ def dispatch(gap, plans):
                 if not (path / ".git").exists() and base is None:
                     base = gitctl.ensure_mirror()
                 assignment.prepare(gap, worker=label, base=base)
-                if not current_matches(rec):
+                if not current_matches(rec, label == "general"):
                     break
                 reusable = next((a for a in existing if a.get("state") in ("idle", "clearexit")), None)
                 if reusable:
@@ -106,10 +124,10 @@ def dispatch(gap, plans):
                                         f"Viche P vs NP research: {gap} {label}")
                     if not re.fullmatch(r"[a-zA-Z0-9_-]+", agent_id):
                         raise ValueError("unreadable new agent id")
-                if not current_matches(rec):
+                if not current_matches(rec, label == "general"):
                     break
                 answer = json.loads(antonina("run", "--id", agent_id, "--cwd", str(path),
-                                            "--prompt", prompt(rec, approach), "--detach", "--json"))
+                                            "--prompt", prompt(rec, approach, label == "general"), "--detach", "--json"))
                 if answer.get("state") != "running":
                     raise ValueError("agent launch not confirmed")
                 results.append({"worker": label, "status": "started", "id": agent_id})
@@ -120,12 +138,40 @@ def dispatch(gap, plans):
         os.close(fd)
 
 
+GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact problem. "
+                    "Inspect previous artifacts, checked lemmas and nearby reductions; "
+                    "derive or test promising proof routes, including constructive witnesses "
+                    "or counterexamples when appropriate. Share specific progress, remaining "
+                    "obstacles and viable next steps with all researchers and evaluators.")
+
+
+def baseline():
+    out = []
+    for gap in state.all_gaps():
+        rec = state.load(gap)
+        if not support.active(rec) or rec.get("queued_lease"):
+            continue
+        try:
+            out.extend({"gap": gap, **row} for row in dispatch(gap, [("general", GENERAL_APPROACH)]))
+        except (OSError, ValueError, subprocess.SubprocessError) as exc:
+            out.append({"gap":gap,"status":"deferred","detail":str(exc)[:300]})
+    return out
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("gap")
-    p.add_argument("--worker", action="append", required=True, metavar="LABEL=APPROACH")
+    p.add_argument("gap", nargs="?")
+    p.add_argument("--baseline", action="store_true", help="staff one general researcher on every live lease")
+    p.add_argument("--worker", action="append", metavar="LABEL=APPROACH")
     args = p.parse_args()
     try:
+        if args.baseline:
+            if args.gap or args.worker:
+                raise ValueError("use --baseline alone")
+            print(json.dumps(baseline(), indent=2))
+            return
+        if not args.gap or not args.worker:
+            raise ValueError("specify GAP and --worker, or --baseline")
         plans = [tuple(item.split("=", 1)) for item in args.worker]
         if any(len(plan) != 2 for plan in plans):
             raise ValueError("use LABEL=APPROACH")

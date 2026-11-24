@@ -74,6 +74,52 @@ def advise(gap, expected, kind, evidence, message, coordinate=False):
         return obj
 
 
+def findings(rec):
+    """Latest substantive result per worker on this exact attempt."""
+    if not active(rec):
+        return []
+    out = []
+    for path in sorted((directory(rec) / "findings").glob("*.json")):
+        try:
+            if path.stat().st_size > 10000:
+                continue
+            obj = json.loads(path.read_text())
+            if (obj.get("attempt") == attempt(rec) and obj.get("worker") == path.stem
+                    and all(isinstance(obj.get(k), str) for k in ("message","evidence","id"))):
+                out.append(obj)
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+    return out
+
+
+def finding(evidence, message, cwd=None):
+    """Bound researchers publish findings directly, no intermediary."""
+    bound = assignment.binding(cwd)
+    label = assignment.worker_label(cwd)
+    if not bound or not label:
+        raise ValueError("run from your immutable assigned workspace")
+    if not evidence.strip() or not message.strip() or len(evidence)>1200 or len(message)>4000:
+        raise ValueError("substantive evidence and result required; link long artifacts")
+    gap, lease = bound
+    with state.lock(gap):
+        rec = state.load(gap)
+        if not active(rec) or rec["lease"] != lease:
+            raise ValueError("lease ended; preserve findings in your workspace")
+        obj = {"gap":gap,"attempt":attempt(rec),"worker":label,
+               "evidence":evidence,"message":message}
+        obj["id"] = hashlib.sha256(json.dumps(obj,sort_keys=True).encode()).hexdigest()[:24]
+        path = directory(rec) / "findings" / (label+".json")
+        try:
+            if json.loads(path.read_text()).get("id") == obj["id"]:
+                return obj
+        except (OSError, ValueError, AttributeError):
+            pass
+        obj["at"] = time.time()
+        state.atomic_write(str(path),json.dumps(obj,ensure_ascii=False,sort_keys=True)+"\n")
+        state.event(gap,"research_finding",obj)
+        return obj
+
+
 def targets(all_held=False):
     out = []
     selected = focus.current()
@@ -85,7 +131,7 @@ def targets(all_held=False):
                 out.append({"gap": gap, "attempt": attempt(rec),
                             "statement": rec["statement"], "imports": rec.get("imports", []),
                             "context": (rec.get("context") or "")[:3000],
-                            "advice": read(rec)})
+                            "advice": read(rec), "findings": findings(rec)})
         except (OSError, ValueError, TypeError, KeyError):
             continue
     return out
@@ -181,6 +227,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("targets")
+    f = sub.add_parser("finding")
+    f.add_argument("--evidence",required=True)
+    f.add_argument("--message",required=True)
     check = sub.add_parser("scan")
     check.add_argument("--refresh", action="store_true")
     a = sub.add_parser("advise")
@@ -194,6 +243,7 @@ def main():
     try:
         result = (targets() if args.command == "targets" else
                   scan(args.refresh) if args.command == "scan" else
+                  finding(args.evidence,args.message) if args.command == "finding" else
                   advise(args.gap, args.attempt, args.kind, args.evidence,
                          args.message, args.coordinate))
     except (OSError, ValueError, gitctl.GitError) as exc:

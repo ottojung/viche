@@ -87,54 +87,17 @@ class Tests(unittest.TestCase):
         self.add("L-meta-3",state="SIGNED")
         self.assertEqual([r["gap_id"] for r in cli.held_records()],["L-meta-3"])
 
-    def test_release_only_after_confirmed_absence(self):
-        rec=self.add()
-        d=Desk()
-        mem={}
-        live={(rec["gap_id"],rec["lease"])}
-        allocator.retire(d,mem,NOW,(live,set()))
-        allocator.retire(d,mem,NOW+30,(set(),set()))
-        self.assertEqual(allocator.retire(d,mem,NOW+200,(set(),set())),[])
-        with patch.object(allocator,"bound_roster",return_value=(set(),set())):
-            self.assertEqual(allocator.retire(d,mem,NOW+331,(set(),set())),["L-meta-1"])
-        self.assertEqual(d.releases,[(rec["lease"],"other")])
-        self.assertEqual(state.load(rec["gap_id"])["state"],"RELEASED")
-
-    def test_unknown_roster_resets_absence(self):
-        self.add()
-        d=Desk()
-        mem={}
-        allocator.retire(d,mem,NOW,(set(),set()))
-        allocator.retire(d,mem,NOW+100,None)
-        allocator.retire(d,mem,NOW+1300,(set(),set()))
-        self.assertFalse(d.releases)
-
-    def test_new_or_queued_not_released(self):
-        self.add(lease_obtained_at=NOW)
-        self.add("L-meta-2",state="CANDIDATE_READY",queued_lease="lease-L-meta-2")
-        self.add("L-meta-3",state="RESEARCHING",queued_lease="lease-L-meta-3")
-        mem={}
-        d=Desk()
-        allocator.retire(d,mem,NOW,(set(),set()))
-        allocator.retire(d,mem,NOW+600,(set(),set()))
-        self.assertFalse(d.releases)
-
-    def test_roster_rechecked_before_release(self):
-        rec=self.add()
-        d=Desk()
-        with patch.object(allocator,"bound_roster",return_value=({(rec["gap_id"],rec["lease"])},set())):
-            self.assertFalse(allocator.release_abandoned(rec,d,NOW,NOW-1500,True))
-        self.assertFalse(d.releases)
-
-    def test_reserves_never_released_for_idle_roster(self):
+    def test_missing_workers_do_not_release_leases(self):
+        now=time.time()
         for i in range(1,6):
-            self.add("L-meta-"+str(i))
-        d = Desk()
-        mem = {}
-        allocator.retire(d,mem,NOW,(set(),set()))
-        allocator.retire(d,mem,NOW+7200,(set(),set()))
-        self.assertEqual(d.releases,[])
-        self.assertEqual(len(cli.held_records()),5)
+            self.add("L-meta-"+str(i),lease_expires_at=now+1200)
+        d=Desk()
+        with patch.object(allocator,"bound_roster",return_value=(set(),set())), \
+             patch.object(allocator.frontier,"refresh",return_value={}):
+            result=allocator.tick(d,now=now)
+        self.assertEqual(result["held"],5)
+        self.assertEqual(result["released"],[])
+        self.assertFalse(d.releases)
 
     def test_single_stable_focus_and_rotation(self):
         hard = self.add(acquisition_hard=True)
@@ -238,19 +201,16 @@ class Tests(unittest.TestCase):
 
     def test_portfolio_switch_parks_previous_focus_and_keeps_lease(self):
         a,b,mem = self.portfolio_fixture()
-        self.assertEqual(len(portfolio.view()["leases"]),2)
+        with patch.object(allocator.status,"workers",return_value={"agents":[],"coverage":"complete"}):
+            self.assertEqual(len(portfolio.view()["leases"]),2)
         decision=portfolio.submit("switch",b["gap_id"],support.attempt(b),
                                   "checked lemma and witness","a requires new theorem; b has explicit witness",
                                   a["gap_id"],support.attempt(a))
         portfolio.apply_switch(mem,time.time())
         self.assertEqual(mem["focus"],list(focus.key(b)))
-        self.assertEqual(mem["parked"],{a["gap_id"]:a["lease"]})
+        self.assertEqual(state.load(b["gap_id"])["state"],"LEASED")
         self.assertEqual(mem["last_switch"]["id"],decision["id"])
         self.assertEqual(state.load(a["gap_id"])["state"],"LEASED")
-        d=Desk()
-        mem["observations"]={a["gap_id"]:{"lease":a["lease"],"staffed":True,"absent_since":time.time()-1000}}
-        self.assertEqual(allocator.retire(d,mem,time.time(),(set(),set())),[])
-        self.assertFalse(d.releases)
         portfolio.apply_switch(mem,time.time())
         self.assertEqual(mem["focus"],list(focus.key(b)))
 
@@ -297,6 +257,36 @@ class Tests(unittest.TestCase):
         self.assertEqual(portfolio.apply_release(d,mem,time.time()),[])
         self.assertFalse(d.releases)
         self.assertEqual(state.load(b["gap_id"])["lease"],"fresh")
+
+    def test_baseline_staffs_every_live_gap(self):
+        a,b,mem=self.portfolio_fixture()
+        self.add("L-meta-3",state="CANDIDATE_READY",queued_lease="q")
+        with patch.object(staff,"dispatch",return_value=[{"status":"started"}]) as dispatch:
+            result=staff.baseline()
+        self.assertEqual({r["gap"] for r in result},{a["gap_id"],b["gap_id"]})
+        self.assertTrue(all(c.args[1][0][0]=="general" for c in dispatch.call_args_list))
+        self.assertTrue(staff.current_matches(b,general=True))
+        self.assertFalse(staff.current_matches(b))
+
+    def test_general_findings_available_to_peers_and_evaluators(self):
+        a,b,mem=self.portfolio_fixture()
+        general=Path(assignment.prepare(b["gap_id"],checkout=False,worker="general")["cwd"])
+        specialist=Path(assignment.prepare(b["gap_id"],checkout=False,worker="search")["cwd"])
+        self.assertTrue(assignment.general(general))
+        self.assertFalse(assignment.general(specialist))
+        note=support.finding("artifact.md","Specific checked proof route.",cwd=general)
+        other=support.finding("search.py","A distinct search result.",cwd=specialist)
+        self.assertEqual({x["id"] for x in support.findings(b)},{note["id"],other["id"]})
+        with patch.object(allocator.status,"workers",return_value={"agents":[{"id":"gen","title":"general","cwd":str(general)}],"coverage":"complete"}):
+            row=next(r for r in portfolio.view()["leases"] if r["gap"]==b["gap_id"])
+        self.assertEqual(row["workers"][0]["role"],"general")
+        self.assertIn("antonina agent log --id gen",row["workers"][0]["log_command"])
+        self.assertEqual(len(row["findings"]),2)
+        state.transition(b["gap_id"],"STALE")
+        state.reacquire(b["gap_id"],lease="fresh",lease_expires_at=time.time()+1200)
+        self.assertEqual(support.findings(state.load(b["gap_id"])),[])
+        with self.assertRaises(ValueError):
+            support.finding("x","old attempt",cwd=general)
 
     def test_duplicate_never_churns(self):
         self.add()

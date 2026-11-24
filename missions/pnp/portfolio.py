@@ -34,11 +34,18 @@ def view():
     chosen = focus.current()
     observed = frontier.load()
     rows = []
+    from . import status
+    roster = status.workers()
     for item in support.targets(all_held=True):
         rec = state.load(item["gap"])
         if not support.active(rec) or support.attempt(rec) != item["attempt"]:
             continue
-        rows.append({**item, "title": rec.get("gap_title"),
+        workers = [{"id": a["id"], "title": a.get("title"), "cwd": a["cwd"],
+                    "role": "general" if support.assignment.general(Path(a["cwd"])) else "specialist",
+                    "log_command": "antonina agent log --id " + a["id"] + " --lines 50"}
+                   for a in roster["agents"] if a.get("id") and a.get("cwd")
+                   and support.assignment.binding(Path(a["cwd"])) == focus.key(rec)]
+        rows.append({**item, "workers":workers,"title": rec.get("gap_title"),
                      "hard": rec.get("acquisition_hard"),
                      "candidate_queued": bool(rec.get("queued_lease")),
                      "remaining_seconds": max(0, round(rec["lease_expires_at"]-time.time())),
@@ -47,7 +54,7 @@ def view():
                      "artifacts": state.gap_dir(item["gap"]),
                      "focus": bool(chosen and focus.key(chosen) == focus.key(rec))})
     return {"focus": chosen["gap_id"] if chosen else None,
-            "leases": rows}
+            "leases": rows, "worker_roster_coverage":roster["coverage"]}
 
 
 def text_field(value, name):
@@ -119,11 +126,8 @@ def apply_switch(mem, now):
     except (ValueError, TypeError, KeyError) as exc:
         finish(mem, obj, "obsolete: " + str(exc))
         return
-    # Do not cancel publication or throw away a candidate. Park the old
-    # lease; preserve every artifact, and let Executive move researchers.
-    mem.setdefault("parked", {})[old["gap_id"]] = old["lease"]
-    mem["parked"].pop(new["gap_id"], None)
-    mem.setdefault("observations", {}).pop(old["gap_id"], None)
+    # Preserve both live leases and the baseline researchers. Executive
+    # moves only extra specialists; completed candidates remain protected.
     mem["focus"] = list(focus.key(new))
     state.event(new["gap_id"], "portfolio_focus", {k:obj[k] for k in ("id","from","reason","evidence")})
     finish(mem, obj, "applied")
@@ -167,8 +171,6 @@ def apply_release(d, mem, now):
             latest.update(state="RELEASED", failure_reason="other", intent=None)
             state.save(latest)
             state.event(gap, "portfolio_release", {k:obj[k] for k in ("id","reason","evidence")})
-        mem.setdefault("parked", {}).pop(gap, None)
-        mem.setdefault("observations", {}).pop(gap, None)
         # Newly vacant capacity should be filled immediately.
         mem.pop("last_null_ordinary", None)
         mem.pop("last_null_hard", None)

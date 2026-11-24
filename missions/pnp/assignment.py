@@ -52,6 +52,20 @@ def binding(cwd=None):
         return None
 
 
+def worker_label(cwd=None):
+    found = workspace(cwd or Path.cwd())
+    if not found:
+        return None
+    marker = found[2]
+    if marker.name == "assignment.json" and marker.parent.parent.name == "workers":
+        return marker.parent.name
+    return "legacy"
+
+
+def general(cwd=None):
+    return worker_label(cwd) == "general"
+
+
 def first_attempt(gap):
     try:
         with open(state.events_path(gap), encoding="utf-8") as f:

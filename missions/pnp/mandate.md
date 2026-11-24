@@ -3,8 +3,9 @@
 The running allocator exclusively claims leases. Never call Desk.next_gap,
 the private wire operation, curl /desk/next, upstream pnp.sh next, or manual
 CLI acquire while the allocator runs. All of these are mutations, not
-diagnostics. Use mission status. If research_focus lacks useful parallel
-workers, the Executive's first substantive action is dispatching them.
+diagnostics. Use mission status. If missing_general is nonempty, first run the baseline batch command
+described below. If research_focus lacks useful parallel workers, dispatch
+additional specialists.
 Choose independent mathematical approaches using focus_details and invoke
 the one-command batch helper:
 `python3 -m missions.pnp.staff GAP --worker 'LABEL=APPROACH' --worker 'LABEL2=APPROACH2'`
@@ -60,8 +61,9 @@ Record the Executive's decisions and worker assignments durably.
 For every Executive cycle:
 - Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes
   since earlier measurements, plus desk leases, research experiments and PRs.
-- Concentrate parallel mathematical work on the SINGLE research_focus from
-  mission status. Keep the other leases as reserves. Delegate genuinely
+- Maintain one general researcher on EVERY live research lease, and
+  concentrate additional parallel mathematical work on the SINGLE research_focus.
+  Delegate genuinely
   independent approaches (construction, refutation, sublemmas, Lean
   formalization and proof reuse) on that same gap. Allocate as much useful
   concurrency as resources permit; do not duplicate expensive builds or
@@ -202,8 +204,8 @@ Reassess work at natural evidence checkpoints, not arbitrary deadlines:
 a successful sublemma, a failed reduction, new rival evidence, a search
 budget exhausted, or a candidate. Keep the highest-yield route moving.
 
-The Executive first addresses an unstaffed research focus and obsolete
-assignments. Reserve gaps require no researchers. After these allocation decisions,
+The Executive first addresses missing_general across all live research leases
+and obsolete assignments. Every nonfocused lease requires one general researcher. After these allocation decisions,
 delegate substantive investigations rather than waiting in the coordinator
 session; finish the pass promptly so the next state change can trigger it.
 No polling sleep inside Executive reasoning. No new review or reporting gate.
@@ -342,20 +344,18 @@ The mission allocator, not model turns, maintains up to five distinct leases.
 It prefers ordinary assignments, falls back to documented hard assignments,
 and keeps polling even with no work. The desk chooses exact gaps; do not
 attempt arbitrary ID claims. The allocator selects one stable research focus, preferring concrete,
-ordinary and low-competition work among held gaps. Do not staff reserve
-gaps. The Executive owns research strategy and agent starts/stops; do not
-duplicate allocator polling. A formerly staffed gap is released only after
-confirmed sustained absence, not because a reserve has no workers.
-Incomplete roster observations, active compilers, queued candidates and
-publication are protected. Preserve work artifacts. Explicit honest release is still possible
-when the Executive decides a route is exhausted. No active proof is cancelled
-just to make room for a more attractive offer.
+ordinary and low-competition work among held gaps until the portfolio
+researcher makes an evidence-based decision. Every held researchable lease
+has one general researcher. The Executive owns agent starts/stops; do not
+duplicate allocator polling. Missing staffing is a replenishment signal,
+not a mathematical release decision. The lease evaluator decides honest
+releases. Preserve work artifacts and protect queued/publishing candidates.
 
 ## Single-gap parallel research (Founder priority, supersedes portfolio staffing)
 
-Strive to maintain five live leases, including four intentional reserves.
-Work on the single research_focus reported by mission status. Parallelize
-that gap as much as useful: appoint a proof integrator and independent
+Strive to maintain five live leases, each with one general researcher.
+Only the single research_focus reported by mission status receives additional
+researchers. Parallelize that gap as much as useful: appoint a proof integrator and independent
 researchers pursuing distinct sublemmas, proof strategies or counterexamples.
 For independent writable checkouts run
 `python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py assignment GAP --worker LABEL`
@@ -364,13 +364,11 @@ same exact lease and has independent mutable build state; no competing PRs.
 Share useful evidence and partial proofs directly, not the writable checkout.
 The first complete valid candidate goes straight to the publisher. When
 publication owns the candidate, the allocator rotates focus to the best
-remaining reserve and fills the vacant lease slot after submission.
+remaining held lease and fills the vacant lease slot after submission.
 An existing PR requiring correction is eligible as the next focus; do not
 split ongoing research across two gaps just to fix a pending correction.
-If the Executive abandons a focus, release it honestly and move to the next.
-Do not rotate simply because another promising gap arrives; never leave
-all reserves unattended until their leases expire. The automated heartbeat
-renews the whole pool.
+The lease evaluator may release a genuinely unpromising gap. The portfolio
+researcher may change focus. The automated heartbeat renews the whole pool.
 
 ## Independent portfolio decisions (Founder priority; supersedes no-preemption)
 
@@ -382,7 +380,11 @@ gap. When a pass finishes, replenish on new assignments or meaningful new
 mathematical evidence; avoid idle polling. Both use:
 `python3 -m missions.pnp.portfolio inspect`
 from the canonical checkout. It returns every held research lease, exact
-statement, immutable attempt, competition, remaining time and artifact paths.
+statement, immutable attempt, competition, remaining time, artifact paths,
+per-worker findings, worker identities and commands to read their logs.
+Base decisions primarily on the general researchers' actual work and logs,
+and on focused specialists' results where relevant. Do not substitute
+independent speculative assessments for available first-hand research.
 
 Portfolio researcher compares ALL held problems, including progress on the
 current focus. Study proof corpus, actual partial proofs, obstacles, remaining
@@ -394,8 +396,8 @@ ordinary/hard label. Record specific comparative arguments and evidence.
 Directly decide, without Executive approval:
 `python3 -m missions.pnp.portfolio switch NEW NEW_ATTEMPT --from-gap OLD --from-attempt OLD_ATTEMPT --reason 'comparative mathematical argument' --evidence 'artifact paths or exact checked lemmas'`
 If the current focus is better, keep it and deliver useful findings instead.
-A switch parks the old lease without releasing it, and Executive promptly
-moves the proof swarm to the new focus, preserving artifacts. Do not launch
+A switch retains both leases and their general researchers. Executive promptly
+moves only the extra specialists to the new focus, preserving artifacts. Do not launch
 agents yourself.
 
 Lease evaluator independently investigates the least promising held problems.
@@ -409,6 +411,37 @@ holding, directly decide:
 The allocator executes the documented reason other, preserves artifacts,
 protects queued/publishing candidates, honors hard-step minimum holding time,
 and refills the slot. No additional review or approval. Never release
-merely because a reserve is unstaffed. Both evaluators finish their passes
+merely because a lease is temporarily unstaffed. Both evaluators finish their passes
 rather than manufacturing activity. The Executive alone staffs and retires
 agents, and immediately obeys a valid focus decision.
+
+## Baseline research on every lease (latest Founder priority)
+
+Every live researchable lease gets one persistent general researcher, with
+workspace label general. This is substantive mathematics, not a reporting
+job: understand the exact problem, relevant literature and checked lemmas,
+prior attempts, candidate constructions and obstacles; work toward a proof.
+The general researcher continues when focus moves and can submit directly.
+Only the focused lease receives additional specialists. Existing proof
+work is preserved; after switching, retire extra specialists on the old
+focus, not its general researcher. Do not count support roles as lease workers.
+When a general researcher finishes, replenish promptly while the lease is
+still live. A queued complete proof is owned by the publisher instead.
+
+Executive: fill missing_general before unrelated coordination using:
+`python3 -m missions.pnp.staff --baseline`
+This is an idempotent batch dispatch for all researchable leases. Use
+staff GAP --worker LABEL=APPROACH for extra specialists on research_focus only.
+The status fields general_workers, missing_general, and off_focus_workers
+identify exact coverage and excess sessions.
+
+All bound researchers share substantial mathematical findings directly,
+including promising routes, failed approaches, precise blockers and checked
+proofs, from their bound workspace:
+`PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support finding --evidence 'artifact or checked lemma' --message 'concrete result and next step'`
+The existing guard delivers research_findings from peers on the same exact
+lease, including the general researcher. Keep full artifacts in workspaces.
+Do not generate empty progress reports. Evaluators use portfolio inspect to
+read these findings and the actual agent logs; they should seek clarification
+or more mathematical evidence when necessary, not impose an extra review gate.
+The allocator must never infer mathematical abandonment from agent absence.

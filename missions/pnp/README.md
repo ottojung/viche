@@ -74,4 +74,4 @@ ottojung count. Source and observations persist under Viche state, never
 under government. The status.sh adapter reports leaderboard movement plus
 actual Antonina P vs NP worker visibility; only Executive dispatches them.
 
-The Executive invokes the staff batch helper for distinct approaches on the selected focus. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
+The Executive runs python3 -m missions.pnp.staff --baseline to maintain one general researcher per researchable lease, and the staff batch helper for extra distinct approaches on the selected focus. Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
