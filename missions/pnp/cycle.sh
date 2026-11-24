@@ -2,6 +2,7 @@
 # Durable nonblocking P vs NP lease maintenance, invoked each Town boot cycle.
 # No agent/model starts here: the Executive assigns mathematical research.
 set -eu
+. "$(dirname "$0")/runtime.sh"
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-user/user1/guix-profile/bin:/run/current-system/profile/bin:${PATH:-/bin}
 [ -r "$town/missions/pnp/cli.py" ] || exit 0

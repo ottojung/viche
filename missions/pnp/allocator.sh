@@ -1,6 +1,7 @@
 #!/bin/sh
 # A single persistent, cheap allocator, including when no lease exists.
 set -eu
+. "$(dirname "$0")/runtime.sh"
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}
 export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-user/user1/guix-profile/bin:/run/current-system/profile/bin:${PATH:-/bin}

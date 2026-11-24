@@ -7,6 +7,7 @@
 # lease every seven minutes and exits when no active lease remains, so it
 # cannot run forever or compete with the Executive's research scheduling.
 set -eu
+. "$(dirname "$0")/runtime.sh"
 
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
