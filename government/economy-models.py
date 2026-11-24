@@ -133,7 +133,7 @@ def read_config():
 
 
 def entry_model(entry):
-    return entry if isinstance(entry, str) else entry.get("model", "")
+    return entry if isinstance(entry, str) else entry.get("model", "") if isinstance(entry, dict) else ""
 
 
 def config_problems(entries):
@@ -276,6 +276,9 @@ def policy():
 
 
 def plan_order(cfg, catalogue_ids, probes, pol, current):
+    problems = config_problems(repair_entries(cfg["models"]))
+    if problems:
+        raise SystemExit("Invalid authorized model config: " + "; ".join(problems))
     configured = [entry_model(e) for e in cfg["models"] if entry_model(e)]
     in_catalogue = set(catalogue_ids)
     wanted = {0: [], 1: [], 2: [], 3: []}
@@ -408,7 +411,7 @@ def cooldown_state(models, current):
             why = None
             if not MODEL_ID_RE.match(model) or path.name != model.replace("/", "@") + ".json":
                 why = "filename or model id mismatch"
-            elif reason not in HARD_COOLDOWN_REASONS:
+            elif not isinstance(reason, str) or reason not in HARD_COOLDOWN_REASONS:
                 why = "not a hard provider cooldown"
             elif isinstance(until, bool) or not isinstance(until, (int, float)):
                 why = "until is not a number"
@@ -444,6 +447,8 @@ def soft_unhealthy(models, current):
             except OSError:
                 continue
             data = load(path, {})
+            if not isinstance(data, dict):
+                continue
             model = data.get("model")
             agent = data.get("agent_id")
             at = data.get("at")
@@ -561,6 +566,11 @@ def main(argv):
         return refresh(args)
     if args.command == "check":
         entries = read_config()["models"]
+        problems = config_problems(entries)
+        if problems:
+            for problem in problems:
+                print("invalid Antonina config: " + problem)
+            return 1
         bad = violations([entry_model(e) for e in entries])
         for first, second in bad:
             print("tier violation: %s (%s) is ahead of %s (%s)" % (
@@ -568,10 +578,7 @@ def main(argv):
         missing_low = [entry_model(e) for e in entries if not isinstance(e, dict) or e.get("variant") != "low"]
         for model in missing_low:
             print("low reasoning variant required: " + model)
-        problems = config_problems(entries)
-        for problem in problems:
-            print("invalid Antonina config: " + problem)
-        return 1 if bad or missing_low or problems else 0
+        return 1 if bad or missing_low else 0
     if args.command == "plan":
         cfg = read_config()
         ids = fetch_catalogue()

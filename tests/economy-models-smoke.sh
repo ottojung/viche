@@ -140,12 +140,14 @@ jq -e '[.cooldown_ignored[] | select(.why == "unreadable or oversized")] | lengt
 rm -f "$d/cool"/*.json
 
 # Fleet-wide soft health is a last-resort warning, never a reason to revoke authorization.
+printf '[]\n' > "$d/health/1794837500000-cccccccccccccccc.json"
+printf '{"model":"opencode/beta-free","reason":[],"until":1794880000}\n' > "$d/cool/opencode@beta-free.json"
 printf '{"agent_id":"agent-one","model":"opencode/alpha-free","at":1794837500}\n' > "$d/health/1794837500000-aaaaaaaaaaaaaaaa.json"
 printf '{"agent_id":"agent-two","model":"opencode/alpha-free","at":1794837550}\n' > "$d/health/1794837550000-bbbbbbbbbbbbbbbb.json"
 VICHE_ECONOMY_NOW=1794837600 $eco refresh --probe-limit 0 | jq -e '.funding_risk == "none" and .free_available_now == 2' >/dev/null
 jq -e '.soft_unhealthy["opencode/alpha-free"].agents == ["agent-one","agent-two"]' "$r" >/dev/null
 jq -e '[.order[].model | select(. == "opencode/alpha-free")] | length == 1' "$r" >/dev/null
-rm -f "$d/health"/*.json
+rm -f "$d/health"/*.json "$d/cool"/*.json
 
 # The catalogue disappearing never damages the list.
 snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
@@ -226,7 +228,7 @@ for f in "$repo"/government/*; do
   [ -f "$f" ] || continue
   grep -q 'antonina/config.json' "$f" || continue
   case "$(basename "$f")" in
-    economy-models.py|knowledge-free-dispatch.sh|MINISTRY-OF-ECONOMY.md|daily-digest.py) : ;;
+    economy-models.py|knowledge-free-dispatch.sh|knowledge-zero-billed.py|MINISTRY-OF-ECONOMY.md|daily-digest.py) : ;;
     *) echo "unexpected global-config reference in $(basename "$f")" >&2; exit 1 ;;
   esac
 done
@@ -245,6 +247,16 @@ snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
 rc=0; $eco check > "$d/bad.out" 2>/dev/null || rc=$?
 test "$rc" -eq 1
 grep -q 'duplicate configured model' "$d/bad.out"
+rc=0; $eco refresh --probe-limit 0 2>/dev/null || rc=$?
+test "$rc" -ne 0
+test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
+
+# Invalid non-object entries must produce a controlled refusal without a rewrite.
+printf '{"models":[42]}\n' > "$VICHE_ANTONINA_CONFIG"
+snapshot=$(cat "$VICHE_ANTONINA_CONFIG")
+rc=0; $eco check > "$d/bad.out" 2>/dev/null || rc=$?
+test "$rc" -eq 1
+grep -q "invalid Antonina config" "$d/bad.out"
 rc=0; $eco refresh --probe-limit 0 2>/dev/null || rc=$?
 test "$rc" -ne 0
 test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$snapshot"
