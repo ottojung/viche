@@ -20,6 +20,7 @@ x['metering']['opencode_db']=db
 x['monitor_interval_seconds']=1
 x['offices']['statistics']['enabled']=True
 x['offices']['statistics']['caps']['tokens_total']=150
+x['offices']['statistics'].pop('per_run_caps',None)
 json.dump(x,open(conf,'w'))
 PY
 cat > "$tmp/bin/antonina" <<'SH'
