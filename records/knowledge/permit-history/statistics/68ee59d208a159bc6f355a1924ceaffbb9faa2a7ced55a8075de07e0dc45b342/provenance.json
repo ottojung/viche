@@ -1,0 +1,24 @@
+{
+  "original_budget_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+  "original_main_commit": "d7c2f84af08032327ae63aeefd65f41ad53eb8c8",
+  "original_permit_sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342",
+  "preserved_artifacts": {
+    "permit.json": {
+      "original_path": "records/knowledge/permits/statistics.json",
+      "path": "records/knowledge/permit-history/statistics/68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342/permit.json",
+      "sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342"
+    },
+    "review-attestation.json": {
+      "original_path": "records/knowledge/pilot-reviews/statistics-attestation.json",
+      "path": "records/knowledge/permit-history/statistics/68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342/review-attestation.json",
+      "sha256": "8b104b054eb2bf995eee338e85c83f9809f9e54213f56bcfb07b1fdf58e42ccb"
+    },
+    "review.json": {
+      "original_path": "records/knowledge/pilot-reviews/statistics.json",
+      "path": "records/knowledge/permit-history/statistics/68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342/review.json",
+      "sha256": "550b3f58d790fb14ff2672f933d2d52ec84b400a440119bbbdc9f5852be04cdf"
+    }
+  },
+  "review_decision": "proceed",
+  "reviewed_at": 1795551268
+}
