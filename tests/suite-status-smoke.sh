@@ -6,7 +6,7 @@ scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 town=$scratch/town
 mkdir -p "$town/government" "$town/records" "$town/tests"
-cp "$repo/government/suite-status.sh" "$town/government/"
+cp "$repo/government/suite-status.sh" "$repo/government/suite-env.sh" "$town/government/"
 git -C "$town" init -q -b main
 git -C "$town" config user.email fixture@example.invalid
 git -C "$town" config user.name Fixture
@@ -15,6 +15,17 @@ git -C "$town" config commit.gpgsign false
 cat > "$town/tests/green.sh" <<'EOF'
 #!/bin/sh
 exit 0
+EOF
+cat > "$town/tests/isolation.sh" <<'EOF'
+#!/bin/sh
+set -eu
+[ "$HOME" != "$ORIGINAL_HOME" ]
+[ "$XDG_CONFIG_HOME" != "$ORIGINAL_HOME/config" ]
+[ "$VICHE_STATE_ROOT" != "$ORIGINAL_HOME/state" ]
+[ -z "${ANTONINA_HOST_XDG_CONFIG_HOME:-}" ]
+[ -z "${VICHE_ANTONINA_CONFIG:-}" ]
+! antonina agent status --id dummy
+! opencode models
 EOF
 cat > "$town/tests/red.sh" <<'EOF'
 #!/bin/sh
@@ -40,6 +51,10 @@ check_result() {
   jq -e --arg expected "$1" '.result == $expected' "$town/records/suite-status.json" >/dev/null
 }
 
+export ORIGINAL_HOME="$HOME"
+ANTONINA_HOST_XDG_CONFIG_HOME="$HOME/config" VICHE_ANTONINA_CONFIG="$HOME/config/antonina.json" \
+  VICHE_STATE_ROOT="$HOME/state" run --suite tests/isolation.sh >/dev/null
+check_result green
 run --suite tests/green.sh >/dev/null
 check_result green
 jq -e --arg commit "$(git -C "$town" rev-parse HEAD)" \

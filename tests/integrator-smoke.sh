@@ -16,7 +16,7 @@ git -C "$town" config user.email fixture@example.invalid
 git -C "$town" config commit.gpgsign false
 git -C "$town" remote add origin "$remote"
 mkdir -p "$town/government" "$town/tests" "$town/records" "$town/constitution"
-for f in suite-status.sh integrator.py propose-delivery.sh review-delivery.sh dispatch-gate.sh; do
+for f in suite-env.sh suite-status.sh integrator.py propose-delivery.sh review-delivery.sh dispatch-gate.sh; do
   cp "$repo/government/$f" "$town/government/$f"
 done
 # Suites: red when records/BREAK and records/ARM are both present (green on
@@ -98,7 +98,10 @@ test "$(git -C "$remote" show main:records/ledger.tsv | wc -l)" -eq 2
 seat c
 printf '#!/bin/sh\necho v2\n' > "$tmp/c/government/tool.sh"
 git -C "$tmp/c" add -A; git -C "$tmp/c" commit -qm 'tool v2'
+before=$(wc -l < "$tmp/suite-runs")
 propose c executive tool
+test "$(wc -l < "$tmp/suite-runs")" -eq "$before"
+test "$(tail -1 "$state/delivery/proposals.tsv" | cut -f6)" = deferred:tests/run-all.sh
 head=$(git -C "$tmp/c" rev-parse HEAD)
 integrate
 test "$(st tool)" = reviewing
@@ -211,7 +214,28 @@ fi
 printf '[{"status":"landed"}]\n' > "$state/delivery/office/c1a00004.json"
 echo same | /bin/sh "$town/government/dispatch-gate.sh" check c1a00004 | grep -q inputs_changed
 
-# 10. Proposals from before Act 31 (no office column) are never picked up.
+# 10. Deferring the proposer suite cannot let red code land.
+seat redcode
+printf '#!/bin/sh\nexit 1\n' > "$tmp/redcode/tests/run-all.sh"
+git -C "$tmp/redcode" add -A; git -C "$tmp/redcode" commit -qm 'deliberately red code'
+if (cd "$tmp/redcode" && /bin/sh "$town/government/propose-delivery.sh" --office executive --verify red-source) >/dev/null 2>&1; then
+  echo 'Explicit source preflight accepted red' >&2; exit 1
+fi
+if git -C "$remote" show-ref --verify --quiet refs/heads/delivery/red-source; then
+  echo 'Failed source preflight pushed a ref' >&2; exit 1
+fi
+propose redcode executive red-code
+test "$(tail -1 "$state/delivery/proposals.tsv" | cut -f6)" = deferred:tests/run-all.sh
+integrate
+test "$(st red-code)" = reviewing
+/bin/sh "$town/government/review-delivery.sh" delivery/red-code "$(git -C "$tmp/redcode" rev-parse HEAD)" approve \
+  --office c1a00005 --reason 'fixture review' >/dev/null
+base_red=$(git -C "$remote" rev-parse main)
+integrate
+test "$(st red-code)" = red
+test "$(git -C "$remote" rev-parse main)" = "$base_red"
+
+# 11. Proposals from before Act 31 (no office column) are never picked up.
 printf '2026-11-10T00:00:00Z\twork-x\trefs/heads/delivery/legacy\t%s\ttree\ttests/run-all.sh\n' "$head" \
   >> "$state/delivery/proposals.tsv"
 integrate

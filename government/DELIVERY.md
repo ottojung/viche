@@ -11,9 +11,13 @@ From a clean branch in your own registered worktree:
     /bin/sh /var/lib/lubko/wd/viche/government/propose-delivery.sh --office YOU short-description
 
 YOU is your seat id (c1a000NN) or your office: clerk, executive, judiciary,
-economy, innovation-office, recovery-steward. The script runs the applicable
-suite on your branch, pushes it to `origin/delivery/short-description` without
-force, and records the proposal. That is all you do.
+economy, innovation-office, recovery-steward. Run the targeted tests appropriate to your
+change. The script checks the exact clean head, runs the cheap records suite
+for records-only proposals, pushes it to `origin/delivery/short-description`
+without force, and records the proposal. Code proposals defer the mandatory
+full suite to the integrator's exact merged candidate; use `--verify` if a
+full source-branch preflight is useful. Deferred is not a green verdict.
+The independent review and Act 21 pre-landing gate remain mandatory.
 
 ## The integration queue lands it
 
