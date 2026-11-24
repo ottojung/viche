@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 from unittest.mock import patch
-from missions.pnp import leaderboard, status
+from missions.pnp import leaderboard, status, frontier
 
 def people(*pairs):
     return [{"github": name, "steps": steps, "first_proof_at":
@@ -82,6 +82,24 @@ with tempfile.TemporaryDirectory() as tmp:
     assert unknown["workers"]["count"] is None
     assert unknown["workers"]["coverage"] == "unavailable"
     assert unknown["dispatch_signal"] != empty["dispatch_signal"]
+# A malformed or partial response cannot signal that a lease has ended.
+raw = {"open_gaps": 2, "offerable_now": 1, "offerable_now_ordinary": 1,
+       "gaps": [{"id": "L-meta-1662", "held": 3, "parallel": 4}]}
+part = frontier.normalize(raw, 100)
+assert not part["complete"] and not frontier.missing(part, "L-meta-651")
+full = frontier.normalize(dict(raw, open_gaps=1), 100)
+assert frontier.missing(full, "L-meta-651")
+for rec, expected in [
+    ({"state": "LEASED", "lease": "a", "lease_expires_at": 200}, "continue"),
+    ({"state": "LEASED", "lease": "a", "lease_expires_at": 50}, "wait"),
+    ({"state": "STALE", "lease": "a"}, "stop"),
+    ({"state": "LEASED", "lease": "b", "lease_expires_at": 200}, "stop"),
+    ({"state": "CANDIDATE_READY", "lease": "a", "lease_expires_at": 200,
+      "queued_lease": "a"}, "wait"),
+    (None, "wait"),
+]:
+    with patch.object(frontier.state, "load", return_value=rec):
+        assert frontier.checkpoint("L-meta-1662", "a", now=100)["decision"] == expected
 gov = Path("government/executive-cycle.sh").read_text()
 assert "mission_dispatch_signature=" in gov
 assert "mission_dispatch_signature" in gov.split("# Founder directive 2026-11-16 (item 4):")[-1]

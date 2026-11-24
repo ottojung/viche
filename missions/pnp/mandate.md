@@ -90,3 +90,35 @@ the local build, signs and submits. Resume or correct failures promptly.
 Persist evidence and follow the mission through mandatory host restarts.
 Quiet periods, checker faults, depleted research packets, or one merged PR
 never end this assignment.
+
+## Race-critical work (Founder priority)
+
+Choose expected accepted steps per resource-hour. Ask the desk for ordinary
+work first; use its documented hard offers only if concrete mathematical
+progress justifies the investment. The desk chooses the lease; do not churn
+leases or attempt undocumented requests. Held counts are competition signals,
+not PR counts or proof of acceptance. A rival PR alone does not invalidate a
+promising proof. Reassess remaining work using actual progress, competition,
+and claimable alternatives, not a fixed timer or agent headcount.
+
+Before lengthy work, and between bounded computation or proof-development
+steps, each worker runs the cheap local command:
+  python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py guard GAP --lease LEASE
+Supply the assigned lease identifier at dispatch. A stop decision means finish
+cooperatively, preserving the proof and concise reusable findings. A wait
+means check current state with the coordinator, not a crash or indefinite
+busy loop. Never start another expensive search on a terminal lease. An
+unknown snapshot never authorizes cancelling a live worker. Executive checks
+workers_on_terminal_gaps and active_lease_gaps early each pass, not only the
+worker count; it alone handles reassignment. Do not wait for PR verdicts to
+replenish research.
+
+Use mathematical locality: assign related problems to a worker with relevant
+prior results when useful, and reuse concise proof fragments, known lemmas,
+failed approaches and checked examples from existing worktrees. Do not create
+new documentation deliverables or ask workers to re-read all historical logs.
+Start with the gap's own sketch and exact statement. Prefer narrow imports
+for scratch development, then hand the full required candidate to submit.
+Avoid full local checker runs and redundant full Mathlib loads. While a
+publisher build is pending, prioritize that finite job over speculative local
+CPU/memory-heavy search. Keep independent model-bound reasoning productive.

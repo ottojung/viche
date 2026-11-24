@@ -183,6 +183,18 @@ def reacquire(gap_id, **fields):
     return rec
 
 
+def stale_lease(gap_id, lease, reason):
+    """Do not invalidate a reacquired or already-published gap on an old reply."""
+    with lock(gap_id):
+        rec = load(gap_id)
+        if not rec or rec.get("lease") != lease or "STALE" not in config.ALLOWED.get(rec["state"], set()):
+            return False
+        rec.update(state="STALE", failure_reason=reason)
+        save(rec)
+        event(gap_id, "state", {"to": "STALE", "fields": {"failure_reason": reason}})
+        return True
+
+
 def update(gap_id, **fields):
     with lock(gap_id):
         rec = load(gap_id)

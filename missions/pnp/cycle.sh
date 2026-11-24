@@ -7,5 +7,6 @@ export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-
 [ -r "$town/missions/pnp/cli.py" ] || exit 0
 cd "$town"
 # Renew leases and recover queued publications before the optional score poll.
+python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile
 python3 missions/pnp/leaderboard.py update || echo "PnP public leaderboard unavailable; retry next cycle" >&2

@@ -20,9 +20,9 @@ if __package__ in (None, ""):
     sys.path.insert(0, os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "..")))
     from missions.pnp import (config, desk as desk_mod, publish,
-                                reconcile, state, jobs)
+                                reconcile, state, jobs, frontier)
 else:
-    from . import config, desk as desk_mod, publish, reconcile, state, jobs
+    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier
 
 
 def _printer(data):
@@ -184,6 +184,10 @@ def main(argv=None):
     subp.add_argument("gap")
     subp.add_argument("candidate")
     subp.set_defaults(fn=cmd_submit)
+    guard = sub.add_parser("guard")
+    guard.add_argument("gap")
+    guard.add_argument("--lease")
+    guard.set_defaults(fn=lambda args: (_printer(frontier.checkpoint(args.gap, args.lease)) or 0))
     sub.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
     args = parser.parse_args(argv)
     return args.fn(args)

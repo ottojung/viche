@@ -4,15 +4,17 @@ import collections
 import datetime
 import json
 import os
+import re
+import time
 from pathlib import Path
 import subprocess
 import sys
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from missions.pnp import leaderboard
+    from missions.pnp import leaderboard, frontier
 else:
-    from . import leaderboard
+    from . import leaderboard, frontier
 
 STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
@@ -50,6 +52,7 @@ def snapshot():
         rows.append({"gap": item.get("gap_id"),
                      "state": item.get("state"),
                      "pr_url": item.get("pr_url"),
+                     "lease_expires_at": item.get("lease_expires_at"),
                      "failure_reason": item.get("failure_reason")})
     lb = leaderboard.load()
     stale = True
@@ -62,6 +65,19 @@ def snapshot():
         except (KeyError, ValueError):
             stale = True
     w = workers()
+    observed = frontier.load()
+    by_gap = {r["gap"]: r for r in rows}
+    for worker in w["agents"]:
+        match = re.search(r"\bL-[a-z0-9]+(?:-[a-z0-9]+)+\b", worker.get("title") or "")
+        gid = match.group(0) if match else None
+        worker["gap"] = gid
+        worker["gap_state"] = by_gap.get(gid, {}).get("state")
+        worker["competition"] = observed.get("gaps", {}).get(gid)
+    stale_workers = [a["id"] for a in w["agents"]
+                     if a["gap_state"] in frontier.STOPPED]
+    active = [r["gap"] for r in rows if r["state"] in frontier.ACTIVE
+              and type(r["lease_expires_at"]) in (int, float)
+              and r["lease_expires_at"] > time.time() and isinstance(r["gap"], str)]
     score = {k: lb.get(k) for k in ("rank", "our_steps", "leader",
                                    "runner_up", "lead_over_second",
                                    "our_margin_vs_best_competitor",
@@ -74,8 +90,13 @@ def snapshot():
     return {
         "observed": len(rows), "by_state": by_state, "recent": rows[-12:],
         "leaderboard": score, "workers": w,
+        "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
+        "frontier_fresh": bool(observed), "active_lease_gaps": active,
+        "workers_on_terminal_gaps": stale_workers,
         "owned_by": "Viche Executive; other operators do not launch agents",
         "action": (
+            "Executive: finish or reassign confirmed terminal-gap workers cooperatively; preserve their proof work. Acquire ordinary gaps promptly when offered."
+            if stale_workers else
             "Executive must restore multiple independent P vs NP researchers "
             "and coordinate desk acquisition and submissions."
             if w["count"] == 0 else
@@ -96,7 +117,9 @@ def snapshot():
                             (score.get("leader") or {}).get("steps"),
                             (score.get("runner_up") or {}).get("steps")],
             "workers": w["count"], "coverage": w["coverage"],
-            "gaps": by_state},
+            "gaps": by_state, "active": sorted(active),
+            "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
+            "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None},
         "caveat": "Only public checked steps count; local activity is not proof."}
 
 
