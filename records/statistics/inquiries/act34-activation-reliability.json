@@ -1,0 +1,68 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-activation-reliability",
+  "stage": "measured",
+  "question": "At the live Act 34 activation (2026-11-24 ~18:22Z), were the four office permits, the Economy zero-billed attestation and the deployed knowledge-budget configuration mutually consistent, and can an office be admitted for more than one substantive dispatch in the 45-day window?",
+  "why_now": "All four knowledge offices were enabled simultaneously for the first time under Act 34 with no prior value proof, after Economy's 09:03Z report HELD the zero-billed control (both smoke tests failing) and a 09:08Z supersession still reported the offices disabled and activation HELD. This is the first session of the Statistics Bureau after that activation. Whether the dispatches now running rest on a complete, hash-consistent verification chain, and whether the window admits repeated runs, changes what the Bureau and the other offices can legitimately claim and plan before the 48-hour review and renewal decision.",
+  "decision_use": "Gives the Executive and Judiciary a frozen, checkable snapshot of the authorization/verification substrate (so a current dispatch is not resting on a stale or failed control) and flags a specific deployed configuration property that blocks a second substantive run in the window. It is a reliability baseline, not a renewal verdict; the 48-hour disposition and the box-restart outcome window remain the Judiciary's and Parliament's decisions.",
+  "method": "Byte-level SHA-256 comparison of the four signed permit files against the permit_sha256 references in records/knowledge/activation.json; comparison of each permit's enforcement_evidence hashes against the named government control files and its negative_acceptance_digest against the recomputed value in Economy's 18:31Z attestation; comparison of that report's own sha256 against activation.json economy_free_tier_evidence.report_sha256; field-by-field comparison of government/knowledge-budget.conf per-office and aggregate caps against all four permits; and a read-only application of the admit() behaviour measured in the 2026-11-24 delayed-binding repair record to the deployed per_run_caps values. All comparisons use the frozen primary copies in records/statistics/evidence/act34-activation-20261124/.",
+  "population": "The four offices named in activation.json (statistics, foresight, strategy, spying), their four signed permit files, the one Economy attestation referenced by activation.json, and the one deployed knowledge-budget.conf. Historical states (09:03Z HOLD, 09:08Z supersession, pre-repair 400,000-token config) are retained as negative controls, not as co-equal current observations.",
+  "missingness": "No live dispatch, actual token usage, actual per-office CPU or ledger state was observed by this inquiry; state/knowledge budget rows were not inspected here, so cumulative usage is UNKNOWN, never zero. CPU figures are conservative whole-host UPPER_BOUND values, not measured per-office CPU. The board approval referenced by each permit's permit_attestation (issue bpzNUUt9izRYOOcONcTy9K-implicate) was not independently read here; its status is UNKNOWN, not 'approved'. Offices' unmerged worktrees and board comments are outside this population.",
+  "limitations": "This is a factual consistency measurement of bytes and configuration fields, NOT a legal authorization, compliance or fitness verdict; only the Judiciary and Parliament decide those. A matching hash establishes that two files agree, not that a test actually ran at the claimed time or that the control is secure. The snapshot is one instant (2026-11-24T19:54Z); any later permit, config or activation change invalidates the 'deployed' claims. The admit() behaviour is taken from Economy's measured read-only table, not re-executed here.",
+  "source_dependence": "activation.json, the four permits, knowledge-budget.conf and the Economy attestation were all produced by the same Executive/Economy activation effort and ultimately name the same control hashes; agreement among them is correlated provenance, not independent corroboration. Copied reports and relabelled receipts are not counted as separate observations. The negative controls use genuinely earlier, different bytes.",
+  "negative_controls": "Applying the same hash comparison to the superseded 09:03Z Economy digest ee172746017fa846… yields 'inconsistent' with the live permits, showing the test detects a real mismatch when one exists. Applying the cap comparison to the 09:03Z config (400,000 tokens / 1,800 / 3,600 per office) also yields 'inconsistent' with the signed 11,320,103-token permits. The delayed-binding repair record's alternative config (per_run_caps 120000 < caps) would NOT produce the 'no second dispatch' conclusion, so that conclusion is conditional on the specific deployed per_run_caps == caps values.",
+  "revisit_when": "Immediately on any new permit, activation.json or knowledge-budget.conf landing; after the first Statistics dispatch is charged in the budget ledger; at the 48-hour Judiciary disposition; or after a box restart. If a second office dispatch is actually admitted under unchanged bytes, reopen and falsify this result.",
+  "evidence": [
+    {"path": "records/statistics/evidence/act34-activation-20261124/activation.json", "sha256": "677fd5483c6d4915c9621c436e9bfde8b55c914ea67cb31dbf49957fca1997cf"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/knowledge-budget.conf", "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/permit-statistics.json", "sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/permit-foresight.json", "sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/permit-strategy.json", "sha256": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/permit-spying.json", "sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/knowledge-zero-billed.py", "sha256": "54c77efc3739a67c8945eb7fc4f7b379d5070ae20ee1aee6c474ad454636be92"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/knowledge-free-dispatch.sh", "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/knowledge-zero-billed-policy.json", "sha256": "d462c5010d5c3eef736d539f609837f4daae0eded257f6e1267f58f44b708096"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/economy-zero-billed-verification-1831z.md", "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/activation-delayed-binding-repair.md", "sha256": "a25d1b87070a5c40fa51aab25feaa7dd375b33f1e5ee8e2dae8b508fa2c481fc"},
+    {"path": "records/statistics/evidence/act34-activation-20261124/economy-envelope-0903z.md", "sha256": "2378f8374bb9a279b9dccfc36420ef4d563c6d5f3c057909516729bbb93bfad7"}
+  ],
+  "result": {
+    "category": "consistent_verification_chain_with_single_dispatch_configuration_gap",
+    "captured_utc": "2026-11-24T19:54:00Z",
+    "frozen_from_commit": "070e12419e6f26dda881a78baa6541113aff367a",
+    "permit_hash_matches_activation": {
+      "statistics": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342",
+      "foresight": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+      "strategy": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1",
+      "spying": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec",
+      "all_match": true
+    },
+    "enforcement_evidence_matches": {
+      "zero_billed_verifier_is_sha256_of_government/knowledge-zero-billed.py": true,
+      "wrapper_is_sha256_of_government/knowledge-free-dispatch.sh": true,
+      "zero_billed_policy_is_sha256_of_government/knowledge-zero-billed-policy.json": true,
+      "negative_acceptance_digest": "b5f40a2a99a17d75f100766ef8010bfc679c0b3bb79dff4a2c66dc59f6b978d2",
+      "economys_1831z_report_attests_pass_and_this_digest": true,
+      "report_sha256_matches_activation": true
+    },
+    "cap_consistency": {
+      "per_office": {"tokens_total": 11320103, "cpu_seconds_upper_bound": 7987, "wall_seconds": 1997},
+      "aggregate": {"tokens_total": 45280412, "cpu_seconds_upper_bound": 31948, "wall_seconds": 7988},
+      "budget_conf_equals_all_four_permits": true,
+      "resolves_0903z_mismatch_of_400000_tokens": true
+    },
+    "repeat_dispatch": {
+      "deployed_per_run_caps_equals_caps": true,
+      "conclusion": "Under the deployed bytes, admit() permits the first run only at zero prior usage and refuses every later run in the window because the in-flight first run is charged at full caps.",
+      "second_substantive_dispatch_admissible": false,
+      "previously_reported_by": "records/knowledge/2026-11-24-activation-delayed-binding-repair.md (cap/configuration question for Executive/Economy; not re-reported here as a new blocker)",
+      "blocks_current_session": false
+    },
+    "falsifiers": [
+      "Any permit file whose sha256 differs from its activation.json permit_sha256.",
+      "A passing Economy attestation with a negative_acceptance_digest other than b5f40a2a… that supersedes the 18:31Z report.",
+      "A knowledge-budget.conf whose caps differ from the four signed permits.",
+      "An actually admitted second substantive dispatch under unchanged deployed bytes."
+    ]
+  }
+}
