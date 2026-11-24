@@ -35,7 +35,14 @@ case "$1 $2" in
         printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL"
     fi ;;
   "agent run")
-    case "$*" in *"Founder charter fixture"*"401"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"Founder charter fixture"*) : ;; *) exit 8 ;; esac
+    if [ "${BOARD_DOWN:-no}" = yes ]; then
+        case "$*" in *"board=unavailable"*"Act only on independently"*"fixture durable authorized task"*) : ;; *) exit 8 ;; esac
+        case "$*" in *'"eligible":[]'*|*'"count":0'*) exit 8 ;; esac
+    else
+        case "$*" in *"401"*) : ;; *) exit 8 ;; esac
+    fi
+    printf '%s\n' "$*" > "$MOCK_STATE/last-prompt"
     case "$*" in *"No work is authorized on SoringP1"*) : ;; *) exit 8 ;; esac
     case "$*" in *"research-plan.md"*|*"depleted_after_empty_curation"*) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
@@ -109,4 +116,62 @@ grep -q 'has no usable state' "$scratch/unknown.err"
 grep -q "unrecognized agent state 'unknown'" "$scratch/unknown.err"
 test "$(wc -l < "$OUTPUT")" -eq 3
 
-echo 'Independent Executive dispatch and fail-closed assignment smoke passed'
+# Board failure may not suppress independently authorized durable handoffs.
+MODE=idle
+export MODE
+id=$(sh "$repo/government/handoff-queue.sh" add "$scratch/town" 'Founder fixture' 'independent authorization' 'Executive: fixture durable authorized task')
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 4
+grep -Fq "$id" "$scratch/last-prompt"
+grep -Fq 'board=unavailable' "$scratch/last-prompt"
+grep -Fq 'no new board assignments may be inferred' "$scratch/last-prompt"
+
+# A broken calibration report blocks its own consequential decisions, not
+# the authorized ordinary turn. The old report is not described as current.
+BOARD_DOWN=no
+export BOARD_DOWN
+printf 'raise SystemExit(9)\n' > "$scratch/town/government/predict-scorer.py"
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 5
+grep -Fq 'Act22 calibration=unavailable' "$scratch/last-prompt"
+grep -Fq 'execute an Act22 consequential order until' "$scratch/last-prompt"
+
+# Unavailable case data never implies that holds may be cleared.
+printf 'raise SystemExit(9)\n' > "$scratch/town/government/institutional-cases.py"
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 6
+grep -Fq '"open_cases":null' "$scratch/last-prompt"
+grep -Fq 'Never' "$scratch/last-prompt"
+
+# A genuine existing unsafe hold remains a hard refusal in degraded mode.
+mkdir -p "$scratch/state/liveness/unsafe-holds"
+printf 'fixture hold\n' > "$scratch/state/liveness/unsafe-holds/executive"
+if sh "$repo/government/executive-cycle.sh" 2>/dev/null; then exit 1; fi
+test "$(wc -l < "$OUTPUT")" -eq 6
+
+# Gate status 10 is an intentional skip; broken advisory bookkeeping is not.
+rm "$scratch/state/liveness/unsafe-holds/executive"
+cat > "$scratch/town/government/dispatch-gate.sh" <<'GATE'
+#!/bin/sh
+case "$1" in
+  board-signature) echo 'fixture-signature';;
+  check) cat >/dev/null; exit "$GATE_RC";;
+  commit) printf 'committed\n' >> "$MOCK_STATE/gate-commits";;
+  *) exit 99;;
+esac
+GATE
+GATE_RC=10
+export GATE_RC
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 6
+test ! -e "$scratch/gate-commits"
+GATE_RC=2
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 7
+test ! -e "$scratch/gate-commits"
+GATE_RC=0
+sh "$repo/government/executive-cycle.sh"
+test "$(wc -l < "$OUTPUT")" -eq 8
+test "$(wc -l < "$scratch/gate-commits")" -eq 1
+
+echo 'Independent Executive dispatch, degraded evidence, advisory gate and fail-closed assignment smoke passed'

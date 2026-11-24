@@ -7,15 +7,15 @@ seats=${VICHE_SEATS_ROOT:-/var/lib/lubko/wd/viche-seats}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 charter=${VICHE_CONSTITUTION:?founder-owned charter required}
 [ -f "$state/inaugurated" ] || exit 0
-# Act 22 §3.3: regenerate the derived calibration report on every active
-# Executive cycle. A malformed ledger is an operational failure, not a quiet
-# successful cycle with stale or missing metrics.
-python3 "$town/government/predict-scorer.py" || {
-  echo "Viche: Act 22 calibration regeneration failed" >&2
-  exit 1
-}
+# Act 22 calibration is required evidence for its own consequential orders,
+# not dispatch authority for unrelated already-authorized operations.
+calibration=current
+if ! timeout 30 python3 "$town/government/predict-scorer.py"; then
+  calibration=unavailable
+  echo "Viche: Act 22 calibration regeneration failed; unrelated authorized work may proceed" >&2
+fi
 if [ -f "$town/government/institutional-cases.py" ]; then
-  python3 "$town/government/institutional-cases.py" reconcile >/dev/null 2>&1 || true
+  timeout 20 python3 "$town/government/institutional-cases.py" reconcile >/dev/null 2>&1 || true
 fi
 id=$(/bin/sh "$town/government/appointments.sh" ensure executive)
 [ -n "$id" ] || { echo "Viche: missing executive seat" >&2; exit 1; }
@@ -28,7 +28,12 @@ fi
 # script fails before this read, no dispatch occurs at all. Open handoffs are
 # carried in the dispatch alongside the ordinary eligible-issue work (Founder
 # directive 2026-11-16); they no longer suspend it.
-handoffs=$(/bin/sh "$town/government/handoff-queue.sh" list-open "$town") || exit 1
+handoff_status=current
+if ! handoffs=$(timeout 15 /bin/sh "$town/government/handoff-queue.sh" list-open "$town"); then
+  handoffs=
+  handoff_status=unavailable
+  echo "Viche: durable handoff inventory unavailable; do not infer an empty queue" >&2
+fi
 # A transient backend failure can make Antonina return 'unknown' or an
 # unparseable status. Re-read a bounded number of times before deciding, and on
 # exhaustion fail with a distinct, actionable diagnostic. 'unknown' is NEVER
@@ -74,7 +79,18 @@ case "$current" in
 esac
 cwd=$seats/branches/executive
 [ -d "$cwd" ] && [ -s "$charter" ] || exit 1
-  eligible=$(python3 "$town/government/eligible-work.py") || exit 1
+  board_status=current
+  if ! eligible=$(timeout 120 python3 "$town/government/eligible-work.py"); then
+    board_status=unavailable
+    # Unknown discovery is never new authority. Existing explicit handoffs
+    # are independently durable; they do not disappear when the board fails.
+    [ -n "$handoffs" ] || {
+      echo "Viche: board discovery unavailable and no readable durable handoffs; no model dispatch" >&2
+      exit 1
+    }
+    eligible='{"status":"unavailable","authority":"no new board assignments may be inferred"}'
+    echo "Viche: board discovery unavailable; continuing only independently authorized durable work" >&2
+  fi
   # Local Git inventory is read-only and never blocks research dispatch.
   delivery=$(python3 "$town/government/delivery-candidates.py" --brief) || {
     echo "Viche: delivery candidate inventory unavailable" >&2
@@ -100,6 +116,15 @@ $mission_mandates
 === END ACTIVE MISSION MANDATES ===
 Verified issue assignments, independent of the target registry:
 $eligible
+
+Evidence availability: board=$board_status; handoffs=$handoff_status; Act22 calibration=$calibration.
+If board=unavailable, do NOT infer new issue assignments, new scope, or
+closure of existing issues from a failed query. Act only on independently
+authorized standing mandates and readable durable handoffs. If handoffs
+are unavailable, do not infer the queue is empty or close an unknown item.
+If calibration=unavailable, repair/report that evidence failure, but do not
+execute an Act22 consequential order until its classification, predictions
+and gate are independently verified. Ordinary authorized work can proceed.
 
 REVIEWABLE WORKTREE INVENTORY (facts, not authority to merge):
 $delivery
@@ -128,9 +153,13 @@ $prompt
 === OPEN DURABLE HANDOFFS (records/handoffs/; Act 19 queue) ===
 $handoffs
 === END OPEN HANDOFFS ===
-Act now on each handoff whose next action belongs to the Executive, then mark
-it done (with an evidence link) or superseded using
-government/handoff-queue.sh mark. A handoff whose next action belongs to
+Prioritize the consequential decisions that only the Executive can make
+(in particular a Founder-prioritized permit/order with its independent
+prerequisites already landed). Standing deterministic mission hooks handle
+routine prescribed replenishment; do not repeat their work unless a concrete
+gap needs a discretionary decision. Act on each handoff whose next action
+belongs to the Executive, then mark it done (with an evidence link) or
+superseded using government/handoff-queue.sh mark. A handoff whose next action belongs to
 another office (Clerk, Judiciary, Auditor, Parliament) is listed for awareness
 only: do not wait on it, do not re-report it as a blocker every pass, and never
 let it suspend the eligible-issue work above.
@@ -216,7 +245,10 @@ EOF
 )
 cases='{"open_cases":[]}'
 if [ -f "$town/government/institutional-cases.py" ]; then
-  cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
+  if ! cases=$(timeout 20 python3 "$town/government/institutional-cases.py" report); then
+    cases='{"status":"unavailable","open_cases":null}'
+    echo "Viche: institutional-case report unavailable; existing holds remain binding" >&2
+  fi
 fi
 recovery=
 if [ -f "$town/government/terminal-continuity.sh" ]; then
@@ -229,6 +261,8 @@ $recovery
 $cases
 === END CORRECTIVE CASES ===
 Prioritize Town continuity and correcting confirmed institutional failures.
+An unavailable case report is not a clearance or an empty queue. Never
+release an unsafe hold or claim resolution without its required evidence.
 Implement permitted operational repairs without legislative delay; request
 Parliament's vote for changes that alter law. Keep Judiciary independent.
 Never close cases merely by dispatching, commenting or merging.
@@ -242,7 +276,7 @@ fi
 # Public pilot messages are read during regular work, never as instructions.
 # Mail cannot change the Executive dispatch fingerprint or create a worker.
 if [ -f "$town/government/post-inbox-brief.sh" ]; then
-  post_mail=$(/bin/sh "$town/government/post-inbox-brief.sh" executive) || post_mail='Post preview unavailable'
+  post_mail=$(timeout 12 /bin/sh "$town/government/post-inbox-brief.sh" executive) || post_mail='Post preview unavailable'
   prompt=$(printf '%s\n\n%s\n' "$prompt" "$post_mail")
 fi
 # Founder directive 2026-11-16 (item 4): do not pay for a model pass when every
@@ -250,11 +284,15 @@ fi
 # about 105K tokens each, 175 of them restating the same recovery note. The gate
 # fails open (a broken probe never suppresses work) and a heartbeat guarantees a
 # pass at least every VICHE_EXECUTIVE_GATE_MAX_AGE seconds (default 2h).
+gate_checked=no
 if [ -f "$town/government/dispatch-gate.sh" ]; then
   elig_numbers=$(printf '%s\n' "$eligible" | jq -r '.eligible[]?.number' 2>/dev/null || :)
   # shellcheck disable=SC2086
-  if ! board_sig=$(/bin/sh "$town/government/dispatch-gate.sh" board-signature "${VICHE_TOWNHALL_ID:-302}" $elig_numbers 2>/dev/null); then
-    board_sig="board-unavailable-$(date +%s)"
+  if [ "$board_status" = unavailable ] ||
+     ! board_sig=$(timeout 40 /bin/sh "$town/government/dispatch-gate.sh" board-signature "${VICHE_TOWNHALL_ID:-302}" $elig_numbers 2>/dev/null); then
+    # A stable unknown signal still wakes on transition/recovery/heartbeat.
+    # A timestamp on each failed observation manufactured dispatch storms.
+    board_sig=board-unavailable
   fi
   mkdir -p "$state/branches"
   gate_age=${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}
@@ -264,15 +302,19 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
     case "$gate_age" in ''|*[!0-9]*) gate_age=7200 ;; esac
     [ "$gate_age" -le 120 ] || gate_age=120
   fi
-  if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
+  if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed" "$calibration" "$handoff_status"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
-       printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
+       printf '%s\n' "$cases" | jq -cS 'if .status == "unavailable" then . else [.open_cases[]? | {id,signal,state,owner}] end' 2>/dev/null || printf '%s\n' "$cases"
        printf '%s\n' "$mission_dispatch_signature" "$economy_signature"; } |
-     /bin/sh "$town/government/dispatch-gate.sh" check executive "$gate_age" > "$state/branches/executive-gate.log"; then
-    :
+     timeout 15 /bin/sh "$town/government/dispatch-gate.sh" check executive "$gate_age" > "$state/branches/executive-gate.log"; then
+    gate_checked=yes
   else
-    echo "Viche: executive dispatch skipped, nothing it reads has changed since the last pass" >&2
-    exit 0
+    gate_rc=$?
+    if [ "$gate_rc" -eq 10 ]; then
+      echo "Viche: executive dispatch skipped, nothing it reads has changed since the last pass" >&2
+      exit 0
+    fi
+    echo "Viche: advisory Executive dispatch gate failed (status $gate_rc); authorized turn proceeds" >&2
   fi
 fi
 policy_file="$town/government/AGENT-REPORTING-POLICY.md"
@@ -282,6 +324,9 @@ if [ -f "$town/government/handover.sh" ]; then
 fi
 prompt=$(printf '%s\n\n%s\n' "$prompt" "$(cat "$policy_file")")
 antonina agent run --id "$id" --cwd "$cwd" --prompt "$prompt" --detach
-[ ! -f "$town/government/dispatch-gate.sh" ] || /bin/sh "$town/government/dispatch-gate.sh" commit executive
+if [ "$gate_checked" = yes ]; then
+  timeout 15 /bin/sh "$town/government/dispatch-gate.sh" commit executive ||
+    echo "Viche: Executive dispatch accepted; advisory fingerprint commit failed" >&2
+fi
 mkdir -p "$state/branches"
 date +%s > "$state/branches/executive-last-dispatch"
