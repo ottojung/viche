@@ -38,6 +38,7 @@ import json
 import os
 import pathlib
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -363,20 +364,49 @@ def record_sample(rows, fs, mem, current):
     return rows
 
 
+def _net_loss_rates(rows, label):
+    """Positive net-loss rates between consecutive samples; reclaim jumps excluded."""
+    rates = []
+    ordered = sorted(rows, key=lambda r: int(r.get("at", 0)))
+    for a, b in zip(ordered, ordered[1:]):
+        dt = (int(b["at"]) - int(a["at"])) / 3600.0
+        if dt <= 0:
+            continue
+        lost = a["fs"][label]["avail"] - b["fs"][label]["avail"]
+        if lost > 0:
+            rates.append(lost / dt)
+    return rates
+
+
 def forecast_hours(rows, label, avail_now, current):
-    """Hours until the filesystem is full at the rate observed over the last day (None: not shrinking)."""
+    """Hours until the filesystem is full at a robust recent net-loss rate.
+
+    A one-off reclamation inside the lookback leaves the oldest sample's free
+    space close to today's, so the naive endpoint rate looks tiny and inflates
+    the forecast.  Use the median of positive sub-window rates over the most
+    recent six hours (reclaims, where free space rises, are excluded).  Fall
+    back to the whole lookback and then to the single-sample two-point rate so
+    sparse histories and the smoke fixtures keep working.
+    """
     window = [r for r in rows if 7200 <= current - int(r.get("at", 0)) <= 86400 and label in r.get("fs", {})]
     if not window:
         window = [r for r in rows if 3600 <= current - int(r.get("at", 0)) <= 7200 and label in r.get("fs", {})]
     if not window:
         return None
+    for cutoff in (6 * 3600, None):
+        subset = ([r for r in window if current - int(r.get("at", 0)) <= cutoff]
+                  if cutoff is not None else window)
+        rates = _net_loss_rates(subset, label)
+        if len(rates) >= 2:
+            rate = statistics.median(rates)
+            if rate > 0:
+                return round(avail_now / rate, 1)
     then = min(window, key=lambda r: r["at"])
     hours = (current - then["at"]) / 3600.0
     lost = then["fs"][label]["avail"] - avail_now
     if hours <= 0 or lost <= 0:
         return None
-    rate = lost / hours
-    return round(avail_now / rate, 1)
+    return round(avail_now / (lost / hours), 1)
 
 
 # ---- evaluation -------------------------------------------------------------
