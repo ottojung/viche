@@ -29,16 +29,18 @@ infrastructure failure is a reason to use local alternatives, not stop work.
 
 ## Lean compilation — PnP researchers
 
-Once the canonical PnP remote packer has landed, from your bound workspace:
+From your bound research workspace (the Executive injects these commands at dispatch):
 
 ```sh
+pnp-remote-check --availability
 pnp-remote-check path/to/candidate.lean
 pnp-remote-check --async path/to/candidate.lean
+pnp-remote-check --scratch --async path/to/Scratch.lean
 marceline-request wait REQUEST_ID 1100
 ```
 
 The helper checks your immutable live assignment, packs the exact source and
-checks the advertised pinned base before transmitting anything. A blocking
+checks the advertised pinned base before transmitting anything. Use --scratch for intermediate files, including unfinished proofs; scratch success is not proof acceptance. A blocking
 check exits 0 only for successful elaboration. Async submission exits 0
 when queued. If the packer or matching cache is unavailable, use the local
 managed compiler; never wait for remote infrastructure before publishing a
@@ -112,11 +114,14 @@ Requests expire after 30 minutes with 2 minutes of clock-skew tolerance.
 Responses contain ACK/running/terminal events (last 12) and a service
 heartbeat. The client durably saves a receipt before removing its request;
 the worker prunes responses after request removal. Private receipts are
-retained for 24 hours; no unbounded remote logs. The worker holds a kernel-released single-instance lock, polls every two
-seconds, updates idle heartbeat every ten seconds, and allows one isolated
-Lean job at a time while acknowledging queued requests and handling pings and heartbeats. The configured
+retained for 24 hours; no unbounded remote logs. The worker holds a kernel-released single-instance lock, polls at bounded short intervals, updates idle heartbeat every ten seconds, and allows up to two isolated
+Lean jobs concurrently (16 GiB aggregate requested RAM) while acknowledging queued requests and handling pings and heartbeats. The configured
 compiler must enforce resource bounds and cancellation independently.
 
 If an encrypted object is corrupted or cannot authenticate, stop using
 the channel and ask the operator to investigate. Never reset a mailbox or
 disable encryption to work around a failure.
+
+Cache aliases refresh independently every two minutes against public upstream.
+Only identical definition trees, Lean toolchain, package manifest and Lake configuration
+reuse a compiled seed; a changed dependency tree needs a new compiled seed.

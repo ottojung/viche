@@ -7,6 +7,7 @@ import {createCipheriv,createDecipheriv,randomBytes,randomUUID} from 'node:crypt
 import {setTimeout as sleep} from 'node:timers/promises';
 
 const MAX=4*1024*1024, JOB_MAX=2*1024*1024, TTL=30*60*1000, SKEW=120000, LIMIT=8;
+const MAX_LEAN=2, LEAN_BUDGET=16384;
 const BASE='https://vau.place/_skrynia/store/antonina/';
 const HOME=os.homedir(), HERE=path.dirname(fileURLToPath(import.meta.url));
 const confPath=path.join(HOME,'.config/marceline-relay/config.json');
@@ -147,7 +148,7 @@ async function wait(c,id,seconds){
  if(!idok(id))throw Error('invalid request ID');
  const cached=load('receipts',id);
  if(cached){try{await cleanup(c,id);}catch{console.error('cleanup deferred to expiry');}return returnResult(cached);}
- let last='',lastReport=0,lastBeat=null,lastObserved=null;
+ let last='',lastReport=0,lastBeat=null,lastObserved=null,lastEnqueue=0;
  const deadline=Date.now()+seconds*1000;
  while(Date.now()<deadline){
   if(load('cancelled',id)){try{await cleanup(c,id);}catch{}console.error('request cancelled');return 1;}
@@ -168,12 +169,13 @@ async function wait(c,id,seconds){
     return returnResult(e);
    }
    const request=load('requests',id);
-   if(request&&!e&&!load('cancelled',id)){
+   if(request&&!e&&!load('cancelled',id)&&now-lastEnqueue>=10000){
+    lastEnqueue=now;
     await enqueue(c,request);
     if(load('cancelled',id))await cleanup(c,id);
    }
   }catch(e){if(Date.now()-lastReport>=10000){console.error('poll: '+e.message);lastReport=Date.now();}}
-  await sleep(2000);
+  await sleep(last==='waiting_for_ack'?1000:1500);
  }
  console.error('timeout; resume with marceline-request wait '+id);return 2;
 }
@@ -197,7 +199,7 @@ function capabilities(){
   const lean_bases=fs.readdirSync(cfg.manifests).filter(x=>/^[0-9a-f]{40}\.json$/.test(x))
    .filter(x=>{const st=fs.lstatSync(path.join(cfg.manifests,x));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);})
    .map(x=>x.slice(0,-5)).filter(base=>{try{const st=fs.lstatSync(path.join(cfg.manifests,base+'.provenance.json'));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);}catch{return false;}}).sort();
-  return {ping:true,lean_bases};
+  return {ping:true,lean_bases,max_parallel_lean:MAX_LEAN};
  }catch{return {ping:true,lean_bases:[]};}
 }
 function launchLean(req){
@@ -258,14 +260,18 @@ async function worker(c){
      await putResponse(c,entry);
     }
     if(stopping)break;
-    if(req.op==='lean-check'&&[...active.values()].some(a=>a.op==='lean-check'))continue;
+    if(req.op==='lean-check'){
+     const running=[...active.values()].filter(a=>a.op==='lean-check'&&!a.finished);
+     const wanted=req.payload.rss_mib;
+     if(running.length>=MAX_LEAN||running.reduce((n,a)=>n+a.rss,0)+wanted>LEAN_BUDGET)continue;
+    }
     if(req.op==='ping'){
      const result=event({...entry,result:{host,echo:req.payload}},'done','ping complete');
      save('worker-receipts',req.id,result);await putResponse(c,result);
     }else{
      entry=event(entry,'running','isolated Lean handler dispatched');
      await putResponse(c,entry);
-     const job=launchLean(req),a={...job,op:req.op,finished:false};
+     const job=launchLean(req),a={...job,op:req.op,rss:req.payload.rss_mib,finished:false};
      active.set(req.id,a);
      job.promise.then(out=>{
       a.finished=true;
@@ -284,10 +290,10 @@ async function worker(c){
   }catch(e){
    const now=Date.now();if(e.message!==lastError||now-lastErrorAt>60000){console.error('relay cycle: '+e.message);lastError=e.message;lastErrorAt=now;}
   }
-  if(!stopping)await sleep(2000);
+  if(!stopping)await sleep(active.size?800:1500);
  }
  for(const a of active.values())if(!a.finished)a.cancel();
- await Promise.race([Promise.allSettled([...active.values()].map(a=>a.promise)),sleep(20000)]);
+ await Promise.race([Promise.allSettled([...active.values()].map(a=>a.promise)),sleep(20000,undefined,{ref:false})]);
 }
 function payload(op,args){
  if(op==='ping'){
@@ -305,15 +311,21 @@ function payload(op,args){
 async function main(){
  const [cmd,arg,...rest]=process.argv.slice(2);
  if(!cmd||cmd==='--help'){
-  console.log('marceline-request status | ping [message] | lean-check JOB.json | submit OP [argument] | wait ID [seconds] | cancel ID');return 0;
+  console.log('marceline-request status [BASE_SHA] | ping [message] | lean-check JOB.json | submit OP [argument] | wait ID [seconds] | cancel ID');return 0;
  }
  const c=config();
  if(cmd!=='worker'){pruneLocal('requests',TTL+SKEW);pruneLocal('receipts',24*60*60*1000);pruneLocal('cancelled',24*60*60*1000);}
  if(cmd==='worker'){await worker(c);return 0;}
  if(cmd==='status'){
   const r=(await get(c,'response')).value,delta=r.heartbeat?Math.round((Date.now()-r.heartbeat)/1000):null;
-  console.log(JSON.stringify({heartbeat:r.heartbeat,age_seconds:delta===null?null:Math.max(0,delta),
-   server_ahead_seconds:delta===null?null:Math.max(0,-delta),capabilities:r.capabilities||null,entries:r.entries.map(({id,state})=>({id,state}))}));return 0;
+  const summary={heartbeat:r.heartbeat,age_seconds:delta===null?null:Math.max(0,delta),
+   server_ahead_seconds:delta===null?null:Math.max(0,-delta),entries:r.entries.map(({id,state})=>({id,state}))};
+  if(arg){
+   if(!/^[0-9a-f]{40}$/.test(arg))throw Error('status base must be a 40-hex SHA');
+   summary.base=arg;summary.base_available=delta!==null&&delta>=-120&&delta<=180&&(r.capabilities?.lean_bases||[]).includes(arg);
+   summary.queue=r.entries.filter(e=>['ack','running'].includes(e.state)).length;
+  }else summary.capabilities=r.capabilities||null;
+  console.log(JSON.stringify(summary));return 0;
  }
  if(cmd==='ping'||cmd==='lean-check'||cmd==='submit'){
   const op=cmd==='submit'?arg:cmd,args=cmd==='submit'?rest:[arg,...rest].filter(x=>x!==undefined);
@@ -321,6 +333,7 @@ async function main(){
   pruneLocal('requests',TTL+SKEW);pruneLocal('receipts',24*60*60*1000);
   save('requests',request.id,request);console.error('request '+request.id);
   if(cmd==='submit'){await enqueue(c,request);console.log(request.id);return 0;}
+  try{await enqueue(c,request);}catch(e){console.error('initial send: '+e.message);}
   return wait(c,request.id,op==='ping'?90:1100);
  }
  if(cmd==='wait'){

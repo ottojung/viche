@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 
-from . import assignment, brief, config, focus, gitctl, state, support
+from . import assignment, brief, config, focus, gitctl, state, support, role_prompt
 
 # A full baseline used to paginate the whole (>2600 agent) registry once per
 # live gap. Fetch pages in bounded concurrent waves and let baseline reuse a
@@ -82,8 +82,9 @@ def roster():
     raise ValueError("agent roster unavailable")
 
 
-def prompt(rec, approach, general=False):
-    return (
+def prompt(rec, approach, general=False, label=None):
+    role = "general" if general else ("integrator" if label == "integrator" else "specialist")
+    return (role_prompt.instructions(role) + "\n\n" +
         "Work on the exact current P vs NP assignment below, using the independent "
         "workspace already prepared for you. Pursue this distinct mathematical "
         "approach; communicate useful sublemmas and artifacts to the other researchers "
@@ -111,9 +112,6 @@ def prompt(rec, approach, general=False):
         "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support finding "
         "--evidence 'artifact or checked lemma' --message 'specific result, blocker or next route'. "
         "Read research_findings in the guard output; use peer insights rather than duplicate work. "
-        "Optional remote Lean: read ~/.local/share/viche/relay/README.md and run "
-        "marceline-request status. Use pnp-remote-check only for a matching exact base "
-        "and validated live assignment. Continue local work if unavailable; no publication gate. "
         "Evaluators rely on your actual findings and logs. "
         + ("You are the persistent general researcher for this lease, whether focused or not. "
            "Understand the exact statement, study existing proofs, pursue promising routes, "
@@ -204,7 +202,7 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if not current_matches(rec, label == "general"):
                     break
                 answer = json.loads(antonina("run", "--id", agent_id, "--cwd", str(path),
-                                            "--prompt", prompt(rec, approach, label == "general"), "--detach", "--json"))
+                                            "--prompt", prompt(rec, approach, label == "general", label), "--detach", "--json"))
                 if answer.get("state") != "running":
                     raise ValueError("agent launch not confirmed")
                 results.append({"worker": label, "status": "started", "id": agent_id})

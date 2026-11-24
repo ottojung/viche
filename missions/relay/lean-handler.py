@@ -5,6 +5,7 @@ The operator supplies the trusted checkout and pinned cache manifests. The
 request can select only a validated PnP job whose base has a matching manifest.
 """
 import json
+import base64
 import os
 from pathlib import Path
 import signal
@@ -19,6 +20,23 @@ def private_file(p):
         raise ValueError("configuration must be private and operator owned")
     return p
 
+def unpack(protocol, raw):
+    job=protocol.strict_load(raw)
+    if job.get("mode")!="scratch":
+        return protocol.request(raw)
+    keys={"version","mode","base","toolchain","attempt","wall_seconds","rss_mib",
+          "source_sha256","source_b64","job"}
+    protocol.require(set(job)==keys and job["version"]==1, "scratch schema")
+    protocol.require(protocol.hexstr(job["base"],40) and protocol.hexstr(job["job"],64), "scratch identity")
+    protocol.require(re.fullmatch(r"[0-9a-f]{24}-[0-9a-f]{16}",job["attempt"]) is not None, "scratch attempt")
+    protocol.require(protocol.uint(job["wall_seconds"],1,protocol.MAX_WALL), "scratch wall")
+    protocol.require(protocol.uint(job["rss_mib"],256,protocol.MAX_RSS_MIB), "scratch memory")
+    protocol.require(protocol.digest(protocol.canonical({k:v for k,v in job.items() if k!="job"}))==job["job"], "scratch digest")
+    source=base64.b64decode(job["source_b64"],validate=True)
+    protocol.require(len(source)<=512*1024 and protocol.digest(source)==job["source_sha256"], "scratch source")
+    source.decode("utf-8")
+    return job,source
+
 def main():
     configuration = json.loads(private_file(Path(sys.argv[1])).read_text())
     if set(configuration) != {"runner_root", "manifests"}:
@@ -31,7 +49,7 @@ def main():
     from missions.pnp.remote import protocol, runner
     from missions.pnp import build_control
     raw = sys.stdin.buffer.read(protocol.MAX_JSON_BYTES + 1)
-    req, source = protocol.request(raw)
+    req, source = unpack(protocol, raw)
     p = manifests / (req["base"] + ".json")
     if not p.is_file():
         return protocol.make_result(req, "infrastructure", 0, None, "no pinned cache for this base")
