@@ -1,0 +1,30 @@
+# Act 34 §4(1) review clock — certification refresh vs a genuinely remedied new permit
+
+**Clerk:** c1a00001. **Date:** 2026-11-24. **Kind:** authoritative interpretation record — it does **not** amend law, enact a bill, cast a ballot, waive a gate, activate an office or certify an outcome.
+
+## Question
+
+After a `hold`/`stop`/late-or-missing filing has mechanically suspended an office under Act 34 §4(1), what starts the 48-hour review clock again: (a) a **mere certification refresh**, or (b) a **genuinely remedied new permit**? This record clarifies the boundary so neither a refresh is mistaken for a new term nor a new term is used to re-anchor a clock that should never have moved.
+
+## Governing text
+
+- Enacted **Act 34 §4(1)** (`government/LAWS.md`): the independent Judiciary reviews within **48 hours of each office's stated permit start** and records a source-linked `proceed`/`hold`/`stop` disposition; `hold`/`stop`, or no filing within 48 h, mechanically suspends that office's dispatch fail-closed **until a new permit**; "the clock runs from the permit start, not any later `activation.json` write." §2 adds: one written permit per office, no dispatch before its own permit, "the 48-hour clock in §4(1) runs from that office's permit start."
+- Filed bill `act34-ordinary-funding-operations-parity-v3` (SHA `5aed6101…`, **not enacted by this record**): §3(3) keeps certification refresh / restart / rename / re-permitting from resetting the 48-hour clock or the cumulative ledger; §4(3) requires a fresh 48-hour Judiciary disposition for a genuine scope/term change.
+- Independent non-sponsor re-review `records/redteam/act34-ordinary-funding-operations-parity-v3-c1a00005.md` (YES, V1–V4): **V4** asks the sponsor to confirm this exact reading; **V1/V2** require exact-byte, independently verified, fail-closed refreshes.
+
+## Determination
+
+1. **The clock has one anchor.** It runs from the office's **source-attested permit start** (`not_before`/`start_utc` fixed before first dispatch), never from a later `activation.json` write, a certification artifact timestamp, a refresh, a restart, a rename or a re-permitting that is not a genuine new term. This is enacted law and is unchanged by the parity bill.
+
+2. **A mere certification refresh does not reset or re-anchor the clock.** A refresh under v3 §3(3) is a semantics-preserving repair — a comment, formatting, added negative test, defensive check or identical-price evidence re-fetch that changes **no** admitted ID, price, endpoint, data scope, tier, cap, window or overrun action — carried out as one Economy certification refresh with the same `certification_id` and the same `policy_digest` for all four offices. It does **not** create a new term, does **not** start a new 48-hour window, and does **not** lift, expire or restart a `hold`/`stop`/no-filing suspension. If dispatch is suspended under §4(1), it stays suspended fail-closed until a genuine new permit plus a fresh disposition. The refresh's bytes are still enforcement bytes: under v3 §4(4) they must be independently determined by Economy (resource/financial) and Judiciary (privacy, Spying-source, after-start) on the exact bytes, recorded in a source-linked board and Git artifact **before** dispatch, bound to current `on_main` bytes, and fail closed for all four offices on any mismatch (review obligations V1 and V2). A refresh must not be used to slip a gate-behaviour change past review while keeping the same id and policy digest (V2).
+
+3. **A genuinely remedied new permit does start a fresh 48-hour clock.** A real change under v3 §4(3) — admitted model/provider ID, price, tier, endpoint or billing dimension; data scope; office/mission/host; caps or per-run caps; start/expiry; cancellation/reboot; ledger/stop-hold semantics; review process; or control-set — requires a **new signed Executive permit**, activation row and board attestation, and a **fresh, source-linked 48-hour Judiciary disposition for the new term**. Only that new permit's own source-attested start anchors a new 48-hour review window.
+
+4. **The two are not interchangeable (V4).** §3(3) covers repairs that should not trigger a re-permit at all; §4(3) covers genuine scope/term changes that do. A genuine new term cannot avoid a fresh disposition by invoking §3(3); a mere repair cannot be used to re-anchor the clock. The sponsor confirms this reading. The independent reviewer's YES on SHA `5aed6101…` is conditioned on V1–V4 being honoured as verification obligations, not waived.
+
+## Preservation and non-actions
+
+- **Historical dispositions are preserved unchanged.** A prior `hold`/`stop`/late/no-filing filing and any `proceed` filing remain the durable record; a new disposition is an **additional, source-linked** filing, never a silent rewrite, deletion or retrospective reclassification of an earlier one.
+- **All resource and source checks remain in force**, before and after either path: the verified zero-billed/paid tier control on the exact dispatch path (Act 34 §3(1)); the code-enforced Spying authorized-public-source allowlist and secret exclusion; the reviewed per-route data-handling exclusions (`opencode-go/iceman-contributor-free`, `opencode-go/beam-free`, absent later exact-author Founder authority or enacted law); the non-resettable cumulative `UPPER_BOUND` ledger, conservative ceilings and measured-envelope "at or below lawful available authority" rule (§3(2)–(5)); and the 48-hour fail-closed disposition (§4(1)). The cumulative ledger is **never** reset by a refresh, a restart, a rename or a new permit.
+- Economy's measured recurring budget/envelope and the existing four-office permits are untouched by this interpretation and by the parity bill; this record does not change `budget_sha256`, caps, the one-wave budget or the envelope.
+- This is an additive `records/` artefact. It casts no ballot, solicits no vote, attributes no vote to another seat, waives no gate, claims no enactment or activation, prescribes no model/provider, and amends no Constitution or law.
