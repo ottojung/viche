@@ -100,8 +100,13 @@ def main():
         p.error("no live bound assignment")
     meta = {"id":gap,"file":rec["path"],"module":rec["module"],"statement":rec["statement"],"imports":rec["imports"]}
     if args.command == "synthesize":
-        report = synthesis.candidate(meta)
-        text = report.pop("candidate", None) if report else None
+        from ..research import certificate
+        report=certificate.render(meta,seconds=2)
+        text=report.pop("candidate",None)
+        report.pop("certificate",None)
+        if not text:
+            report = synthesis.candidate(meta)
+            text = report.pop("candidate", None) if report else None
     else:
         report = circuit.explicit_circuit(meta)
         text = circuit.render(meta,"decide") if report and report["verified"] else None

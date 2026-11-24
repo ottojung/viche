@@ -223,7 +223,7 @@ def main():
     a=sub.add_parser("body");a.add_argument("id");a.add_argument("--output",required=True);a.add_argument("--for-node")
     a=sub.add_parser("assign");a.add_argument("id");a.add_argument("worker")
     a=sub.add_parser("solve");a.add_argument("id");a.add_argument("body");a.add_argument("--local",action="store_true");a.add_argument("--method",action="store_true")
-    a.add_argument("--async",dest="asynchronous",action="store_true");a.add_argument("--wall",type=int,default=600);a.add_argument("--rss-mib",type=int,default=8192)
+    a.add_argument("--async",dest="asynchronous",action="store_true");a.add_argument("--wall",type=int,default=600);a.add_argument("--rss-mib",type=int,default=8192);a.add_argument("--retry",action="store_true",help="retry a terminal unsuccessful async check")
     a=sub.add_parser("collect");a.add_argument("id");a.add_argument("--poll",action="store_true");a.add_argument("--timeout",type=int,default=1100)
     sub.add_parser("pending");sub.add_parser("reconcile")
     a=sub.add_parser("reuse");a.add_argument("old");a.add_argument("new");a.add_argument("--method",action="store_true");a.add_argument("--async",dest="asynchronous",action="store_true")
@@ -285,8 +285,10 @@ def main():
             if a.asynchronous:
                 from . import async_check
                 if a.local:raise ValueError("async uses remote Lean")
-                out=async_check.submit(c,a.id,a.body,a.method,a.wall,a.rss_mib)
-            else:out=solve(c,a.id,a.body,a.local,a.method)
+                out=async_check.submit(c,a.id,a.body,a.method,a.wall,a.rss_mib,a.retry)
+            else:
+                if a.retry or a.wall!=600 or a.rss_mib!=8192:raise ValueError("retry and resource overrides require --async")
+                out=solve(c,a.id,a.body,a.local,a.method)
         elif a.cmd=="collect":
             from . import async_check
             out=async_check.collect(c,a.id,1 if a.poll else a.timeout)

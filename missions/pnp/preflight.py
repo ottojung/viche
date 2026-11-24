@@ -48,10 +48,25 @@ def run(rec, revision):
             if r.get("verified"):
                 source=circuit.render(meta,"decide")
         else:
-            r=synthesis.candidate(meta)
-            if r is not None:
-                source=r.pop("candidate",None)
-                result.update(generator="synthesis",details=r,result="no_candidate")
+            from .research import certificate
+            # Symbolic star certificates are cheap and support larger graphs;
+            # the legacy generator can still win on overlapping bicliques.
+            parsed=certificate.parse(meta["statement"])
+            if parsed and parsed[0]<=64 and len(parsed[3])<=256:
+                # Bound the synchronous preflight search; agents can explicitly
+                # request a longer search without slowing guard/lease work.
+                try:
+                    r=certificate.render(meta,seconds=0.15)
+                    source=r.pop("candidate",None)
+                    r.pop("certificate",None)
+                    result.update(generator="symbolic_star",details=r,result="no_candidate")
+                except (ValueError,TypeError,KeyError,validate.InvalidCandidate):
+                    pass  # Try the older construction instead.
+            if not source:
+                r=synthesis.candidate(meta)
+                if r is not None:
+                    source=r.pop("candidate",None)
+                    result.update(generator="synthesis",details=r,result="no_candidate")
         if source:
             validate.validate(meta,source.encode())
             result.update(result="candidate",sha256=hashlib.sha256(source.encode()).hexdigest(),

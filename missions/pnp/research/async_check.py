@@ -28,7 +28,7 @@ def identity(base,toolchain,attempt,source,wall=600,rss=8192):
     raw=source.encode("utf-8")
     if not raw or len(raw)>512*1024:
         raise ValueError("proof closure empty or exceeds 512 KiB")
-    if not 1<=wall<=1200 or not 256<=rss<=16384:
+    if not 1<=wall<=900 or not 256<=rss<=12288:
         raise ValueError("remote resource bounds invalid")
     job={"version":1,"mode":"scratch","base":base,"toolchain":toolchain,
          "attempt":attempt,"wall_seconds":wall,"rss_mib":rss,
@@ -79,7 +79,7 @@ def recover_request(job):
         except (OSError,ValueError,AttributeError):continue
     return None
 
-def submit(c,oid,path,method=False,wall=600,rss=8192):
+def submit(c,oid,path,method=False,wall=600,rss=8192,retry=False):
     table(c)
     body,job,ident=make(c,oid,path,method,wall,rss)
     cid=job["job"]
@@ -95,7 +95,20 @@ def submit(c,oid,path,method=False,wall=600,rss=8192):
             if request:
                 with c:c.execute("UPDATE pending_check SET request=?,state='queued' WHERE id=?",(request,cid))
                 old=snapshot(c,cid)
-        return {"check":cid,"node":oid,"state":old["state"],"request":old["request"],"reused":True,"collect":"pnp-research obligations collect "+cid}
+        can_retry=old["state"]=="transport_failed" or (
+            old["state"]=="done" and json.loads(old["result"] or "{}").get("status")!="kernel_checked")
+        if retry and can_retry:
+            # Never retry an in-flight or verified job. A previous failed
+            # transport request may still exist: resume it if so.
+            request=recover_request(cid)
+            with c:
+                cursor=c.execute("""UPDATE pending_check SET request=?,at=?,state=?,result=NULL,identity=?
+                    WHERE id=? AND at=? AND state=?""",
+                    (request,time.time(),"queued" if request else "submitting",k.canon(ident),cid,old["at"],old["state"]))
+                new=cursor.rowcount==1 and not request
+            old=snapshot(c,cid)
+        if not new:
+            return {"check":cid,"node":oid,"state":old["state"],"request":old["request"],"reused":True,"collect":"pnp-research obligations collect "+cid}
     try:
         with tempfile.NamedTemporaryFile(mode="w",suffix=".json") as f:
             f.write(k.canon(job));f.flush()
@@ -107,7 +120,7 @@ def submit(c,oid,path,method=False,wall=600,rss=8192):
         if not request:
             with c:c.execute("UPDATE pending_check SET state='transport_failed',result=? WHERE id=?",
                              (k.canon({"error":proc.stderr[-1000:]}),cid))
-            raise ValueError("relay did not create a request; use a new resource budget or local check")
+            raise ValueError("relay did not create a request; retry explicitly with --retry, or use a local check")
     except (OSError,subprocess.SubprocessError) as exc:
         request=recover_request(cid)
         if not request:
@@ -134,7 +147,7 @@ def proof_result(c,row,result,stderr=""):
         if ok or not prev or json.loads(prev[0]).get("status")!="kernel_checked":
             c.execute("INSERT OR REPLACE INTO proof VALUES(?,?,?,?,?,?)",
                       (row["node"],row["base"],row["body"],row["source"],k.canon(out),time.time()))
-        c.execute("UPDATE pending_check SET state='done',result=? WHERE id=?",(k.canon(out),row["id"]))
+        c.execute("UPDATE pending_check SET state='done',result=? WHERE id=? AND at=?",(k.canon(out),row["id"],row["at"]))
     return out
 
 def collect(c,check,seconds=1100):
@@ -147,9 +160,16 @@ def collect(c,check,seconds=1100):
     if not 1<=seconds<=1800:raise ValueError("wait must be 1–1800 seconds")
     proc=subprocess.run([RELAY,"wait",request,str(seconds)],capture_output=True,text=True,timeout=seconds+30)
     try:
-        receipt=json.loads(proc.stdout);result=receipt["result"]
-        if not isinstance(result,dict):raise ValueError("invalid compiler result")
-    except (ValueError,KeyError,TypeError):
+        receipt=json.loads(proc.stdout)
+        if receipt.get("id")==request and receipt.get("state")=="error":
+            out={"status":"transport_failed","check":row["id"],"detail":receipt.get("events",[])[-1:]}
+            with c:c.execute("UPDATE pending_check SET state='transport_failed',result=? WHERE id=? AND at=?",
+                             (k.canon(out),row["id"],row["at"]))
+            return out
+        result=receipt["result"]
+        if receipt.get("id")!=request or receipt.get("state")!="done" or not isinstance(result,dict):
+            raise ValueError("invalid compiler result")
+    except (ValueError,KeyError,TypeError,AttributeError):
         # A short poll is not a failed proof. Leave the check recoverable.
         if time.time()-row["at"]>24*3600:
             with c:c.execute("UPDATE pending_check SET state='transport_failed',result=? WHERE id=?",

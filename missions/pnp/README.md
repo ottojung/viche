@@ -108,3 +108,12 @@ imports matching. Run `python3 -m missions.pnp.brief` in a bound workspace.
 Use the reduction source as a mathematical guide, not an automatically
 permitted import. Catalog metadata never changes lease identity or authorizes
 work on unheld steps.
+
+## Research tools
+
+Researchers receive role-specific instructions at dispatch. Start with
+\`pnp-research start\` in the workspace, or \`pnp-research guide ROLE\` for
+examples. The work packet includes reusable discoveries across lease changes,
+exact open Lean dependencies, and relevant proof generators. See
+[research/README.md](research/README.md) for async checks, independent method
+research, symbolic Lean certificates, and adoption measurements.

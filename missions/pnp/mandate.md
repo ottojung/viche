@@ -387,8 +387,13 @@ lemmas, obstructions or certificates; tool fronts produce independently
 verified automation and held-out family benchmarks. Prefer results over reports.
 
 At dispatch inject the role-specific executable workflow directly into the
-initial prompt. For independent method/tool researchers, knowledge curators
-and portfolio evaluators, after creating/reusing the idle agent run
+initial prompt. The standing staff/continuity helper does this automatically
+for bound and support roles. Workers first run pnp-research start for their
+actual work packet; pnp-research guide ROLE gives examples on demand.
+Do not require reading the entire mandate or a documentation quiz before
+research. Measure actual adoption with pnp-research adoption, and separately
+measure checked output. For explicit independent method/tool researchers,
+knowledge curators and portfolio evaluators, after creating/reusing the idle agent run
 `pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task "specific task"`
 (or include the role text from `pnp-research dispatch ROLE` with the existing
 role instructions). This is an Executive lifecycle action, not a worker tool

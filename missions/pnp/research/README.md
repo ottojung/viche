@@ -1,14 +1,22 @@
 # Cumulative mathematical research
 
-Agent CLI: `pnp-research`, installed with `missions/pnp/research/install.sh`.
-Executive dispatches independent method/tool roles with `pnp-research dispatch
-ROLE --agent ID --cwd WORKSPACE --task TASK`. Baseline worker prompts include
-the same usable commands. No role is authorized to create leases or publish
-outside the existing allocator and publisher.
+## First command, not a reading assignment
 
-## Knowledge
+\`pnp-research start\` in a research workspace returns the current role, pinned
+revision, assigned subproblem, checked/open dependencies, and relevant earlier
+results (including released leases). The Executive dispatch helper injects a
+short role-specific prompt automatically. For an unfamiliar command, use
+\`pnp-research guide ROLE\` for executable examples or the command's \`--help\`.
+Do not read every manual before doing mathematics.
 
-```sh
+Independent method/tool agents run \`pnp-research start --role method\` or
+\`pnp-research start --role tool\`. They work on reusable mathematical families
+and proof-producing automation without acquiring desk leases. The Executive
+maintains these independent roles alongside baseline and focused researchers.
+
+## Use the mathematical memory
+
+\`\`\`sh
 pnp-research knowledge find 'peeling core bound'
 pnp-research knowledge find --family projective-plane --kind technique
 pnp-research knowledge show ID
@@ -16,65 +24,99 @@ pnp-research knowledge add obstruction --family graph-circuit \
   --statement 'precise failed claim' --detail 'why it fails' \
   --provenance 'original investigation' --file evidence.txt
 pnp-research knowledge link COUNTEREXAMPLE OBSTRUCTION counterexample_to
-pnp-research knowledge ingest
-```
+\`\`\`
 
-The SQLite database and content-addressed artifacts live outside lease trees
-under PNP_STATE_ROOT/research. Imported reports/fragment metadata are not
-kernel receipts. Archive replay deduplicates immutable identities. Typed
-knowledge and explicit links persist independently of workers. Use exact
-statements/hypotheses and reproducible files rather than generic notes.
+Exact prior-gap records are prioritized in the work packet even across
+reacquisitions or family classification changes. Search results are compact;
+use show for details and artifacts. Imported worker findings and fragment
+metadata are not kernel receipts. Typed objects preserve actual mathematical
+statements, hypotheses, counterexamples and reproducible evidence.
 
-## Proof dependency graph
+## Parallel Lean discovery
 
 In a bound workspace:
-```sh
+\`\`\`sh
+pnp-research obligations ready --current
+pnp-research obligations show NODE_ID
 pnp-research obligations request --statement '∀ n : Nat, n + 0 = n' --import Mathlib
-pnp-research obligations ready
-pnp-research obligations show ID
-pnp-research obligations assign ID WORKER_LABEL
-pnp-research obligations solve ID proof.body
-pnp-research obligations assemble ID --output Combined.lean
-pnp-research obligations assemble ROOT --candidate --output Candidate.lean
-```
+# Write proof.body containing a complete Lean term: by intro n; exact Nat.add_zero n
+pnp-research obligations solve NODE_ID proof.body --async
+# Keep investigating another obligation. Use CHECK_ID from the returned JSON.
+pnp-research obligations collect CHECK_ID --poll
+# Exit 75 means pending; collect without --poll to wait.
+pnp-research obligations assemble ROOT_ID --candidate --output Candidate.lean
+# Submit the exact complete candidate through the ordinary submission pipeline.
+\`\`\`
 
-A body is a complete Lean term, normally `by ...`. Refer to other nodes by
-their `viche_o_ID` symbols and give their IDs with repeated `--requires ID`
-when requesting an obligation. A node is ready only once its dependencies
-are checked on the same base. The solver builds the dependency closure,
-uses the remote compiler (or `--local` managed compiler), checks the exact
-source digest, and requires Lean's axiom report for the exact declaration
-with no additional axioms. It records failures separately. `fork ID` copies
-an obligation graph to the bound workspace's base, without carrying proof
-verification; `body ID --output FILE` retrieves a checked proof body.
-Assembly in candidate mode runs the existing static validator; the normal
-publisher and authoritative checker still determine acceptance.
+Integrators request exact types with repeated \`--requires NODE_ID\`. A node
+is ready when its required nodes are checked on the same base, not when
+its own proof is complete. In proof bodies, refer to dependencies as
+\`viche_o_NODE_ID\`. Executive assigns complementary nodes to specialists.
+Do not duplicate an active worker's obligation. Exact obligations deduplicate
+across origins when type, imports/options, revision and dependencies match.
 
-Independent method research does not need a lease:
-```sh
+Remote async submission stores the immutable full source and request identity.
+Repeating the same check returns its existing ID. Collection validates the
+exact result identity, Lean exit status and axiom report. Completed remote
+checks can be recovered after agent exit or lease rotation by maintenance.
+A terminal failure may be retried explicitly with \`--retry\` on solve, or
+using a changed body/resource budget. A pending check is not a failed proof.
+Synchronous solve and managed \`--local\` are also available in a bound workspace.
+
+Different base? \`obligations fork OLD_ID\` returns the node mapping;
+\`obligations reuse OLD_ID NEW_ID --async\` rechecks a reusable proof body.
+Verification does not transfer automatically between commits. To edit the
+remapped body first, use \`obligations body OLD_ID --for-node NEW_ID --output FILE\`.
+Only the existing publisher and authoritative checker determine acceptance.
+
+## Independent methods
+
+The work packet provides a compatible public upstream revision when available:
+\`\`\`sh
 pnp-research obligations request --base PUBLIC_SHA --family graph-circuit \
   --provenance 'method research' --import Mathlib --statement 'True'
-pnp-research obligations solve ID proof.body --method
-```
-The exact public base must be cached on Marceline. This does not touch the
-desk or claim a lease. Use this for general reusable theorems, not to
-circumvent the assigned proof rules.
+# proof.body: by trivial
+pnp-research obligations solve NODE_ID proof.body --method --async
+pnp-research obligations collect CHECK_ID
+\`\`\`
 
-## Family-level construction and evaluation
+Method research is not an extra desk claim and cannot publish to arbitrary gaps.
 
-`pnp-research star GRAPH.json` accepts {"n":26,"edges":[[0,13],...]}.
-It constructs an edge-owned star cover, using exact bipartite matching or
-bounded branch-and-bound for other graphs. The verifier uses exact minimal
-true sets, not truth-table enumeration. Resource limits produce unknown;
-no claim of globally optimal circuit size. The output is a computational
-certificate, not a Lean proof. General Boolean grouping and antichain
-semantics have separate checked graph obligations.
+## Reusable proof-producing tools
 
-`pnp-research yield` reconstructs historical acquisition episodes including
-archived leases. It uses censored exposure, observed submission/loss rates
-and shrinkage for sparse families. Checker acceptance is not credited
-leaderboard success. Estimates are a heuristic baseline, not calibrated
-individual predictions, and do not control the desk. Compare with real
-remaining proof work and current competition. No automatic release.
+\`pnp-research certificate --output Candidate.lean\` attempts the exact bound
+assignment. Independently, provide \`certificate GRAPH.json --output Test.lean\`,
+where the graph format is {"n":26,"edges":[[0,13],...],"bound":64}.
+The star-cover construction uses minimum bipartite vertex cover or bounded
+branch-and-bound, and symbolic antichain verification. Its Lean certificate
+uses a permutation of concrete edges rather than exhaustive enumeration of
+Boolean assignments. A generated file still needs kernel verification;
+a failed construction does not prove a lower bound. The ordinary proof
+synthesis and cheap preflight use this generator when applicable, with
+fallback to legacy synthesis.
 
-Tests: `python3 tests/pnp-research.py`.
+\`pnp-research star GRAPH.json\` returns only the computational witness.
+Benchmark implementation: \`python3 -m missions.pnp.research.certificate_bench
+--help\`. Benchmark on distinct families and report actual kernel results.
+
+## Operations and decision support
+
+- Executive lifecycle uses the canonical standing dispatch helper; it
+  injects the playbook before launching a worker. For explicit independent
+  dispatch: \`pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task TASK\`.
+  Only Executive may use agent-launch/steer actions.
+- \`pnp-research adoption\` measures confirmed launches, discovery, substantive
+  commands and time to first use using the actual agent environment.
+  These are adoption measurements, not proof success or leaderboard credit.
+- \`pnp-research yield\` exposes censored historical family-level evidence,
+  shrinkage estimates, actual graph progress and competition. It is a
+  heuristic, not calibrated individual prediction or automatic release policy.
+- \`pnp-research knowledge ingest\` replays live and quarantined research findings.
+  \`pnp-research obligations reconcile\` collects terminal async jobs.
+  The mission cycle runs both in independent bounded maintenance.
+- State lives under PNP_STATE_ROOT/research, independent of lease workspaces.
+  SQLite stores graph and receipts; immutable artifact files use SHA-256.
+  Installation: \`missions/pnp/research/install.sh\` installs an atomic release.
+  Canonical code is used once the complete feature set is integrated.
+- Offline regression tests: \`python3 tests/pnp-research.py\`. Use the normal
+  delivery queue for integration. Do not add an onboarding approval gate.

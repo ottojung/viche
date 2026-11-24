@@ -58,6 +58,9 @@ def db():
       key TEXT PRIMARY KEY, node TEXT REFERENCES object(id)
     );
     CREATE TABLE IF NOT EXISTS migration(name TEXT PRIMARY KEY);
+    CREATE TRIGGER IF NOT EXISTS object_origin_add AFTER INSERT ON object BEGIN
+      INSERT OR IGNORE INTO origin VALUES(new.id,new.family,new.provenance);
+    END;
     CREATE INDEX IF NOT EXISTS origin_family ON origin(family,node);
     CREATE INDEX IF NOT EXISTS origin_provenance ON origin(provenance);
     CREATE INDEX IF NOT EXISTS object_family ON object(family,kind);
@@ -163,6 +166,12 @@ def add(c, kind, fam, statement, detail, provenance, file=None, base=None, deps=
         key=obligation_identity(statement,detail,base,deps) if kind=="obligation" else None
         if key:
             canonical=c.execute("SELECT node FROM obligation_key WHERE key=?",(key,)).fetchone()
+            if not canonical:
+                for row in c.execute("SELECT id,detail FROM object WHERE kind='obligation' AND statement=? AND base=? ORDER BY created,id",(statement,base)):
+                    existing=[r[0] for r in c.execute("SELECT target FROM edge WHERE source=? AND relation='requires'",(row["id"],))]
+                    if obligation_identity(statement,row["detail"],base,existing)==key:
+                        c.execute("INSERT OR IGNORE INTO obligation_key VALUES(?,?)",(key,row["id"]))
+                        canonical=(row["id"],);break
             if canonical:
                 oid=canonical[0]
                 c.execute("INSERT OR IGNORE INTO origin VALUES(?,?,?)",(oid,fam,provenance))
