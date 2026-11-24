@@ -1,6 +1,8 @@
 id: H-1795509599-c6c9
-status: open
+status: superseded
 assigned-by: Founder P vs NP baseline priority / Executive post-restart pass
 created: 2026-11-24T08:39:59Z
 evidence: missions.pnp.status after baseline; portfolio inspect; antonina agent status for general/specialist/support/evaluator IDs; guard decision=continue; PR 4501 GPG verification; tests/pnp-pipeline-smoke.sh green
 work: Executive post-restart P vs NP allocation: all five live leases retain one general researcher; focus L-meta-2138 has integrator/restriction/certificate specialists plus knowledge/methods/flow support and both independent evaluators. General researchers remain on focus switches; retire only extra off-focus specialists. PR 4501 is pending. Next action is evidence-driven replenishment, correction or retirement at a meaningful state change, not polling.
+closed: 2026-11-24T09:10:55Z
+note: Lease/focus rotation advanced to L-meta-2149; current allocation and PR state recorded in a fresh handoff.

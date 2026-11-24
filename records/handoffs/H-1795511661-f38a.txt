@@ -1,0 +1,6 @@
+id: H-1795511661-f38a
+status: open
+assigned-by: executive
+created: 2026-11-24T09:14:21Z
+evidence: https://github.com/brilliant-hq/pequalnp-proofs/pull/4609 ; /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2138/state.json (postcheck event 2026-11-24T09:12:30Z)
+work: FLOW correction needed on PR #4609: local postcheck now fails on the exact published bytes (candidate dfbbd948) at L_meta_2138.lean:4838 and the preceding projection branch: the rewrite seeks (homProject 6).fn (raw.getD 6 zero) but the target contains homProject6.fn raw0; a raw0-zero projection fact or unfolding before rw is needed. Status has correction_needed=['L-meta-2138'], external verdict still pending, PR open with no checker comment. Next: Executive delegate this bounded correction to the L-meta-2138 owner, patch minimally, rerun managed postcheck, and push a signed correction to the SAME PR; preserve candidate bytes and do not open a competing PR or rebuild identical proof bytes.

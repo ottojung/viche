@@ -1,6 +1,8 @@
 id: H-1795509747-1b06
-status: open
+status: done
 assigned-by: Founder request via ChatGPT
 created: 2026-11-24T08:42:27Z
 evidence: /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/support-artifacts/founder-correction-second-derivative.md
 work: Executive: correct the general researcher's claim that mixed second derivatives close the bipartite case. Exact multiplicity and multi-output Hessian cost are unresolved. No full solution; avoid formalizing false coverage lemma. Keep the valid first-order partial bounds and integrate new evidence into research decisions.
+closed: 2026-11-24T09:10:55Z
+note: General independently verified and published withdrawal 97f9f653f4a1f0887b12faf3; later finding c75cb285 preserves valid routes and the newest finding verifies the junk-profile theorem. False second-derivative claim is not used.
