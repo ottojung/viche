@@ -1,0 +1,82 @@
+{
+  "schema": "viche-knowledge-budget-v1",
+  "accounting_window_seconds": 3888000,
+  "note": "MEASURED MULTI-WAVE CANDIDATE - Economy evidence only, NOT installed, signed, activated or dispatched. Cumulative caps = 45 x the published measured per-run proxy-p95 envelope, supporting one four-office wave per day across the 45-day term. per_run_caps are the FULL measured per-run envelope (11,320,103 tokens / 7,987 whole-host UPPER_BOUND CPU-s / 1,997 wall-s), above the observed first-wave maximum (3,257,367 / 3549.29 / 871). Admission charges the full per-run ceiling against the non-resettable 45-day ledger; debt is never reset. Host: 4 CPUs; aggregate CPU charge 1,437,660 over the term equals 359,415 physical core-s, 2.31% of the 15,552,000 core-s physically available. Zero-billed exact-ID allowlist and Spying source scope unchanged; no paid tier, no new spending.",
+  "baseline": {
+    "label": "point-in-time diagnostic only (197 executions, 0 scored outcomes); NOT a frozen verified cost comparator under Act 32 v4 D",
+    "ref": "records/knowledge/baseline-20261119.json"
+  },
+  "cpu_meter": {
+    "attribution": "conservative-whole-host-upper-bound",
+    "available": true,
+    "reason": "Every host busy CPU second is pessimistically charged to every overlapping knowledge office; includes unrelated workloads. This is a bound, NOT measured per-office CPU usage.",
+    "source": "proc-stat-host-busy-upper-bound-v1"
+  },
+  "metering": {
+    "opencode_db": "/home/lubko/.local/state/antonina/opencode-service/opencode.db",
+    "source": "opencode-service-session-v2"
+  },
+  "monitor_interval_seconds": 20,
+  "overrun_action": "kill",
+  "aggregate": {
+    "caps": {
+      "tokens_total": 2037618540,
+      "cpu_seconds": 1437660,
+      "wall_seconds": 359460
+    }
+  },
+  "offices": {
+    "foresight": {
+      "enabled": true,
+      "caps": {
+        "tokens_total": 509404635,
+        "cpu_seconds": 359415,
+        "wall_seconds": 89865
+      },
+      "per_run_caps": {
+        "tokens_total": 11320103,
+        "cpu_seconds": 7987,
+        "wall_seconds": 1997
+      }
+    },
+    "spying": {
+      "enabled": true,
+      "caps": {
+        "tokens_total": 509404635,
+        "cpu_seconds": 359415,
+        "wall_seconds": 89865
+      },
+      "per_run_caps": {
+        "tokens_total": 11320103,
+        "cpu_seconds": 7987,
+        "wall_seconds": 1997
+      }
+    },
+    "statistics": {
+      "enabled": true,
+      "caps": {
+        "tokens_total": 509404635,
+        "cpu_seconds": 359415,
+        "wall_seconds": 89865
+      },
+      "per_run_caps": {
+        "tokens_total": 11320103,
+        "cpu_seconds": 7987,
+        "wall_seconds": 1997
+      }
+    },
+    "strategy": {
+      "enabled": true,
+      "caps": {
+        "tokens_total": 509404635,
+        "cpu_seconds": 359415,
+        "wall_seconds": 89865
+      },
+      "per_run_caps": {
+        "tokens_total": 11320103,
+        "cpu_seconds": 7987,
+        "wall_seconds": 1997
+      }
+    }
+  }
+}
