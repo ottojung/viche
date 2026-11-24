@@ -20,6 +20,8 @@ cat > "$town/tests/isolation.sh" <<'EOF'
 #!/bin/sh
 set -eu
 [ "$HOME" != "$ORIGINAL_HOME" ]
+[ "$VICHE_TOWN_ROOT" = "$(pwd -P)" ]
+[ -z "${VICHE_BUDGET_STATE:-}" ]
 [ "$XDG_CONFIG_HOME" != "$ORIGINAL_HOME/config" ]
 [ "$VICHE_STATE_ROOT" != "$ORIGINAL_HOME/state" ]
 [ -z "${ANTONINA_HOST_XDG_CONFIG_HOME:-}" ]
@@ -53,7 +55,7 @@ check_result() {
 
 export ORIGINAL_HOME="$HOME"
 ANTONINA_HOST_XDG_CONFIG_HOME="$HOME/config" VICHE_ANTONINA_CONFIG="$HOME/config/antonina.json" \
-  VICHE_STATE_ROOT="$HOME/state" run --suite tests/isolation.sh >/dev/null
+  VICHE_STATE_ROOT="$HOME/state" VICHE_BUDGET_STATE="$HOME/budget" run --suite tests/isolation.sh >/dev/null
 check_result green
 run --suite tests/green.sh >/dev/null
 check_result green

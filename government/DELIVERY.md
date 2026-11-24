@@ -63,3 +63,8 @@ conflict) and propose again. The whole queue: `integrator.py status`.
   candidate (and it is reviewed). No script impersonates a parliamentarian.
 - A delivery marked `Act25-Phase:` (Act 26 governs those; land it by hand with
   `reviewed-merge.sh`, kept for that purpose).
+
+For manual source tests, run from the source worktree using the canonical
+`/bin/sh /var/lib/lubko/wd/viche/government/suite-env.sh /bin/sh tests/YOUR-TEST.sh`.
+This disposable runtime protects normal tests from inherited live configuration;
+it is not a security sandbox for arbitrary same-user code.

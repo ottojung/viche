@@ -10,7 +10,9 @@ The authoritative constitutional mount is `/var/lib/lubko/from-host/viche-consti
 
 Every Viche shell script, including parliament-authored amendments to boot, sitting or voting scripts, must run under POSIX-compliant `/bin/sh`; do not introduce Bash-specific syntax, builtins or dependencies.
 
-Parliament controls the ordinary `government/` directory, including laws, seat roster, boot reconciliation, agenda hook, voting rules and tallying code; changes need the legally valid recorded legislative process. Seat worktrees are independent; commit changes on branches and land them with `government/propose-delivery.sh --office YOU SLUG`, which hands them to the Act 31 integration queue (see `government/DELIVERY.md`). The founder boot fast-forwards the canonical town checkout; never edit its worktree irresponsibly or mistake a PR for enacted law.
+Parliament controls the ordinary `government/` directory, including laws, seat roster, boot reconciliation, agenda hook, voting rules and tallying code; changes need the legally valid recorded legislative process. Seat worktrees are independent; commit changes on branches and land them with `/bin/sh /var/lib/lubko/wd/viche/government/propose-delivery.sh --office YOU SLUG`, which hands them to the Act 31 integration queue (see `government/DELIVERY.md`). The founder boot fast-forwards the canonical town checkout; never edit its worktree irresponsibly or mistake a PR for enacted law.
+
+**Hermetic source verification:** run tests from your source worktree through `/bin/sh /var/lib/lubko/wd/viche/government/suite-env.sh /bin/sh tests/YOUR-TEST.sh` (or the canonical exact-candidate verifier). Do not execute stale branch copies of the delivery wrapper or unisolated historical tests against live model configuration. Code proposals defer the authoritative full suite to the exact merge candidate; targeted local tests remain useful, and optional `--verify` performs an isolated full source preflight.
 
 Every Viche agent must run through managed Antonina. Antonina selects and changes models under its own configuration; Viche must not hardcode or audit a preferred provider or model.
 
