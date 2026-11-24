@@ -241,3 +241,22 @@ def all_new_commits_signed(worktree, base_sha):
         except GitError:
             return False
     return bool(shas)
+
+
+def prepare_unpublished(worktree, branch, base, previous=None):
+    """Recover a crash before recording SIGNED, never rewrite a remote head."""
+    remote = remote_branch_sha(branch)
+    if remote != previous:
+        raise GitError("unexpected remote branch before staging")
+    target = previous or base
+    run(["git", "-C", worktree, "reset", "--hard", target])
+    run(["git", "-C", worktree, "clean", "-fd", "--", "lean"])
+
+
+def is_upstream_ancestor(sha, latest):
+    """Use a prior checked upstream base only if its ancestry is confirmed."""
+    import re
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return False
+    return run(["git", "--git-dir=" + MIRROR, "merge-base", "--is-ancestor",
+                sha, latest], check=False).returncode == 0

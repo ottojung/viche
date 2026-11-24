@@ -9,7 +9,24 @@ import time
 
 from . import config, desk as desk_mod, gitctl, github, state, frontier
 
-VERDICT = re.compile(r"\b(ACCEPTED|REJECTED|FAULT)\b")
+VERDICT = re.compile(
+    r"^Checked on the base repository at commit `([0-9a-f]{9,40})`\.\s+"
+    r"\*\*(ACCEPTED|REJECTED|FAULT|REFUSED) \([^\n]*\)\*\*", re.M)
+
+
+def current_verdict(comments, sha):
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return None
+    verdicts = []
+    for comment in comments:
+        if comment.get("author") != "LiorDagan":
+            continue
+        body = comment.get("body") or ""
+        match = VERDICT.search(body)
+        if (match and sha.startswith(match[1]) and
+                re.search(r"^Run: https://github\.com/brilliant-hq/pequalnp-proofs/actions/runs/[0-9]+$", body, re.M)):
+            verdicts.append((comment.get("created_at", ""), match[2]))
+    return max(verdicts)[1] if verdicts else None
 
 
 def _heartbeat(gap_id, rec, desk, force=False):
@@ -38,21 +55,19 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     rec = state.load(gap_id)
     if rec is None:
         return {"gap": gap_id, "result": "no-state"}
-    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
-            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE"):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
 
     # Missing from a complete fresh frontier is a reason to confirm, not a verdict.
     _heartbeat(gap_id, rec, desk, force=frontier.missing(observed or {}, gap_id))
     rec = state.load(gap_id)
-    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") or (
-            rec["state"] == "REJECTED" and not rec.get("queued_lease")):
+    if rec["state"] in ("ACCEPTED", "RELEASED", "STALE"):
         return {"gap": gap_id, "result": "terminal", "state": rec["state"]}
 
     # A detached deterministic publisher owns a durable candidate. Recovery
     # never starts a competing build or holds the short reconciliation pass.
     from . import jobs
-    if jobs.resume(gap_id):
+    if rec["state"] != "PR_OPEN" and jobs.resume(gap_id):
         return {"gap": gap_id, "result": "publishing", "state": rec["state"]}
 
     branch = rec.get("branch") or config.branch_for(gap_id)
@@ -96,24 +111,35 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     if number:
         number = int(number)
         pr = gh.get_pr(number)
-        if rec["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED"):
+        if rec["state"] in ("PUSHED", "SIGNED", "LOCAL_CHECKED") and pr.get("head_sha") == rec.get("commit_sha"):
             state.transition(gap_id, "PR_OPEN", pr_number=number,
                              pr_url=pr.get("url"),
                              external_verdict="pending")
         state.update(gap_id, pr_number=number, pr_url=pr.get("url"))
-        comments = gh.pr_comments(number)
-        verdicts = [(m.get("created_at", ""),
-                     VERDICT.search(m.get("body", "")).group(1))
-                    for m in comments
-                    if VERDICT.search(m.get("body", ""))]
-        if verdicts:
-            verdict = sorted(verdicts)[-1][1]
-            if verdict != "FAULT":
-                state.transition(gap_id, verdict,
-                                 external_verdict=verdict, queued_lease=None)
-            else:
-                state.update(gap_id, external_verdict="FAULT",
-                             failure_reason="upstream checker FAULT; will recheck")
+        current = state.load(gap_id)
+        if current["state"] in ("PR_OPEN", "REJECTED") and not current.get("queued_lease") and pr.get("head_sha") == current.get("commit_sha"):
+            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"))
+            # A checker success is not a merged contribution; a competitor
+            # can win before the merge. Never apply an old revision's verdict.
+            with state.lock(gap_id):
+                latest = state.load(gap_id)
+                if latest["state"] in ("PR_OPEN", "REJECTED") and not latest.get("queued_lease") and latest.get("commit_sha") == current.get("commit_sha"):
+                    before = latest["state"]
+                    if pr.get("merged") is True and verdict == "ACCEPTED":
+                        latest.update(state="ACCEPTED", external_verdict="ACCEPTED", queued_lease=None)
+                    elif pr.get("state") == "closed" and not pr.get("merged"):
+                        latest.update(state="STALE", failure_reason="PR closed without merge", queued_lease=None)
+                    elif verdict in ("REJECTED", "REFUSED"):
+                        latest.update(state="REJECTED", external_verdict=verdict, queued_lease=None)
+                    elif verdict == "FAULT":
+                        latest.update(external_verdict="FAULT")
+                    elif verdict == "ACCEPTED":
+                        latest.update(external_verdict="ACCEPTED")
+                    state.save(latest)
+                    if latest["state"] != before:
+                        state.event(gap_id, "state", {"to": latest["state"], "sha": latest.get("commit_sha")})
+            from . import postcheck
+            postcheck.resume(gap_id, state.load(gap_id))
     rec = state.load(gap_id)
     state.update(gap_id, last_reconcile=time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                       time.gmtime()))

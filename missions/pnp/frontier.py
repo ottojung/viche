@@ -88,6 +88,8 @@ def checkpoint(gap, lease=None, now=None):
         return {"decision": "wait", "reason": "assignment identity unavailable"}
     if lease and rec.get("lease") != lease:
         return {"decision": "stop", "reason": "assignment superseded"}
+    if status == "PR_OPEN" and rec.get("local_check_status") == "failed" and rec.get("external_verdict") != "ACCEPTED":
+        return {"decision": "continue", "reason": "correct existing PR after local compile failure"}
     if status in STOPPED:
         return {"decision": "stop", "reason": status}
     if status == "REJECTED" and rec.get("pr_number"):

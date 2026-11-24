@@ -174,6 +174,11 @@ def reacquire(gap_id, **fields):
             rec[key] = None
         rec["failure_reason"] = None
         rec["queued_lease"] = None
+        rec["build_evidence"] = None
+        rec["local_check_status"] = None
+        rec["correction_from_sha"] = None
+        rec["expected_commits"] = None
+        rec["local_check_retry_at"] = None
         rec["publisher_retry_at"] = None
         rec["publisher_failures"] = 0
         rec["publisher_memory_required"] = None

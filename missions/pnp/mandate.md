@@ -212,3 +212,12 @@ unmanaged Lean: use the shared compiler and respect its resource admission.
 A complete candidate must be submitted promptly rather than waiting on an
 irrelevant experimental branch. Executive delivers actionable mathematical
 handoffs to the existing researcher promptly, preserving search progress.
+
+## Immediate publication
+Submit complete high-confidence proofs immediately with the normal submit command.
+Never wait for a redundant compile before opening the PR. The publisher validates,
+signs and publishes, then checks the exact published revision locally in parallel
+with upstream CI. Do not submit unfinished proofs, placeholders or guesses.
+Executive must promptly delegate corrections shown in correction_needed, reusing
+the same open PR and the existing research artifacts. Do not treat a local check
+failure as a final external verdict; do not repeat rejected identical proof bytes.

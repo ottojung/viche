@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from . import config, publish, state, validate, build_control
+from . import config, publish, state, validate
 
 READY = ("CANDIDATE_READY", "LOCAL_CHECKED", "SIGNED", "PUSHED", "REJECTED")
 
@@ -42,8 +42,6 @@ def submit(gap, source, expected_lease=None):
         raise publish.StopPublish("assignment superseded")
     if not rec:
         raise publish.StopPublish("no acquired gap")
-    if rec["state"] == "PR_OPEN":
-        return {"gap": gap, "pr": rec["pr_number"], "url": rec["pr_url"]}
     fd = claim(gap)
     if fd is None:
         return {"gap": gap, "status": "publishing"}
@@ -54,18 +52,23 @@ def submit(gap, source, expected_lease=None):
             rec = state.load(gap)
             if not rec or (expected_lease and rec.get("lease") != expected_lease):
                 raise publish.StopPublish("assignment superseded")
-            if rec["state"] not in ("LEASED", "RESEARCHING") + READY:
+            if rec["state"] not in ("LEASED", "RESEARCHING", "PR_OPEN") + READY:
                 raise publish.StopPublish("gap not publishable: " + rec["state"])
             meta = {"id": gap, "file": rec["path"], "module": rec["module"],
                     "statement": rec["statement"], "imports": rec["imports"]}
             digest = validate.validate(meta, data)
             if rec["state"] in ("SIGNED", "PUSHED") and digest != rec["candidate_digest"]:
                 raise publish.StopPublish("signed proof is immutable")
-            if digest == rec.get("candidate_digest") and not build_control.resource_ready(rec):
-                return {"gap": gap, "status": "resource-deferred",
-                        "required_headroom": rec["publisher_memory_required"]}
-            state.atomic_write(candidate_path(gap), data.decode("utf-8"))
             before = rec["state"]
+            if rec["state"] == "PR_OPEN":
+                if (digest == rec.get("candidate_digest") or rec.get("local_check_status") != "failed"
+                        or rec.get("external_verdict") == "ACCEPTED"):
+                    return {"gap": gap, "pr": rec["pr_number"], "url": rec["pr_url"]}
+                rec["state"] = "REJECTED"
+            if (rec["state"] == "REJECTED" and digest == rec.get("candidate_digest")
+                    and not rec.get("queued_lease")):
+                raise publish.StopPublish("correction must change the proof")
+            state.atomic_write(candidate_path(gap), data.decode("utf-8"))
             if before in ("LEASED", "RESEARCHING", "CANDIDATE_READY"):
                 rec.update(state="CANDIDATE_READY", candidate_digest=digest,
                            failure_reason=None)
@@ -88,8 +91,6 @@ def resume(gap):
             not rec.get("queued_lease") or rec["queued_lease"] != rec["lease"] or
             not os.path.isfile(candidate_path(gap))):
         return False
-    if not build_control.resource_ready(rec):
-        return True
     if (rec.get("publisher_retry_at") or 0) > time.time():
         return True
     fd = claim(gap)
@@ -119,6 +120,10 @@ def run(gap, fd):
     try:
         os.environ["PNP_PUBLISH_LOCK_FD"] = str(fd)
         rec = state.load(gap)
+        if rec["state"] == "PR_OPEN":
+            from . import postcheck
+            postcheck.run(gap)
+            return
         if rec["state"] not in READY or rec.get("queued_lease") != rec["lease"]:
             return
         os.environ["PNP_PUBLISH_GAP"] = gap
@@ -126,6 +131,8 @@ def run(gap, fd):
         os.environ["PNP_PUBLISH_LEASE"] = lease or ""
         result = publish.publish(gap, candidate_path(gap))
         print(result, flush=True)
+        from . import postcheck
+        postcheck.run(gap)
     except publish.StopPublish as exc:
         print("publication stopped:", exc, flush=True)
         if lease:

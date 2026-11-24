@@ -75,10 +75,14 @@ native_decide, unsafe commands), and exactly one Lean proof file.
 Use a fresh isolated Git checkout/worktree based on a pinned upstream main SHA and
 a new branch unique to the leased gap. Never use untrusted candidate worktree Git hooks,
 configs, pre-existing branch, or commit history as submission input.
-Run the required pinned local Lean/Mathlib build once, in the publisher. Do not
-run a redundant full local authoritative checker; the PR receives that verdict
-from the upstream fleet. Record hash and outcome; distinguish the successful
-local build from authoritative upstream acceptance. A worker hands a complete
+Submit complete, high-confidence proofs immediately after static validation and lease
+confirmation. Do not delay signing, pushing or PR creation for local compilation.
+After the PR opens, independently verify that exact committed revision with the
+managed compiler unless matching successful managed build evidence already exists.
+A local failure is a correction signal, not an authoritative rejection. Correct
+the same open PR with a new signed commit; never open a second PR for the gap.
+Reconcile only authoritative verdicts for the current PR head, and require merge
+for ACCEPTED. Do not run a redundant full local authoritative checker. A worker hands a complete
 candidate directly to the publisher via submit; no additional Executive approval
 or researcher-side full checker is needed. Snapshot the candidate and start a
 detached, per-gap locked deterministic publisher immediately. Recover interrupted
@@ -108,7 +112,7 @@ contains exactly the expected signed SHA, GitHub verification == true.
 If post-create validation fails, report and stop automated mutations; do not
 hide the discrepancy. Never merge, close, comment on unrelated PRs, change settings,
 delete branches as incidental cleanup, or operate on other repositories.
-For an allowed correction, rebuild new signed commit(s) and prove every PR
+For an allowed correction, sign new commit(s) and prove every PR
 commit beyond the upstream base is signed and attributed to ottojung before updating.
 
 ## Research program (standing)

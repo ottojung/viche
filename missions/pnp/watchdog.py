@@ -126,6 +126,18 @@ def stop_if_terminal(entry, expected, pending, now):
                 except OSError:
                     pass
             superseded = previous is not None and previous != current
+            if rec.get("state") == "PR_OPEN" and not superseded:
+                try:
+                    env = (entry / "environ").read_bytes().split(b"\0")
+                    if (b"PNP_MANAGED_COMPILER=1" in env
+                            and rec.get("local_check_status") == "pending"
+                            and rec.get("commit_sha")
+                            and ("PNP_POSTCHECK_SHA=" + rec["commit_sha"]).encode() in env
+                            and (entry / "cwd").resolve().is_relative_to(
+                                Path(config.WORKTREES_DIR, gap).resolve())):
+                        return None
+                except (OSError, ValueError):
+                    pass
             if rec.get("state") not in TERMINAL and not superseded:
                 return None
             # Recheck after acquiring the gap lock. A replaced PID or cwd

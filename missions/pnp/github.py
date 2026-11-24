@@ -77,7 +77,7 @@ def create_pr(branch, gap_id):
 
 def get_pr(number):
     expr = ("{number: .number, state: .state, title: .title, "
-            "author: .user.login, "
+            "author: .user.login, head_sha: .head.sha, merged: .merged, "
             "head_ref: .head.ref, head_repo: .head.repo.full_name, "
             "base_ref: .base.ref, base_repo: .base.repo.full_name, "
             "url: .html_url}")
@@ -99,7 +99,7 @@ def pr_commits(number):
 def pr_comments(number):
     return json.loads(gh("api", "repos/" + config.UPSTREAM + "/issues/" +
                          str(number) + "/comments", "--jq",
-                         "[.[] | {body: .body, created_at: .created_at}]"))
+                         "[.[] | {body: .body, created_at: .created_at, author: .user.login}]"))
 
 
 def validate_created(number, expected_sha, expected_path,

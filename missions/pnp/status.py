@@ -55,6 +55,9 @@ def snapshot():
                      "lease_expires_at": item.get("lease_expires_at"),
                      "lease_obtained_at": item.get("lease_obtained_at"),
                      "resource_deferred": bool(item.get("publisher_memory_required") and not frontier.build_control.resource_ready(item)) if item.get("state") in ("CANDIDATE_READY", "LOCAL_CHECKED") else False,
+                     "local_check_status": item.get("local_check_status"),
+                     "correction_queued": bool(item.get("queued_lease")),
+                     "external_verdict": item.get("external_verdict"),
                      "failure_reason": item.get("failure_reason")})
     lb = leaderboard.load()
     stale = True
@@ -85,8 +88,9 @@ def snapshot():
                 pass
         worker["gap_state"] = by_gap.get(gid, {}).get("state")
         worker["competition"] = observed.get("gaps", {}).get(gid)
+    corrections = sorted(r["gap"] for r in rows if (r["state"] == "REJECTED" and not r["correction_queued"]) or (r["state"] == "PR_OPEN" and r["local_check_status"] == "failed" and r["external_verdict"] != "ACCEPTED"))
     stale_workers = [a["id"] for a in w["agents"]
-                     if a["gap_state"] in frontier.STOPPED or a["lease_current"] is False]
+                     if (a["gap_state"] in frontier.STOPPED and a["gap"] not in corrections) or a["lease_current"] is False]
     active = [r["gap"] for r in rows if r["state"] in frontier.ACTIVE
               and type(r["lease_expires_at"]) in (int, float)
               and r["lease_expires_at"] > time.time() and isinstance(r["gap"], str)]
@@ -102,7 +106,7 @@ def snapshot():
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
     coordination_due = bool(w["coverage"] == "complete" and (
-        stale_workers or unstaffed or (ordinary is not None and ordinary > 0)))
+        stale_workers or unstaffed or corrections or (ordinary is not None and ordinary > 0)))
     age = {r["gap"]: max(0, round((time.time()-r["lease_obtained_at"])/60))
            for r in rows if r["gap"] in active and type(r["lease_obtained_at"]) in (int,float)}
     score = {k: lb.get(k) for k in ("rank", "our_steps", "leader",
@@ -121,7 +125,7 @@ def snapshot():
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
         "potential_fronts": related[:12],
-        "coordination_due": coordination_due,
+        "coordination_due": coordination_due, "correction_needed": corrections,
         "publisher_build_busy": frontier.build_control.busy(),
         "legacy_lean_compiler_pids": frontier.build_control.legacy_compilers(),
         "lean_headroom_bytes": frontier.build_control.headroom(),
@@ -155,7 +159,7 @@ def snapshot():
             "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
             "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None,
             "hard_available": (observed.get("offerable") or 0) > (observed.get("ordinary") or 0) if observed else None,
-            "unstaffed": unstaffed, "obsolete_workers": sorted(stale_workers),
+            "corrections": corrections, "unstaffed": unstaffed, "obsolete_workers": sorted(stale_workers),
             "unbound": sorted(str(a["id"]) for a in w["agents"] if not a["bound"])},
         "caveat": "Only public checked steps count; local activity is not proof."}
 

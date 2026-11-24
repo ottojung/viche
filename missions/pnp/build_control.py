@@ -45,6 +45,10 @@ def obsolete(gap=None, lease=None):
         return False
     if lease and rec.get("lease") and lease != rec["lease"]:
         return True
+    if os.environ.get("PNP_POSTCHECK_SHA"):
+        return not (rec.get("state") == "PR_OPEN"
+                    and rec.get("commit_sha") == os.environ["PNP_POSTCHECK_SHA"]
+                    and rec.get("local_check_status") == "pending")
     return rec.get("state") in ("STALE", "RELEASED", "ACCEPTED", "PR_OPEN")
 
 

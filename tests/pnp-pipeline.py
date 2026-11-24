@@ -258,12 +258,26 @@ class TestPublish(unittest.TestCase):
         self.assertEqual(r["pr"], 77)
         self.assertEqual(h.created, 0)
 
-    def test_failed_build_stops(self):
+    def test_compilation_not_a_publication_gate(self):
         new_state()
-        with self.assertRaises(publish.StopPublish):
-            publish.publish(GAP, self.file, desk=FakeDesk(),
-                            git=FakeGit(build_ok=False), gh=FakeGH())
-        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
+        g, h = FakeGit(build_ok=False), FakeGH()
+        with mock.patch.object(g, "build", side_effect=AssertionError("pre-PR build")):
+            r = publish.publish(GAP, self.file, desk=FakeDesk(), git=g, gh=h)
+        self.assertEqual(r["pr"], 123)
+        self.assertEqual(state.load(GAP)["local_check_status"], "pending")
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+
+    def test_exact_evidence_skips_postcheck(self):
+        from missions.pnp import evidence
+        rec = new_state()
+        state.update(GAP, build_evidence={
+            "lease": rec["lease"], "base": "base1", "digest": rec["candidate_digest"],
+            "module": MODULE, "path": PATH, "statement": STATEMENT, "imports": []})
+        self.assertTrue(evidence.matching(state.load(GAP), rec["candidate_digest"], "base1"))
+        self.assertFalse(evidence.matching(state.load(GAP), "changed", "base1"))
+        self.assertFalse(evidence.matching(state.load(GAP), rec["candidate_digest"], "base2"))
+        publish.publish(GAP, self.file, desk=FakeDesk(), git=FakeGit(), gh=FakeGH())
+        self.assertEqual(state.load(GAP)["local_check_status"], "passed")
 
     def test_bad_candidate_stops_before_git(self):
         new_state()
@@ -281,18 +295,49 @@ class TestPublish(unittest.TestCase):
                             git=FakeGit(), gh=FakeGH())
         self.assertEqual(state.load(GAP)["state"], "STALE")
 
-    def test_failed_proof_can_be_corrected_without_losing_lease(self):
-        new_state()
-        d, g, h = FakeDesk(), FakeGit(build_ok=False), FakeGH()
-        with self.assertRaises(publish.StopPublish):
-            publish.publish(GAP, self.file, desk=d, git=g, gh=h)
-        self.assertEqual(state.load(GAP)["state"], "RESEARCHING")
-        self.assertIsNone(state.load(GAP)["candidate_digest"])
-        state.transition(GAP, "CANDIDATE_READY")
-        g.build_ok = True
-        result = publish.publish(GAP, self.file, desk=d, git=g, gh=h)
-        self.assertEqual(result["pr"], 123)
-        self.assertEqual(h.created, 1)
+    def test_failed_local_check_can_queue_same_pr_correction(self):
+        from missions.pnp import jobs
+        new_state("PR_OPEN", local_check_status="failed", pr_number=123,
+                  pr_url="u", commit_sha=SHA)
+        corrected = candidate_file(GOOD.replace("norm_num", "decide"))
+        with mock.patch.object(jobs, "launch") as launch:
+            jobs.submit(GAP, corrected)
+            launch.assert_called_once()
+        rec = state.load(GAP)
+        self.assertEqual(rec["state"], "REJECTED")
+        self.assertEqual(rec["pr_number"], 123)
+        self.assertEqual(rec["queued_lease"], "lease-1")
+
+    def test_correction_uses_same_pr_and_can_resume(self):
+        new_state("REJECTED", pr_number=123, pr_url="u", commit_sha=SHA,
+                  base_sha="base1", branch=config.branch_for(GAP))
+        new_sha = "b" * 40
+        class CorrectionGit(FakeGit):
+            def pin_candidate(self, wt, path, data, correction=False):
+                self.calls.append(("pin", correction))
+            def signed_commit(self, wt, base, message, signer=None, correction=False):
+                self.calls.append(("commit", correction))
+                return new_sha
+            def new_commits(self, wt, base):
+                return [SHA, new_sha]
+            def push_branch(self, branch, pusher=None):
+                self.remote = new_sha
+                return new_sha
+        g = CorrectionGit(remote=SHA)
+        h = FakeGH()
+        h.get_pr = lambda n: {"state": "open", "head_sha": g.remote}
+        h.commit_verification = lambda sha: {"sha": sha, "verified": True,
+            "name": config.AUTHOR_NAME, "email": config.AUTHOR_EMAIL}
+        h.validate_created = lambda n, sha, path, expected_commits=None: (
+            {"url": "u"}, [] if expected_commits == [SHA, new_sha] else ["wrong range"])
+        d = FakeDesk()
+        r = publish.publish(GAP, candidate_file(GOOD.replace("norm_num", "decide")),
+                            desk=d, git=g, gh=h)
+        self.assertEqual(r["pr"], 123)
+        self.assertEqual(h.created, 0)
+        self.assertEqual(d.releases, [])
+        self.assertEqual(state.load(GAP)["commit_sha"], new_sha)
+        self.assertEqual(state.load(GAP)["local_check_status"], "pending")
 
     def test_gap_settled_during_build_never_pushes(self):
         new_state()
@@ -490,6 +535,11 @@ class TestCli(unittest.TestCase):
         self.assertEqual(state.load(GAP)["lease"], "active-lease")
 
 
+def verdict_comment(sha, verdict, author="LiorDagan", date="2026"):
+    return {"author": author, "created_at": date,
+            "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/brilliant-hq/pequalnp-proofs/actions/runs/123" % (sha[:10], verdict)}
+
+
 class TestReconcile(unittest.TestCase):
     def setUp(self):
         fresh()
@@ -498,12 +548,33 @@ class TestReconcile(unittest.TestCase):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
                   branch=config.branch_for(GAP))
         gh = FakeGH(existing="123")
-        gh.get_pr = lambda n: {"url": "u", "number": n}
-        gh.pr_comments = lambda n: [{"body": "ACCEPTED", "created_at": "2026"}]
+        gh.get_pr = lambda n: {"url": "u", "number": n, "head_sha": SHA, "merged": True}
+        gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
         g = FakeGit(remote=SHA)
         r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
         self.assertEqual(r["state"], "ACCEPTED")
+
+    def test_old_or_untrusted_verdict_ignored(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.pr_comments = lambda n: [verdict_comment("b"*40, "REJECTED", date="2027"),
+                                    verdict_comment(SHA, "ACCEPTED", author="other")]
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        gh.pr_comments = lambda n: [verdict_comment(SHA, "REJECTED")]
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "REJECTED")
+
+    def test_checker_acceptance_without_merge_is_not_terminal(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open", "merged": False}
+        gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertEqual(state.load(GAP)["external_verdict"], "ACCEPTED")
 
     def test_signed_push_without_pr_is_recovered_to_one_pr(self):
         from pathlib import Path
@@ -534,6 +605,41 @@ class TestReconcile(unittest.TestCase):
                                     gh=FakeGH(), git=FakeGit())
         self.assertEqual(state.load(GAP)["state"], "STALE")
 
+
+class TestPostcheck(unittest.TestCase):
+    def setUp(self):
+        fresh()
+
+    def test_exact_published_revision_checked_and_failure_recorded(self):
+        from missions.pnp import postcheck, build_control
+        from pathlib import Path as P
+        with tempfile.TemporaryDirectory() as wt:
+            proof = P(wt, PATH)
+            proof.parent.mkdir(parents=True)
+            proof.write_text(GOOD)
+            new_state("PR_OPEN", commit_sha=SHA, pr_number=123, worktree=wt,
+                      local_check_status="pending")
+            g = FakeGit(build_ok=False)
+            g.run = lambda args: type("Result", (), {"stdout": SHA if "rev-parse" in args else ""})()
+            with mock.patch.dict(os.environ, {}, clear=False):
+                with mock.patch.object(g, "build", wraps=g.build) as build:
+                    postcheck.run(GAP, git=g)
+                    build.assert_called_once()
+            rec = state.load(GAP)
+            self.assertEqual(rec["state"], "PR_OPEN")
+            self.assertEqual(rec["local_check_status"], "failed")
+            self.assertIsNone(rec["external_verdict"])
+            with mock.patch.dict(os.environ, {"PNP_POSTCHECK_SHA": SHA}):
+                self.assertTrue(build_control.obsolete(GAP, "lease-1"))
+
+    def test_pending_postcheck_admitted_only_for_matching_revision(self):
+        from missions.pnp import build_control
+        new_state("PR_OPEN", commit_sha=SHA, local_check_status="pending")
+        with mock.patch.dict(os.environ, {"PNP_POSTCHECK_SHA": SHA}):
+            self.assertFalse(build_control.obsolete(GAP, "lease-1"))
+            self.assertTrue(build_control.obsolete(GAP, "wrong-lease"))
+            state.update(GAP, commit_sha="b"*40)
+            self.assertTrue(build_control.obsolete(GAP, "lease-1"))
 
 class TestDeskNextGap(unittest.TestCase):
     """join.txt documents an explicit null gap as 'no gaps right now'."""

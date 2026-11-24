@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-from . import build_control as control, watchdog, state, assignment
+from . import build_control as control, watchdog, state, assignment, evidence
 
 
 def command(args):
@@ -28,7 +28,7 @@ def run(args, cwd=None, heavy=True, publication=False, timeout=600,
     argv = command(args)
     # Avoid inheriting a researcher's custom path/options in publication.
     env = {k: v for k, v in os.environ.items()
-           if not (publication and (k.startswith("LEAN_") or k.startswith("LAKE_")
+           if not ((publication or os.environ.get("PNP_EVIDENCE_BUILD") == "1") and (k.startswith("LEAN_") or k.startswith("LAKE_")
                                     or k in ("PEQUALNP_IN_QUEUE", "PEQUALNP_REAL_LAKE")))}
     env.update(PNP_MANAGED_COMPILER="1", LEAN_NUM_THREADS="1", LAKE_ARTIFACT_CACHE="true",
                LAKE_RESTORE_ARTIFACTS="true",
@@ -97,7 +97,18 @@ def main(argv=None):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, interrupted)
     try:
-        return run(args, heavy=not ns.light, timeout=max(1, min(ns.timeout, 1800)))
+        bound = assignment.binding(Path.cwd())
+        rec = state.load(bound[0]) if bound else None
+        before = evidence.snapshot(rec, Path.cwd(), args) if rec and not ns.light else None
+        if before:
+            os.environ["PNP_EVIDENCE_BUILD"] = "1"
+        code = run(args, heavy=not ns.light, timeout=max(1, min(ns.timeout, 1800)))
+        if code == 0 and before:
+            try:
+                evidence.record(rec, before, evidence.snapshot(rec, Path.cwd(), args))
+            except (OSError, ValueError) as exc:
+                print("build evidence unavailable:", exc, file=sys.stderr)
+        return code
     except (control.BuildDeferred, KeyboardInterrupt, OSError) as exc:
         print("RESOURCE DEFERRED:", exc, file=sys.stderr, flush=True)
         return 75
