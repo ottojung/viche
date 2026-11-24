@@ -10,7 +10,12 @@ import re
 UPSTREAM_ID = 1468025030
 FORK_ID = 1469318535
 CONTRIBUTOR_ID = 121908118
+# Preserve the historical human checker identity. The official intake GitHub
+# App began publishing verdicts on 2026-11-24. Both its numeric bot account
+# and performed_via_github_app identity must match (never just a login).
 CHECKER_ID = 275416420
+CHECKER_INTAKE_BOT_ID = 360790873
+CHECKER_INTAKE_APP_ID = 5908013
 BASE_REF = "main"
 
 # The external desk and public scoreboard identify participants by handle,
