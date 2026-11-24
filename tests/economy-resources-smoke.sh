@@ -72,6 +72,20 @@ printf '{"at":%s,"fs":{"state":{"avail":%s}}}\n' "$((NOW - 86400))" "$(( 300 * G
 run $NOW | jq -e '.overall == "ok"' >/dev/null
 jq -e '.resources["disk:state"].hours_to_full == null' "$report" >/dev/null
 
+# A one-off reclaim inside the lookback must not inflate the forecast: the 24 h
+# endpoint is close to today's free space, but the recent sustained loss is 40 GiB/h.
+reset; fs 1000 400
+printf '{"at":%s,"fs":{"state":{"avail":%s}}}\n' \
+  "$((NOW - 86400))" "$(( 405 * GIB ))" \
+  "$((NOW - 25200))" "$(( 600 * GIB ))" \
+  "$((NOW - 18000))" "$(( 560 * GIB ))" \
+  "$((NOW - 14400))" "$(( 520 * GIB ))" \
+  "$((NOW - 10800))" "$(( 480 * GIB ))" \
+  "$((NOW - 7200))"  "$(( 440 * GIB ))" \
+  > "$d/state/economy/resource-history.jsonl"
+run $NOW >/dev/null
+jq -e '.resources["disk:state"].hours_to_full > 9 and .resources["disk:state"].hours_to_full < 11' "$report" >/dev/null
+
 # Inodes: exhausted inodes make a roomy disk short.
 reset; printf '{"state":{"total":%s,"avail":%s,"files":1000,"ffree":50}}\n' "$(( 1000 * GIB ))" "$(( 900 * GIB ))" > "$d/fs.json"
 run $NOW | jq -e '.overall == "critical"' >/dev/null
