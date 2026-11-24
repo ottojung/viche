@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp import config, state, watchdog, compile as compiler
+from missions.pnp import config, state, watchdog, compile as compiler, assignment, frontier
 
 GAP = "L-meta-1662"
 LIVE = "L-meta-1665"
@@ -34,7 +34,9 @@ class WatchdogTests(unittest.TestCase):
         self.unrelated = self.root / "unrelated"
         self.unrelated.mkdir()
         self.binary = self.root / "checklemma"
-        shutil.copyfile(shutil.which("sleep"), self.binary)
+        # GNU coreutils can be a multicall binary on CI; renaming sleep
+        # then fails before the watchdog test has a live process.
+        shutil.copyfile(sys.executable, self.binary)
         self.binary.chmod(0o700)
 
     def worktree(self, gap, status):
@@ -44,7 +46,10 @@ class WatchdogTests(unittest.TestCase):
         return cwd
 
     def spawn(self, cwd, executable=None, env=None):
-        p = subprocess.Popen([str(executable or self.binary), "90"], cwd=cwd, env=env)
+        p = subprocess.Popen(
+            [str(executable), "90"] if executable else
+            [str(self.binary), "-c", "import time; time.sleep(90)"],
+            cwd=cwd, env=(env or os.environ) | {"PYTHONHOME": sys.base_prefix})
         def cleanup():
             if p.poll() is None:
                 p.terminate()
@@ -146,6 +151,29 @@ class WatchdogTests(unittest.TestCase):
                 run.assert_not_called()
         finally:
             os.chdir(original)
+
+    def test_binding_survives_reacquisition_without_adopting_new_lease(self):
+        state.event(LIVE, "acquired")
+        prepared = assignment.prepare(LIVE, checkout=False)
+        cwd = Path(prepared["cwd"])
+        self.assertEqual(cwd, self.live.parent)
+        self.assertEqual(assignment.resolve(cwd=cwd), (LIVE, "lease-" + LIVE))
+        self.assertEqual(assignment.resolve(LIVE, LIVE, cwd=cwd), (LIVE, "lease-" + LIVE))
+        state.transition(LIVE, "STALE")
+        state.reacquire(LIVE, lease="new-lease", lease_expires_at=time.time()+900)
+        new = Path(assignment.prepare(LIVE, checkout=False)["cwd"])
+        self.assertNotEqual(cwd, new)
+        self.assertEqual(assignment.resolve(cwd=cwd), (LIVE, "lease-" + LIVE))
+        self.assertEqual(assignment.resolve(cwd=new), (LIVE, "new-lease"))
+        self.assertEqual(frontier.checkpoint(*assignment.resolve(cwd=cwd))["decision"], "stop")
+        self.assertEqual(frontier.checkpoint(*assignment.resolve(cwd=new))["decision"], "continue")
+        self.assertEqual(watchdog.assignment(new), LIVE)
+
+    def test_missing_or_placeholder_identity_is_not_supersession(self):
+        with self.assertRaises(ValueError):
+            assignment.resolve(LIVE, LIVE, cwd=self.unrelated)
+        with self.assertRaises(ValueError):
+            assignment.resolve(cwd=self.live)
 
     def test_singleton_ensure(self):
         os.makedirs(config.CACHE_DIR, exist_ok=True)

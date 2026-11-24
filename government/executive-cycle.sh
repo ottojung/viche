@@ -141,6 +141,7 @@ fi
 # wired into the Executive itself. They are advisory, bounded and read-only.
 mission_diagnostics=
 mission_dispatch_signature=
+mission_coordination_due=no
 for diagnostic in "$town"/missions/*/status.sh; do
   [ -f "$diagnostic" ] || continue
   label=${diagnostic%/status.sh}
@@ -149,6 +150,9 @@ for diagnostic in "$town"/missions/*/status.sh; do
     line='{"status":"unavailable","action":"investigate diagnostic failure"}'
   mission_diagnostics="$mission_diagnostics
 $label: $line"
+  if printf '%s\n' "$line" | jq -e '.coordination_due == true' >/dev/null 2>&1; then
+    mission_coordination_due=yes
+  fi
   # Compact stable signal: a change in staffing, checked output or mission
   # state causes an Executive pass. Timestamps and full notes do not.
   signal=$(printf '%s\n' "$line" | jq -cS '
@@ -164,6 +168,8 @@ $prompt
 === MISSION READ-ONLY DIAGNOSTICS ===
 $mission_diagnostics
 === END MISSION DIAGNOSTICS ===
+Reconcile actionable allocation gaps first. Delegate lengthy investigations
+and finish this coordination pass without waiting for worker completion.
 Do not infer successful mission outcomes from a diagnostic, agent exit, or
 depleted queue. Check live assignments and pursue new useful work when any
 Founder's standing objective is still open.
@@ -243,11 +249,18 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
     board_sig="board-unavailable-$(date +%s)"
   fi
   mkdir -p "$state/branches"
+  gate_age=${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}
+  # Actionable unresolved coordination gets a bounded retry even when the
+  # diagnostic is unchanged. This does not preempt a running Executive.
+  if [ "$mission_coordination_due" = yes ]; then
+    case "$gate_age" in ''|*[!0-9]*) gate_age=7200 ;; esac
+    [ "$gate_age" -le 120 ] || gate_age=120
+  fi
   if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
        printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
        printf '%s\n' "$mission_dispatch_signature" "$economy_signature"; } |
-     /bin/sh "$town/government/dispatch-gate.sh" check executive "${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}" > "$state/branches/executive-gate.log"; then
+     /bin/sh "$town/government/dispatch-gate.sh" check executive "$gate_age" > "$state/branches/executive-gate.log"; then
     :
   else
     echo "Viche: executive dispatch skipped, nothing it reads has changed since the last pass" >&2

@@ -398,6 +398,16 @@ class TestCli(unittest.TestCase):
             self.assertEqual(f.read(), GOOD)
         self.assertEqual(state.load(GAP)["queued_lease"], "lease-1")
 
+    def test_superseded_workspace_cannot_queue_candidate(self):
+        from missions.pnp import jobs, publish
+        new_state("LEASED")
+        with mock.patch.object(jobs, "launch") as launch:
+            with self.assertRaises(publish.StopPublish):
+                jobs.submit(GAP, candidate_file(), expected_lease="old-lease")
+            launch.assert_not_called()
+        self.assertEqual(state.load(GAP)["state"], "LEASED")
+        self.assertIsNone(state.load(GAP).get("queued_lease"))
+
     def test_publication_retry_backoff_preserves_candidate(self):
         from missions.pnp import jobs
         new_state("LEASED")

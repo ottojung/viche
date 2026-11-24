@@ -13,6 +13,7 @@ import sys
 import time
 
 from . import config, state
+from . import assignment as bindings
 
 COMPILERS = {"lean", "lake", "checklemma"}
 TERMINAL = {"STALE", "RELEASED", "ACCEPTED", "PR_OPEN"}
@@ -49,7 +50,10 @@ def send(fd, sig):
 
 def assignment(cwd):
     """Only exact canonical gap worktrees; no loose process-title matching."""
-    for root, research in ((config.GAPS_DIR, True), (config.WORKTREES_DIR, False)):
+    local = bindings.workspace(cwd)
+    if local:
+        return local[0]
+    for root, research in ((config.WORKTREES_DIR, False),):
         try:
             parts = cwd.relative_to(Path(root).resolve()).parts
         except ValueError:
@@ -114,6 +118,13 @@ def stop_if_terminal(entry, expected, pending, now):
             if not isinstance(current, str) or not current:
                 return None
             previous = managed_lease(entry, gap)
+            if previous is None:
+                try:
+                    bound = bindings.binding((entry / "cwd").resolve(strict=True))
+                    if bound and bound[0] == gap:
+                        previous = bound[1]
+                except OSError:
+                    pass
             superseded = previous is not None and previous != current
             if rec.get("state") not in TERMINAL and not superseded:
                 return None

@@ -103,8 +103,8 @@ and claimable alternatives, not a fixed timer or agent headcount.
 
 Before lengthy work, and between bounded computation or proof-development
 steps, each worker runs the cheap local command:
-  python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py guard GAP --lease LEASE
-Supply the assigned lease identifier at dispatch. A stop decision means finish
+  python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py guard
+Run from the immutable assignment workspace returned by the preparation command below. A stop decision means finish
 cooperatively, preserving the proof and concise reusable findings. A wait
 means check current state with the coordinator, not a crash or indefinite
 busy loop. Never start another expensive search on a terminal lease. An
@@ -134,9 +134,9 @@ preserves the proof and retries; do not start a competing full build.
 
 All P vs NP local Lean computation uses the shared queue, including research.
 From the Lean directory run:
-  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile --gap GAP --lease LEASE -- lake build +MODULE
+  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake build +MODULE
 For small scratch files with narrow imports:
-  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile --light --gap GAP --lease LEASE -- lake env lean Scratch.lean
+  PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile --light -- lake env lean Scratch.lean
 Use heavy (the default) for any full Mathlib import or unknown memory demand.
 Do not invoke raw lean/lake/checklemma for research or start competing full
 builds. Up to two light compilations may overlap when memory permits; heavy builds
@@ -161,8 +161,36 @@ gap worktrees whose durable assignment has ended (STALE, RELEASED, ACCEPTED,
 PR_OPEN). It never terminates or launches agent sessions, touches unrelated
 worktrees, or acts on missing/unreadable state. Exact gap state and process
 identity are checked under the assignment lock; a fresh reacquisition is
-not cancelled on old evidence. Research commands must use their own exact
-gap and lease with the shared compiler entry point. The Executive remains
+not cancelled on old evidence. Research commands use their immutable workspace binding with the shared compiler entry point. The Executive remains
 sole authority for researcher reassignment and must do it early, before
 lengthy deliberation. Preserve proof files; no repeated compilation of a
 settled gap. Computational cancellation is not a mathematical verdict.
+
+## Work-conserving research allocation
+
+Executive: after a successful acquire (or when adopting a live assignment),
+run `python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py assignment GAP`.
+Use its returned absolute cwd for Antonina new/run. It prepares an isolated
+pinned checkout and shares only pinned package dependencies. Never relabel
+a previous attempt after reacquisition. The guard and compiler infer the
+immutable assignment from cwd; do not type or expose lease IDs. Use the
+same workspace for submit and preserve earlier attempts for reuse.
+
+Prefer incremental formalization and explicit reductions to known theorems.
+Before investing in an open-ended lower bound, identify a concrete proof
+route, its nearest checked lemma, and the missing inference or certificate.
+Reuse the previous research notes for the same or related problem rather
+than repeating failed SAT encodings. If no ordinary lease is available,
+prepare independent small derivations for published open problems or
+identify a concrete hard-gap route; do not burn hours on an unpromising
+hard lease just to occupy capacity. The desk alone chooses claimable gaps.
+Do not churn leases or release on a speculative difficulty judgment.
+Reassess work at natural evidence checkpoints, not arbitrary deadlines:
+a successful sublemma, a failed reduction, new rival evidence, a search
+budget exhausted, or a candidate. Keep the highest-yield route moving.
+
+The Executive first addresses unstaffed active gaps, obsolete assignments,
+and newly claimable ordinary work. After these allocation decisions,
+delegate substantive investigations rather than waiting in the coordinator
+session; finish the pass promptly so the next state change can trigger it.
+No polling sleep inside Executive reasoning. No new review or reporting gate.

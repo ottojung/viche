@@ -166,17 +166,32 @@ def busy():
     return False
 
 
-def headroom(root=Path("/sys/fs/cgroup")):
-    """Conservative cgroup headroom, including reclaimable inactive cache."""
+def headroom(root=Path("/sys/fs/cgroup"), meminfo=Path("/proc/meminfo")):
+    """Budget clean, reclaimable cache with a haircut and host-availability cap."""
     try:
         maximum = (root / "memory.max").read_text().strip()
         if maximum == "max":
             return None
         limit = int(maximum)
         current = int((root / "memory.current").read_text())
-        stats = dict(line.split() for line in
-                     (root / "memory.stat").read_text().splitlines())
-        return max(0, limit - current + int(stats.get("inactive_file", "0")))
+        stats = {k: int(v) for k, v in (line.split() for line in
+                 (root / "memory.stat").read_text().splitlines())}
+        if "file" in stats:
+            clean = max(0, stats["file"] - sum(stats.get(k, 0) for k in
+                         ("shmem", "file_dirty", "file_writeback", "unevictable")))
+            reclaimable = clean * 9 // 10 + stats.get("slab_reclaimable", 0) // 2
+        else:
+            reclaimable = stats.get("inactive_file", 0)
+        result = max(0, min(limit, limit - current + reclaimable))
+        # Root cgroup cannot reclaim more memory than the host can supply.
+        try:
+            available = next(int(line.split()[1]) * 1024 for line in
+                             meminfo.read_text().splitlines()
+                             if line.startswith("MemAvailable:"))
+            result = min(result, available)
+        except (OSError, ValueError, StopIteration):
+            pass
+        return result
     except (OSError, ValueError, TypeError):
         return None
 

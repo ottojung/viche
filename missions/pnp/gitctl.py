@@ -136,6 +136,8 @@ def prepare_build_cache(worktree):
     dest = os.path.join(local, "packages")
     if not os.path.lexists(dest):
         os.symlink(packages, dest)
+    elif not os.path.isdir(dest):
+        raise GitError("invalid local package cache")
 
 
 def build(worktree, module, statement, runner=None):

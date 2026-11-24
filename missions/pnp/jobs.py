@@ -36,8 +36,10 @@ def launch(gap, fd):
                          pass_fds=(fd,), start_new_session=True)
 
 
-def submit(gap, source):
+def submit(gap, source, expected_lease=None):
     rec = state.load(gap)
+    if expected_lease and (not rec or rec.get("lease") != expected_lease):
+        raise publish.StopPublish("assignment superseded")
     if not rec:
         raise publish.StopPublish("no acquired gap")
     if rec["state"] == "PR_OPEN":
@@ -46,33 +48,33 @@ def submit(gap, source):
     if fd is None:
         return {"gap": gap, "status": "publishing"}
     try:
-        rec = state.load(gap)
-        if rec["state"] not in ("LEASED", "RESEARCHING") + READY:
-            raise publish.StopPublish("gap not publishable: " + rec["state"])
         with open(source, "rb") as f:
             data = f.read(config.MAX_FILE_BYTES + 1)
-        meta = {"id": gap, "file": rec["path"], "module": rec["module"],
-                "statement": rec["statement"], "imports": rec["imports"]}
-        digest = validate.validate(meta, data)
-        if rec["state"] in ("SIGNED", "PUSHED") and digest != rec["candidate_digest"]:
-            raise publish.StopPublish("signed proof is immutable")
-        if digest == rec.get("candidate_digest") and not build_control.resource_ready(rec):
-            return {"gap": gap, "status": "resource-deferred",
-                    "required_headroom": rec["publisher_memory_required"]}
-        # Snapshot before acknowledging; never depend on a researcher file
-        # that may change or vanish on agent exit.
-        state.atomic_write(candidate_path(gap), data.decode("utf-8"))
-        if rec["state"] == "LEASED":
-            state.transition(gap, "RESEARCHING")
+        with state.lock(gap):
             rec = state.load(gap)
-        if rec["state"] == "RESEARCHING":
-            state.transition(gap, "CANDIDATE_READY", candidate_digest=digest,
-                             failure_reason=None)
-        elif rec["state"] == "CANDIDATE_READY":
-            state.update(gap, candidate_digest=digest, failure_reason=None)
-        state.update(gap, queued_lease=rec["lease"],
-                     publisher_retry_at=None, publisher_failures=0,
-                     publisher_memory_required=None)
+            if not rec or (expected_lease and rec.get("lease") != expected_lease):
+                raise publish.StopPublish("assignment superseded")
+            if rec["state"] not in ("LEASED", "RESEARCHING") + READY:
+                raise publish.StopPublish("gap not publishable: " + rec["state"])
+            meta = {"id": gap, "file": rec["path"], "module": rec["module"],
+                    "statement": rec["statement"], "imports": rec["imports"]}
+            digest = validate.validate(meta, data)
+            if rec["state"] in ("SIGNED", "PUSHED") and digest != rec["candidate_digest"]:
+                raise publish.StopPublish("signed proof is immutable")
+            if digest == rec.get("candidate_digest") and not build_control.resource_ready(rec):
+                return {"gap": gap, "status": "resource-deferred",
+                        "required_headroom": rec["publisher_memory_required"]}
+            state.atomic_write(candidate_path(gap), data.decode("utf-8"))
+            before = rec["state"]
+            if before in ("LEASED", "RESEARCHING", "CANDIDATE_READY"):
+                rec.update(state="CANDIDATE_READY", candidate_digest=digest,
+                           failure_reason=None)
+            rec.update(queued_lease=rec["lease"], publisher_retry_at=None,
+                       publisher_failures=0, publisher_memory_required=None)
+            state.save(rec)
+            if before != rec["state"]:
+                state.event(gap, "state", {"to": rec["state"], "fields": {"candidate_digest": digest}})
+            state.event(gap, "update", {"fields": {"queued_lease": rec["lease"]}})
         launch(gap, fd)
         return {"gap": gap, "status": "publishing", "digest": digest}
     finally:

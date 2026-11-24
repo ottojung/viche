@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-from . import build_control as control, watchdog, state
+from . import build_control as control, watchdog, state, assignment
 
 
 def command(args):
@@ -80,23 +80,18 @@ def main(argv=None):
     p.add_argument("--timeout", type=int, default=600)
     p.add_argument("args", nargs=argparse.REMAINDER)
     ns = p.parse_args(argv)
-    local_gap = watchdog.assignment(Path.cwd().resolve())
-    if local_gap or ns.gap or ns.lease:
-        if (local_gap and ns.gap != local_gap) or not ns.gap or not ns.lease or not state.config.GAP_ID_RE.fullmatch(ns.gap):
-            print("RESOURCE DEFERRED: gap-local compilation requires its exact lease", file=sys.stderr)
-            return 75
+    local = assignment.workspace(Path.cwd())
+    if local or ns.gap or ns.lease:
         try:
-            rec = state.load(ns.gap)
-            if not isinstance(rec, dict) or rec.get("lease") != ns.lease:
-                print("RESOURCE DEFERRED: assignment unavailable or superseded", file=sys.stderr)
-                return 75
-        except (OSError, ValueError):
-            print("RESOURCE DEFERRED: assignment unavailable", file=sys.stderr)
+            gap, lease = assignment.resolve(ns.gap, ns.lease)
+            rec = state.load(gap)
+            if not isinstance(rec, dict) or rec.get("lease") != lease:
+                raise ValueError("assignment unavailable or superseded")
+            os.environ["PNP_PUBLISH_GAP"] = gap
+            os.environ["PNP_PUBLISH_LEASE"] = lease
+        except (OSError, ValueError) as exc:
+            print("RESOURCE DEFERRED:", exc, file=sys.stderr)
             return 75
-    if ns.gap:
-        os.environ["PNP_PUBLISH_GAP"] = ns.gap
-    if ns.lease:
-        os.environ["PNP_PUBLISH_LEASE"] = ns.lease
     args = ns.args[1:] if ns.args[:1] == ["--"] else ns.args
     def interrupted(signum, frame):
         raise KeyboardInterrupt

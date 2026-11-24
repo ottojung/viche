@@ -12,9 +12,9 @@ import sys
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from missions.pnp import leaderboard, frontier
+    from missions.pnp import leaderboard, frontier, assignment
 else:
-    from . import leaderboard, frontier
+    from . import leaderboard, frontier, assignment
 
 STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
@@ -36,7 +36,7 @@ def workers():
                     else "complete")
         return {"count": len(filtered), "coverage": coverage,
                 "agents": [{"id": a.get("id"), "title": a.get("title"),
-                            "state": a.get("state")}
+                            "state": a.get("state"), "cwd": a.get("cwd")}
                            for a in filtered]}
     except (OSError, ValueError, subprocess.SubprocessError):
         return {"count": None, "coverage": "unavailable", "agents": []}
@@ -53,6 +53,7 @@ def snapshot():
                      "state": item.get("state"),
                      "pr_url": item.get("pr_url"),
                      "lease_expires_at": item.get("lease_expires_at"),
+                     "lease_obtained_at": item.get("lease_obtained_at"),
                      "resource_deferred": bool(item.get("publisher_memory_required") and not frontier.build_control.resource_ready(item)) if item.get("state") in ("CANDIDATE_READY", "LOCAL_CHECKED") else False,
                      "failure_reason": item.get("failure_reason")})
     lb = leaderboard.load()
@@ -70,15 +71,40 @@ def snapshot():
     by_gap = {r["gap"]: r for r in rows}
     for worker in w["agents"]:
         match = re.search(r"\bL-[a-z0-9]+(?:-[a-z0-9]+)+\b", worker.get("title") or "")
-        gid = match.group(0) if match else None
+        bound = assignment.binding(Path(worker["cwd"])) if worker.get("cwd") else None
+        gid = bound[0] if bound else match.group(0) if match else None
         worker["gap"] = gid
+        worker["bound"] = bool(bound)
+        worker["lease_current"] = None
+        if bound:
+            try:
+                rec = frontier.state.load(gid)
+                if isinstance(rec, dict) and rec.get("lease"):
+                    worker["lease_current"] = rec["lease"] == bound[1]
+            except (OSError, ValueError):
+                pass
         worker["gap_state"] = by_gap.get(gid, {}).get("state")
         worker["competition"] = observed.get("gaps", {}).get(gid)
     stale_workers = [a["id"] for a in w["agents"]
-                     if a["gap_state"] in frontier.STOPPED]
+                     if a["gap_state"] in frontier.STOPPED or a["lease_current"] is False]
     active = [r["gap"] for r in rows if r["state"] in frontier.ACTIVE
               and type(r["lease_expires_at"]) in (int, float)
               and r["lease_expires_at"] > time.time() and isinstance(r["gap"], str)]
+    staffed = {a["gap"] for a in w["agents"] if a["lease_current"] is not False}
+    unstaffed = sorted(set(active) - staffed) if w["coverage"] == "complete" else []
+    ordinary = observed.get("ordinary")
+    # These are useful opportunities, not automatic staffing instructions.
+    # Desk status only exposes title/competition, not individually offerable IDs.
+    related = []
+    for gid, item in observed.get("gaps", {}).items():
+        held, parallel = item.get("held"), item.get("parallel")
+        if type(held) is int and type(parallel) is int and held < parallel:
+            related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
+    related.sort(key=lambda x: (x["held"], x["gap"]))
+    coordination_due = bool(w["coverage"] == "complete" and (
+        stale_workers or unstaffed or (ordinary is not None and ordinary > 0)))
+    age = {r["gap"]: max(0, round((time.time()-r["lease_obtained_at"])/60))
+           for r in rows if r["gap"] in active and type(r["lease_obtained_at"]) in (int,float)}
     score = {k: lb.get(k) for k in ("rank", "our_steps", "leader",
                                    "runner_up", "lead_over_second",
                                    "our_margin_vs_best_competitor",
@@ -93,6 +119,9 @@ def snapshot():
         "leaderboard": score, "workers": w,
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
+        "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
+        "potential_fronts": related[:12],
+        "coordination_due": coordination_due,
         "publisher_build_busy": frontier.build_control.busy(),
         "legacy_lean_compiler_pids": frontier.build_control.legacy_compilers(),
         "lean_headroom_bytes": frontier.build_control.headroom(),
@@ -124,7 +153,10 @@ def snapshot():
             "workers": w["count"], "coverage": w["coverage"],
             "gaps": by_state, "active": sorted(active),
             "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
-            "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None},
+            "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None,
+            "hard_available": (observed.get("offerable") or 0) > (observed.get("ordinary") or 0) if observed else None,
+            "unstaffed": unstaffed, "obsolete_workers": sorted(stale_workers),
+            "unbound": sorted(str(a["id"]) for a in w["agents"] if not a["bound"])},
         "caveat": "Only public checked steps count; local activity is not proof."}
 
 

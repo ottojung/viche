@@ -125,7 +125,8 @@ class FullPathSmoke(unittest.TestCase):
             (root / "memory.max").write_text(str(14 * build_control.GIB))
             (root / "memory.current").write_text(str(13 * build_control.GIB))
             (root / "memory.stat").write_text("inactive_file 1073741824\n")
-            self.assertEqual(build_control.headroom(root), 2 * build_control.GIB)
+            (root / "meminfo").write_text("MemAvailable: 12582912 kB\n")
+            self.assertEqual(build_control.headroom(root, root / "meminfo"), 2 * build_control.GIB)
             (root / "memory.max").write_text("max")
             self.assertIsNone(build_control.headroom(root))
         with patch.object(build_control, "headroom", return_value=build_control.GIB):
@@ -137,6 +138,20 @@ class FullPathSmoke(unittest.TestCase):
         with patch.object(build_control, "headroom", return_value=None), patch.object(
                 build_control, "group_rss", return_value=0):
             self.assertIsNone(build_control.memory_reason(1))
+
+    def test_clean_cache_budget_and_physical_cap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            gib = build_control.GIB
+            (root / "memory.max").write_text(str(14 * gib))
+            (root / "memory.current").write_text(str(14 * gib))
+            (root / "memory.stat").write_text(
+                "file %d\nshmem %d\nfile_dirty %d\nfile_writeback %d\nslab_reclaimable %d\ninactive_file %d\n" %
+                (10*gib, gib, gib, 0, 2*gib, gib))
+            (root / "meminfo").write_text("MemAvailable: 12582912 kB\n")
+            self.assertEqual(build_control.headroom(root, root / "meminfo"), 8*gib*9//10+gib)
+            (root / "meminfo").write_text("MemAvailable: 4194304 kB\n")
+            self.assertEqual(build_control.headroom(root, root / "meminfo"), 4*gib)
 
     def test_light_shared_heavy_exclusive(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=12 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]):

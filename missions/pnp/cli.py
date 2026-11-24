@@ -11,6 +11,7 @@
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
 import time
 
@@ -20,9 +21,9 @@ if __package__ in (None, ""):
     sys.path.insert(0, os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "..")))
     from missions.pnp import (config, desk as desk_mod, publish,
-                                reconcile, state, jobs, frontier)
+                                reconcile, state, jobs, frontier, assignment)
 else:
-    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier
+    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier, assignment
 
 
 def _printer(data):
@@ -153,8 +154,15 @@ def cmd_release(args):
 
 def cmd_submit(args):
     try:
-        _printer(jobs.submit(args.gap, args.candidate))
-    except (publish.StopPublish, jobs.validate.InvalidCandidate, OSError) as exc:
+        expected = None
+        for path in (Path.cwd(), Path(args.candidate).resolve().parent):
+            if assignment.workspace(path):
+                gap, lease = assignment.resolve(args.gap, cwd=path)
+                if expected is not None and expected != lease:
+                    raise ValueError("candidate belongs to a different assignment")
+                expected = lease
+        _printer(jobs.submit(args.gap, args.candidate, expected_lease=expected))
+    except (publish.StopPublish, jobs.validate.InvalidCandidate, OSError, ValueError) as exc:
         print("PUBLISH STOPPED: " + str(exc), file=sys.stderr)
         return 1
     return 0
@@ -163,6 +171,25 @@ def cmd_submit(args):
 def cmd_reconcile(args):
     _printer(reconcile.reconcile_all())
     return 0
+
+
+def cmd_guard(args):
+    try:
+        gap, lease = assignment.resolve(args.gap, args.lease)
+        result = frontier.checkpoint(gap, lease)
+    except (OSError, ValueError) as exc:
+        result = {"decision": "wait", "reason": str(exc)}
+    _printer(result)
+    return 0
+
+
+def cmd_assignment(args):
+    try:
+        _printer(assignment.prepare(args.gap))
+        return 0
+    except (OSError, ValueError, RuntimeError) as exc:
+        print("assignment unavailable: " + str(exc), file=sys.stderr)
+        return 1
 
 
 def main(argv=None):
@@ -185,9 +212,12 @@ def main(argv=None):
     subp.add_argument("candidate")
     subp.set_defaults(fn=cmd_submit)
     guard = sub.add_parser("guard")
-    guard.add_argument("gap")
+    guard.add_argument("gap", nargs="?")
     guard.add_argument("--lease")
-    guard.set_defaults(fn=lambda args: (_printer(frontier.checkpoint(args.gap, args.lease)) or 0))
+    guard.set_defaults(fn=cmd_guard)
+    bind = sub.add_parser("assignment")
+    bind.add_argument("gap")
+    bind.set_defaults(fn=cmd_assignment)
     sub.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
     args = parser.parse_args(argv)
     return args.fn(args)
