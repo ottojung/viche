@@ -189,6 +189,126 @@ class Tests(unittest.TestCase):
                     staff.dispatch(a["gap_id"],[("x","prove")])
             run.assert_not_called()
 
+    # --- Staffing roster lookup: speed, idempotence, fail-closed ----------------
+
+    def roster_wire(self, pages):
+        """Fake the read-only `antonina agent list` pages plus new/run."""
+        calls = []
+        def fake(*args):
+            calls.append(args)
+            if args[0] == "list":
+                page = int(args[args.index("--page") + 1])
+                return json.dumps({"agents": pages.get(page, []), "unreadable": []})
+            if args[0] == "new":
+                return "created-agent"
+            if args[0] == "run":
+                return json.dumps({"state": "running"})
+            raise AssertionError(args)
+        return fake, calls
+
+    def staffed(self, gap, worker="general"):
+        """Prepare a deterministic bound workspace without any real git work."""
+        path = Path(assignment.prepare(gap, checkout=False, worker=worker)["cwd"])
+        return path, patch.object(staff.assignment, "prepare",
+                                  return_value={"cwd": str(path)})
+
+    def test_roster_dedups_cross_page_repeats_but_fails_closed(self):
+        # An insertion shifts the offset window: "b" shows up on pages 1 and 2.
+        page1 = [{"id": "id-%d" % i, "cwd": "/w/%d" % i, "state": "idle"}
+                 for i in range(99)]
+        page1.append({"id": "b", "cwd": "/w/b", "state": "idle"})
+        page2 = [{"id": "b", "cwd": "/w/b", "state": "idle"},
+                 {"id": "c", "cwd": "/w/c", "state": "failed"}]
+        wire, _ = self.roster_wire({1: page1, 2: page2})
+        with patch.object(staff, "antonina", side_effect=wire):
+            ids = [a["id"] for a in staff.roster()]
+        self.assertEqual(len(ids), 101)
+        self.assertEqual(ids.count("b"), 1)          # race duplicate collapsed
+        self.assertIn("c", ids)
+
+        # A duplicate *within one page* is corruption, not an insertion race.
+        wire, _ = self.roster_wire({1: [{"id": "a"}, {"id": "a"}]})
+        with patch.object(staff, "antonina", side_effect=wire):
+            with self.assertRaisesRegex(ValueError, "inconsistent agent roster"):
+                staff.roster()
+
+        # An unreadable registry is never an empty registry.
+        with patch.object(staff, "antonina",
+                          return_value=json.dumps({"agents": [], "unreadable": ["x"]})):
+            with self.assertRaisesRegex(ValueError, "agent roster unavailable"):
+                staff.roster()
+
+    def test_staff_reuses_idle_workspace_exactly(self):
+        rec = self.add(lease_expires_at=time.time() + 1200)
+        path, prepare = self.staffed(rec["gap_id"])
+        idle = {"id": "idle-agent", "cwd": str(path), "state": "clearexit"}
+        wire, calls = self.roster_wire({1: [idle]})
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"], [("general", "prove")])
+        self.assertEqual([r["status"] for r in result], ["started"])
+        self.assertEqual(result[0]["id"], "idle-agent")
+        runs = [c for c in calls if c[0] == "run"]
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(runs[0][runs[0].index("--id") + 1], "idle-agent")
+        self.assertEqual(Path(runs[0][runs[0].index("--cwd") + 1]).resolve(),
+                         path.resolve())
+        self.assertFalse([c for c in calls if c[0] == "new"])
+
+    def test_baseline_idempotent_and_one_roster_fetch_per_pass(self):
+        a = self.add(lease_expires_at=time.time() + 1200)
+        b = self.add("L-meta-2", lease_expires_at=time.time() + 1200)
+        pa, prepare_a = self.staffed(a["gap_id"])
+        pb, prepare_b = self.staffed(b["gap_id"])
+        wire, calls = self.roster_wire({1: [
+            {"id": "live-a", "cwd": str(pa), "state": "running"},
+            {"id": "live-b", "cwd": str(pb), "state": "running"},
+        ]})
+        with prepare_a, prepare_b, \
+             patch.object(staff, "antonina", side_effect=wire), \
+             patch.object(staff, "roster", wraps=staff.roster) as roster_spy:
+            first = staff.baseline()
+            second = staff.baseline()
+        # Two passes over two live gaps: one pagination per pass, not four.
+        self.assertEqual(roster_spy.call_count, 2)
+        for out in (first, second):
+            self.assertEqual([r["status"] for r in out],
+                             ["already running", "already running"])
+        self.assertFalse([c for c in calls if c[0] in ("new", "run")])
+
+    def test_pagination_race_does_not_spawn_duplicate_worker(self):
+        rec = self.add(lease_expires_at=time.time() + 1200)
+        path, prepare = self.staffed(rec["gap_id"])
+        page1 = [{"id": "id-%d" % i, "cwd": "/w/%d" % i, "state": "idle"}
+                 for i in range(99)]
+        page1.append({"id": "bound", "cwd": str(path), "state": "running"})
+        page2 = [{"id": "bound", "cwd": str(path), "state": "running"},
+                 {"id": "tail", "cwd": "/w/tail", "state": "idle"}]
+        wire, calls = self.roster_wire({1: page1, 2: page2})
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"], [("general", "prove")])
+        self.assertEqual([r["status"] for r in result], ["already running"])
+        self.assertEqual(result[0]["id"], "bound")
+        self.assertFalse([c for c in calls if c[0] in ("new", "run")])
+
+    def test_staff_refuses_duplicate_and_uncertain_workers(self):
+        rec = self.add(lease_expires_at=time.time() + 1200)
+        path, prepare = self.staffed(rec["gap_id"])
+        dupes = [{"id": "one", "cwd": str(path), "state": "running"},
+                 {"id": "two", "cwd": str(path), "state": "running"}]
+        wire, calls = self.roster_wire({1: dupes})
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"], [("general", "prove")])
+        self.assertEqual([r["status"] for r in result], ["deferred"])
+        self.assertIn("duplicate worker", result[0]["detail"])
+
+        uncertain = [{"id": "one", "cwd": str(path), "state": "provisioning"}]
+        wire, calls = self.roster_wire({1: uncertain})
+        with prepare, patch.object(staff, "antonina", side_effect=wire):
+            result = staff.dispatch(rec["gap_id"], [("general", "prove")])
+        self.assertEqual([r["status"] for r in result], ["deferred"])
+        self.assertIn("uncertain worker state", result[0]["detail"])
+        self.assertFalse([c for c in calls if c[0] in ("new", "run")])
+
     def portfolio_fixture(self, **fields):
         now = time.time()
         a = self.add(acquisition_hard=True,lease_obtained_at=now-1500,

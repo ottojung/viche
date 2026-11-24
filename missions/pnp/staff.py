@@ -5,6 +5,7 @@ approaches and invokes this helper. Existing workers are adopted by exact
 workspace, not mutable titles; uncertainty never authorizes duplicate starts.
 """
 import argparse
+import concurrent.futures
 import fcntl
 import json
 import os
@@ -15,6 +16,15 @@ import sys
 
 from . import assignment, config, focus, gitctl, state, support
 
+# A full baseline used to paginate the whole (>2600 agent) registry once per
+# live gap. Fetch pages in bounded concurrent waves and let baseline reuse a
+# single snapshot. These are performance bounds, not policy limits: a page
+# shape we cannot validate still fails closed.
+_ROSTER_PAGE_SIZE = 100
+_ROSTER_WAVE = 8
+_MAX_ROSTER_PAGES = 4096                       # guard against a corrupt cursor
+_REUSABLE = frozenset(("idle", "clearexit", "stopped", "killed", "failed"))
+
 
 def antonina(*args):
     result = subprocess.run(["antonina", "agent", *args], capture_output=True,
@@ -22,21 +32,53 @@ def antonina(*args):
     return result.stdout.strip()
 
 
+def _roster_page(page):
+    data = json.loads(antonina("list", "--page", str(page),
+                               "--limit", str(_ROSTER_PAGE_SIZE), "--json"))
+    agents = data.get("agents")
+    if not isinstance(agents, list) or data.get("unreadable"):
+        raise ValueError("agent roster unavailable")
+    return agents
+
+
 def roster():
+    """Read every agent once, tolerating insertions during pagination.
+
+    Antonina's --page/--limit windows are taken against a live registry. The
+    Town adds agents while we page, so the same id can reappear on the next
+    page when a new agent shifts the offset window. Only additions happen on
+    these workspaces (agents are retired by state change, never deleted), so
+    a repeated id is a harmless duplicate, never a *skipped* agent: adoption
+    is by exact cwd and a duplicated row still yields one candidate for that
+    workspace. We therefore dedupe across pages instead of raising a spurious
+    "inconsistent agent roster", while a duplicate *within one page* remains
+    corruption and fails closed. Unreadable pages and an unbounded cursor also
+    fail closed rather than being mistaken for an empty registry.
+    """
     rows = {}
     page = 1
-    while True:
-        data = json.loads(antonina("list", "--page", str(page), "--limit", "100", "--json"))
-        agents = data.get("agents")
-        if not isinstance(agents, list) or data.get("unreadable"):
-            raise ValueError("agent roster unavailable")
-        for agent in agents:
-            if not isinstance(agent.get("id"), str) or agent["id"] in rows:
-                raise ValueError("inconsistent agent roster")
-            rows[agent["id"]] = agent
-        if len(agents) < 100:
+    while page <= _MAX_ROSTER_PAGES:
+        wanted = list(range(page, min(page + _ROSTER_WAVE, _MAX_ROSTER_PAGES + 1)))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(wanted)) as pool:
+            pages = dict(zip(wanted, pool.map(_roster_page, wanted)))
+        # A short page is the end of the registry. Pages beyond it were part
+        # of the same concurrent wave and are ignored (they can only contain
+        # agents added after the snapshot boundary).
+        short = next((p for p in wanted if len(pages[p]) < _ROSTER_PAGE_SIZE), None)
+        for p in wanted:
+            if short is not None and p > short:
+                break
+            seen = set()
+            for agent in pages[p]:
+                aid = agent.get("id")
+                if not isinstance(aid, str) or aid in seen:
+                    raise ValueError("inconsistent agent roster")
+                seen.add(aid)
+                rows.setdefault(aid, agent)  # cross-page repeat = insertion race
+        if short is not None:
             return list(rows.values())
-        page += 1
+        page += len(wanted)
+    raise ValueError("agent roster unavailable")
 
 
 def prompt(rec, approach, general=False):
@@ -79,7 +121,8 @@ def current_matches(rec, general=False):
     return selected is not None and focus.key(selected) == focus.key(rec)
 
 
-def dispatch(gap, plans):
+def dispatch(gap, plans, agents=None):
+    """adopt by exact cwd; ``agents`` may be a baseline's single snapshot."""
     rec = state.load(gap)
     if not support.active(rec) or rec.get("queued_lease"):
         raise ValueError("not a live research lease")
@@ -94,7 +137,10 @@ def dispatch(gap, plans):
     fd = os.open(os.path.join(config.STATE_ROOT, "staff.lock"), os.O_CREAT | os.O_RDWR, 0o600)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        agents = roster()
+        # A direct dispatch still reads the roster itself; baseline passes a
+        # snapshot it already fetched so N live gaps cost one pagination, not N.
+        if agents is None:
+            agents = roster()
         base = None
         results = []
         for label, approach in plans:
@@ -106,10 +152,15 @@ def dispatch(gap, plans):
                 existing = [a for a in agents if a.get("cwd") and
                             Path(a["cwd"]).resolve() == path.resolve()]
                 running = [a for a in existing if a.get("state") == "running"]
+                if len(running) > 1:
+                    # Two live workers on one bound workspace are already a
+                    # duplicate: refuse rather than pick one blindly or add a
+                    # third. This is the fail-closed side of "never duplicate".
+                    raise ValueError("duplicate worker on workspace")
                 if running:
                     results.append({"worker": label, "status": "already running", "id": running[0]["id"]})
                     continue
-                if existing and any(a.get("state") not in ("idle", "clearexit", "stopped", "killed", "failed") for a in existing):
+                if existing and any(a.get("state") not in _REUSABLE for a in existing):
                     raise ValueError("uncertain worker state")
                 if not (path / ".git").exists() and base is None:
                     base = gitctl.ensure_mirror()
@@ -146,15 +197,28 @@ GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact pro
 
 
 def baseline():
-    out = []
+    live = []
     for gap in state.all_gaps():
         rec = state.load(gap)
-        if not support.active(rec) or rec.get("queued_lease"):
-            continue
+        if support.active(rec) and not rec.get("queued_lease"):
+            live.append(gap)
+    if not live:
+        return []
+    # One bounded, race-tolerant pagination for the whole pass. A direct
+    # dispatch() still fetches its own roster, so its contract is unchanged;
+    # reusing the snapshot here is safe because each live gap has a distinct
+    # bound workspace and cannot collide with another gap's dispatch.
+    try:
+        agents = roster()
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        return [{"gap": g, "status": "deferred", "detail": str(exc)[:300]} for g in live]
+    out = []
+    for gap in live:
         try:
-            out.extend({"gap": gap, **row} for row in dispatch(gap, [("general", GENERAL_APPROACH)]))
+            out.extend({"gap": gap, **row} for row in
+                       dispatch(gap, [("general", GENERAL_APPROACH)], agents=agents))
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
-            out.append({"gap":gap,"status":"deferred","detail":str(exc)[:300]})
+            out.append({"gap": gap, "status": "deferred", "detail": str(exc)[:300]})
     return out
 
 
