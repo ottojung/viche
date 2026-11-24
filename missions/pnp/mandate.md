@@ -243,3 +243,13 @@ For small existential monotone edge-function circuits use the same command with
 expressions, independently checks every Boolean input, enforces the gate
 budget, and emits a self-contained candidate. A failed search is not evidence
 of nonexistence. No generator claims a lease or publishes a proof.
+
+## Compilation duration
+
+Managed Lean compilation has no elapsed-time deadline. A build may continue
+as long as its assignment or exact published revision remains relevant and
+memory is safe. The short resource-admission wait is not a compilation
+deadline. Do not wrap useful builds in wall-clock timeout commands or use
+the removed compiler timeout option. For long compilations, use a managed
+detached process with a durable log rather than blocking an agent tool call.
+Cancel obsolete work, not merely old work.

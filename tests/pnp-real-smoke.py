@@ -232,7 +232,7 @@ class FullPathSmoke(unittest.TestCase):
             return proc
         with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=10 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]), patch.object(build_control, "memory_reason", return_value="simulated pressure"), patch.object(compiler, "command", return_value=[sys.executable, "-c", "import time; time.sleep(30)"]), patch.object(compiler.subprocess, "Popen", side_effect=spawn):
             with self.assertRaises(build_control.MemoryDeferred):
-                compiler.run(["lean", "scratch.lean"], timeout=3)
+                compiler.run(["lean", "scratch.lean"])
             self.assertEqual(len(children), 1)
             self.assertIsNotNone(children[0].poll())
             self.assertFalse(build_control.busy())
@@ -240,7 +240,19 @@ class FullPathSmoke(unittest.TestCase):
     def test_compiler_supervisor_success(self):
         from missions.pnp import compile as compiler
         with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=10 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]), patch.object(compiler, "command", return_value=[sys.executable, "-c", "pass"]):
-            self.assertEqual(compiler.run(["lean", "scratch.lean"], timeout=3), 0)
+            self.assertEqual(compiler.run(["lean", "scratch.lean"]), 0)
+            self.assertFalse(build_control.busy())
+
+    def test_compilation_has_no_elapsed_time_limit(self):
+        from missions.pnp import compile as compiler
+        from unittest.mock import MagicMock
+        proc = MagicMock()
+        proc.pid = 123456
+        proc.wait.side_effect = [subprocess.TimeoutExpired("lean", 0.25)] * 2500 + [0]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config, "CACHE_DIR", tmp), patch.object(build_control, "headroom", return_value=10 * build_control.GIB), patch.object(build_control, "legacy_compilers", return_value=[]), patch.object(build_control, "memory_reason", return_value=None), patch.object(compiler.subprocess, "Popen", return_value=proc):
+            self.assertEqual(compiler.run(["lean", "scratch.lean"]), 0)
+            self.assertEqual(proc.wait.call_count, 2501)
+            self.assertTrue(all(call.kwargs == {"timeout": 0.25} for call in proc.wait.call_args_list))
             self.assertFalse(build_control.busy())
 
     def test_resource_blocked_waits_for_more_headroom(self):

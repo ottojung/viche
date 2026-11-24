@@ -5,7 +5,6 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
-import time
 
 from . import build_control as control, watchdog, state, assignment, evidence
 
@@ -23,7 +22,7 @@ def command(args):
     return [os.path.join(os.path.expanduser("~/.elan/bin"), tool)] + args[1:]
 
 
-def run(args, cwd=None, heavy=True, publication=False, timeout=600,
+def run(args, cwd=None, heavy=True, publication=False,
         output=None, inherited=()):
     argv = command(args)
     # Avoid inheriting a researcher's custom path/options in publication.
@@ -33,14 +32,14 @@ def run(args, cwd=None, heavy=True, publication=False, timeout=600,
     env.update(PNP_MANAGED_COMPILER="1", LEAN_NUM_THREADS="1", LAKE_ARTIFACT_CACHE="true",
                LAKE_RESTORE_ARTIFACTS="true",
                LAKE_CACHE_DIR=os.path.expanduser("~/.pequalnp/lake-cache"))
-    wait = timeout if publication else min(15, timeout)
+    # Admission is bounded; once admitted, a useful build has no wall-clock deadline.
+    wait = 600 if publication else 15
     with control.slot(timeout=wait, heavy=heavy, publication=publication) as fds:
         initial = control.headroom()
         oom = control.oom_count()
         proc = subprocess.Popen(argv, cwd=cwd, env=env, stdout=output,
                                 stderr=output, start_new_session=True,
                                 pass_fds=inherited + fds)
-        deadline = time.monotonic() + timeout
         try:
             while True:
                 if control.obsolete():
@@ -49,11 +48,8 @@ def run(args, cwd=None, heavy=True, publication=False, timeout=600,
                 if reason:
                     required = (initial or control.HEAVY_MIN + control.RESERVE) + control.GIB // 2
                     raise control.MemoryDeferred(reason, required)
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise control.BuildDeferred("Lean compilation timed out")
                 try:
-                    code = proc.wait(timeout=min(0.25, remaining))
+                    code = proc.wait(timeout=0.25)
                 except subprocess.TimeoutExpired:
                     continue
                 after = control.oom_count()
@@ -77,7 +73,6 @@ def main(argv=None):
     p.add_argument("--light", action="store_true")
     p.add_argument("--gap")
     p.add_argument("--lease")
-    p.add_argument("--timeout", type=int, default=600)
     p.add_argument("args", nargs=argparse.REMAINDER)
     ns = p.parse_args(argv)
     local = assignment.workspace(Path.cwd())
@@ -102,7 +97,7 @@ def main(argv=None):
         before = evidence.snapshot(rec, Path.cwd(), args) if rec and not ns.light else None
         if before:
             os.environ["PNP_EVIDENCE_BUILD"] = "1"
-        code = run(args, heavy=not ns.light, timeout=max(1, min(ns.timeout, 1800)))
+        code = run(args, heavy=not ns.light)
         if code == 0 and before:
             try:
                 evidence.record(rec, before, evidence.snapshot(rec, Path.cwd(), args))
