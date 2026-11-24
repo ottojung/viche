@@ -78,13 +78,33 @@ def connect():
     path = location()
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     db = sqlite3.connect(str(path), timeout=15)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA foreign_keys=ON")
-    db.execute("PRAGMA busy_timeout=15000")
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute("PRAGMA synchronous=FULL")
-    db.executescript(SCHEMA)
-    return db
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA foreign_keys=ON")
+        db.execute("PRAGMA busy_timeout=15000")
+        # SQLite can return BUSY immediately during DELETE -> WAL transition,
+        # even with busy_timeout installed. Avoid unnecessary mode changes and
+        # retry only transient lock contention within a bounded startup window.
+        deadline = time.monotonic() + 15
+        while True:
+            try:
+                mode = db.execute("PRAGMA journal_mode").fetchone()[0]
+                if mode.lower() != "wal":
+                    mode = db.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+                if mode.lower() != "wal":
+                    raise RuntimeError("Post database did not enter WAL mode")
+                break
+            except sqlite3.OperationalError as exc:
+                code = getattr(exc, "sqlite_errorcode", 0) & 0xff
+                if code not in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED) or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
+        db.execute("PRAGMA synchronous=FULL")
+        db.executescript(SCHEMA)
+        return db
+    except BaseException:
+        db.close()
+        raise
 
 def event(db, actor, action, message_id=None, **details):
     db.execute("INSERT INTO events(at,actor,action,message_id,details) VALUES(?,?,?,?,?)",
