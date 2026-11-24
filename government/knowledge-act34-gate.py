@@ -140,6 +140,13 @@ def require_audited_free_tier(root, record, permit):
     snapshot_ref = billing.get("snapshot_ref")
     if not isinstance(snapshot_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", snapshot_ref):
         raise ValueError("zero-billed provider snapshot ref invalid")
+    go = billing.get("go_source")
+    if go is not None:
+        go_ref = go.get("snapshot_ref") if isinstance(go, dict) else None
+        if not isinstance(go_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", go_ref):
+            raise ValueError("zero-billed Go snapshot ref invalid")
+        if on_main(root, root / go_ref) != go.get("sha256"):
+            raise ValueError("unverified Go snapshot bytes")
     zmod.verified_subset(billing_path, allowed, models, root / snapshot_ref)
     expected_digest = zmod.negative_acceptance_digest({
         "wrapper": root / "government/knowledge-free-dispatch.sh",

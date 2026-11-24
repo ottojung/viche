@@ -19,7 +19,7 @@ for f in knowledge-act34-gate.py knowledge-phase-verifier.py \
  cp "$repo/government/$f" "$town/government/"
 done
 mkdir -p "$town/records/economy/evidence"
-cp "$repo/records/economy/evidence/2026-11-24-provider-models.json" "$town/records/economy/evidence/"
+cp "$repo/records/economy/evidence/2026-11-24-provider-models.json" "$repo/records/economy/evidence/2026-11-24-go-provider-models.json" "$town/records/economy/evidence/"
 cp "$repo/tests/knowledge-free-dispatch-smoke.sh" "$town/tests-placeholder"
 mkdir -p "$town/tests"
 mv "$town/tests-placeholder" "$town/tests/knowledge-free-dispatch-smoke.sh"
@@ -38,10 +38,10 @@ economy	econ-agent
 judiciary	jud-agent
 EOF
 cat > "$state/economy/model-policy.json" <<'EOF'
-{"prefer":["opencode/hy4-flash-free"]}
+{"prefer":["opencode-go/hy4-flash-free","opencode/hy4-flash-free"]}
 EOF
 cat > "$state/economy/catalogue.json" <<'EOF'
-{"models":{"opencode/hy4-flash-free":{"tier":"free"},
+{"models":{"opencode-go/hy4-flash-free":{"tier":"free"},"opencode/hy4-flash-free":{"tier":"free"},
  "provider/paid-free":{"tier":"free"}}}
 EOF
 # Fake read-only Antonina coordination surface. The source verifier itself is

@@ -68,7 +68,7 @@ python3 - "$d/state/knowledge/free-allowlist/antonina/config.json" <<'PY'
 import json,sys
 c=json.load(open(sys.argv[1]))
 assert [e['model'] for e in c['models']]==['opencode/tidepool-alpha-free','opencode/hy4-flash-free']
-assert all('-free' in e['model'] for e in c['models'])
+assert all('-free' in e['model'] and e['variant']=='low' for e in c['models'])
 PY
 
 # Global ladder is untouched (wrapper works from a temp state root only).
@@ -187,7 +187,27 @@ import datetime,importlib.util,sys
 spec=importlib.util.spec_from_file_location("zb",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 # Validate the committed evidence as of publication; the runtime gate uses the
 # real clock and the fixture above separately proves expiry fails closed.
-m.load_verified(sys.argv[3],now=datetime.datetime(2026,11,24,9,0,tzinfo=datetime.timezone.utc),snapshot_path=sys.argv[8])
+data=m.load_verified(sys.argv[3],now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=sys.argv[8])
+import json,pathlib,tempfile,hashlib
+expected={"opencode-go/"+mid for mid in ("beam-free","hy4-flash-free","hungerg-free","iceman-contributor-free")}
+assert expected <= set(data["models"])
+assert set(m.verified_subset(sys.argv[3],sorted(expected),snapshot_path=sys.argv[8])) == expected
+# Route mismatch and corrupted Go bytes cannot authorize a Go model.
+with tempfile.TemporaryDirectory() as td:
+    p=pathlib.Path(td)
+    primary=p/"primary.json";primary.write_bytes(pathlib.Path(sys.argv[8]).read_bytes())
+    go=p/pathlib.Path(data["go_source"]["snapshot_ref"]).name
+    go.write_bytes((pathlib.Path(sys.argv[8]).parent/go.name).read_bytes())
+    policy=p/"policy.json"
+    bad=json.loads(json.dumps(data));bad["go_source"]["url"]="https://opencode.ai/inference/v1/models"
+    policy.write_text(json.dumps(bad))
+    try:m.load_verified(policy,now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=primary)
+    except ValueError:pass
+    else:raise AssertionError("wrong Go route admitted")
+    policy.write_text(json.dumps(data));go.write_bytes(b"{}")
+    try:m.load_verified(policy,now=datetime.datetime(2026,11,24,18,0,tzinfo=datetime.timezone.utc),snapshot_path=primary)
+    except ValueError:pass
+    else:raise AssertionError("changed Go snapshot admitted")
 paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7],"provider_snapshot":sys.argv[8]}
 print("PRODUCTION_NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
 PYDIGEST

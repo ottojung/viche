@@ -13,47 +13,126 @@
     "opencode/tidepool-alpha-free": {
       "provider": "opencode",
       "provider_model": "tidepool-alpha-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/beam-free": {
       "provider": "opencode",
       "provider_model": "beam-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/nemotron-3.5-super-vl-free": {
       "provider": "opencode",
       "provider_model": "nemotron-3.5-super-vl-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/hy4-flash-free": {
       "provider": "opencode",
       "provider_model": "hy4-flash-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/nemotron-3.5-lightning-free": {
       "provider": "opencode",
       "provider_model": "nemotron-3.5-lightning-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/iceman-free": {
       "provider": "opencode",
       "provider_model": "iceman-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/mimo-v2.6-flash-free": {
       "provider": "opencode",
       "provider_model": "mimo-v2.6-flash-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/deepseek-v4.1-flash-free": {
       "provider": "opencode",
       "provider_model": "deepseek-v4.1-flash-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     },
     "opencode/flint-40b-free": {
       "provider": "opencode",
       "provider_model": "flint-40b-free",
-      "cost": {"input": 0, "output": 0, "cache_read": 0}
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
+    },
+    "opencode-go/beam-free": {
+      "provider": "opencode-go",
+      "provider_model": "beam-free",
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
+    },
+    "opencode-go/hy4-flash-free": {
+      "provider": "opencode-go",
+      "provider_model": "hy4-flash-free",
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
+    },
+    "opencode-go/hungerg-free": {
+      "provider": "opencode-go",
+      "provider_model": "hungerg-free",
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
+    },
+    "opencode-go/iceman-contributor-free": {
+      "provider": "opencode-go",
+      "provider_model": "iceman-contributor-free",
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0
+      }
     }
+  },
+  "go_source": {
+    "url": "https://opencode.ai/inference/go/v1/models",
+    "retrieved_at": "2026-11-24T17:56:06Z",
+    "sha256": "cf7019172f53d12c175f499934678c51bf161f66a93362a124e24b750d538767",
+    "snapshot_ref": "records/economy/evidence/2026-11-24-go-provider-models.json",
+    "note": "First-party Go route; the provider payload identifies the model owner as opencode. Go identity is bound by the specific Go endpoint, not inferred from the model name."
   }
 }

@@ -71,7 +71,29 @@ def load_verified(path, now=None, snapshot_path=None):
     records = snapshot.get("data") if isinstance(snapshot, dict) else None
     if not isinstance(records, list):
         raise ValueError("zero-billed provider snapshot schema invalid")
-    by_id = {row.get("id"): row for row in records if isinstance(row, dict)}
+    by_id = {"opencode": {row.get("id"): row for row in records if isinstance(row, dict)}}
+    go = data.get("go_source")
+    if go is not None:
+        if (not isinstance(go, dict)
+                or go.get("url") != "https://opencode.ai/inference/go/v1/models"
+                or not isinstance(go.get("sha256"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", go["sha256"])
+                or not isinstance(go.get("snapshot_ref"), str)
+                or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", go["snapshot_ref"])):
+            raise ValueError("zero-billed Go provider-cost source invalid")
+        go_time = _timestamp(go.get("retrieved_at"))
+        if go_time > now or go_time >= review_after:
+            raise ValueError("zero-billed Go provider-cost timestamps invalid")
+        # The two source snapshots share the evidence directory. Do not
+        # accept path traversal or a different provider's endpoint.
+        go_path = Path(snapshot_path).parent / pathlib.PurePosixPath(go["snapshot_ref"]).name
+        go_bytes = go_path.read_bytes()
+        if hashlib.sha256(go_bytes).hexdigest() != go["sha256"]:
+            raise ValueError("zero-billed Go snapshot digest mismatch")
+        go_data = json.loads(go_bytes)
+        if not isinstance(go_data, dict) or not isinstance(go_data.get("data"), list):
+            raise ValueError("zero-billed Go snapshot schema invalid")
+        by_id["opencode-go"] = {row.get("id"): row for row in go_data["data"] if isinstance(row, dict)}
     models = data.get("models")
     if not isinstance(models, dict) or not models:
         raise ValueError("zero-billed exact-ID policy empty")
@@ -89,8 +111,10 @@ def load_verified(path, now=None, snapshot_path=None):
             raise ValueError("unknown billing dimension: " + mid)
         if any(not _zero(cost[k]) for k in cost):
             raise ValueError("nonzero provider cost: " + mid)
-        rec = by_id.get(provider_model)
-        if not isinstance(rec, dict) or rec.get("owned_by") != provider:
+        rec = by_id.get(provider, {}).get(provider_model)
+        # Both first-party endpoints report the model owner as opencode;
+        # the route-specific source above binds which provider can use it.
+        if not isinstance(rec, dict) or rec.get("owned_by") != "opencode":
             raise ValueError("provider snapshot exact model missing: " + mid)
         provider_cost = rec.get("cost")
         if not isinstance(provider_cost, dict) or set(provider_cost) != {"text"}:
@@ -148,7 +172,7 @@ def negative_acceptance_digest(paths):
         "opencode/hy4-flash-free:nonzero-cost",
         "opencode/hy4-flash-free:expired-evidence",
         "opencode/hy4-flash-free:unknown-billing-dimension",
-        "opencode-go/hy4-flash-free:gateway-only-omitted")
+        "opencode-go/hy4-flash-free:missing-or-wrong-go-source")
     payload = {"rejected_ids": names,
                "controls": {name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
                             for name, path in sorted(paths.items())}}
@@ -163,7 +187,7 @@ def build_allowlist(policy_path, prefer_path, catalogue_path, output_path, snaps
     if not isinstance(catalogue, dict) or not isinstance(catalogue.get("models"), dict):
         raise ValueError("Economy catalogue missing/invalid")
     ids = verified_subset(policy_path, policy.get("prefer"), catalogue.get("models"), snapshot_path)
-    entries = [{"model": mid,
+    entries = [{"model": mid, "variant": "low",
                 "comment": "Economy exact-ID zero-cost policy; source-attested provider metadata"}
                for mid in ids]
     output = Path(output_path)
