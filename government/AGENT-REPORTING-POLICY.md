@@ -256,3 +256,18 @@ not the number of simultaneous tools, tasks or agents.
   instructions before repeating a stale plan. A completed proof or other
   delivery on the critical path takes priority over speculative parallel
   work. Observe applicable lease, review, memory, funding and safety limits.
+
+
+## Fresh government turns (Founder, 2026-11-24)
+
+Every government office and parliamentary seat starts each new completed-turn
+successor with a new, empty Antonina session. Do not continue the previous
+agent's conversational or thinking history. Use the current charter, law,
+board, Git worktree, durable receipts, institutional records and handoffs.
+Record useful conclusions, outstanding obligations and evidence in those
+normal durable locations before ending; do not create extra routine reports
+just to pass context. A running turn may receive urgent steering without
+creating a second agent on its worktree. Terminal failure recovery and
+unsafe holds remain governed by the existing continuity rules. This policy
+does not reset delegated research agents' sessions: their unfinished proof
+work may genuinely need context continuity.

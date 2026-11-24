@@ -155,10 +155,10 @@ if [ "$action" = ensure ] && [ -n "$old" ] && [ "${status:-}" = failed ] &&
   reason='confirmed PID1 restart orphan; no prompt replay'
   action=replace
 fi
-# Founder directive 2026-11-16: an idle office whose conversation has grown
-# too large is given a fresh session with a short handover note, instead of
-# re-reading one ever-growing conversation every cycle. Only a positively
-# idle/clearexit appointee rotates; a running, failed or held one never does.
+# Founder directive 2026-11-24: every completed government turn gets a
+# fresh appointment with no old model conversation. Existing running turns
+# are not interrupted; unsafe/failed sessions remain under recovery rules.
+# The normal ensure path is shared by all parliamentary and office callers.
 rotation=no
 if [ "$action" = ensure ] && [ -n "$old" ] && [ "$live" = true ] &&
    { [ "${status:-}" = idle ] || [ "${status:-}" = clearexit ]; } &&
@@ -170,7 +170,7 @@ if [ "$action" = ensure ] && [ -n "$old" ] && [ "$live" = true ] &&
   expected=$old
   caller=appointments.ensure
   trigger=session_rotation
-  reason='conversation too large; fresh session with handover note'
+  reason='completed government turn; fresh context and durable record pointers'
   action=replace
 fi
 if [ "$action" = ensure ] && [ -n "$old" ]; then

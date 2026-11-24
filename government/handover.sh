@@ -1,24 +1,10 @@
 #!/bin/sh
-# Fresh office sessions with a short handover note (Founder directive,
-# 2026-11-16). POSIX /bin/sh. No model call: the note is assembled from the
-# outgoing session's own last reports and pointers to durable records.
-#
-#   handover.sh due ID
-#       Exit 0 when the appointee ID is idle and its conversation is large
-#       enough to replace: its last model request carried at least
-#       VICHE_ROTATE_CONTEXT_TOKENS of context (default 120000), or it has
-#       accepted at least VICHE_ROTATE_PROMPTS prompts (default 150).
-#       Exit 1 otherwise, including whenever the evidence is unreadable.
-#   handover.sh write KEY OLD_ID NEW_ID
-#       Write the handover note for office KEY from OLD_ID to NEW_ID.
-#   handover.sh show KEY ID
-#       Print the note when ID is its successor and has not yet received a
-#       prompt. Prints nothing otherwise. Never fails the caller.
-#
-# Why: one Clerk conversation reached 2,966 prompts and a median of 152K
-# (max 892K) context tokens per model step; every sitting re-read all of it.
-# Durable records, not a conversation, are the Town's memory (Constitution
-# VIII), so a successor loses nothing that is actually authoritative.
+# Fresh context per completed government turn (Founder, 2026-11-24).
+# due ID: rotate a used, positively idle/clearexit appointment; no model call.
+# write KEY OLD_ID NEW_ID: persist only identity and durable record pointers.
+# show KEY ID: display the short pointer note to an unused successor.
+# Never inject the predecessor's conversation or thinking history. Durable
+# institutional records are the memory, not the previous session.
 set -eu
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -33,25 +19,14 @@ case "$cmd" in
     meta=$(antonina agent status --id "$2" --json 2>/dev/null) || exit 1
     st=$(printf '%s\n' "$meta" | jq -r '.state // empty' 2>/dev/null) || exit 1
     case "$st" in idle|clearexit) :;; *) exit 1;; esac
-    prompts=$(printf '%s\n' "$meta" | jq -r '.prompts // 0' 2>/dev/null) || exit 1
-    case "$prompts" in ''|*[!0-9]*) exit 1;; esac
-    [ "$prompts" -gt 0 ] || exit 1
-    if [ "$prompts" -ge "${VICHE_ROTATE_PROMPTS:-150}" ]; then exit 0; fi
-    context=$(antonina agent log --id "$2" --lines 400 2>/dev/null | python3 -c '
-import json, sys
-last = 0
-for line in sys.stdin:
-    if not line.startswith("{\"type\":\"step_finish\""):
-        continue
-    try:
-        tokens = json.loads(line)["part"].get("tokens") or {}
-    except Exception:
-        continue
-    last = int(tokens.get("input", 0)) + int((tokens.get("cache") or {}).get("read", 0))
-print(last)
-' 2>/dev/null) || exit 1
-    case "$context" in ''|*[!0-9]*) exit 1;; esac
-    [ "$context" -ge "${VICHE_ROTATE_CONTEXT_TOKENS:-120000}" ]
+    # clearexit itself is evidence that the appointment has completed a turn.
+    [ "$st" != clearexit ] || exit 0
+    # Idle is also used for newly created, never-invoked appointments.
+    # A native session or positive prompt count proves this one is not fresh.
+    printf '%s\n' "$meta" | jq -e '
+      ((.prompts // 0) | type=="number" and .>0) or
+      ((.native_session_id // "") | type=="string" and length>0)
+    ' >/dev/null
     ;;
   write)
     [ "$#" -eq 4 ] && valid_id "$2" && valid_id "$3" && valid_id "$4" || exit 2
@@ -66,30 +41,12 @@ print(last)
       printf 'rotated_at: %s\n' "$(date -u +%FT%TZ)"
       printf '%s\n' '---'
       printf 'You are a FRESH session for office %s. Your predecessor %s was\n' "$key" "$old"
-      printf 'retired because its conversation had grown too large to re-read every cycle.\n'
-      printf 'Its conversation is NOT available to you and is NOT authority. The\n'
-      printf 'authoritative state is durable: Git records under %s/records,\n' "$town"
+      printf 'retired after completing its government turn.\n'
+      printf 'Its conversation is NOT authority and is not carried forward.\n'
+      printf 'Reconstruct your assignment from durable records under %s/records,\n' "$town"
       printf 'records/handoffs/, the Town Hall cursor, the Antonina board, and %s.\n' "$state"
-      printf 'Do not redo work your predecessor finished; verify it from those records.\n'
-      printf 'Do not repeat external actions (posts, merges, dispatches) without checking.\n'
-      printf '\nPredecessor'"'"'s last reports (newest last, truncated):\n'
-      antonina agent log --id "$old" --lines 3000 2>/dev/null | python3 -c '
-import json, sys
-texts = []
-for line in sys.stdin:
-    if not line.startswith("{\"type\":\"text\""):
-        continue
-    try:
-        text = (json.loads(line)["part"].get("text") or "").strip()
-    except Exception:
-        continue
-    if text:
-        texts.append(" ".join(text.split()))
-for text in texts[-3:]:
-    print("- " + (text[:900] + " [...]" if len(text) > 900 else text))
-if not texts:
-    print("- (no readable report; reconstruct from durable records)")
-' 2>/dev/null || printf '%s\n' '- (predecessor log unreadable; reconstruct from durable records)'
+      printf 'Check unfinished work and current evidence; do not redo completed work.\n'
+      printf 'Check durable receipts before repeating external actions.\n'
     } > "$tmp"
     mv -f "$tmp" "$dir/$key.md"
     printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$key" "$old" "$new" >> "$dir/rotations.log"

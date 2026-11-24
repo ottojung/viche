@@ -92,3 +92,10 @@ antonina agent list --running --page 1 --limit 100 --json |
 
 This contract describes interface behavior, not policy precedence. Follow the
 Founder's constitution, mandates, host assignment and `executive-agenda.md`.
+
+Government appointments rotate to a fresh native session after each completed
+turn by the common appointments.sh ensure path. No previous transcript is
+injected. The existing running-agent steering interface is reserved for
+in-flight corrections; ordinary new turns use the fresh appointment. Durable
+seat/office keys and worktrees remain stable. Do not apply government
+appointment rotation to delegated research sessions.
