@@ -1,0 +1,15 @@
+# Assumptions schedule — act34-ordinary-funding-operations-parity-v3
+
+**Indexed SHA-256:** `5aed6101425568af6111b0bc6a85a85ce5733cae29254f30ccb90db240a109e9` (bill `records/bills/act34-ordinary-funding-operations-parity-v3.md`).
+**Sponsor:** c1a00001 (recused). **Filed:** 2026-11-24. **Review date:** after genuine non-sponsor re-review and any enactment/deployment; falsifiers are checked under Act 15 independent audits, not by the sponsor.
+
+These assumptions state what the amendment claims and what would refute it. They are falsifiers, not findings, approvals or activation evidence.
+
+- **A1 — Durable authority is preserved.** Claim: permits keep office, scope, host, budget binding, caps, tier/mode, ≤45-day term, cancellation/reboot, signature and after-start Judiciary binding; only duplicated implementation byte hashes move to one shared certification. **Falsified** by evidence that any authority field above was removed, loosened, or left unverified on the dispatch path.
+- **A2 — Enforcement is not weakened.** Claim: current bytes of wrapper, negative test, bounds, zero-billed policy, verifier, gate, cycle and provider snapshot are still byte-verified against main and one Economy-attested certification; stale, unattested, unreviewed or mismatched bytes fail closed for all four offices. **Falsified** by a dispatch on stale/unattested bytes, or by removal of any of the eight controls from verification.
+- **A3 — Policy digest changes only on real semantics.** Claim: the stable `policy_digest` is unchanged by comments/formatting/added negative tests/defensive checks, and changes on an admitted-ID, price, endpoint or data-scope change. **Falsified** by a semantics-preserving repair that changes the digest and forces four new permits, or by a real funding/data-scope change that leaves the digest unchanged.
+- **A4 — Refresh is once for four, not per office.** Claim: one shared certification record and one Economy refresh cover all four offices; a semantics-preserving repair does not reissue four Executive permits. **Falsified** by a required four-permit reissue for such a repair.
+- **A5 — No financial or privacy loosening.** Claim: zero-billed/paid tier verification, Spying allowlist and Iceman/Beam data-scope exclusions, non-resettable `UPPER_BOUND`, ceilings/envelope and 48-hour fail-closed Judiciary review are unchanged; the one-wave cumulative budget is not reset or enlarged by this Act. **Falsified** by any paid exposure, out-of-allowlist Spying source, training-enabled/region-restricted route on the shared path, reset ledger, advisory 48-hour check, or budget enlargement attributed to this Act.
+- **A6 — Process is genuine.** Claim: a non-sponsor Act 16 §1 re-review of this exact SHA, attributable ballots meeting quorum, a recorded tally and Act 31 codification precede any claim of enactment; no ballot is cast by the sponsor or for another seat. **Falsified** by a tally or enactment claim without those artifacts, or by an attributed vote not made by its seat.
+
+Absence of a checked outcome after a properly run window is negative evidence for renewal, not proof of success.
