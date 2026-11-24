@@ -267,7 +267,8 @@ def capacity_assessment(resources, counter, previous, current, pol):
     if resources.get("load", {}).get("status") in ("short", "critical"):
         reasons.append("load pressure")
     free = funding.get("free_available_now")
-    if not isinstance(free, int) or free < 1 or funding.get("status") == "critical":
+    fallback = funding.get("fallback_eligible_now")
+    if not isinstance(free, int) or free < 1:
         reasons.append("free model availability")
     if reasons:
         status = "constrained"
@@ -285,8 +286,10 @@ def capacity_assessment(resources, counter, previous, current, pol):
     memory_state = ("unknown" if spare_mem is None else
                     "pressure" if new_oom or mem.get("status") != "ok" else
                     "spare" if spare_mem >= 2.0 else "limited")
-    funding_state = ("unknown" if not isinstance(free, int) else
-                     "unavailable" if free < 1 else "available")
+    funding_state = ("available" if isinstance(free, int) and free > 0 else
+                     "fallback_eligible" if isinstance(fallback, int) and fallback > 0 else
+                     "unavailable" if isinstance(free, int) and free == 0 and fallback == 0 else
+                     "unknown")
     stalls = pressure()
     dimensions = {"cpu": cpu_state, "memory": memory_state,
                   "disk": disk_mode, "model_funding": funding_state}
@@ -445,7 +448,8 @@ def evaluate(pol, fs, mem, load_avg, funding, rows, current):
     risk = funding.get("funding_risk") if isinstance(funding, dict) else None
     resources["model_funding"] = {"status": {"none": "ok", "elevated": "watch", "high": "critical"}.get(risk, "ok"),
                                   "funding_risk": risk or "unknown",
-                                  "free_available_now": (funding or {}).get("free_available_now")}
+                                  "free_available_now": (funding or {}).get("free_available_now"),
+                                  "fallback_eligible_now": (funding or {}).get("fallback_eligible_now")}
     return resources
 
 
@@ -516,7 +520,10 @@ def needs_founder(resources, taken, previous):
             lines.append("NEEDS-FOUNDER: memory headroom is %.2f GiB (critical, Act 13); more memory or fewer concurrent seats."
                          % r["headroom_gib"])
         elif key == "model_funding" and r["status"] == "critical":
-            lines.append("NEEDS-FOUNDER: no free model is available now; the Town would fall back to paid models.")
+            if (r.get("fallback_eligible_now") or 0) > 0:
+                lines.append("NEEDS-FOUNDER: no free model is available now; previously authorized fallback models are eligible (invocation not verified).")
+            else:
+                lines.append("NEEDS-FOUNDER: no free model is available now and no eligible fallback is confirmed.")
     return lines
 
 

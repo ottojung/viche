@@ -108,12 +108,23 @@ def entry_model(entry):
     return entry if isinstance(entry, str) else entry.get("model", "")
 
 
+def service_env():
+    """Use Antonina's authenticated v2 service, never a second CLI server."""
+    env = dict(os.environ)
+    root = COOLDOWNS.parent / "opencode-service"
+    for variable, name in (("XDG_CONFIG_HOME", "config"),
+                           ("XDG_DATA_HOME", "data"),
+                           ("XDG_STATE_HOME", "state")):
+        env[variable] = str(root / name)
+    return env
+
+
 def fetch_catalogue():
     override = os.environ.get("VICHE_OPENCODE_MODELS")
     if override:
         text = pathlib.Path(override).read_text()
     else:
-        done = subprocess.run(["opencode", "models"], capture_output=True, text=True, timeout=90)
+        done = subprocess.run(["opencode", "models"], capture_output=True, text=True, timeout=90, env=service_env())
         if done.returncode != 0:
             raise RuntimeError("opencode models failed: " + done.stderr.strip()[:200])
         text = done.stdout
@@ -144,7 +155,7 @@ def probe(model):
     prompt = "Reply with the single word OK and nothing else."
     try:
         done = subprocess.run(["opencode", "run", "-m", model, "--format", "json", prompt],
-                              capture_output=True, text=True, timeout=PROBE_TIMEOUT, cwd="/tmp")
+                              capture_output=True, text=True, timeout=PROBE_TIMEOUT, cwd="/tmp", env=service_env())
     except subprocess.TimeoutExpired:
         return False, "timeout after %ds" % PROBE_TIMEOUT
     out = done.stdout
@@ -202,6 +213,12 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
             return
         seen.add(model)
         tier = tier_of(model)
+        # Catalogue omissions and temporary free-tier policy must never
+        # revoke an explicitly configured fallback. Only the operator can
+        # remove that authorization. Runtime cooldowns still apply.
+        if grandfathered and tier != 0:
+            wanted[tier].append(model)
+            return
         if model not in in_catalogue:
             dropped.append((model, "not in catalogue"))
             return
@@ -231,10 +248,9 @@ def plan_order(cfg, catalogue_ids, probes, pol, current):
         c = configured.index(model) if model in configured else len(configured)
         return (p, c, model)
 
-    final = []
-    for tier in range(4):
-        final.extend(sorted(wanted[tier], key=rank))
-    final = final[:MAX_MODELS]
+    fallback = [m for tier in (1, 2, 3) for m in sorted(wanted[tier], key=rank)]
+    # Limit discovered free models, never evict an authorized fallback.
+    final = sorted(wanted[0], key=rank)[:max(0, MAX_MODELS - len(fallback))] + fallback
     if not final:
         raise SystemExit("plan would leave Antonina with no models; refusing")
     return configured, final, dropped
@@ -284,16 +300,22 @@ def cooldown_state(models, current):
     return out
 
 
-def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, current):
+def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, current, catalogue_ids):
     cooling = cooldown_state(set(final), current)
     free = [m for m in final if tier_of(m) == 0]
     free_available = [m for m in free if m not in cooling]
+    fallback_eligible = [m for m in final if tier_of(m) != 0 and m in catalogue_ids and m not in cooling]
+    missing_fallback = [m for m in final if tier_of(m) != 0 and m not in catalogue_ids]
     returns = sorted(v["until"] for m, v in cooling.items() if m in free)
     return {
         "at": datetime.datetime.fromtimestamp(current, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "order": [{"model": m, "tier": TIER_NAMES[tier_of(m)]} for m in final],
         "free_models": len(free),
         "free_available_now": len(free_available),
+        "fallback_eligible_now": len(fallback_eligible),
+        "fallback_eligible_models": fallback_eligible,
+        "fallback_missing_from_catalogue": missing_fallback,
+        "model_eligibility_note": "Catalogue presence and no known cooldown are not proof of a successful invocation.",
         "next_free_returns_at": returns[0] if (returns and not free_available) else None,
         "cooling": cooling,
         "changed": changed,
@@ -327,7 +349,7 @@ def refresh(args):
     backup = None
     if changed and not args.no_apply:
         backup = apply_order(cfg, final, probes, dropped, current)
-    report = build_report(final, before, dropped, new_free, ran, changed and not args.no_apply, backup, current)
+    report = build_report(final, before, dropped, new_free, ran, changed and not args.no_apply, backup, current, ids)
     atomic_write(ROOT / "report.json", json.dumps(report, sort_keys=True, indent=1) + "\n")
     print(json.dumps({"changed": report["changed"], "free_available_now": report["free_available_now"],
                       "funding_risk": report["funding_risk"]}, sort_keys=True))

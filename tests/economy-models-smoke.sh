@@ -154,4 +154,26 @@ printf '{}\n' > "$d/state/economy/model-policy.json"
 VICHE_ECONOMY_NOW=1794837700 $eco refresh >/dev/null
 test "$(jq -r '[.models[] | (.model // .)] | join(",")' "$VICHE_ANTONINA_CONFIG")" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6,openai/gpt-6-luna'   # delta is free again once the exclusion is lifted
 
+# A partial or unauthenticated catalogue must never erase authorized fallbacks.
+# Even a small configured list cap must reserve their slots.
+grep -vE '^(openai/|opencode-go/)' "$d/catalogue.txt" > "$d/partial.txt"
+printf '%s\n' opencode/a opencode/b opencode/c >> "$d/partial.txt"
+VICHE_OPENCODE_MODELS="$d/partial.txt" VICHE_ECONOMY_MAX_MODELS=3 $eco refresh --probe-limit 0 >/dev/null
+test "$(order)" = 'opencode/alpha-free,openai/gpt-6,openai/gpt-6-luna'
+jq -e '.fallback_eligible_now == 0 and (.fallback_missing_from_catalogue|length)==2' "$r" >/dev/null
+# When authenticated catalogue returns, eligibility recovers without manual re-add.
+$eco refresh --probe-limit 0 >/dev/null
+jq -e '.fallback_eligible_now == 2 and (.fallback_missing_from_catalogue|length)==0' "$r" >/dev/null
+test "$(order)" = 'opencode/alpha-free,opencode/beta-free,opencode/delta-free,openai/gpt-6,openai/gpt-6-luna'
+# Service discovery and free probes share Antonina's isolated XDG roots.
+python3 - "$repo" <<'PYTEST'
+import importlib.util, pathlib, sys
+spec=importlib.util.spec_from_file_location("eco", pathlib.Path(sys.argv[1])/"government/economy-models.py")
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+e=m.service_env()
+root=m.COOLDOWNS.parent/"opencode-service"
+assert e["XDG_CONFIG_HOME"]==str(root/"config")
+assert e["XDG_DATA_HOME"]==str(root/"data")
+assert e["XDG_STATE_HOME"]==str(root/"state")
+PYTEST
 echo 'economy models smoke passed'
