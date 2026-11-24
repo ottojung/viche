@@ -153,9 +153,23 @@ def evaluate_with_holdouts(rows, generator, generator_name=None, test_fraction=0
     fam_test_keys = {r["module"] for r in fam_test}
     fam_results = [r for r in all_results if r["module"] in fam_test_keys]
 
-    ordered = sorted(rows, key=time_key)
-    cut = max(1, int(round(len(ordered) * (1 - test_fraction)))) if ordered else 0
-    time_test = ordered[cut:]
+    if not 0 < test_fraction < 1:
+        raise ValueError("test fraction must be between zero and one")
+    # Missing times are excluded, not silently treated as future examples.
+    # Do not split simultaneous checked events across train/test.
+    timestamp_mode = any("checked_at" in row for row in rows)
+    if timestamp_mode:
+        dated = [r for r in rows if r.get("checked_at")]
+        _, time_test = holdout_split(dated, lambda r: r["checked_at"], test_fraction)
+        if len({r["checked_at"] for r in dated}) < 2:
+            time_test = []
+        split = "tail_by_official_checked_at_groups"
+    else:
+        dated = []
+        ordered = sorted(rows, key=time_key)
+        cut = max(1, int(round(len(ordered) * (1 - test_fraction)))) if ordered else 0
+        time_test = ordered[cut:]
+        split = "module_number_proxy_not_acceptance_time"
     time_test_keys = {r["module"] for r in time_test}
     time_results = [r for r in all_results if r["module"] in time_test_keys]
 
@@ -170,7 +184,10 @@ def evaluate_with_holdouts(rows, generator, generator_name=None, test_fraction=0
             "summary": summarize(fam_results),
         },
         "time_holdout": {
-            "split": "tail_by_public_module_time_key",
+            "split": split,
+            "dated_rows": len(dated),
+            "undated_rows": len(rows) - len(dated),
+            "interpretation": "Retrospective split, not evidence of unseen generalization.",
             "test_fraction": test_fraction,
             "test_modules": [r["module"] for r in time_test],
             "summary": summarize(time_results),
