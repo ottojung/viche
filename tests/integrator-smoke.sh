@@ -19,6 +19,14 @@ mkdir -p "$town/government" "$town/tests" "$town/records" "$town/constitution"
 for f in suite-env.sh suite-status.sh integrator.py propose-delivery.sh review-delivery.sh dispatch-gate.sh; do
   cp "$repo/government/$f" "$town/government/$f"
 done
+# Fixture-only switch for a verifier setup outage before it emits a record.
+python3 - "$town/government/suite-status.sh" <<'PYTEST'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]);s=p.read_text()
+assert "set -eu\n" in s
+p.write_text(s.replace("set -eu\n",'set -eu\n[ "${VICHE_TEST_VERIFY_UNAVAILABLE:-no}" != yes ] || exit 2\n',1))
+PYTEST
 # Suites: red when records/BREAK and records/ARM are both present (green on
 # each side alone, red once merged); every run is counted.
 cat > "$town/tests/records-smoke.sh" <<'EOF'
@@ -159,6 +167,21 @@ test "$(wc -l < "$tmp/suite-runs")" -eq "$runs"
 log=$(jq -r '[.entries[] | select(.branch == "delivery/breaker")] | last | .log' "$state/delivery/queue.json")
 grep -q 'records/BREAK with records/ARM' "$log"
 python3 "$town/government/integrator.py" office c1a00004 | grep -q 'RED: tests/records-smoke.sh failed twice'
+
+# 5b. Infrastructure outage before an exact receipt is not a terminal red.
+# The old main record is green but belongs to another SHA/tree.
+seat verifier_outage
+printf 'retriable\n' > "$tmp/verifier_outage/records/verifier-outage.md"
+git -C "$tmp/verifier_outage" add -A
+git -C "$tmp/verifier_outage" commit -qm 'verification outage recovery fixture'
+propose verifier_outage judiciary verifier-outage
+VICHE_TEST_VERIFY_UNAVAILABLE=yes integrate
+test "$(st verifier-outage)" = approved
+if on_main records/verifier-outage.md; then echo 'unverified candidate landed' >&2; exit 1; fi
+jq -e '[.entries[] | select(.branch == "delivery/verifier-outage")] | last | .reason | contains("no fresh exact-candidate record")' "$state/delivery/queue.json" >/dev/null
+integrate
+test "$(st verifier-outage)" = landed
+on_main records/verifier-outage.md
 
 # 6. A conflict with main is reported, not landed.
 seat f

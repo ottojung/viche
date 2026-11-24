@@ -482,14 +482,34 @@ def land(p, entry, review):
                                         SUITE_STATUS_LOG_DIR=str(logs)))
         status_file = wt / "records" / "suite-status.json"
         record = load(status_file, {})
-        if check.returncode != 0 or record.get("result") != "green":
-            runs = record.get("runs") or []
-            last = runs[-1].get("output_sha256") if runs else None
-            entry.update({"status": "red", "reason": "%s failed twice on the merged candidate" % suite,
-                          "log": str(logs / ("suite-%s.log" % last)) if last else None})
+        exact = record.get("commit") == candidate and record.get("tree") == tree
+        if not exact:
+            if check.returncode != 0:
+                # A verifier setup failure, timeout before a record, or lost
+                # evidence is not two red tests. Never reuse main's old result.
+                entry.update({"status": "approved", "reason":
+                              "verification unavailable (exit %d); no fresh exact-candidate record; retry" % check.returncode,
+                              "log": None})
+            else:
+                entry.update({"status": "refused", "reason": "suite record does not name the exact candidate"})
             return False
-        if record.get("commit") != candidate or record.get("tree") != tree:
-            entry.update({"status": "refused", "reason": "suite record does not name the exact candidate"})
+        if check.returncode != 0 or record.get("result") != "green":
+            runs = record.get("runs")
+            twice_red = (check.returncode == 1 and record.get("result") == "red"
+                         and isinstance(runs, list) and len(runs) == 2
+                         and all(isinstance(run, dict) and run.get("run") == i
+                                 and run.get("result") == "red"
+                                 and type(run.get("exit")) is int and run["exit"] != 0
+                                 and isinstance(run.get("output_sha256"), str)
+                                 and re.fullmatch(r"[0-9a-f]{64}", run["output_sha256"])
+                                 for i, run in enumerate(runs, 1)))
+            if twice_red:
+                entry.update({"status": "red", "reason": "%s failed twice on the merged candidate" % suite,
+                              "log": str(logs / ("suite-%s.log" % runs[-1]["output_sha256"]))})
+            else:
+                entry.update({"status": "approved", "reason":
+                              "verification unavailable or inconsistent exact record (exit %d); retry" % check.returncode,
+                              "log": None})
             return False
         receipt = DELIVERY / ("verified-%s.json" % candidate)
         shutil.copyfile(str(status_file), str(receipt))
