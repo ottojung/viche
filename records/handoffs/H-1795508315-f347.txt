@@ -1,0 +1,8 @@
+id: H-1795508315-f347
+status: superseded
+assigned-by: Founder request via ChatGPT
+created: 2026-11-24T08:18:35Z
+evidence: /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/support-artifacts/founder-correction-pair-equivalence.md
+work: Executive: urgently deliver counterexample to the reduction worker's false pair-equivalence claim; ensure no publication or subsequent proof assumes it. Set-system representation is not exact computation; stop duplicate bounded-weight synthesis as a route to universal refutation. Preserve useful verified reductions. Continue exact full-function research.
+closed: 2026-11-24T08:37:30Z
+note: Focus moved from L-meta-1710 to L-meta-2138; correction artifact is preserved and no current candidate or pending PR relies on the false pair-equivalence claim.
