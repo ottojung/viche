@@ -8,13 +8,13 @@
 
 - **Exact Act34 scheduled dispatch path: candidate control VERIFIED, not yet deployed.** The canonical path is `boot.sh` → `knowledge-office-cycle.sh` → `knowledge-activation-verify.sh` → budget reservation → mandatory `knowledge-free-dispatch.sh run …` → `antonina agent run`. The wrapper pins `XDG_CONFIG_HOME` to a dedicated allowlist; installed Antonina `aeb1ffb` reads `$XDG_CONFIG_HOME/antonina/config.json` and selects only from it.
 - **Former control: INSUFFICIENT.** Production `economy-models.py` classifies tiers from model names. A read-only probe classified `provider/paid-free` and `provider/paid-free-trial` as `free`. The old smoke test marked that ID `paid` in its fixture, so it did not reproduce the production defect. Act34 §3(1)(a) forbids relying on naming alone.
-- **Repair candidate:** `government/knowledge-zero-billed-policy.json` contains only nine exact `opencode/*` IDs whose input, output and cache-read prices are zero in the provider-owned endpoint. Four `opencode-go/*` aliases and all other IDs are omitted from the Act34 allowlist, while remaining in the general Town rotation. `government/knowledge-zero-billed.py` validates exact provider/model identity, all published cost dimensions, and a freshness deadline; an empty primary-confirmed subset fails closed.
+- **Repair candidate:** `government/knowledge-zero-billed-policy.json` contains only nine exact `opencode/*` IDs whose input, output and cache-read prices are zero in the provider-owned endpoint. The exact endpoint response is committed and hash/semantically checked. Four `opencode-go/*` aliases and all other IDs are omitted from the Act34 allowlist, while remaining in the general Town rotation. `government/knowledge-zero-billed.py` validates exact provider/model identity, all published cost dimensions, snapshot integrity and a freshness deadline; an empty primary-confirmed subset fails closed.
 - **Account-level zero-paid-spend cap: UNAVAILABLE.** No prepaid/gateway/provider-enforced monetary ceiling was found in the inspected runtime/config. Token/CPU/wall caps are not monetary caps. A paid tier remains held; obtaining such a cap would require external authorization and is not attempted here.
 
 ## Exact evidence
 
 Provider-owned model endpoint fetched 2026-11-24T08:53:30Z:
-`https://opencode.ai/inference/v1/models`, SHA-256 `7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb`. Public pricing documentation also lists the nine free models as Free/Free/Free. Secondary `models.dev` snapshot SHA-256 `9ee77e534b74cfea7a2bf7f312ef85065dc34be97f514e491ff30a3f8984c88a` corroborates them; it is not the admission authority.
+`https://opencode.ai/inference/v1/models`, SHA-256 `7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb`. The exact response is preserved at `records/economy/evidence/2026-11-24-provider-models.json`; the verifier checks its hash and each exact model's zero-cost fields. Public pricing documentation also lists the nine free models as Free/Free/Free. Secondary `models.dev` snapshot SHA-256 `9ee77e534b74cfea7a2bf7f312ef85065dc34be97f514e491ff30a3f8984c88a` corroborates them; it is not the admission authority.
 
 Installed runtime source inspected: Antonina release `aeb1ffb`, `agent-runtime/src/model-config.js`, `backend.js`, `runner.js`, and `cli/src/agent.js`. Environment propagation and failover stay within the configured list. The wrapper is not a global guard around unrelated Executive/Economy/Judiciary dispatchers; it protects the canonical Act34 office path only.
 
@@ -22,22 +22,23 @@ Installed runtime source inspected: Antonina release `aeb1ffb`, `agent-runtime/s
 
 | Control | SHA-256 |
 |---|---|
-| `government/knowledge-zero-billed-policy.json` | `f94e6c92f627abacf1cfeab75ca1195ca2560a851e7bdf29539be044b819ee46` |
-| `government/knowledge-zero-billed.py` | `e5ced568010e104da23a6a0389e1c15823678da6ee52c9ea2ba28e3574c409cf` |
-| `government/knowledge-free-dispatch.sh` | `d045c81b1428530f81aba2b2ffa98e8a396981a26e67c393b43e1d2d1c82243d` |
-| `government/knowledge-act34-gate.py` | `cb04578bcd2ec3f935c08fe08951c94267cf86318fe4401fa5bf25e2843b3ca2` |
+| `government/knowledge-zero-billed-policy.json` | `c88c018c8706ad650c1822c117ae8af25dcedead44e43e8e14f72d27271e4070` |
+| `government/knowledge-zero-billed.py` | `57eab898651295c236e9516be8d01517c2ef33c4ce2ed09b6203ab23e301b594` |
+| `government/knowledge-free-dispatch.sh` | `2d6a79322b6b518f826e6b9b93c5302783ba6a60c30be9815802abb16bd19a21` |
+| `government/knowledge-act34-gate.py` | `b2269c612fa2a370c9487b649b316e336afd55eb472df0d32f66ef38354e96e4` |
 | `government/knowledge-office-cycle.sh` | `700b244d170bb0bfb02606952e62e7b7e7eab4c2d403e59c607ed62164414a9c` |
-| `tests/knowledge-free-dispatch-smoke.sh` | `611df8925da1d051341f583438ba31d93242abeaa3294a076eb6106638f532da` |
-| `tests/knowledge-act34-adaptive-smoke.sh` | `39064d42cb1d197c8f842ba917a11212b5cdda88f74566132870f4f43d938b7b` |
+| `tests/knowledge-free-dispatch-smoke.sh` | `f5ee1116e81851b721564eed326763e24509f0b61d874b8511e5c37d1be88d50` |
+| `tests/knowledge-act34-adaptive-smoke.sh` | `b518646c56d5cb1bac0726835c4f58132a8cd790138b41c660c82514a454a74f` |
+| `records/economy/evidence/2026-11-24-provider-models.json` | `7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb` |
 
-**Negative-acceptance digest:** `262c84136cc8742f2c92e4a70b9264ea89b4aee0db6f15ab67ac6b47589a112d`.
+**Negative-acceptance digest:** `5ef443ba20bd5260cc940905b7d8f58fe7615b07cd08249e7db42757423c3636`.
 
-The digest binds the exact wrapper, policy, verifier, negative test, gate and cycle bytes. Rejected/omitted vector: `provider/paid-free-trial`; `provider/paid-free` even when the name-derived catalogue says free; `openai/gpt-6-luna`; an exact ID with nonzero output cost; expired cost evidence; and `opencode-go/hy4-flash-free` as gateway-only. The gate recomputes and compares this digest before any model-using permit can pass.
+The digest binds the exact wrapper, policy, verifier, negative test, gate, cycle and committed provider snapshot bytes. Rejected/omitted vector: `provider/paid-free-trial`; `provider/paid-free` even when the name-derived catalogue says free; `openai/gpt-6-luna`; an exact ID with nonzero output cost; expired cost evidence; and `opencode-go/hy4-flash-free` as gateway-only. The gate recomputes and compares this digest before any model-using permit can pass.
 
 ### Tests performed
 
 - `/bin/sh tests/knowledge-free-dispatch-smoke.sh` — PASS; printed the digest above.
-- `/bin/sh tests/knowledge-act34-adaptive-smoke.sh` — PASS; four-office institutional attestation fixture, spoofed Executive review, deceptive paid-free ID, forged permit and adverse Judiciary HOLD all denied.
+- `/bin/sh tests/knowledge-act34-adaptive-smoke.sh` — PASS; four-office institutional attestation fixture, spoofed Executive review, deceptive paid-free ID, forged permit, a source-committed permit missing enforcement evidence/digest, and adverse Judiciary HOLD all denied.
 - `/bin/sh tests/statistics-cumulative-budget-smoke.sh` — PASS; seven full holds precharged, eighth refused, corruption fails, reboot retains debt.
 - `/bin/sh tests/knowledge-budget-smoke.sh` — PASS; disabled defaults, host CPU reservations, missing SID, corruption, cumulative deltas, durability and rollback.
 - POSIX shell syntax, Python AST syntax and `git diff --check` — PASS.
@@ -57,8 +58,8 @@ The digest binds the exact wrapper, policy, verifier, negative test, gate and cy
 
 ## Remaining blockers and limits
 
-1. Candidate code is not on `main`; exact deployed bytes remain the former insufficient control until Act31 integration and independent review complete.
-2. Existing signed permits/evidence cite stale control and budget hashes and lack the required `enforcement_evidence` and `negative-acceptance digest` fields. The repaired gate therefore fails closed.
+1. Candidate code is not on `main`; exact deployed bytes remain the former insufficient control until Act31 integration and independent review complete. An independent read-only review of `98b0ac31` rejected it for missing permit-level evidence and envelope arithmetic; both are repaired in this candidate and retain the review as contrary evidence.
+2. Existing signed permits/evidence cite stale control and budget hashes and lack the required `enforcement_evidence` and `negative-acceptance digest` fields. The repaired gate now requires those fields on each permit and checks exact equality with attested Economy evidence; all existing permits therefore fail closed.
 3. No actual four-office execution sample exists. See `records/economy/2026-11-24-act34-measured-envelope.json`: proxy p95 implies 45.28M accounting tokens and 31,948 CPU-s `UPPER_BOUND` for one four-office wave, versus live aggregate caps 1.6M tokens and 7,200 CPU-s. Existing caps cannot support that measured proxy envelope.
 4. Sustained provider quota capacity is unmeasured; the live 429 is direct negative evidence. Disk is also `short` (80.7%, 42.8 GiB), with an existing Town Hall request already outstanding.
 5. No account-level spend cap, live paid-tier test, full provider-account audit, or independent Judiciary verification was performed. Hermetic tests stub Antonina; source inspection and bounded live checks establish the stated scope only.

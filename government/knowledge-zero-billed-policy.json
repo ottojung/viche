@@ -7,6 +7,8 @@
     "note": "Provider-owned exact model cost metadata. Admission is by exact ID and zero published input/output/cache-read cost; no cache-write charge is listed. Never inferred from a -free name. Secondary models.dev snapshot sha256 9ee77e534b74cfea7a2bf7f312ef85065dc34be97f514e491ff30a3f8984c88a corroborates these nine IDs; four gateway/secondary-only rotation IDs are deliberately excluded."
   },
   "review_after": "2026-12-01T08:53:30Z",
+  "snapshot_ref": "records/economy/evidence/2026-11-24-provider-models.json",
+  "snapshot_sha256": "7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb",
   "models": {
     "opencode/tidepool-alpha-free": {
       "provider": "opencode",

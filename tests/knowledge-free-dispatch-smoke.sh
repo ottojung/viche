@@ -7,7 +7,7 @@ wrap=government/knowledge-free-dispatch.sh
 [ -s "$wrap" ]
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT HUP INT TERM
-mkdir -p "$d/state/economy" "$d/town/government" "$d/bin"
+mkdir -p "$d/state/economy" "$d/town/government" "$d/town/records/economy/evidence" "$d/bin"
 cat > "$d/state/economy/catalogue.json" <<'CATALOGUE'
 {"models":{
   "opencode/tidepool-alpha-free":{"tier":"free"},
@@ -18,15 +18,26 @@ cat > "$d/state/economy/catalogue.json" <<'CATALOGUE'
 }}
 CATALOGUE
 cp government/knowledge-practical-bounds.py government/knowledge-zero-billed.py "$d/town/government/"
-cat > "$d/town/government/knowledge-zero-billed-policy.json" <<'BILLING'
-{"schema":"viche-zero-billed-model-policy-v1",
- "source":{"url":"https://opencode.ai/inference/v1/models","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+cp records/economy/evidence/2026-11-24-provider-models.json "$d/town/records/economy/evidence/"
+python3 - "$d/town/government/knowledge-zero-billed-policy.json" "$d/town/records/economy/evidence/provider-snapshot.json" <<'BILLINGPY'
+import hashlib,json,sys
+policy,snapshot=sys.argv[1:]
+data={"object":"list","data":[
+ {"id":"tidepool-alpha-free","owned_by":"opencode","cost":{"text":{"input":{"price":0,"cache":{"read":0}},"output":{"price":0}}}},
+ {"id":"hy4-flash-free","owned_by":"opencode","cost":{"text":{"input":{"price":0,"cache":{"read":0}},"output":{"price":0}}}}
+]}
+blob=json.dumps(data,sort_keys=True,separators=(",",":")).encode()
+open(snapshot,"wb").write(blob)
+p={"schema":"viche-zero-billed-model-policy-v1",
+ "source":{"url":"https://opencode.ai/inference/v1/models","retrieved_at":"2026-11-24T00:00:00Z","sha256":hashlib.sha256(blob).hexdigest()},
  "review_after":"2099-01-01T00:00:00Z",
+ "snapshot_ref":"records/economy/evidence/provider-snapshot.json","snapshot_sha256":hashlib.sha256(blob).hexdigest(),
  "models":{
   "opencode/tidepool-alpha-free":{"provider":"opencode","provider_model":"tidepool-alpha-free","cost":{"input":0,"output":0,"cache_read":0}},
   "opencode/hy4-flash-free":{"provider":"opencode","provider_model":"hy4-flash-free","cost":{"input":0,"output":0,"cache_read":0}}
  }}
-BILLING
+json.dump(p,open(policy,"w"))
+BILLINGPY
 # CI has no actual Antonina global config; create a sentinel and verify that
 # successful and rejected per-invocation dispatches never modify it.
 mkdir -p "$d/global/antonina"
@@ -34,6 +45,7 @@ printf '%s\n' '{"models":[{"model":"global-sentinel"}]}' > "$d/global/antonina/c
 cp "$d/global/antonina/config.json" "$d/global-before.json"
 XDG_CONFIG_HOME="$d/global"
 export XDG_CONFIG_HOME
+export VICHE_ZERO_BILLED_SNAPSHOT=provider-snapshot.json
 
 python3 - "$d/state/economy/model-policy.json" <<'PY'
 import json,sys
@@ -142,9 +154,10 @@ echo 'knowledge free dispatch smoke: OK (XDG pinned, exact-ID zero-cost allowlis
 python3 - "$PWD/government/knowledge-zero-billed.py" "$wrap" \
   government/knowledge-zero-billed-policy.json government/knowledge-practical-bounds.py \
   tests/knowledge-free-dispatch-smoke.sh government/knowledge-act34-gate.py \
-  government/knowledge-office-cycle.sh <<'PYDIGEST'
+  government/knowledge-office-cycle.sh \
+  "$d/town/records/economy/evidence/provider-snapshot.json" <<'PYDIGEST'
 import importlib.util,sys
 spec=importlib.util.spec_from_file_location("zb",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
-paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7]}
+paths={"wrapper":sys.argv[2],"zero_billed_policy":sys.argv[3],"bounds":sys.argv[4],"negative_test":sys.argv[5],"verifier":sys.argv[1],"gate":sys.argv[6],"cycle":sys.argv[7],"provider_snapshot":sys.argv[8]}
 print("NEGATIVE_ACCEPTANCE_DIGEST="+m.negative_acceptance_digest(paths))
 PYDIGEST

@@ -110,6 +110,7 @@ def require_audited_free_tier(root, record, permit):
         ("bounds_sha256", "government/knowledge-practical-bounds.py"),
         ("zero_billed_policy_sha256", "government/knowledge-zero-billed-policy.json"),
         ("zero_billed_verifier_sha256", "government/knowledge-zero-billed.py"),
+        ("provider_snapshot_sha256", "records/economy/evidence/2026-11-24-provider-models.json"),
         ("gate_sha256", "government/knowledge-act34-gate.py"),
         ("cycle_sha256", "government/knowledge-office-cycle.sh"))
     for key, rel in controls:
@@ -134,7 +135,12 @@ def require_audited_free_tier(root, record, permit):
     allowed = policy.get("prefer") if isinstance(policy, dict) else None
     if not isinstance(models, dict) or not isinstance(allowed, list) or not allowed:
         raise ValueError("free-tier policy/catalogue unavailable")
-    zmod.verified_subset(root / "government/knowledge-zero-billed-policy.json", allowed, models)
+    billing_path = root / "government/knowledge-zero-billed-policy.json"
+    billing = load(billing_path)
+    snapshot_ref = billing.get("snapshot_ref")
+    if not isinstance(snapshot_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", snapshot_ref):
+        raise ValueError("zero-billed provider snapshot ref invalid")
+    zmod.verified_subset(billing_path, allowed, models, root / snapshot_ref)
     expected_digest = zmod.negative_acceptance_digest({
         "wrapper": root / "government/knowledge-free-dispatch.sh",
         "zero_billed_policy": root / "government/knowledge-zero-billed-policy.json",
@@ -142,7 +148,8 @@ def require_audited_free_tier(root, record, permit):
         "negative_test": root / "tests/knowledge-free-dispatch-smoke.sh",
         "verifier": root / "government/knowledge-zero-billed.py",
         "gate": root / "government/knowledge-act34-gate.py",
-        "cycle": root / "government/knowledge-office-cycle.sh"})
+        "cycle": root / "government/knowledge-office-cycle.sh",
+        "provider_snapshot": root / "records/economy/evidence/2026-11-24-provider-models.json"})
     if evidence.get("negative_acceptance_digest") != expected_digest:
         raise ValueError("negative-acceptance digest differs from exact controls")
 
@@ -195,6 +202,9 @@ def check(office, root):
             or permit.get("signature_status") != "signed"
             or permit.get("provider_budget_mode") != "zero-billed-runtime-allowlist"
             or permit.get("provider_tier") != "free_only"
+            or not isinstance(permit.get("enforcement_evidence"), dict)
+            or not isinstance(permit.get("negative_acceptance_digest"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", permit["negative_acceptance_digest"])
             or permit.get("inflight_overrun_risk_disclosed") is not True
             or permit.get("cancellation") != "stop-agent-and-hold-budget"
             or permit.get("reboot_recovery") != "reconcile-held-liability"):
@@ -203,6 +213,16 @@ def check(office, root):
         root, "executive", "c1e00002", ref, a.get("permit_origin_commit"),
         permit_hash, a.get("permit_attestation"), "act34-executive-" + office)
     require_audited_free_tier(root, record, permit)
+    evidence = record.get("economy_free_tier_evidence", {})
+    required = ("wrapper_sha256", "negative_test_sha256",
+                "bounds_sha256", "zero_billed_policy_sha256",
+                "zero_billed_verifier_sha256", "gate_sha256", "cycle_sha256",
+                "provider_snapshot_sha256", "negative_acceptance_digest")
+    if (any(permit.get("enforcement_evidence", {}).get(key) != evidence.get(key)
+            for key in required)):
+        raise ValueError("permit enforcement evidence differs from attested Economy control")
+    if permit.get("negative_acceptance_digest") != evidence.get("negative_acceptance_digest"):
+        raise ValueError("permit negative-acceptance digest differs from attested control")
     review_path = root / ("records/knowledge/pilot-reviews/" + office + ".json")
     # An early adverse Judiciary decision is immediately binding.
     if review_path.exists():

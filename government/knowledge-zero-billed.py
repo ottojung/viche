@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import pathlib
 import re
 import tempfile
 
@@ -34,8 +35,8 @@ def _timestamp(value):
     return parsed
 
 
-def load_verified(path, now=None):
-    """Load a fresh policy and validate every exact-ID cost record."""
+def load_verified(path, now=None, snapshot_path=None):
+    """Load a fresh policy and validate exact IDs against committed provider bytes."""
     path = Path(path)
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or data.get("schema") != SCHEMA:
@@ -45,12 +46,32 @@ def load_verified(path, now=None):
             or not isinstance(source.get("sha256"), str)
             or not re.fullmatch(r"[0-9a-f]{64}", source["sha256"])):
         raise ValueError("zero-billed provider-cost source invalid")
+    retrieved_at = _timestamp(source.get("retrieved_at"))
     review_after = _timestamp(data.get("review_after"))
     now = now or datetime.datetime.now(datetime.timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=datetime.timezone.utc)
+    if retrieved_at > now or retrieved_at >= review_after:
+        raise ValueError("zero-billed provider-cost timestamps invalid")
     if now >= review_after:
         raise ValueError("zero-billed provider-cost evidence expired")
+    snapshot_ref = data.get("snapshot_ref")
+    snapshot_sha = data.get("snapshot_sha256")
+    if (not isinstance(snapshot_ref, str) or not snapshot_ref or
+            pathlib.PurePosixPath(snapshot_ref).is_absolute() or
+            ".." in pathlib.PurePosixPath(snapshot_ref).parts or
+            snapshot_sha != source["sha256"]):
+        raise ValueError("zero-billed provider snapshot binding invalid")
+    if snapshot_path is None:
+        raise ValueError("zero-billed provider snapshot missing")
+    snapshot_bytes = Path(snapshot_path).read_bytes()
+    if hashlib.sha256(snapshot_bytes).hexdigest() != snapshot_sha:
+        raise ValueError("zero-billed provider snapshot digest mismatch")
+    snapshot = json.loads(snapshot_bytes)
+    records = snapshot.get("data") if isinstance(snapshot, dict) else None
+    if not isinstance(records, list):
+        raise ValueError("zero-billed provider snapshot schema invalid")
+    by_id = {row.get("id"): row for row in records if isinstance(row, dict)}
     models = data.get("models")
     if not isinstance(models, dict) or not models:
         raise ValueError("zero-billed exact-ID policy empty")
@@ -68,17 +89,31 @@ def load_verified(path, now=None):
             raise ValueError("unknown billing dimension: " + mid)
         if any(not _zero(cost[k]) for k in cost):
             raise ValueError("nonzero provider cost: " + mid)
+        rec = by_id.get(provider_model)
+        if not isinstance(rec, dict) or rec.get("owned_by") != provider:
+            raise ValueError("provider snapshot exact model missing: " + mid)
+        text = rec.get("cost", {}).get("text", {})
+        inp = text.get("input", {}) if isinstance(text, dict) else {}
+        out = text.get("output", {}) if isinstance(text, dict) else {}
+        cache = inp.get("cache", {}) if isinstance(inp, dict) else {}
+        observed = {"input": inp.get("price") if isinstance(inp, dict) else None,
+                    "output": out.get("price") if isinstance(out, dict) else None,
+                    "cache_read": cache.get("read") if isinstance(cache, dict) else None}
+        if any(not _zero(observed[key]) for key in REQUIRED_COST):
+            raise ValueError("provider snapshot shows nonzero cost: " + mid)
+        if "write" in cache and not _zero(cache.get("write")):
+            raise ValueError("provider snapshot shows nonzero cache-write cost: " + mid)
     return data
 
 
-def verified_subset(policy_path, ids, catalogue_models=None):
+def verified_subset(policy_path, ids, catalogue_models=None, snapshot_path=None):
     """Return the exact, fresh, zero-cost subset in caller order.
 
     IDs absent from provider-cost evidence are omitted, not admitted. An empty
     result fails closed. This lets the general free rotation retain secondary-
     only offers while the Act34 path uses the primary-confirmed subset.
     """
-    data = load_verified(policy_path)
+    data = load_verified(policy_path, snapshot_path=snapshot_path)
     if not isinstance(ids, list):
         raise ValueError("model allowlist missing")
     selected = []
@@ -117,13 +152,13 @@ def negative_acceptance_digest(paths):
                                      separators=(",", ":")).encode()).hexdigest()
 
 
-def build_allowlist(policy_path, prefer_path, catalogue_path, output_path):
+def build_allowlist(policy_path, prefer_path, catalogue_path, output_path, snapshot_path=None):
     """Build Antonina's per-invocation config from exact verified IDs."""
     policy = json.loads(Path(prefer_path).read_text(encoding="utf-8"))
     catalogue = json.loads(Path(catalogue_path).read_text(encoding="utf-8"))
     if not isinstance(catalogue, dict) or not isinstance(catalogue.get("models"), dict):
         raise ValueError("Economy catalogue missing/invalid")
-    ids = verified_subset(policy_path, policy.get("prefer"), catalogue.get("models"))
+    ids = verified_subset(policy_path, policy.get("prefer"), catalogue.get("models"), snapshot_path)
     entries = [{"model": mid,
                 "comment": "Economy exact-ID zero-cost policy; source-attested provider metadata"}
                for mid in ids]

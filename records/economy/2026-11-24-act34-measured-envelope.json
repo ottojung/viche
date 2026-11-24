@@ -60,7 +60,8 @@
     "measured_p95_aggregate_exceeds_live_caps": {
       "tokens_factor": 28.3,
       "cpu_upper_bound_factor": 4.437,
-      "summed_wall_fraction": 0.139
+      "summed_wall_fraction": 0.5547,
+      "elapsed_parallel_wall_fraction": 0.1387
     },
     "older_proposed_caps": {
       "per_office_45d": {"tokens_total": 3360000, "cpu_seconds": 50400, "wall_seconds": 100800},
