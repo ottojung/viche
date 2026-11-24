@@ -367,7 +367,11 @@ class TestCli(unittest.TestCase):
             with self.subTest(previous=previous):
                 fresh()
                 new_state(previous, lease="old-lease",
-                          failure_reason="out_of_time")
+                          failure_reason="out_of_time",
+                          base_sha="old-base", branch="pnp/old",
+                          worktree="/tmp/old-wt", commit_sha="old-sha",
+                          pr_number=7, pr_url="https://old/pr/7",
+                          external_verdict="REJECTED")
                 fake = FakeDesk()
                 fake.next_gap = lambda **kw: answer
                 with mock.patch.object(cli.desk_mod, "Desk",
@@ -379,6 +383,13 @@ class TestCli(unittest.TestCase):
                 self.assertEqual(rec["state"], "LEASED")
                 self.assertEqual(rec["lease"], "fresh-lease")
                 self.assertIsNone(rec["failure_reason"])
+                # Reviewer finding: stale publish artifacts must be cleared so
+                # a fresh candidate can be checked and submitted without a
+                # false "candidate digest changed since local check" FAULT.
+                for stale in ("candidate_digest", "base_sha", "branch",
+                              "worktree", "commit_sha", "pr_number",
+                              "pr_url", "external_verdict"):
+                    self.assertIsNone(rec[stale], stale)
 
     def test_active_lease_duplicate_is_not_released_into_cooldown(self):
         from missions.pnp import cli

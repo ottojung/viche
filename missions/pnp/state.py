@@ -164,6 +164,13 @@ def reacquire(gap_id, **fields):
         for key in lease_fields + meta_fields:
             if key in fields:
                 rec[key] = fields[key]
+        # A re-leased gap starts a fresh publication cycle.  Stale digest or
+        # publish artifacts from an earlier attempt would make publish()
+        # abort ("candidate digest changed since local check") or reuse an
+        # old base/branch/PR, driving the gap to FAULT instead of credited.
+        for key in ("candidate_digest", "base_sha", "branch", "worktree",
+                    "commit_sha", "pr_number", "pr_url", "external_verdict"):
+            rec[key] = None
         rec["failure_reason"] = None
         rec["intent"] = None
         rec["researchers"] = []
