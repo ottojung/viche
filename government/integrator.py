@@ -69,7 +69,7 @@ EXPIRE_SECONDS = 14 * 86400
 REVIEW_TIMEOUT = 24 * 3600
 REVIEW_ATTEMPTS = 2
 # Prefer ready short deliveries, but allow an old full-suite candidate first.
-FULL_SUITE_PRIORITY_AGE = 3600
+RECORD_BATCH_LIMIT = 32
 LANDED_VISIBLE = 3 * 86400
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
@@ -566,6 +566,20 @@ def run():
         return run_locked()
 
 
+def landing_batch(ready):
+    """Bounded record-first service, with a guaranteed oldest-code slot.
+
+    The ready set is a finite snapshot. An aged code candidate cannot force
+    ballots or evidence to wait for a full suite before making any progress;
+    an unbounded record arrival stream cannot starve code either.
+    """
+    records = sorted((item for item in ready if item[3] == "tests/records-smoke.sh"),
+                     key=lambda item: (item[0]["at"], item[0]["branch"]))
+    full = sorted((item for item in ready if item[3] != "tests/records-smoke.sh"),
+                  key=lambda item: (item[0]["at"], item[0]["branch"]))
+    return records[:RECORD_BATCH_LIMIT] + full[:1]
+
+
 def run_locked():
     try:
         git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main",
@@ -627,29 +641,14 @@ def run_locked():
         if (entry.get("status") not in TERMINAL and entry.get("branch") in latest
                 and entry.get("head") != latest[entry["branch"]]):
             entry.update({"status": "superseded", "reason": "a newer commit was proposed on this branch"})
-    # Short ready records should not wait behind several full-suite candidates.
-    # A code proposal aged >= 1h gets first priority (oldest first); at most
-    # one full candidate is attempted per pass, so the next pass can discover
-    # newly arrived records rather than monopolizing the queue.
-    def priority(item):
-        p, _, _, suite = item
-        if suite != "tests/records-smoke.sh" and now() - p["at"] >= FULL_SUITE_PRIORITY_AGE:
-            return (0, p["at"])
-        return (1 if suite == "tests/records-smoke.sh" else 2, p["at"])
-
     def persist():
         publish(state)
         atomic_write(ROOT / "state.json", json.dumps(state, sort_keys=True, indent=1) + "\n")
 
     persist()
-    full_attempted = False
-    for p, entry, review, suite in sorted(ready, key=priority):
+    for p, entry, review, suite in landing_batch(ready):
         if entry.get("status") in TERMINAL:
             continue
-        if suite != "tests/records-smoke.sh":
-            if full_attempted:
-                continue
-            full_attempted = True
         try:
             land(p, entry, review)
         except (GitError, OSError, subprocess.SubprocessError) as error:

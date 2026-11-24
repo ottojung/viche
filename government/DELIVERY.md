@@ -69,9 +69,10 @@ For manual source tests, run from the source worktree using the canonical
 This disposable runtime protects normal tests from inherited live configuration;
 it is not a security sandbox for arbitrary same-user code.
 
-The queue prioritizes ready short records before full-suite code deliveries;
-full-suite work that has waited an hour gets first priority, and at most one
-full-suite candidate is attempted per pass. Status is published after each
+The queue drains up to 32 ready short records in age order before starting
+the oldest ready full-suite candidate. Each finite pass gives that candidate
+one slot even during a record flood. Aged code does not jump ahead of ballots
+and other records; every candidate still receives its exact-tree suite. Status is published after each
 landing. Concurrent ballot append conflicts may be resolved mechanically
 only for the proposing seat's own exact-digest row, preserving every prior
 row byte-for-byte and rejecting any different vote for the same seat. The

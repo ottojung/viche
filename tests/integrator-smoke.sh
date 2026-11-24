@@ -296,7 +296,8 @@ test "$(st wrong-a)" = landed
 test "$(st wrong-b)" = conflict
 
 # 12. Ready short records land before expensive code, and no more than one
-# full-suite candidate is attempted per pass. An aged candidate goes first.
+# full-suite candidate is attempted per pass. An aged candidate still follows
+# the bounded record batch; this is a guaranteed slot, not age inversion.
 seat long_a
 seat long_b
 seat short_a
@@ -324,7 +325,24 @@ propose short_b judiciary short-b
 VICHE_INTEGRATOR_NOW=$(( $(date +%s) + 3601 )) integrate
 test "$(st long-b)" = landed
 test "$(st short-b)" = landed
-test "$(tail -2 "$state/delivery/landed.jsonl" | jq -r .branch | tr '\n' ' ')" = 'delivery/long-b delivery/short-b '
+test "$(tail -2 "$state/delivery/landed.jsonl" | jq -r .branch | tr '\n' ' ')" = 'delivery/short-b delivery/long-b '
+
+# A record flood cannot starve the oldest ready full-suite candidate, and
+# code age cannot suppress the entire ready record lane.
+python3 - "$town/government/integrator.py" <<'PYTEST'
+import importlib.util,sys
+spec=importlib.util.spec_from_file_location("integrator_fixture",sys.argv[1])
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+def item(name,at,suite):
+    return ({"branch":name,"at":at},{},None,suite)
+ready=[item("record-%03d"%i,100+i,"tests/records-smoke.sh") for i in range(100)]
+ready += [item("new-code",2000,"tests/run-all.sh"),item("old-code",0,"tests/run-all.sh")]
+batch=m.landing_batch(list(reversed(ready)))
+assert len(batch)==m.RECORD_BATCH_LIMIT+1
+assert [i[0]["branch"] for i in batch[:-1]] == ["record-%03d"%i for i in range(m.RECORD_BATCH_LIMIT)]
+assert batch[-1][0]["branch"]=="old-code"
+assert len(m.landing_batch(ready[:100]))==m.RECORD_BATCH_LIMIT
+PYTEST
 
 # 13. Proposals from before Act 31 (no office column) are never picked up.
 printf '2026-11-10T00:00:00Z\twork-x\trefs/heads/delivery/legacy\t%s\ttree\ttests/run-all.sh\n' "$head" \
