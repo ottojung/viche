@@ -49,7 +49,8 @@ The digest binds the exact wrapper, policy, verifier, negative test, gate, cycle
 
 1. **Gateway alias Hy4, successful usage:** temporary managed agent `eYFd07PDd9lbaK9DVUNyo8-decently`, session `ses_df3394c5effeJdjLGkHS1ECOFo`; exit 0; `models_used=[opencode-go/hy4-flash-free]`; input 3,039, output 3, reasoning 28, cache-read 2,048, cache-write 0; `cost=0.0`. This proved the XDG selection mechanism, but that gateway alias is now excluded from the stricter primary-only policy.
 2. **Exact primary Iceman, quota refusal:** agent `1pjuK2amnaNzuwClW9WPWP-jammed`, session `ses_df3349a47ffehfaD31SDuYh7E1`; only `opencode/iceman-free` selected; provider returned HTTP 429 `FreeUsageLimitError`; no paid fallback; terminal `unknown`, `alive=false`, `model_quota_exhausted`.
-3. **Contrary evidence — Beam stall:** agent `nwRI9iflGszbJ9yzh48St8-more`, session `ses_df33fb904ffeRsj4cZvTHpMLm7`; only `opencode-go/beam-free` selected and `cost=0.0`, but no tokens arrived before the 150 s bound; Economy stopped the owned agent. This is selection evidence only, not successful usage. A first attempt without `VICHE_TOWN_ROOT` correctly failed closed on missing candidate policy and dispatched nothing.
+3. **Exact primary Deepseek, quota refusal:** agent `vTaSJD3QrSf9AwezEfZVfN-assemble`, session `ses_df2f051f3ffeiq0BVrCbGQ1TI7`; only `opencode/deepseek-v4.1-flash-free` selected; provider returned HTTP 429 `FreeUsageLimitError`; no paid fallback; terminal `unknown`, `alive=false`, `model_quota_exhausted`.
+4. **Contrary evidence — Beam stall:** agent `nwRI9iflGszbJ9yzh48St8-more`, session `ses_df33fb904ffeRsj4cZvTHpMLm7`; only `opencode-go/beam-free` selected and `cost=0.0`, but no tokens arrived before the 150 s bound; Economy stopped the owned agent. This is selection evidence only, not successful usage. A first attempt without `VICHE_TOWN_ROOT` correctly failed closed on missing candidate policy and dispatched nothing.
 
 ## Cumulative ledger and catalogue
 

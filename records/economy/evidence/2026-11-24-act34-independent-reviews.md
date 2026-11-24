@@ -29,6 +29,12 @@ Disposition in the final candidate:
 - The verifier additionally rejects any provider cost object other than the known sole `text` billing object, with a regression case for an added image-price object.
 - The final production digest is `04cf2ba385ce512c42d574cf5bcd05c7840de16e8438548a091e6234a684e45b`; the verification record and gate use the same committed bytes.
 
+## Final review of `9d0ba1e365152cf5708b626be75f614103fea239` — APPROVE
+
+The same independent reviewer verified the exact final code/evidence objects (before the
+records-only main merge to `3999baf0`) and approved the candidate, not activation or deployment.
+It independently reproduced production digest `04cf2ba385ce512c42d574cf5bcd05c7840de16e8438548a091e6234a684e45b`, confirmed the smoke test prints that production value, confirmed refusal of an unknown provider billing dimension while all nine real models pass, rechecked permit-level evidence equality/refusal, and recomputed the envelope arithmetic. Bounded hermetic tests passed. The review did not perform a final-patch full suite, live provider request, deployment verification, account-level audit, or actual four-office sample.
+
 ## Limits preserved
 
 No review performed a live paid-tier request, provider-account audit, deployment verification, full-suite run for the final patch, or actual four-office execution sample. Provider quota capacity and account-level spend-cap availability remain unverified. The candidate remains held pending Act31 integration and independent review of the exact final commit.
