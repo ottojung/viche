@@ -253,3 +253,72 @@ deadline. Do not wrap useful builds in wall-clock timeout commands or use
 the removed compiler timeout option. For long compilations, use a managed
 detached process with a durable log rather than blocking an agent tool call.
 Cancel obsolete work, not merely old work.
+
+
+## Continuous parallel research support (Founder priority)
+
+Optimize accepted contributions per elapsed and resource hour. Keep the
+primary proof/construction owner working independently while other agents
+continually seek actionable evidence across the live portfolio. Do not make
+the Executive search proofs, debug algorithms, or review every submission.
+
+Executive: staff and replenish useful independent support fronts as well as
+primary researchers, using the separate coverage in the mission diagnostic.
+Use Antonina titles `Viche P vs NP support: knowledge`,
+`Viche P vs NP support: methods`, and `Viche P vs NP support: flow`.
+One agent may cover related roles (comma-separated titles, e.g.
+`Viche P vs NP support: knowledge, methods`) when the workload justifies it;
+parallelize distinct useful investigations when resources permit. These are
+roles, not prescribed headcounts or new institutions. Support agents never
+count as leased proof owners, never claim another agent's lease, and must
+not edit a primary's workspace or open competing PRs. Use independent scratch
+directories and existing shared proof/compile tools. Restore coverage promptly
+when a support agent finishes and further useful work remains; when no
+actionable work exists, finish rather than manufacture activity or poll.
+
+- Knowledge: check exact claims and opposite conclusions against the checked
+  proof corpus; inspect relevant upstream proofs, newly accepted results,
+  nearby reductions and transferable tactics. Verify semantic applicability,
+  allowed imports and exact checked revision. Catch obsolete work early.
+- Methods: independently derive promising proof steps, counterexamples,
+  structural reductions, alternative algorithms or reusable verified code;
+  identify specific invalid assumptions and duplicate searches. Deliver
+  concrete mathematical assistance promptly, not generic commentary.
+- Flow: identify lost race time, resource contention, repeated computations,
+  unattended corrections, incomplete handoffs and more productive opportunities.
+  Evaluate actual marginal yield; give Executive concise evidence and a proposed
+  allocation or process change when it would matter. Do not watch individual
+  tool calls or demand more reports.
+
+All support agents use, from any independent scratch directory:
+```
+export PYTHONPATH=/var/lib/lubko/wd/viche
+python3 -m missions.pnp.support targets
+python3 -m missions.pnp.support advise GAP ATTEMPT ROLE EVIDENCE MESSAGE
+```
+Copy GAP and ATTEMPT from targets, not a lease secret. ROLE is knowledge,
+methods or flow. EVIDENCE is an exact proof link or durable artifact path;
+MESSAGE is the concise substantive finding and useful next action. Put longer
+proofs/code in a separate durable artifact and link it. Add `--coordinate`
+only when Executive needs to change ownership, priority, resources, or stop
+confirmed obsolete work. For portfolio-wide findings without a live gap, use
+the existing Executive handoff queue; no new reporting system. Retain only
+material findings: the latest finding per role is delivered by the primary's
+existing guard command. Never wait for acknowledgment or a scheduled meeting.
+
+The detached checked-proof scan refreshes the upstream corpus in parallel
+and supplies exact syntactic statement/opposite-conclusion matches as
+advice. Knowledge support still verifies matches, finds nontrivial semantic
+equivalences and mathematical reuse. No match is not proof of novelty.
+Neither advisory evidence nor a support outage changes guard decisions or
+publication eligibility. A confirmed checked refutation ends the impossible
+construction effort; retain evidence and let Executive handle assignment
+release and reassignment. A rival's unaccepted PR alone is not a refutation.
+
+Primary researchers incorporate relevant guard advice at their normal
+checkpoints; use evidence critically, don't blindly execute it. Submit a
+complete proof immediately without waiting for any scout, review, or Executive
+approval. Executive delivers urgent coordination findings promptly; preempt
+only when confirmed material benefit outweighs interruption and preserve
+ongoing useful computations. Never dispatch, restart or steer an agent from
+a support agent. Executive retains sole lifecycle authority.

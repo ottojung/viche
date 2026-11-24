@@ -12,9 +12,9 @@ import sys
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from missions.pnp import leaderboard, frontier, assignment
+    from missions.pnp import leaderboard, frontier, assignment, support
 else:
-    from . import leaderboard, frontier, assignment
+    from . import leaderboard, frontier, assignment, support
 
 STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
@@ -34,12 +34,15 @@ def workers():
                     (a.get("title") or "").startswith("Viche P vs NP:")]
         coverage = ("partial" if len(agents) >= 100 or data.get("unreadable")
                     else "complete")
-        return {"count": len(filtered), "coverage": coverage,
+        scouts = [{"id": a.get("id"), "title": a.get("title"), "roles": support.roles(a),
+                   "state": a.get("state"), "cwd": a.get("cwd")}
+                  for a in agents if support.roles(a)]
+        return {"support": scouts, "count": len(filtered), "coverage": coverage,
                 "agents": [{"id": a.get("id"), "title": a.get("title"),
                             "state": a.get("state"), "cwd": a.get("cwd")}
                            for a in filtered]}
     except (OSError, ValueError, subprocess.SubprocessError):
-        return {"count": None, "coverage": "unavailable", "agents": []}
+        return {"support": [], "count": None, "coverage": "unavailable", "agents": []}
 
 
 def snapshot():
@@ -107,6 +110,16 @@ def snapshot():
     related.sort(key=lambda x: (x["held"], x["gap"]))
     coordination_due = bool(w["coverage"] == "complete" and (
         stale_workers or unstaffed or corrections or (ordinary is not None and ordinary > 0)))
+    # Support agents are never counted as leased researchers. Coverage is
+    # a coordination signal, not an agent-number quota or a proof gate.
+    scouts = w.pop("support", [])
+    covered = {role for agent in scouts for role in agent["roles"]}
+    useful = bool(active or corrections or w["count"] or ordinary or observed.get("offerable"))
+    missing_support = sorted(set(support.ROLES) - covered) if useful and w["coverage"] == "complete" else []
+    findings = []
+    for target in support.targets():
+        findings.extend(a for a in target["advice"] if a.get("coordinate"))
+    coordination_due = coordination_due or bool(missing_support)
     age = {r["gap"]: max(0, round((time.time()-r["lease_obtained_at"])/60))
            for r in rows if r["gap"] in active and type(r["lease_obtained_at"]) in (int,float)}
     score = {k: lb.get(k) for k in ("rank", "our_steps", "leader",
@@ -121,6 +134,9 @@ def snapshot():
     return {
         "observed": len(rows), "by_state": by_state, "recent": rows[-12:],
         "leaderboard": score, "workers": w,
+        "research_support": {"agents": scouts, "coverage_missing": missing_support,
+                             "coordination_findings": findings,
+                             "action": "Executive owns staffing and material steering; support findings are advisory and arrive directly in worker guards."},
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
@@ -159,7 +175,10 @@ def snapshot():
             "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
             "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None,
             "hard_available": (observed.get("offerable") or 0) > (observed.get("ordinary") or 0) if observed else None,
-            "corrections": corrections, "unstaffed": unstaffed, "obsolete_workers": sorted(stale_workers),
+            "corrections": corrections, "unstaffed": unstaffed,
+            "support": sorted((str(a["id"]), ",".join(a["roles"])) for a in scouts),
+            "missing_support": missing_support,
+            "support_findings": sorted(a["id"] for a in findings), "obsolete_workers": sorted(stale_workers),
             "unbound": sorted(str(a["id"]) for a in w["agents"] if not a["bound"])},
         "caveat": "Only public checked steps count; local activity is not proof."}
 

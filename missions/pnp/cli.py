@@ -21,9 +21,9 @@ if __package__ in (None, ""):
     sys.path.insert(0, os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "..")))
     from missions.pnp import (config, desk as desk_mod, publish,
-                                reconcile, state, jobs, frontier, assignment)
+                                reconcile, state, jobs, frontier, assignment, support)
 else:
-    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier, assignment
+    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier, assignment, support
 
 
 def _printer(data):
@@ -177,6 +177,16 @@ def cmd_guard(args):
     try:
         gap, lease = assignment.resolve(args.gap, args.lease)
         result = frontier.checkpoint(gap, lease)
+        if result["decision"] == "continue":
+            # Advisory only; an unavailable evidence channel must not stop work.
+            try:
+                rec = state.load(gap)
+                if rec and rec.get("lease") == lease:
+                    advice = support.read(rec)
+                    if advice:
+                        result["research_advice"] = advice
+            except (OSError, ValueError, TypeError, KeyError):
+                pass
     except (OSError, ValueError) as exc:
         result = {"decision": "wait", "reason": str(exc)}
     _printer(result)

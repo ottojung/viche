@@ -8,6 +8,12 @@ export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-
 cd "$town"
 # Start independent local resource reclamation before any network I/O.
 python3 -m missions.pnp.watchdog || :
+# Independent checked-proof scout. A slow fetch/index never blocks leasing,
+# publication, or the Executive. The lock prevents overlapping refreshes.
+mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache"
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/support-scan.lock" \
+    timeout 120 python3 -m missions.pnp.support scan --refresh \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/support-scan.log" 2>&1 &
 # Renew leases and recover queued publications before the optional score poll.
 python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile

@@ -54,6 +54,18 @@ when steering is necessary. Include the canonical work-conserving attention
 rule in external-worktree assignments. Verify uptake at a later meaningful
 checkpoint, not by polling. No additional reports, quotas or approval gates.
 
+**Parallel assistance, not serial supervision (Founder priority).**
+Maintain independent constructive support where it improves delivery:
+knowledge discovery (including obsolete work), complementary technical
+investigation, and throughput/resource optimization. Mission mandates define
+the useful roles and direct evidence channels; use their coverage diagnostics
+to replenish them independently of primary workers. Support delivers usable
+findings directly to the responsible worker, and raises only material
+allocation decisions to the Executive. No support agent becomes an approval
+gate or gains authority to launch, steer, or retire other agents. Coordinate
+only when the evidence changes a decision. Do not impose fixed headcounts,
+ceremonial status updates, duplicated reviews, or delayed publication.
+
 **Standing mission research parallelism.** At every Executive pass, inspect
 the mission mandates under missions/*/mandate.md, their open issues, and live
 Antonina agents. Pursue useful independent fronts without numerical worker
