@@ -139,6 +139,23 @@ stop_or_kill() {
   antonina agent kill --id "$_sk_agent" >/dev/null 2>&1 || :
 }
 
+# A later meter read must never REDUCE a liability already observed. Token rows
+# are monotone within one native session, but a session can be recovered into a
+# different row and a re-read can be stale or reset. Take the larger token total
+# and the larger whole-host CPU bound so an observed overrun stays charged.
+merge_usage_snapshots() {
+  _ms_a=$1; _ms_b=$2
+  [ -n "$_ms_a" ] && [ "$_ms_a" != null ] || { printf '%s\n' "$_ms_b"; return 0; }
+  [ -n "$_ms_b" ] && [ "$_ms_b" != null ] || { printf '%s\n' "$_ms_a"; return 0; }
+  printf '%s\n' "$_ms_a" | jq -ce --argjson b "$_ms_b" '
+    ((.tokens.total // 0)) as $at | (($b.tokens.total // 0)) as $bt |
+    (if $bt > $at then $b else . end)
+    | .tokens.total = (if $bt > $at then $bt else $at end)
+    | .tokens.delta_total = (if $bt > $at then $bt else $at end)
+    | .cpu_seconds = ([.cpu_seconds // 0, $b.cpu_seconds // 0] | max)
+    | .cost = ([.cost // 0, $b.cost // 0] | max)'
+}
+
 usage_from_snapshot() {
   _us_snap=$1; _us_wall=$2
   printf '%s\n' "$_us_snap" | jq -c --argjson w "$_us_wall" \
@@ -239,9 +256,9 @@ finalize_locked() {
       hold_locked "$_f_id" 'meter_unreadable_at_finalize'; return 0
     fi
   fi
+  _f_base=$(printf '%s\n' "$_f_cur" | jq -c '.cpu_baseline')
+  _f_previous=$(printf '%s\n' "$_f_cur" | jq -c '.meter')
   if [ "$(printf '%s\n' "$_f_snap" | jq -r '.cpu_upper_bound // false')" != true ]; then
-    _f_base=$(printf '%s\n' "$_f_cur" | jq -c '.cpu_baseline')
-    _f_previous=$(printf '%s\n' "$_f_cur" | jq -c '.meter')
     if ! _f_snap=$(cpu_adjust "$_f_base" "$_f_snap" "$_f_previous"); then
       hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_at_finalize'; return 0
     fi
@@ -261,7 +278,25 @@ finalize_locked() {
       running|starting|recovering|unknown)
         hold_locked "$_f_id" 'agent_still_active_or_unknown_after_stop'; return 0 ;;
     esac
+    # Stopping the agent is not proof that all usage was already committed:
+    # the provider can flush token accounting to the authoritative meter AFTER
+    # the process is gone. Re-read the pinned session now that termination is
+    # confirmed and keep the greater observation. An unreadable meter after
+    # stop stays a full-cap hold, never an optimistic release.
+    _f_after=
+    if ! _f_after=$(python3 "$TOOL" snapshot "$_f_db" "$_f_sid" "$_f_pid" 2>/dev/null); then
+      hold_locked "$_f_id" 'meter_unreadable_after_stop'; return 0
+    fi
+    if [ "$(printf '%s\n' "$_f_after" | jq -r '.cpu_upper_bound // false')" != true ]; then
+      if ! _f_after=$(cpu_adjust "$_f_base" "$_f_after" "$_f_previous"); then
+        hold_locked "$_f_id" 'cpu_reboot_or_counter_invalid_after_stop'; return 0
+      fi
+    fi
+    _f_snap=$(merge_usage_snapshots "$_f_snap" "$_f_after")
   fi
+  # A previously observed meter (e.g. an overrun that was held pending stop)
+  # is a liability already incurred; a later re-read cannot erase it.
+  _f_snap=$(merge_usage_snapshots "$_f_snap" "$_f_previous")
   _f_usage=$(usage_from_snapshot "$_f_snap" "$_f_wall")
   _f_now=$(date +%s)
   _f_new=$(printf '%s\n' "$_f_cur" | jq -c --arg r "$_f_reason" --argjson u "$_f_usage" \
