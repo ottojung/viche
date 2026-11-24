@@ -41,6 +41,7 @@ The digest binds the exact wrapper, policy, verifier, negative test, gate and cy
 - `/bin/sh tests/statistics-cumulative-budget-smoke.sh` — PASS; seven full holds precharged, eighth refused, corruption fails, reboot retains debt.
 - `/bin/sh tests/knowledge-budget-smoke.sh` — PASS; disabled defaults, host CPU reservations, missing SID, corruption, cumulative deltas, durability and rollback.
 - POSIX shell syntax, Python AST syntax and `git diff --check` — PASS.
+- Repaired a pre-existing full-suite blocker in `tests/executive-cycle-smoke.sh`: its fixture town was not a Git repository required by current delivery inventory, and it still expected withdrawn SoringP1 research eligibility. The fixture now uses an ordinary assigned issue and asserts the current suspension text. The exact preceding-test sequence and delivery-bridge smoke pass.
 
 ### Live candidate-path checks (not office activation)
 
