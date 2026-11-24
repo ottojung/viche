@@ -168,8 +168,11 @@ $prompt
 === MISSION READ-ONLY DIAGNOSTICS ===
 $mission_diagnostics
 === END MISSION DIAGNOSTICS ===
-Reconcile actionable allocation gaps first. Delegate lengthy investigations
-and finish this coordination pass without waiting for worker completion.
+You are the orchestrator, not the supervisor of individual tool calls.
+Reconcile actionable allocation gaps and deliver useful handoffs first.
+Workers own their methods and experiments. Delegate substantive investigations;
+never sleep or poll worker computations in the Executive session. Make the
+coordination decisions, then finish the pass without waiting for their effects.
 Do not infer successful mission outcomes from a diagnostic, agent exit, or
 depleted queue. Check live assignments and pursue new useful work when any
 Founder's standing objective is still open.
