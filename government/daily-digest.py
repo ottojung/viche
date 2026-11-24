@@ -237,7 +237,10 @@ def scan_logs(now):
         except (OSError, ValueError):
             continue
         title = (meta.get("title") or "") + " " + (meta.get("cwd") or "")
-        who = "SoringP1" if "soring" in title.lower() else "town" if "viche" in title.lower() else "other"
+        # Group by task title prefix, not a list of named projects.
+        head = title.split()[0].rstrip(":") if title.split() else ""
+        who = "town" if head == "Viche" else (
+            head if head.isidentifier() and len(head) <= 48 else "other")
         with open(log, errors="replace") as handle:
             for line in handle:
                 if line.startswith('{"type":"step_finish"'):
@@ -274,7 +277,11 @@ def line_quota(scan):
     def pct(value):
         share = 100 * value / total
         return "<1%" if 0 < share < 0.5 else "%d%%" % round(share)
-    split = ", ".join("%s %s" % (k, pct(tokens[k])) for k in ("town", "SoringP1", "other") if tokens[k]) or "none"
+    labels = (["town"] if tokens.get("town") else []) + sorted(
+        k for k in tokens if k not in ("town", "other"))
+    if tokens.get("other"):
+        labels.append("other")
+    split = ", ".join("%s %s" % (k, pct(tokens[k])) for k in labels) or "none"
     return "Quota split (context+output tokens): %s — %.1fM tokens over %d steps" % (
         split, total / 1e6, sum(steps.values()))
 

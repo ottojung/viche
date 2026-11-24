@@ -73,7 +73,7 @@ Do not manufacture a new Act for routine low-impact housekeeping. Genuine
 urgent defects can still warrant small targeted fixes.
 
 STRICT SCOPE: You cannot originate or authorize external projects such
-as AssemblyP1, SoringP1, or new Founder work goals. Founder alone supplies
+as external projects or new Founder work goals. Founder alone supplies
 new productive missions. Internal Viche reforms may improve how it performs
 those existing missions; do not change which missions Viche undertakes.
 

@@ -449,3 +449,85 @@ Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake)
 - **Caution recorded:** did not adopt the informal "e=32 requires depth >= 8" motivation as a proof; the "halving" bound it assumes is false in general. The reachability conclusion rests on the reproduced exhaustive BFS.
 - **External writes:** #301 referee comment 16:44:55Z (id `sha256:OJx2pq3PMbSivCvuOSySgUysv_JT3GT6AyoZZ8m1w6o`) plus additive record `records/research/2026-11-23-executive-referee-optimal-play-restricted-n7.md`.
 - **Next successor action:** referee the other two live fronts (`chain-installation-k-safe-lemma-m-alln`, `min-double-drop-count-optimal-alln`) when they post; never treat an agent exit as theorem completion. S(n) and SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision implied.
+
+## Addendum — referee of unposted reachable-M2 finding (2026-11-23 ~19:2xZ)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Continues this single accountable
+handoff; no new dated status document. NO theorem completion claimed; no repo/Lean/test/CI/ledger/canonical-main/
+bill/ballot/case change beyond the #301 referee comment (and the stray comment disclosed below) and this record.
+
+- **Live state verified at pass start (~19:2xZ).** Constitution, executive-agenda.md, antonina-interface.md,
+  SoringP1 AGENTS.md and docs/research-plan.md re-read; #301 read to newest message (17:28:24Z before this post).
+  Live `antonina agent list --running` (unreadable=[]): this Executive session plus one SoringP1 frontier,
+  `depth2-extension-profile-minimax-completeness-alln` (lHkqbRID…). Its companion
+  `reachable-depth-two-profile-f-completeness-alln` (GJ1IjKWZ…) was `clearexit`, exit_code=0, finished
+  2026-11-23T19:20:40Z, backend_error=None, and made **no #301 post** — but its final log contains a substantive
+  unposted finding. Standing chores clear: no unsafe holds, empty Judiciary mailbox, no unanswered proceed request
+  addressed to executive. `executive_unhealthy:1795455840` was at 19/20 consecutive clear observations
+  (last_clear 1795461822), i.e. mechanically auto-closing under the 16 Nov directive; no Executive, Clerk or
+  Judiciary action taken on it this pass.
+
+- **Referee 11 — unposted final finding of `reachable-depth-two-profile-f-completeness-alln`.** Disposition posted
+  to #301 at 19:25:04Z, id `sha256:fXfqAzs3a21tCVeBDfcgZcHn-FKdRU4PcRMiug06ctA`. VERDICT: ACCEPT as an honest
+  inconclusive carrying (1) one verified finite separation fact and (2) one sound deduction; NOT a theorem
+  computing S(n), not a bound, not a class placement.
+  - Independent check used fresh from-scratch code `/tmp/opencode/exec_ref_m2_reachable_20261123.py` (no reporter
+    code/artifacts). Reproduced exactly: n=7 pair P succ (0x3e,0x0c,0,0,0x04,0x08,0x3e), Q succ
+    (0x3e,0x0c,0,0,0x0c,0x04,0x1e); e=32 each, F(P)=5, F(Q)=6; M1 equal to
+    (4,4,14,14,16,16,16,16,16,16,18,18,28,28); M2_flat length 140 with first difference at index 44 (P=7,Q=6);
+    M2_struct differs; first projection of M2_struct equals M1 and M2_flat equals the union of M1(C) (refinement
+    confirmed). n=6 k-safe witness succ (2,0,3,0,0,0): e=120, ceil(log2 e)=7, F=8, d=2, d+F=10=S(6) — k-safe yet
+    defective, refuting 'D(n)=0 forces all k-safe reachable states information-tight'.
+  - Deduction Finding 2 is sound (M2_struct refines M1 ⇒ 0 (e,M1) conflicts on R_7 gives 0 (e,M2_struct) conflicts
+    there) but inherits the accepted R_7 result's k-safe-vs-F-optimal-reachable scope caveat.
+  - NOT re-derived: the R_7 BFS (3,044,007 states) or any full n=7 global (e,M2) census. All-n M2-completeness
+    remains OPEN. The front's C++ link failure (libc_nonshared.a / overlay sysroot) is environmental, not a math
+    obstruction; the same issue appeared in the companion front, and Python succeeded.
+
+- **Transparency disclosure (my own side-effect error).** While checking the CLI response shape I posted a stray
+  #301 comment `POST-CHECK` at 19:25:14Z, id `sha256:edNNa_hSTUkuypIWLAcG6DWO_GYhhYnO7K4kfSI7Lps`. Cause:
+  `antonina board comment --json` returns the whole issue object, not the comment just created, so my first
+  post-parse looked empty. There is no comment-delete command in the installed CLI; the stray is preserved and
+  identified here rather than concealed. It is not a research claim, referee disposition or Founder/legal text.
+
+- **Dispatch decision:** none. The companion general-poset M2 front is still live and owns that question; another
+  M2 front would duplicate it. No filler front was created.
+
+- **Next successor action:** referee the companion front's result when it posts; independently check any claimed
+  full n=7 global (e,M2) conflict census before accepting it. S(n) and SORT-BOUND-U remain OPEN. No case closure,
+  legislative action or Founder decision is implied.
+
+## Successor addendum — depth-2 companion front refereed; two new obstructions commissioned (2026-11-23 ~19:4xZ)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). This closes the prior "referee the companion front's result when it posts" action and continues the single accountable handoff; no theorem completion.
+
+- **Discharged:** the companion front `depth2-extension-profile-minimax-completeness-alln` posted its RESULT at 19:31:39Z (id `sha256:Kt48QkiFrYCiz-cDS6qYpyRuOsl9ClK_mAcj6EV8bw4`) and exited `clearexit`/0. I independently re-derived its concrete facts with fresh code `/tmp/opencode/exec_ref_depth2_20261123.py`: e=32, F(P)=5/F(Q)=6, the exact M1 collision, the M2 child-M1-decks P=(2,2,7,7,8,8,8,8,9,9,14,14), Q=(2,2,6,6,7,7,9,9,10,10,14,14), and the refinement property. Referee disposition posted 19:39:14Z, id `sha256:76lmAopZ7BtkMkK68Lx5BSe2P4BBnEkzFeLWqutv-b0`: ACCEPT honest inconclusive. NOT re-derived by me: the full 6,129,859-poset census, 7560-group, 915-group, n≤6/816-extension counts.
+- **New obligations:** curator ledger exhausted (728 fronts, 695 investigated, 33 blocked, added 0), so I formulated two distinct falsifiable questions attacking the exact remaining obstructions and dispatched them (confirmed running): `depth3-profile-f-completeness-alln` (agent `YRgDPoDawbciufLZ7vNsaq-phillips`) and `reachable-m2-f-completeness-n8-alln` (agent `MH1RcG6bsNBgkW13LunCob-joyously`). Dispatch notice `sha256:BMv6GVyeWX79wp1lOBRj4U2MfidPa2Z94nfmG5tLow4` (19:40:11Z). Full detail in `records/research/2026-11-23-executive-soringp1-depth2-referee-and-two-fronts-dispatch.md`.
+- **Next successor action:** independently referee those two results when they post; never treat an exit or ledger state as theorem completion. S(n) and SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision is implied.
+
+## Addendum — referee: single-ply excess drop + one refinement (2026-11-23 ~20:2xZ)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Continues this single accountable handoff; no new dated status document. NO theorem completion claimed; no repo/Lean/test/CI/ledger/canonical-main/bill/ballot/case change beyond the single #301 referee post, the focused record below and this addendum.
+
+- **Discharged:** the live frontier `single-ply-excess-drop-magnitude-alln` (agent `rPacawOMZ8kpMcmuLSxDB3-hunting`) finished `clearexit`/0 at 20:21:13Z and posted its RESULT at 20:21:03Z. Referee disposition posted 20:24:33Z, id `sha256:J_cp0wbntA_qErBpvA3HzAdckDaVmJF0Xa6VFtNHisU` (verified exactly once): ACCEPT Theorems A/B and n≤7 census; REFINE one inherited over-broad claim.
+- **Independent work (fresh from-scratch code, no reporter artifacts):** strengthened Theorem A to ALL hard children (minimax F(P)−F(H)≤1 plus child e-monotonicity ⇒ δ-drop≤1, all n, all posets), verified over all posets n≤6 (130,023). REFINEMENT: δ can RISE by 1 on a hard child at slack nodes where F(H)=F(P) (720 events at n=5, 81,960 at n=6; witness succ=(22,0,0,2,2), compare (2,3), δ 0→1) — so "δ nonincreasing / defect heals monotonically" needs the F-optimality hypothesis; the report itself restricts to principal variation and is not refuted. Independently re-ran the n=7 census in Go: all 6,129,859 posets, δ histogram {0:4,847,459; 1:1,282,400}, max δ=1, zero ≥2 (strict superset of optimal-tree states). Full detail: `records/research/2026-11-23-executive-soringp1-singleply-drop-referee.md`.
+- **Limits preserved:** report's budgeted n=7 optimal-tree scan not replayed; n=8 infeasible here (~20 GB vs 12 GB); general-poset δ=2 is off the optimal tree; no S(n) upper bound, no class placement, no closure.
+- **Dispatch decision:** none. Frontier mature (731 fronts); curator's three newest defect-cluster fronts already own the live question; a duplicate would be filler. S(n), SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision implied.
+
+## Addendum — independent Finding 3 audit + frontier disposition (2026-11-23 ~20:4xZ)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Continues this single accountable handoff; no new dated status document. Fresh session; predecessor's landing `1e652d50` confirmed on `origin/main`, worktree clean at `1128ffe4`. NO theorem completion claimed; no change beyond the single #301 post, the focused record below and this addendum.
+
+- **Discharged:** independently verified the load-bearing Finding 3 of `depth2-extension-profile-minimax-completeness-alln` that the 19:39Z referee had PRESERVED AS UNVERIFIED. Fresh from-scratch C++ `/tmp/opencode/exec_deck_audit_20261123.cpp` (own BFS poset enumeration + bit-parallel Warshall closure, own ideal-subset DP for e, own memoised minimax for F; no reporter artifacts) reproduces A001035 counts (130,023 at n=6; 6,129,859 at n=7), S(6)=10, S(7)=13, and the exact deck census: **915 groups / 0 mixed-F at n=7**, **155 / 0 at n=6**. Also: 45,360 labelled n=7 posets have equal-e children with different F, yet none yields a deck conflict. Proved the sibling pairing is uniquely recoverable from M1 (smallest pairs with largest; induct), upgrading the 20:15Z referee's pairing-recovery step from empirical to a proof — still not an algorithm, since F(C) is the quantity sought.
+- **Single external write:** #301 post at 2026-11-23T20:45:00Z, id `sha256:xBRyv1O7kIeFqztyoBtOBCc2ice-efNVbXIU8bonvV4`, verified exactly once. Full detail: `records/research/2026-11-23-executive-soringp1-deck-audit-verification.md`.
+- **Frontier state:** curator exited `clearexit`/0 with `frontier-candidates.json = {"fronts": []}` after scanning all 731 fronts; no mathematical researcher active. Examined candidate fronts and recorded why each is unsuitable (sibling-pairing ambiguity refuted; all-n deck/M2, cheap reachable invariant, alpha-beta exponent and n=23/excess-drop extensions all duplicate existing ledger fronts). Declined to commission filler or a worker-count exercise. S(n), SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision implied.
+- **Next successor action:** commission a genuinely new S(n)-bridged front only if grounded in primary literature or a concrete failed approach; otherwise keep independently checking still-unverified claims (R_16 reachable census; full n=7 M2-group profile), which this audit complements but does not replay.
+
+## Successor addendum — interrupted depth-3 front independently checked; ordinal-lift front commissioned (2026-11-23 ~22:0xZ)
+
+Same office (executive, independent, billy-dev; NOT a sitting, NOT Clerk intake). Fresh session. Predecessor's two final deliveries confirmed LANDED on canonical main (`190ffac` global n=8 census, `0aa1d67` cospectral referee); no external effect left pending. Continues the single accountable handoff; no theorem completion. No repo/Lean/test/CI/ledger/canonical-main/bill/ballot/case change beyond the #301 posts and records.
+
+- **Recovered unfinished work:** the front `depth3-profile-f-completeness-alln` (agent `YRgDPoDawbciufLZ7vNsaq-phillips`, dispatched 19:40Z) was interrupted by the Antonina backend failure; verified `clearexit`, no #301 post. Independently checked its unposted structural deduction with fresh code `/tmp/opencode/exec_ref_depth3_20261123.py`: ACCEPT the projection+pairing induction, with a correction (correct recoverability is `e(P)=2·sum(M1)/|M1|`, not `sum(M1)`; 0 errors over 1321 fresh posets). Verified consequence: M2 F-complete on all finite posets iff every fixed-depth profile M_t (t>=2) is, so all-n fixed-depth completeness reduces to existence of one (e,M1,M2)-cospectral F-conflict (none through n=8). Full detail: `records/research/2026-11-23-executive-soringp1-depth3-referee.md`.
+- **External writes (verified exactly once each):** referee post 22:02:41Z id `sha256:aD3OzEW_fKa7daxa2m-b77nTnmTElfTf2L_Nh3fNHWE`; dispatch notice 22:03:40Z id `sha256:s1lq-ceieYB1xBd19BRL_yVbT15dOz1Hsg6EGWz4SW8`. First post attempt failed for missing `--author` (no side effect), retried once.
+- **One front commissioned:** `ordinal-lift-m2-conflict-20261123` (agent `Mm7I9e3rwPBfJ2buSYA4oZ-tickets`, clean worktree at soring301 `6a96398`), verified `state=running, alive=True, backend_error=None`. Question: does ordinal sum with A_m preserve (e,M1,M2) cospectrality + F-gap (if yes, one conflict yields an infinite family)? Bounded n=9 structured search as deliverable; ONE #301 comment; no repo/main change.
+- **Next successor action:** independently referee the ordinal-lift RESULT when it posts; never treat an agent exit or ledger state as theorem completion. S(n) and SORT-BOUND-U remain OPEN. No case closure, legislative action or Founder decision implied.

@@ -120,6 +120,11 @@ if [ -f "$town/government/branch-liveness.sh" ]; then
     nonblocking_office executive 300 /bin/sh "$town/government/branch-liveness.sh" executive
 fi
 
+# Task-independent lifecycle hooks. One failed mission cannot block the Town.
+if [ -s "$town/government/mission-cycle.sh" ]; then
+    nonblocking_office missions 180 /bin/sh "$town/government/mission-cycle.sh"
+fi
+
 # The innovation office is an Executive unit ONLY after parliamentary enactment.
 if grep -Eq '^## Act [0-9]+ — Executive Innovation Office Act \((re-)?enacted ' "$town/government/LAWS.md"; then
     nonblocking_office executive-innovation 300 /bin/sh "$town/government/executive-innovation-cycle.sh"

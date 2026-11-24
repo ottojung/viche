@@ -9,7 +9,7 @@ The measurements distinguish (1) Antonina process exits by project/outcome,
 (2) main-branch Git commits and PR merges as delivery signals,
 (3) readiness ages of the Legislature, Executive, Judiciary and permanent
 non-voting Innovation Centre, (4) still-open work seen on the Antonina board,
-and (5) claimed, investigated, blocked and independently curated SoringP1
+and (5) claimed, investigated, blocked and independently curated external research
 research fronts.
 
 **No proxy proves completed work.** A green agent exit is not a merged

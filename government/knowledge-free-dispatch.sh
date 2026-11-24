@@ -28,29 +28,39 @@ set -eu
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 policy="$state/economy/model-policy.json"
+catalogue="$state/economy/catalogue.json"
 allow_dir="$state/knowledge/free-allowlist"
 allow_cfg="$allow_dir/antonina/config.json"
 
 log() { printf 'knowledge-free-dispatch: %s\n' "$*" >&2; }
 die() { log "$*"; exit 1; }
 
-[ -s "$policy" ] || die "Economy model policy missing: $policy"
+[ -s "$policy" ] || die "Economy model policy missing"
+[ -s "$catalogue" ] || die "Economy provider catalogue missing; no paid fallback"
 [ -f "$town/government/knowledge-practical-bounds.py" ] || die "practical-bounds module missing"
 
 # Build the allowlist from Economy's audited, source-attested free tier only.
 # Every id must carry a '-free' component and appear in model-policy.json 'prefer'.
 # This is ALLOWLIST CONSTRUCTION from an authoritative record, not a billing
 # enforcement check here: enforcement is Antonina's config on the dispatch path.
-python3 - "$policy" "$allow_dir" "$allow_cfg" <<'PY'
-import json, os, sys, tempfile
-policy, allow_dir, allow_cfg = sys.argv[1:4]
+python3 - "$policy" "$catalogue" "$allow_dir" "$allow_cfg" <<'PY'
+import json, os, re, sys, tempfile
+policy, catalogue, allow_dir, allow_cfg = sys.argv[1:5]
 p = json.load(open(policy, encoding="utf-8"))
+cat = json.load(open(catalogue, encoding="utf-8"))
+if not isinstance(cat, dict) or not isinstance(cat.get("models"), dict):
+    raise SystemExit("audited Economy catalogue missing/invalid")
 prefer = p.get("prefer") or []
 if not prefer:
     raise SystemExit("empty free-tier prefer list")
 for mid in prefer:
-    if not isinstance(mid, str) or "-free" not in mid:
-        raise SystemExit("non-free id in policy prefer: %s" % mid)
+    if not isinstance(mid, str) or not re.fullmatch(
+        r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+-free", mid):
+        raise SystemExit("non-free or malformed id in policy prefer")
+    if cat["models"].get(mid, {}).get("tier") != "free":
+        # An apparently free-looking ID CAN be billable; suffix alone is
+        # insufficient. Never silently fall through to the global ladder.
+        raise SystemExit("model id is not independently catalogued as free")
 entries = [{"model": mid, "comment": "Economy audited free tier 2026-11-23; source-attested in model-policy.json"} for mid in prefer]
 os.makedirs(os.path.dirname(allow_cfg), mode=0o700, exist_ok=True)
 os.chmod(allow_dir, 0o700)
