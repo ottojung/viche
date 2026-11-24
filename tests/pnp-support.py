@@ -55,8 +55,9 @@ class SupportTests(unittest.TestCase):
                 out = io.StringIO()
                 with contextlib.redirect_stdout(out):
                     self.assertEqual(cli.main(["guard"]), 0)
-        self.assertEqual(json.loads(out.getvalue()),
-                         {"decision": "continue", "research_advice": [note]})
+        result=json.loads(out.getvalue())
+        self.assertIn("missions.pnp.tools",result.pop("research_tools")["command"])
+        self.assertEqual(result,{"decision": "continue", "research_advice": [note]})
 
     def test_old_attempt_and_changed_statement_rejected(self):
         a = support.attempt(self.rec)

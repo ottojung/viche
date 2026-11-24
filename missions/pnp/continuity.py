@@ -67,6 +67,9 @@ def support_pass(role, records, selected, agents):
     prompt = (
         "You are performing a bounded Executive-delegated research support pass. "
         "Read /var/lib/lubko/wd/viche/missions/pnp/mandate.md. "
+        "Discover current mathematical and engineering capabilities using "
+        "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.tools. "
+        "Inspect actual tool adoption with tools --usage when useful; tool invocation is not success. "
         "Use PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support targets "
         "and python3 -m missions.pnp.portfolio inspect. "
         "Deliver substantive evidence directly via support advise (or portfolio decisions). "
