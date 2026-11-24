@@ -1,12 +1,13 @@
 """One supervised entry point for research and publisher Lean compilation."""
 import argparse
 import os
+from pathlib import Path
 import signal
 import subprocess
 import sys
 import time
 
-from . import build_control as control
+from . import build_control as control, watchdog, state
 
 
 def command(args):
@@ -79,6 +80,19 @@ def main(argv=None):
     p.add_argument("--timeout", type=int, default=600)
     p.add_argument("args", nargs=argparse.REMAINDER)
     ns = p.parse_args(argv)
+    local_gap = watchdog.assignment(Path.cwd().resolve())
+    if local_gap or ns.gap or ns.lease:
+        if (local_gap and ns.gap != local_gap) or not ns.gap or not ns.lease or not state.config.GAP_ID_RE.fullmatch(ns.gap):
+            print("RESOURCE DEFERRED: gap-local compilation requires its exact lease", file=sys.stderr)
+            return 75
+        try:
+            rec = state.load(ns.gap)
+            if not isinstance(rec, dict) or rec.get("lease") != ns.lease:
+                print("RESOURCE DEFERRED: assignment unavailable or superseded", file=sys.stderr)
+                return 75
+        except (OSError, ValueError):
+            print("RESOURCE DEFERRED: assignment unavailable", file=sys.stderr)
+            return 75
     if ns.gap:
         os.environ["PNP_PUBLISH_GAP"] = ns.gap
     if ns.lease:

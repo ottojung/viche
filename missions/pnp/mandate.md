@@ -152,3 +152,17 @@ Research admission waits only briefly (at most 15 seconds) before returning
 Legacy raw PnP compiler processes are recognized as an admission constraint.
 The Executive must retire or cooperatively reassign obsolete workers rather
 than allow them to restart unnecessary full checkers.
+
+## Revocable computation (Founder priority)
+
+The deterministic mission watchdog runs independently of Executive sessions.
+It revokes only identifiable Lean/lake/checklemma subprocesses in canonical
+gap worktrees whose durable assignment has ended (STALE, RELEASED, ACCEPTED,
+PR_OPEN). It never terminates or launches agent sessions, touches unrelated
+worktrees, or acts on missing/unreadable state. Exact gap state and process
+identity are checked under the assignment lock; a fresh reacquisition is
+not cancelled on old evidence. Research commands must use their own exact
+gap and lease with the shared compiler entry point. The Executive remains
+sole authority for researcher reassignment and must do it early, before
+lengthy deliberation. Preserve proof files; no repeated compilation of a
+settled gap. Computational cancellation is not a mathematical verdict.
