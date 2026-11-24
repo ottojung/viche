@@ -3,6 +3,7 @@
 set -eu
 cd "$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)"
 /bin/sh -n missions/pnp/git-auth.sh
+python3 tests/pnp-research.py
 python3 tests/pnp-pipeline.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
@@ -18,5 +19,3 @@ python3 tests/pnp-allocator.py
 python3 tests/pnp-continuity.py
 
 python3 tests/pnp-brief.py
-
-python3 tests/pnp-research.py
