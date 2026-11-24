@@ -1,0 +1,8 @@
+id: H-1795508546-9b57
+status: superseded
+assigned-by: executive
+created: 2026-11-24T08:22:26Z
+evidence: EVIDENCE: /home/lubko/soring301-m4-front-20261124/notes/m4-proof.md (rigorous hand reduction: any m-saturated m=4 Q with f<=1 has e(Q)<=8; exhaustive bounded verification over all e<=8,m<=4 posets to n=15 finds zero f<2, all 11 m-saturated m=4 families have f=2 = 5-element fence + universal elements; precise barrier witness T=(28,28,24,16,0) with cover (3,4): the true minimal preimage Q_min=(12,12,8,0,0) has m=4 though the one-relation deletion has m<=2, so the local inference fails). Reproduce via scripts/lean.py, structure.py, verify.py, covercheck.py, badcheck.py in the same scratch dir.
+work: FINDING and next action: No counterexample to the m=4 question; m-saturated m=4 forces f>=2 for every poset with e<=8 checked through n=15. Not a pure hand proof: the e=8 classification is computational and the natural A1-style local route provably fails (near-chain child does not determine Q). Next: either prove by hand that every e=8 poset with m=4 is the fence+universals family (which with the reduction closes m=4), or find a global argument about which relations of the near-chain child are derived from the added relation; then assess m>=5. Canonical repo/Lean/CI untouched.
+closed: 2026-11-24T08:37:30Z
+note: Founder suspended SoringP1 indefinitely; no further SoringP1 research, monitoring, issue maintenance or worker dispatch is authorized.

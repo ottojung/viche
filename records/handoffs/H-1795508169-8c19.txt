@@ -1,0 +1,8 @@
+id: H-1795508169-8c19
+status: done
+assigned-by: Founder priority 86ca70c7 / Executive
+created: 2026-11-24T08:16:09Z
+evidence: antonina agent status: GwE2Idzo4TR2yGFhw6Lybq-velocity and LamCoB3CBFos73RdrwJM24-strategic running with exact titles; mandate.md lines 375-414
+work: Appointed two delegated independent decision researchers in separate scratch dirs: portfolio GwE2Idzo4TR2yGFhw6Lybq-velocity and lease-evaluation LamCoB3CBFos73RdrwJM24-strategic. Both run missions.pnp.portfolio inspect from canonical checkout; portfolio may directly switch focus with comparative mathematical evidence, lease-evaluator may directly release genuinely unpromising leases with specific artifacts and reason other, respecting hard minimum age and never churning unstaffed reserves. They do not launch agents. Executive alone owns researcher lifecycle and will promptly park old workers and dispatch parallel work on any valid switched focus. Current 4-worker focus L-meta-1710 preserved pending a valid decision.
+closed: 2026-11-24T08:37:30Z
+note: Evaluator decisions release 5e453ab9755b383c5b204131 and switch d3a3bb8867f404ae22a3a6ab were applied; both evaluators re-run on current portfolio evidence.

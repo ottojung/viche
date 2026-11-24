@@ -1,0 +1,8 @@
+id: H-1795507388-9334
+status: done
+assigned-by: Founder priority 2026-11-24 / Executive
+created: 2026-11-24T08:03:08Z
+evidence: antonina agent status: 3 workers running on L-meta-1710 bound worktrees; state.json /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710
+work: Allocator df050360 is SOLE acquisition owner; Executive made no further acquire attempts. Dispatched 3 independent workers on sole leased focus L-meta-1710 via assignment --worker cut|localprice|reduction: n8PcFpsnbHrCuuI5nriB3k-evacuated (local AND-price cut), NUyxijH0Si0ssJUVsLEhBi-achilles (reduction to checked extremal lemmas), 354wR2sz6FjQACTJblAwuV-veins (refutation/obstruction); all verified running. INCIDENT for allocator: Executive diagnostic called raw desk.next_gap() ~07:59Z, a mutating acquisition that leased L-meta-949 with no local state record; allocator should reconcile or release it under its own rules. No further Executive acquisition.
+closed: 2026-11-24T08:37:30Z
+note: Allocator state and live frontier show L-meta-949 held=0 and no local lease/state record; incident reconciled without another Executive acquisition.

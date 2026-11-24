@@ -1,0 +1,8 @@
+id: H-1795508084-f1d1
+status: done
+assigned-by: Founder operational directive / Executive
+created: 2026-11-24T08:14:44Z
+evidence: staff output: cut+localprice started (reused clearexit agents), integrator+reduction already running; support methods/flow started; focus notes under /var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1710/attempts/7c7134e70be4a2b4ee9e7deb/workers
+work: Replenished focus L-meta-1710 to four workers after cut/localprice exited with substantive findings: cut has a checked sound-edge bound c=1 (L_meta_1762) and proved the per-gate charge false for unsound gates; localprice reduced the whole gap to ONE missing unsound-edge bound via checked R_meta_1710_2. Via missions.pnp.staff resumed cut n8PcFpsnbHrCuuI5nriB3k and localprice NUyxijH0Si0ssJUVsLEhBi in their workspaces with sharper unsound-edge approaches informed by knowledge artifact founder-reverse-derivative-bound.md (bipartite read-once-endpoint |E1|<=11s+5, reverse derivative <=5s+2 gates); integrator jqAr2yrLJhHhLkRXeCM6k9 and reduction 354wR2sz6FjQACTJblAwuV adopted unchanged. Restored support methods cXZHI45s2ZBvnBBCjk5iGA and flow x4MAHSmoxvSl3W2uV2mi12-bone; knowledge D67KVMawu7b50tbbJqlNuv running. No acquisition attempted; allocator owns desk. Leaderboard ottojung 0/unranked, leader willakone 69, gap -69 (worsened 4).
+closed: 2026-11-24T08:37:30Z
+note: Old-focus specialists finished with preserved artifacts; current baseline and support coverage were independently reconciled and replenished after restart.
