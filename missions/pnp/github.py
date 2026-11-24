@@ -57,7 +57,7 @@ def pr_exists_for(branch, gap_id, api=None):
     for pr in prs:
         head = pr.get("head") or {}
         if (head.get("ref") == branch and
-                (head.get("repo") or {}).get("full_name") == config.FORK and
+                (head.get("repo") or {}).get("id") == config.FORK_ID and
                 (pr.get("title") == gap_id or gap_id in (pr.get("title") or ""))):
             return pr.get("number")
     return None
@@ -78,8 +78,8 @@ def create_pr(branch, gap_id):
 def get_pr(number):
     expr = ("{number: .number, state: .state, title: .title, "
             "author: .user.login, head_sha: .head.sha, merged: .merged, "
-            "head_ref: .head.ref, head_repo: .head.repo.full_name, "
-            "base_ref: .base.ref, base_repo: .base.repo.full_name, "
+            "head_ref: .head.ref, head_repo: .head.repo.full_name, head_repo_id: .head.repo.id, "
+            "base_ref: .base.ref, base_repo: .base.repo.full_name, base_repo_id: .base.repo.id, "
             "url: .html_url}")
     return json.loads(gh("api", "repos/" + config.UPSTREAM + "/pulls/" +
                          str(number), "--jq", expr))
@@ -108,10 +108,12 @@ def validate_created(number, expected_sha, expected_path,
     problems = []
     if pr.get("author") != config.GH_USER:
         problems.append("PR author is not ottojung")
-    if pr.get("head_repo") != config.FORK:
+    if pr.get("head_repo_id") != config.FORK_ID:
         problems.append("head repo is not the fork")
-    if pr.get("base_repo") != config.UPSTREAM:
+    if pr.get("base_repo_id") != config.UPSTREAM_ID:
         problems.append("base repo is not upstream")
+    if pr.get("head_sha") != expected_sha:
+        problems.append("PR head SHA differs from the signed revision")
     if pr.get("base_ref") != config.BASE_REF:
         problems.append("base ref is not main")
     files = pr_files(number)

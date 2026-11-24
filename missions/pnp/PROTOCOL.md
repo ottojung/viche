@@ -7,7 +7,7 @@ Implementation issue: R4WYVaWyRxoD911soUtcAo-sciatic.
 The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop remains part of ordinary Viche Executive scheduling. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
 
 ## Precise interfaces
-Upstream: brilliant-hq/pequalnp-proofs, base branch main.
+Upstream: open-goat/pequalnp-proofs, base branch main.
 Fork: ottojung/pequalnp-proofs.
 Desk: https://pequalnp.com/desk with documented next/beat/release endpoints.
 Instructions: https://pequalnp.com/join.txt and upstream CONTRIBUTING.md (live version takes precedence).
@@ -104,9 +104,9 @@ commit.verification.verified == true for the exact pushed SHA. If false, STOP
 without opening a PR and record the reason.
 Before opening PR, search upstream existing open/closed PRs for this exact
 head branch and gap ID. If already present, reuse its ID; never open duplicates.
-Only create PR to brilliant-hq/pequalnp-proofs, base main, title gap ID,
+Only create PR to open-goat/pequalnp-proofs, base main, title gap ID,
 head ottojung:<branch>. Then GET created PR and verify author == ottojung,
-head repo == ottojung/pequalnp-proofs, base repo == brilliant-hq/pequalnp-proofs,
+head repo == ottojung/pequalnp-proofs, base repository ID == 1468025030 (open-goat/pequalnp-proofs),
 base ref == main, changed file list exactly one added proof, PR commit list
 contains exactly the expected signed SHA, GitHub verification == true.
 If post-create validation fails, report and stop automated mutations; do not
@@ -151,3 +151,5 @@ Only send substantial milestones or verified blockers to Founder-facing channels
 
 Do not report agent setup, branch push, an unmerged PR, or a merely local
 compilation as a mathematically accepted contribution.
+
+Repository names can change. Validate immutable GitHub IDs for upstream and fork, and recover existing PRs by verified signed revision even after a local FAULT. Old official checker links remain recognized.

@@ -400,9 +400,24 @@ class TestSignatureFields(unittest.TestCase):
 
 
 class TestGitHubValidation(unittest.TestCase):
+    def test_repository_rename_and_identity(self):
+        pr = {"author": config.GH_USER, "head_repo": config.FORK,
+              "head_repo_id": config.FORK_ID, "base_repo": "renamed/project",
+              "base_repo_id": config.UPSTREAM_ID, "head_sha": SHA, "base_ref": "main"}
+        with mock.patch.object(github, "get_pr", return_value=pr), \
+             mock.patch.object(github, "pr_files", return_value=[PATH]), \
+             mock.patch.object(github, "pr_commits", return_value=[SHA]), \
+             mock.patch.object(github, "commit_verification", return_value={
+                 "verified": True, "name": config.AUTHOR_NAME, "email": config.AUTHOR_EMAIL}):
+            self.assertEqual(github.validate_created(1, SHA, PATH)[1], [])
+            pr.update(base_repo=config.UPSTREAM, base_repo_id=999)
+            self.assertIn("base repo is not upstream", github.validate_created(1, SHA, PATH)[1])
+
     def test_post_create_checks(self):
         pr = {"number": 1, "author": config.GH_USER,
               "head_repo": config.FORK, "base_repo": config.UPSTREAM,
+              "head_repo_id": config.FORK_ID, "base_repo_id": config.UPSTREAM_ID,
+              "head_sha": SHA,
               "base_ref": "main", "url": "u"}
         with mock.patch.object(github, "get_pr", return_value=pr), \
              mock.patch.object(github, "pr_files", return_value=[PATH]), \
@@ -554,6 +569,51 @@ class TestReconcile(unittest.TestCase):
         r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
         self.assertEqual(r["state"], "ACCEPTED")
+
+    def test_fault_adopts_existing_validated_pr_without_duplicate(self):
+        new_state("FAULT", commit_sha=SHA, branch=config.branch_for(GAP),
+                  queued_lease="lease-1", expected_commits=[SHA])
+        gh = FakeGH(existing=8143)
+        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.pr_comments = lambda n: []
+        d = FakeDesk()
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertEqual(state.load(GAP)["pr_number"], 8143)
+        self.assertIsNone(state.load(GAP)["queued_lease"])
+        self.assertEqual(gh.created, 0)
+        self.assertEqual(d.releases, [("lease-1", "submitted")])
+
+    def test_release_retry_does_not_lose_pr(self):
+        new_state("FAULT", commit_sha=SHA, pending_pr_number=8143)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.pr_comments = lambda n: []
+        d = FakeDesk()
+        with mock.patch.object(d, "release", side_effect=OSError("offline")):
+            reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertTrue(state.load(GAP)["release_pending"])
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertFalse(state.load(GAP)["release_pending"])
+        self.assertEqual(d.releases, [("lease-1", "submitted")])
+
+    def test_fault_does_not_adopt_wrong_pr(self):
+        new_state("FAULT", commit_sha=SHA, pending_pr_number=8143)
+        gh = FakeGH()
+        gh.validate_created = lambda *a, **k: ({}, ["head mismatch"])
+        d = FakeDesk()
+        reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertIsNone(state.load(GAP)["pr_number"])
+        self.assertEqual(d.releases, [])
+
+    def test_renamed_checker_link(self):
+        c = verdict_comment(SHA, "ACCEPTED")
+        c["body"] = c["body"].replace("brilliant-hq/pequalnp-proofs", config.UPSTREAM)
+        self.assertEqual(reconcile.current_verdict([c], SHA), "ACCEPTED")
+        c["body"] = c["body"].replace(config.UPSTREAM, "unrelated/pequalnp-proofs")
+        self.assertIsNone(reconcile.current_verdict([c], SHA))
 
     def test_old_or_untrusted_verdict_ignored(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)

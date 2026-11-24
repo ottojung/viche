@@ -34,6 +34,8 @@ EMPTY = {
     "worktree": None,
     "commit_sha": None,
     "pr_number": None,
+    "pending_pr_number": None,
+    "release_pending": False,
     "pr_url": None,
     "external_verdict": None,
     "failure_reason": None,
@@ -173,6 +175,8 @@ def reacquire(gap_id, **fields):
                     "commit_sha", "pr_number", "pr_url", "external_verdict"):
             rec[key] = None
         rec["failure_reason"] = None
+        rec["pending_pr_number"] = None
+        rec["release_pending"] = False
         rec["queued_lease"] = None
         rec["build_evidence"] = None
         rec["local_check_status"] = None

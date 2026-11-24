@@ -6,8 +6,11 @@ file.  Only the operator CLI may choose a gap id and a local candidate path.
 import os
 import re
 
-UPSTREAM = "brilliant-hq/pequalnp-proofs"
+UPSTREAM = "open-goat/pequalnp-proofs"
+UPSTREAM_ID = 1468025030
+UPSTREAM_NAMES = (UPSTREAM, "brilliant-hq/pequalnp-proofs")
 FORK = "ottojung/pequalnp-proofs"
+FORK_ID = 1469318535
 BASE_REF = "main"
 GH_USER = "ottojung"
 
@@ -63,7 +66,7 @@ ALLOWED = {
     "PUSHED": {"PR_OPEN", "FAULT"},
     "PR_OPEN": {"ACCEPTED", "REJECTED", "STALE", "FAULT"},
     "REJECTED": {"RESEARCHING", "SIGNED", "FAULT", "STALE"},
-    "FAULT": {"RESEARCHING", "RELEASED"},
+    "FAULT": {"RESEARCHING", "RELEASED", "PR_OPEN"},
 }
 
 
