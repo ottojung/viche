@@ -19,7 +19,12 @@ while :; do
   [ "$count" -gt 0 ] || break
   [ -n "$latest" ] || latest=$(jq -r '.messages[-1].id // empty' "$d/page")
   [ -n "$latest" ] || exit 1
-  jq -c '.messages|reverse|.[]' "$d/page" > "$d/items"
+  # Scan the whole page in jq, but pass only Founder messages, the exact
+  # saved anchor, and malformed IDs to the shell. Never skip an anchor just
+  # because its author is not the Founder.
+  jq -c --arg old "$old" '.messages|reverse|.[] |
+    select(.author == "Vitalik" or ((.id // "")|tostring) == $old
+           or ((.id // "")|tostring) == "")' "$d/page" > "$d/items"
   while IFS= read -r line; do
     id=$(printf '%s\n' "$line" | jq -r '.id // empty')
     [ -n "$id" ] || exit 1
@@ -59,7 +64,16 @@ while :; do
   [ "$count" -gt 0 ] || break
   [ -n "$first" ] || first=$(jq -r '.entries[0].id // empty' "$d/feed")
   stop=0
-  jq -c '.entries[]' "$d/feed" > "$d/items"
+  # Select relevant messages AND the stopping boundary before launching
+  # per-item subprocesses. The original loop still decides where to stop;
+  # a missing opaque anchor must still fail closed after all pages.
+  jq -c --arg last "$last" --arg kind "$last_kind" '
+    .entries[] | select(.author == "Vitalik" or
+      ($last != "" and (if $kind == "id" then
+        ((.id // "")|tostring) == $last
+      else
+        ((.position // 0)|tonumber) <= ($last|tonumber)
+      end)))' "$d/feed" > "$d/items"
   while IFS= read -r line; do
     pos=$(printf '%s\n' "$line" | jq -r '.position // 0')
     entry_id=$(printf '%s\n' "$line" | jq -r '.id // empty')
