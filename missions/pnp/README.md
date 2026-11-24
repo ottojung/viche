@@ -112,7 +112,7 @@ work on unheld steps.
 ## Research tools
 
 Researchers receive role-specific instructions at dispatch. Start with
-\`pnp-research start\` in the workspace, or \`pnp-research guide ROLE\` for
+`pnp-research start` in the workspace, or `pnp-research guide ROLE` for
 examples. The work packet includes reusable discoveries across lease changes,
 exact open Lean dependencies, and relevant proof generators. See
 [research/README.md](research/README.md) for async checks, independent method
