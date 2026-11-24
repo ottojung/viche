@@ -555,44 +555,86 @@ inventory() {
     return 0
 }
 
+# One interpreter per probe, rather than a readlink/grep process for every
+# procfs entry. Keep the same per-candidate fresh scan and conservative
+# reference checks; unexpected scanner failure counts as in use.
+proc_reference() {
+    _pr_mode=$1; _pr_path=$2
+    _pr_rc=0
+    python3 - "$_pr_mode" "$_pr_path" <<'PYPROBE' || _pr_rc=$?
+import os
+import re
+import sys
+
+mode, path = sys.argv[1], os.fsencode(sys.argv[2])
+
+def matches(value):
+    if value.endswith(b" (deleted)"):
+        value = value[:-10]
+    if mode == "prefix":
+        return value.startswith(path)
+    return value == path or (mode == "tree" and value.startswith(path + b"/"))
+
+def links(proc):
+    if mode == "tree":
+        yield proc + b"/cwd"
+        yield proc + b"/root"
+    try:
+        with os.scandir(proc + b"/fd") as entries:
+            for entry in entries:
+                yield entry.path
+    except OSError:
+        pass
+
+with os.scandir(b"/proc") as procs:
+    for entry in procs:
+        if not entry.name.isdigit():
+            continue
+        proc = entry.path
+        for link in links(proc):
+            try:
+                if matches(os.readlink(link)):
+                    sys.exit(0)
+            except OSError:
+                pass
+        try:
+            with open(proc + b"/maps", "rb") as maps:
+                for line in maps:
+                    fields = line.rstrip(b"\n").split(None, 5)
+                    # Preserve the previous substring match as well as
+                    # recognising an exact mapped-file reference.
+                    if len(fields) == 6 and matches(fields[5]):
+                        sys.exit(0)
+                    if (path + b"/" if mode == "tree" else path) in line:
+                        sys.exit(0)
+        except OSError:
+            pass
+if mode == "tree":
+    try:
+        with open(b"/proc/mounts", "rb") as mounts:
+            for line in mounts:
+                fields = line.split()
+                if len(fields) > 1:
+                    value = re.sub(rb"\\([0-7]{3})",
+                                   lambda m: bytes([int(m[1], 8)]), fields[1])
+                    if matches(value):
+                        sys.exit(0)
+    except OSError:
+        pass
+sys.exit(10)
+PYPROBE
+    # 10 alone means the scan completed without a reference. Python syntax
+    # errors and uncaught exceptions normally exit 1, never authorize deletion.
+    [ "$_pr_rc" -ne 10 ]
+}
+
 path_in_use() {
-    # path_in_use <path>: return 0 if any live process references the path
-    # (cwd/root at or under it, an open fd or memory map under it) or a mount
-    # sits at or under it. Read-only liveness probe backing the Act 12.4(d)
-    # evidence standard: no artifact is quarantine-classified while referenced.
     _piu=$1
     [ -n "$_piu" ] || return 1
     _piu_canon=$(readlink -f "$_piu" 2>/dev/null) || return 1
     [ -n "$_piu_canon" ] || return 1
     [ "$_piu_canon" != "/" ] || return 1
-    for _piu_p in /proc/[0-9]*; do
-        for _piu_link in "$_piu_p/cwd" "$_piu_p/root"; do
-            _piu_val=$(readlink "$_piu_link" 2>/dev/null) || continue
-            case "$_piu_val" in
-                "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
-            esac
-        done
-        if [ -r "$_piu_p/maps" ]; then
-            if grep -q -F -e "$_piu_canon/" "$_piu_p/maps" 2>/dev/null; then return 0; fi
-        fi
-        if [ -d "$_piu_p/fd" ]; then
-            for _piu_fd in "$_piu_p/fd"/*; do
-                _piu_val=$(readlink "$_piu_fd" 2>/dev/null) || continue
-                case "$_piu_val" in
-                    "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
-                esac
-            done
-        fi
-    done
-    if [ -r /proc/mounts ]; then
-        while IFS= read -r _piu_line; do
-            _piu_mp=$(printf '%s' "$_piu_line" | awk '{print $2; exit}')
-            case "$_piu_mp" in
-                "$_piu_canon"|"$_piu_canon/"*) return 0 ;;
-            esac
-        done < /proc/mounts
-    fi
-    return 1
+    proc_reference tree "$_piu_canon"
 }
 
 # --- classify inventory candidates (read-only) ----------------------------------
@@ -753,20 +795,7 @@ scratch_quarantine() {
         age=$((now - fm))
         [ "$age" -ge "$min_age" ] || continue
         # Skip any file a live process still maps or holds open.
-        referenced=0
-        for _sq_p in /proc/[0-9]*; do
-            if [ -r "$_sq_p/maps" ]; then
-                if grep -q -F -e "$f" "$_sq_p/maps" 2>/dev/null; then referenced=1; break; fi
-            fi
-            if [ -d "$_sq_p/fd" ]; then
-                for _sq_fd in "$_sq_p/fd"/*; do
-                    _sq_val=$(readlink "$_sq_fd" 2>/dev/null) || continue
-                    if [ "$_sq_val" = "$f" ]; then referenced=1; break; fi
-                done
-            fi
-            [ "$referenced" -eq 1 ] && break
-        done
-        [ "$referenced" -eq 1 ] && continue
+        if proc_reference exact "$f"; then continue; fi
         fkb=$(du -k "$f" 2>/dev/null | awk 'NR==1{print $1; exit}')
         is_num "$fkb" || fkb=0
         if mv "$f" "$stage/" 2>/dev/null; then

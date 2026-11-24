@@ -78,6 +78,8 @@ def support_pass(role, records, selected, agents):
         {"signature": sig, "agent": aid, "at": time.time()}) + "\n")
     prompt = (
         "You are performing a bounded Executive-delegated research support pass. "
+        "Use the injected role playbook and current work packet; tools lists other installed capabilities if needed. "
+        "Inspect actual outcomes, not merely invocation counts. "
         "Use PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support targets "
         "and python3 -m missions.pnp.portfolio inspect. "
         "Deliver substantive evidence directly via support advise (or portfolio decisions). "

@@ -19,3 +19,10 @@ python3 tests/pnp-allocator.py
 python3 tests/pnp-continuity.py
 
 python3 tests/pnp-brief.py
+python3 tests/pnp-tool-discovery.py
+
+python3 tests/pnp-adapter.py
+
+python3 tests/pnp-rows.py
+
+python3 tests/pnp-metrics.py

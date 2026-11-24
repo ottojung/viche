@@ -532,3 +532,19 @@ an assertion of kernel checking. Use narrow scratch imports and the managed
 light queue when possible; the integrator checks the combined exact file.
 Proof reuse hints in `proofs find` include relaxed conclusion/hypothesis
 matches; a high score is NOT a proof of implication.
+
+
+## Research capability awareness
+
+The live tool inventory (`python3 -m missions.pnp.tools`, with the canonical
+town PYTHONPATH) is part of every assignment, not a one-time announcement.
+Each guard reports the tool revision and discovery command. A changed revision
+means inspect the applicable new capabilities before doing redundant work.
+Cheap automatic preflight runs separately for every live lease; its candidates
+are not kernel-checked or automatically published. Researchers should review
+and use them promptly. Engineering deliveries that introduce tools must also
+update the inventory with actionable examples, applicability and limitations.
+Use `tools --usage` for attempt-scoped observed CLI invocations; never infer
+proof success from invocation. Use evidence of actual tool use and successful proofs, not mandatory reports
+or ritual invocations, to evaluate adoption. Persistent tooling engineering
+continues independently of any single lease.
