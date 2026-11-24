@@ -256,6 +256,14 @@ def cmd_guard(args):
                     findings = support.findings(rec)
                     if findings:
                         result["research_findings"] = findings
+                    try:
+                        from missions.pnp.research import knowledge
+                        cumulative = knowledge.relevant(rec)
+                        if cumulative:
+                            result["cumulative_research"] = cumulative
+                    except Exception:
+                        pass
+
             except (OSError, ValueError, TypeError, KeyError):
                 pass
     except (OSError, ValueError) as exc:

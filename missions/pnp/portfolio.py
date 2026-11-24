@@ -69,8 +69,14 @@ def view():
                      "competition": observed.get("gaps", {}).get(item["gap"]),
                      "artifacts": state.gap_dir(item["gap"]),
                      "focus": bool(chosen and focus.key(chosen) == focus.key(rec))})
-    return {"focus": chosen["gap_id"] if chosen else None,
+    result={"focus": chosen["gap_id"] if chosen else None,
             "leases": rows, "worker_roster_coverage":roster["coverage"]}
+    try:
+        from .research import yield_model
+        result["empirical_yield"]=yield_model.view()
+    except Exception:
+        pass
+    return result
 
 
 def text_field(value, name):

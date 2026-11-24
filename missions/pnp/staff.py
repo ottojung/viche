@@ -122,6 +122,11 @@ def prompt(rec, approach, general=False):
            f"and local diagnostic {rec.get('local_check_log', '')[-2000:]}. Correct the same "
            "PR through submit; no new PR. Use the saved candidate in the gap state directory. "
            if focus.correction(rec) else "")
+        + " Cumulative research: run pnp-research knowledge find --family FAMILY (or query exact terms); "
+          "use pnp-research obligations ready and show ID for exact Lean dependencies. "
+          "A reusable method, failed route or checked fragment should be recorded with its evidence, not lost when the lease ends. "
+          "Request exact Lean lemmas via pnp-research obligations request --statement TYPE; "
+          "solve ID BODY checks it and all dependencies. Coordinate assignments through Executive; don't duplicate a claimed node. "
         + f"Assigned approach: {approach}"
     )
 
@@ -186,7 +191,15 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if existing and any(a.get("state") not in _REUSABLE for a in existing):
                     raise ValueError("uncertain worker state")
                 if not (path / ".git").exists() and base is None:
-                    base = gitctl.ensure_mirror()
+                    # Compositional workers must be able to assemble checked
+                    # lemmas on the same base. Do not reset existing worktrees.
+                    general_path = (Path(state.gap_dir(gap)) / "attempts" /
+                                    assignment.attempt_id(rec["lease"]) / "workers/general/path")
+                    if label != "general" and (general_path / ".git").exists():
+                        base = subprocess.check_output(["git","-C",str(general_path),"rev-parse","HEAD"],
+                                                       text=True,timeout=5).strip()
+                    else:
+                        base = gitctl.ensure_mirror()
                 assignment.prepare(gap, worker=label, base=base)
                 if not current_matches(rec, label == "general"):
                     break

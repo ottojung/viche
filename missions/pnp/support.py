@@ -117,7 +117,12 @@ def finding(evidence, message, cwd=None):
         obj["at"] = time.time()
         state.atomic_write(str(path),json.dumps(obj,ensure_ascii=False,sort_keys=True)+"\n")
         state.event(gap,"research_finding",obj)
-        return obj
+    try:
+        from .research import knowledge
+        knowledge.record_finding(rec,obj)
+    except Exception:
+        pass  # Historical event replay repairs a missed indexing write.
+    return obj
 
 
 def targets(all_held=False):
