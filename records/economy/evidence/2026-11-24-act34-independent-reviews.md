@@ -1,0 +1,46 @@
+# Independent Act34 candidate reviews and dispositions — 2026-11-24
+
+These are independent read-only code/evidence reviews, not Judiciary verdicts. No reviewer edited files, activated an office, prescribed staffing, or dispatched an agent.
+
+## Review of `98b0ac319beaad184a4565e6cd4ed6e07d661c1b` — REJECT
+
+Blocking findings:
+
+1. The Act34 gate validated enforcement evidence only at activation level; an individual permit could omit `enforcement_evidence` and `negative_acceptance_digest` and still pass.
+2. The envelope Markdown misstated physical CPU capacity as 8,988 CPU-s instead of 7,988, and mislabelled the 13.9% wall fraction as summed exposure instead of elapsed parallel exposure. Correct values are 55.47% summed and 13.87% elapsed.
+
+Disposition in the final candidate:
+
+- `government/knowledge-act34-gate.py` requires both fields on every permit and exact equality with attested Economy control hashes/digest.
+- `tests/knowledge-act34-adaptive-smoke.sh` commits a permit missing those fields and verifies refusal.
+- Envelope JSON/Markdown now state 7,988 physical CPU-s, 55.47% summed-wall fraction and 13.87% elapsed-wall fraction.
+
+## Review of `ef7add3778a83263ce280711526bd60cc19d79a2` — REJECT
+
+Blocking finding:
+
+- The verification record published `5ef443ba20bd5260cc940905b7d8f58fe7615b07cd08249e7db42757423c3636`, independently reproduced as the digest of the two-model hermetic fixture snapshot. The gate hashes the committed provider snapshot, whose exact-blob production digest is `5cb8ebcc004af09b6b1308105de63b6fe9023e40a26c3fe909754757c1bed87d` for that commit. A permit copying the recorded digest would fail closed; no paid dispatch was observed.
+
+The same review confirmed the prior permit-evidence and arithmetic fixes, the nine exact provider-confirmed IDs, static confinement of the scheduled path to the allowlist, disabled offices/budgets, and absence of staffing advice.
+
+Disposition in the final candidate:
+
+- The smoke test now validates the committed production snapshot as of publication and prints only the production digest.
+- The verifier additionally rejects any provider cost object other than the known sole `text` billing object, with a regression case for an added image-price object.
+- The final production digest is `04cf2ba385ce512c42d574cf5bcd05c7840de16e8438548a091e6234a684e45b`; the verification record and gate use the same committed bytes.
+
+## Final review of `9d0ba1e365152cf5708b626be75f614103fea239` — APPROVE
+
+The same independent reviewer verified the exact final code/evidence objects (before the
+records-only main merge to `3999baf0`) and approved the candidate, not activation or deployment.
+It independently reproduced production digest `04cf2ba385ce512c42d574cf5bcd05c7840de16e8438548a091e6234a684e45b`, confirmed the smoke test prints that production value, confirmed refusal of an unknown provider billing dimension while all nine real models pass, rechecked permit-level evidence equality/refusal, and recomputed the envelope arithmetic. Bounded hermetic tests passed. The review did not perform a final-patch full suite, live provider request, deployment verification, account-level audit, or actual four-office sample.
+
+## Act31 reviewer rejection (10:27:09Z) and final-head verification (fresh session, 2026-11-24T10:33Z)
+
+The Act31 integration reviewer `reviewer-knstfxnwdzjrw2d6smir0y-morel` rejected proposal head `ef7add3778a83263ce280711526bd60cc19d79a2` at 2026-11-24T10:27:09Z for the same stale-snapshot digest defect recorded above: the record published `5ef443ba…`/`262c8413…` while the committed controls recompute to a different value. That rejection is of the older proposal head, not the final candidate.
+
+The fresh-session Economy officer independently re-ran `/bin/sh tests/knowledge-free-dispatch-smoke.sh` on final head `a8a019f780722d77bd746249165f1a9d8c697285`. It printed `PRODUCTION_NEGATIVE_ACCEPTANCE_DIGEST=04cf2ba385ce512c42d574cf5bcd05c7840de16e8438548a091e6234a684e45b`, computed over the committed provider snapshot `records/economy/evidence/2026-11-24-provider-models.json` (not the hermetic fixture), and matches both the verification record and the gate's runtime `negative_acceptance_digest` input set. `git diff --check origin/main...HEAD` is clean. The final head is therefore re-proposed; the rejection finding is confirmed repaired on that exact head. The fresh session did not repeat the full `run-all.sh` suite locally (heavy under current load; it is the integrator's exact-candidate acceptance test and completed green on `bdededc2`), activated no office, and performed no live paid dispatch.
+
+## Limits preserved
+
+No review performed a live paid-tier request, provider-account audit, deployment verification, full-suite run for the final patch, or actual four-office execution sample. Provider quota capacity and account-level spend-cap availability remain unverified. The candidate remains held pending Act31 integration and independent review of the exact final commit.

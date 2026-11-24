@@ -16,6 +16,8 @@ import subprocess
 import sys
 import time
 
+sys.dont_write_bytecode = True
+
 OFFICES = ("statistics", "foresight", "strategy", "spying")
 TITLE = "## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act (enacted "
 WINDOW = 45 * 86400
@@ -97,30 +99,59 @@ def require_audited_free_tier(root, record, permit):
     evidence = record.get("economy_free_tier_evidence")
     if not isinstance(evidence, dict):
         raise ValueError("independent Economy model-source control missing")
-    report_ref = "records/knowledge/2026-11-23-economy-free-tier-prelaunch-allowlist-finding.md"
+    report_ref = "records/economy/2026-11-24-act34-zero-billed-verification.md"
     institutionally_attested(
         root, "economy", "c1e00012", report_ref,
         evidence.get("artifact_commit"), evidence.get("report_sha256"),
         evidence.get("attestation"), "act34-economy-free-provider-control")
-    for key, rel in (
-            ("wrapper_sha256", "government/knowledge-free-dispatch.sh"),
-            ("negative_test_sha256", "tests/knowledge-free-dispatch-smoke.sh"),
-            ("bounds_sha256", "government/knowledge-practical-bounds.py")):
+    controls = (
+        ("wrapper_sha256", "government/knowledge-free-dispatch.sh"),
+        ("negative_test_sha256", "tests/knowledge-free-dispatch-smoke.sh"),
+        ("bounds_sha256", "government/knowledge-practical-bounds.py"),
+        ("zero_billed_policy_sha256", "government/knowledge-zero-billed-policy.json"),
+        ("zero_billed_verifier_sha256", "government/knowledge-zero-billed.py"),
+        ("provider_snapshot_sha256", "records/economy/evidence/2026-11-24-provider-models.json"),
+        ("gate_sha256", "government/knowledge-act34-gate.py"),
+        ("cycle_sha256", "government/knowledge-office-cycle.sh"))
+    for key, rel in controls:
         if evidence.get(key) != on_main(root, root / rel):
             raise ValueError("unverified Economy runtime control: " + rel)
-    # Economy's live catalogue must explicitly say 'free' for EVERY allowed
-    # model; a paid provider with a deceptive -free suffix must be refused.
+    if not isinstance(evidence.get("negative_acceptance_digest"), str) or not re.fullmatch(
+            r"[0-9a-f]{64}", evidence["negative_acceptance_digest"]):
+        raise ValueError("negative-acceptance digest missing")
+    # Exact provider/model cost evidence, not the name-derived rotation tier,
+    # decides whether the live policy is admissible. The shared verifier also
+    # enforces the evidence freshness deadline.
+    module = root / "government/knowledge-zero-billed.py"
+    spec = importlib.util.spec_from_file_location("act34_zero_billed", module)
+    if spec is None or spec.loader is None:
+        raise ValueError("zero-billed policy verifier unavailable")
+    zmod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(zmod)
     state = Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
     policy = load(state / "economy/model-policy.json")
     cat = load(state / "economy/catalogue.json")
     models = cat.get("models") if isinstance(cat, dict) else None
     allowed = policy.get("prefer") if isinstance(policy, dict) else None
     if not isinstance(models, dict) or not isinstance(allowed, list) or not allowed:
-        raise ValueError("independent free-tier policy/catalogue unavailable")
-    if (any(not isinstance(mid, str) or not
-            re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+-free", mid) or
-            models.get(mid, {}).get("tier") != "free" for mid in allowed)):
-        raise ValueError("unapproved or provider-billed model in active policy")
+        raise ValueError("free-tier policy/catalogue unavailable")
+    billing_path = root / "government/knowledge-zero-billed-policy.json"
+    billing = load(billing_path)
+    snapshot_ref = billing.get("snapshot_ref")
+    if not isinstance(snapshot_ref, str) or not re.fullmatch(r"records/economy/evidence/[A-Za-z0-9_.-]+[.]json", snapshot_ref):
+        raise ValueError("zero-billed provider snapshot ref invalid")
+    zmod.verified_subset(billing_path, allowed, models, root / snapshot_ref)
+    expected_digest = zmod.negative_acceptance_digest({
+        "wrapper": root / "government/knowledge-free-dispatch.sh",
+        "zero_billed_policy": root / "government/knowledge-zero-billed-policy.json",
+        "bounds": root / "government/knowledge-practical-bounds.py",
+        "negative_test": root / "tests/knowledge-free-dispatch-smoke.sh",
+        "verifier": root / "government/knowledge-zero-billed.py",
+        "gate": root / "government/knowledge-act34-gate.py",
+        "cycle": root / "government/knowledge-office-cycle.sh",
+        "provider_snapshot": root / "records/economy/evidence/2026-11-24-provider-models.json"})
+    if evidence.get("negative_acceptance_digest") != expected_digest:
+        raise ValueError("negative-acceptance digest differs from exact controls")
 
 
 def check(office, root):
@@ -171,6 +202,9 @@ def check(office, root):
             or permit.get("signature_status") != "signed"
             or permit.get("provider_budget_mode") != "zero-billed-runtime-allowlist"
             or permit.get("provider_tier") != "free_only"
+            or not isinstance(permit.get("enforcement_evidence"), dict)
+            or not isinstance(permit.get("negative_acceptance_digest"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", permit["negative_acceptance_digest"])
             or permit.get("inflight_overrun_risk_disclosed") is not True
             or permit.get("cancellation") != "stop-agent-and-hold-budget"
             or permit.get("reboot_recovery") != "reconcile-held-liability"):
@@ -179,6 +213,16 @@ def check(office, root):
         root, "executive", "c1e00002", ref, a.get("permit_origin_commit"),
         permit_hash, a.get("permit_attestation"), "act34-executive-" + office)
     require_audited_free_tier(root, record, permit)
+    evidence = record.get("economy_free_tier_evidence", {})
+    required = ("wrapper_sha256", "negative_test_sha256",
+                "bounds_sha256", "zero_billed_policy_sha256",
+                "zero_billed_verifier_sha256", "gate_sha256", "cycle_sha256",
+                "provider_snapshot_sha256", "negative_acceptance_digest")
+    if (any(permit.get("enforcement_evidence", {}).get(key) != evidence.get(key)
+            for key in required)):
+        raise ValueError("permit enforcement evidence differs from attested Economy control")
+    if permit.get("negative_acceptance_digest") != evidence.get("negative_acceptance_digest"):
+        raise ValueError("permit negative-acceptance digest differs from attested control")
     review_path = root / ("records/knowledge/pilot-reviews/" + office + ".json")
     # An early adverse Judiciary decision is immediately binding.
     if review_path.exists():

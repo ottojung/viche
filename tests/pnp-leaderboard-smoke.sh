@@ -43,6 +43,7 @@ for bad in (
 
 with tempfile.TemporaryDirectory() as tmp:
     os.environ["VICHE_STATE_ROOT"] = tmp
+    os.environ["PNP_STATE_ROOT"] = str(Path(tmp, "pnp"))
     a = {"available": True, **unranked, "observed_at": "2026-11-23T12:00:00+00:00",
          "source_checked_at": "2026-11-23T12:00:00Z", "source_version": "a"}
     leaderboard.save(a)
@@ -86,6 +87,8 @@ with tempfile.TemporaryDirectory() as tmp:
     assert full["workers"]["count"] == 3
     assert empty["workers"]["count"] == 0
     assert full["dispatch_signal"] != empty["dispatch_signal"]
+    assert full["dispatch_signal"]["workers"] == 3
+    assert empty["dispatch_signal"]["workers"] == 0
     assert empty["action"].startswith("Executive")
     assert unknown["workers"]["count"] is None
     assert unknown["workers"]["coverage"] == "unavailable"

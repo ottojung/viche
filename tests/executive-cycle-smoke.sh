@@ -21,7 +21,7 @@ set -eu
 case "$1 $2" in
   "board list")
     [ "${BOARD_DOWN:-no}" != yes ] || exit 3
-    echo '[{"number":"301","title":"SoringP1"},{"number":"opaque-id-xyz","title":"Second issue"}]' ;;
+    echo '[{"number":"401","title":"Ordinary assigned task"},{"number":"opaque-id-xyz","title":"Second issue"}]' ;;
   "board show")
     echo '{"body":"All agent execution and development work must happen on billy-dev.","messages":[]}' ;;
   "agent status")
@@ -35,7 +35,7 @@ case "$1 $2" in
         printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL"
     fi ;;
   "agent run")
-    case "$*" in *"Founder charter fixture"*"301"*) : ;; *) exit 8 ;; esac
+    case "$*" in *"Founder charter fixture"*"401"*) : ;; *) exit 8 ;; esac
     case "$*" in *"No work is authorized on SoringP1"*) : ;; *) exit 8 ;; esac
     case "$*" in *"research-plan.md"*|*"depleted_after_empty_curation"*) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
@@ -56,6 +56,16 @@ export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
 MOCK_STATE=$scratch
 MOCK_STATE=$MOCK_STATE
 export MOCK_STATE
+# The current Executive cycle inventories Git delivery candidates. Keep this
+# fixture a real repository with the exact ref that inventory reads; otherwise
+# the smoke fails for an unrelated missing-Git dependency.
+git -C "$scratch/town" init -q -b main
+git -C "$scratch/town" config user.name Fixture
+git -C "$scratch/town" config user.email fixture@example.invalid
+git -C "$scratch/town" config commit.gpgsign false
+git -C "$scratch/town" add -A
+git -C "$scratch/town" commit -qm 'Executive cycle fixture baseline'
+git -C "$scratch/town" update-ref refs/remotes/origin/main HEAD
 grep -Fq "Before interacting with Antonina board or agents" "$repo/government/executive-cycle.sh"
 grep -Fq "government/antonina-interface.md" "$repo/government/executive-agenda.md"
 sh "$repo/government/executive-cycle.sh"
@@ -64,7 +74,7 @@ touch "$scratch/state/inaugurated"
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 1
 test -s "$scratch/town/records/predictions/calibration.json"
-jq -e '.count==2 and .eligible[0].number=="301" and .eligible[1].number=="opaque-id-xyz"' "$scratch/state/branches/eligible-issues.json" >/dev/null
+jq -e '.count==2 and .eligible[0].number=="401" and .eligible[1].number=="opaque-id-xyz"' "$scratch/state/branches/eligible-issues.json" >/dev/null
 sh "$repo/government/executive-cycle.sh"
 test "$(wc -l < "$OUTPUT")" -eq 2
 MODE=running

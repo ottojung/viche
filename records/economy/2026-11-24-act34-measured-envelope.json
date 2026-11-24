@@ -1,0 +1,94 @@
+{
+  "schema": "viche-act34-measured-envelope-v1",
+  "published_at": "2026-11-24T09:04:44Z",
+  "authority": "Act 34 §3(5); request P-1795509650-b874",
+  "activation": "none; all four offices remain disabled",
+  "staffing": "Resource evidence only. Four offices are the statutory scenario, not a staffing recommendation.",
+  "method": {
+    "primary_sources": [
+      "/home/lubko/.local/state/antonina/agents/*/meta.json",
+      "/home/lubko/.local/state/antonina/opencode-service/opencode.db:session_v2"
+    ],
+    "selection": "prompt_count=1; terminal state clearexit/failed/stopped/killed; native_session_id present; finished_at>=started_at",
+    "tokens": "absolute session_v2 sum of input+output+reasoning+cache_read+cache_write; conservative for reused sessions",
+    "cpu": "4 logical CPUs * wall seconds; whole-host UPPER_BOUND charged to each overlapping office, not attributable office CPU",
+    "percentiles": "linear interpolation on the selected sample",
+    "measured_at_epoch": 1795510664
+  },
+  "cohorts": {
+    "institutional_worktree_proxy": {
+      "n": 209,
+      "states": {"clearexit": 188, "failed": 14, "killed": 6, "stopped": 1},
+      "window_utc": ["2026-11-05T20:31:06Z", "2026-11-24T08:55:47Z"],
+      "sample_sha256": "1f1b934b0d591d7a9f4e97aa7597960f14d0d0a5484bdc735482c8eceaf579d9",
+      "tokens_total": {"p50": 3034809, "p95": 10989468, "max": 24387751},
+      "wall_seconds": {"p50": 411.621, "p95": 1996.667, "max": 13989.473},
+      "cpu_upper_bound_seconds": {"p50": 1646.484, "p95": 7986.667, "max": 55957.892}
+    },
+    "adaptive_pnp_title_proxy": {
+      "n": 37,
+      "states": {"clearexit": 28, "failed": 1, "stopped": 8},
+      "window_utc": ["2026-11-23T22:26:20Z", "2026-11-24T08:48:37Z"],
+      "sample_sha256": "2cf023e794c01919434fd1ac46a762236a7c976ce4a255249eaeeb36a6107644",
+      "tokens_total": {"p50": 2939727, "p95": 11320102.2, "max": 16645579},
+      "wall_seconds": {"p50": 526.503, "p95": 1605.862, "max": 12323.615},
+      "cpu_upper_bound_seconds": {"p50": 2106.012, "p95": 6423.446, "max": 49294.46},
+      "note": "Historical comparable adaptive research only. SoringP1 is suspended; this record neither monitors nor resumes it."
+    }
+  },
+  "per_office_proposal": {
+    "basis": "maximum p95 across the two proxy cohorts",
+    "tokens_total": 11320103,
+    "wall_seconds": 1997,
+    "cpu_upper_bound_seconds": 7987,
+    "headroom_note": "No actual Statistics/Foresight/Strategy/Spying execution exists. These are conservative proxy planning values, not measured office demand."
+  },
+  "four_office_parallel_scenario": {
+    "tokens_total": 45280412,
+    "wall_seconds_summed_office_exposure": 7988,
+    "wall_seconds_elapsed_parallel_upper_bound": 1997,
+    "cpu_upper_bound_seconds": 31948,
+    "physical_cpu_seconds_over_elapsed_window": 7988,
+    "note": "CPU UPPER_BOUND is four times the physical CPU window because every overlapping office is charged all host busy CPU."
+  },
+  "current_position": {
+    "ledger": {"tokens_total": 0, "cpu_seconds": 0.0, "wall_seconds": 0, "counted": [], "reservations": 0},
+    "live_caps": {
+      "per_office": {"tokens_total": 400000, "cpu_seconds": 1800, "wall_seconds": 3600},
+      "aggregate": {"tokens_total": 1600000, "cpu_seconds": 7200, "wall_seconds": 14400}
+    },
+    "measured_p95_aggregate_exceeds_live_caps": {
+      "tokens_factor": 28.3,
+      "cpu_upper_bound_factor": 4.437,
+      "summed_wall_fraction": 0.5547,
+      "elapsed_parallel_wall_fraction": 0.1387
+    },
+    "older_proposed_caps": {
+      "per_office_45d": {"tokens_total": 3360000, "cpu_seconds": 50400, "wall_seconds": 100800},
+      "aggregate": {"tokens_total": 13440000, "cpu_seconds": 201600, "wall_seconds": 403200},
+      "measured_p95_aggregate_tokens_factor": 3.369
+    }
+  },
+  "host_snapshot_utc": "2026-11-24T09:00:39Z",
+  "host": {
+    "cpus": 4,
+    "load1": 7.47,
+    "load_status": "watch",
+    "memory_headroom_gib": 9.21,
+    "memory_status": "ok",
+    "disk_avail_gib": 42.8,
+    "disk_used_pct": 80.7,
+    "disk_status": "short",
+    "free_models_available_now": 9,
+    "funding_risk": "none"
+  },
+  "blockers": [
+    "No actual four-office execution sample; office-specific expected demand and peak memory remain UNAVAILABLE.",
+    "Current lawful budget caps are below one four-office proxy-p95 wave (tokens 28.3x; CPU UPPER_BOUND 4.437x). No permit may issue on these caps.",
+    "Provider quota capacity for sustained four-office use is unmeasured; live Iceman check returned HTTP 429 free-limit with no paid fallback.",
+    "Disk remains short; existing outstanding Town Hall disk request is not repeated here.",
+    "Signed permits cite stale budget/control hashes and lack enforcement_evidence and negative_acceptance_digest fields.",
+    "No account-level zero-paid-spend cap was found; the exact-path runtime allowlist is the available control, subject to the verification record."
+  ],
+  "founder_request": "None from this envelope alone: no evidence yet that capacity can only be bought. Executive must choose lawful caps/permits or hold; purchase-only capacity would require a separate priced NEEDS-FOUNDER line."
+}
