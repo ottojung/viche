@@ -26,9 +26,11 @@ no model, variant or provider.
   integrated as commit `c045a8ab2f34dfad9c3ff097e7214a1396240d7a` from
   `delivery/ballot-c1a00004-parity-v3-yes-20261124` (source head `fbe26418b6ca`).
 - `python3 government/bills.py open` no longer lists c1a00004 as owing a v3
-  ballot (remaining: c1a00001, c1a00002, c1a00006, c1a00007, c1a0000b, c1a00009).
+  ballot (re-checked this session: only c1a00001, the Clerk/sponsor, remains).
   `government/tally.sh act34-ordinary-funding-operations-parity-v3` counts the
-  row (present=4 yes=4, quorum=6, required_yes=6, NOT PASSED).
+  row (re-checked this session: present=9 yes=9 no=0 abstain=0, quorum=6,
+  required_yes=6 — vote tally PASSED; this is a ballot-tally fact only and does
+  not assert enactment, activation, a permit, attestation or any spend).
   `/bin/sh government/predict-gate.sh act34-ordinary-funding-operations-parity-v3`
   returns PASS (`not_exercised`).
 

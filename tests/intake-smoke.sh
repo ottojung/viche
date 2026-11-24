@@ -115,6 +115,22 @@ printf '%s\n' 'sha256:message-501' > "$d/state/founder-inbox/feed-cursor"
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'sha256:message-0' ]
 [ "$(wc -l < "$d/mock/calls")" -eq 5 ]
+# A non-Founder opaque anchor must stop the scan even if a Founder message
+# appears later on the same page. No old message may enter the queue.
+jq -n '{entries:[
+  {id:"new-other",position:1002,author:"other",issueNumber:"303"},
+  {id:"sha256:message-0",position:1000,author:"other",issueNumber:"303"},
+  {id:"older-founder",position:999,author:"Vitalik",issueNumber:"303",body:"must not dispatch"}]}' > "$d/mock/feed"
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'new-other' ]
+[ "$(wc -l < "$d/mock/calls")" -eq 5 ]
+# Preserve the legacy numeric cursor boundary, including non-Founder entries.
+printf '%s\n' '1000' > "$d/state/founder-inbox/feed-cursor"
+/bin/sh "$repo/government/founder-intake.sh"
+[ "$(cat "$d/state/founder-inbox/feed-cursor")" = 'new-other' ]
+[ "$(wc -l < "$d/mock/calls")" -eq 5 ]
+# Keep the current anchor present for the repeated-observation regression.
+
 /bin/sh "$repo/government/founder-intake.sh"
 [ "$(wc -l < "$d/mock/calls")" -eq 5 ]
 # An unknown prior anchor must never be silently skipped during a cutover.
