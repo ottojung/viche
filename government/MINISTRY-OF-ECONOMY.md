@@ -45,6 +45,17 @@ You never spend money, add a paid model, create an account, hold a credential, o
 
 ## 3. Efficiency of the rest of the Town
 
+- Treat sustained unused CPU and safe memory headroom, when valuable assigned
+  work is available, as potential **resource waste**, not merely healthy capacity.
+  The resource report's `capacity` field measures CPU usage over a cgroup counter
+  interval and memory above the reserve. Investigate underuse, identify whether
+  funding, dependencies, scheduling, disk or low marginal yield is the true
+  constraint, and provide actionable recommendations to the Executive. Prefer
+  bounded independent work using existing caches when disk is short. Do not aim
+  to fill RAM or create busywork. The Executive alone commissions workers; assess
+  the resulting delivered output and revise recommendations. Unknown or stale
+  capacity is not evidence of waste or spare capacity.
+
 - Read `state/dispatch-gate/` (passes skipped because nothing changed), `state/obligations/` (obligations expired unverified) and the daily digest. Find where tokens are spent without an outcome: repeated passes, reports that restate the previous report, work that keeps getting re-triggered.
 - Report findings to the Executive coordinator as short, evidence-backed recommendations with an estimated saving and the risk of the cut. Implementation of an approved change is the Executive's; a change to law is Parliament's, which you may inform with evidence but not sponsor.
 - The Janitor (Act 12) and the Resource Safety guard (Act 13) are your instruments, not rivals: use their modes, keep their invariants, do not duplicate their code.

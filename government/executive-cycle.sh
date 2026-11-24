@@ -169,6 +169,31 @@ depleted queue. Check live assignments and pursue new useful work when any
 Founder's standing objective is still open.
 EOF
 )
+# Economy's report is the resource authority; missing/stale evidence is not zero.
+economy_capacity='{"status":"unmeasured","action":"obtain fresh Economy report"}'
+if [ -s "$state/economy/resources.json" ]; then
+  economy_capacity=$(jq -c --argjson now "$(date +%s)" '
+    if (.epoch | type) == "number" and $now >= .epoch and ($now-.epoch) <= 3600
+    then {at,overall,capacity,resources: {memory:.resources.memory,load:.resources.load,model_funding:.resources.model_funding}}
+    else {status:"stale",action:"obtain fresh Economy report"} end' "$state/economy/resources.json" 2>/dev/null) || economy_capacity='{"status":"unmeasured"}'
+fi
+economy_signature=$(printf '%s\n' "$economy_capacity" | jq -cS '.capacity.dispatch_signal // {status}' 2>/dev/null) || economy_signature=unreadable
+prompt=$(cat <<EOF
+$prompt
+
+=== MINISTRY OF ECONOMY: RESOURCE CAPACITY AND WASTE ===
+$economy_capacity
+=== END ECONOMY REPORT ===
+Treat unused safe compute capacity with useful outstanding work as resource waste.
+When Economy identifies underuse, commission additional independent productive
+fronts promptly within actual CPU, memory, disk and funding constraints. Do not
+wait for one front to finish if another can proceed. Record a concrete reason if
+safe capacity cannot be used; investigate the bottleneck rather than merely
+reporting it. Reassess results and marginal yield, not activity counts. Preserve
+resource safety and existing model funding policy. Only the Executive manages
+research workers. No fixed worker cap or requirement to artificially consume RAM.
+EOF
+)
 cases='{"open_cases":[]}'
 if [ -f "$town/government/institutional-cases.py" ]; then
   cases=$(python3 "$town/government/institutional-cases.py" report) || exit 1
@@ -215,7 +240,7 @@ if [ -f "$town/government/dispatch-gate.sh" ]; then
   if { printf '%s\n' "$eligible" "$delivery" "$handoffs" "$recovery" "$board_sig" "$proceed"
        git -C "$town" rev-parse HEAD 2>/dev/null || :
        printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || printf '%s\n' "$cases"
-       printf '%s\n' "$mission_dispatch_signature"; } |
+       printf '%s\n' "$mission_dispatch_signature" "$economy_signature"; } |
      /bin/sh "$town/government/dispatch-gate.sh" check executive "${VICHE_EXECUTIVE_GATE_MAX_AGE:-7200}" > "$state/branches/executive-gate.log"; then
     :
   else
