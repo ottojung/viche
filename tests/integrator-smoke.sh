@@ -183,6 +183,65 @@ integrate
 test "$(st verifier-outage)" = landed
 on_main records/verifier-outage.md
 
+# 5c. Git may publish the carrier and lose its acknowledgement. Recover from
+# authoritative remote ancestry, without running or recording a second suite.
+seat lost_ack
+printf 'published once\n' > "$tmp/lost_ack/records/lost-ack.md"
+git -C "$tmp/lost_ack" add -A
+git -C "$tmp/lost_ack" commit -qm 'lost acknowledgement fixture'
+propose lost_ack judiciary lost-ack
+REAL_GIT=$(command -v git)
+export REAL_GIT
+cat > "$tmp/bin/git" <<'GIT'
+#!/bin/sh
+set -eu
+if [ "${VICHE_TEST_ACK_LOST:-no}" = yes ]; then
+  case "$*" in
+    *' push -q origin '*':refs/heads/main')
+      "$REAL_GIT" "$@"
+      exit 124
+      ;;
+  esac
+fi
+exec "$REAL_GIT" "$@"
+GIT
+chmod +x "$tmp/bin/git"
+VICHE_TEST_ACK_LOST=yes integrate
+test "$(st lost-ack)" = approved
+on_main records/lost-ack.md
+test "$(find "$state/delivery/pending-publication" -name '*.json' | wc -l)" -eq 1
+remote_candidate=$(git -C "$remote" rev-parse main^)
+test ! -f "$state/delivery/published-$remote_candidate.json"
+runs=$(wc -l < "$tmp/suite-runs")
+integrate
+test "$(st lost-ack)" = landed
+test "$(wc -l < "$tmp/suite-runs")" -eq "$runs"
+jq -e '.observation=="remote ancestry recovered"' "$state/delivery/published-$remote_candidate.json" >/dev/null
+test "$(jq -s --arg sha "$remote_candidate" 'map(select(.candidate==$sha))|length' "$state/delivery/landed.jsonl")" -eq 1
+test "$(find "$state/delivery/pending-publication" -name '*.json' | wc -l)" -eq 0
+rm "$tmp/bin/git"
+
+# A network helper that starts a child and blocks cannot own the queue lock
+# indefinitely. Only the spawned fixture process group is signalled.
+python3 - "$town/government/integrator.py" "$tmp" <<'PYTEST'
+import importlib.util,os,pathlib,sys,time
+spec=importlib.util.spec_from_file_location("integrator_fixture",sys.argv[1])
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+d=pathlib.Path(sys.argv[2]);fake=d/"bin"/"git"; child=d/"git-child"
+fake.write_text('#!/bin/sh\nsleep 30 &\necho $! > "$GIT_TEST_CHILD"\nwait\n')
+fake.chmod(0o755)
+m.GIT_REMOTE_TIMEOUT=1
+started=time.monotonic()
+try:
+    result=m.git("fetch","origin",check=False,env=dict(os.environ,GIT_TEST_CHILD=str(child)))
+    assert result.returncode==124 and time.monotonic()-started<8
+    pid=int(child.read_text())
+    stat=pathlib.Path("/proc")/str(pid)/"stat"
+    if stat.exists(): assert stat.read_text().rsplit(")",1)[1].split()[0] in ("Z","X")
+finally:
+    fake.unlink()
+PYTEST
+
 # 6. A conflict with main is reported, not landed.
 seat f
 printf 'their line\n' > "$tmp/f/records/shared.md"

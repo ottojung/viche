@@ -55,6 +55,7 @@ import os
 import pathlib
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -70,6 +71,8 @@ REVIEW_TIMEOUT = 24 * 3600
 REVIEW_ATTEMPTS = 2
 # Prefer ready short deliveries, but allow an old full-suite candidate first.
 RECORD_BATCH_LIMIT = 32
+GIT_LOCAL_TIMEOUT = 60
+GIT_REMOTE_TIMEOUT = 90
 LANDED_VISIBLE = 3 * 86400
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
@@ -114,8 +117,32 @@ def append(path, obj):
 
 
 def git(*args, cwd=None, check=True, env=None):
-    done = subprocess.run(["git", "-C", str(cwd or TOWN)] + list(args),
-                          capture_output=True, text=True, env=env)
+    command = ["git", "-C", str(cwd or TOWN)] + list(args)
+    deadline = GIT_REMOTE_TIMEOUT if args and args[0] in ("fetch", "push") else GIT_LOCAL_TIMEOUT
+    # A blocked SSH helper is part of this invocation, not a reason for the
+    # queue to hold its worktree lock indefinitely. Never wait for a terminal
+    # credential prompt. Kill only our own new process group on timeout.
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               text=True, start_new_session=True,
+                               env=dict(os.environ if env is None else env, GIT_TERMINAL_PROMPT="0"))
+    try:
+        stdout, stderr = process.communicate(timeout=deadline)
+        done = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout, stderr = process.communicate()
+        done = subprocess.CompletedProcess(command, 124, stdout,
+                                           (stderr or "") + "\nGit invocation exceeded its deadline")
     if check and done.returncode != 0:
         raise GitError("git %s: %s" % (" ".join(args[:3]), done.stderr.strip()[-300:]))
     return done.stdout.strip() if check else done
@@ -401,6 +428,102 @@ def canonical_preflight(base, candidate):
     return None
 
 
+def pending_publication(candidate):
+    return DELIVERY / "pending-publication" / (candidate + ".json")
+
+
+def finalize_publication(prelanding, entry, recovered=False):
+    """Record only a known successful push or an observed reachable carrier.
+
+    An interrupted acknowledgement never manufactures a publication. The
+    prelanding record and exact verification receipt must still match.
+    """
+    candidate, carrier = prelanding["candidate"], prelanding["carrier"]
+    receipt = DELIVERY / ("verified-%s.json" % candidate)
+    digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
+    if digest != prelanding["suite_record_sha256"]:
+        raise GitError("publication receipt digest mismatch")
+    event_path = DELIVERY / ("published-%s.json" % candidate)
+    event = load(event_path, None)
+    if event is None:
+        event = {"generated_by": "government/integrator.py", "commit": candidate,
+                 "published_at_ns": time.time_ns(), "receipt_sha256": digest,
+                 "observation": "remote ancestry recovered" if recovered else "push acknowledged"}
+        atomic_write(event_path, json.dumps(event, sort_keys=True) + "\n")
+    elif event.get("commit") != candidate or event.get("receipt_sha256") != digest:
+        raise GitError("existing publication evidence differs")
+    # The carrier object is already present locally after our verified build
+    # or a fresh remote fetch. Avoid another redundant network request.
+    sync = git("merge", "--ff-only", carrier, check=False)
+    landed_path = DELIVERY / "landed.jsonl"
+    seen = False
+    if landed_path.exists():
+        for line in landed_path.read_text().splitlines():
+            try:
+                seen = seen or json.loads(line).get("candidate") == candidate
+            except (ValueError, AttributeError):
+                continue
+            if seen:
+                break
+    if not seen:
+        append(landed_path, {k: prelanding[k] for k in
+               ("at", "branch", "head", "office", "reviewed_by", "candidate", "carrier", "suite", "enacts")})
+    entry.update({"status": "landed", "reason": None if sync.returncode == 0 else
+                  "remote landed; canonical checkout synchronization pending",
+                  "candidate": candidate, "carrier": carrier,
+                  "landed_at": now(), "log": None})
+    log("landed %s (%s) as %s%s" % (prelanding["branch"], prelanding["office"],
+        candidate[:12], " (remote ancestry confirmed)" if recovered else ""))
+
+
+def recover_publications(state, remote_main):
+    """Reconcile uncertain pushes after a successful authoritative fetch."""
+    for marker in (DELIVERY / "pending-publication").glob("*.json"):
+        try:
+            data = load(marker, None)
+            if not isinstance(data, dict):
+                raise GitError("pending publication marker unreadable")
+            candidate, carrier = data["candidate"], data["carrier"]
+            if not all(isinstance(x, str) and re.fullmatch(r"[0-9a-f]{40}", x) for x in (candidate, carrier)):
+                raise GitError("pending publication identifiers malformed")
+            if marker != pending_publication(candidate):
+                raise GitError("pending publication filename mismatch")
+            if load(DELIVERY / ("integration-%s.json" % candidate), None) != data:
+                raise GitError("pending publication differs from prelanding record")
+            result = git("merge-base", "--is-ancestor", carrier, remote_main, check=False)
+            if result.returncode == 1:
+                # Fresh remote main does not contain our carrier. Nothing
+                # is claimed as published; ordinary candidate rebuild may retry.
+                marker.unlink()
+                continue
+            if result.returncode != 0:
+                raise GitError("cannot establish remote publication ancestry")
+            if (git("rev-parse", carrier + "^") != candidate
+                    or git("rev-parse", candidate + "^") != data["base"]
+                    or git("rev-parse", candidate + "^{tree}") != data["tree"]
+                    or git("diff", "--name-only", candidate, carrier) != "records/suite-status.json"):
+                raise GitError("remote carrier no longer matches exact prelanding assertions")
+            key = "%s@%s" % (data["branch"], data["head"])
+            entry = state.setdefault(key, {"branch": data["branch"], "head": data["head"],
+                                          "office": data["office"], "proposed_at": data.get("proposed_at", now())})
+            finalize_publication(data, entry, recovered=True)
+        except (GitError, OSError, KeyError, ValueError, TypeError) as error:
+            log("pending publication %s not reconciled: %s" % (marker.name, error))
+
+
+def clear_finalized_publications(state):
+    # A crash before the atomic queue-state write leaves the marker available
+    # for idempotent recovery. Remove only after the landed status is durable.
+    for marker in (DELIVERY / "pending-publication").glob("*.json"):
+        data = load(marker, {})
+        if not isinstance(data, dict):
+            continue
+        key = "%s@%s" % (data.get("branch"), data.get("head"))
+        entry = state.get(key, {})
+        if entry.get("status") == "landed" and entry.get("candidate") == data.get("candidate"):
+            marker.unlink(missing_ok=True)
+
+
 def land(p, entry, review):
     git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main")
     base = git("rev-parse", "refs/remotes/origin/main")
@@ -541,27 +664,20 @@ def land(p, entry, review):
             return False
         prelanding = {"generated_by": "government/integrator.py", "act": 31, "at": iso(now()),
                       "branch": p["branch"], "head": p["head"], "office": p["office"],
+                      "proposed_at": p["at"],
                       "reviewed_by": review["office"] if review else None,
                       "review_reason": review.get("reason") if review else None,
                       "base": base, "candidate": candidate, "tree": tree, "carrier": carrier,
                       "suite": suite, "suite_record_sha256": hashlib.sha256(receipt.read_bytes()).hexdigest(),
                       "enacts": bill, "paths": info["paths"], "assertions": assertions}
         atomic_write(DELIVERY / ("integration-%s.json" % candidate), json.dumps(prelanding, sort_keys=True, indent=1) + "\n")
+        atomic_write(pending_publication(candidate), json.dumps(prelanding, sort_keys=True, indent=1) + "\n")
         pushed = git("push", "-q", "origin", carrier + ":refs/heads/main", cwd=wt, check=False)
         if pushed.returncode != 0:
-            entry.update({"status": "approved", "reason": "main moved during landing; rebuilt next cycle"})
+            entry.update({"status": "approved", "reason":
+                          "publication unconfirmed (git exit %d); reconcile against fresh remote main" % pushed.returncode})
             return False
-        atomic_write(DELIVERY / ("published-%s.json" % candidate), json.dumps(
-            {"generated_by": "government/integrator.py", "commit": candidate,
-             "published_at_ns": time.time_ns(),
-             "receipt_sha256": hashlib.sha256(receipt.read_bytes()).hexdigest()}, sort_keys=True) + "\n")
-        git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main", check=False)
-        git("merge", "--ff-only", carrier, check=False)
-        append(DELIVERY / "landed.jsonl", {k: prelanding[k] for k in
-               ("at", "branch", "head", "office", "reviewed_by", "candidate", "carrier", "suite", "enacts")})
-        entry.update({"status": "landed", "reason": None, "candidate": candidate, "carrier": carrier,
-                      "landed_at": now(), "log": None})
-        log("landed %s (%s) as %s" % (p["branch"], p["office"], candidate[:12]))
+        finalize_publication(prelanding, entry)
         return True
     finally:
         git("worktree", "remove", "--force", str(wt), check=False)
@@ -609,6 +725,7 @@ def run_locked():
         return 1
     base = git("rev-parse", "refs/remotes/origin/main")
     state = load(ROOT / "state.json", {})
+    recover_publications(state, base)
     all_reviews = reviews()
     ready = []
     for p in proposals():
@@ -664,6 +781,7 @@ def run_locked():
     def persist():
         publish(state)
         atomic_write(ROOT / "state.json", json.dumps(state, sort_keys=True, indent=1) + "\n")
+        clear_finalized_publications(state)
 
     persist()
     for p, entry, review, suite in landing_batch(ready):
