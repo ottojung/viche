@@ -48,6 +48,13 @@ cases for cross-page duplicate tolerance, in-page duplicate/unreadable fail-clos
 idle workspace reuse by exact cwd, two-pass idempotence with one roster fetch per
 pass, pagination-race non-duplication, and duplicate/uncertain-worker refusal.
 
-Delivery: branch `exec/staff-roster-lookup-20261124`, proposed via
-`government/propose-delivery.sh --office executive staff-roster-lookup-20261124`.
-Land through the integration queue only.
+Delivery: committed as `08b6de1a` on branch `exec/staff-roster-lookup-20261124`.
+`government/propose-delivery.sh --office executive staff-roster-lookup-20261124`
+was attempted and **refused before publication** because its applicable suite
+`tests/run-all.sh` exits 8 at `tests/executive-cycle-smoke.sh`. That failure is
+pre-existing (reproduced at clean HEAD `1ece4f3a` in a detached worktree), caused
+by the smoke's SoringP1 dispatch fixture conflicting with the Founder's
+2026-11-24 indefinite SoringP1 suspension; it is outside this change's scope.
+Filed durably at
+`/var/lib/lubko/wd/viche-state/oversight/judiciary-mailbox/inbox/20261124T0945Z-executive-delivery-gate-red-stale-soring-smoke.md`.
+No push, merge or hand landing; the change is not claimed as delivered.
