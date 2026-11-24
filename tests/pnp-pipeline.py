@@ -57,6 +57,43 @@ def candidate_file(content=GOOD):
     return p
 
 
+class TestGitRunCwd(unittest.TestCase):
+    def test_remote_only_git_uses_durable_cwd_when_unspecified(self):
+        # A deleted launcher worktree must not break `git ls-remote`, which
+        # resolves its repository from the process cwd even for a remote URL.
+        captured = {}
+
+        class FakeResult:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        def fake_run(argv, cwd=None, **kw):
+            captured["cwd"] = cwd
+            return FakeResult()
+
+        with mock.patch.object(gitctl.subprocess, "run", fake_run):
+            gitctl.run(["git", "ls-remote", "--heads", "url", "refs/heads/x"])
+        self.assertEqual(captured["cwd"], config.CACHE_DIR)
+        self.assertTrue(os.path.isdir(config.CACHE_DIR))
+
+    def test_explicit_cwd_is_respected(self):
+        captured = {}
+
+        class FakeResult:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        def fake_run(argv, cwd=None, **kw):
+            captured["cwd"] = cwd
+            return FakeResult()
+
+        with mock.patch.object(gitctl.subprocess, "run", fake_run):
+            gitctl.run(["git", "rev-parse", "HEAD"], cwd="/example/worktree")
+        self.assertEqual(captured["cwd"], "/example/worktree")
+
+
 class FakeDesk:
     def __init__(self, beat=200):
         self.beat_status = beat

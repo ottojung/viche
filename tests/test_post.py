@@ -5,6 +5,8 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sqlite3
+import time
 import tempfile
 import unittest
 
@@ -207,6 +209,31 @@ class PostTest(unittest.TestCase):
         self.assertEqual(pub["delivered"],1)
         self.assertEqual(self.cli("inbox","--office",ident)[0]["alert"],1)
         self.assertEqual(self.cli("wake","--office",ident)["urgent_unread"],0)
+
+    def test_wal_initialization_waits_for_transient_writer(self):
+        # A cold database in rollback-journal mode held by another writer.
+        # WAL conversion may return BUSY immediately, not after busy_timeout.
+        db=sqlite3.connect(self.env["VICHE_POST_DB"])
+        self.addCleanup(db.close)
+        db.execute("CREATE TABLE fixture (x INTEGER)")
+        db.commit()
+        db.execute("BEGIN IMMEDIATE")
+        proc=subprocess.Popen(["python3",str(POST),"inbox","--office","judiciary"],
+                              env=self.env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        try:
+            time.sleep(0.5)
+            self.assertIsNone(proc.poll(), "initialization failed instead of waiting for writer")
+            db.commit()
+            out,err=proc.communicate(timeout=20)
+            self.assertEqual(proc.returncode,0,err)
+            self.assertEqual(json.loads(out),[])
+            with sqlite3.connect(self.env["VICHE_POST_DB"]) as fresh:
+                self.assertEqual(fresh.execute("PRAGMA journal_mode").fetchone()[0],"wal")
+        finally:
+            db.rollback()
+            if proc.poll() is None:
+                proc.kill()
+                proc.communicate()
 
     def test_atomic_concurrent_idempotency(self):
         def action(_):

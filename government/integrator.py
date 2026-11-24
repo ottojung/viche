@@ -68,6 +68,8 @@ OFFICES = DELIVERY / "office"
 EXPIRE_SECONDS = 14 * 86400
 REVIEW_TIMEOUT = 24 * 3600
 REVIEW_ATTEMPTS = 2
+# Prefer ready short deliveries, but allow an old full-suite candidate first.
+FULL_SUITE_PRIORITY_AGE = 3600
 LANDED_VISIBLE = 3 * 86400
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
@@ -301,6 +303,73 @@ def suite_for(paths):
         else "tests/run-all.sh"
 
 
+def ballot_rows(blob, digest, seats):
+    """Validate exact newline-terminated rows; never normalize or invent votes."""
+    if blob and not blob.endswith(b"\n"):
+        raise ValueError("incomplete ballot row")
+    rows = {}
+    for row in blob.splitlines(keepends=True):
+        fields = row[:-1].split(b"\t")
+        if (len(fields) != 3 or fields[0] not in seats
+                or fields[1] not in (b"yes", b"no", b"abstain")
+                or fields[2] != digest or fields[0] in rows):
+            raise ValueError("invalid or conflicting ballot row")
+        rows[fields[0]] = row
+    return rows
+
+
+def resolve_ballot_append(wt, path, proposer):
+    """Merge only independent, exact-SHA append-only ballots.
+
+    An incoming auto-resolution may add only the proposing seat's own row.
+    All prior rows and current main rows stay byte-identical; a conflicting
+    same-seat vote or amended bill is never guessed at. The actual merged
+    candidate still runs the ordinary suite and any required tally.
+    """
+    match = re.fullmatch(r"records/ballots/([A-Za-z0-9_-]+)[.]tsv", path)
+    if not match:
+        return False
+    bill = wt / "records" / "bills" / (match[1] + ".md")
+    roster = wt / "government" / "seats.tsv"
+    if any(x.is_symlink() or not x.is_file() for x in (bill, roster)):
+        return False
+    target = wt / path
+    # Never interpret a symlink, gitlink, or non-regular conflict stage as
+    # ballot data or write through it. The merge worktree is disposable.
+    stages = git("ls-files", "-u", "--", path, cwd=wt).splitlines()
+    if target.is_symlink() or any(line.split()[0] != "100644" for line in stages):
+        return False
+    def stage(n):
+        result = subprocess.run(["git", "-C", str(wt), "show", ":%d:%s" % (n, path)],
+                                capture_output=True)
+        return result.stdout if result.returncode == 0 else None
+    old, ours, theirs = stage(1), stage(2), stage(3)
+    if ours is None or theirs is None:
+        return False  # deletion, not a concurrent append
+    old = old if old is not None else b""
+    if not ours.startswith(old) or not theirs.startswith(old):
+        return False
+    try:
+        digest = hashlib.sha256(bill.read_bytes()).hexdigest().encode("ascii")
+        seats = {line.split(b"\t", 1)[0] for line in roster.read_bytes().splitlines()}
+        before = ballot_rows(old, digest, seats)
+        current = ballot_rows(ours, digest, seats)
+        incoming = ballot_rows(theirs, digest, seats)
+        additions = {seat: row for seat, row in incoming.items() if seat not in before}
+        if set(additions) - {proposer.encode("ascii")}:
+            return False
+        for seat, row in additions.items():
+            if seat in current and current[seat] != row:
+                return False
+        combined = ours + b"".join(row for seat, row in additions.items() if seat not in current)
+        ballot_rows(combined, digest, seats)
+        target.write_bytes(combined)
+        git("add", "--", path, cwd=wt)
+        return True
+    except (OSError, ValueError, GitError):
+        return False
+
+
 def canonical_preflight(base, candidate):
     """The canonical checkout must be at base and hold no untracked or edited
     file the landing would overwrite (same rule as reviewed-merge.sh)."""
@@ -349,8 +418,10 @@ def land(p, entry, review):
             conflicted = [f for f in git("diff", "--name-only", "--diff-filter=U", cwd=wt).splitlines() if f]
             if not conflicted:
                 raise GitError("merge failed without conflicts: " + merged.stderr.strip()[-200:])
-            if conflicted != ["AGENTS.md"]:
-                entry.update({"status": "conflict", "reason": "conflicts with main in " + ", ".join(conflicted[:8])})
+            unresolved = [path for path in conflicted if path != "AGENTS.md"
+                          and not resolve_ballot_append(wt, path, p["office"])]
+            if unresolved:
+                entry.update({"status": "conflict", "reason": "conflicts with main in " + ", ".join(unresolved[:8])})
                 return False
         # The canonical Founder policy always wins over a branch's old copy.
         git("checkout", base, "--", "AGENTS.md", cwd=wt, check=False)
@@ -549,20 +620,43 @@ def run_locked():
                 continue
         entry.update({"status": "approved", "reason": None,
                       "reviewed_by": review["office"] if review else None})
-        ready.append((p, entry, review))
+        ready.append((p, entry, review, suite_for(info["paths"])))
     # A newer proposal on the same branch replaces every older unfinished one.
     latest = {p["branch"]: p["head"] for p in proposals()}
     for entry in state.values():
         if (entry.get("status") not in TERMINAL and entry.get("branch") in latest
                 and entry.get("head") != latest[entry["branch"]]):
             entry.update({"status": "superseded", "reason": "a newer commit was proposed on this branch"})
-    for p, entry, review in ready:
+    # Short ready records should not wait behind several full-suite candidates.
+    # A code proposal aged >= 1h gets first priority (oldest first); at most
+    # one full candidate is attempted per pass, so the next pass can discover
+    # newly arrived records rather than monopolizing the queue.
+    def priority(item):
+        p, _, _, suite = item
+        if suite != "tests/records-smoke.sh" and now() - p["at"] >= FULL_SUITE_PRIORITY_AGE:
+            return (0, p["at"])
+        return (1 if suite == "tests/records-smoke.sh" else 2, p["at"])
+
+    def persist():
+        publish(state)
+        atomic_write(ROOT / "state.json", json.dumps(state, sort_keys=True, indent=1) + "\n")
+
+    persist()
+    full_attempted = False
+    for p, entry, review, suite in sorted(ready, key=priority):
+        if entry.get("status") in TERMINAL:
+            continue
+        if suite != "tests/records-smoke.sh":
+            if full_attempted:
+                continue
+            full_attempted = True
         try:
             land(p, entry, review)
         except (GitError, OSError, subprocess.SubprocessError) as error:
             entry.update({"status": "approved", "reason": "landing error, retried next cycle: %s" % error})
             log("landing %s failed: %s" % (p["branch"], error))
         entry["updated_at"] = now()
+        persist()  # wake an office as soon as its record lands, before a full suite
     for key, entry in state.items():
         if entry.get("status") in TERMINAL and entry.get("head"):
             review_wt = ROOT / "review" / entry["head"][:12]

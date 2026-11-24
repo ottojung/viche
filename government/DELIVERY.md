@@ -68,3 +68,11 @@ For manual source tests, run from the source worktree using the canonical
 `/bin/sh /var/lib/lubko/wd/viche/government/suite-env.sh /bin/sh tests/YOUR-TEST.sh`.
 This disposable runtime protects normal tests from inherited live configuration;
 it is not a security sandbox for arbitrary same-user code.
+
+The queue prioritizes ready short records before full-suite code deliveries;
+full-suite work that has waited an hour gets first priority, and at most one
+full-suite candidate is attempted per pass. Status is published after each
+landing. Concurrent ballot append conflicts may be resolved mechanically
+only for the proposing seat's own exact-digest row, preserving every prior
+row byte-for-byte and rejecting any different vote for the same seat. The
+ordinary exact merged-candidate suite, required review and tally remain in force.

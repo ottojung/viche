@@ -273,3 +273,13 @@ creating a second agent on its worktree. Terminal failure recovery and
 unsafe holds remain governed by the existing continuity rules. This policy
 does not reset delegated research agents' sessions: their unfinished proof
 work may genuinely need context continuity.
+
+### Test and delivery liveness
+From a source worktree, run manual tests through the canonical
+`/bin/sh /var/lib/lubko/wd/viche/government/suite-env.sh /bin/sh tests/YOUR-TEST.sh`
+(or `suite-env.sh python3 tests/YOUR-TEST.py`). Use the canonical
+`/bin/sh /var/lib/lubko/wd/viche/government/propose-delivery.sh --office OFFICE SLUG`.
+The ordinary exact-candidate full suite runs at integration; targeted source
+checks are useful, but a second mandatory full source suite is not needed.
+Never run historical unisolated tests against production agent/model state or
+read live credentials from a test fixture.
