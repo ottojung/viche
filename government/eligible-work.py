@@ -126,7 +126,7 @@ def invoke(*args):
 def explicit(text):
     normalized = re.sub(r"\s+", " ", text.lower()) if isinstance(text, str) else ""
     pats = (
-        r"(?:execution|dispatch|assignment|target)\s+(?:host|target|machine|server)\s*[:=]\s*billy-dev",
+        r"(?:execution|dispatch|assignment|target)[\s-]+(?:host|target|machine|server)\s*[:=]\s*billy-dev",
         r"(?:assign(?:ed|ment)?|route(?:d)?|dispatch(?:ed)?)\s+(?:\S+\s+){0,9}(?:to|on)\s+billy-dev",
         r"(?:agent|worker)(?:\s+\S+){0,13}\s+(?:must|shall|only|exclusively)(?:\s+\S+){0,12}\s+(?:on|at)\s+billy-dev",
         r"(?:agent|worker)\s+execution(?:\s+\S+){0,14}\s+(?:on|at)\s+billy-dev",
@@ -160,7 +160,7 @@ def _eligible_item(row, issue):
     assigned = explicit(body) or any(
         c.get("author") == "Vitalik"
         and ("this issue" in c.get("body", "").lower()
-             or c.get("body", "").lower().startswith("execution host:"))
+             or c.get("body", "").lower().lstrip().startswith(("execution host:", "execution-host:")))
         and explicit(c.get("body", ""))
         for c in (issue.get("messages") or []))
     if assigned and "legislature-only" not in body.lower() and not (

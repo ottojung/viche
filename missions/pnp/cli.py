@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Stable operator interface for the PnP contribution workflow.
+
+    python3 missions/pnp/cli.py status
+    python3 missions/pnp/cli.py acquire [--hard]
+    python3 missions/pnp/cli.py beat <gap-id>
+    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
+    python3 missions/pnp/cli.py reconcile
+"""
+import argparse
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+if __package__ in (None, ""):
+    # Support the required direct invocation:
+    #   python3 missions/pnp/cli.py <command>
+    sys.path.insert(0, os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "..")))
+    from missions.pnp import (config, desk as desk_mod, publish,
+                                reconcile, state, jobs, frontier, assignment)
+else:
+    from . import config, desk as desk_mod, publish, reconcile, state, jobs, frontier, assignment
+
+
+def _printer(data):
+    print(json.dumps(data, indent=2, sort_keys=True))
+
+
+def cmd_status(args):
+    d = desk_mod.Desk()
+    docs = d.docs()
+    desk_state = d.status()
+    _printer({
+        "headline": config.HEADER,
+        "open_gaps": desk_state.get("open_gaps"),
+        "held_now": desk_state.get("held_now"),
+        "docs_bytes": len(docs),
+        "leases": [{"gap": g,
+                    "state": state.load(g)["state"],
+                    "expires": state.load(g).get("lease_expires_at")}
+                   for g in state.all_gaps()
+                   if state.load(g).get("lease")],
+        "gaps": [{k: state.load(g).get(k)
+                  for k in ("gap_id", "state", "lease", "branch",
+                            "commit_sha", "pr_number", "external_verdict")}
+                 for g in state.all_gaps()],
+    })
+
+
+def cmd_acquire(args):
+    d = desk_mod.Desk()
+    d.docs(refresh=True)                       # live rules on startup
+    held = sum(1 for g in state.all_gaps()
+               if state.load(g).get("lease") and
+               state.load(g)["state"] not in
+               ("RELEASED", "STALE", "ACCEPTED"))
+    if held >= config.MAX_LEASES:
+        print("refusing to exceed the desk's %d active leases" %
+              config.MAX_LEASES, file=sys.stderr)
+        return 2
+    answer = d.next_gap(hard=args.hard, another=args.another)
+    if answer is None:
+        print("no claimable gap right now; retry later", file=sys.stderr)
+        return 1
+    gap, lease_data = answer["gap"], answer["lease"]
+    lease = lease_data.get("id") if isinstance(lease_data, dict) else lease_data
+    if not isinstance(lease, str) or not lease:
+        print("desk returned a malformed lease", file=sys.stderr)
+        return 2
+    gid = gap.get("id")
+    if not isinstance(gid, str) or not config.GAP_ID_RE.match(gid):
+        print("desk returned a gap id failing the grammar", file=sys.stderr)
+        return 2
+    prior = state.load(gid)
+    if prior is not None:
+        # The desk granted a fresh lease for a gap we have seen before.  The
+        # old behaviour released it with reason 'other', which (per live
+        # join.txt) re-arms a one-hour cooldown and feeds the ten-minute step
+        # rate limit.  With several workers churning acquire/release this
+        # locked the whole handle out of the desk.  Adopt the fresh lease so
+        # the gap can actually be worked; the event log keeps every attempt.
+        if prior["state"] in ("RELEASED", "STALE"):
+            rec = state.reacquire(
+                gid, statement=gap.get("statement"),
+                module=gap.get("module"), path=gap.get("file"),
+                imports=gap.get("imports") or [],
+                gap_title=gap.get("title"),
+                context=gap.get("context"), dead=gap.get("dead"),
+                lease=lease, lease_obtained_at=time.time(),
+                lease_expires_at=time.time() +
+                config.LEASE_TTL_SECONDS)
+            state.event(gid, "acquired", {"hard": bool(args.hard),
+                                          "another": bool(args.another),
+                                          "reacquired": True})
+            _printer({"gap": gid, "file": rec["path"],
+                      "module": rec["module"], "lease": lease,
+                      "reacquired": True, "headline": config.HEADER})
+            return 0
+        # Genuine duplicate: an active lease/PR already exists.  Never
+        # release the spare lease with 'other'/'out_of_time': that triggers
+        # the cooldown and rate limit.  Let the spare lease expire on its own.
+        print("gap already has an active local lease; ignoring spare desk "
+              "lease (it will expire) - never release it as 'other'",
+              file=sys.stderr)
+        return 1
+    rec = state.create(gid, state="DISCOVERED",
+                       statement=gap.get("statement"),
+                       module=gap.get("module"), path=gap.get("file"),
+                       imports=gap.get("imports") or [],
+                       gap_title=gap.get("title"),
+                       context=gap.get("context"), dead=gap.get("dead"),
+                       lease=lease, lease_obtained_at=time.time(),
+                       lease_expires_at=time.time() +
+                       config.LEASE_TTL_SECONDS)
+    state.transition(gid, "LEASED")
+    state.event(gid, "acquired", {"hard": bool(args.hard),
+                                  "another": bool(args.another)})
+    _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
+              "lease": lease, "headline": config.HEADER})
+    return 0
+
+
+def cmd_beat(args):
+    rec = state.load(args.gap)
+    if not rec or not rec.get("lease"):
+        print("no lease for gap", file=sys.stderr)
+        return 2
+    status = desk_mod.Desk().beat(rec["lease"])
+    if status == 410:
+        state.transition(args.gap, "STALE",
+                         failure_reason="lease returned 410")
+        print("lease is gone (410); stop work on this gap", file=sys.stderr)
+        return 1
+    state.update(args.gap, lease_expires_at=time.time() +
+                 config.LEASE_TTL_SECONDS)
+    print("lease renewed")
+    return 0
+
+
+def cmd_release(args):
+    rec = state.load(args.gap)
+    if not rec or not rec.get("lease"):
+        print("no lease for gap", file=sys.stderr)
+        return 2
+    desk_mod.Desk().release(rec["lease"], args.reason)
+    state.transition(args.gap, "RELEASED", failure_reason=args.reason)
+    print("released " + args.gap + " with reason " + args.reason)
+    return 0
+
+
+def cmd_submit(args):
+    try:
+        expected = None
+        for path in (Path.cwd(), Path(args.candidate).resolve().parent):
+            if assignment.workspace(path):
+                gap, lease = assignment.resolve(args.gap, cwd=path)
+                if expected is not None and expected != lease:
+                    raise ValueError("candidate belongs to a different assignment")
+                expected = lease
+        _printer(jobs.submit(args.gap, args.candidate, expected_lease=expected))
+    except (publish.StopPublish, jobs.validate.InvalidCandidate, OSError, ValueError) as exc:
+        print("PUBLISH STOPPED: " + str(exc), file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_reconcile(args):
+    _printer(reconcile.reconcile_all())
+    return 0
+
+
+def cmd_guard(args):
+    try:
+        gap, lease = assignment.resolve(args.gap, args.lease)
+        result = frontier.checkpoint(gap, lease)
+    except (OSError, ValueError) as exc:
+        result = {"decision": "wait", "reason": str(exc)}
+    _printer(result)
+    return 0
+
+
+def cmd_assignment(args):
+    try:
+        _printer(assignment.prepare(args.gap))
+        return 0
+    except (OSError, ValueError, RuntimeError) as exc:
+        print("assignment unavailable: " + str(exc), file=sys.stderr)
+        return 1
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="pnp")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("status").set_defaults(fn=cmd_status)
+    acq = sub.add_parser("acquire")
+    acq.add_argument("--hard", action="store_true")
+    acq.add_argument("--another", action="store_true")
+    acq.set_defaults(fn=cmd_acquire)
+    beat = sub.add_parser("beat")
+    beat.add_argument("gap")
+    beat.set_defaults(fn=cmd_beat)
+    rel = sub.add_parser("release")
+    rel.add_argument("gap")
+    rel.add_argument("reason")
+    rel.set_defaults(fn=cmd_release)
+    subp = sub.add_parser("submit")
+    subp.add_argument("gap")
+    subp.add_argument("candidate")
+    subp.set_defaults(fn=cmd_submit)
+    guard = sub.add_parser("guard")
+    guard.add_argument("gap", nargs="?")
+    guard.add_argument("--lease")
+    guard.set_defaults(fn=cmd_guard)
+    bind = sub.add_parser("assignment")
+    bind.add_argument("gap")
+    bind.set_defaults(fn=cmd_assignment)
+    sub.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
+    args = parser.parse_args(argv)
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

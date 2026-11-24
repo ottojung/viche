@@ -17,6 +17,13 @@ with tempfile.TemporaryDirectory() as td:
     government=town/"government"
     seats=root/"seats"
     state=root/"state"
+    # Boot needs an Antonina CLI in production, but CI must not depend on
+    # one being installed on the runner. Supply an isolated fixture.
+    bin_dir=root/"bin"
+    bin_dir.mkdir()
+    antonina=bin_dir/"antonina"
+    antonina.write_text("#!/bin/sh\nexit 0\n")
+    antonina.chmod(0o755)
     government.mkdir(parents=True)
     (seats/"c1a00001").mkdir(parents=True)
     (seats/"c1a00001"/".git").touch()
@@ -31,7 +38,8 @@ with tempfile.TemporaryDirectory() as td:
     (government/"oversight-watch.sh").write_text("#!/bin/sh\nsleep 8\nexit 9\n")
     subprocess.run(["git","init","-q",str(town)],check=True)
     env=dict(os.environ,VICHE_TOWN_ROOT=str(town),
-             VICHE_SEATS_ROOT=str(seats),VICHE_STATE_ROOT=str(state))
+             VICHE_SEATS_ROOT=str(seats),VICHE_STATE_ROOT=str(state),
+             PATH=str(bin_dir)+os.pathsep+os.environ.get("PATH", ""))
     start=time.monotonic()
     run=subprocess.run(["/bin/sh",str(government/"boot.sh")],
         env=env,capture_output=True,text=True,timeout=4)

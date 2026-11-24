@@ -43,8 +43,10 @@ VICHE_TOWN_ROOT=$scratch/town
 VICHE_SEATS_ROOT=$scratch/seats
 VICHE_STATE_ROOT=$scratch/state
 VICHE_CONSTITUTION=$scratch/charter
-VICHE_KAWUN_REPO=$scratch/unavailable-kawun
+VICHE_OVERSIGHT_REPO=$scratch/unavailable-kawun
 VICHE_OVERSIGHT_NOW=20000
+VICHE_OVERSIGHT_ISSUE_PATTERN=Kawun
+VICHE_OVERSIGHT_ISSUE_PATTERN=Kawun
 MOCK_BOARD='[{"number":152,"title":"Kawun: audit secrets"},{"number":43,"title":"Unrelated project"}]'
 EXEC_STATE=failed
 ERROR=upstream_endpoint_unavailable
@@ -56,13 +58,13 @@ DISPATCHES=$scratch/dispatches
 NOTICES=$scratch/notices
 VICHE_TOWNHALL_ID=302
 export PATH VICHE_TOWN_ROOT VICHE_SEATS_ROOT VICHE_STATE_ROOT VICHE_CONSTITUTION
-export VICHE_KAWUN_REPO VICHE_OVERSIGHT_NOW MOCK_BOARD EXEC_STATE ERROR LAST
+export VICHE_OVERSIGHT_REPO VICHE_OVERSIGHT_ISSUE_PATTERN VICHE_OVERSIGHT_NOW MOCK_BOARD EXEC_STATE ERROR LAST
 VICHE_AUDIT_SELECTION=0
 VICHE_AUDIT_CHECKS=0
 export AUDIT_STATE MODEL VARIANT DISPATCHES NOTICES VICHE_TOWNHALL_ID VICHE_AUDIT_SELECTION VICHE_AUDIT_CHECKS
 /bin/sh "$repo/government/oversight-watch.sh"
 incident=$scratch/state/oversight/incident.json
-jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_kawun_issues_first_page == 1' "$incident" >/dev/null
+jq -e '.first_seen == 20000 and (.signals | index("executive_failed")) and .open_assigned_issues_first_page == 1' "$incident" >/dev/null
 /bin/sh "$repo/government/audit-cycle.sh"
 [ "$(wc -l < "$DISPATCHES")" -eq 1 ]
 /bin/sh "$repo/government/audit-cycle.sh"

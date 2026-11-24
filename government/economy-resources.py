@@ -188,6 +188,122 @@ def load_average():
             "per_cpu": round(five / cpus, 2)}
 
 
+def cpu_counter():
+    """Cgroup CPU usage, not load average; respect affinity and CPU quota."""
+    try:
+        fields = dict(line.split() for line in (CGROUP / "cpu.stat").read_text().splitlines())
+        quota, period = (CGROUP / "cpu.max").read_text().split()
+        cpus = float(len(os.sched_getaffinity(0)))
+        effective = (CGROUP / "cpuset.cpus.effective").read_text().strip()
+        if effective:
+            count = sum(int(part.split("-")[-1]) - int(part.split("-")[0]) + 1
+                        for part in effective.split(","))
+            cpus = min(cpus, count)
+        if quota != "max":
+            cpus = min(cpus, int(quota) / int(period))
+        st = CGROUP.stat()
+        if cpus <= 0:
+            return None
+        return {"usage_usec": int(fields["usage_usec"]), "cpus": cpus,
+                "identity": "%s:%s" % (st.st_dev, st.st_ino)}
+    except (OSError, ValueError, KeyError, ZeroDivisionError, AttributeError):
+        return None
+
+
+def pressure():
+    """Cgroup pressure-stall measurements; unavailable is not zero."""
+    result = {}
+    for resource in ("cpu", "memory", "io"):
+        try:
+            values = {}
+            for line in (CGROUP / (resource + ".pressure")).read_text().splitlines():
+                kind, *fields = line.split()
+                fields = dict(field.split("=", 1) for field in fields)
+                values[kind] = float(fields["avg60"])
+            result[resource] = values
+        except (OSError, ValueError, KeyError):
+            result[resource] = None
+    return result
+
+
+def capacity_assessment(resources, counter, previous, current, pol):
+    """Report potential resource waste separately from scarcity/safety status.
+
+    A time-window delta is evidence, not a worker quota. Never fill memory
+    for its own sake; prefer productive, bounded, independent work.
+    """
+    old = previous.get("capacity", {})
+    before = old.get("cpu_sample") or {}
+    elapsed = current - before.get("epoch", current)
+    sample = dict(counter, epoch=current) if counter else None
+    cpu = None
+    if (sample and 60 <= elapsed <= 3600 and
+            before.get("identity") == sample["identity"] and
+            before.get("cpus") == sample["cpus"] and
+            isinstance(before.get("usage_usec"), int)):
+        delta = sample["usage_usec"] - before["usage_usec"]
+        if 0 <= delta <= elapsed * 1e6 * sample["cpus"] * 1.05:
+            cpu = min(sample["cpus"], delta / (elapsed * 1e6))
+    mem = resources.get("memory", {})
+    headroom = mem.get("headroom_gib")
+    reserve = max(3.0, pol["memory_headroom_bytes"][0] / GIB)
+    spare_mem = max(0.0, headroom - reserve) if isinstance(headroom, (int, float)) else None
+    spare_cpu = sample["cpus"] - cpu if cpu is not None else None
+    previous_oom = previous.get("resources", {}).get("memory", {}).get("oom_kills")
+    oom = mem.get("oom_kills")
+    new_oom = isinstance(previous_oom, int) and isinstance(oom, int) and oom > previous_oom
+    funding = resources.get("model_funding", {})
+    disks = [v for k, v in resources.items() if k.startswith("disk:")]
+    disk_mode = ("unknown" if not disks else "blocked" if any(v["status"] == "critical" for v in disks)
+                 else "disk-light-only" if any(v["status"] in ("short", "watch") for v in disks) else "normal")
+    # Distinct resources constrain distinct workloads. This summary is
+    # not an admission decision, an agent quota, or a global stop signal.
+    reasons = []
+    if disk_mode in ("blocked", "unknown"):
+        reasons.append("disk safety or visibility")
+    if mem.get("status") != "ok" or new_oom:
+        reasons.append("memory safety or recent OOM")
+    if resources.get("load", {}).get("status") in ("short", "critical"):
+        reasons.append("load pressure")
+    free = funding.get("free_available_now")
+    if not isinstance(free, int) or free < 1 or funding.get("status") == "critical":
+        reasons.append("free model availability")
+    if reasons:
+        status = "constrained"
+    elif spare_cpu is None or spare_mem is None:
+        status = "unmeasured"
+    elif spare_cpu >= 1.0 and spare_mem >= 2.0 and cpu / sample["cpus"] <= .70:
+        status = "underused"
+    else:
+        status = "no_clear_spare_capacity"
+    cpu_state = ("unknown" if cpu is None else
+                 "spare" if spare_cpu >= 1.0 and cpu / sample["cpus"] <= .70 else
+                 "busy")
+    if resources.get("load", {}).get("status") in ("short", "critical"):
+        cpu_state = "contended"
+    memory_state = ("unknown" if spare_mem is None else
+                    "pressure" if new_oom or mem.get("status") != "ok" else
+                    "spare" if spare_mem >= 2.0 else "limited")
+    funding_state = ("unknown" if not isinstance(free, int) else
+                     "unavailable" if free < 1 else "available")
+    stalls = pressure()
+    dimensions = {"cpu": cpu_state, "memory": memory_state,
+                  "disk": disk_mode, "model_funding": funding_state}
+    signal = {"status": status, "dimensions": dimensions,
+              "spare_cpu_band": int(spare_cpu) if spare_cpu is not None else None,
+              "spare_memory_band": int(spare_mem // 2) if spare_mem is not None else None,
+              "constraints": reasons}
+    return {"status": status, "cpu_sample": sample, "window_seconds": elapsed if cpu is not None else None,
+            "cpu_used_cores": round(cpu, 2) if cpu is not None else None,
+            "cpu_spare_cores": round(spare_cpu, 2) if spare_cpu is not None else None,
+            "memory_headroom_gib": headroom, "memory_reserve_gib": reserve,
+            "memory_spare_gib": round(spare_mem, 2) if spare_mem is not None else None,
+            "disk_mode": disk_mode, "constraints": reasons,
+            "dimensions": dimensions, "pressure_avg60_pct": stalls,
+            "recent_oom": new_oom, "dispatch_signal": signal,
+            "interpretation": "Resource observations only. Each constraint is specific to the resource; the Executive determines workload allocation. Neither saturation nor free capacity implies a worker count."}
+
+
 def growth_sizes(current, urgent):
     """Sizes of the Town-owned top-level directories, cached; du is slow on a big box."""
     cache = load(ROOT / "sizes.json", {})
@@ -392,7 +508,8 @@ def measure(current, record=True):
 def refresh(args):
     current = now()
     ROOT.mkdir(parents=True, exist_ok=True)
-    previous = load(ROOT / "resources.json", {}).get("resources", {})
+    previous_report = load(ROOT / "resources.json", {})
+    previous = previous_report.get("resources", {})
     pol, resources = measure(current)
     taken = []
     if not args.no_act:
@@ -407,6 +524,7 @@ def refresh(args):
         "actions_this_pass": taken, "needs_founder": needs_founder(resources, taken, previous),
         "town_owned_largest": sizes.get("dirs", [])[:8], "town_owned_total_kb": sizes.get("total_kb"),
         "policy": pol,
+        "capacity": capacity_assessment(resources, cpu_counter(), previous_report, now(), pol),
     }
     atomic_write(ROOT / "resources.json", json.dumps(report, sort_keys=True, indent=1) + "\n")
     summary = {"overall": report["overall"], "actions": len(taken), "needs_founder": len(report["needs_founder"])}
