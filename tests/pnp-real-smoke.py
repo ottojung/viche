@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 TMP = tempfile.TemporaryDirectory(prefix="pnp-real-smoke-")
 os.environ["PNP_STATE_ROOT"] = str(pathlib.Path(TMP.name) / "state")
 
-from missions.pnp import cli, config, github, state, gitctl, jobs  # noqa: E402
+from missions.pnp import cli, config, github, state, gitctl, jobs, build_control  # noqa: E402
 
 
 class FullPathSmoke(unittest.TestCase):
@@ -99,6 +99,41 @@ class FullPathSmoke(unittest.TestCase):
             self.assertFalse((work / ".lake").is_symlink())
             self.assertTrue((work / ".lake/packages").is_symlink())
             self.assertFalse((work / ".lake/check.lock").exists())
+
+    def test_publication_slot_and_confirmed_obsolescence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(config, "CACHE_DIR", tmp):
+                self.assertFalse(build_control.busy())
+                with build_control.slot(timeout=0):
+                    self.assertTrue(build_control.busy())
+                    with self.assertRaises(build_control.BuildDeferred):
+                        with build_control.slot(timeout=0):
+                            self.fail("duplicate full publication build")
+                self.assertFalse(build_control.busy())
+        with patch.object(state, "load", return_value={"state": "STALE", "lease": "old"}):
+            self.assertTrue(build_control.obsolete("L-meta-1", "old"))
+        with patch.object(state, "load", side_effect=OSError("temporarily unavailable")):
+            self.assertFalse(build_control.obsolete("L-meta-1", "old"))
+        with patch.object(state, "load", return_value={"state": "LEASED", "lease": "new"}):
+            self.assertTrue(build_control.obsolete("L-meta-1", "old"))
+
+    def test_reuse_requires_exact_publisher_tree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            def git(*args):
+                return subprocess.run(["git", "-C", tmp, *args], check=True,
+                                      capture_output=True, text=True).stdout.strip()
+            git("init", "-q")
+            pathlib.Path(tmp, "seed").write_text("base")
+            git("add", "seed")
+            git("-c", "user.name=Seed", "-c", "user.email=seed@example.org",
+                "-c", "commit.gpgsign=false", "commit", "-qm", "base")
+            base = git("rev-parse", "HEAD")
+            path = "lean/PEqualNP/Outside/L_meta_582.lean"
+            gitctl.pin_candidate(tmp, path, b"proof")
+            self.assertTrue(gitctl.reusable_checked_tree(tmp, base, path, b"proof"))
+            self.assertFalse(gitctl.reusable_checked_tree(tmp, base, path, b"other"))
+            pathlib.Path(tmp, "seed").write_text("different dependency")
+            self.assertFalse(gitctl.reusable_checked_tree(tmp, base, path, b"proof"))
 
     def test_real_signed_git_commit(self):
         # CI environments intentionally lack Otto Jung's private signing key.

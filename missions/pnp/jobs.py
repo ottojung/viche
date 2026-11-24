@@ -96,6 +96,8 @@ def run(gap, fd):
         rec = state.load(gap)
         if rec["state"] not in READY or rec.get("queued_lease") != rec["lease"]:
             return
+        os.environ["PNP_PUBLISH_GAP"] = gap
+        os.environ["PNP_PUBLISH_LEASE"] = rec.get("lease") or ""
         result = publish.publish(gap, candidate_path(gap))
         print(result, flush=True)
     except publish.StopPublish as exc:

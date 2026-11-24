@@ -307,6 +307,22 @@ class TestPublish(unittest.TestCase):
         self.assertEqual(h.created, 0)
         self.assertFalse(any(c[0] == "push" for c in g.calls))
 
+    def test_confirmed_stale_reply_does_not_touch_new_lease(self):
+        new_state("LEASED")
+        self.assertFalse(state.stale_lease(GAP, "old-lease", "old reply"))
+        self.assertEqual(state.load(GAP)["state"], "LEASED")
+
+    def test_partial_frontier_does_not_invalidate_live_assignment(self):
+        new_state("LEASED")
+        d = FakeDesk(beat=410)
+        reconcile.reconcile_gap(GAP, desk=d, git=FakeGit(), gh=FakeGH(),
+                                observed={"complete": False, "gaps": {}})
+        self.assertEqual(state.load(GAP)["state"], "LEASED")
+        self.assertEqual(d.beats, [])
+        reconcile.reconcile_gap(GAP, desk=d, git=FakeGit(), gh=FakeGH(),
+                                observed={"complete": True, "gaps": {}})
+        self.assertEqual(state.load(GAP)["state"], "STALE")
+
     def test_github_verification_false_means_no_pr(self):
         new_state()
         h = FakeGH(verified=False)

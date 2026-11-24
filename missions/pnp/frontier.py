@@ -10,7 +10,7 @@ import subprocess
 import time
 from urllib.parse import urlencode
 
-from . import config, state
+from . import config, state, build_control
 
 MAX_AGE = 300
 ACTIVE = ("LEASED", "RESEARCHING", "CANDIDATE_READY", "LOCAL_CHECKED")
@@ -83,6 +83,8 @@ def checkpoint(gap, lease=None, now=None):
     if not isinstance(rec, dict):
         return {"decision": "wait", "reason": "assignment unavailable"}
     status = rec.get("state")
+    if lease and not rec.get("lease"):
+        return {"decision": "wait", "reason": "assignment identity unavailable"}
     if lease and rec.get("lease") != lease:
         return {"decision": "stop", "reason": "assignment superseded"}
     if status in STOPPED:
@@ -96,7 +98,8 @@ def checkpoint(gap, lease=None, now=None):
         return {"decision": "wait", "reason": "lease needs confirmation"}
     if status in ("CANDIDATE_READY", "LOCAL_CHECKED") and rec.get("queued_lease"):
         return {"decision": "wait", "reason": "publisher owns candidate"}
-    return {"decision": "continue", "reason": "live local assignment"}
+    return {"decision": "continue", "reason": "live local assignment",
+            "publisher_build_busy": build_control.busy()}
 
 
 if __name__ == "__main__":

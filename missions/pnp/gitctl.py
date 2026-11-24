@@ -9,8 +9,9 @@ import signal
 import shutil
 import subprocess
 import tempfile
+import time
 
-from . import config
+from . import config, build_control
 
 UPSTREAM_URL = "https://github.com/" + config.UPSTREAM + ".git"
 FORK_URL = "git@github.com:" + config.FORK + ".git"
@@ -159,22 +160,58 @@ def build(worktree, module, statement, runner=None):
     # Retain the publisher lock across an orphaned build subprocess, too.
     lock_fd = os.environ.get("PNP_PUBLISH_LOCK_FD")
     inherited = (int(lock_fd),) if lock_fd else ()
-    with tempfile.TemporaryFile() as output:
+    with build_control.slot() as slot_fd, tempfile.TemporaryFile() as output:
         proc = subprocess.Popen([shim, "build", "+" + module],
                                 cwd=os.path.join(worktree, "lean"),
                                 env=env, stdout=output, stderr=output,
-                                start_new_session=True, pass_fds=inherited)
+                                start_new_session=True,
+                                pass_fds=inherited + (slot_fd,))
+        deadline = time.monotonic() + 600
         try:
-            code = proc.wait(timeout=600)
-        except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
+            while True:
+                if build_control.obsolete():
+                    raise build_control.BuildDeferred("publication assignment ended")
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise GitError("local Lean build timed out; retry")
+                try:
+                    code = proc.wait(timeout=min(3, remaining))
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+        except BaseException:
+            # Only this publisher's new process group, never an agent.
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
             proc.wait()
-            raise GitError("local Lean build timed out; retry without stale lock")
+            raise
         output.seek(max(0, output.tell() - 8000))
         log = output.read().decode("utf-8", "replace")
     if code and ("error: PEqualNP/" not in log and "error: ./PEqualNP/" not in log):
         raise GitError("local build interrupted: " + log[-600:])
     return code == 0, log[-2000:]
+
+
+def reusable_checked_tree(worktree, base_sha, path, data):
+    """Reuse only the publisher's exact successful pinned build, never worker output."""
+    if not worktree or not base_sha:
+        return False
+    try:
+        if run(["git", "-C", worktree, "rev-parse", "HEAD"]).stdout.strip() != base_sha:
+            return False
+        if run(["git", "-C", worktree, "status", "--porcelain"]).stdout.splitlines() != ["A  " + path]:
+            return False
+        # Staged and working copies must both match the validated bytes.
+        with open(os.path.join(worktree, path), "rb") as f:
+            if f.read() != data:
+                return False
+        if run(["git", "-C", worktree, "diff", "--quiet"], check=False).returncode != 0:
+            return False
+        return True
+    except (OSError, GitError, subprocess.SubprocessError):
+        return False
 
 
 def signed_commit(worktree, base_sha, message, signer=None, correction=False):

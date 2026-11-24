@@ -92,6 +92,7 @@ def snapshot():
         "leaderboard": score, "workers": w,
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
+        "publisher_build_busy": frontier.build_control.busy(),
         "workers_on_terminal_gaps": stale_workers,
         "owned_by": "Viche Executive; other operators do not launch agents",
         "action": (
