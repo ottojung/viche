@@ -133,7 +133,7 @@ class Desk:
             raise DeskError("desk next offered a gap without a lease")
         if not isinstance(gap, dict):
             raise DeskError("desk gap is not an object")
-        return {"gap": gap, "lease": lease}
+        return {"gap": gap, "lease": lease, **{k: data[k] for k in ("shard", "shards") if k in data}}
 
     def beat(self, lease):
         status, _ = self._call("POST", "/beat", {"lease": lease},

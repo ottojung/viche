@@ -97,3 +97,14 @@ From a bound workspace, `proofs share FILE --message RESULT` snapshots a
 Lean helper, and `proofs fragments --all-attempts` lists immutable helper
 sources with provenance and digests. No claim of compilation is inferred
 from a snapshot. These are direct peer tools, not submission gates.
+
+
+### Research packet
+
+The leased response preserves the actual proof sketch, failed approaches,
+reduction eligibility, and shard assignment. The read-only public catalog
+adds parent cuts and sibling links only after exact statement/module/path/
+imports matching. Run `python3 -m missions.pnp.brief` in a bound workspace.
+Use the reduction source as a mathematical guide, not an automatically
+permitted import. Catalog metadata never changes lease identity or authorizes
+work on unheld steps.

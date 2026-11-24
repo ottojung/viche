@@ -128,7 +128,8 @@ def targets(all_held=False):
         try:
             rec = state.load(gap)
             if active(rec):
-                out.append({"gap": gap, "attempt": attempt(rec),
+                from . import brief
+                out.append({"gap": gap, "attempt": attempt(rec), "desk_notes": brief.read(rec),
                             "statement": rec["statement"], "imports": rec.get("imports", []),
                             "context": (rec.get("context") or "")[:3000],
                             "advice": read(rec), "findings": findings(rec)})

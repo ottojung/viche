@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 
-from . import assignment, config, focus, gitctl, state, support
+from . import assignment, brief, config, focus, gitctl, state, support
 
 # A full baseline used to paginate the whole (>2600 agent) registry once per
 # live gap. Fetch pages in bounded concurrent waves and let baseline reuse a
@@ -102,6 +102,11 @@ def prompt(rec, approach, general=False):
         f"Gap: {rec['gap_id']}\nStatement: {rec['statement']}\n"
         f"Imports: {json.dumps(rec.get('imports', []))}\n"
         f"Context: {rec.get('context') or ''}\n"
+        f"Desk proof sketch / cut ancestry / failed approaches (advisory): {json.dumps(brief.read(rec),ensure_ascii=False)}\n"
+        "Start by reading the exact supplied sketch, checked reduction sources, and solved siblings "
+        "with the current pinned upstream checkout. Do not redo known mathematics. "
+        "For shard assignments work only on the assigned range; do not infer a global refutation. "
+        "Use python3 -m missions.pnp.brief from the bound workspace for the full packet.\n"
         "Share substantial findings immediately from your bound cwd using "
         "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support finding "
         "--evidence 'artifact or checked lemma' --message 'specific result, blocker or next route'. "
