@@ -178,6 +178,13 @@ def packet(role, cwd=None):
         out["attempt"]=support.attempt(rec)
         out["family"]=knowledge.family((rec.get("gap_title") or "")+" "+rec.get("statement",""))
         out["cumulative_research"]=knowledge.relevant(rec)
+        try:
+            from .. import preflight
+            report=preflight.read(rec)
+            if report and report.get("result")=="candidate":
+                out["preflight_candidate"]={"path":report["candidate"],"generator":report.get("generator"),
+                                            "sha256":report["sha256"],"kernel_checked":False}
+        except (OSError,ValueError,ImportError,KeyError):pass
         label=assignment.worker_label(cwd)
         if label and label.startswith("ob-"):
             out["assigned_obligation"]=label[3:]
@@ -223,13 +230,15 @@ def main():
             if key in data:print(key+":",data[key])
         context=data.get("cumulative_research") or {}
         if context.get("obligations"):
-            print("\nCurrent exact obligations (show ID for full statement):")
+            print("\nExact-gap obligations (show ID for full statement; fork/recheck if base differs):")
             for o in context["obligations"]:
-                print(o["id"],"CHECKED" if o.get("verified") else o.get("status","OPEN"),o["statement"][:220].replace("\n"," "))
+                print(o["id"],"CHECKED" if o.get("verified") else o.get("status","OPEN"),("same-base" if o.get("base")==data.get("base") else "other-base"),o["statement"][:220].replace("\n"," "))
         if context.get("knowledge"):
             print("\nRelevant knowledge:")
             for x in context["knowledge"]:
                 print(x["id"],x["kind"],x["statement"][:200].replace("\n"," "))
+        if data.get("preflight_candidate"):
+            print("\nGenerated candidate (not yet kernel-checked):",data["preflight_candidate"]["path"])
         if data.get("open_method_nodes"):
             print("\nOpen mathematical methods (coordinate ownership before reuse):")
             for x in data["open_method_nodes"]:print(x["id"],x["family"],x["statement"].replace("\n"," "))
