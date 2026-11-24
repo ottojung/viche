@@ -1,6 +1,7 @@
 """Immutable workspace-to-lease bindings. Researchers never type lease IDs."""
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from . import config, state
@@ -20,6 +21,11 @@ def workspace(cwd):
     root = Path(state.gap_dir(parts[0]))
     if len(parts) >= 2 and parts[1] == "path":
         return parts[0], root / "path", root / "research-assignment.json"
+    if len(parts) >= 6 and parts[1] == "attempts" and parts[3] == "workers" and parts[5] == "path":
+        if not re.fullmatch(r"[0-9a-f]{24}", parts[2]) or not re.fullmatch(r"[a-zA-Z0-9_-]{1,48}", parts[4]):
+            return None
+        parent = root / "attempts" / parts[2] / "workers" / parts[4]
+        return parts[0], parent / "path", parent / "assignment.json"
     if len(parts) >= 4 and parts[1] == "attempts" and parts[3] == "path":
         if len(parts[2]) != 24 or any(c not in "0123456789abcdef" for c in parts[2]):
             return None
@@ -37,8 +43,10 @@ def binding(cwd=None):
         obj = json.loads(marker.read_text())
         if obj.get("gap") != gap or not isinstance(obj.get("lease"), str):
             return None
-        if marker.name == "assignment.json" and marker.parent.name != attempt_id(obj["lease"]):
-            return None
+        if marker.name == "assignment.json":
+            attempt = marker.parent.parent.parent.name if marker.parent.parent.name == "workers" else marker.parent.name
+            if attempt != attempt_id(obj["lease"]):
+                return None
         return gap, obj["lease"]
     except (OSError, ValueError, AttributeError):
         return None
@@ -54,7 +62,7 @@ def first_attempt(gap):
         return False
 
 
-def prepare(gap, checkout=True):
+def prepare(gap, checkout=True, worker=None):
     """Executive calls once per assignment. Never relabel an old checkout."""
     from . import gitctl
     if not isinstance(gap, str) or not config.GAP_ID_RE.fullmatch(gap):
@@ -67,7 +75,12 @@ def prepare(gap, checkout=True):
         root = Path(state.gap_dir(gap))
         old = root / "path"
         legacy = root / "research-assignment.json"
-        if old.is_dir() and first_attempt(gap) and not legacy.exists():
+        if worker is not None:
+            if not re.fullmatch(r"[a-zA-Z0-9_-]{1,48}", worker):
+                raise ValueError("invalid worker workspace label")
+            parent = root / "attempts" / attempt_id(lease) / "workers" / worker
+            path, marker = parent / "path", parent / "assignment.json"
+        elif old.is_dir() and first_attempt(gap) and not legacy.exists():
             path, marker = old, legacy
         elif binding(old) == (gap, lease):
             path, marker = old, legacy

@@ -44,12 +44,11 @@ Record the Executive's decisions and worker assignments durably.
 For every Executive cycle:
 - Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes
   since earlier measurements, plus desk leases, research experiments and PRs.
-- Dispatch and replenish **multiple genuinely independent mathematical
-  fronts** (Lean formalization, counterexample searching, proof reasoning,
-  desk gap claims and PR corrections as appropriate), allocating concurrency
-  by marginal verified contributions, host resource availability and current
-  independent tasks. ONE researcher is not a satisfactory steady state while
-  multiple valuable fronts are available. Do not hard-cap worker count or
+- Concentrate parallel mathematical work on the SINGLE research_focus from
+  mission status. Keep the other leases as reserves. Delegate genuinely
+  independent approaches (construction, refutation, sublemmas, Lean
+  formalization and proof reuse) on that same gap. Allocate as much useful
+  concurrency as resources permit; do not duplicate expensive builds or
   spawn redundant agents just to increase a counter.
 - Take over the preexisting managed agents/worktrees under the roster
   /var/lib/lubko/wd/viche-state/pnp/swarm/agents.json if useful, or retire them
@@ -93,9 +92,8 @@ never end this assignment.
 
 ## Race-critical work (Founder priority)
 
-Choose expected accepted steps per resource-hour. Ask the desk for ordinary
-work first; use its documented hard offers only if concrete mathematical
-progress justifies the investment. The desk chooses the lease; do not churn
+Choose expected accepted steps per resource-hour. The deterministic lease allocator
+asks for ordinary work first and fills remaining capacity with hard offers. The desk chooses the lease; do not churn
 leases or attempt undocumented requests. Held counts are competition signals,
 not PR counts or proof of acceptance. A rival PR alone does not invalidate a
 promising proof. Reassess remaining work using actual progress, competition,
@@ -180,17 +178,16 @@ Prefer incremental formalization and explicit reductions to known theorems.
 Before investing in an open-ended lower bound, identify a concrete proof
 route, its nearest checked lemma, and the missing inference or certificate.
 Reuse the previous research notes for the same or related problem rather
-than repeating failed SAT encodings. If no ordinary lease is available,
-prepare independent small derivations for published open problems or
-identify a concrete hard-gap route; do not burn hours on an unpromising
-hard lease just to occupy capacity. The desk alone chooses claimable gaps.
+than repeating failed SAT encodings. The allocator fills capacity with hard gaps when ordinary work is unavailable.
+The Executive identifies the best proof route for each assignment and stops
+work that has genuinely been abandoned. The desk alone chooses claimable gaps.
 Do not churn leases or release on a speculative difficulty judgment.
 Reassess work at natural evidence checkpoints, not arbitrary deadlines:
 a successful sublemma, a failed reduction, new rival evidence, a search
 budget exhausted, or a candidate. Keep the highest-yield route moving.
 
-The Executive first addresses unstaffed active gaps, obsolete assignments,
-and newly claimable ordinary work. After these allocation decisions,
+The Executive first addresses an unstaffed research focus and obsolete
+assignments. Reserve gaps require no researchers. After these allocation decisions,
 delegate substantive investigations rather than waiting in the coordinator
 session; finish the pass promptly so the next state change can trigger it.
 No polling sleep inside Executive reasoning. No new review or reporting gate.
@@ -259,7 +256,7 @@ Cancel obsolete work, not merely old work.
 
 Optimize accepted contributions per elapsed and resource hour. Keep the
 primary proof/construction owner working independently while other agents
-continually seek actionable evidence across the live portfolio. Do not make
+continually seek actionable evidence for the single research focus. Do not make
 the Executive search proofs, debug algorithms, or review every submission.
 
 Executive: staff and replenish useful independent support fronts as well as
@@ -322,3 +319,39 @@ approval. Executive delivers urgent coordination findings promptly; preempt
 only when confirmed material benefit outweighs interruption and preserve
 ongoing useful computations. Never dispatch, restart or steer an agent from
 a support agent. Executive retains sole lifecycle authority.
+
+## Continuous lease allocation (Founder priority)
+
+The mission allocator, not model turns, maintains up to five distinct leases.
+It prefers ordinary assignments, falls back to documented hard assignments,
+and keeps polling even with no work. The desk chooses exact gaps; do not
+attempt arbitrary ID claims. The allocator selects one stable research focus, preferring concrete,
+ordinary and low-competition work among held gaps. Do not staff reserve
+gaps. The Executive owns research strategy and agent starts/stops; do not
+duplicate allocator polling. A formerly staffed gap is released only after
+confirmed sustained absence, not because a reserve has no workers.
+Incomplete roster observations, active compilers, queued candidates and
+publication are protected. Preserve work artifacts. Explicit honest release is still possible
+when the Executive decides a route is exhausted. No active proof is cancelled
+just to make room for a more attractive offer.
+
+## Single-gap parallel research (Founder priority, supersedes portfolio staffing)
+
+Strive to maintain five live leases, including four intentional reserves.
+Work on the single research_focus reported by mission status. Parallelize
+that gap as much as useful: appoint a proof integrator and independent
+researchers pursuing distinct sublemmas, proof strategies or counterexamples.
+For independent writable checkouts run
+`python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py assignment GAP --worker LABEL`
+with a distinct short label per researcher. Each checkout is bound to the
+same exact lease and has independent mutable build state; no competing PRs.
+Share useful evidence and partial proofs directly, not the writable checkout.
+The first complete valid candidate goes straight to the publisher. When
+publication owns the candidate, the allocator rotates focus to the best
+remaining reserve and fills the vacant lease slot after submission.
+An existing PR requiring correction is eligible as the next focus; do not
+split ongoing research across two gaps just to fix a pending correction.
+If the Executive abandons a focus, release it honestly and move to the next.
+Do not rotate simply because another promising gap arrives; never leave
+all reserves unattended until their leases expire. The automated heartbeat
+renews the whole pool.

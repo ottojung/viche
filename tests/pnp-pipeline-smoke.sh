@@ -9,3 +9,5 @@ python3 tests/pnp-watchdog-smoke.py
 python3 tests/pnp-proof-tools.py
 
 python3 tests/pnp-support.py
+
+python3 tests/pnp-allocator.py

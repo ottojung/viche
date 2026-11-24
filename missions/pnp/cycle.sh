@@ -6,6 +6,10 @@ town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-user/user1/guix-profile/bin:/run/current-system/profile/bin:${PATH:-/bin}
 [ -r "$town/missions/pnp/cli.py" ] || exit 0
 cd "$town"
+# Start the work-conserving allocator before optional slow network work.
+mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}"
+nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
+    >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
 # Start independent local resource reclamation before any network I/O.
 python3 -m missions.pnp.watchdog || :
 # Independent checked-proof scout. A slow fetch/index never blocks leasing,

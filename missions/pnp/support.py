@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import time
 
-from . import assignment, config, gitctl, state
+from . import assignment, config, focus, gitctl, state
 from .proofs import corpus
 
 ROLES = ("knowledge", "methods", "flow")
@@ -73,9 +73,11 @@ def advise(gap, expected, kind, evidence, message, coordinate=False):
         return obj
 
 
-def targets():
+def targets(all_held=False):
     out = []
-    for gap in state.all_gaps():
+    selected = focus.current()
+    gaps = state.all_gaps() if all_held else ([selected["gap_id"]] if selected else [])
+    for gap in gaps:
         try:
             rec = state.load(gap)
             if active(rec):
@@ -130,7 +132,7 @@ def matches(db, statement):
 def scan(refresh=False):
     # The scanner is independent of the Executive and publication. No
     # cancellation, desk release, agent commands, or publication mutation.
-    work = targets()
+    work = targets(all_held=True)
     if not work:
         return {"active": 0, "matches": 0}
     if refresh:

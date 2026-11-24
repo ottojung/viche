@@ -41,7 +41,7 @@ def normalize(raw, now):
                      "parallel": count(item.get("parallel")),
                      "title": item.get("title", "")[:300] if isinstance(item.get("title"), str) else ""}
     total = count(raw.get("open_gaps"))
-    return {"observed": now, "complete": total == len(rows),
+    return {"observed": now, "source_updated_at": raw.get("updated_at"), "complete": total == len(rows),
             "open_gaps": total, "offerable": count(raw.get("offerable_now")),
             "ordinary": count(raw.get("offerable_now_ordinary")),
             "held": count(raw.get("held_now")), "gaps": rows}

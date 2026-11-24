@@ -9,6 +9,8 @@
     python3 missions/pnp/cli.py reconcile
 """
 import argparse
+import contextlib
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -51,13 +53,41 @@ def cmd_status(args):
     })
 
 
+@contextlib.contextmanager
+def acquisition_lock():
+    os.makedirs(config.STATE_ROOT, exist_ok=True)
+    fd = os.open(os.path.join(config.STATE_ROOT, "acquisition.lock"),
+                 os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)
+
+
+def held_records():
+    # Signed/pushed candidates and unpublished faults still occupy a lease.
+    # Submitted PRs do not; the remote desk independently enforces its cap.
+    result = []
+    for gid in state.all_gaps():
+        rec = state.load(gid)
+        if rec and rec.get("lease") and rec["state"] not in (
+                "RELEASED", "STALE", "ACCEPTED", "PR_OPEN", "REJECTED"):
+            if rec["state"] == "FAULT" and (rec.get("lease_expires_at") or 0) <= time.time():
+                continue
+            result.append(rec)
+    return result
+
+
 def cmd_acquire(args):
-    d = desk_mod.Desk()
-    d.docs(refresh=True)                       # live rules on startup
-    held = sum(1 for g in state.all_gaps()
-               if state.load(g).get("lease") and
-               state.load(g)["state"] not in
-               ("RELEASED", "STALE", "ACCEPTED"))
+    with acquisition_lock():
+        return acquire(args, desk_mod.Desk())
+
+
+def acquire(args, d, report=True):
+    """Caller holds acquisition_lock; both CLI and daemon use this path."""
+    d.docs()
+    held = len(held_records())
     if held >= config.MAX_LEASES:
         print("refusing to exceed the desk's %d active leases" %
               config.MAX_LEASES, file=sys.stderr)
@@ -75,6 +105,10 @@ def cmd_acquire(args):
     if not isinstance(gid, str) or not config.GAP_ID_RE.match(gid):
         print("desk returned a gap id failing the grammar", file=sys.stderr)
         return 2
+    if not all(isinstance(gap.get(k), str) and gap[k].strip()
+               for k in ("statement", "module", "file")):
+        print("desk returned incomplete assignment metadata", file=sys.stderr)
+        return 2
     prior = state.load(gid)
     if prior is not None:
         # The desk granted a fresh lease for a gap we have seen before.  The
@@ -90,15 +124,17 @@ def cmd_acquire(args):
                 imports=gap.get("imports") or [],
                 gap_title=gap.get("title"),
                 context=gap.get("context"), dead=gap.get("dead"),
+                acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
                 lease=lease, lease_obtained_at=time.time(),
                 lease_expires_at=time.time() +
                 config.LEASE_TTL_SECONDS)
             state.event(gid, "acquired", {"hard": bool(args.hard),
                                           "another": bool(args.another),
                                           "reacquired": True})
-            _printer({"gap": gid, "file": rec["path"],
-                      "module": rec["module"], "lease": lease,
-                      "reacquired": True, "headline": config.HEADER})
+            if report:
+                _printer({"gap": gid, "file": rec["path"],
+                          "module": rec["module"], "lease": lease,
+                          "reacquired": True, "headline": config.HEADER})
             return 0
         # Genuine duplicate: an active lease/PR already exists.  Never
         # release the spare lease with 'other'/'out_of_time': that triggers
@@ -107,20 +143,21 @@ def cmd_acquire(args):
               "lease (it will expire) - never release it as 'other'",
               file=sys.stderr)
         return 1
-    rec = state.create(gid, state="DISCOVERED",
+    rec = state.create(gid, state="LEASED",
                        statement=gap.get("statement"),
                        module=gap.get("module"), path=gap.get("file"),
                        imports=gap.get("imports") or [],
                        gap_title=gap.get("title"),
                        context=gap.get("context"), dead=gap.get("dead"),
+                       acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
                        lease=lease, lease_obtained_at=time.time(),
                        lease_expires_at=time.time() +
                        config.LEASE_TTL_SECONDS)
-    state.transition(gid, "LEASED")
     state.event(gid, "acquired", {"hard": bool(args.hard),
                                   "another": bool(args.another)})
-    _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
-              "lease": lease, "headline": config.HEADER})
+    if report:
+        _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
+                  "lease": lease, "headline": config.HEADER})
     return 0
 
 
@@ -195,7 +232,7 @@ def cmd_guard(args):
 
 def cmd_assignment(args):
     try:
-        _printer(assignment.prepare(args.gap))
+        _printer(assignment.prepare(args.gap, worker=getattr(args, "worker", None)))
         return 0
     except (OSError, ValueError, RuntimeError) as exc:
         print("assignment unavailable: " + str(exc), file=sys.stderr)
@@ -227,6 +264,7 @@ def main(argv=None):
     guard.set_defaults(fn=cmd_guard)
     bind = sub.add_parser("assignment")
     bind.add_argument("gap")
+    bind.add_argument("--worker", help="distinct parallel research workspace label")
     bind.set_defaults(fn=cmd_assignment)
     sub.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
     args = parser.parse_args(argv)

@@ -12,9 +12,9 @@ import sys
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from missions.pnp import leaderboard, frontier, assignment, support
+    from missions.pnp import leaderboard, frontier, assignment, support, focus
 else:
-    from . import leaderboard, frontier, assignment, support
+    from . import leaderboard, frontier, assignment, support, focus
 
 STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
@@ -31,7 +31,8 @@ def workers():
         if not isinstance(agents, list):
             raise ValueError("unreadable agent roster")
         filtered = [a for a in agents if
-                    (a.get("title") or "").startswith("Viche P vs NP:")]
+                    (a.get("title") or "").startswith("Viche P vs NP:") or
+                    (a.get("cwd") and assignment.workspace(Path(a["cwd"])))]
         coverage = ("partial" if len(agents) >= 100 or data.get("unreadable")
                     else "complete")
         scouts = [{"id": a.get("id"), "title": a.get("title"), "roles": support.roles(a),
@@ -97,8 +98,15 @@ def snapshot():
     active = [r["gap"] for r in rows if r["state"] in frontier.ACTIVE
               and type(r["lease_expires_at"]) in (int, float)
               and r["lease_expires_at"] > time.time() and isinstance(r["gap"], str)]
+    selected = focus.current()
+    focus_gap = selected["gap_id"] if selected else None
     staffed = {a["gap"] for a in w["agents"] if a["lease_current"] is not False}
-    unstaffed = sorted(set(active) - staffed) if w["coverage"] == "complete" else []
+    reserves = sorted(r["gap"] for r in rows if r["gap"] in active and r["gap"] != focus_gap
+                      and r["state"] in ("LEASED", "RESEARCHING"))
+    focus_workers = [a["id"] for a in w["agents"] if focus_gap and a["gap"] == focus_gap
+                     and a["lease_current"] is not False]
+    unstaffed = [focus_gap] if focus_gap and focus_gap not in staffed and w["coverage"] == "complete" else []
+    off_focus = sorted(a["id"] for a in w["agents"] if focus_gap and a["gap"] and a["gap"] != focus_gap and (a["gap_state"] in ("LEASED", "RESEARCHING") or a["gap"] in corrections))
     ordinary = observed.get("ordinary")
     # These are useful opportunities, not automatic staffing instructions.
     # Desk status only exposes title/competition, not individually offerable IDs.
@@ -109,7 +117,8 @@ def snapshot():
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
     coordination_due = bool(w["coverage"] == "complete" and (
-        stale_workers or unstaffed or corrections or (ordinary is not None and ordinary > 0)))
+        stale_workers or unstaffed or off_focus or
+        (focus_gap and len(focus_workers) < 2)))
     # Support agents are never counted as leased researchers. Coverage is
     # a coordination signal, not an agent-number quota or a proof gate.
     scouts = w.pop("support", [])
@@ -139,6 +148,8 @@ def snapshot():
                              "action": "Executive owns staffing and material steering; support findings are advisory and arrive directly in worker guards."},
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
+        "research_focus": focus_gap, "focus_workers": focus_workers, "reserve_gaps": reserves,
+        "off_focus_workers": off_focus,
         "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
         "potential_fronts": related[:12],
         "coordination_due": coordination_due, "correction_needed": corrections,
@@ -149,14 +160,14 @@ def snapshot():
         "workers_on_terminal_gaps": stale_workers,
         "owned_by": "Viche Executive; other operators do not launch agents",
         "action": (
-            "Executive: finish or reassign confirmed terminal-gap workers cooperatively; preserve their proof work. Acquire ordinary gaps promptly when offered."
+            "Executive: retire obsolete workers cooperatively and concentrate useful research on research_focus. Preserve artifacts; reserve gaps need no workers."
             if stale_workers else
-            "Executive must restore multiple independent P vs NP researchers "
-            "and coordinate desk acquisition and submissions."
-            if w["count"] == 0 else
-            "Executive must replenish independent P vs NP research fronts; "
-            "one worker is not a steady-state research program."
-            if w["count"] == 1 else
+            "Executive must concentrate independent P vs NP researchers on research_focus "
+            "and coordinate submissions; reserve gaps intentionally have no workers."
+            if not focus_workers else
+            "Executive must parallelize distinct proof approaches on research_focus, "
+            "not distribute researchers across reserve gaps."
+            if len(focus_workers) == 1 else
             "Executive must restore visibility of the actual worker roster."
             if w["count"] is None else
             "Executive must increase the verified checked-step lead over #2 "
@@ -171,7 +182,8 @@ def snapshot():
                             (score.get("leader") or {}).get("steps"),
                             (score.get("runner_up") or {}).get("steps")],
             "workers": w["count"], "coverage": w["coverage"],
-            "gaps": by_state, "active": sorted(active),
+            "gaps": by_state, "active": sorted(active), "focus": focus_gap,
+            "off_focus": off_focus,
             "assignments": sorted((str(a["id"]), a["gap"] or "", a["gap_state"] or "") for a in w["agents"]),
             "ordinary_available": (observed.get("ordinary") or 0) > 0 if observed else None,
             "hard_available": (observed.get("offerable") or 0) > (observed.get("ordinary") or 0) if observed else None,
