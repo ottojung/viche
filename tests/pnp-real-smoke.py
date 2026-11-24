@@ -42,7 +42,7 @@ class FullPathSmoke(unittest.TestCase):
         gap = "L-meta-93285"
         fake = SimpleNamespace(
             docs=lambda refresh=False: "current",
-            next_gap=lambda hard=False, another=False: {
+            _next_gap=lambda hard=False, another=False: {
                 "gap": {"id": gap, "statement": "True",
                         "module": "PEqualNP.Outside.L_meta_93285",
                         "file": "lean/PEqualNP/Outside/L_meta_93285.lean",

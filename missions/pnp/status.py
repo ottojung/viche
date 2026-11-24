@@ -100,11 +100,11 @@ def snapshot():
               and r["lease_expires_at"] > time.time() and isinstance(r["gap"], str)]
     selected = focus.current()
     focus_gap = selected["gap_id"] if selected else None
-    staffed = {a["gap"] for a in w["agents"] if a["lease_current"] is not False}
+    staffed = {a["gap"] for a in w["agents"] if a["lease_current"] is True}
     reserves = sorted(r["gap"] for r in rows if r["gap"] in active and r["gap"] != focus_gap
                       and r["state"] in ("LEASED", "RESEARCHING"))
     focus_workers = [a["id"] for a in w["agents"] if focus_gap and a["gap"] == focus_gap
-                     and a["lease_current"] is not False]
+                     and a["lease_current"] is True]
     unstaffed = [focus_gap] if focus_gap and focus_gap not in staffed and w["coverage"] == "complete" else []
     off_focus = sorted(a["id"] for a in w["agents"] if focus_gap and a["gap"] and a["gap"] != focus_gap and (a["gap_state"] in ("LEASED", "RESEARCHING") or a["gap"] in corrections))
     ordinary = observed.get("ordinary")
@@ -149,6 +149,10 @@ def snapshot():
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "research_focus": focus_gap, "focus_workers": focus_workers, "reserve_gaps": reserves,
+        "focus_details": ({k: selected.get(k) for k in ("gap_title", "statement", "imports", "context")}
+                          if selected else None),
+        "staff_command": ("python3 -m missions.pnp.staff " + focus_gap + " --worker LABEL=APPROACH"
+                          if focus_gap else None),
         "off_focus_workers": off_focus,
         "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
         "potential_fronts": related[:12],

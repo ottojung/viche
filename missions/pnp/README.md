@@ -9,13 +9,13 @@ authenticated GitHub mutation commands directly.
 ## Commands (stable interface)
 
     python3 missions/pnp/cli.py status
-    python3 missions/pnp/cli.py acquire [--hard] [--another]
+    python3 -m missions.pnp.staff GAP --worker LABEL=APPROACH
     python3 missions/pnp/cli.py beat <gap-id>
     python3 missions/pnp/cli.py release <gap-id> <reason>
     python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
     python3 missions/pnp/cli.py reconcile
 
-`status` is read-only. `acquire` claims at most five desk leases and records
+`status` is read-only. The automatic allocator claims at most five desk leases and records
 the exact statement, module, path and imports as data. `beat` renews a lease;
 `release` returns it honestly. `submit` snapshots and immediately starts the
 deterministic publisher; it survives the researcher exiting or a tool timeout.
@@ -73,3 +73,5 @@ last verified snapshot through outages. Only checked steps credited to
 ottojung count. Source and observations persist under Viche state, never
 under government. The status.sh adapter reports leaderboard movement plus
 actual Antonina P vs NP worker visibility; only Executive dispatches them.
+
+The Executive invokes the staff batch helper for distinct approaches on the selected focus. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.

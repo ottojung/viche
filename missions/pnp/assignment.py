@@ -62,7 +62,7 @@ def first_attempt(gap):
         return False
 
 
-def prepare(gap, checkout=True, worker=None):
+def prepare(gap, checkout=True, worker=None, base=None):
     """Executive calls once per assignment. Never relabel an old checkout."""
     from . import gitctl
     if not isinstance(gap, str) or not config.GAP_ID_RE.fullmatch(gap):
@@ -102,7 +102,7 @@ def prepare(gap, checkout=True, worker=None):
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             if not (path / ".git").exists():
-                base = gitctl.ensure_mirror()
+                base = base or gitctl.ensure_mirror()
                 gitctl.run(["git", "--git-dir=" + gitctl.MIRROR, "worktree", "add",
                             "--detach", str(path), base])
             gitctl.prepare_build_cache(str(path))

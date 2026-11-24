@@ -502,7 +502,7 @@ class TestCli(unittest.TestCase):
                           pr_number=7, pr_url="https://old/pr/7",
                           external_verdict="REJECTED")
                 fake = FakeDesk()
-                fake.next_gap = lambda **kw: answer
+                fake._next_gap = lambda **kw: answer
                 with mock.patch.object(cli.desk_mod, "Desk",
                                        return_value=fake):
                     self.assertEqual(cli.cmd_acquire(args), 0)
@@ -525,7 +525,7 @@ class TestCli(unittest.TestCase):
         fresh()
         new_state("RESEARCHING", lease="active-lease")
         fake = FakeDesk()
-        fake.next_gap = lambda **kw: {"gap": gap_meta(),
+        fake._next_gap = lambda **kw: {"gap": gap_meta(),
                                       "lease": "spare-lease"}
         args = type("Args", (), {"hard": False, "another": False})()
         with mock.patch.object(cli.desk_mod, "Desk", return_value=fake):
@@ -649,7 +649,7 @@ class TestDeskNextGap(unittest.TestCase):
 
     def call(self, data):
         with mock.patch.object(self.d, "_call", return_value=(200, data)):
-            return self.d.next_gap()
+            return self.d._next_gap()
 
     def test_documented_empty_frontier_without_lease_key_is_no_gap(self):
         self.assertIsNone(self.call({
@@ -665,7 +665,7 @@ class TestDeskNextGap(unittest.TestCase):
         for flags in ({"hard": True}, {"another": True}):
             with self.subTest(flags=flags):
                 with mock.patch.object(self.d, "_call", return_value=(200, {"gap": None})) as call:
-                    self.assertIsNone(self.d.next_gap(**flags))
+                    self.assertIsNone(self.d._next_gap(**flags))
                 self.assertEqual(call.call_args[0][1], "/next")
                 expected = {"handle": config.GH_USER}
                 expected.update({k: "1" for k in flags})

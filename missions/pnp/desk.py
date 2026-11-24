@@ -104,6 +104,11 @@ class Desk:
         return data
 
     def next_gap(self, hard=False, another=False):
+        raise DeskError("next is a mutating acquisition, not a diagnostic. "
+                        "Use status; the automatic allocator records every claim.")
+
+    def _next_gap(self, hard=False, another=False):
+        """Private wire operation; only the locked, recording broker calls it."""
         params = {"handle": config.GH_USER}
         if hard:
             params["hard"] = "1"

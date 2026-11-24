@@ -80,8 +80,21 @@ def held_records():
 
 
 def cmd_acquire(args):
-    with acquisition_lock():
-        return acquire(args, desk_mod.Desk())
+    # Manual maintenance is supported only when the allocator is absent.
+    # Do not let a stale Executive instruction compete with the live broker.
+    os.makedirs(config.STATE_ROOT, exist_ok=True)
+    fd = os.open(os.path.join(config.STATE_ROOT, "allocator-loop.lock"),
+                 os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("allocator running; use status and staff research_focus", file=sys.stderr)
+            return 2
+        with acquisition_lock():
+            return acquire(args, desk_mod.Desk())
+    finally:
+        os.close(fd)
 
 
 def acquire(args, d, report=True):
@@ -92,7 +105,7 @@ def acquire(args, d, report=True):
         print("refusing to exceed the desk's %d active leases" %
               config.MAX_LEASES, file=sys.stderr)
         return 2
-    answer = d.next_gap(hard=args.hard, another=args.another)
+    answer = d._next_gap(hard=args.hard, another=args.another)
     if answer is None:
         print("no claimable gap right now; retry later", file=sys.stderr)
         return 1
@@ -136,6 +149,11 @@ def acquire(args, d, report=True):
                           "module": rec["module"], "lease": lease,
                           "reacquired": True, "headline": config.HEADER})
             return 0
+        if prior.get("lease") == lease:
+            # At capacity the desk may return an existing lease rather than
+            # null. This is idempotent, not a spare lease or a new assignment.
+            print("desk returned already recorded lease for " + gid, file=sys.stderr)
+            return 1
         # Genuine duplicate: an active lease/PR already exists.  Never
         # release the spare lease with 'other'/'out_of_time': that triggers
         # the cooldown and rate limit.  Let the spare lease expire on its own.

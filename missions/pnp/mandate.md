@@ -1,3 +1,19 @@
+## Immediate operational rule (Founder priority)
+
+The running allocator exclusively claims leases. Never call Desk.next_gap,
+the private wire operation, curl /desk/next, upstream pnp.sh next, or manual
+CLI acquire while the allocator runs. All of these are mutations, not
+diagnostics. Use mission status. If research_focus lacks useful parallel
+workers, the Executive's first substantive action is dispatching them.
+Choose independent mathematical approaches using focus_details and invoke
+the one-command batch helper:
+`python3 -m missions.pnp.staff GAP --worker 'LABEL=APPROACH' --worker 'LABEL2=APPROACH2'`
+from the canonical Viche checkout. Add as many distinct useful approaches as
+resources permit; the helper handles independent bound workspaces, existing
+agents and detached starts. No separate model turn, per-worker setup routine,
+or administrative review. Only the Executive invokes this dispatch helper.
+If no focus exists, do not acquire manually.
+
 ## Standing Founder priority — autonomous P vs NP contributions (2026-11-23)
 
 The Founder authorized an INDEFINITE external research mission on billy-dev,

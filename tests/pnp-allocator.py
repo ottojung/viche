@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Offline lease allocation policy, no external mutations."""
 import os
+import fcntl
+import json
+import time
+from types import SimpleNamespace
 from pathlib import Path
 import sys
 import tempfile
@@ -8,7 +12,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp import allocator, assignment, cli, config, focus, state
+from missions.pnp import allocator, assignment, cli, config, desk, focus, staff, state
 
 NOW = 10000
 
@@ -22,7 +26,7 @@ class Desk:
     def docs(self):
         return "fixture"
 
-    def next_gap(self, hard=False, another=False):
+    def _next_gap(self, hard=False, another=False):
         self.calls.append((hard, another))
         if not self.offers:
             return None
@@ -168,6 +172,59 @@ class Tests(unittest.TestCase):
         allocator.fill(d,mem,NOW+60,{"ordinary":1,"offerable":1,"source_updated_at":"b"})
         self.assertEqual(d.calls[-1],(False,False))
         self.assertEqual(len(d.calls),3)
+
+    def test_raw_next_is_not_a_diagnostic(self):
+        d = desk.Desk()
+        with patch.object(d, "_call") as wire:
+            with self.assertRaises(desk.DeskError):
+                d.next_gap()
+            wire.assert_not_called()
+
+    def test_manual_acquisition_excluded_by_live_allocator(self):
+        fd = os.open(os.path.join(config.STATE_ROOT, "allocator-loop.lock"),
+                     os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            with patch.object(cli.desk_mod, "Desk") as factory:
+                self.assertEqual(cli.cmd_acquire(SimpleNamespace(hard=False, another=True)),2)
+                factory.assert_not_called()
+        finally:
+            os.close(fd)
+
+    def test_staff_batch_adopts_running_and_starts_new_once(self):
+        rec = self.add(lease_expires_at=time.time()+1200)
+        a = Path(assignment.prepare(rec["gap_id"],checkout=False,worker="existing")["cwd"])
+        calls = []
+        def fake_antonina(*args):
+            calls.append(args)
+            if args[0] == "new":
+                return "new-agent-id"
+            if args[0] == "run":
+                return json.dumps({"state":"running"})
+            raise AssertionError(args)
+        with patch.object(staff,"roster",return_value=[{"id":"running-id","cwd":str(a),"state":"running"}]), \
+             patch.object(staff,"antonina",side_effect=fake_antonina), \
+             patch.object(staff.gitctl,"ensure_mirror",return_value="base") as fetch, \
+             patch.object(staff.assignment,"prepare",wraps=assignment.prepare) as original:
+            def prepare(gap, checkout=True, worker=None, base=None):
+                return original._mock_wraps(gap,checkout=False,worker=worker)
+            original.side_effect=prepare
+            result=staff.dispatch(rec["gap_id"],[("existing","reuse"),("fresh","new proof")])
+        self.assertEqual([r["status"] for r in result],["already running","started"])
+        self.assertEqual([c[0] for c in calls],["new","run"])
+        fetch.assert_called_once()
+        self.assertIn(rec["statement"], calls[1][calls[1].index("--prompt")+1])
+
+    def test_staff_rejects_reserve_and_unknown_roster(self):
+        a=self.add(acquisition_hard=False,lease_expires_at=time.time()+1200)
+        b=self.add("L-meta-2",acquisition_hard=True,lease_expires_at=time.time()+1200)
+        with patch.object(staff,"antonina") as run:
+            with self.assertRaises(ValueError):
+                staff.dispatch(b["gap_id"],[("x","prove")])
+            with patch.object(staff,"roster",side_effect=ValueError("unknown")):
+                with self.assertRaises(ValueError):
+                    staff.dispatch(a["gap_id"],[("x","prove")])
+            run.assert_not_called()
 
     def test_duplicate_never_churns(self):
         self.add()
