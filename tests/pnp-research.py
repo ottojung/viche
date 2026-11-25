@@ -65,6 +65,19 @@ class Research(unittest.TestCase):
         injected=self.obligation("True\naxiom bogus : False")
         with self.assertRaises(ValueError):o.build(self.c,injected,"by trivial")
 
+    def test_sync_receipt(self):
+        from types import SimpleNamespace
+        a=self.obligation("True")
+        def method(base,oid,source):
+            return SimpleNamespace(returncode=0,stderr=""),{"status":"elaborated","exit_code":0,
+                "base":base,"source_sha256":k.digest(source.encode()),
+                "diagnostic":f"'{o.symbol(oid)}' does not depend on any axioms"}
+        with tempfile.NamedTemporaryFile(mode="w") as f:
+            f.write("by trivial");f.flush()
+            with patch.object(o,"method_check",side_effect=method):
+                result=o.solve(self.c,a,f.name,method=True)
+        self.assertEqual(result["status"],"kernel_checked")
+        self.assertEqual(o.checked_body(self.c,a,self.base),"by trivial")
     def test_candidate(self):
         a=self.obligation("True")
         self.fixture_receipt(a,"by trivial")

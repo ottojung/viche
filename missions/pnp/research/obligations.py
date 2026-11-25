@@ -239,7 +239,6 @@ def solve(c,oid,path,local=False,method=False):
         with tempfile.NamedTemporaryFile(mode="w",suffix=".lean",prefix=".obligation-",dir=work) as f:
             f.write(src);f.flush()
             if local:
-                import os
                 env=dict(os.environ,PYTHONPATH="/var/lib/lubko/wd/viche")
                 proc=subprocess.run([str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
                                      "--light","--","lake","env","lean",f.name],cwd=work/"lean",
