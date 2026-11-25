@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import hashlib
 from contextlib import closing
+import sqlite3
 
 from .. import assignment, config, continuity, focus, staff, state, support
 from . import policy
@@ -118,8 +119,18 @@ def obsolete(agent, slots):
     if support.active(rec) and label != "general" and selected:
         if focus.key(rec) != focus.key(selected):
             return True
-        # A policy explicitly removes extra positions; existing checked
-        # obligation specialists may finish without preemption.
+        # A policy explicitly removes extra positions.  Exact obligation
+        # specialists finish their current pass while ready; once the node is
+        # checked, refuted, or blocked there is no remaining mathematical work
+        # and the controller may retire the exact workspace identity.
         if label and label.startswith("extra-"):
             return str(path) not in {s.path for s in slots}
+        if label and label.startswith("ob-"):
+            try:
+                from ..research import knowledge, obligations
+                with closing(knowledge.db()) as c:
+                    node=next((n for n in obligations.ready(c) if n["id"]==label[3:]),None)
+                return bool(node and node["status"] in ("checked","refuted","blocked"))
+            except (OSError,ValueError,KeyError,AttributeError,sqlite3.Error):
+                return False
     return False

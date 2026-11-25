@@ -41,6 +41,23 @@ class Research(unittest.TestCase):
         m=o.fork(self.c,b,"b"*40)
         self.assertEqual(k.get(self.c,m[b])["dependencies"],[m[a]])
         self.assertFalse(k.get(self.c,m[a])["checks"])
+    def test_checked_negation_marks_target_refuted(self):
+        target=self.obligation("True")
+        negation=self.obligation("¬ True")
+        self.fixture_receipt(negation,"by simp")
+        k.link(self.c,negation,target,"counterexample_to")
+        statuses={x["id"]:x for x in o.ready(self.c)}
+        self.assertEqual(statuses[target]["status"],"refuted")
+        self.assertEqual(statuses[target]["refuted_by"],[negation])
+        self.assertEqual(statuses[negation]["status"],"checked")
+
+        unverified=self.obligation("¬ True ∧ True")
+        other=self.obligation("True ∧ True")
+        k.link(self.c,unverified,other,"counterexample_to")
+        statuses={x["id"]:x for x in o.ready(self.c)}
+        self.assertEqual(statuses[other]["status"],"ready")
+        self.assertEqual(statuses[other]["refuted_by"],[])
+
     def test_axioms(self):
         a=self.obligation("True");name=o.symbol(a)
         self.assertTrue(o.verify_output(f"'{name}' depends on axioms: [propext, Classical.choice, Quot.sound]",a))
