@@ -174,16 +174,21 @@ def main():
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
             gaps = json.loads(get(DESK))['gaps']
+            # The desk also publishes unresolved value/template gaps that carry
+            # `template` with @@VALUE@@ holes and no concrete `statement`.
+            # They are not certifiable yet; skip them instead of letting a
+            # KeyError abort the whole poll and disable certificate generation.
+            concrete = [g for g in gaps if isinstance(g.get('statement'), str)]
             pos, twins, desk = {}, {}, {}
             fam = {}
-            for g in gaps:
+            for g in concrete:
                 f = lbparse.family(g['statement'])
                 if f:
                     fam[g['id']] = f
                     desk[g['id']] = g.get('pr_open', 0)
                 if f == 'lb':
                     pos[lbparse.norm(g['statement'])] = g['id']
-            for g in gaps:
+            for g in concrete:
                 m = re.fullmatch(r'¬ ?\((.*)\)', lbparse.norm(g['statement']))
                 if m and m.group(1) in pos:
                     twins[g['id']] = pos[m.group(1)]
