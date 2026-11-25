@@ -25,6 +25,7 @@
 set -eu
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 dir=$state/dispatch-gate
+town=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
 cmd=${1:-}
 [ -n "$cmd" ] || { echo 'usage: dispatch-gate.sh check|commit|board-signature|stats ...' >&2; exit 2; }
 shift
@@ -32,13 +33,10 @@ shift
 case "$cmd" in
   board-signature)
     [ "$#" -ge 1 ] || exit 2
-    for issue in "$@"; do
-      case "$issue" in ''|*[!a-zA-Z0-9_-]*) echo "bad issue id $issue" >&2; exit 2 ;; esac
-      line=$(antonina board show --id "$issue" --page 1 --json 2>/dev/null |
-             jq -r --arg n "$issue" '[$n, (.updatedAt // "-"), (.messages[0].id // "-")] | join(" ")') || exit 1
-      [ -n "$line" ] || exit 1
-      printf '%s\n' "$line"
-    done
+    # Bounded parallel fetch with identical input-order output; see
+    # government/board-signature.py. A failed lookup still exits non-zero so
+    # the caller fails open rather than suppressing work on a broken probe.
+    exec python3 "$town/government/board-signature.py" "$@"
     ;;
   check|commit)
     [ "$#" -ge 1 ] || exit 2
