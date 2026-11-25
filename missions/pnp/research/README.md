@@ -24,6 +24,7 @@ pnp-research knowledge add obstruction --family graph-circuit \
   --statement 'precise failed claim' --detail 'why it fails' \
   --provenance 'original investigation' --file evidence.txt
 pnp-research knowledge link COUNTEREXAMPLE OBSTRUCTION counterexample_to
+# Other relationships: supports, blocks, instantiates, reduces_to.
 ```
 
 Exact prior-gap records are prioritized in the work packet even across
@@ -43,6 +44,7 @@ pnp-research obligations request --statement '∀ n : Nat, n + 0 = n' --import M
 pnp-research obligations solve NODE_ID proof.body --async
 # Keep investigating another obligation. Use CHECK_ID from the returned JSON.
 pnp-research obligations collect CHECK_ID --poll
+pnp-research obligations pending # --all also lists terminal checks
 # Exit 75 means pending; collect without --poll to wait.
 pnp-research obligations assemble ROOT_ID --candidate --output Candidate.lean
 # Submit the exact complete candidate through the ordinary submission pipeline.
@@ -87,6 +89,9 @@ Method research is not an extra desk claim and cannot publish to arbitrary gaps.
 `pnp-research certificate --output Candidate.lean` attempts the exact bound
 assignment. Independently, provide `certificate GRAPH.json --output Test.lean`,
 where the graph format is {"n":26,"edges":[[0,13],...],"bound":64}.
+Supported graphs have 2–256 vertices, nonempty simple edge sets and integer
+vertex indices starting at zero. Failure outside those limits is unsupported,
+not a mathematical obstruction.
 The star-cover construction uses minimum bipartite vertex cover or bounded
 branch-and-bound, and symbolic antichain verification. Its Lean certificate
 uses a permutation of concrete edges rather than exhaustive enumeration of
@@ -115,7 +120,8 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
   dispatch: `pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task TASK`.
   Only Executive may use agent-launch/steer actions.
 - `pnp-research adoption` measures confirmed launches, discovery, substantive
-  commands and time to first use using the actual agent environment.
+  commands, help calls before first use, and time to first successful use
+  using the actual agent environment.
   These are adoption measurements, not proof success or leaderboard credit.
 - `pnp-research yield` exposes censored historical family-level evidence,
   shrinkage estimates, actual graph progress and competition. It is a

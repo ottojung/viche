@@ -98,6 +98,11 @@ def report(hours=24):
         d["used"]=bool(actual)
         d["successful_use"]=any(u["exit"]==0 for u in actual)
         d["first_use_seconds"]=round(min(u["started"] for u in actual)-d["started"],2) if actual else None
+        successful=[u for u in actual if u["exit"]==0]
+        d["first_success_seconds"]=round(min(u["started"] for u in successful)-d["started"],2) if successful else None
+        first=min((u["started"] for u in actual),default=now)
+        d["help_calls_before_first_use"]=sum(u["command"].endswith(" help") and u["started"]<first for u in events)
+        d["substantive_failures"]=sum(u["exit"] not in (0,75) for u in actual)
         d["commands"]=sorted(set(u["command"] for u in events))
         role=by.setdefault(d["role"],{"launches":0,"discovered":0,"used":0,"successful_use":0})
         role["launches"]+=1

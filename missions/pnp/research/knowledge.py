@@ -14,6 +14,7 @@ from .. import config, state
 
 KINDS = ("lemma", "technique", "obstruction", "counterexample", "reduction",
          "certificate", "obligation", "finding", "fragment")
+RELATIONS = ("supports","blocks","counterexample_to","instantiates","reduces_to")
 MAX_ARTIFACT = 512 * 1024
 def digest(x):
     return hashlib.sha256(x).hexdigest()
@@ -283,8 +284,8 @@ def relevant(rec):
 
 
 def link(c, source, target, relation):
-    if relation not in ("supports","blocks","counterexample_to","instantiates","reduces_to"):
-        raise ValueError("invalid relationship")
+    if relation not in RELATIONS:
+        raise ValueError("invalid relationship; choose "+", ".join(RELATIONS))
     if source==target:raise ValueError("self link")
     with c:
         c.execute("INSERT OR IGNORE INTO edge VALUES(?,?,?)",(source,target,relation))
@@ -346,7 +347,7 @@ def main():
     a=sub.add_parser("find");a.add_argument("query",nargs="?",default="");a.add_argument("--family")
     a.add_argument("--kind",action="append",choices=KINDS);a.add_argument("--limit",type=int,default=12);a.add_argument("--full",action="store_true")
     a=sub.add_parser("show");a.add_argument("id")
-    a=sub.add_parser("link");a.add_argument("source");a.add_argument("target");a.add_argument("relation")
+    a=sub.add_parser("link");a.add_argument("source");a.add_argument("target");a.add_argument("relation",choices=RELATIONS)
     sub.add_parser("ingest");sub.add_parser("stats")
     args=p.parse_args()
     with closing(db()) as c:

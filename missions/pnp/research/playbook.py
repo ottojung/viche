@@ -66,7 +66,7 @@ def guide(role):
     elif role in DECISIONS:
         lines += ["Use pnp-research yield (empirical baseline; not calibrated) and " + P + "portfolio inspect. Read current proof artifacts before deciding."]
     elif role in {"knowledge","methods"}:
-        lines += ["Use pnp-research knowledge find QUERY and knowledge show ID; knowledge add KIND --family FAMILY --statement TEXT --provenance SOURCE --file FILE. Deliver actionable evidence via support advise."]
+        lines += ["Use pnp-research knowledge find QUERY and knowledge show ID; knowledge add KIND --family FAMILY --statement TEXT --provenance SOURCE --file FILE. Link evidence with knowledge link SOURCE TARGET RELATION; --help lists valid relation names. Deliver actionable evidence via support advise."]
     elif role in {"flow","transport"}:
         lines += ["Use pnp-research adoption; marceline-request status; inspect actual outcomes and timings, not merely reports."]
     lines += ["Detailed examples on demand: pnp-research guide " + role + ". No separate onboarding gate."]
@@ -199,8 +199,8 @@ def packet(role, cwd=None):
             "marceline-request status "+base if base else "marceline-request status"]
         if role=="tool":
             out["next_commands"].insert(0,"pnp-research certificate GRAPH.json --base "+(base or "BASE")+" --check")
-            out["source_locations"]=["missions/pnp/research/certificate.py","missions/pnp/research/star.py",
-                                     "missions/pnp/research/certificate_bench.py","missions/pnp/research/dnf_reflection.py","missions/pnp/proofs/"]
+            out["source_locations"]=[str(Path(__file__).resolve().parent/f) for f in ("certificate.py","star.py","certificate_bench.py","dnf_reflection.py","README.md")]
+            out["source_locations"].append("/var/lib/lubko/wd/viche/missions/pnp/proofs")
         with knowledge.db() as c:
             from . import obligations
             out["open_method_nodes"]=[{"id":x["id"],"family":x["family"],"base":x["base"],"statement":x["statement"][:250]}
@@ -226,6 +226,7 @@ def main():
     else:
         print("CURRENT WORK PACKET — "+role)
         print("Purpose:",ROLES[role][0])
+        print("\n".join(data["instructions"].splitlines()[2:-1]))
         for key in ("gap","family","base","latest_public_base","assignment_current","assigned_obligation"):
             if key in data:print(key+":",data[key])
         context=data.get("cumulative_research") or {}

@@ -75,7 +75,7 @@ def checked_body(c,node,base):
     for row in c.execute("SELECT artifact,result FROM proof WHERE node=? AND base=? ORDER BY checked DESC",(node,base)):
         d=json.loads(row["result"])
         if d.get("status")=="kernel_checked":return k.artifact(row["artifact"]).read_text()
-    raise ValueError("unresolved dependency "+node)
+    raise ValueError("unresolved dependency "+node+"; inspect obligations show "+node+" and solve/check it before assembly")
 
 def declaration_options(meta):
     opts=meta.get("options",{})
@@ -233,7 +233,7 @@ def main():
     a=sub.add_parser("solve");a.add_argument("id");a.add_argument("body");a.add_argument("--local",action="store_true");a.add_argument("--method",action="store_true")
     a.add_argument("--async",dest="asynchronous",action="store_true");a.add_argument("--wall",type=int,default=600);a.add_argument("--rss-mib",type=int,default=8192);a.add_argument("--retry",action="store_true",help="retry a terminal unsuccessful async check")
     a=sub.add_parser("collect");a.add_argument("id");a.add_argument("--poll",action="store_true");a.add_argument("--timeout",type=int,default=1100)
-    sub.add_parser("pending");sub.add_parser("reconcile")
+    a=sub.add_parser("pending",help="list in-flight checks, or all with --all");a.add_argument("--all",action="store_true");sub.add_parser("reconcile")
     a=sub.add_parser("reuse");a.add_argument("old");a.add_argument("new");a.add_argument("--method",action="store_true");a.add_argument("--async",dest="asynchronous",action="store_true")
     a=sub.add_parser("assemble");a.add_argument("id");a.add_argument("--output",required=True);a.add_argument("--candidate",action="store_true")
     a=sub.add_parser("show");a.add_argument("id");a.add_argument("--full",action="store_true")
@@ -303,6 +303,7 @@ def main():
         elif a.cmd=="pending":
             from . import async_check
             out=async_check.pending(c)
+            if not a.all:out=[x for x in out if x["state"] in ("queued","submitting")]
         elif a.cmd=="reconcile":
             from . import async_check
             out=async_check.reconcile(c)
