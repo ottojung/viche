@@ -76,6 +76,21 @@ complexity L (lb_cert at L, a circuit at L), searches an AND/OR circuit with exa
 the lb_cert lemma plus the explicit circuit; the lb-cert handler compiles it before returning it.
 No monotone circuit of size L = the statement is false (status `false`).
 
+## One-NOT family ("At fan-in two, one NOT gate saves nothing on edges …")
+
+Hundreds are posted per batch and cleared by competitors within the hour (2026-11-25: 500 open at
+18:10, 49 left at 18:40, all of those beyond this method). `onenot/onenot.py` instantiates the merged
+L-meta-14150 proof (Apache-2.0) per graph: a monotone witness of M gates (exact biclique cover,
+SAT/cadical for M-1) and a kernel live-set search showing no circuit of M-2 binary gates separates
+the critical row pairs (x, x-e_i). `onenot/lsearch.c` decides that search with the kernel's own
+pruning first and counts its states; the kernel does ~2k states/s, so instances over 400k states
+(about M >= 12 on 8 vertices) are refused (`unsupported`) instead of tying up a compile slot.
+Typical easy instance: generation < 1 s, compile ~25 s, file ~62 KB, passes missions.pnp.validate
+(one `theorem`, helper `lemma`s, `import Mathlib`, no `noncomputable section`).
+Flow: autosolve (family `onenot`, only while `pr_open == 0`, ahead of every other family) ->
+relay `lb-cert` -> marceline lb-handler -> onenot.py -> compile gate -> cands/GAP.lean -> bulk lane PR.
+Harder instances need the gate-elimination method of the merged L-meta-9266 / 14412 files.
+
 ## Track record and limits
 
 ACCEPTED by `tools/check-lean.mjs`: L_meta_7309 (merged holdout), 5459, 8493, 8487, 8483 (pruned

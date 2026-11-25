@@ -62,7 +62,11 @@ def guide(role):
              "every 5 minutes while a step is held (PNP_STATE_ROOT/lbcert/cands/GAP.status says `ok sibling SOURCE`). "
              "Run it yourself (compiled on marceline-dev): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/sibremote.py "
              "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs  (exit 0 written, 5 no compiling sibling). "
-             "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method."]
+             "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method.",
+             "ONE-NOT STEPS (\"At fan-in two, one NOT gate saves nothing on edges ...\"): generated automatically the moment "
+             "they are posted (marceline-dev onenot.py, same lbremote.py command as above) and published by the bulk lane; "
+             "an instance the generator refuses (status `unsupported`: monotone size >= 12) needs the gate-elimination "
+             "method of the merged L-meta-14412 file. See missions/pnp/lbcert/README.md."]
     if role in BOUND:
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",

@@ -47,7 +47,7 @@ DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 45
-REMOTE_WORKERS = 4   # marceline-dev runs at most 4 lb-cert jobs and 3 compiles at once
+REMOTE_WORKERS = 6   # marceline-dev runs at most 6 lb-cert jobs and 3 compiles at once
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
 
@@ -104,7 +104,7 @@ def generate(g, engines):
     except Exception:
         r = {'status': 'relay_error'}
     where = 'marceline'
-    if p.returncode == 1 and lbparse.family(g['statement']) == 'mono':
+    if p.returncode == 1 and lbparse.family(g['statement']) in ('mono', 'onenot'):
         QUEUED.discard(gid)   # only marceline-dev builds this family: retry on a later poll
         log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
         return
@@ -189,8 +189,11 @@ def main():
     queued = QUEUED
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         if source_changed():
+            # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
+            # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
             log('source changed; exiting for clean restart')
-            return 0
+            pool.shutdown(wait=False, cancel_futures=True)
+            os._exit(0)
         try:
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
@@ -216,9 +219,16 @@ def main():
                 tmp = os.path.join(WORK, name + '.tmp')
                 json.dump(obj, open(tmp, 'w'))
                 os.replace(tmp, os.path.join(WORK, name))
-            # newest first: fresh batches are where the races are
+            # newest first: fresh batches are where the races are. The one-NOT family is the live
+            # race (hundreds posted at once, cleared within the hour): first, and only while unclaimed.
+            # Within the family, fewest edges first: those are the instances the generator can
+            # do (monotone size <= 11) and the ones competitors take within minutes.
             for g in sorted((g for g in gaps if g['id'] in fam),
-                            key=lambda g: (g.get('pr_open', 0) > 0, -int(re.sub(r'\D', '', g['id']) or 0))):
+                            key=lambda g: (fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
+                                           g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
+                                           -int(re.sub(r'\D', '', g['id']) or 0))):
+                if fam[g['id']] == 'onenot' and g.get('pr_open', 0):
+                    continue
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
                     pool.submit(generate, g, engines)
