@@ -60,7 +60,11 @@ git -C "$d/town" -c user.name=t -c user.email=t@example.invalid commit -qm fixtu
 printf 'Founder test constitution\n' > "$d/constitution"
 mkdir -p "$d/state/economy"
 printf '{"at":"x","funding_risk":"none","free_available_now":3,"order":[],"probes_run":[]}\n' > "$d/state/economy/report.json"
+# Keep the dispatcher's inherited host XDG pointers on scratch too: this test
+# stubs economy-models.py, but the real dispatcher reads these variables, and a
+# leaked /home/lubko/.config must never be reachable from a scratch checkout.
 export PATH="$d/bin:$PATH" VICHE_TOWN_ROOT="$d/town" VICHE_SEATS_ROOT="$d/seats" VICHE_STATE_ROOT="$d/state" \
+  ANTONINA_HOST_XDG_CONFIG_HOME="$d/xdg-config" ANTONINA_HOST_XDG_STATE_HOME="$d/xdg-state" \
   VICHE_CONSTITUTION="$d/constitution" MODE=idle DISPATCHES="$d/runs" MOCK_REFRESH_LOG="$d/refresh.log" \
   MOCK_RESOURCES_LOG="$d/resources.log"
 : > "$d/runs"; : > "$d/refresh.log"; : > "$d/resources.log"
