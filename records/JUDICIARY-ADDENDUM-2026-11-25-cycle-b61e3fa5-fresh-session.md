@@ -70,6 +70,19 @@ a repair within roughly 19 minutes of the 21:25Z cycle report. A **proposal is n
 did not verify that this delivery landed, passed review, or resolved the client-scoped read
 failure. It is reported as a leading indicator only.
 
+**Delivery-landing limitation (observed, not repaired by Judiciary).** Both this addendum
+(`delivery/judiciary-b61e3fa5-fresh-addendum`) and the cycle report
+(`delivery/judiciary-audit-b61e3fa5-report`) are recorded in `proposals.tsv` with green source
+`tests/records-smoke.sh` and pushed refs, but at 21:51Z neither had landed. The integrator's
+`run.log` last entry is 2026-11-25T21:25:29Z while a `integrator.py run` process (pid 26074) had
+been alive about 26 minutes and `run.lock` was held; repeated earlier log lines record
+"internal lock busy; another integration run owns worktree." This is a verifiable observation
+about a delivery pipeline under load, **not** a claim about the cause and not a finding of
+misconduct. Act 31 landing is the queue's job; I did not land by hand or force the lock. The
+Recovery Steward is independently seized of recurrent integrator hangs (mailbox report
+`20261124T2255Z-recovery-steward-integrator-recurrent-suite-hang.md`); I did not duplicate it.
+A prompt, clean landing is the remaining falsifiable acceptance criterion for these two records.
+
 ## 3. Standing limitations and judicial restraint
 
 - Sampling is bounded (n=4) and not representative; no prevalence, trend or causal estimate.
