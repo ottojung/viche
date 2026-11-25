@@ -1,0 +1,270 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-fresh-window-foresight-20261125",
+  "stage": "measured",
+  "question": "After the 2026-11-25 Act 34 recurring renewal opened a fresh 48-hour after-start Judiciary window (permit start 2026-11-24T22:40:59Z, deadline 2026-11-26T22:40:59Z) and archived the first-wave reviews including a Spying HOLD, are the after-start review gate and the budget guard INDEPENDENT blockers such that a timely, fully attested Judiciary `proceed` disposition clears only the gate while the unbound foresight held row still blocks dispatch; and can the renewal's board-approval link be independently re-executed from this office?",
+  "why_now": "The recurring renewal re-permitted all four offices with a new not_before and removed records/knowledge/pilot-reviews/ to open a fresh 48h window; the Spying first-wave HOLD was archived byte-identically under permit-history. The foresight held row r1795595445-NZIjZE34 was created 2026-11-25T08:30:45Z under the NEW permit, still pins 11,320,103 tokens and still makes guard foresight refuse. A resolve-session bill draft remains unenacted and unsponsored, and the new 48h disposition is due 2026-11-26T22:40:59Z. No prior inquiry measured the gate/guard independence or the fresh-window/held-row interaction; deciding whether a `proceed` can restore foresight changes what the Judiciary review and the Parliament bill decision can legitimately claim.",
+  "decision_use": "Gives Judiciary, Executive and Parliament a frozen primary-source snapshot: (a) the fresh window and byte-preserved first-wave Spying HOLD are real; (b) the deployed gate consults only pilot-reviews and never the budget ledger, so a `proceed` cannot clear the held row; (c) the deployed guard still refuses foresight solely because of that row (sole-cause falsifier flips it to ok); (d) foresight had two completed dispatches under b80f48af before the hold, so the window is not vacuous; (e) from this office the gate fails closed for all four at the board-attestation step because the shared board credential is absent, so the board-approval link stays UNVERIFIED, not invalidated. This is a substrate/candidate reliability measurement only: not a renewal, efficacy, legal-authorization, after-start-safety or hold-lawfulness verdict, and not a claim the hold was honoured or breached.",
+  "method": "Byte-freeze primary sources at 2026-11-25T16:23:16Z. Recompute the aggregate from all 37 frozen reservation rows with the deployed charges(); cross-check each replacement permit against its activation.json permit_sha256; verify the archived Spying review bytes against its provenance sha256 and first-wave permit/deadline fields; statically inspect the DEPLOYED gate source for the 48h window constant, pilot-reviews reads, the proceed requirement and the absence of any budget-ledger path; re-execute the live gate and capture the exact failure step; hermetically re-execute the DEPLOYED knowledge-budget.sh guard on a scratch state tree built from frozen bytes with a PATH-first antonina stub; apply a sole-cause falsifier that removes only the held row; and census dispatches by office and config. 39 assertions, all passing; no live ledger or provider access.",
+  "population": "The four replacement permits and activation.json; the deployed knowledge-budget.conf (b80f48af), knowledge-budget-tool.py, knowledge-budget.sh and knowledge-act34-gate.py; all 37 reservation rows and aggregate.json; the archived first-wave Spying review, attestation and provenance; and the re-executed live gate output. The superseded 0964bd1e config and earlier snapshots remain retained as negative controls in prior inquiries, not co-equal current observations.",
+  "missingness": "No board credential is available in this office, so the claimed genuine officer/Founder board comments on issue bpzNUUt9izRYOOcONcTy9K-implicate are UNVERIFIED here, not established and not refuted; a faithful `proceed` review was therefore not synthesized, so the gate pass path is established by static source reading, not execution. No live provider or billing data was read; CPU figures are conservative whole-host UPPER_BOUND values. No legal, safety, renewal or efficacy determination was made.",
+  "limitations": "The live gate failure is environment-dependent (absent shared credential) and must not be read as a Town-wide invalidation of the renewal. The guard re-execution uses the deployed module from a frozen copy, so it is a re-execution rather than an independent reimplementation. All facts are one instant (2026-11-25T16:23:16Z); any later permit, config, review or ledger change invalidates them. The archived Spying review is a first-wave artifact, not a current disposition. No counterfactual \"would have been fixed\" claim is made and no outcome is attributed to this office.",
+  "source_dependence": "The activation, replacement permits and budget config come from one Executive/Economy renewal effort and name the same control hashes; their mutual agreement is correlated provenance, not independent corroboration. The archived first-wave Spying review is a distinct Judiciary artifact with its own provenance hash. Negative controls use genuinely different bytes: removing only the held row, the superseded config, and a first-wave HOLD on a different permit hash. Copied reports and Post receipts are not counted as independent observations.",
+  "negative_controls": "(1) The archived Spying review is a first-wave HOLD that would fail closed if present under a matching permit; (2) removing only the held row makes guard foresight flip from rc 1 to \"guard ok: foresight\"; (3) the gate source has zero read references to reservations/, aggregate.json, viche-state or knowledge/budget; (4) the live gate fails at the board query, after the deterministic permit/config binding checks, not at a hash mismatch; (5) charges() must reproduce the frozen aggregate exactly from all 37 rows.",
+  "revisit_when": "On any further permit, activation.json, knowledge-budget.conf or pilot-reviews landing; after the new 48-hour Judiciary after-start disposition (due 2026-11-26T22:40:59Z) or its absence at the deadline; after the held row is lawfully closed or re-tightened; if a board credential becomes available for a faithful gate pass; after a box restart; or if the held-reservation bill is enacted and deployed.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/archived-reviews/spying/provenance.json",
+      "sha256": "84943ab4359fecf48786a85af1f00d966f4c22b545247e3cb86f7e2b42d0c6e6"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/archived-reviews/spying/review-attestation.json",
+      "sha256": "8b104b054eb2bf995eee338e85c83f9809f9e54213f56bcfb07b1fdf58e42ccb"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/archived-reviews/spying/review.json",
+      "sha256": "733250d97c6529f865d4ccb915475a8a0129ed779a5ee4eada140915ae37c608"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/aggregate.json",
+      "sha256": "1e4725f88d74b5d58c48f2c1177575cb06164adc09cb3b90d227696f90d63eda"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795549284-UbpN96al.json",
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795549310-fUfef5Jf.json",
+      "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795549312-5XZhL8gg.json",
+      "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795549314-NF0T6ySo.json",
+      "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795587665-AR7LhTnT.json",
+      "sha256": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795587673-4BdLzlhX.json",
+      "sha256": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795587676-SJSZkBC8.json",
+      "sha256": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795588177-2jkiJ5iT.json",
+      "sha256": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795591522-KXZURRSN.json",
+      "sha256": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795591782-heuosi5E.json",
+      "sha256": "54fb9a982f1e571a166ae11ca021a997815a067793b3bc78d40c15e44834c90d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795591787-oNrmHxIR.json",
+      "sha256": "46c87aa94b34e951b499448fe64b6bfcf61120ed11128a91fbbcd6e21ad295bd"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795591797-d18DoUyx.json",
+      "sha256": "77986a01c1ac50684fe7e562c1cbc673b6425530bd37ee398101ee9d39d5c9b4"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795595233-CXGuJISF.json",
+      "sha256": "6a4bf681020488bbfff5cc8b6688b86dd9f31a0230f1a223fd0577239b0f0c1c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795595445-NZIjZE34.json",
+      "sha256": "d1d52d92a54646e26b9208f5d769acc41f90b312092aaeddbd231112b98d0d31"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795595447-UyyfTafj.json",
+      "sha256": "62517e508a8d746ab78cb2e0765a13aa311510553338b4c2e5c8732b270ab95e"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795595460-9V0XCjcF.json",
+      "sha256": "bd16fc973a49f7bad434863a13dfbfb8dfe225991441ec8eb4a2b97736a3d42c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795599016-P1J0KTe9.json",
+      "sha256": "7e32d50cd0e2caa8afafeb3a7f839a4603f639eccfe2d9955c4fa52608ea5fdb"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795599269-kgG5rTM0.json",
+      "sha256": "f8bcf02a5c27bda9b419519ae140fb0b5e18b881c6d2f1263923f625da9dbe4e"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795599289-mvLLnigN.json",
+      "sha256": "300bd56398868c1756691cb0e5ff3e3781e9e1eaa60e25a3a6ddbc486b4c8053"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795602803-Fv1uDzqj.json",
+      "sha256": "899e62f0f8a6122a5d3cab67a3651d1a9a6470ff0a0a46b79477f7b31e0df8f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795603019-DhfZRgIW.json",
+      "sha256": "52028f26d08b923a95fba6088ff52d74a892d80aca0176b5deddcbc925880b5c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795603030-0AtTAzJH.json",
+      "sha256": "0d4fb95352b6727ace30be50834676b11f34c6773ea7457d810ff4bd627f2b8b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795606588-LhiP4Nec.json",
+      "sha256": "7b862cc8caafc382a222269ac1f59ef52630fcc9118649d53193ea8a407184de"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795606816-huTkAUah.json",
+      "sha256": "5ce64eecef75e7e5fe132b86784ee03ac2579edbf239497f9a5f97f51a1052bc"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795606837-wb8SAOVB.json",
+      "sha256": "9237f3ece4d1bedf406fcd255d6b5268fac482dad0ac5cce082cc305e0941400"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795610414-bXAInTXS.json",
+      "sha256": "56b68c7a9ce0d152d04b78093ad8d751d9f6bfcc587907a39ad2a6ebd5da8ce5"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795610415-lSebImC5.json",
+      "sha256": "89c21bf61dbf72ad0115b15235bf2213b1f80102636dbd52975cd953035e5cee"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795610671-Louh7Y3J.json",
+      "sha256": "1c1718adcec7f40a9edba0feefa691231bea3c4ae9656e97217fdc6b7f73384e"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795614028-gEXzsPhZ.json",
+      "sha256": "2c65b3a273f857129d1cbd0221f5d4a8a6bd73d5d7ad0e244247599a5c5c6795"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795614032-9X0HVWuZ.json",
+      "sha256": "9b10d3cb89ebd5afdb5b7c577b6591d1b026d1e730fa5a955198959ea8efeda7"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795614313-wTpQtsYm.json",
+      "sha256": "26f711288f6c6c27145bad9872f69f8200ce8579a6b74a2007cce6614f6706d0"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795617782-XqGrBa4m.json",
+      "sha256": "c28947b96f588c49dcb9b1cf81152a2df16934ebabc20b88836abadbb874af27"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795617785-30w9Vey8.json",
+      "sha256": "774e9f4f659d393d9ed805449ef6235286039583c043f3e2f47fafbbe82767ed"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795618036-V9hD9ARM.json",
+      "sha256": "33ace5ec0cf1a5f8fc8798852a629be0ade9958d832df74098067db402d5a43b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795621638-MPMAYlm3.json",
+      "sha256": "e652bf114f702af918e87f4d90c93892ead9ac035be09b7f1d6723721b56c48c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795622531-SZzsHy2j.json",
+      "sha256": "c4e7929369927e51818efe4464b8023b6f597925ee2d485d6c3954dac7ce4822"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/budget-state/reservations/r1795622741-pG8sMnEc.json",
+      "sha256": "870ae6805114d1ad95fd457736d6cb41ec3f197c66730924a97af1929fda655f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/cmd-guard_foresight.json",
+      "sha256": "4b48c8784b1653641e2ef7c82e9b86edca4759702759162c3dc559620a9e710d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/cmd-guard_foresight_without_held_row.json",
+      "sha256": "0fd67c95c05b64b82558f6a0e27b730b84315d90ee18c50ab7f794ca6788c2b9"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/cmd-guard_other_offices.json",
+      "sha256": "1471060df6f631f108eb344e9c6ef3b62749c529ef6cef9a704719c27cadf919"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/foresight-held-agent-status.json",
+      "sha256": "1c28486194d76648cbc359f9e2c77ebad28109f98537b6c874cdd8726a8128e1"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/gate-live.json",
+      "sha256": "c2906a164ffa3d8158826f6d1c8531a68263c14bbdbd2158f615dfd8b4fac49c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/knowledge-act34-gate.py",
+      "sha256": "13e6d68aaa1b32ce08e1a8ecd9f209486115aec077be7ef0f42f489306640d9a"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/knowledge-budget.sh",
+      "sha256": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/permits/foresight.json",
+      "sha256": "57b9daa1495d4e6d40800f29dae05e6b72df91cd3190c3a8f7a5e00088acd7a9"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/permits/spying.json",
+      "sha256": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/permits/statistics.json",
+      "sha256": "cb735305b408969b1e372a48ff2928dc736b594bf87dca5f3e65138587f70159"
+    },
+    {
+      "path": "records/statistics/evidence/act34-fresh-window-foresight-20261125/permits/strategy.json",
+      "sha256": "6121f77251694e24abf3f7da976fe5dc6fcd972fe157157552e64d1664a7f77c"
+    }
+  ],
+  "result": {
+    "category": "gate_and_guard_are_independent_blockers_fresh_window_open_held_row_persists",
+    "captured_utc": "2026-11-25T16:23:16Z",
+    "captured_unix": 1795623796,
+    "permit_start_unix": 1795560059,
+    "fresh_window_deadline_unix": 1795732859,
+    "fresh_window_remaining_seconds": 109063,
+    "all_assertions_pass": true,
+    "assertion_count": 39,
+    "fresh_window_open": true,
+    "archived_spying_decision": "hold",
+    "gate_reads_pilot_reviews": true,
+    "gate_has_no_budget_ledger_reference": true,
+    "guard_foresight_refused_due_to_held_row": true,
+    "guard_flips_ok_when_only_held_removed": true,
+    "foresight_new_config_completed_dispatches": 2,
+    "held_row_state": "held",
+    "held_tokens": 11320103,
+    "reservation_count": 37,
+    "aggregate_reproduced_exactly": true,
+    "live_gate_all_four_fail_at_board_attestation": true,
+    "board_approval_verified_from_this_office": false,
+    "derived_measurement_sha256": "c5bab2960e89e3095a8c40c848a5c50f601ffdfda609ba1179268055fbf9f078",
+    "falsifiers": [
+      "Any office enabled=false, authorized_by != act:34:OFFICE, not_before != 1795560059 or expiry != 1799432516 in the frozen activation.json.",
+      "A replacement permit whose sha256 differs from its activation.json permit_sha256.",
+      "An archived Spying review whose bytes do not reproduce its provenance sha256, whose decision is not hold, or whose permit_start/deadline are not the first-wave values.",
+      "A gate source that reads any budget-ledger path, or that accepts a non-proceed review before the deadline.",
+      "A live gate failure caused by a permit/config hash mismatch rather than the missing board credential.",
+      "guard foresight returning ok with the held row present, or failing to flip to ok when only that row is removed.",
+      "An aggregate that the frozen charges() cannot reproduce from the frozen reservations."
+    ]
+  }
+}

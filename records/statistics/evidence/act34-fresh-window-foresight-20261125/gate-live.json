@@ -1,0 +1,22 @@
+{
+  "foresight": {
+    "rc": 1,
+    "stderr": "Act34 foresight: HOLD: unverified executive action: antonina query failed: board show --id bpzNUUt9izRYOOcONcTy9K-implicate --page 1 --json",
+    "stdout": ""
+  },
+  "spying": {
+    "rc": 1,
+    "stderr": "Act34 spying: HOLD: unverified executive action: antonina query failed: board show --id bpzNUUt9izRYOOcONcTy9K-implicate --page 1 --json",
+    "stdout": ""
+  },
+  "statistics": {
+    "rc": 1,
+    "stderr": "Act34 statistics: HOLD: unverified executive action: antonina query failed: board show --id bpzNUUt9izRYOOcONcTy9K-implicate --page 1 --json",
+    "stdout": ""
+  },
+  "strategy": {
+    "rc": 1,
+    "stderr": "Act34 strategy: HOLD: unverified executive action: antonina query failed: board show --id bpzNUUt9izRYOOcONcTy9K-implicate --page 1 --json",
+    "stdout": ""
+  }
+}
