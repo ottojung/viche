@@ -74,14 +74,14 @@ def inventory():
         "At natural checkpoints, especially after expensive work.")
     add("cli.py", "cli submit GAP FILE", "Queue exact completed proof for publication",
         "Immediately when complete; never wait for an extra review.")
-    if present("research/entry.py"):
+    if present("research/entry.py") and (Path.home()/".local/bin/pnp-research").is_file():
         rows += [
             {"command":"pnp-research start","purpose":"Short role-specific work packet with exact pinned revision, prior findings and open obligations","when":"First command after dispatch; no need to read every tool manual."},
             {"command":"pnp-research guide ROLE","purpose":"Executable detailed examples for your role","when":"Only when you need the next unfamiliar operation."},
             {"command":"pnp-research knowledge find QUERY","purpose":"Cumulative mathematical objects from current and archived leases","when":"Before rediscovering a lemma or failed approach."},
             {"command":"pnp-research obligations ready --current","purpose":"Exact proof dependency graph for your current gap","when":"At decomposition and natural proof checkpoints."},
             {"command":"pnp-research obligations solve NODE BODY --async","purpose":"Durable kernel check of a complete body and checked dependencies","when":"Parallel Lean iteration; collect CHECK_ID later."},
-            {"command":"pnp-research certificate --output Candidate.lean","purpose":"Generate exact star-cover Lean certificate using list permutation, not truth-table enumeration","when":"Compatible graph-circuit construction; normal publication checks still apply."},
+            {"command":"pnp-research certificate --check --output Candidate.lean","purpose":"Generate and asynchronously check exact star-cover Lean certificate using reflection or list permutation","when":"Compatible graph-circuit construction; normal publication checks still apply."},
             {"command":"pnp-research yield","purpose":"Empirical family-level allocation baseline, current graph progress and competition","when":"Portfolio and lease evaluators."},
             {"command":"pnp-research adoption","purpose":"Observed role-prompt delivery and actual agent tool calls","when":"Flow and Executive evaluation; not mathematical success."},
         ]
