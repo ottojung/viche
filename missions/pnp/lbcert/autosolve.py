@@ -24,6 +24,22 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lbparse  # noqa: E402
 
+# A running Python process does not reload a module whose source changes on
+# disk. Without this guard, a fix delivered while autosolve is alive stays
+# dormant until some unrelated restart, which previously left the poll loop
+# throwing KeyError on value/template desk gaps for hours while generating no
+# candidates. Detect a source change at each poll and exit cleanly; allocator.sh
+# relaunches us with the current code within one tick (it holds our flock).
+START_HASH = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
+
+
+def source_changed():
+    try:
+        now = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
+    except OSError:
+        return False
+    return now != START_HASH
+
 STATE = os.environ.get('PNP_STATE_ROOT', '/var/lib/lubko/wd/viche-state/pnp')
 WORK = os.path.join(STATE, 'lbcert')
 CANDS = os.path.join(WORK, 'cands')
@@ -172,6 +188,9 @@ def main():
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
     queued = QUEUED
     while not os.path.exists(os.path.join(WORK, 'STOP')):
+        if source_changed():
+            log('source changed; exiting for clean restart')
+            return 0
         try:
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
