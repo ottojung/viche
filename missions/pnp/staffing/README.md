@@ -77,8 +77,10 @@ are retained for seven days; lifecycle events for thirty days. Metrics
 report observed general slot-seconds and unobserved intervals separately.
 A stale health snapshot is not evidence of coverage. A live but quiet
 worker exposes last activity; the controller does not kill one simply for
-being quiet (it might be compiling). A sustained vacancy or stale health
-requires Executive diagnosis, not another independent staffing loop.
+being quiet (it might be compiling). A sustained vacancy (120 seconds by default) or stale health requires Executive
+diagnosis, not another independent staffing loop. The Executive dispatch gate
+receives persistent incidents and publication outcomes, not routine worker
+identity changes. Full instantaneous worker diagnostics remain available.
 
 The Antonina interface does not provide a server-side idempotency key or
 atomic lease/launch transaction. This is reconciliation, not a claim of

@@ -34,7 +34,7 @@ def tick():
             except Exception as exc:
                 row={"phase":"unknown","reason":"slot error "+type(exc).__name__}
             rows.append({"key":s.key,"label":s.label,"gap":s.gap,
-                         **{k:row.get(k) for k in ("phase","reason","agent","vacant_since","next_at","failures","started","activity","model")}})
+                         **{k:row.get(k) for k in ("phase","reason","agent","vacant_since","next_at","failures","started","activity","model","uncovered_since")}})
         def history_scan():
             try:
                 return staff.roster()
@@ -65,7 +65,13 @@ def tick():
                     pass
         t=time.time()
         store.sample(rows,t)
-        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,
+        alerts=sorted(f'{r["gap"] or "support"}:{r["label"]}'
+                      for r in rows if r["phase"] not in ("running","completed","paused","obsolete")
+                      and isinstance(r.get("uncovered_since"),(int,float))
+                      and t-r["uncovered_since"]>=p["alert_after"])
+        if issues:
+            alerts.append("planning degraded")
+        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,"alerts":alerts,
              "duration":round(t-now,3),"slots":rows,"retired":retired,
              "desired":len(rows),"running":sum(r["phase"]=="running" for r in rows),
              "unknown":sum(r["phase"]=="unknown" for r in rows)}

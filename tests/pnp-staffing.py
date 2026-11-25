@@ -271,6 +271,19 @@ class Tests(unittest.TestCase):
             with self.assertRaises(backend.Uncertain):controller.tick()
         self.assertFalse(self.fake.runs)
 
+    def test_persistent_vacancy_alert_not_transient(self):
+        aid=self.launch()
+        self.fake.finish(aid)
+        self.step()
+        row=store.get(self.slot.key)
+        row["uncovered_since"]=time.time()-200
+        row["next_at"]=time.time()+120
+        store.put(self.slot.key,row)
+        with patch.object(staff,"roster",return_value=self.fake.history()):
+            out=controller.tick()
+        self.assertIn(self.rec["gap_id"]+":general",out["alerts"])
+        self.assertNotIn(self.rec["gap_id"]+":integrator",out["alerts"])
+
     def test_metrics_no_imputation_across_outage(self):
         t=time.time()-300
         a=[{"label":"general","phase":"running"}]

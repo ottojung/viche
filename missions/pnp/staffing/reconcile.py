@@ -15,6 +15,10 @@ def update(row, phase, reason="", **kw):
 
 def save(slot,row,phase,reason="",event=None,**kw):
     update(row,phase,reason,**kw)
+    if phase in ("running","completed","paused","obsolete"):
+        row["uncovered_since"]=None
+    elif row.get("uncovered_since") is None:
+        row["uncovered_since"]=time.time()
     store.put(slot.key,row,event)
     return row
 

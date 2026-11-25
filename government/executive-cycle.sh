@@ -150,14 +150,14 @@ for diagnostic in "$town"/missions/*/status.sh; do
     line='{"status":"unavailable","action":"investigate diagnostic failure"}'
   mission_diagnostics="$mission_diagnostics
 $label: $line"
-  if printf '%s\n' "$line" | jq -e '.coordination_due == true' >/dev/null 2>&1; then
+  if printf '%s\n' "$line" | jq -e 'if has("executive_coordination_due") then .executive_coordination_due == true else .coordination_due == true end' >/dev/null 2>&1; then
     mission_coordination_due=yes
   fi
-  # Compact stable signal: a change in staffing, checked output or mission
-  # state causes an Executive pass. Timestamps and full notes do not.
+  # Missions may expose a compact incident-level Executive signal separately
+  # from fast-changing worker rosters. Other missions keep their existing signal.
   signal=$(printf '%s\n' "$line" | jq -cS '
       if type=="object" then
-        (.dispatch_signal // {status,counts,by_state})
+        (.executive_dispatch_signal // .dispatch_signal // {status,counts,by_state})
       else . end' 2>/dev/null) || signal="unreadable"
   mission_dispatch_signature="$mission_dispatch_signature
 $label:$signal"

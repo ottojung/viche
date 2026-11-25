@@ -9,13 +9,13 @@ from .. import config, state
 DEFAULT = {
     "interval": 5, "parallel": 4, "retry_min": 5, "retry_max": 180,
     "short_run": 20, "ambiguity_grace": 45, "support_refresh": 600,
-    "focus_obligations": 2, "rotate_after": 3, "paused": False, "extras": [],
+    "focus_obligations": 2, "rotate_after": 3, "alert_after": 120, "paused": False, "extras": [],
 }
 BOUNDS = {
     "interval": (2, 60), "parallel": (1, 12), "retry_min": (2, 60),
     "retry_max": (30, 1800), "short_run": (5, 120),
     "ambiguity_grace": (30, 600), "support_refresh": (120, 3600),
-    "focus_obligations": (0, 12), "rotate_after": (2, 12),
+    "focus_obligations": (0, 12), "rotate_after": (2, 12), "alert_after": (30, 1800),
 }
 
 

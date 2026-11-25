@@ -175,7 +175,22 @@ def snapshot():
     score["available"] = lb.get("available", False)
     score["stale"] = stale
     by_state = dict(collections.Counter(r["state"] for r in rows))
+    # Worker identities churn as bounded passes finish. Wake the Executive
+    # for persistent incidents or externally meaningful changes, not for
+    # individual vacancies the controller is already reconciling.
+    staffing_alerts=list(controller_health.get("alerts",[]))
+    if controller_health.get("state") in ("unknown","stale"):
+        staffing_alerts.append("controller "+controller_health["state"])
+    publication_alerts=sorted(r["gap"] for r in rows if r["state"] in ("FAULT","REJECTED")
+                              or (r["state"]=="PR_OPEN" and r.get("failure_reason")))
+    executive_signal={"staffing_alerts":sorted(set(staffing_alerts)),
+                      "publication_alerts":publication_alerts,
+                      "leaderboard":[score.get("rank"),score.get("our_steps")],
+                      "corrections":corrections}
+
     return {"staffing_controller":controller_health,
+        "executive_dispatch_signal":executive_signal,
+        "executive_coordination_due":bool(staffing_alerts or publication_alerts),
         "observed": len(rows), "by_state": by_state, "recent": rows[-12:],
         "leaderboard": score, "workers": w,
         "research_support": {"agents": scouts, "completed_current_evidence": sorted(complete), "coverage_missing": missing_support,
