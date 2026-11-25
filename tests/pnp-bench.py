@@ -102,6 +102,30 @@ class BenchTests(unittest.TestCase):
         finally:
             Path(db_path).unlink(missing_ok=True)
 
+    def test_real_checked_times_and_ties(self):
+        entries = {"contributors":[{"lemmas":[
+            {"id":"L-meta-1","at":"2026-11-24T10:00:00Z"},
+            {"id":"L-meta-2","at":"2026-11-24T12:00:00+01:00"},
+            {"id":"L-meta-3","at":"2026-11-24T11:00:00Z"},
+            {"id":"L-meta-4","at":"invalid"},
+            {"id":"L-meta-1","at":"2026-11-24T12:00:00Z"},
+        ]}]}
+        times = corpus.checked_timestamps(entries)
+        self.assertEqual(len(times), 3)
+        self.assertEqual(times["L-meta-2"], times["L-meta-3"])
+        db = _make_db([(f"PEqualNP.Outside.L_meta_{i}", [(0,1)], 1) for i in range(1,5)])
+        try:
+            loaded = corpus.load_graph_circuits(db, timestamps=times)
+            out = evaluate.evaluate_with_holdouts(loaded, generators.exact_star_cover)
+            holdout = out["time_holdout"]
+            self.assertEqual(holdout["dated_rows"], 3)
+            self.assertEqual(holdout["undated_rows"], 1)
+            self.assertEqual(set(holdout["test_modules"]),
+                {"PEqualNP.Outside.L_meta_2","PEqualNP.Outside.L_meta_3"})
+            self.assertEqual(holdout["summary"]["total"], 2)
+        finally:
+            Path(db).unlink(missing_ok=True)
+
     def test_holdout_group_split(self):
         rows = []
         for i in range(8):
