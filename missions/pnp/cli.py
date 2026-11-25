@@ -4,7 +4,7 @@
     python3 missions/pnp/cli.py status
     python3 missions/pnp/cli.py acquire [--hard]
     python3 missions/pnp/cli.py beat <gap-id>
-    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
     python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
     python3 missions/pnp/cli.py reconcile
 """
@@ -199,14 +199,46 @@ def cmd_beat(args):
 
 
 def cmd_release(args):
-    rec = state.load(args.gap)
-    if not rec or not rec.get("lease"):
-        print("no lease for gap", file=sys.stderr)
+    """Exceptional operator repair, never a competing portfolio mechanism."""
+    if not args.operator_override or not args.attempt or not args.evidence or not args.evidence.strip():
+        print("Routine release belongs to the lease evaluator: use portfolio release GAP ATTEMPT --reason ... --evidence ... . "
+              "For deliberate operator repair use --operator-override --attempt ATTEMPT --evidence EVIDENCE.",file=sys.stderr)
         return 2
-    desk_mod.Desk().release(rec["lease"], args.reason)
-    state.transition(args.gap, "RELEASED", failure_reason=args.reason)
-    print("released " + args.gap + " with reason " + args.reason)
-    return 0
+    if len(args.evidence)>4000 or args.reason not in config.RELEASE_REASONS-{"submitted"}:
+        print("invalid operator release evidence/reason (submitted is publisher-only)",file=sys.stderr)
+        return 2
+    if not config.GAP_ID_RE.fullmatch(args.gap):
+        print("invalid gap",file=sys.stderr);return 2
+    rec=state.load(args.gap)
+    if not support.active(rec) or support.attempt(rec)!=args.attempt:
+        print("obsolete or nonresearch assignment; inspect the current attempt",file=sys.stderr);return 2
+    fd=jobs.claim(args.gap)
+    if fd is None:
+        print("publisher owns assignment; release refused",file=sys.stderr);return 2
+    try:
+        with state.lock(args.gap):
+            rec=state.load(args.gap)
+            if (not support.active(rec) or support.attempt(rec)!=args.attempt
+                    or rec.get("queued_lease") or rec.get("intent")
+                    or rec.get("pr_number") or rec.get("candidate_digest")):
+                print("assignment changed or publication pending; release refused",file=sys.stderr);return 2
+            detail={"attempt":args.attempt,"reason":args.reason,"evidence":args.evidence.strip(),
+                    "agent":os.environ.get("ANTONINA_AGENT_ID"),"pid":os.getpid(),"operator_override":True}
+            # Durable evidence even if the network operation fails after dispatch.
+            state.event(args.gap,"operator_release_requested",detail)
+            try:
+                desk_mod.Desk().release(rec["lease"],args.reason)
+            except Exception as exc:
+                state.event(args.gap,"operator_release_uncertain",{"attempt":args.attempt,"error_type":type(exc).__name__})
+                print("release not confirmed; reconcile before retrying",file=sys.stderr);return 1
+            rec.update(state="RELEASED",failure_reason=args.reason)
+            state.save(rec)
+            state.event(args.gap,"state",{"to":"RELEASED","fields":{"failure_reason":args.reason}})
+            state.event(args.gap,"operator_release",detail)
+        print("released "+args.gap+" with reason "+args.reason)
+        return 0
+    finally:
+        os.close(fd)
 
 
 def cmd_submit(args):
@@ -309,6 +341,9 @@ def main(argv=None):
     rel = sub.add_parser("release")
     rel.add_argument("gap")
     rel.add_argument("reason")
+    rel.add_argument("--operator-override",action="store_true",help="exceptional explicit operator repair only")
+    rel.add_argument("--attempt",help="exact current attempt from portfolio inspect")
+    rel.add_argument("--evidence",help="substantive reason for exceptional operator repair")
     rel.set_defaults(fn=cmd_release)
     subp = sub.add_parser("submit")
     subp.add_argument("gap")

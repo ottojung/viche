@@ -120,6 +120,29 @@ class Research(unittest.TestCase):
         self.assertNotIn("general",report["roles"])
         self.assertEqual(report["observed_usage"]["general"]["opened_packet"],1)
         self.assertEqual(report["observed_usage"]["general"]["unconfirmed_dispatches"],1)
+    def test_operator_release_is_exact_and_explicit(self):
+        from missions.pnp import cli
+        from argparse import Namespace
+        gap="L-meta-7"
+        r=state.create(gap,state="LEASED",lease="fixture",statement="True",
+                       lease_expires_at=__import__("time").time()+600)
+        a=Namespace(gap=gap,reason="missing_lemma",operator_override=False,attempt=None,evidence=None)
+        with patch.object(cli.desk_mod,"Desk") as desk:
+            self.assertEqual(cli.cmd_release(a),2)
+            desk.assert_not_called()
+            a.operator_override=True;a.attempt="stale";a.evidence="concrete repair"
+            self.assertEqual(cli.cmd_release(a),2)
+            desk.assert_not_called()
+            a.attempt=support.attempt(r)
+            state.update(gap,queued_lease="fixture")
+            self.assertEqual(cli.cmd_release(a),2)
+            desk.assert_not_called()
+            state.update(gap,queued_lease=None)
+            self.assertEqual(cli.cmd_release(a),0)
+            desk.return_value.release.assert_called_once_with("fixture","missing_lemma")
+        self.assertEqual(state.load(gap)["state"],"RELEASED")
+        events=[json.loads(l) for l in Path(state.events_path(gap)).read_text().splitlines()]
+        self.assertTrue(any(e["kind"]=="operator_release" and e["detail"]["attempt"]==a.attempt for e in events))
     def test_independent_roles_and_obligation_fronts(self):
         rec=state.create("L-meta-9",state="LEASED",lease="fixture",statement="True",
                          lease_expires_at=__import__("time").time()+600)

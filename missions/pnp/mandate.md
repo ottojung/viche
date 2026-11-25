@@ -471,6 +471,13 @@ active proof swarm before abandoning its focus. A difficult label, age or
 one unsuccessful tactic is insufficient. If a lease is genuinely not worth
 holding, directly decide:
 `python3 -m missions.pnp.portfolio release GAP ATTEMPT --reason 'specific mathematical obstacles and opportunity cost' --evidence 'checked lemmas, failed route artifacts or reproducible experiments'`
+Direct operator CLI release is reserved for deliberate exceptional repair;
+it requires --operator-override, exact current --attempt and --evidence.
+It cannot release an assignment owned by the publisher or a superseded
+attempt. Routine releases must go through the independent lease evaluator;
+do not mass-release live research assignments from external maintenance.
+No additional approval is required for the normal evaluator path.
+
 The allocator executes the documented reason other, preserves artifacts,
 protects queued/publishing candidates, honors hard-step minimum holding time,
 and refills the slot. No additional review or approval. Never release

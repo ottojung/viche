@@ -11,7 +11,7 @@ authenticated GitHub mutation commands directly.
     python3 missions/pnp/cli.py status
     python3 -m missions.pnp.staff GAP --worker LABEL=APPROACH
     python3 missions/pnp/cli.py beat <gap-id>
-    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
     python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
     python3 missions/pnp/cli.py reconcile
 
