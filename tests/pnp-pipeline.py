@@ -653,6 +653,20 @@ class TestReconcile(unittest.TestCase):
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
         self.assertEqual(r["state"], "ACCEPTED")
 
+    def test_merged_without_checker_comment_becomes_accepted(self):
+        # The intake bot can merge a validated proof without posting a
+        # parseable ACCEPTED comment. The merge itself is definitive credit;
+        # do not strand the gap in PR_OPEN with verdict "pending" forever.
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "number": n,
+                               "head_sha": SHA, "merged": True}
+        gh.pr_comments = lambda n: []
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
+        self.assertEqual(state.load(GAP)["external_verdict"], "ACCEPTED")
+        self.assertEqual(r["state"], "ACCEPTED")
+
     def test_fault_adopts_existing_validated_pr_without_duplicate(self):
         new_state("FAULT", commit_sha=SHA, branch=config.branch_for(GAP),
                   queued_lease="lease-1", expected_commits=[SHA])
