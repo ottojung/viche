@@ -1,0 +1,170 @@
+{
+  "admit_by_office": {
+    "foresight": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "spying": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "statistics": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "strategy": {
+      "admit": true,
+      "reason": "within caps"
+    }
+  },
+  "all_assertions_pass": true,
+  "assertions": {
+    "admit_all_four_true": true,
+    "admit_foresight_true": true,
+    "aggregate_reproduced_exactly": true,
+    "bytes_unchanged_vs_0935_activation.json": true,
+    "bytes_unchanged_vs_0935_knowledge-budget-tool.py": true,
+    "bytes_unchanged_vs_0935_knowledge-budget.conf": true,
+    "frozen_config_valid": true,
+    "guard_flips_ok_when_held_removed": true,
+    "guard_foresight_blames_held_row": true,
+    "guard_foresight_refused": true,
+    "held_charge_at_frozen_ceiling": true,
+    "held_longer_than_prior_3867s": true,
+    "held_meter_and_usage_null": true,
+    "held_native_session_null": true,
+    "held_no_closure_fields": true,
+    "held_reason_unchanged": true,
+    "held_row_still_present": true,
+    "held_state_still_held": true,
+    "no_live_antonina_call_in_scratch": true,
+    "over_cap_refuses_statistics": true,
+    "prior_count_was_19": true,
+    "resolve_did_not_close": true,
+    "resolve_kept_full_ceiling": true,
+    "resolve_left_row_held": true,
+    "resolve_rc_zero": true,
+    "resolve_reason_was_identity_unresolved": true,
+    "superseded_config_refuses_all": true
+  },
+  "capture_utc": "2026-11-25T10:37:08Z",
+  "captured_unix": 1795603028,
+  "ceiling_pinned_share": 0.4362548223960603,
+  "ceiling_pinned_tokens": 33960309,
+  "commands": {
+    "guard_foresight": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 1,
+      "stderr": "knowledge-budget: office foresight has an open reservation: r1795595445-NZIjZE34",
+      "stdout": ""
+    },
+    "guard_foresight_without_held_row": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "guard ok: foresight"
+    },
+    "guard_other_offices": {
+      "spying": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "spying"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "guard ok: spying"
+      },
+      "statistics": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "statistics"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office statistics has an open reservation: r1795602803-Fv1uDzqj",
+        "stdout": ""
+      },
+      "strategy": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "strategy"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office strategy has an open reservation: r1795603019-DhfZRgIW",
+        "stdout": ""
+      }
+    },
+    "resolve_held_row": {
+      "argv": [
+        "knowledge-budget.sh",
+        "resolve",
+        "r1795595445-NZIjZE34",
+        "statistics-hermetic-reexec"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "derived_measurement_sha256": "07705701d6dc55d0f73a8ff70783eb27470cd7b13d8606e7e58f4a7f47ceb849",
+  "hashes": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "knowledge-budget.sh": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56",
+    "superseded-knowledge-budget.conf": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+  },
+  "held_duration_seconds_at_capture": 7553,
+  "held_id": "r1795595445-NZIjZE34",
+  "held_share_of_aggregate": 0.1454182741320201,
+  "held_tokens": 11320103,
+  "liability_basis_tokens": {
+    "active_caps": 22640206,
+    "closed_usage": 43884811,
+    "held_charge": 11320103,
+    "reserved_caps": 0
+  },
+  "minutes_since_prior": 61.22,
+  "open_reservations_by_office": {
+    "foresight": [
+      "r1795595445-NZIjZE34"
+    ],
+    "spying": [],
+    "statistics": [
+      "r1795602803-Fv1uDzqj"
+    ],
+    "strategy": [
+      "r1795603019-DhfZRgIW"
+    ]
+  },
+  "prior_capture_utc": "2026-11-25T09:35:55Z",
+  "reservation_count": 21,
+  "resolve_row_after": {
+    "charge": {
+      "cpu_seconds": 7987,
+      "tokens_total": 11320103,
+      "wall_seconds": 1997
+    },
+    "closed_at": null,
+    "closed_reason": null,
+    "held_reason": "operator_resolution_identity_unresolved",
+    "resolved_by": null,
+    "state": "held"
+  },
+  "state_counts": {
+    "active": 2,
+    "closed": 18,
+    "held": 1
+  },
+  "tokens_total": 77845120
+}
