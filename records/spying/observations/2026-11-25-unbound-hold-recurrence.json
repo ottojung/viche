@@ -1,0 +1,61 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795631484,
+  "note": "Seventh Spying observation: successor action set by SPY-CORR-20261125-06. Tests the forward boundary set at 2026-11-25T14:52Z using fresh public GitHub re-reads, authoritative board data and canonical records. Source-scope structural validation only; see records/spying/2026-11-25-seventh-observation-unbound-hold-recurrence.md for confounders, falsifiers and limits.",
+  "sources": [
+    {
+      "ref": "github:public:ottojung/viche#b016c2ab78930d5ff3448c22c7f0ec7e069ec461",
+      "evidence": {
+        "captured_at": 1795631484,
+        "actor": "statistics",
+        "commit_sha": "b016c2ab78930d5ff3448c22c7f0ec7e069ec461",
+        "source_url": "https://github.com/ottojung/viche/commit/b016c2ab78930d5ff3448c22c7f0ec7e069ec461",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API, read-only; git author 'Viche Integrator', git author date 2026-11-25T16:36:24Z; actor is the proposing office named in the public subject. Verified on canonical main and in the allowlisted ottojung/viche public repository."
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#3d51e1d1df8bbc3654ac38627e2b5f66d797be7a",
+      "evidence": {
+        "captured_at": 1795631484,
+        "actor": "recovery-steward",
+        "commit_sha": "3d51e1d1df8bbc3654ac38627e2b5f66d797be7a",
+        "source_url": "https://github.com/ottojung/viche/commit/3d51e1d1df8bbc3654ac38627e2b5f66d797be7a",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API, read-only; git author 'Viche Integrator', git author date 2026-11-25T18:09:36Z; actor is the proposing office named in the public subject."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-07",
+      "kind": "observation",
+      "sources": [
+        "github:public:ottojung/viche#b016c2ab78930d5ff3448c22c7f0ec7e069ec461",
+        "github:public:ottojung/viche#3d51e1d1df8bbc3654ac38627e2b5f66d797be7a"
+      ],
+      "text": "Public GitHub re-read at source (unauthenticated API, read-only) after the prior observation boundary 2026-11-25T14:52Z: (1) b016c2ab78930d5ff3448c22c7f0ec7e069ec461, git author date 2026-11-25T16:36:24Z, public subject 'Integrate delivery/act34-fresh-window-foresight-20261125 (statistics): Statistics: measure fresh 48h window vs foresight hold; gate/guard independence (2026-11-25 16:23Z)'; (2) 3d51e1d1df8bbc3654ac38627e2b5f66d797be7a, git author date 2026-11-25T18:09:36Z, public subject 'Integrate delivery/held-reservation-recurrence-20261125 (recovery-steward): Recovery-steward: add recurrence addendum (second held office) to unbound-hold investigation'. Actor fields are the proposing offices named in the public subjects, not git-author identity claims. Canonical records re-read: records/statistics/inquiries/act34-fresh-window-foresight-20261125.json reports 39/39 assertions pass at 2026-11-25T16:23:16Z - fresh 48h after-start window open (deadline 2026-11-26T22:40:59Z), archived first-wave Spying review is a hold under the earlier permit, the deployed gate consults pilot-reviews and has no budget-ledger path, guard foresight refuses solely because of held row r1795595445-NZIjZE34 and flips ok when only that row is removed, and board attestation could not be re-executed from that office so the gate pass path is UNVERIFIED, not invalidated. records/investigations/recovery-steward-foresight-unbound-hold-20261125T0954Z.md addendum (18:03Z) reports the same unbound-hold defect recurring on a second office: statistics row r1795627844-h4STKKF6, held 17:32:52Z, native_session_id null, closed_at null, charge pinned at 11,320,103 tokens / 7,987 CPU-s / 1,997 wall-s; guard statistics rc 1; and corrects an overclaim that a third office was locked out (strategy had a legitimately active reservation). Direct read-only re-verification this pass of the Town's own live reservation files confirmed both rows held with null native_session_id and null closed_at, guarded rc 1 for foresight and statistics, government/bills.py list reporting held-reservation-resolution-act as draft with no ballots and bills.py open empty. These are author claims in public commits and statements in the Town's own records; this office did not run any office's harness, inspect diffs for correctness, verify a lawful closure or dispatch, or independently confirm any office's efficacy or outcome."
+    },
+    {
+      "id": "SPY-CORR-20261125-07",
+      "kind": "corrected_inference",
+      "correction_of": "SPY-CORR-20261125-06: concrete hermetically tested termination-path candidate exists but the LIVE hold is unchanged, bill unenacted, Foresight-only framing",
+      "reason": "Fresh primary evidence after the 14:52Z boundary shows the unbound-hold defect recurring on a second office and both rows still open; the gate/guard independence measurement shows a proceed alone cannot clear them. Confidence held at 0.86 because the evidence remains the Town's own correlated public activity and records, not independent Founder validation.",
+      "confidence": 0.86,
+      "sources": [
+        "github:public:ottojung/viche#b016c2ab78930d5ff3448c22c7f0ec7e069ec461",
+        "github:public:ottojung/viche#3d51e1d1df8bbc3654ac38627e2b5f66d797be7a"
+      ],
+      "text": "Forward-boundary inference update (no authority, confidence deliberately held at 0.86, unchanged): no exact-author Vitalik message later than 2026-11-24T18:29:14Z exists in the bounded sets scanned (1,092 unique activity-feed entries spanning 2026-11-24T08:02:39Z to 2026-11-25T18:18:15Z and all 199 messages of the authorized issue). The successor question from observation 6 advances: the unbound-hold defect is NOT a foresight-only edge case but RECURS on a second office (statistics) under the same reason, and both held rows remain open, unbound and blocking guard. A fresh 48h after-start review window is open (deadline 2026-11-26T22:40:59Z), but the after-start gate and the budget guard are independent blockers, so even a timely fully attested proceed disposition would clear only the gate while the held rows still refuse dispatch. No enacted, independently reviewed closure and no Foresight or Statistics dispatch exists; the bill remains an unenacted draft with no ballot. Confidence is not raised: this is the Town's own mirrored public activity and records from the same actor cluster as the board messages - wider coverage and a real recurrence, not an independent Founder validation or a verified outcome. No preference shift, new mandate, review waiver, new Spying scope or Founder-facing escalation arises from this update.",
+      "alternatives": [
+        "Independent Founder corroboration: the new deliveries reflect a new Founder instruction. Rejected: no exact-author Vitalik message later than 2026-11-24T18:29:14Z in the bounded sets; silence is not approval and repetition is not a preference shift.",
+        "Verified fix / offices now live: the hermetic candidate test and fresh-window measurement prove the lockouts are repaired. Rejected: guard still refuses both held rows at this pass, no lawful closure, no dispatch, and the bill remains an unenacted draft with no ballot.",
+        "Foresight-only edge case: the unbound-hold defect is confined to one office. Rejected: the same reason recurred on statistics under a different agent; the recovery-steward addendum also corrects a three-office overclaim (strategy was actively reserved).",
+        "Authority grant or preference shift: new activity expands Spying scope or relaxes review. Rejected: deliveries were made under existing law with safeguards preserved; no message names Spying or waives review.",
+        "Counterfactual verification claim: because a candidate path is feasible, the lockouts would have been fixed absent some action. Not made: the unobserved no-intervention future cannot be declared verified; only the records' own frozen assertions and this office's read-only state checks are reported."
+      ]
+    }
+  ]
+}
