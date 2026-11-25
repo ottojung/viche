@@ -1,6 +1,6 @@
 #!/bin/sh
 # Durable nonblocking P vs NP lease maintenance, invoked each Town boot cycle.
-# No agent/model starts here: the Executive assigns mathematical research.
+# Staffing is independently reconciled under the standing founder order.
 set -eu
 . "$(dirname "$0")/runtime.sh"
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -11,6 +11,12 @@ cd "$town"
 mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}"
 nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
     >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
+# Supervise the standing staffing controller independently of model sessions.
+# It owns its lifetime lock, and each tick is bounded and crash-recoverable.
+if [ ! -d /run/service/viche-pnp-staffing ]; then
+    nohup setsid /bin/sh "$town/missions/pnp/staffing.sh" </dev/null \
+        >/dev/null 2>&1 &
+fi
 # Start independent local resource reclamation before any network I/O.
 python3 -m missions.pnp.watchdog || :
 # Independent checked-proof scout. A slow fetch/index never blocks leasing,

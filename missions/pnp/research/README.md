@@ -4,7 +4,7 @@
 
 `pnp-research start` in a research workspace returns the current role, pinned
 revision, assigned subproblem, checked/open dependencies, and relevant earlier
-results (including released leases). The Executive dispatch helper injects a
+results (including released leases). The standing staffing controller injects a
 short role-specific prompt automatically. For an unfamiliar command, use
 `pnp-research guide ROLE` for executable examples or the command's `--help`.
 Do not read every manual before doing mathematics. A stale work packet explains\nthat the assignment ended and points only to preservation and receipt collection.\nPublished-proof corrections receive correction-specific commands.
@@ -124,10 +124,10 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
 
 ## Operations and decision support
 
-- Executive lifecycle uses the canonical standing dispatch helper; it
+- The standing staffing controller manages lifecycle; it
   injects the playbook before launching a worker. For explicit independent
   dispatch: `pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task TASK`.
-  Only Executive may use agent-launch/steer actions.
+  Routine research-agent lifecycle actions belong to the standing controller; Executive monitors and debugs.
 - `pnp-research adoption` measures confirmed launches, discovery, substantive
   commands, help calls before first use, and time to first successful use
   using the actual agent environment.

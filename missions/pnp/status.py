@@ -127,7 +127,16 @@ def snapshot():
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
     from missions.pnp import continuity
-    missing_fronts = [p[0] for p in continuity.focus_plans(selected,w["agents"])] if w["coverage"]=="complete" else []
+    from missions.pnp.staffing import plan as staffing_plan, policy as staffing_policy, store as staffing_store
+    controller_health=staffing_store.read_health()
+    missing_fronts=[]
+    if w["coverage"]=="complete":
+        try:
+            running_paths={a.get("cwd") for a in w["agents"]}
+            missing_fronts=[slot.label for slot in staffing_plan.desired(staffing_policy.load(),w["agents"])
+                            if slot.gap==focus_gap and slot.label!="general" and slot.path not in running_paths]
+        except (OSError,ValueError,RuntimeError):
+            pass
     coordination_due = bool(w["coverage"] == "complete" and (
         stale_workers or unstaffed or missing_general or off_focus or
         missing_fronts))
@@ -141,7 +150,10 @@ def snapshot():
         needed.add("lease-evaluation")
     if len(active) > 1:
         needed.add("portfolio")
-    complete = continuity.completed_roles(continuity.live(), selected)
+    if controller_health.get("state") not in ("stale","unknown"):
+        complete={r["label"] for r in controller_health.get("slots",[]) if r.get("phase")=="completed"}
+    else:
+        complete=set()
     missing_support = sorted(needed - covered - complete) if w["coverage"] == "complete" else []
     try:
         memory = json.loads((STATE / "pnp/allocator.json").read_text())
@@ -163,22 +175,21 @@ def snapshot():
     score["available"] = lb.get("available", False)
     score["stale"] = stale
     by_state = dict(collections.Counter(r["state"] for r in rows))
-    return {
+    return {"staffing_controller":controller_health,
         "observed": len(rows), "by_state": by_state, "recent": rows[-12:],
         "leaderboard": score, "workers": w,
         "research_support": {"agents": scouts, "completed_current_evidence": sorted(complete), "coverage_missing": missing_support,
                              "coordination_findings": findings,
                              "portfolio_decisions": decisions,
-                             "action": "Executive owns staffing and material steering; support findings are advisory and arrive directly in worker guards."},
+                             "action": "Controller reconciles staffing; Executive monitors, debugs and adjusts standing policy. Support findings are advisory."},
         "frontier": {k: observed.get(k) for k in ("offerable", "ordinary", "open_gaps", "held")},
         "frontier_fresh": bool(observed), "active_lease_gaps": active,
         "research_focus": focus_gap, "missing_focus_fronts": missing_fronts, "focus_workers": focus_workers, "reserve_gaps": reserves,
         "general_workers": general_workers, "missing_general": missing_general,
-        "baseline_command":"python3 -m missions.pnp.staff --baseline",
+        "baseline_command":"python3 -m missions.pnp.staffing.controller status",
         "focus_details": ({k: selected.get(k) for k in ("gap_title", "statement", "imports", "context")}
                           if selected else None),
-        "staff_command": ("python3 -m missions.pnp.staff " + focus_gap + " --worker LABEL=APPROACH"
-                          if focus_gap else None),
+        "staff_command": ("python3 -m missions.pnp.staffing.controller policy" if focus_gap else None),
         "off_focus_workers": off_focus,
         "unstaffed_active_gaps": unstaffed, "active_lease_age_minutes": age,
         "potential_fronts": related[:12],
@@ -188,24 +199,11 @@ def snapshot():
         "lean_headroom_bytes": frontier.build_control.headroom(),
         "resource_deferred_gaps": [r["gap"] for r in rows if r.get("resource_deferred")],
         "workers_on_terminal_gaps": stale_workers,
-        "owned_by": "Viche Executive; other operators do not launch agents",
+        "owned_by": "Standing staffing controller; Executive owns monitoring, debugging and policy",
         "action": (
-            "Executive: retire obsolete workers cooperatively, preserve one general researcher per live lease, and concentrate extra specialists on research_focus."
-            if stale_workers else
-            "Executive: run the baseline_command now to fill missing general researchers on every live lease."
-            if missing_general else
-            "Executive must concentrate additional independent researchers on research_focus; every live lease keeps its general researcher."
-            if not focus_workers else
-            "Executive must parallelize distinct proof approaches on research_focus, "
-            "not distribute researchers across reserve gaps."
-            if len(focus_workers) == 1 else
-            "Executive must restore visibility of the actual worker roster."
-            if w["count"] is None else
-            "Executive must increase the verified checked-step lead over #2 "
-            "and protect the lead trajectory."
-            if score.get("rank") == 1 else
-            "Executive must increase checked-step throughput to gain #1; "
-            "evaluate research yield, resources and worker replenishment."),
+            "Executive: inspect staffing controller health and repair persistent failures; do not manually replenish workers. "
+            "Evaluate mathematical yield and publication blockers. Only externally credited steps establish success."
+        ),
         # No timestamps here: the general government dispatch gate changes
         # only when mission facts or staffing change, not every refresh.
         "dispatch_signal": {
@@ -213,6 +211,7 @@ def snapshot():
                             (score.get("leader") or {}).get("steps"),
                             (score.get("runner_up") or {}).get("steps")],
             "workers": w["count"], "coverage": w["coverage"],
+            "staffing_health":controller_health.get("state","unknown"),
             "gaps": by_state, "active": sorted(active), "focus": focus_gap,
             "off_focus": off_focus, "missing_general": missing_general,
             "general_workers": general_workers,

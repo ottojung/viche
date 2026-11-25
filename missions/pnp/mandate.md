@@ -357,7 +357,7 @@ complete proof immediately without waiting for any scout, review, or Executive
 approval. Executive delivers urgent coordination findings promptly; preempt
 only when confirmed material benefit outweighs interruption and preserve
 ongoing useful computations. Never dispatch, restart or steer an agent from
-a support agent. Executive retains sole lifecycle authority.
+a support agent. The standing staffing controller executes lifecycle actions; Executive monitors and repairs it.
 
 ## Continuous lease allocation (Founder priority)
 
@@ -367,7 +367,7 @@ and keeps polling even with no work. The desk chooses exact gaps; do not
 attempt arbitrary ID claims. The allocator selects one stable research focus, preferring concrete,
 ordinary and low-competition work among held gaps until the portfolio
 researcher makes an evidence-based decision. Every held researchable lease
-has one general researcher. The Executive owns agent starts/stops; do not
+has one general researcher. The staffing controller owns routine agent starts/stops; do not
 duplicate allocator polling. Missing staffing is a replenishment signal,
 not a mathematical release decision. The lease evaluator decides honest
 releases. Preserve work artifacts and protect queued/publishing candidates.
@@ -416,7 +416,7 @@ for launching other agents. The existing baseline and focus rules remain.
 
 When an approach admits a useful decomposition, the proof integrator
 requests exact Lean obligations with `pnp-research obligations request`
-and specifies their dependencies. Executive assigns unresolved ready nodes
+and specifies their dependencies. The standing controller assigns unresolved ready nodes
 to complementary specialists; do not allocate every specialist the same
 complete theorem. Keep independent approaches when useful. New focused
 specialists should share the general researcher's exact pinned base. Existing
@@ -482,7 +482,7 @@ The allocator executes the documented reason other, preserves artifacts,
 protects queued/publishing candidates, honors hard-step minimum holding time,
 and refills the slot. No additional review or approval. Never release
 merely because a lease is temporarily unstaffed. Both evaluators finish their passes
-rather than manufacturing activity. The Executive alone staffs and retires
+rather than manufacturing activity. The standing controller staffs and retires
 agents, and immediately obeys a valid focus decision.
 
 ## Baseline research on every lease (latest Founder priority)
@@ -498,12 +498,11 @@ focus, not its general researcher. Do not count support roles as lease workers.
 When a general researcher finishes, replenish promptly while the lease is
 still live. A queued complete proof is owned by the publisher instead.
 
-Executive: fill missing_general before unrelated coordination using:
-`python3 -m missions.pnp.staff --baseline`
-This is an idempotent batch dispatch for all researchable leases. Use
-staff GAP --worker LABEL=APPROACH for extra specialists on research_focus only.
-The status fields general_workers, missing_general, and off_focus_workers
-identify exact coverage and excess sessions.
+The standing staffing controller replenishes missing general researchers.
+The Executive inspects controller health and persistent vacancies, diagnoses
+failures and changes exact-attempt policy when necessary. Routine manual
+agent starts or stops are not part of the Executive model turn.
+See missions/pnp/staffing/README.md for commands and fault recovery.
 
 All bound researchers share substantial mathematical findings directly,
 including promising routes, failed approaches, precise blockers and checked
@@ -519,14 +518,14 @@ The allocator must never infer mathematical abandonment from agent absence.
 
 ## Standing Executive continuity order (Founder priority, supersedes vacancy holds)
 
-The Executive's prescribed mechanical staffing duties run through the generic
-Executive mission hook independently of its reasoning session. This is the
-Executive executing a standing order, NOT the desk allocator, an external
-assistant, a support agent, or a new discretionary scheduler. The Executive
-retains lifecycle authority and chooses additional approaches, intervenes on
-duplicates, and resolves resource or model failures. Do not manually run the
-live hook from another office. The hook uses the same staffing lock as the
-Executive's interactive commands; only the existing allocator claims leases.
+Founder directive (2026-11-25): routine staffing is programmatic and
+independent of the Executive model and branch. The standing staffing
+controller reconciles every exact desired position continuously. The
+Executive monitors, debugs, and adjusts policy; the controller exclusively
+owns routine research-agent starts, replenishment and cooperative retirement.
+Only the existing allocator claims leases; the independent evaluators own
+evidence-based allocation decisions. There is no manual staffing fallback
+that competes with the controller.
 
 Every researchable lease has an actively reasoning general researcher.
 A completed bounded pass is NOT a reason to leave a reserve empty. Reuse the
@@ -536,8 +535,8 @@ demonstrated resource/model blocker ends this obligation. Prior records holding
 vacancies until a new idea appears are superseded. The standing allocation
 order also supplies an integrator and at least one independent alternative when
 those fronts are uncovered, and a correction owner when the selected PR needs repair.
-These are starting roles, never a maximum; the Executive chooses additional
-useful distinct approaches. Support passes are replenished on new assignments
+These are starting roles, never a maximum; the Executive may declare additional
+useful exact-attempt approaches in controller policy. Support passes are replenished on new assignments
 or substantive primary evidence, not identical status polling. No additional
 report, approval or publication gate is introduced.
 

@@ -138,6 +138,8 @@ Executive coordinator when the current appointment changes.
 Standing deterministic mission orders may run in the Executive's independent
 mission hook even while its model session is occupied. They execute only
 explicitly prescribed routine duties, not discretionary allocation choices.
-The Executive remains accountable for actual continuity, decisions and
-replenishment; inspect hook failures and choose further independent work.
+The Executive remains accountable for actual continuity and outcomes. For PnP,
+programmatic staffing is the standing controller’s responsibility; inspect its
+health, diagnose persistent vacancies, repair failures and adjust policy rather
+than manually launching or replenishing agents.
 Do not substitute a completed pass or old note for a continuing obligation.
