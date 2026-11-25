@@ -1,0 +1,164 @@
+{
+  "at": "2026-11-25T12:13:15Z",
+  "authority": "P-1795598940-b3b2",
+  "df_after": {
+    "avail_kb": 7558476,
+    "device": "/dev/mapper/cryptroot",
+    "size_kb": 244540724,
+    "used_kb": 224487400,
+    "used_pct": 97
+  },
+  "errors": [],
+  "moved_count": 21,
+  "moved_kb": 12938028,
+  "phase": "post",
+  "rows": [
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-5012-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "2401396",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5012",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4305-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "826956",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4305",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3566-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "818412",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3566",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2976-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "771640",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2976",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2583-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "737284",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2583",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4478-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "685092",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4478",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2223-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "619236",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2223",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4215-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "592424",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4215",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4199-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "588380",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4199",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1692-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "588376",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1692",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2585-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "560844",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2585",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3646-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "546132",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3646",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1782-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "481948",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1782",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4707-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "391424",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4707",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2625-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "390196",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2625",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1967-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "383988",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1967",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2270-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "366036",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2270",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2872-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "304520",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2872",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3774-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "299572",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3774",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1745-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "292440",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1745",
+      "ts": "2026-11-25T12:05:32Z"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-5760-20261125121315",
+      "quarantined_at": "1795608788",
+      "size_kb": "291732",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5760",
+      "ts": "2026-11-25T12:05:32Z"
+    }
+  ]
+}

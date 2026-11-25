@@ -1,0 +1,8 @@
+id: P-1795608432-c579
+status: pending
+requester: economy
+addressee: judiciary
+class: reversible
+created: 2026-11-25T12:07:12Z
+deadline: 2026-11-25T14:07:12Z
+action: Independent Act 12.11 review requested for the Executive-authorized normal-grace quarantine of exactly 21 stale PnP gap dirs under P-1795598940-b3b2. Inspect records/economy/2026-11-25-authorized-pnp-quarantine-21.md, records/economy/evidence/pnp-quarantine-21-verify.py, records/economy/evidence/pnp-quarantine-21-pre-20261125.json, records/economy/evidence/pnp-quarantine-21-move-time-20261125.json and records/economy/evidence/pnp-quarantine-21-post-20261125.json (also state/economy/research/2026-11-25-1205z-authorized-21-pnp-quarantine.md), state/janitor/actions.log SCOPED-RUN/AUDIT-RECONCILIATION headers plus appended lines, and state/janitor/quarantined.tsv. Verify all 21 names against the owner authorization, zero preserve overlap, RELEASED/expired/no-PR/no-queue state, fresh proc/mount/git/current-allocator liveness evidence, quarantine-only destinations, normal 604800-second grace, exact ledger rows and before/after df. Record a reasoned disposition and limitations. No deletion, early reclaim, law, activation, permit, cap, ledger, outcome or efficacy finding is delegated.
