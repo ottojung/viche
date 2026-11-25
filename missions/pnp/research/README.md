@@ -90,8 +90,17 @@ where the graph format is {"n":26,"edges":[[0,13],...],"bound":64}.
 The star-cover construction uses minimum bipartite vertex cover or bounded
 branch-and-bound, and symbolic antichain verification. Its Lean certificate
 uses a permutation of concrete edges rather than exhaustive enumeration of
-Boolean assignments. A generated file still needs kernel verification;
-a failed construction does not prove a lower bound. The ordinary proof
+Boolean assignments. For more than 64 gates it uses a general Lean reflection
+lemma and verifies the concrete DNF plus edge permutation. The structured
+certificate is preserved as proof evidence; assembly reconstructs its checked
+helper namespace. On the order-5 projective plane (62 inputs, 216 gates),
+the original direct obligation check took 252.3 s, while reflection through
+the same graph checker took 22.9 s. Both were checked on the same public revision.
+A generated file still needs kernel verification;
+a failed construction does not prove a lower bound. For direct kernel verification and durable graph storage, add `--check` to
+the bound generator or run `certificate GRAPH.json --base PUBLIC_SHA --check`.
+Collect the returned verification request with `obligations collect CHECK_ID`;
+no helper extraction or manual obligation creation is required. The ordinary proof
 synthesis and cheap preflight use this generator when applicable, with
 fallback to legacy synthesis.
 

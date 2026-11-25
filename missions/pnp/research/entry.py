@@ -9,7 +9,7 @@ def main():
     import missions.pnp
     canonical=root/"missions/pnp/research"
     # A partial canonical rollout must not shadow the complete installed CLI.
-    required=("entry.py","playbook.py","async_check.py","adoption.py","certificate.py")
+    required=("entry.py","playbook.py","async_check.py","adoption.py","certificate.py","dnf_reflection.py")
     if not all((canonical/f).is_file() for f in required):
         missions.pnp.__path__.insert(0,str(Path(__file__).resolve().parent.parent))
     commands={"knowledge":"knowledge","obligations":"obligations","yield":"yield_model","star":"star","dispatch":"roles","start":"playbook","adoption":"adoption","guide":"playbook","certificate":"certificate"}

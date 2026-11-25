@@ -11,7 +11,7 @@ P = "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp."
 CLI = "pnp-research"
 ROLES = {
     "general": ("Own the exact leased theorem; explore promising routes, reuse knowledge and share concrete results.",
-        "Use the existing checked corpus before inventing a proof. For compatible graph constructions run pnp-research certificate --output Candidate.lean from the bound workspace. Verify generated candidates through the normal pipeline. Preserve your results when focus changes."),
+        "Use the existing checked corpus before inventing a proof. For compatible graph constructions run pnp-research certificate --check --output Candidate.lean from the bound workspace. Collect the proof check and submit the exact checked candidate through the normal pipeline. Preserve your results when focus changes."),
     "integrator": ("Own the proof dependency graph and eventual exact submission, not another independent full-theorem search.",
         "Request exact missing types, assign through Executive, reuse checked bodies. When the root is complete, assemble --candidate and submit immediately."),
     "specialist": ("Solve the assigned distinct approach or exact obligation, not every part of the theorem.",
@@ -61,7 +61,7 @@ def guide(role):
     elif role in METHOD:
         lines += [
           "Use pnp-research obligations request --base SHA --family FAMILY --provenance SOURCE --statement TYPE; obligations solve ID BODY --method --async; obligations collect ID. The work packet supplies an exact public base. No desk lease is needed.",
-          "Run pnp-research knowledge find QUERY; store exact reusable objects with knowledge add. Use pnp-research certificate GRAPH.json --output Candidate.lean for a Lean-rendered graph-circuit certificate; star GRAPH.json returns its computational witness."
+          "Run pnp-research knowledge find QUERY; store exact reusable objects with knowledge add. Use pnp-research certificate GRAPH.json --base SHA --check to generate and asynchronously verify a graph certificate in one command; --output FILE also writes the standalone Lean source."
         ]
     elif role in DECISIONS:
         lines += ["Use pnp-research yield (empirical baseline; not calibrated) and " + P + "portfolio inspect. Read current proof artifacts before deciding."]
@@ -130,7 +130,7 @@ INDEPENDENT METHOD WORKFLOW:
   # proof.body: by intro a b; exact Bool.and_comm a b
   pnp-research obligations solve NODE_ID proof.body --method --async
   pnp-research obligations collect CHECK_ID
-  pnp-research certificate GRAPH.json --output Candidate.lean
+  pnp-research certificate GRAPH.json --base BASE --check --output Candidate.lean
 Keep reusable lemmas and counterexamples in the graph, not only in your transcript.
 """
     if role in {"knowledge","methods"}:
@@ -198,9 +198,9 @@ def packet(role, cwd=None):
             "pnp-research obligations ready --base "+base if base else "pnp-research obligations ready",
             "marceline-request status "+base if base else "marceline-request status"]
         if role=="tool":
-            out["next_commands"].insert(0,"pnp-research certificate GRAPH.json --output Candidate.lean")
+            out["next_commands"].insert(0,"pnp-research certificate GRAPH.json --base "+(base or "BASE")+" --check")
             out["source_locations"]=["missions/pnp/research/certificate.py","missions/pnp/research/star.py",
-                                     "missions/pnp/research/certificate_bench.py","missions/pnp/proofs/"]
+                                     "missions/pnp/research/certificate_bench.py","missions/pnp/research/dnf_reflection.py","missions/pnp/proofs/"]
         with knowledge.db() as c:
             from . import obligations
             out["open_method_nodes"]=[{"id":x["id"],"family":x["family"],"base":x["base"],"statement":x["statement"][:250]}

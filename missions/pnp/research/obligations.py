@@ -86,6 +86,12 @@ def declaration_options(meta):
     return "".join(f"set_option {k} {v} in\n" for k,v in sorted(opts.items()))
 
 
+def proof_parts(node,text):
+    from . import dnf_reflection
+    if text.startswith(dnf_reflection.MARKER):
+        return dnf_reflection.unpack(text,node["statement"],"viche_r_"+node["id"])
+    return "",text
+
 def build(c,oid,body=None):
     nodes=plan(c,oid); base=nodes[-1]["base"]
     imports=set(); lines=[]
@@ -93,7 +99,8 @@ def build(c,oid,body=None):
         meta=json.loads(o["detail"])
         imports.update(meta["imports"])
         text=body if o["id"]==oid and body is not None else checked_body(c,o["id"],base)
-        lines.append(declaration_options(meta)+f"theorem {symbol(o['id'])} : {o['statement']} :=\n{text}\n")
+        helpers,text=proof_parts(o,text)
+        lines.append(helpers+declaration_options(meta)+f"theorem {symbol(o['id'])} : {o['statement']} :=\n{text}\n")
     src="\n".join("import "+x for x in sorted(imports))+"\n\n"+"\n".join(lines)
     return src+"\n#print axioms "+symbol(oid)+"\n"
 
@@ -105,7 +112,8 @@ def candidate(c,oid,rec,base):
     module=rec["module"];namespace=module+"_aux"
     for node in nodes:
         imports.update(json.loads(node["detail"])["imports"])
-        lines.append(declaration_options(json.loads(node["detail"]))+f"lemma {symbol(node['id'])} : {node['statement']} :=\n{checked_body(c,node['id'],base)}\n")
+        helpers,text=proof_parts(node,checked_body(c,node["id"],base))
+        lines.append(helpers+declaration_options(json.loads(node["detail"]))+f"lemma {symbol(node['id'])} : {node['statement']} :=\n{text}\n")
     src="\n".join("import "+x for x in sorted(imports,key=lambda x:(x!="Mathlib",x)))
     src+="\n\nnamespace "+namespace+"\n"+"\n".join(lines)+"\nend "+namespace+"\n\n"
     src+=f"theorem {module} : {rec['statement']} := by\n  exact {namespace}.{symbol(oid)}\n"

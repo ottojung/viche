@@ -124,6 +124,32 @@ class Research(unittest.TestCase):
         self.assertNotIn("∀ b0 b1",r["candidate"])
         # No generated proof is claimed kernel-checked before verification.
         self.assertEqual(r["verification"]["status"],"verified")
+    def test_reflected_artifact_assembly(self):
+        from missions.pnp.research import dnf_reflection as d
+        meta=certificate.graph_meta({"n":20,"edges":[(u,v) for u in range(10) for v in range(10,20)],"bound":109})
+        r=certificate.render(meta)
+        self.assertEqual(r["proof_strategy"],"reflection")
+        self.assertIn("lemma sound",r["candidate"])
+        self.assertIn("foldl dstep",r["candidate"])
+        body=certificate.obligation_body(meta,r["certificate"])
+        self.assertTrue(body.startswith(d.MARKER))
+        a=self.obligation(meta["statement"])
+        src=o.build(self.c,a,body)
+        self.assertIn("namespace viche_r_"+a,src)
+        self.assertIn("#print axioms "+o.symbol(a),src)
+        self.assertNotIn(d.MARKER,src)
+        bad=json.loads(body[len(d.MARKER):]);bad["output"]=0
+        with self.assertRaises(ValueError):o.build(self.c,a,d.artifact(bad))
+        h=k.store_bytes(body.encode())
+        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(a,self.base,h,"fixture",k.canon({"status":"kernel_checked"}),1))
+        b=self.obligation("True",[a])
+        h=k.store_bytes(b"by trivial")
+        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(b,self.base,h,"fixture",k.canon({"status":"kernel_checked"}),1))
+        rec={"gap_id":"L-meta-1","module":"PEqualNP.Outside.L_meta_1","path":"lean/PEqualNP/Outside/L_meta_1.lean","statement":"True","imports":["Mathlib"]}
+        result=o.candidate(self.c,b,rec,self.base)
+        self.assertIn("namespace viche_r_"+a,result)
+        self.assertEqual(result.count("theorem "),1)
+        self.assertNotIn("#print",result)
     def test_archive_ingest(self):
         archive=Path(config.STATE_ROOT).parent/"quarantine"/"L-meta-2-20261124100000"
         archive.mkdir(parents=True)
