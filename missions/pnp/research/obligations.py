@@ -95,7 +95,7 @@ def proof_parts(node,text):
 
 def build(c,oid,body=None):
     nodes=plan(c,oid); base=nodes[-1]["base"]
-    imports={"Lean"}; lines=[]
+    imports={"Mathlib"}; lines=[]
     for o in nodes:
         meta=json.loads(o["detail"])
         imports.update(meta["imports"])
