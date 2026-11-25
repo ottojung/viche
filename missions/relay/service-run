@@ -1,0 +1,5 @@
+#!/bin/sh
+# s6 entry point. No arbitrary request-derived commands.
+export HOME=/home/lubko
+export PATH="$HOME/.local/bin:/command:/var/guix/profiles/per-user/puser/guix-profile/bin:/run/current-system/profile/bin:/usr/bin:/bin"
+exec "$HOME/.local/bin/marceline-request" worker

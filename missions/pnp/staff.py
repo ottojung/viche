@@ -101,7 +101,7 @@ def roster():
     raise ValueError("agent roster unavailable")
 
 
-def prompt(rec, approach, general=False):
+def prompt(rec, approach, general=False, label=None):
     return (
         "Use the injected role playbook and exact assignment below. Work from your bound cwd. "
         "No direct desk/GitHub mutation, unrelated claims or agent launches. "
@@ -234,7 +234,7 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if not current_matches(rec, label == "general"):
                     break
                 answer = json.loads(antonina("run", "--id", agent_id, "--cwd", str(path),
-                                            "--prompt", prompt(rec, approach, label == "general"), "--detach", "--json"))
+                                            "--prompt", prompt(rec, approach, label == "general", label), "--detach", "--json"))
                 if answer.get("state") != "running":
                     raise ValueError("agent launch not confirmed")
                 results.append({"worker": label, "status": "started", "id": agent_id})

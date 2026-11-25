@@ -55,7 +55,7 @@ def guide(role):
     if role in BOUND:
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",
-          "Use pnp-remote-check --scratch --async FILE.lean for experimental Lean; pnp-remote-check --wait ID retrieves the result. Use managed local Lean if remote unavailable. Do not build the same file twice.",
+          "Run pnp-remote-check --availability once per checkout. Use --scratch --async FILE.lean for experimental Lean or --async FILE.lean for complete candidates; pnp-remote-check --wait ID retrieves the result. Use managed local Lean if remote unavailable. Do not build the same file twice.",
           "Use pnp-research knowledge find QUERY; knowledge show ID retrieves artifacts. Share findings through the existing support channel. Complete exact proof: use the normal submit command immediately."
         ]
     elif role in METHOD:

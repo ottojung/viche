@@ -276,6 +276,21 @@ detached process with a durable log rather than blocking an agent tool call.
 Cancel obsolete work, not merely old work.
 
 
+## Role-specific instructions at dispatch (Founder priority)
+
+Every P vs NP agent invocation receives actionable instructions in its initial
+prompt. Never delegate discovery to a README. The mechanical staff helper
+injects instructions for general researchers, integrators and specialists.
+For each support or engineering agent, Executive uses
+`PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.role_prompt ROLE --agent ID --cwd WORKSPACE --task "specific assignment"`
+for dispatch after creating/reusing an idle agent. This helper inserts role
+instructions into the actual agent invocation; do not send an unadorned task. Roles: knowledge, methods, flow, portfolio,
+lease-evaluation, transport, adapter, benchmark. For a combined support role,
+include the other role’s generated instructions in the specific task. Prefer short role-specific commands over
+a long generic inventory; do not require irrelevant tool calls. Replenishment
+and reassignment use the same prompt mechanism. Existing agents receive
+updated guidance at their next natural checkpoint or a justified steer.
+
 ## Continuous parallel research support (Founder priority)
 
 Optimize accepted contributions per elapsed and resource hour. Keep the
