@@ -47,7 +47,7 @@ DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 45
-REMOTE_WORKERS = 4   # marceline-dev runs at most 4 lb-cert jobs and 3 compiles at once
+REMOTE_WORKERS = 6   # marceline-dev runs at most 6 lb-cert jobs and 3 compiles at once
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
 
@@ -218,8 +218,11 @@ def main():
                 os.replace(tmp, os.path.join(WORK, name))
             # newest first: fresh batches are where the races are. The one-NOT family is the live
             # race (hundreds posted at once, cleared within the hour): first, and only while unclaimed.
+            # Within the family, fewest edges first: those are the instances the generator can
+            # do (monotone size <= 11) and the ones competitors take within minutes.
             for g in sorted((g for g in gaps if g['id'] in fam),
                             key=lambda g: (fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
+                                           g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
                 if fam[g['id']] == 'onenot' and g.get('pr_open', 0):
                     continue

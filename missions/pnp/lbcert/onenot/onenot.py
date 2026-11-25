@@ -33,7 +33,7 @@ SAT_TIMEOUT = int(os.environ.get('ONENOT_SAT_TIMEOUT', '240'))
 LIVE_TIMEOUT = int(os.environ.get('ONENOT_LIVE_TIMEOUT', '60'))
 PAIR_TARGET = int(os.environ.get('ONENOT_PAIRS', '128'))
 STATE_CAP = int(os.environ.get('ONENOT_STATE_CAP', '400000'))
-MONO_STEP_TIMEOUT = int(os.environ.get('ONENOT_MONO_TIMEOUT', '90'))
+MONO_STEP_TIMEOUT = int(os.environ.get('ONENOT_MONO_TIMEOUT', '20'))
 
 
 def log(*a):
