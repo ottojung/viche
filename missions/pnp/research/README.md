@@ -66,8 +66,11 @@ pnp-research obligations assemble ROOT_ID --candidate --output Candidate.lean
 
 Integrators request exact types with repeated `--requires NODE_ID`. A node
 is ready when its required nodes are checked on the same base, not when
-its own proof is complete. In proof bodies, refer to dependencies as
-`viche_o_NODE_ID`. Executive assigns complementary nodes to specialists.
+its own proof is complete. A checked object linked to a target with
+`counterexample_to` marks that target `refuted`; unverified counterexample notes
+do not suppress research. Refuted, checked and blocked nodes are never dispatched
+as new proof work. In proof bodies, refer to dependencies as `viche_o_NODE_ID`.
+Executive assigns complementary nodes to specialists.
 Do not duplicate an active worker's obligation. Exact obligations deduplicate
 across origins when type, imports/options, revision and dependencies match.
 

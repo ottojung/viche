@@ -247,6 +247,32 @@ class Tests(unittest.TestCase):
         self.assertEqual(sum(s.label=="general" for s in slots),2)
         self.assertEqual({s.gap for s in slots if s.label=="integrator"},{b["gap_id"]})
 
+    def test_refuted_obligation_is_not_dispatched_and_exact_worker_retires(self):
+        from missions.pnp.research import knowledge as k, obligations as o
+        c=k.db();self.addCleanup(c.close)
+        target=k.add(c,"obligation","test","True",k.canon({"imports":["Mathlib"]}),
+                     "L-meta-1 / fixture",base="a"*40)
+        negation=k.add(c,"obligation","test","¬ True",k.canon({"imports":["Mathlib"]}),
+                       "L-meta-1 / fixture",base="a"*40)
+        body=k.store_bytes(b"by simp")
+        source=k.store_bytes(o.build(c,negation,"by simp").encode())
+        result={"status":"kernel_checked","compiler":{"status":"elaborated","exit_code":0,
+            "base":"a"*40,"source_sha256":source,
+            "diagnostic":f"'{o.symbol(negation)}' does not depend on any axioms"}}
+        with c:c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",
+                         (negation,"a"*40,body,source,k.canon(result),1))
+        k.link(c,negation,target,"counterexample_to")
+        path=assignment.prepare(self.rec["gap_id"],checkout=False,worker="ob-"+target)["cwd"]
+        ready=k.add(c,"obligation","test","True ∧ True",k.canon({"imports":["Mathlib"]}),
+                    "L-meta-1 / fixture",base="a"*40)
+        ready_path=assignment.prepare(self.rec["gap_id"],checkout=False,worker="ob-"+ready)["cwd"]
+        self.p["focus_obligations"]=0
+        with patch.object(focus,"current",return_value=self.rec):
+            slots=plan.desired(self.p,[])
+            self.assertNotIn("ob-"+target,[s.label for s in slots])
+            self.assertTrue(plan.obsolete({"cwd":path},slots))
+            self.assertFalse(plan.obsolete({"cwd":ready_path},slots))
+
     def test_bad_policy_fails_closed(self):
         policy.root().mkdir(parents=True)
         (policy.root()/"policy.json").write_text('{"parallel":100000}')
