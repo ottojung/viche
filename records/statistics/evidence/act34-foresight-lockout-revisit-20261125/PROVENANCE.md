@@ -44,7 +44,7 @@ primary sources and canonical Git.
 No production budget byte was read or written by those probes and no live
 Antonina call was made (stub log empty). The sole-cause falsifier removes only
 the held row and flips `guard foresight` from rc 1 to `guard ok: foresight`.
-All 38 assertions are preserved in `measurement.json`; the run exits non-zero
+All 37 assertions are preserved in `measurement.json`; the run exits non-zero
 if any fails.
 
 ## Honest correction
@@ -60,8 +60,11 @@ resolve substrate are unchanged across the two captures.
 
 ## New state fact
 
-At 10:37Z foresight was the only office with an open reservation. By 11:43Z
-all four have one: statistics (`r1795606588-LhiP4Nec`), strategy
-(`r1795606816-huTkAUah`) and spying (`r1795606837-wb8SAOVB`) are fresh ACTIVE
-dispatches; foresight alone remains blocked by the stuck `held` row. The
-earlier "operational asymmetry" framing is therefore updated, not repeated.
+At 10:37Z three offices had open reservations: foresight (held row
+`r1795595445-NZIjZE34`) and statistics (`r1795602803-Fv1uDzqj`) and strategy
+(`r1795603019-DhfZRgIW`), the latter two were fresh ACTIVE dispatches; spying
+had no open reservation. By 11:43Z all four have one: statistics
+(`r1795606588-LhiP4Nec`), strategy (`r1795606816-huTkAUah`) and spying
+(`r1795606837-wb8SAOVB`) are fresh ACTIVE dispatches; foresight alone remains
+blocked by the stuck `held` row. The earlier "operational asymmetry" framing is
+therefore updated, not repeated.

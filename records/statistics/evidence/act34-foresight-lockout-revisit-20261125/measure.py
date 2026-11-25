@@ -199,9 +199,10 @@ def main():
         A["guard_foresight_refused"] = guard_live["rc"] != 0
         A["guard_foresight_blames_held_row"] = HELD_ID in guard_live["stderr"]
         guard_other = {o: run_sh(env, "guard", o) for o in ("statistics", "strategy", "spying")}
-        # At 10:37Z the other three offices had no open rows; by this capture
-        # they each have a fresh ACTIVE dispatch. Their guard refusal must cite
-        # that office's own active row, never the held foresight row.
+        # At 10:37Z the other offices had open rows of their own where they
+        # did (statistics, strategy); by this capture the probed offices each
+        # have a fresh ACTIVE dispatch. Their guard refusal must cite that
+        # office's own active row, never the held foresight row.
         A["other_offices_refuse_on_own_active_rows"] = all(
             v["rc"] != 0 and any(r in v["stderr"] for r in active_open[o])
             and HELD_ID not in v["stderr"]
