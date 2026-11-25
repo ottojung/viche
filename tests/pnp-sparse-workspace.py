@@ -1,8 +1,10 @@
 import pathlib
 import subprocess
 import tempfile
+import sys
 import unittest
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from missions.pnp import research_workspace as w
 
 
