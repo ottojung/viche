@@ -117,10 +117,19 @@ def prepare(gap, checkout=True, worker=None, base=None, expected=None):
         fd = os.open(str(marker) + ".prepare.lock", os.O_CREAT | os.O_RDWR, 0o600)
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            if not (path / ".git").exists():
+            from . import research_workspace
+            setup = marker.parent / "storage-setup.json"
+            if setup.exists():
+                pending = json.loads(setup.read_text())
+                research_workspace.restore_incomplete(gitctl.MIRROR, path,
+                                                      pending["base"], rec.get("imports"))
+                setup.unlink()
+            elif not (path / ".git").exists():
                 base = base or gitctl.ensure_mirror()
-                gitctl.run(["git", "--git-dir=" + gitctl.MIRROR, "worktree", "add",
-                            "--detach", str(path), base])
+                # Pin the revision before any partial checkout may be created.
+                state.atomic_write(str(setup), json.dumps({"base": base}) + "\n")
+                research_workspace.create(gitctl.MIRROR, path, base, rec.get("imports"))
+                setup.unlink()
             gitctl.prepare_build_cache(str(path))
         except gitctl.GitError as exc:
             raise ValueError(str(exc)) from exc

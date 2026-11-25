@@ -18,6 +18,7 @@ python3 tests/pnp-allocator.py
 
 python3 tests/pnp-continuity.py
 python3 tests/pnp-staffing.py
+python3 tests/pnp-sparse-workspace.py
 
 python3 tests/pnp-brief.py
 python3 tests/pnp-tool-discovery.py
