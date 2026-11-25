@@ -171,7 +171,7 @@ class FakeGH:
     def pr_exists_for(self, branch, gap, api=None):
         return self.existing
 
-    def create_pr(self, branch, gap):
+    def create_pr(self, branch, gap, lease=None):
         self.created += 1
         return "123"
 
@@ -293,7 +293,7 @@ class TestPublish(unittest.TestCase):
 
     def test_pr_creation_network_error_keeps_recoverable_push(self):
         class Outage(FakeGH):
-            def create_pr(self, branch, gap):
+            def create_pr(self, branch, gap, lease=None):
                 raise RuntimeError("temporary GitHub outage")
         new_state()
         g = FakeGit()
@@ -803,6 +803,41 @@ class TestPostcheck(unittest.TestCase):
             self.assertIsNone(rec["external_verdict"])
             with mock.patch.dict(os.environ, {"PNP_POSTCHECK_SHA": SHA}):
                 self.assertTrue(build_control.obsolete(GAP, "lease-1"))
+
+    def test_parallel_check_does_not_need_an_open_pr(self):
+        from missions.pnp import earlycheck, support
+        from missions.pnp.remote import protocol
+        rec = new_state("SIGNED", base_sha=SHA, commit_sha="b"*40,
+                        local_check_status="pending")
+        job = protocol.make(gap_meta(), GOOD.encode(), SHA, config.LEAN_TOOLCHAIN,
+                            support.attempt(rec))
+        result = protocol.make_result(job, "elaborated", 100, 1024, "", 0)
+        self.assertTrue(earlycheck.apply(GAP, earlycheck.key(rec), job, result))
+        self.assertEqual(state.load(GAP)["local_check_status"], "passed")
+        self.assertEqual(state.load(GAP)["state"], "SIGNED")
+
+    def test_parallel_check_cannot_overwrite_newer_candidate(self):
+        from missions.pnp import earlycheck, support
+        from missions.pnp.remote import protocol
+        rec = new_state("PUSHED", base_sha=SHA, commit_sha="b"*40,
+                        local_check_status="pending")
+        job = protocol.make(gap_meta(), GOOD.encode(), SHA, config.LEAN_TOOLCHAIN,
+                            support.attempt(rec))
+        result = protocol.make_result(job, "rejected", 100, None, "bad proof", 1)
+        state.update(GAP, commit_sha="c"*40)
+        self.assertFalse(earlycheck.apply(GAP, earlycheck.key(rec), job, result))
+        self.assertEqual(state.load(GAP)["local_check_status"], "pending")
+
+    def test_parallel_check_resource_failure_does_not_mark_proof_bad(self):
+        from missions.pnp import earlycheck, support
+        from missions.pnp.remote import protocol
+        rec = new_state("PR_OPEN", base_sha=SHA, commit_sha="b"*40,
+                        local_check_status="pending")
+        job = protocol.make(gap_meta(), GOOD.encode(), SHA, config.LEAN_TOOLCHAIN,
+                            support.attempt(rec))
+        result = protocol.make_result(job, "resource", 0, None, "busy")
+        self.assertFalse(earlycheck.apply(GAP, earlycheck.key(rec), job, result))
+        self.assertEqual(state.load(GAP)["local_check_status"], "pending")
 
     def test_pending_postcheck_admitted_only_for_matching_revision(self):
         from missions.pnp import build_control

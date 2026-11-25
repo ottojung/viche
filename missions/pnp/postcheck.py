@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import time
 
-from . import build_control, gitctl, state
+from . import build_control, earlycheck, gitctl, state
 
 
 def pending(rec):
@@ -15,7 +15,7 @@ def pending(rec):
 
 def run(gap, git=gitctl):
     rec = state.load(gap)
-    if not pending(rec):
+    if not pending(rec) or earlycheck.inflight(rec):
         return
     sha = rec["commit_sha"]
     if not build_control.resource_ready(rec):
@@ -57,7 +57,7 @@ def run(gap, git=gitctl):
 
 def resume(gap, rec):
     from . import jobs
-    if (not pending(rec) or (rec.get("local_check_retry_at") or 0) > time.time()
+    if (not pending(rec) or earlycheck.inflight(rec) or (rec.get("local_check_retry_at") or 0) > time.time()
             or not build_control.resource_ready(rec)):
         return
     fd = jobs.claim(gap)

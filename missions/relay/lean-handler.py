@@ -47,7 +47,6 @@ def main():
         raise ValueError("missing operator-provisioned paths")
     sys.path.insert(0, str(root))
     from missions.pnp.remote import protocol, runner
-    from missions.pnp import build_control
     raw = sys.stdin.buffer.read(protocol.MAX_JSON_BYTES + 1)
     req, source = unpack(protocol, raw)
     p = manifests / (req["base"] + ".json")
@@ -75,16 +74,18 @@ def main():
         rel = module.replace(".", "/") + ".olean"
         if not any((Path(lib) / rel).is_file() for lib in cache["libraries"]):
             return protocol.make_result(req, "infrastructure", 0, None, "pinned cache lacks an imported module")
-    available = build_control.headroom()
-    if available is None or available < build_control.RESERVE + req["rss_mib"]*1024**2:
-        return protocol.make_result(req, "resource", 0, None, "remote memory admission deferred")
     cancelled = False
     def stop(*_):
         nonlocal cancelled
         cancelled = True
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
-    out = runner.run(cache, req, source, lambda: cancelled)
+    from compile_admission import slot
+    try:
+        with slot(req["rss_mib"], timeout=120, cancelled=lambda:cancelled):
+            out = runner.run(cache, req, source, lambda: cancelled)
+    except TimeoutError:
+        return protocol.make_result(req, "resource", 0, None, "shared compiler admission deferred")
     protocol.result(protocol.canonical(out), req)
     return out
 

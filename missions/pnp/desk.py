@@ -107,13 +107,17 @@ class Desk:
         raise DeskError("next is a mutating acquisition, not a diagnostic. "
                         "Use status; the automatic allocator records every claim.")
 
-    def _next_gap(self, hard=False, another=False):
+    def _next_gap(self, hard=False, another=False, proof_of=None):
         """Private wire operation; only the locked, recording broker calls it."""
         params = {"handle": config.DESK_HANDLE}
         if hard:
             params["hard"] = "1"
         if another:
             params["another"] = "1"
+        if proof_of is not None:
+            if not config.GAP_ID_RE.fullmatch(proof_of):
+                raise DeskError("invalid proof-of gap")
+            params.update(gap=proof_of, have="proof")
         _, data = self._call("GET", "/next", params)
         if not isinstance(data, dict):
             raise DeskError("unexpected desk next shape")

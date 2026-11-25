@@ -105,7 +105,13 @@ def acquire(args, d, report=True):
         print("refusing to exceed the desk's %d active leases" %
               config.MAX_LEASES, file=sys.stderr)
         return 2
-    answer = d._next_gap(hard=args.hard, another=args.another)
+    proof_of=getattr(args,"proof_of",None)
+    if proof_of:
+        from missions.pnp.lbcert import ready
+        if not ready.verified(proof_of):
+            return 2
+    answer = d._next_gap(hard=args.hard, another=args.another,
+                         **({"proof_of":proof_of} if proof_of else {}))
     if answer is None:
         print("no claimable gap right now; retry later", file=sys.stderr)
         return 1

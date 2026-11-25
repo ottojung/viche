@@ -23,6 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lbparse  # noqa: E402
+import process as managed_process
 
 # A running Python process does not reload a module whose source changes on
 # disk. Without this guard, a fix delivered while autosolve is alive stays
@@ -46,7 +47,7 @@ CANDS = os.path.join(WORK, 'cands')
 DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
-POLL = 45
+POLL = 20
 REMOTE_WORKERS = 6   # marceline-dev runs at most 6 lb-cert jobs and 3 compiles at once
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
@@ -71,7 +72,7 @@ def ensure_engines():
         open(eng, 'w').write(s[:s.index('def L_ : List ℕ :=')])
     pr = os.path.join(WORK, 'engine7281.pruned.lean')
     if not os.path.exists(pr):
-        subprocess.run([sys.executable, os.path.join(HERE, 'prune_engine.py'), eng, pr], check=True)
+        managed_process.run([sys.executable, os.path.join(HERE, 'prune_engine.py'), eng, pr], check=True)
     return [eng, pr]
 
 
@@ -84,6 +85,12 @@ def write_status(gid, text):
     tmp = os.path.join(CANDS, gid + '.status.tmp')
     open(tmp, 'w').write(text)
     os.replace(tmp, os.path.join(CANDS, gid + '.status'))
+    if text.split()[0] in ('ok','generated'):
+        try:
+            from missions.pnp import fastlane
+            fastlane.submit_ready(gid)
+        except Exception as exc:
+            log('ready notification deferred',gid,type(exc).__name__,str(exc)[:150])
 
 
 QUEUED = set()
@@ -97,8 +104,11 @@ def generate(g, engines):
     open(sf, 'w').write(g['statement'])
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
-    p = subprocess.run([sys.executable, os.path.join(HERE, 'lbremote.py'), sf, mod, out,
-                        '--maxstates', str(MAXSTATES), '--chunks', '40'], capture_output=True, text=True, timeout=2000)
+    from missions.pnp import state, support
+    rec = state.load(gid)
+    defer = bool(support.active(rec) and rec['statement'] == g['statement'])
+    p = managed_process.run([sys.executable, os.path.join(HERE, 'lbremote.py'), sf, mod, out,
+                        '--maxstates', str(MAXSTATES), '--chunks', '40'] + (['--defer-compile'] if defer else []), capture_output=True, text=True, timeout=2000)
     try:
         r = json.loads(p.stdout.strip().split('\n')[-1])
     except Exception:
@@ -112,7 +122,7 @@ def generate(g, engines):
         where = 'local'
         r = {'status': 'error'}
         for eng in engines:
-            q = subprocess.run([sys.executable, 'lbassemble.py', eng, mod, sf, out + '.tmp', '--maxstates', '4800',
+            q = managed_process.run([sys.executable, 'lbassemble.py', eng, mod, sf, out + '.tmp', '--maxstates', '4800',
                                 '--chunks', '40'], cwd=HERE, capture_output=True, text=True, timeout=3600)
             if q.returncode == 0:
                 os.replace(out + '.tmp', out)
@@ -121,7 +131,14 @@ def generate(g, engines):
             r = {'status': {2: 'unsupported', 3: 'false', 4: 'toobig'}.get(q.returncode, 'error')}
             if not (q.returncode == 4 and 'TOO LARGE' in q.stderr):
                 break
+    if r.get('status')=='ok' and r.get('compiled'):
+        from missions.pnp.lbcert import ready
+        ready.record(gid,r,open(out,'rb').read())
     st = r.get('status')
+    # Generation success is not an exact Lean compile receipt. Existing
+    # checked/compiled marker semantics stay available to the bulk lane.
+    if st == 'ok' and not r.get('compiled'):
+        st = 'generated'
     write_status(gid, '%s %s %s states=%s secs=%.0f' % (st, r.get('engine') or '-', where, r.get('states'), time.time() - t0))
     log('generated', gid, st, where, r.get('states'), '%.0fs' % (time.time() - t0))
 
@@ -152,7 +169,7 @@ def sibling_pass():
         sf = os.path.join(CANDS, gid + '.sib.stmt')
         open(sf, 'w').write(rec['statement'])
         out = os.path.join(CANDS, gid + '.lean')
-        p = subprocess.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, rec['module'], out,
+        p = managed_process.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, rec['module'], out,
                             '--imports', ','.join(rec.get('imports') or ['PEqualNP.Defs']), '--max-tries', '6'],
                            capture_output=True, text=True, timeout=2000)
         try:
@@ -187,14 +204,22 @@ def main():
     threading.Thread(target=sibling_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
     queued = QUEUED
+    outstanding = {}
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         if source_changed():
             # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
             # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
             log('source changed; exiting for clean restart')
+            managed_process.stop_all()
             pool.shutdown(wait=False, cancel_futures=True)
             os._exit(0)
         try:
+            for gid, future in list(outstanding.items()):
+                if future.done():
+                    try:future.result()
+                    except Exception as e:log('generator interrupted',gid,type(e).__name__,str(e)[:160])
+                    outstanding.pop(gid)
+                    queued.discard(gid)
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
             # `template` with @@VALUE@@ holes and no concrete `statement`.
@@ -223,18 +248,24 @@ def main():
             # race (hundreds posted at once, cleared within the hour): first, and only while unclaimed.
             # Within the family, fewest edges first: those are the instances the generator can
             # do (monotone size <= 11) and the ones competitors take within minutes.
+            from missions.pnp import cli
+            held = {r['gap_id'] for r in cli.held_records()}
             for g in sorted((g for g in gaps if g['id'] in fam),
-                            key=lambda g: (fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
+                            key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
-                if fam[g['id']] == 'onenot' and g.get('pr_open', 0):
+                if fam[g['id']] == 'onenot' and g.get('pr_open', 0) and g['id'] not in held:
                     continue
+                if len(outstanding) >= REMOTE_WORKERS:
+                    break
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
-                    pool.submit(generate, g, engines)
+                    outstanding[g['id']] = pool.submit(generate, g, engines)
         except Exception as e:
             log('poll error', type(e).__name__, str(e)[:200])
         time.sleep(POLL)
+    managed_process.stop_all()
+    pool.shutdown(wait=False, cancel_futures=True)
     log('STOP file found; exiting')
     return 0
 

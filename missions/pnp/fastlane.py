@@ -42,14 +42,32 @@ def _read(name, default):
         return default
 
 
-def cand_ready(gap):
+def cand_ready(gap, allow_generated=True):
     try:
         with open(os.path.join(CANDS, gap + ".status"), encoding="utf-8") as f:
-            ok = f.read().startswith("ok")
+            marker = f.read().split()
+            ok = bool(marker and (marker[0] == "ok" or allow_generated and marker[0] == "generated"))
     except OSError:
         return None
     path = os.path.join(CANDS, gap + ".lean")
     return path if ok and os.path.exists(path) else None
+
+
+def submit_ready(gap):
+    """Generator completion wakes the ordinary publisher immediately.
+
+    No build gate, no direct GitHub mutation, no acquisition and no release.
+    The normal jobs lock handles a concurrent allocator tick or worker.
+    """
+    rec = state.load(gap)
+    if not support.active(rec) or rec.get("queued_lease") or rec.get("candidate_digest"):
+        return None
+    path = cand_ready(gap)
+    if not path:
+        return None
+    result = jobs.submit(gap, path, expected_lease=rec["lease"])
+    state.event(gap, "generator_ready_submit", {"status": str(result)[:300]})
+    return result
 
 
 def concrete(rec):
@@ -108,7 +126,7 @@ def tick(d, mem, now, roster_known=True):
         lb = twins.get(gap)
         if not lb:
             continue
-        lb_path = cand_ready(lb)
+        lb_path = cand_ready(lb, allow_generated=False)
         if not lb_path:
             continue   # the lower bound is not decided by our generator: research may still refute it
         mark = os.path.join(CANDS, gap + ".twinpub")
