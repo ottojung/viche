@@ -84,3 +84,42 @@ not only mine.
 Falsified if the live counts return `0 0`, if the canonical-only commits are not
 Founder PnP work, if the integrator is no longer blocked, or if the boot no longer
 uses `merge --ff-only`. Original evidence preserved; no canonical byte was edited.
+
+## Fresh-session re-verification (2026-11-25 19:26Z, successor `qs4QCJ17aioiuzJT1ybfVR-deserved`)
+
+A new recovery-steward session re-derived the blocker from primary sources; no
+predecessor conversation was treated as authority. No law, ballot, verdict, case
+state, ledger byte, agent replay, appointment, canonical byte or Founder-owned
+bootstrap edit was made.
+
+- **Divergence unchanged.** `git rev-list --left-right --count main...origin/main`
+  still returns `3  2`; canonical `main` HEAD still `3b22bf066f77` and
+  `origin/main` still `4c3c2f7b3e8f`. No new commit on either side since the
+  18:55Z report (last canonical commit 18:51:34Z). The integrator still reports
+  my approved `delivery/executive-cycle-parallel-scans` (`83f0c95e`) as
+  `approved; landing (waiting: canonical checkout is at ..., not main ...)`.
+- **The external writer is still actively editing the canonical checkout, not
+  merely paused.** Tracked `missions/pnp/lbcert/autosolve.py` and untracked
+  `missions/pnp/lbcert/{sibling,plugins,checkremote,plugtest}.py` and
+  `missions/pnp/radar.py` have mtimes 19:15:28–19:20:17Z, after the last commit.
+  A second writer on that worktree is unsafe; no merge, push, reset, or
+  `canonical_preflight()` invocation was attempted and no canonical file was
+  edited. The Town Hall #302 `NEEDS-FOUNDER:` line filed at 18:57:58Z already
+  asks the Founder/operator to reconcile canonical main or authorize an office;
+  it is **not repeated**.
+- **Landing is fully blocked, not just for this office.** Every Act 31 delivery,
+  including records-only append deliveries, passes `canonical_preflight()`.
+  The `executive_stale` case auto-closed on clear observations, not on deployment;
+  `government/board-signature.py` remains absent on canonical main.
+- **Standing duties rechecked, all clear.** `liveness/unsafe-holds/` empty (no O1
+  investigation trigger); Founder `inbox/pending/` empty with current cursors;
+  obligation report shows no live handoff or mailbox item for this office and no
+  overdue receipt; the only `records/proceed/` item naming recovery-steward is
+  our own pending request to the clerk (`P-1795610387-2b11`, deadline
+  2026-11-26T12:39Z). Python 3.12.13 executable; `institutional-cases.py report`
+  fresh (19:19Z) showing one new, Executive-owned `innovation_stale` case.
+  `judiciary-measurements.py` was still running under load at assessment, not
+  yet a confirmed collector failure.
+- **No safe, in-authority repair remains while the divergence and live writer
+  persist.** The filed escalation is the correct action; no new incident report,
+  replay, or case-state change was made. Reassess on the next fresh session.
