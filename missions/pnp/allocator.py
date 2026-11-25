@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio
 
 POLL_SECONDS = 30
-NULL_RETRY_SECONDS = 60   # new concrete batches are taken within minutes
+NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
 
 
 def memory_path():
@@ -147,7 +147,7 @@ def tick(d=None, now=None):
             print("allocator frontier unavailable:", exc, flush=True)
         # Fast lane: submit ready certificates, settle false twins, keep two slots cycling.
         try:
-            lane = fastlane.tick(d, mem, now)
+            lane = fastlane.tick(d, mem, now, roster_known=roster is not None)
             if any(lane.values()):
                 print("fastlane", json.dumps(lane), flush=True)
                 released = list(released) + lane["released"]

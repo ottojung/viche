@@ -92,8 +92,9 @@ class Tests(unittest.TestCase):
 
     def test_missing_workers_do_not_release_leases(self):
         now=time.time()
+        # Young leases (< the desk's 20 minutes): a missing worker alone never releases.
         for i in range(1,6):
-            self.add("L-meta-"+str(i),lease_expires_at=now+1200)
+            self.add("L-meta-"+str(i),lease_expires_at=now+1200,lease_obtained_at=now-600)
         d=Desk()
         with patch.object(allocator,"bound_roster",return_value=(set(),set())), \
              patch.object(allocator.frontier,"refresh",return_value={}):
@@ -101,6 +102,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(result["held"],5)
         self.assertEqual(result["released"],[])
         self.assertFalse(d.releases)
+
+    def test_fastlane_cycles_oldest_research_lease(self):
+        # Fast lane rule 3: research may hold at most MAX-2 slots; release the oldest one past
+        # twenty minutes, one per tick, never with an unknown worker roster.
+        from missions.pnp import fastlane
+        now=time.time()
+        for i in range(1,6):
+            self.add("L-meta-"+str(i),lease_expires_at=now+1200,lease_obtained_at=now-3600+i*60)
+        d=Desk()
+        self.assertEqual(fastlane.tick(d,{},now,roster_known=False)["released"],[])
+        chosen=focus.current()["gap_id"]
+        oldest=[g for g in ["L-meta-"+str(i) for i in range(1,6)] if g!=chosen][0]
+        self.assertEqual(fastlane.tick(d,{},now,roster_known=True)["released"],[oldest])  # focus is protected
+        self.assertEqual(len(cli.held_records()),4)
 
     def test_single_stable_focus_and_rotation(self):
         hard = self.add(acquisition_hard=True)

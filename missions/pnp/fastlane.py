@@ -87,7 +87,7 @@ def release(d, mem, gap, reason, evidence):
         os.close(fd)
 
 
-def tick(d, mem, now):
+def tick(d, mem, now, roster_known=True):
     out = {"submitted": [], "twin_published": [], "released": []}
     twins, desk = _read("twins.json", {}), _read("desk.json", {})
     held = cli.held_records()
@@ -129,7 +129,8 @@ def tick(d, mem, now):
     chosen = focus.current()
     research = [r for r in held if support.active(r, now) and not concrete(r) and not r.get("queued_lease")
                 and not r.get("candidate_digest") and not r.get("pr_number")]
-    if len(held) >= config.MAX_LEASES and len(research) > RESEARCH_SLOTS:
+    # An incomplete worker roster means we cannot see who is working; never cycle then.
+    if roster_known and len(held) >= config.MAX_LEASES and len(research) > RESEARCH_SLOTS:
         old = sorted((r for r in research if not (chosen and focus.key(chosen) == focus.key(r))
                       and now - (r.get("lease_obtained_at") or now) >= RESEARCH_MIN_AGE),
                      key=lambda r: r.get("lease_obtained_at") or now)
