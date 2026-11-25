@@ -48,8 +48,23 @@ def confirmed(did):
     except (OSError,sqlite3.Error):pass
 
 def lookup(c,agent,cwd,at):
-    return c.execute("SELECT * FROM dispatch WHERE agent=? AND started<=? ORDER BY started DESC LIMIT 1",
-                     (agent,at)).fetchone()
+    # A reused agent may have worked in another lease. Do not transfer its
+    # old launch identity to a new assignment or independent research front.
+    cwd=Path(cwd).resolve()
+    for row in c.execute("SELECT * FROM dispatch WHERE agent=? AND started<=? ORDER BY started DESC",(agent,at)):
+        root=Path(row["cwd"]).resolve()
+        if cwd==root or root in cwd.parents:return row
+    return None
+
+def workspace_role(cwd):
+    cwd=Path(cwd).resolve()
+    from . import playbook
+    label=assignment.worker_label(cwd)
+    if label:return playbook.role_for(label,label=="general")
+    for parent in (cwd,*cwd.parents):
+        if parent.parent.name in ("standing-support","independent") and parent.name in playbook.ROLES:
+            return parent.name
+    return None
 
 def current_role():
     agent=os.environ.get("ANTONINA_AGENT_ID")
@@ -57,7 +72,7 @@ def current_role():
     try:
         with closing(db()) as c:
             row=lookup(c,agent,Path.cwd(),time.time())
-            return row["role"] if row else None
+            return row["role"] if row else workspace_role(Path.cwd())
     except (OSError,sqlite3.Error):return None
 
 def record(command,started,code):
@@ -108,11 +123,29 @@ def report(hours=24):
         role["launches"]+=1
         for key in ("discovered","used","successful_use"):role[key]+=int(d[key])
         del d["cwd"]
+    # A planned steer may lack a synchronous confirmation (e.g. interruption
+    # while reading the response). A real start command proves use, but does
+    # not retrospectively claim that the launch itself was confirmed.
+    observed={}
+    planned_unconfirmed=set()
+    with closing(db()) as c:
+        planned_unconfirmed={r[0] for r in c.execute("SELECT id FROM dispatch WHERE confirmed=0 AND started>=?",(now-hours*3600,))}
+    by_agent={}
+    for u in uses:
+        if not u["role"]:continue
+        key=(u["agent"],u["role"],u["dispatch"] or "unmatched")
+        events=by_agent.setdefault(key,[]);events.append(u)
+    for (agent,role,dispatch),events in by_agent.items():
+        row=observed.setdefault(role,{"agent_dispatches":0,"opened_packet":0,"successful_use":0,"unconfirmed_dispatches":0})
+        row["agent_dispatches"]+=1
+        row["opened_packet"]+=int(any(e["command"]=="start" and e["exit"]==0 for e in events))
+        row["successful_use"]+=int(any(meaningful(e["command"]) and e["exit"]==0 for e in events))
+        row["unconfirmed_dispatches"]+=int(dispatch in planned_unconfirmed)
     commands={}
     for u in uses:
         row=commands.setdefault(u["command"],{"calls":0,"successful":0})
         row["calls"]+=1;row["successful"]+=int(u["exit"]==0)
-    return {"hours":hours,"roles":by,"commands":commands,"launches":launches[:40],
+    return {"hours":hours,"roles":by,"observed_usage":observed,"commands":commands,"launches":launches[:40],
             "unmatched_agent_calls":sum(u["dispatch"] is None for u in uses),
             "note":"Agent environment attribution; successful command is not a proof or credited contribution."}
 

@@ -84,12 +84,42 @@ class Research(unittest.TestCase):
             self.assertIn("YOUR ROLE: general",prompt[prompt.index("--prompt")+1])
             self.assertIn("pnp-research start",prompt[prompt.index("--prompt")+1])
         with patch.dict(os.environ,{"ANTONINA_AGENT_ID":"agent-fixture","ANTONINA_INVOCATION_ID":"turn"}):
-            self.assertEqual(adoption.current_role(),"general")
-            adoption.record("start",__import__("time").time(),0)
-            adoption.record("knowledge find",__import__("time").time(),0)
+            oldcwd=Path.cwd()
+            try:
+                os.chdir(p)
+                self.assertEqual(adoption.current_role(),"general")
+                adoption.record("start",__import__("time").time(),0)
+                adoption.record("knowledge find",__import__("time").time(),0)
+            finally:os.chdir(oldcwd)
         result=adoption.report()
         self.assertEqual(result["roles"]["general"]["discovered"],1)
         self.assertEqual(result["roles"]["general"]["successful_use"],1)
+    def test_expired_packet_and_workspace_attribution(self):
+        rec=state.create("L-meta-8",state="LEASED",lease="fixture",statement="True",
+                         lease_expires_at=__import__("time").time()+600)
+        p=Path(assignment.prepare(rec["gap_id"],checkout=False,worker="general")["cwd"])
+        p.mkdir(parents=True)
+        with patch.object(playbook,"pinned_base",return_value=self.base):
+            data=playbook.packet("general",p)
+            self.assertTrue(data["assignment_current"])
+            state.transition(rec["gap_id"],"RELEASED",failure_reason="fixture")
+            data=playbook.packet("general",p)
+            self.assertFalse(data["assignment_current"])
+            self.assertNotIn("pnp-research obligations ready --current",data["next_commands"])
+        did=adoption.planned("agent-fixture",p,"general","fixture")
+        with __import__("contextlib").closing(adoption.db()) as c:
+            self.assertIsNotNone(adoption.lookup(c,"agent-fixture",p,__import__("time").time()))
+            self.assertIsNone(adoption.lookup(c,"agent-fixture",Path(config.STATE_ROOT),__import__("time").time()))
+        with patch.dict(os.environ,{"ANTONINA_AGENT_ID":"agent-fixture"}):
+            old=Path.cwd()
+            try:
+                os.chdir(p)
+                adoption.record("start",__import__("time").time(),0)
+            finally:os.chdir(old)
+        report=adoption.report()
+        self.assertNotIn("general",report["roles"])
+        self.assertEqual(report["observed_usage"]["general"]["opened_packet"],1)
+        self.assertEqual(report["observed_usage"]["general"]["unconfirmed_dispatches"],1)
     def test_independent_roles_and_obligation_fronts(self):
         rec=state.create("L-meta-9",state="LEASED",lease="fixture",statement="True",
                          lease_expires_at=__import__("time").time()+600)

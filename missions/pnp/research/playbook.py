@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from .. import assignment, config, state, support
+from .. import assignment, config, focus, state, support
 from . import knowledge
 
 P = "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp."
@@ -172,6 +172,20 @@ def packet(role, cwd=None):
     if not rec and role in METHOD:base=compatible_public_base(latest)
     out={"role":role,"base":base,"instructions":guide(role)}
     if latest!=base:out["latest_public_base"]=latest
+    if role in BOUND:
+        if not rec or not focus.eligible(rec):
+            out["gap"]=b[0] if b else None
+            out["assignment_current"]=False
+            out["instructions"]="YOUR ROLE: "+role+". This is not a live research assignment.\nFIRST: preserve existing artifacts.\nDo not run bound proof checks, edit a new lease, or submit. If a check was already submitted, collect its immutable receipt. Notify Executive and finish this invocation.\nOnly Executive may assign independent method work.\nNo onboarding gate."
+            out["next_commands"]=["pnp-research obligations pending","pnp-research knowledge find QUERY"]
+            return out
+        if focus.correction(rec):
+            out["gap"]=rec["gap_id"]
+            out["assignment_current"]=True
+            out["correction"]=True
+            out["instructions"]="YOUR ROLE: "+role+". Repair the exact published proof.\nFIRST: inspect guard and checker diagnostics.\nUse the existing correction workspace, the remote scratch compiler when available, and checked reusable evidence. Do not request lease-only obligations for a published correction. Submit the corrected exact proof through the normal publisher immediately.\nNo onboarding gate."
+            out["next_commands"]=[P+"cli guard","pnp-remote-check --availability","pnp-research knowledge find QUERY"]
+            return out
     if rec:
         out["gap"]=rec["gap_id"]
         out["assignment_current"]=support.active(rec)
@@ -227,7 +241,7 @@ def main():
         print("CURRENT WORK PACKET — "+role)
         print("Purpose:",ROLES[role][0])
         print("\n".join(data["instructions"].splitlines()[2:-1]))
-        for key in ("gap","family","base","latest_public_base","assignment_current","assigned_obligation"):
+        for key in ("gap","family","base","latest_public_base","assignment_current","correction","assigned_obligation"):
             if key in data:print(key+":",data[key])
         context=data.get("cumulative_research") or {}
         if context.get("obligations"):

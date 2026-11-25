@@ -19,11 +19,13 @@ def main():
     did=adoption.planned(a.agent,a.cwd,a.role,text)
     result=subprocess.run(["antonina","agent","run","--id",a.agent,"--cwd",str(a.cwd.resolve()),
                             "--prompt",text,"--detach","--json"]+(["--steer"] if a.steer else []),capture_output=True,text=True)
-    print(result.stdout,end="")
-    if result.stderr:print(result.stderr,end="",file=__import__("sys").stderr)
     if result.returncode==0:
         try:
             if __import__("json").loads(result.stdout).get("state")=="running":adoption.confirmed(did)
         except ValueError:pass
+    # Record acknowledgement before writing to a potentially closed output
+    # pipe, e.g. an Executive capturing the first few output lines.
+    print(result.stdout,end="")
+    if result.stderr:print(result.stderr,end="",file=__import__("sys").stderr)
     return result.returncode
 if __name__=="__main__":raise SystemExit(main())

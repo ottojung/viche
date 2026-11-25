@@ -7,7 +7,7 @@ revision, assigned subproblem, checked/open dependencies, and relevant earlier
 results (including released leases). The Executive dispatch helper injects a
 short role-specific prompt automatically. For an unfamiliar command, use
 `pnp-research guide ROLE` for executable examples or the command's `--help`.
-Do not read every manual before doing mathematics.
+Do not read every manual before doing mathematics. A stale work packet explains\nthat the assignment ended and points only to preservation and receipt collection.\nPublished-proof corrections receive correction-specific commands.
 
 Independent method/tool agents run `pnp-research start --role method` or
 `pnp-research start --role tool`. They work on reusable mathematical families
@@ -122,7 +122,7 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
 - `pnp-research adoption` measures confirmed launches, discovery, substantive
   commands, help calls before first use, and time to first successful use
   using the actual agent environment.
-  These are adoption measurements, not proof success or leaderboard credit.
+  The report separates confirmed launches from observed use (including interrupted\n  launch acknowledgements and older workers); exact workspace matching prevents\n  attribution across unrelated assignments. These are adoption measurements, not\n  proof success or leaderboard credit.
 - `pnp-research yield` exposes censored historical family-level evidence,
   shrinkage estimates, actual graph progress and competition. It is a
   heuristic, not calibrated individual prediction or automatic release policy.
