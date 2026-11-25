@@ -1,0 +1,445 @@
+{
+ "allocator_focus_present": {
+  "2962": true
+ },
+ "at": "2026-11-25T15:17:32Z",
+ "authority": "P-1795618764-9ded",
+ "authorized_count": 44,
+ "candidate_dir_kb": 9441168,
+ "compiled_files": 5015,
+ "compiled_total_kb": 324749,
+ "df_before": {
+  "avail_kb": 11052204,
+  "device": "/dev/mapper/cryptroot",
+  "size_kb": 244540724,
+  "used_kb": 220993672,
+  "used_pct": 96
+ },
+ "liveness": {
+  "git_refs": [],
+  "mount_refs": [],
+  "proc_refs": [],
+  "proc_scan_errors": []
+ },
+ "phase": "pre",
+ "preserve_present": {
+  "2149": true,
+  "2232": true,
+  "2341": true,
+  "2373": true,
+  "2382": true,
+  "3321": true,
+  "8449": true
+ },
+ "reclaimed_21_overlap": [],
+ "rows": [
+  {
+   "compiled_files": 693,
+   "compiled_kb": 91770,
+   "compiled_sample": [
+    "attempts/d72d8d703409af7e60e6b8b3/workers/general/path/lean/.lake/build/",
+    "attempts/d72d8d703409af7e60e6b8b3/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/d72d8d703409af7e60e6b8b3/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/d72d8d703409af7e60e6b8b3/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-2091",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 551,
+   "compiled_kb": 20116,
+   "compiled_sample": [
+    "attempts/622f2f9a4ae0bcf2e07d1b9d/workers/general/path/lean/.lake/build/",
+    "attempts/622f2f9a4ae0bcf2e07d1b9d/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/622f2f9a4ae0bcf2e07d1b9d/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/622f2f9a4ae0bcf2e07d1b9d/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-10227",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-10210",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 622,
+   "compiled_kb": 27220,
+   "compiled_sample": [
+    "attempts/8b7587029a6227d607660a63/workers/general/path/lean/.lake/build/",
+    "attempts/8b7587029a6227d607660a63/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/8b7587029a6227d607660a63/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/8b7587029a6227d607660a63/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-651",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 613,
+   "compiled_kb": 15395,
+   "compiled_sample": [
+    "attempts/c50aa8911b7932dec4b83ece/workers/general/path/lean/.lake/build/",
+    "attempts/c50aa8911b7932dec4b83ece/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/c50aa8911b7932dec4b83ece/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/c50aa8911b7932dec4b83ece/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-612",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-972",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 4,
+   "compiled_kb": 1445,
+   "compiled_sample": [
+    "attempts/87fa44127c0b1ce70733fef7/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/87fa44127c0b1ce70733fef7/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/87fa44127c0b1ce70733fef7/workers/general/path/lean/.lake/config/1/lakefile.olean.trace",
+    "attempts/87fa44127c0b1ce70733fef7/workers/general/path/lean/.lake/config/1/lakefile.olean"
+   ],
+   "gap": "L-meta-4185",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-1342",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 7,
+   "compiled_kb": 9920,
+   "compiled_sample": [
+    "attempts/75a342189300d40ed8a18383/workers/general/path/.cache_s10.cnf",
+    "attempts/75a342189300d40ed8a18383/workers/general/path/.cache_s11r.cnf",
+    "attempts/75a342189300d40ed8a18383/workers/general/path/.cache_s11.cnf",
+    "attempts/75a342189300d40ed8a18383/workers/general/path/.cache_s10r.cnf"
+   ],
+   "gap": "L-meta-8498",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 630,
+   "compiled_kb": 34261,
+   "compiled_sample": [
+    "attempts/c88f61362b325b5e34fed0b2/workers/general/path/lean/.lake/build/",
+    "attempts/c88f61362b325b5e34fed0b2/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/c88f61362b325b5e34fed0b2/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/c88f61362b325b5e34fed0b2/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-2450",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-6658",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-1681",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-8444",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 692,
+   "compiled_kb": 85731,
+   "compiled_sample": [
+    "attempts/61b1a562819eca5e62270899/workers/general/path/lean/.lake/build/",
+    "attempts/61b1a562819eca5e62270899/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/61b1a562819eca5e62270899/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/61b1a562819eca5e62270899/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-2081",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 600,
+   "compiled_kb": 22141,
+   "compiled_sample": [
+    "attempts/4571ca57f20dc0667ace7342/workers/general/path/lean/.lake/build/",
+    "attempts/4571ca57f20dc0667ace7342/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/4571ca57f20dc0667ace7342/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/4571ca57f20dc0667ace7342/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-2379",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 4,
+   "compiled_kb": 1445,
+   "compiled_sample": [
+    "attempts/71344fb6823fc9a206fbc843/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/71344fb6823fc9a206fbc843/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/71344fb6823fc9a206fbc843/workers/general/path/lean/.lake/config/1/lakefile.olean.trace",
+    "attempts/71344fb6823fc9a206fbc843/workers/general/path/lean/.lake/config/1/lakefile.olean"
+   ],
+   "gap": "L-meta-2572",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4608",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4618",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-1677",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-1969",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4643",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-2568",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-3456",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-3682",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-3004",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-5080",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-5208",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-2640",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4291",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-3451",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-949",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-5369",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-2400",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4147",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4752",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-5306",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4693",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-5339",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4504",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-3917",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 599,
+   "compiled_kb": 15305,
+   "compiled_sample": [
+    "attempts/4c7b16a21d1f5c4086229508/workers/general/path/lean/.lake/build/",
+    "attempts/4c7b16a21d1f5c4086229508/workers/general/path/lean/.lake/config/5/lakefile.olean.trace",
+    "attempts/4c7b16a21d1f5c4086229508/workers/general/path/lean/.lake/config/5/lakefile.olean",
+    "attempts/4c7b16a21d1f5c4086229508/workers/general/path/lean/.lake/config/1/lakefile.olean.trace"
+   ],
+   "gap": "L-meta-4966",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-2071",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-1710",
+   "state_ok": true,
+   "why": ""
+  },
+  {
+   "compiled_files": 0,
+   "compiled_kb": 0,
+   "compiled_sample": [],
+   "gap": "L-meta-4221",
+   "state_ok": true,
+   "why": ""
+  }
+ ],
+ "state_failures": []
+}
