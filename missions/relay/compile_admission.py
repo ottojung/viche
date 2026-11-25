@@ -20,7 +20,10 @@ def headroom(cgroup=Path("/sys/fs/cgroup"), meminfo=Path("/proc/meminfo")):
             return host//MIB
         used = int((cgroup/"memory.current").read_text())
         stats = dict(x.split() for x in (cgroup/"memory.stat").read_text().splitlines())
-        reclaimable = int(stats.get("inactive_file", "0"))
+        # Clean file-backed cache is reclaimable even when on the active LRU.
+        # Never count tmpfs, dirty/writeback pages or unevictable pages.
+        reclaimable = max(0, int(stats.get("file","0")) -
+            sum(int(stats.get(k,"0")) for k in ("shmem","file_dirty","file_writeback","unevictable")))
         return max(0, min(host, int(limit)-used+reclaimable))//MIB
     except (OSError, ValueError, StopIteration):
         return None
@@ -40,7 +43,7 @@ def slot(rss_mib=8192, timeout=180, cancelled=lambda:False, directory=None):
 
     Conservative reservation: do not count on an existing job already having
     allocated its predicted memory. Cgroup headroom includes reclaimable
-    inactive file cache but is capped by host available memory.
+    clean file cache but is capped by host available memory.
     """
     if not 256 <= rss_mib <= 12288:
         raise ValueError("invalid compiler reservation")

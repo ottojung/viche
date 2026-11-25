@@ -1,4 +1,24 @@
-# lbcert — certificates for concrete circuit-size steps
+# Certificate production — current workflow (2026-11-25)
+
+**Held step:** generate complete exact candidate → normal signed publisher immediately;
+the exact signed bytes are checked concurrently on Marceline. Correct the same PR if
+the compiler or official checker reports a defect. No mandatory local build gate.
+A generator's `generated` status means complete source, not a compiler receipt.
+
+**Unheld step:** the desk documents `next --proof-of <step>` for an already checked
+proof (even if another contributor holds the step). Prepare the candidate and check
+the exact bytes; the allocator claims it through that documented route and immediately
+submits via the normal publisher. The `GAP.checked.json` receipt binds digest and public
+base. Never pretend an unchecked candidate was checked. Do not create unheld PRs
+merely because competitors omit lease text. No separate bulk publisher is required.
+
+The autosolver bounds outstanding work to six tasks total, prioritizes held steps,
+uses at most one speculative prepared check, supervises subprocess trees, and has
+one bounded local fallback slot. A successful generator event wakes the publisher
+without waiting for an allocator tick. A failed or unavailable compiler is not evidence
+of a false theorem. See `missions/pnp/research/README.md` for agent workflows.
+
+## Certificate engines and examples
 
 The fastest-moving family on the desk is concrete lower bounds:
 
@@ -88,7 +108,7 @@ pruning first and counts its states; the kernel does ~2k states/s, so instances 
 Typical easy instance: generation < 1 s, compile ~25 s, file ~62 KB, passes missions.pnp.validate
 (one `theorem`, helper `lemma`s, `import Mathlib`, no `noncomputable section`).
 Flow: autosolve (family `onenot`, only while `pr_open == 0`, ahead of every other family) ->
-relay `lb-cert` -> marceline lb-handler -> onenot.py -> compile gate -> cands/GAP.lean -> bulk lane PR.
+relay `lb-cert` -> marceline lb-handler -> onenot.py -> candidate file -> normal lease-aware publisher.
 Harder instances need the gate-elimination method of the merged L-meta-9266 / 14412 files.
 
 ## Track record and limits

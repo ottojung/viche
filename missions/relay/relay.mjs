@@ -6,13 +6,14 @@ import {spawn} from 'node:child_process';
 import {createCipheriv,createDecipheriv,randomBytes,randomUUID} from 'node:crypto';
 import {setTimeout as sleep} from 'node:timers/promises';
 
-const MAX=4*1024*1024, JOB_MAX=2*1024*1024, TTL=30*60*1000, SKEW=120000, LIMIT=8;
+const MAX=4*1024*1024, JOB_MAX=2*1024*1024, TTL=30*60*1000, SKEW=120000, LIMIT=32;
 const MAX_LEAN=2, LEAN_BUDGET=16384;
 const BASE='https://vau.place/_skrynia/store/antonina/';
 const HOME=os.homedir(), HERE=path.dirname(fileURLToPath(import.meta.url));
 const confPath=path.join(HOME,'.config/marceline-relay/config.json');
 const stateRoot=path.join(HOME,'.local/state/marceline-relay');
-const ops=new Set(['ping','lean-check']);
+const ops=new Set(['ping','lean-check','lb-cert','sibling']);
+const MAX_LB=6;
 function config(){
  const st=fs.lstatSync(confPath);
  if(!st.isFile()||st.uid!==process.getuid()||(st.mode&0o077))throw Error('private relay config required');
@@ -27,6 +28,15 @@ function seal(c,box,value){
  const data=Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]);
  return JSON.stringify({v:1,iv:iv.toString('base64'),data:data.toString('base64'),tag:cipher.getAuthTag().toString('base64')});
 }
+// lb-cert: a lower-bound certificate request (data only: statement text, module name, two bounded integers).
+function lbOK(p){return !!p&&typeof p==='object'&&typeof p.statement==='string'&&Buffer.byteLength(p.statement)<=16384&&
+ /^PEqualNP\.Outside\.[A-Za-z0-9_]{1,80}$/.test(p.module)&&Number.isSafeInteger(p.maxstates)&&p.maxstates>=1&&p.maxstates<=300000&&
+ Number.isSafeInteger(p.chunks)&&p.chunks>=1&&p.chunks<=200;}
+// sibling: transfer of a merged same-skeleton proof (data only: statement, module, imports, a bound).
+function sibOK(p){return !!p&&typeof p==='object'&&typeof p.statement==='string'&&Buffer.byteLength(p.statement)<=16384&&
+ /^PEqualNP\.Outside\.[A-Za-z0-9_]{1,80}$/.test(p.module)&&Array.isArray(p.imports)&&p.imports.length<=16&&
+ p.imports.every(i=>typeof i==='string'&&/^[A-Za-z][A-Za-z0-9_.]{0,120}$/.test(i))&&
+ Number.isSafeInteger(p.max_tries)&&p.max_tries>=1&&p.max_tries<=16;}
 function open(c,box,raw){
  try{
   const e=JSON.parse(raw);
@@ -45,6 +55,8 @@ function open(c,box,raw){
     if(!ops.has(x.op)||!Number.isSafeInteger(x.created)||x.expires-x.created!==TTL)throw Error();
     if(x.op==='ping'&&(typeof x.payload!=='string'||Buffer.byteLength(x.payload)>4096))throw Error();
     if(x.op==='lean-check'&&(!x.payload||typeof x.payload!=='object'||!(/^[0-9a-f]{64}$/.test(x.payload.job))))throw Error();
+    if(x.op==='lb-cert'&&!lbOK(x.payload))throw Error();
+    if(x.op==='sibling'&&!sibOK(x.payload))throw Error();
    }
    if(box==='response'&&(!['ack','running','done','error'].includes(x.state)||!Array.isArray(x.events)))throw Error();
   }
@@ -199,7 +211,7 @@ function capabilities(){
   const lean_bases=fs.readdirSync(cfg.manifests).filter(x=>/^[0-9a-f]{40}\.json$/.test(x))
    .filter(x=>{const st=fs.lstatSync(path.join(cfg.manifests,x));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);})
    .map(x=>x.slice(0,-5)).filter(base=>{try{const st=fs.lstatSync(path.join(cfg.manifests,base+'.provenance.json'));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);}catch{return false;}}).sort();
-  return {ping:true,lean_bases,max_parallel_lean:MAX_LEAN};
+  return {ping:true,lean_bases,max_parallel_lean:MAX_LEAN,lb_cert:fs.existsSync(path.join(HERE,'lb-handler.py')),sibling:fs.existsSync(path.join(HERE,'sib-handler.py')),max_parallel_lb:MAX_LB};
  }catch{return {ping:true,lean_bases:[]};}
 }
 function launchLean(req){
@@ -232,6 +244,34 @@ function launchLean(req){
  });
  return {promise,cancel:()=>child.kill('SIGTERM')};
 }
+function launchLb(req){return launchHandler(req,'lb-handler.py');}
+function launchHandler(req,script){
+ // Fixed handler, no shell; the request supplies only validated data on stdin.
+ const child=spawn(path.join(HOME,'.local/bin/python3'),[path.join(HERE,script)],{
+  stdio:['pipe','pipe','ignore'],env:{HOME,PATH:path.join(HOME,'.elan/bin')+':'+(process.env.PATH||'/usr/bin:/bin'),LANG:'C.UTF-8'},shell:false,detached:true
+ });
+ function killGroup(){
+  if(!child.pid)return;
+  try{process.kill(-child.pid,'SIGTERM');}catch{}
+  const escalation=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}},1500);
+  escalation.unref();
+ }
+ let out=Buffer.alloc(0),failed=false;
+ const deadline=setTimeout(()=>{failed=true;killGroup();},1800000);deadline.unref();
+ child.stdout.on('data',b=>{if(out.length+b.length>1536*1024){failed=true;killGroup();}else out=Buffer.concat([out,b]);});
+ child.stdin.on('error',()=>{});
+ child.stdin.end(JSON.stringify(req.payload));
+ const promise=new Promise(resolve=>{
+  child.on('error',()=>resolve({error:'cannot start lb-cert handler'}));
+  child.on('close',code=>{
+   clearTimeout(deadline);
+   if(code!==0||failed)return resolve({error:'lb-cert handler failed'});
+   try{const result=JSON.parse(out);if(!result||result.module!==req.payload.module)throw Error();resolve({result});}
+   catch{resolve({error:'invalid lb-cert handler response'});}
+  });
+ });
+ return {promise,cancel:()=>killGroup()};
+}
 async function worker(c){
  const host=os.hostname();
  if(host!=='marceline-dev')throw Error('worker must run on marceline-dev');
@@ -248,7 +288,9 @@ async function worker(c){
     if(v.heartbeat&&now-v.heartbeat<10000&&entries.length===v.entries.length)return null;
     return {...v,heartbeat:now,entries,capabilities:capabilities()};
    });
-   for(const req of rq){
+   const priority=req=>req.op==='ping'?0:req.op==='lean-check'&&req.payload.mode==='elaborate'?1:
+    req.op==='lb-cert'&&!req.payload.check_file_gz_b64?2:req.op==='lean-check'?3:req.op==='lb-cert'?4:5;
+   for(const req of [...rq].sort((a,b)=>priority(a)-priority(b)||a.created-b.created)){
     const old=response.entries.find(e=>e.id===req.id);
     if(terminal(old))continue;
     const receipt=load('worker-receipts',req.id);
@@ -265,13 +307,15 @@ async function worker(c){
      const wanted=req.payload.rss_mib;
      if(running.length>=MAX_LEAN||running.reduce((n,a)=>n+a.rss,0)+wanted>LEAN_BUDGET)continue;
     }
+    if(req.op==='lb-cert'&&[...active.values()].filter(a=>a.op==='lb-cert'&&!a.finished).length>=MAX_LB)continue;
+    if(req.op==='sibling'&&[...active.values()].filter(a=>a.op==='sibling'&&!a.finished).length>=4)continue;
     if(req.op==='ping'){
      const result=event({...entry,result:{host,echo:req.payload}},'done','ping complete');
      save('worker-receipts',req.id,result);await putResponse(c,result);
     }else{
      entry=event(entry,'running','isolated Lean handler dispatched');
      await putResponse(c,entry);
-     const job=launchLean(req),a={...job,op:req.op,rss:req.payload.rss_mib,finished:false};
+     const job=req.op==='lb-cert'?launchLb(req):req.op==='sibling'?launchHandler(req,'sib-handler.py'):launchLean(req),a={...job,op:req.op,rss:req.payload.rss_mib||0,finished:false};
      active.set(req.id,a);
      job.promise.then(out=>{
       a.finished=true;
@@ -306,12 +350,26 @@ function payload(op,args){
   if(!value||!(/^[0-9a-f]{64}$/.test(value.job)))throw Error('invalid Lean job identity');
   return value;
  }
+ if(op==='sibling'){
+  if(args.length!==1)throw Error('sibling requires one request JSON file');
+  const st=fs.statSync(args[0]);if(!st.isFile()||st.size>65536)throw Error('invalid sibling request file');
+  const value=JSON.parse(fs.readFileSync(args[0],'utf8'));
+  if(!sibOK(value))throw Error('invalid sibling request: statement, module, imports, max_tries');
+  return value;
+ }
+ if(op==='lb-cert'){
+  if(args.length!==1)throw Error('lb-cert requires one request JSON file');
+  const st=fs.statSync(args[0]);if(!st.isFile()||st.size>65536)throw Error('invalid lb-cert request file');
+  const value=JSON.parse(fs.readFileSync(args[0],'utf8'));
+  if(!lbOK(value))throw Error('invalid lb-cert request: statement, module, maxstates, chunks');
+  return value;
+ }
  throw Error('unknown relay operation');
 }
 async function main(){
  const [cmd,arg,...rest]=process.argv.slice(2);
  if(!cmd||cmd==='--help'){
-  console.log('marceline-request status [BASE_SHA] | ping [message] | lean-check JOB.json | submit OP [argument] | wait ID [seconds] | cancel ID');return 0;
+  console.log('marceline-request status [BASE_SHA] | ping [message] | lean-check JOB.json | submit OP [argument] (OP: ping, lean-check, lb-cert REQ.json, sibling REQ.json) | wait ID [seconds] | cancel ID');return 0;
  }
  const c=config();
  if(cmd!=='worker'){pruneLocal('requests',TTL+SKEW);pruneLocal('receipts',24*60*60*1000);pruneLocal('cancelled',24*60*60*1000);}

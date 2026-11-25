@@ -7,10 +7,9 @@ Called by allocator.tick before fill(). Consumes the files written by missions.p
    (jobs.submit). No local re-verification: the generator's certificates were ACCEPTED by the
    official checker on every instance tried (7309, 5459, 8493, 8487, 8483), and the races for this
    family are lost by minutes.
-2. FALSE TWIN. A held "¬ (lower bound)" step whose lower bound is decided true is false. If the
-   lower bound has a ready candidate and no open PR, publish it first (join.txt: prove the negated
-   twin as an ordinary pull request; lbcert/twin_publish.py uses the publisher's own git/gh/validate
-   helpers). Then release the held step with the desk reason statement_seems_false.
+2. FALSE TWIN. A held negation is released only when an exact compiler receipt
+   exists for its negated twin. The checked twin goes through the allocator's
+   documented proof-of acquisition rather than a separate unheld PR path.
 3. CYCLE. Research leases may hold at most RESEARCH_SLOTS of the MAX_LEASES slots. When all slots
    are full and more are held by research, release the oldest non-focus research lease that has been
    held at least the desk's twenty minutes and has no candidate (reason out_of_time). The freed slot
@@ -126,21 +125,14 @@ def tick(d, mem, now, roster_known=True):
         lb = twins.get(gap)
         if not lb:
             continue
-        lb_path = cand_ready(lb, allow_generated=False)
-        if not lb_path:
-            continue   # the lower bound is not decided by our generator: research may still refute it
-        mark = os.path.join(CANDS, gap + ".twinpub")
-        if desk.get(lb, 1) == 0 and not os.path.exists(mark):
-            p = subprocess.run([sys.executable, os.path.join(HERE, "lbcert", "twin_publish.py"), gap, lb, lb_path],
-                               cwd=os.path.dirname(os.path.dirname(HERE)), capture_output=True, text=True, timeout=900)
-            with open(mark, "w") as f:
-                f.write("%d\n%s\n%s" % (p.returncode, p.stdout[-2000:], p.stderr[-2000:]))
-            state.event(gap, "fastlane_twin_publish", {"twin": lb, "rc": p.returncode, "out": (p.stdout + p.stderr)[-400:]})
-            if p.returncode == 0:
-                out["twin_published"].append(lb)
+        from .lbcert import ready
+        # A mathematical candidate or old "ok" marker is not a kernel
+        # proof of the negated twin. Only exact checked evidence justifies
+        # release, then the checked twin enters targeted acquisition.
+        if not ready.verified(lb):
+            continue
         if release(d, mem, gap, "statement_seems_false",
-                   "lb_cert certificate for the negated twin %s (viche lbcert generator; same engine and encoding "
-                   "as checker-ACCEPTED files) proves the lower bound, so this negation is false." % lb):
+                   "Exact checked proof of the negated twin %s establishes that this negation is false." % lb):
             out["released"].append(gap)
     # Rule 3: keep two slots cycling.
     held = cli.held_records()

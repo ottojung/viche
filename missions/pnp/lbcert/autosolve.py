@@ -24,6 +24,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lbparse  # noqa: E402
 import process as managed_process
+import threading
+LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 
 # A running Python process does not reload a module whose source changes on
 # disk. Without this guard, a fix delivered while autosolve is alive stays
@@ -115,22 +117,27 @@ def generate(g, engines):
         r = {'status': 'relay_error'}
     where = 'marceline'
     if p.returncode == 1 and lbparse.family(g['statement']) in ('mono', 'onenot'):
-        QUEUED.discard(gid)   # only marceline-dev builds this family: retry on a later poll
         log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
         return
     if p.returncode == 1:   # relay or handler trouble: build here, slower but independent
-        where = 'local'
-        r = {'status': 'error'}
-        for eng in engines:
-            q = managed_process.run([sys.executable, 'lbassemble.py', eng, mod, sf, out + '.tmp', '--maxstates', '4800',
-                                '--chunks', '40'], cwd=HERE, capture_output=True, text=True, timeout=3600)
-            if q.returncode == 0:
-                os.replace(out + '.tmp', out)
-                r = {'status': 'ok', 'engine': os.path.basename(eng)}
-                break
-            r = {'status': {2: 'unsupported', 3: 'false', 4: 'toobig'}.get(q.returncode, 'error')}
-            if not (q.returncode == 4 and 'TOO LARGE' in q.stderr):
-                break
+        if not LOCAL_FALLBACK.acquire(blocking=False):
+            log('local fallback deferred',gid)
+            return
+        try:
+            where = 'local'
+            r = {'status': 'error'}
+            for eng in engines:
+                q = managed_process.run([sys.executable, 'lbassemble.py', eng, mod, sf, out + '.tmp', '--maxstates', '4800',
+                                    '--chunks', '40'], cwd=HERE, capture_output=True, text=True, timeout=300)
+                if q.returncode == 0:
+                    os.replace(out + '.tmp', out)
+                    r = {'status': 'ok', 'engine': os.path.basename(eng)}
+                    break
+                r = {'status': {2: 'unsupported', 3: 'false', 4: 'toobig'}.get(q.returncode, 'error')}
+                if not (q.returncode == 4 and 'TOO LARGE' in q.stderr):
+                    break
+        finally:
+            LOCAL_FALLBACK.release()
     if r.get('status')=='ok' and r.get('compiled'):
         from missions.pnp.lbcert import ready
         ready.record(gid,r,open(out,'rb').read())
@@ -184,6 +191,141 @@ def sibling_pass():
     os.replace(tmp, SIB_STATE)
 
 
+def gen_plugin(g, name, sha):
+    """A town-written generator plugin (lbcert/plugins.py): generate here, compile on marceline-dev."""
+    import plugins, checkremote
+    from missions.pnp import state, support, validate
+    from missions.pnp.lbcert import ready
+    gid = g['id']
+    sf = os.path.join(CANDS, gid + '.stmt')
+    open(sf, 'w').write(g['statement'])
+    out = os.path.join(CANDS, gid + '.lean')
+    t0 = time.time()
+    rc, why = plugins.run(name, gid, sf, out + '.gen')
+    if rc != 0:
+        write_status(gid, '%s plugin %s %s rc=%s %s' % ('unsupported' if rc == 3 else 'failed', name, sha, rc,
+                                                     why.strip().replace('\n', ' ')[-160:]))
+        log('plugin', name, gid, 'rc', rc, '%.0fs' % (time.time() - t0))
+        return
+    # Statically validate exact output before any publication or remote check.
+    meta={k:g[k] for k in ('id','file','module','statement','imports')}
+    try:
+        data=open(out+'.gen','rb').read()
+        validate.validate(meta,data)
+    except (OSError,validate.InvalidCandidate) as e:
+        write_status(gid,'failed plugin %s %s invalid %s'%(name,sha,str(e)[:120]))
+        return
+    rec=state.load(gid)
+    if support.active(rec) and rec['statement']==g['statement']:
+        os.replace(out+'.gen',out)
+        write_status(gid,'generated plugin %s %s secs=%.0f'%(name,sha,time.time()-t0))
+        return
+    crc, res = checkremote.check(out + '.gen', g['module'])
+    if crc == 2:
+        log('plugin', name, gid, 'check deferred', res.get('status'))
+        return
+    if crc == 0:
+        os.replace(out + '.gen', out)
+        ready.record(gid,dict(res,status='ok',compiled=True),data)
+        write_status(gid, 'ok plugin %s %s marceline compiled secs=%.0f' % (name, sha, time.time() - t0))
+    else:
+        write_status(gid, 'failed plugin %s %s compile: %s' % (name, sha, (res.get('log') or '').replace('\n', ' ')[-160:]))
+    log('plugin', name, gid, 'ok' if crc == 0 else 'compile_error', '%.0fs' % (time.time() - t0))
+
+
+def check_prepared(g):
+    import checkremote
+    from missions.pnp import state, support, validate, fastlane
+    from missions.pnp.lbcert import ready
+    gid=g['id']
+    rec=state.load(gid)
+    if support.active(rec):
+        fastlane.submit_ready(gid)
+        return
+    path=os.path.join(CANDS,gid+'.lean')
+    try:
+        data=open(path,'rb').read()
+        validate.validate({k:g[k] for k in ('id','file','module','statement','imports')},data)
+    except (OSError,validate.InvalidCandidate) as e:
+        log('prepared validation refused',gid,str(e)[:160]);return
+    if ready.verified(gid):
+        return
+    code,result=checkremote.check(path,g['module'],timeout=600)
+    if code==0:
+        if ready.record(gid,dict(result,status='ok',compiled=True),data):
+            log('prepared exact proof',gid,result.get('checked_base'))
+            fastlane.submit_ready(gid)
+    else:
+        log('prepared check',gid,code,result.get('status'),str(result.get('log',''))[-180:])
+
+
+def held_ids():
+    out = set()
+    d = os.path.join(STATE, 'gaps')
+    for gid in os.listdir(d) if os.path.isdir(d) else []:
+        try:
+            if json.load(open(os.path.join(d, gid, 'state.json'))).get('state') in ('LEASED', 'RESEARCHING', 'CANDIDATE_READY'):
+                out.add(gid)
+        except (OSError, ValueError):
+            pass
+    return out
+
+
+def fresh(gid, plugin_sha=None):
+    """No status yet, or a plugin refused/failed it with an older version of its gen.py."""
+    st = status(gid)
+    if st is None:
+        return True
+    m = re.match(r'(unsupported|failed) plugin \S+ (\w+)', st)
+    return bool(m and plugin_sha and m.group(2) != plugin_sha)
+
+
+SWEEP_STATE = os.path.join(WORK, 'sweep.json')
+SWEEP_MAX_TRIES = 4
+
+
+def sweep_pass():
+    """Sibling transfer for every open step nobody has claimed (pr_open == 0) and no generator owns,
+    whose statement skeleton matches a merged file: the bulk lane publishes what compiles.
+    Each step is tried once per upstream corpus commit."""
+    import sibling
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
+    from missions.pnp import gitctl
+    head, idx = sibling.index(gitctl.MIRROR, WORK)
+    try:
+        tried = json.load(open(SWEEP_STATE))
+    except (OSError, ValueError):
+        tried = {}
+    gaps = json.loads(get(DESK))['gaps']
+    todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
+            and status(g['id']) is None and not lbparse.family(g['statement'])
+            and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx]
+    todo.sort(key=lambda g: -int(re.sub(r'\D', '', g['id']) or 0))
+    log('sweep', len(todo), 'open unclaimed steps with a merged sibling at', head[:12])
+    for g in todo:
+        if os.path.exists(os.path.join(WORK, 'STOP')):
+            break
+        gid = g['id']
+        sf = os.path.join(CANDS, gid + '.sib.stmt')
+        open(sf, 'w').write(g['statement'])
+        out = os.path.join(CANDS, gid + '.lean')
+        p = managed_process.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, g['module'], out,
+                            '--imports', ','.join(g.get('imports') or ['PEqualNP.Defs']),
+                            '--max-tries', str(SWEEP_MAX_TRIES)], capture_output=True, text=True, timeout=3000)
+        try:
+            r = json.loads(p.stdout.strip().split('\n')[-1])
+        except Exception:
+            r = {}
+        if p.returncode == 0:
+            write_status(gid, 'ok sibling %s %s marceline compiled tried=%s sweep' % (r.get('source'), r.get('variant'), r.get('tried')))
+        if p.returncode in (0, 5):
+            tried[gid] = head
+            tmp = SWEEP_STATE + '.tmp'
+            json.dump(tried, open(tmp, 'w'))
+            os.replace(tmp, SWEEP_STATE)
+        log('sweep', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'))
+
+
 def sibling_loop():
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
@@ -191,6 +333,22 @@ def sibling_loop():
         except Exception as e:
             log('sibling error', type(e).__name__, str(e)[:200])
         time.sleep(30)
+
+
+def sweep_loop():
+    from missions.pnp import gitctl
+    last_radar = 0
+    while not os.path.exists(os.path.join(WORK, 'STOP')):
+        try:
+            gitctl.ensure_mirror()      # fresh upstream/main: new merges are new siblings
+            if time.time() - last_radar > 600:
+                last_radar = time.time()
+                from missions.pnp import radar   # family radar + tool/method backlogs
+                radar.write(radar.build())
+            sweep_pass()
+        except Exception as e:
+            log('sweep error', type(e).__name__, str(e)[:200])
+        time.sleep(120)
 
 
 def main():
@@ -202,9 +360,12 @@ def main():
     engines = ensure_engines()
     import threading
     threading.Thread(target=sibling_loop, daemon=True).start()
+    threading.Thread(target=sweep_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
     queued = QUEUED
     outstanding = {}
+    prepared = {}
+    prepare_retry = {}
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         if source_changed():
             # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
@@ -220,12 +381,21 @@ def main():
                     except Exception as e:log('generator interrupted',gid,type(e).__name__,str(e)[:160])
                     outstanding.pop(gid)
                     queued.discard(gid)
+            for gid,future in list(prepared.items()):
+                if future.done():
+                    try:future.result()
+                    except Exception as e:log('prepared interrupted',gid,type(e).__name__,str(e)[:120])
+                    prepared.pop(gid)
+                    queued.discard(gid)
+                    prepare_retry[gid]=time.time()+600
+            prepare_retry={g:t for g,t in prepare_retry.items() if t>time.time()}
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
             # `template` with @@VALUE@@ holes and no concrete `statement`.
             # They are not certifiable yet; skip them instead of letting a
             # KeyError abort the whole poll and disable certificate generation.
             concrete = [g for g in gaps if isinstance(g.get('statement'), str)]
+            held = held_ids()
             pos, twins, desk = {}, {}, {}
             fam = {}
             for g in concrete:
@@ -250,17 +420,49 @@ def main():
             # do (monotone size <= 11) and the ones competitors take within minutes.
             from missions.pnp import cli
             held = {r['gap_id'] for r in cli.held_records()}
+            from missions.pnp import fastlane
+            for gid in held:
+                try:fastlane.submit_ready(gid)
+                except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
+            from missions.pnp.lbcert import ready
+            if not prepared and len(outstanding)<REMOTE_WORKERS:
+                choices=[g for g in concrete if g['id'] not in held and g['id'] not in queued
+                         and g['id'] not in prepare_retry and not g.get('pr_open',0)
+                         and (status(g['id']) or '').split(' ')[0] in ('ok','generated')
+                         and os.path.isfile(os.path.join(CANDS,g['id']+'.lean'))
+                         and not ready.verified(g['id'])]
+                if choices:
+                    # Prefer recent, cheaply solved candidates; no old FIFO backlog.
+                    g=max(choices,key=lambda x:os.stat(os.path.join(CANDS,x['id']+'.lean')).st_mtime)
+                    queued.add(g['id'])
+                    prepared[g['id']]=pool.submit(check_prepared,g)
             for g in sorted((g for g in gaps if g['id'] in fam),
                             key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
-                if fam[g['id']] == 'onenot' and g.get('pr_open', 0) and g['id'] not in held:
+                if g.get('pr_open', 0) and g['id'] not in held:
                     continue
-                if len(outstanding) >= REMOTE_WORKERS:
+                if len(outstanding)+len(prepared) >= REMOTE_WORKERS:
                     break
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
                     outstanding[g['id']] = pool.submit(generate, g, engines)
+            # Generator plugins share the same bounded queue and future lifecycle.
+            try:
+                import plugins
+                found = plugins.discover()
+                if found:
+                    for g in sorted(concrete, key=lambda g: (g['id'] not in held, -int(re.sub(r'\D', '', g['id']) or 0))):
+                        if len(outstanding)+len(prepared) >= REMOTE_WORKERS:
+                            break
+                        if g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
+                            continue
+                        hit = plugins.family_of(g['statement'], found)
+                        if hit and fresh(g['id'], hit[1]):
+                            queued.add(g['id'])
+                            outstanding[g['id']] = pool.submit(gen_plugin, g, hit[0], hit[1])
+            except Exception as e:
+                log('plugin poll error', type(e).__name__, str(e)[:200])
         except Exception as e:
             log('poll error', type(e).__name__, str(e)[:200])
         time.sleep(POLL)

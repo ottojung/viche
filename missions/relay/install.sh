@@ -4,7 +4,7 @@ src=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 dest="$HOME/.local/share/viche/relay"
 mkdir -p "$dest" "$HOME/.local/bin"
 chmod 700 "$dest"
-for f in relay.mjs marceline-request README.md test.mjs lean-handler.py compile_admission.py worker-lock.py pnp-remote-check.py refresh-cache.py; do
+for f in relay.mjs marceline-request README.md test.mjs lean-handler.py lb-handler.py sib-handler.py compile_admission.py worker-lock.py pnp-remote-check.py refresh-cache.py; do
   cp "$src/$f" "$dest/$f.tmp"
   chmod 600 "$dest/$f.tmp"
   mv "$dest/$f.tmp" "$dest/$f"
