@@ -26,3 +26,5 @@ python3 tests/pnp-adapter.py
 python3 tests/pnp-rows.py
 
 python3 tests/pnp-metrics.py
+
+python3 tests/pnp-remote-protocol.py
