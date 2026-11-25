@@ -134,7 +134,7 @@ def pr_commits(number):
 
 def pr_comments(number):
     return json.loads(gh("api", endpoint(config.UPSTREAM_ID, "issues/" + str(number)) + "/comments", "--jq",
-                         "[.[] | {body: .body, created_at: .created_at, author: .user.login, author_id: .user.id}]"))
+                         "[.[] | {body: .body, created_at: .created_at, author: .user.login, author_id: .user.id, app_id: .performed_via_github_app.id}]"))
 
 
 def validate_created(number, expected_sha, expected_path,

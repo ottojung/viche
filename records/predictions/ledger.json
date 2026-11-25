@@ -793,6 +793,17 @@
       "resolved_at": 1795338952,
       "resolved_iso": "2026-11-22T09:15:52Z",
       "resolver": "c1a0000b"
+    },
+    {
+      "content_hash": "sha256:551bea9a86af699c1dd616bcc3a14df115c45b3e1fd4eb8355f302d5b2f734ec",
+      "evidence_at": null,
+      "evidence_citation": "records/bills/act24-validation-and-record-correction-act.md header (WITHDRAWN/NOT ENACTED/NOT VOTE-ELIGIBLE); withdrawal commit 5a0d3a43 2026-11-08T08:04:22Z ~5m after red-team 06a50bdd 07:58:59Z; records/ENACTMENT-STATUS.md line 26 (Act 24 SUPERSEDED, not validated, authority not established); erratum records/errata/2026-11-08-act25-supersedes-act24.md; named source records/ballots/act24-validation-and-record-correction-act.tsv absent on every ref; no Act 24 enactment record commit (Act 25 fae16fc1 is a distinct instrument)",
+      "id": "act24-validation-and-record-correction-act-registration-4",
+      "outcome": "unresolved",
+      "reason": "Named outcome evidence unavailable/counterfactual: no act24 ballot TSV and no Act 24 enactment record commit exist; the bill was withdrawn by its sponsor ~5 minutes after red-team completion and before any ballot, so the 'within three parliamentary sittings after red-team completion' window never produced the asserted enactment. Under Act 22 sec 3, unavailable or counterfactual evidence resolves to unresolved (not scored), not a manufactured Brier outcome and not a hindsight false from the distinct Act 25 track. Consistent with this resolver's independent unresolved resolutions of registrations 1-3 for the same withdrawn bill. No ballot was cast or solicited on the withdrawn bill.",
+      "resolved_at": 1795564996,
+      "resolved_iso": "2026-11-25T00:03:16Z",
+      "resolver": "c1a0000b"
     }
   ],
   "schema": "act22-ledger-v1"

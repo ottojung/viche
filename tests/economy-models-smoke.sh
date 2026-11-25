@@ -31,7 +31,12 @@ fi
 jq -r '.models[].model' "$VICHE_ANTONINA_CONFIG"
 MOCK
 chmod +x "$d/bin/opencode" "$d/bin/antonina"
+# Pin every host XDG pointer to this test's scratch roots. The ambient runner
+# may inherit ANTONINA_HOST_XDG_CONFIG_HOME=/home/lubko/.config; leaving it set
+# would make the real ladder reachable by any path that prefers the host XDG
+# variable over VICHE_ANTONINA_CONFIG.
 export PATH="$d/bin:$PATH" MOCK_PROBES="$d/probes.log" HOME="$d/home" \
+  ANTONINA_HOST_XDG_CONFIG_HOME="$d/cfg" ANTONINA_HOST_XDG_STATE_HOME="$d/xdg-state" \
   VICHE_STATE_ROOT="$d/state" VICHE_ANTONINA_CONFIG="$d/cfg/config.json" \
   VICHE_ANTONINA_COOLDOWNS="$d/cool" VICHE_ANTONINA_MODEL_HEALTH="$d/health" \
   VICHE_OPENCODE_MODELS="$d/catalogue.txt" VICHE_ECONOMY_NOW=1794830400
@@ -271,4 +276,68 @@ jq -e '.models[0].comment == "" and .models[0].variant == "low"' "$VICHE_ANTONIN
 before=$(cat "$VICHE_ANTONINA_CONFIG")
 (unset VICHE_OPENCODE_MODELS; $eco refresh) && exit 1
 test "$(cat "$VICHE_ANTONINA_CONFIG")" = "$before"
+
+# Adversarial: the live ladder stays untouched even when the caller inherits a
+# real HOME/XDG_CONFIG_HOME/ANTONINA_HOST_XDG_* environment. On the host the
+# live file exists; on CI it does not, and must not be created by any of this.
+live_cfg=/home/lubko/.config/antonina/config.json
+if [ -f "$live_cfg" ]; then
+  live_before=$(sha256sum "$live_cfg" | cut -d' ' -f1)
+else
+  live_before=absent
+fi
+check_live_untouched() {
+  if [ -f "$live_cfg" ]; then
+    test "$(sha256sum "$live_cfg" | cut -d' ' -f1)" = "$live_before"
+  else
+    test ! -e "$live_cfg"
+  fi
+}
+
+# (a) Real HOME/XDG but no VICHE_ANTONINA_CONFIG fixture: discovery cannot start.
+rc=0
+env -u VICHE_ANTONINA_CONFIG -u VICHE_ANTONINA_COOLDOWNS \
+  HOME=/home/lubko ANTONINA_HOST_XDG_CONFIG_HOME=/home/lubko/.config \
+  ANTONINA_HOST_XDG_STATE_HOME=/home/lubko/.local/state \
+  VICHE_TOWN_ROOT="$repo" VICHE_STATE_ROOT="$d/state" \
+  VICHE_OPENCODE_MODELS="$d/catalogue.txt" \
+  python3 "$repo/government/economy-models.py" refresh --probe-limit 0 2>"$d/live-refuse-a.err" || rc=$?
+test "$rc" -eq 1
+grep -q 'noncanonical refresh skipped' "$d/live-refuse-a.err"
+
+# (b) The bypass the guard must close: fixture vars are set and resolve to the
+# real ladder while HOME points at scratch. Assert the gate in-process (pure,
+# no writes), then invoke refresh and prove it refuses before discovery/writes.
+env HOME="$d/home" ANTONINA_HOST_XDG_CONFIG_HOME=/home/lubko/.config \
+  ANTONINA_HOST_XDG_STATE_HOME=/home/lubko/.local/state \
+  VICHE_ANTONINA_CONFIG="$live_cfg" \
+  VICHE_ANTONINA_COOLDOWNS=/home/lubko/.local/state/antonina/model-cooldowns \
+  VICHE_STATE_ROOT="$d/state" VICHE_TOWN_ROOT="$repo" \
+  VICHE_OPENCODE_MODELS="$d/catalogue.txt" \
+  python3 - "$repo" <<'PY'
+import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location("eco", pathlib.Path(sys.argv[1])/"government/economy-models.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+reason = m.noncanonical_refusal()
+assert reason is not None, "guard would allow a noncanonical refresh of the live ladder"
+assert "noncanonical" in reason
+PY
+rc=0
+env HOME="$d/home" ANTONINA_HOST_XDG_CONFIG_HOME=/home/lubko/.config \
+  ANTONINA_HOST_XDG_STATE_HOME=/home/lubko/.local/state \
+  VICHE_ANTONINA_CONFIG="$live_cfg" \
+  VICHE_ANTONINA_COOLDOWNS=/home/lubko/.local/state/antonina/model-cooldowns \
+  VICHE_STATE_ROOT="$d/state" VICHE_TOWN_ROOT="$repo" \
+  VICHE_OPENCODE_MODELS="$d/catalogue.txt" \
+  python3 "$repo/government/economy-models.py" refresh --probe-limit 0 2>"$d/live-refuse-b.err" || rc=$?
+test "$rc" -eq 1
+grep -q 'noncanonical refresh skipped' "$d/live-refuse-b.err"
+
+# (c) A properly isolated scratch refresh with the real HOME/XDG inherited still
+# writes only scratch; the live ladder is byte-for-byte unchanged.
+env HOME=/home/lubko ANTONINA_HOST_XDG_CONFIG_HOME=/home/lubko/.config \
+  ANTONINA_HOST_XDG_STATE_HOME=/home/lubko/.local/state VICHE_ECONOMY_NOW=1794837700 \
+  python3 "$repo/government/economy-models.py" refresh --probe-limit 0 >/dev/null
+check_live_untouched
+
 echo 'economy models smoke passed'

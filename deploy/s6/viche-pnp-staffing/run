@@ -1,0 +1,6 @@
+#!/bin/sh
+. /home/lubko/.profile
+set -eu
+export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
+export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
+exec /bin/sh "$VICHE_TOWN_ROOT/missions/pnp/staffing.sh" supervised

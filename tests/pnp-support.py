@@ -55,8 +55,9 @@ class SupportTests(unittest.TestCase):
                 out = io.StringIO()
                 with contextlib.redirect_stdout(out):
                     self.assertEqual(cli.main(["guard"]), 0)
-        self.assertEqual(json.loads(out.getvalue()),
-                         {"decision": "continue", "research_advice": [note]})
+        result=json.loads(out.getvalue())
+        self.assertIn("missions.pnp.tools",result.pop("research_tools")["command"])
+        self.assertEqual(result,{"decision": "continue", "research_advice": [note]})
 
     def test_old_attempt_and_changed_statement_rejected(self):
         a = support.attempt(self.rec)
@@ -136,10 +137,10 @@ class SupportTests(unittest.TestCase):
              patch.object(status.frontier.build_control, "legacy_compilers", return_value=[]), \
              patch.object(status.frontier.build_control, "headroom", return_value=1024):
             snap = status.snapshot()
-        self.assertEqual(snap["research_support"]["coverage_missing"], ["flow", "lease-evaluation"])
+        self.assertEqual(snap["research_support"]["coverage_missing"], ["flow", "lease-evaluation", "method", "tool"])
         self.assertTrue(snap["coordination_due"])
         self.assertEqual(snap["workers"]["count"], 1)
-        self.assertEqual(snap["dispatch_signal"]["missing_support"], ["flow", "lease-evaluation"])
+        self.assertEqual(snap["dispatch_signal"]["missing_support"], ["flow", "lease-evaluation", "method", "tool"])
 
 
 if __name__ == "__main__":

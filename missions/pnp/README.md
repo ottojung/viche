@@ -9,9 +9,9 @@ authenticated GitHub mutation commands directly.
 ## Commands (stable interface)
 
     python3 missions/pnp/cli.py status
-    python3 -m missions.pnp.staff GAP --worker LABEL=APPROACH
+    python3 -m missions.pnp.staffing.controller status
     python3 missions/pnp/cli.py beat <gap-id>
-    python3 missions/pnp/cli.py release <gap-id> <reason>
+    python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
     python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
     python3 missions/pnp/cli.py reconcile
 
@@ -27,6 +27,18 @@ The publisher performs static validation, signing, push and PR creation, then
 checks the exact published revision concurrently with upstream. The town monitors the result in the gap state and
 `publisher.log`. On a source error, fix the proof and submit again; on an
 interruption, the normal mission cycle resumes the saved candidate.
+
+## Optional remote Lean checking (billy-dev)
+
+The encrypted Marceline relay is available at `~/.local/bin/marceline-request`.
+Run `marceline-request status` for the heartbeat and available exact base SHAs.
+Once the canonical PnP remote packer is deployed, use `pnp-remote-check FILE.lean`
+from your bound workspace, or `pnp-remote-check --async FILE.lean` followed by
+`marceline-request wait REQUEST_ID 1100`. Read the nested Lean result, not just
+the transport exit status. See `missions/relay/README.md` (installed copy:
+`~/.local/share/viche/relay/README.md`). If the exact base is not available,
+continue with the managed local compiler. Do not delay publication or send
+arbitrary commands, credentials or raw lease data.
 
 ## Safety invariants
 
@@ -72,9 +84,9 @@ contributors export it names. Run python3 missions/pnp/leaderboard.py update
 last verified snapshot through outages. Only checked steps credited to
 ottojung count. Source and observations persist under Viche state, never
 under government. The status.sh adapter reports leaderboard movement plus
-actual Antonina P vs NP worker visibility; only Executive dispatches them.
+actual Antonina P vs NP worker visibility; the standing controller dispatches them.
 
-The Executive runs python3 -m missions.pnp.staff --baseline to maintain one general researcher per researchable lease, and the staff batch helper for extra distinct approaches on the selected focus. Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
+The independent standing staffing controller maintains one general researcher per researchable lease and focused specialists. The Executive monitors and repairs it rather than dispatching agents manually. See [staffing](staffing/README.md). Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
 
 
 ## Reusable mathematical search
@@ -108,3 +120,12 @@ imports matching. Run `python3 -m missions.pnp.brief` in a bound workspace.
 Use the reduction source as a mathematical guide, not an automatically
 permitted import. Catalog metadata never changes lease identity or authorizes
 work on unheld steps.
+
+## Research tools
+
+Researchers receive role-specific instructions at dispatch. Start with
+`pnp-research start` in the workspace, or `pnp-research guide ROLE` for
+examples. The work packet includes reusable discoveries across lease changes,
+exact open Lean dependencies, and relevant proof generators. See
+[research/README.md](research/README.md) for async checks, independent method
+research, symbolic Lean certificates, and adoption measurements.

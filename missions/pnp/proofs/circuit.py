@@ -2,6 +2,7 @@
 import re
 
 from .. import validate
+from . import reread
 
 GATE = re.compile(r"⟨PEqualNP\.CircuitLowerBounds\.GateOp\.(and|or|not),\s*\[([0-9, ]*)\]⟩")
 EDGE = re.compile(r"\(x (\d+) && x (\d+)\)")
@@ -11,6 +12,11 @@ INPUT = re.compile(r"∀ x : Fin (\d+) → Bool, C\.eval \(List\.ofFn x\) =")
 def explicit_circuit(meta):
     """Recognize only explicit circuit equality rows; reject ambiguous shapes."""
     s = meta["statement"]
+    r = reread.verify(s)
+    if r is not None:
+        # Large certificates have independent semantic checks, but the
+        # small direct Lean renderer is not yet validated for that budget.
+        return r if r["auto_render"] else None
     head = re.match(r"let C : PEqualNP\.CircuitLowerBounds\.Circuit := \(⟨\[(.*?)\],\s*(\d+)⟩ : PEqualNP\.CircuitLowerBounds\.Circuit\);", s, re.S)
     if not head:
         return None
@@ -61,6 +67,11 @@ def explicit_circuit(meta):
 
 
 def render(meta, proof):
+    if proof == "decide" and reread.parse(meta["statement"]) is not None:
+        r = reread.verify(meta["statement"])
+        if not r or not r["verified"] or not r["auto_render"]:
+            raise ValueError("explicit re-read certificate does not satisfy the statement")
+        proof = reread.PROOF
     imports = ["Mathlib"] + [m for m in meta["imports"] if m != "Mathlib"]
     text = "\n".join("import "+m for m in imports) + "\n\n"
     text += "set_option maxRecDepth 100000 in\nset_option maxHeartbeats 0 in\n"

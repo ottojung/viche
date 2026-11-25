@@ -28,8 +28,27 @@ _REUSABLE = frozenset(("idle", "clearexit", "stopped", "killed", "failed"))
 
 
 def antonina(*args):
+    # All deterministic Executive dispatch paths use this wire. Inject exactly
+    # one short role playbook at the actual invocation, including restarts.
+    args=list(args);did=None
+    if args[:1]==["run"] and all(x in args for x in ("--id","--cwd","--prompt")):
+        from .research import playbook, adoption
+        path=Path(args[args.index("--cwd")+1])
+        label=assignment.worker_label(path)
+        role=playbook.role_for(label,label=="general") if label else None
+        if path.parent.name in ("standing-support","independent") and path.name in playbook.ROLES:
+            role=path.name
+        if role:
+            i=args.index("--prompt")+1
+            if not args[i].startswith("YOUR ROLE:"):
+                args[i]=playbook.guide(role)+"\n\n"+args[i]
+            did=adoption.planned(args[args.index("--id")+1],path,role,args[i])
     result = subprocess.run(["antonina", "agent", *args], capture_output=True,
                             text=True, timeout=30, check=True)
+    if did:
+        try:
+            if json.loads(result.stdout).get("state")=="running":adoption.confirmed(did)
+        except (ValueError,AttributeError):pass
     return result.stdout.strip()
 
 
@@ -82,27 +101,22 @@ def roster():
     raise ValueError("agent roster unavailable")
 
 
-def prompt(rec, approach, general=False):
+def prompt(rec, approach, general=False, label=None):
     return (
-        "Work on the exact current P vs NP assignment below, using the independent "
-        "workspace already prepared for you. Pursue this distinct mathematical "
-        "approach; communicate useful sublemmas and artifacts to the other researchers "
-        "on this same gap. No unrelated gap acquisition, no direct desk or GitHub "
-        "mutation, no agent launches. Use the local managed compiler and guard from "
-        "your bound cwd. Use proofs find/source first and proofs search for bounded "
-        "finite circuit synthesis, with a durable CEGIS checkpoint. Verify any witness "
-        "on the full domain; solver UNSAT alone is not a Lean proof. Reuse peer source "
-        "fragments and previous attempts rather than restarting equivalent work. Use proofs share FILE "
-        "--message RESULT to snapshot a reusable Lean helper; proofs fragments --all-attempts "
-        "lists available helpers. Preserve "
-        "work when the lease ends. When a complete exact proof exists, immediately "
-        "invoke python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py submit GAP FILE "
-        "with actual gap and file; never wait for an extra review. If the guard "
-        "says publication owns the candidate or stop, do not compete with it.\n"
+        "Use the injected role playbook and exact assignment below. Work from your bound cwd. "
+        "No direct desk/GitHub mutation, unrelated claims or agent launches. "
+        "Read guard's preflight candidate and peer findings; use an applicable generator, "
+        "checked proof or adapter before reinventing it. The full tool inventory is available "
+        "through python3 -m missions.pnp.tools when needed, not mandatory at entry. "
+        "For finite search use durable CEGIS checkpoints and independently verify witnesses; "
+        "UNSAT alone is not a Lean proof. Preserve checked helpers and exact failed inferences. "
+        "When an exact proof exists, immediately invoke python3 /var/lib/lubko/wd/viche/missions/pnp/cli.py "
+        "submit GAP FILE with the actual gap and file. No extra approval. If guard says "
+        "publication owns the candidate or stop, preserve your work and do not compete.\n"
         f"Gap: {rec['gap_id']}\nStatement: {rec['statement']}\n"
         f"Imports: {json.dumps(rec.get('imports', []))}\n"
         f"Context: {rec.get('context') or ''}\n"
-        f"Desk proof sketch / cut ancestry / failed approaches (advisory): {json.dumps(brief.read(rec),ensure_ascii=False)}\n"
+        f"Desk proof sketch / cut ancestry / failed approaches (advisory): {json.dumps(brief.read(rec),ensure_ascii=False)[:6000]}\n"
         "Start by reading the exact supplied sketch, checked reduction sources, and solved siblings "
         "with the current pinned upstream checkout. Do not redo known mathematics. "
         "For shard assignments work only on the assigned range; do not infer a global refutation. "
@@ -149,6 +163,8 @@ def staffing_lock():
 
 def dispatch(gap, plans, agents=None, locked=False):
     """adopt by exact cwd; ``agents`` may be a baseline's single snapshot."""
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     rec = state.load(gap)
     if not focus.eligible(rec) or rec.get("queued_lease"):
         raise ValueError("not a live research or correction assignment")
@@ -186,8 +202,27 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if existing and any(a.get("state") not in _REUSABLE for a in existing):
                     raise ValueError("uncertain worker state")
                 if not (path / ".git").exists() and base is None:
-                    base = gitctl.ensure_mirror()
-                assignment.prepare(gap, worker=label, base=base)
+                    # Compositional workers must be able to assemble checked
+                    # lemmas on the same base. Do not reset existing worktrees.
+                    general_path = (Path(state.gap_dir(gap)) / "attempts" /
+                                    assignment.attempt_id(rec["lease"]) / "workers/general/path")
+                    if label.startswith("ob-"):
+                        from .research import knowledge
+                        from contextlib import closing
+                        with closing(knowledge.db()) as c:
+                            base=knowledge.get(c,label[3:])["base"]
+                    elif label != "general" and (general_path / ".git").exists():
+                        base = subprocess.check_output(["git","-C",str(general_path),"rev-parse","HEAD"],
+                                                       text=True,timeout=5).strip()
+                    else:
+                        base = gitctl.ensure_mirror()
+                chosen_base=base
+                if label.startswith("ob-"):
+                    from .research import knowledge
+                    from contextlib import closing
+                    with closing(knowledge.db()) as c:
+                        chosen_base=knowledge.get(c,label[3:])["base"]
+                assignment.prepare(gap, worker=label, base=chosen_base)
                 if not current_matches(rec, label == "general"):
                     break
                 reusable = next((a for a in existing if a.get("state") in ("idle", "clearexit")), None)
@@ -201,10 +236,20 @@ def dispatch(gap, plans, agents=None, locked=False):
                 if not current_matches(rec, label == "general"):
                     break
                 answer = json.loads(antonina("run", "--id", agent_id, "--cwd", str(path),
-                                            "--prompt", prompt(rec, approach, label == "general"), "--detach", "--json"))
+                                            "--prompt", prompt(rec, approach, label == "general", label), "--detach", "--json"))
                 if answer.get("state") != "running":
                     raise ValueError("agent launch not confirmed")
                 results.append({"worker": label, "status": "started", "id": agent_id})
+                if label.startswith("ob-"):
+                    try:
+                        from .research import knowledge
+                        from contextlib import closing
+                        import time
+                        with closing(knowledge.db()) as c,c:
+                            c.execute("INSERT OR REPLACE INTO assignment VALUES(?,?,?,?)",
+                                      (label[3:],support.attempt(rec),label,time.time()))
+                    except Exception:pass
+
             except (OSError, ValueError, subprocess.SubprocessError, gitctl.GitError) as exc:
                 results.append({"worker": label, "status": "deferred", "detail": str(exc)[:300]})
         # A staffing/replenishment decision is routine, not a Git delivery.
@@ -238,6 +283,8 @@ GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact pro
 
 
 def baseline(agents=None, locked=False):
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     if not locked:
         with staffing_lock():
             return baseline(agents, locked=True)
@@ -273,6 +320,14 @@ def main():
     p.add_argument("--baseline", action="store_true", help="staff one general researcher on every live lease")
     p.add_argument("--worker", action="append", metavar="LABEL=APPROACH")
     args = p.parse_args()
+    # Interactive legacy entry points must not race the standing controller.
+    # Hermetic callers of the old helpers remain supported for regression tests.
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        from .staffing import store
+        if args.worker:
+            p.error("declare exact-attempt extras in staffing/policy.json; controller owns launches")
+        print(json.dumps(store.read_health(),indent=2))
+        return
     try:
         if args.baseline:
             if args.gap or args.worker:

@@ -17,3 +17,6 @@ authorization on the Antonina board. **Never edit government for a new task.**
 The generic Executive still checks live board scope before dispatch.
 Finishing an implementation issue does not automatically end a standing
 mandate. Historical laws retain original enacted text; a task is not a law.
+
+Shared cross-host request tooling lives in [relay/](relay/README.md); it is a
+transport utility, not a separate standing mission.

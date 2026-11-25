@@ -3,17 +3,12 @@
 The running allocator exclusively claims leases. Never call Desk.next_gap,
 the private wire operation, curl /desk/next, upstream pnp.sh next, or manual
 CLI acquire while the allocator runs. All of these are mutations, not
-diagnostics. Use mission status. If missing_general is nonempty, first run the baseline batch command
-described below. If research_focus lacks useful parallel workers, dispatch
-additional specialists.
-Choose independent mathematical approaches using focus_details and invoke
-the one-command batch helper:
-`python3 -m missions.pnp.staff GAP --worker 'LABEL=APPROACH' --worker 'LABEL2=APPROACH2'`
-from the canonical Viche checkout. Add as many distinct useful approaches as
-resources permit; the helper handles independent bound workspaces, existing
-agents and detached starts. No separate model turn, per-worker setup routine,
-or administrative review. Only the Executive invokes this dispatch helper.
-If no focus exists, do not acquire manually.
+diagnostics. Use mission status and the staffing controller's health.
+The controller independently replenishes every live general position and
+the useful focused specialist and support positions. The Executive monitors
+persistent failures, repairs the infrastructure and adjusts policy, rather
+than manually starting agents. If no focus exists, do not acquire manually.
+See missions/pnp/staffing/README.md for the operational interface.
 
 ## Standing Founder priority — autonomous P vs NP contributions (2026-11-23)
 
@@ -47,16 +42,15 @@ Current 2026-11-23 public baseline: ottojung absent/unranked (zero checked),
 first 53 checked steps, second 46. This is a baseline, NOT a fixed threshold:
 poll the live source and adapt to leaderboard movement.
 
-## Ownership, staffing, and continuity — Executive only
+## Ownership, staffing, and continuity — standing controller
 
-**ONLY Viche Executive may create, start, restart, steer or retire research
-agents.** Founder's external assistants, maintenance automation, Judiciary,
-researchers and publisher do not launch research agents. The Founder may
-specify objectives and inspect the system without seeding worker sessions.
-Do not infer Executive staffing effectiveness from agents started by an
-external operator. Require evidence that Executive independently recognizes
-zero/insufficient useful staffing and replenishes it through Antonina.
-Record the Executive's decisions and worker assignments durably in existing
+The Founder delegates routine research-agent creation, starts, replenishment
+and retirement exclusively to the programmatic staffing controller.
+Researchers, publisher, Judiciary and external assistants do not launch
+research agents. Executive monitors, diagnoses and repairs the controller
+and can change its validated policy; it does not manually fill vacancies.
+Verify coverage from actual running identities and slot-seconds, not
+launch acknowledgements. Decisions and worker assignments remain durable in
 mission state and operational logs. Routine allocation, replenishment and
 focus decisions do not need a new records/research report, Git commit, delivery,
 integration, or review; preserve the evidence and decision reason in the
@@ -67,17 +61,16 @@ process. No duplicate records or artificial approval gates.
 For every Executive cycle:
 - Inspect the exact public rank/score, the #1 and #2 totals, gap, and changes
   since earlier measurements, plus desk leases, research experiments and PRs.
-- Maintain one general researcher on EVERY live research lease, and
-  concentrate additional parallel mathematical work on the SINGLE research_focus.
-  Delegate genuinely
+- Verify that the controller maintains one general researcher on EVERY live
+  research lease and concentrates extra work on the SINGLE research_focus.
+  Diagnose persistent failures and adjust policy for genuinely
   independent approaches (construction, refutation, sublemmas, Lean
   formalization and proof reuse) on that same gap. Allocate as much useful
   concurrency as resources permit; do not duplicate expensive builds or
   spawn redundant agents just to increase a counter.
-- Take over the preexisting managed agents/worktrees under the roster
-  /var/lib/lubko/wd/viche-state/pnp/swarm/agents.json if useful, or retire them
-  and replace them yourself. Never expect an outside operator to restart them.
-  Check their actual Antonina states, output, remaining leases and dependencies.
+- Verify adoption of exact-workspace identities by the controller. Diagnose
+  persistent adoption or retirement failures; preserve existing artifacts.
+  Check actual Antonina states, output, remaining leases and dependencies.
 - Prefer claimable, well-scoped proofs with high expected accepted-step
   throughput; keep a portfolio of harder/high-value results and rigorous
   refutations where useful. Demand completed exact Lean proofs or reproducible
@@ -85,7 +78,7 @@ For every Executive cycle:
   accepted steps per time and resource use; avoid duplicate expensive builds.
 - When all desk leases are held or claim service is cooling, DO NOT go idle:
   investigate published open claims and prepare proofs or bounded searches,
-  then promptly obtain official leases once available; never submit an
+  the allocator obtains official leases once available; never submit an
   unleased gap against the project's rules.
 - Investigate any slowdown in credit rate or lost leadership: stalled workers,
   model access, invalid checker, forgotten claims, unnecessary work, duplicate
@@ -101,8 +94,8 @@ missions/pnp/PROTOCOL.md.
 Operator interface from the canonical checkout:
 python3 missions/pnp/cli.py status|acquire|beat|release|submit|reconcile.
 Desk lease reconciliation and public leaderboard observation are run
-by the independently nonblocking missions/pnp/cycle.sh from generic boot; the Executive still owns research,
-failed-work decisions and dispatch. Do not launch a competing scheduler.
+by the independently nonblocking missions/pnp/cycle.sh from generic boot; the staffing controller independently manages lifecycle. Mathematical allocation
+remains with the allocator and evaluators. Do not launch a competing scheduler.
 The publisher hardcodes Otto Jung <otto.jung@vauplace.com>, his GPG signing
 subkey 08AF2726387BD4A4C87DF1821BEDDF96D7B1BA2B and the exact fork and
 upstream PR destinations. Researchers must not open PRs with generic gh. They must directly invoke
@@ -130,9 +123,8 @@ Run from the immutable assignment workspace returned by the preparation command 
 cooperatively, preserving the proof and concise reusable findings. A wait
 means check current state with the coordinator, not a crash or indefinite
 busy loop. Never start another expensive search on a terminal lease. An
-unknown snapshot never authorizes cancelling a live worker. Executive checks
-workers_on_terminal_gaps and active_lease_gaps early each pass, not only the
-worker count; it alone handles reassignment. Do not wait for PR verdicts to
+unknown snapshot never authorizes cancelling a live worker. The controller reconciles obsolete and missing workers from exact attempts;
+Executive diagnoses persistent failures using controller health. Do not wait for PR verdicts to
 replenish research.
 
 Use mathematical locality: assign related problems to a worker with relevant
@@ -167,13 +159,15 @@ resource/lease deferral, not a rejected theorem. Do not busy-retry; pursue
 independent reasoning or simplify the proof. A heavy build may use available
 RAM above the host reserve without a fixed per-proof cap. A resource-blocked
 publisher preserves its candidate and waits for increased headroom or new
-proof bytes. Executive owns reassignment; no process kills of researchers.
+proof bytes. The staffing controller reconciles assignments; no raw process
+kills of researchers.
 
 Research admission waits only briefly (at most 15 seconds) before returning
 75, so a queued compilation does not occupy an agent tool call indefinitely.
 Legacy raw PnP compiler processes are recognized as an admission constraint.
-The Executive must retire or cooperatively reassign obsolete workers rather
-than allow them to restart unnecessary full checkers.
+The staffing controller cooperatively retires obsolete workers rather than
+allowing them to restart unnecessary full checkers. Executive diagnoses
+persistent retirement failures.
 
 ## Revocable computation (Founder priority)
 
@@ -276,6 +270,15 @@ detached process with a durable log rather than blocking an agent tool call.
 Cancel obsolete work, not merely old work.
 
 
+## Role-specific instructions at dispatch (Founder priority)
+
+Every P vs NP agent invocation receives actionable role-specific instructions
+from the controller. General researchers, integrators, specialists and
+support roles receive their executable workflow in the initial prompt.
+Workers start with pnp-research start, not a documentation reading assignment.
+No model-controlled launch or steer is required for routine replenishment.
+Additional focused approaches are declared as exact-attempt policy entries.
+
 ## Continuous parallel research support (Founder priority)
 
 Optimize accepted contributions per elapsed and resource hour. Keep the
@@ -283,14 +286,13 @@ primary proof/construction owner working independently while other agents
 continually seek actionable evidence for the single research focus. Do not make
 the Executive search proofs, debug algorithms, or review every submission.
 
-Executive: staff and replenish useful independent support fronts as well as
-primary researchers, using the separate coverage in the mission diagnostic.
+The controller staffs independent support fronts as well as primary
+researchers; Executive inspects persistent deficiencies in its health.
 Use Antonina titles `Viche P vs NP support: knowledge`,
 `Viche P vs NP support: methods`, and `Viche P vs NP support: flow`.
-One agent may cover related roles (comma-separated titles, e.g.
-`Viche P vs NP support: knowledge, methods`) when the workload justifies it;
-parallelize distinct useful investigations when resources permit. These are
-roles, not prescribed headcounts or new institutions. Support agents never
+The controller maintains distinct support roles and parallelizes independent
+investigations within resource constraints. These are roles, not new institutions.
+Support agents never
 count as leased proof owners, never claim another agent's lease, and must
 not edit a primary's workspace or open competing PRs. Use independent scratch
 directories and existing shared proof/compile tools. Restore coverage promptly
@@ -333,16 +335,15 @@ advice. Knowledge support still verifies matches, finds nontrivial semantic
 equivalences and mathematical reuse. No match is not proof of novelty.
 Neither advisory evidence nor a support outage changes guard decisions or
 publication eligibility. A confirmed checked refutation ends the impossible
-construction effort; retain evidence and let Executive handle assignment
-release and reassignment. A rival's unaccepted PR alone is not a refutation.
+construction effort; retain evidence for the lease evaluator and allocator,
+which decide release; the controller reconciles staffing. A rival's unaccepted PR alone is not a refutation.
 
 Primary researchers incorporate relevant guard advice at their normal
 checkpoints; use evidence critically, don't blindly execute it. Submit a
 complete proof immediately without waiting for any scout, review, or Executive
-approval. Executive delivers urgent coordination findings promptly; preempt
-only when confirmed material benefit outweighs interruption and preserve
-ongoing useful computations. Never dispatch, restart or steer an agent from
-a support agent. Executive retains sole lifecycle authority.
+approval. Executive delivers urgent coordination findings promptly and
+diagnoses controller failures; routine lifecycle actions remain programmatic. Never dispatch, restart or steer an agent from
+a support agent. The standing staffing controller executes lifecycle actions; Executive monitors and repairs it.
 
 ## Continuous lease allocation (Founder priority)
 
@@ -352,7 +353,7 @@ and keeps polling even with no work. The desk chooses exact gaps; do not
 attempt arbitrary ID claims. The allocator selects one stable research focus, preferring concrete,
 ordinary and low-competition work among held gaps until the portfolio
 researcher makes an evidence-based decision. Every held researchable lease
-has one general researcher. The Executive owns agent starts/stops; do not
+has one general researcher. The staffing controller owns routine agent starts/stops; do not
 duplicate allocator polling. Missing staffing is a replenishment signal,
 not a mathematical release decision. The lease evaluator decides honest
 releases. Preserve work artifacts and protect queued/publishing candidates.
@@ -376,9 +377,48 @@ split ongoing research across two gaps just to fix a pending correction.
 The lease evaluator may release a genuinely unpromising gap. The portfolio
 researcher may change focus. The automated heartbeat renews the whole pool.
 
+## Cumulative research and mathematical families (Founder priority)
+
+Maintain theorem research, independent mathematical method research, and
+tool research concurrently. Method and tool researchers are not leased proof
+owners and do not count toward the five baseline researchers. The controller maintains useful independent method fronts across lease
+changes; Executive monitors their mathematical yield. Each method front produces exact reusable
+lemmas, obstructions or certificates; tool fronts produce independently
+verified automation and held-out family benchmarks. Prefer results over reports.
+
+At dispatch inject the role-specific executable workflow directly into the
+initial prompt. The standing staffing controller does this automatically
+for bound and support roles. Workers first run pnp-research start for their
+actual work packet; pnp-research guide ROLE gives examples on demand.
+Do not require reading the entire mandate or a documentation quiz before
+research. Measure actual adoption with pnp-research adoption, and separately
+measure checked output. For independent method/tool researchers, knowledge curators and evaluators,
+the standing controller injects the same role-specific workflow automatically.
+Manual agent-ID dispatch is retired in production; pnp-research guide ROLE
+remains available for inspecting instructions.
+
+When an approach admits a useful decomposition, the proof integrator
+requests exact Lean obligations with `pnp-research obligations request`
+and specifies their dependencies. The standing controller assigns unresolved ready nodes
+to complementary specialists; do not allocate every specialist the same
+complete theorem. Keep independent approaches when useful. New focused
+specialists should share the general researcher's exact pinned base. Existing
+workspaces need not be reset: fork obligations and independently recheck on
+another base. Check proof bodies with `pnp-research obligations solve`;
+complete roots can be assembled as ordinary validated candidates. Only the
+existing submission pipeline publishes. A failed check is not a refutation.
+
+Use `pnp-research knowledge` for persistent mathematical objects and
+`pnp-research yield` for empirical family-level baseline, actual graph
+progress, available techniques and competition. Historical import includes
+quarantined attempts. Index missed findings with `knowledge ingest`.
+The guard and portfolio expose these as advisory information. Estimates do
+not themselves authorize release, focus change, or publication. No extra
+approval gates. See missions/pnp/research/README.md for operator details.
+
 ## Independent portfolio decisions (Founder priority; supersedes no-preemption)
 
-Executive must maintain two distinct useful researcher roles, independently of
+The controller maintains two distinct useful researcher roles, independently of
 the proof swarm: `Viche P vs NP support: portfolio` and
 `Viche P vs NP support: lease-evaluation`. Use separate Antonina agents.
 Portfolio is needed with two or more held gaps; lease-evaluation with any held
@@ -402,7 +442,7 @@ ordinary/hard label. Record specific comparative arguments and evidence.
 Directly decide, without Executive approval:
 `python3 -m missions.pnp.portfolio switch NEW NEW_ATTEMPT --from-gap OLD --from-attempt OLD_ATTEMPT --reason 'comparative mathematical argument' --evidence 'artifact paths or exact checked lemmas'`
 If the current focus is better, keep it and deliver useful findings instead.
-A switch retains both leases and their general researchers. Executive promptly
+A switch retains both leases and their general researchers. The controller
 moves only the extra specialists to the new focus, preserving artifacts. Do not launch
 agents yourself.
 
@@ -414,11 +454,18 @@ active proof swarm before abandoning its focus. A difficult label, age or
 one unsuccessful tactic is insufficient. If a lease is genuinely not worth
 holding, directly decide:
 `python3 -m missions.pnp.portfolio release GAP ATTEMPT --reason 'specific mathematical obstacles and opportunity cost' --evidence 'checked lemmas, failed route artifacts or reproducible experiments'`
+Direct operator CLI release is reserved for deliberate exceptional repair;
+it requires --operator-override, exact current --attempt and --evidence.
+It cannot release an assignment owned by the publisher or a superseded
+attempt. Routine releases must go through the independent lease evaluator;
+do not mass-release live research assignments from external maintenance.
+No additional approval is required for the normal evaluator path.
+
 The allocator executes the documented reason other, preserves artifacts,
 protects queued/publishing candidates, honors hard-step minimum holding time,
 and refills the slot. No additional review or approval. Never release
 merely because a lease is temporarily unstaffed. Both evaluators finish their passes
-rather than manufacturing activity. The Executive alone staffs and retires
+rather than manufacturing activity. The standing controller staffs and retires
 agents, and immediately obeys a valid focus decision.
 
 ## Baseline research on every lease (latest Founder priority)
@@ -434,12 +481,11 @@ focus, not its general researcher. Do not count support roles as lease workers.
 When a general researcher finishes, replenish promptly while the lease is
 still live. A queued complete proof is owned by the publisher instead.
 
-Executive: fill missing_general before unrelated coordination using:
-`python3 -m missions.pnp.staff --baseline`
-This is an idempotent batch dispatch for all researchable leases. Use
-staff GAP --worker LABEL=APPROACH for extra specialists on research_focus only.
-The status fields general_workers, missing_general, and off_focus_workers
-identify exact coverage and excess sessions.
+The standing staffing controller replenishes missing general researchers.
+The Executive inspects controller health and persistent vacancies, diagnoses
+failures and changes exact-attempt policy when necessary. Routine manual
+agent starts or stops are not part of the Executive model turn.
+See missions/pnp/staffing/README.md for commands and fault recovery.
 
 All bound researchers share substantial mathematical findings directly,
 including promising routes, failed approaches, precise blockers and checked
@@ -455,14 +501,14 @@ The allocator must never infer mathematical abandonment from agent absence.
 
 ## Standing Executive continuity order (Founder priority, supersedes vacancy holds)
 
-The Executive's prescribed mechanical staffing duties run through the generic
-Executive mission hook independently of its reasoning session. This is the
-Executive executing a standing order, NOT the desk allocator, an external
-assistant, a support agent, or a new discretionary scheduler. The Executive
-retains lifecycle authority and chooses additional approaches, intervenes on
-duplicates, and resolves resource or model failures. Do not manually run the
-live hook from another office. The hook uses the same staffing lock as the
-Executive's interactive commands; only the existing allocator claims leases.
+Founder directive (2026-11-25): routine staffing is programmatic and
+independent of the Executive model and branch. The standing staffing
+controller reconciles every exact desired position continuously. The
+Executive monitors, debugs, and adjusts policy; the controller exclusively
+owns routine research-agent starts, replenishment and cooperative retirement.
+Only the existing allocator claims leases; the independent evaluators own
+evidence-based allocation decisions. There is no manual staffing fallback
+that competes with the controller.
 
 Every researchable lease has an actively reasoning general researcher.
 A completed bounded pass is NOT a reason to leave a reserve empty. Reuse the
@@ -472,8 +518,8 @@ demonstrated resource/model blocker ends this obligation. Prior records holding
 vacancies until a new idea appears are superseded. The standing allocation
 order also supplies an integrator and at least one independent alternative when
 those fronts are uncovered, and a correction owner when the selected PR needs repair.
-These are starting roles, never a maximum; the Executive chooses additional
-useful distinct approaches. Support passes are replenished on new assignments
+These are starting roles, never a maximum; the Executive may declare additional
+useful exact-attempt approaches in controller policy. Support passes are replenished on new assignments
 or substantive primary evidence, not identical status polling. No additional
 report, approval or publication gate is introduced.
 
@@ -495,3 +541,19 @@ an assertion of kernel checking. Use narrow scratch imports and the managed
 light queue when possible; the integrator checks the combined exact file.
 Proof reuse hints in `proofs find` include relaxed conclusion/hypothesis
 matches; a high score is NOT a proof of implication.
+
+
+## Research capability awareness
+
+The live tool inventory (`python3 -m missions.pnp.tools`, with the canonical
+town PYTHONPATH) is part of every assignment, not a one-time announcement.
+Each guard reports the tool revision and discovery command. A changed revision
+means inspect the applicable new capabilities before doing redundant work.
+Cheap automatic preflight runs separately for every live lease; its candidates
+are not kernel-checked or automatically published. Researchers should review
+and use them promptly. Engineering deliveries that introduce tools must also
+update the inventory with actionable examples, applicability and limitations.
+Use `tools --usage` for attempt-scoped observed CLI invocations; never infer
+proof success from invocation. Use evidence of actual tool use and successful proofs, not mandatory reports
+or ritual invocations, to evaluate adoption. Persistent tooling engineering
+continues independently of any single lease.

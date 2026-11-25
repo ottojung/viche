@@ -213,6 +213,21 @@ class TestValidate(unittest.TestCase):
                 with self.assertRaises(validate.InvalidCandidate):
                     validate.validate(gap_meta(), content.encode())
 
+    def test_narrow_imports_and_nested_namespace(self):
+        src = GOOD.replace("import Mathlib", "import Mathlib.Tactic.NormNum")
+        src = src.replace("lemma helper", "namespace Inner\nlemma helper").replace(
+            "end "+MODULE, "end Inner\nend "+MODULE)
+        self.assertEqual(len(validate.validate(gap_meta(),src.encode())),64)
+        for bad in (
+            src.replace("namespace Inner","namespace _root_.Other"),
+            src.replace("end Inner","end Wrong"),
+            src.replace("namespace Inner\n",""),
+            src.replace("import Mathlib.Tactic.NormNum","import Evil"),
+            src.replace("namespace "+MODULE,"namespace Other"),
+        ):
+            with self.assertRaises(validate.InvalidCandidate):
+                validate.validate(gap_meta(),bad.encode())
+
     def test_size_and_encoding(self):
         with self.assertRaises(validate.InvalidCandidate):
             validate.validate(gap_meta(), GOOD.encode() + b"x" * (513 * 1024))
@@ -617,6 +632,12 @@ def verdict_comment(sha, verdict, author="renamed-checker", date="2026"):
             "body": "Checked on the base repository at commit `%s`.\n\n**%s (checker exit 0)**\n\nRun: https://github.com/old-owner/proofs/actions/runs/123" % (sha[:10], verdict)}
 
 
+def owned_pr_identity():
+    return {"author_id": config.CONTRIBUTOR_ID, "head_repo_id": config.FORK_ID,
+            "base_repo_id": config.UPSTREAM_ID, "base_ref": config.BASE_REF,
+            "head_ref": config.branch_for(GAP), "title": GAP}
+
+
 class TestReconcile(unittest.TestCase):
     def setUp(self):
         fresh()
@@ -625,7 +646,7 @@ class TestReconcile(unittest.TestCase):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
                   branch=config.branch_for(GAP))
         gh = FakeGH(existing="123")
-        gh.get_pr = lambda n: {"url": "u", "number": n, "head_sha": SHA, "merged": True}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "number": n, "head_sha": SHA, "merged": True}
         gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
         g = FakeGit(remote=SHA)
         r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=g)
@@ -636,7 +657,7 @@ class TestReconcile(unittest.TestCase):
         new_state("FAULT", commit_sha=SHA, branch=config.branch_for(GAP),
                   queued_lease="lease-1", expected_commits=[SHA])
         gh = FakeGH(existing=8143)
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
         gh.pr_comments = lambda n: []
         d = FakeDesk()
         reconcile.reconcile_gap(GAP, desk=d, gh=gh, git=FakeGit(remote=SHA))
@@ -649,7 +670,7 @@ class TestReconcile(unittest.TestCase):
     def test_release_retry_does_not_lose_pr(self):
         new_state("FAULT", commit_sha=SHA, pending_pr_number=8143)
         gh = FakeGH()
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
         gh.pr_comments = lambda n: []
         d = FakeDesk()
         with mock.patch.object(d, "release", side_effect=OSError("offline")):
@@ -682,10 +703,34 @@ class TestReconcile(unittest.TestCase):
         c["author_id"] = 999
         self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
 
+    def test_intake_app_requires_both_numeric_ids(self):
+        c = verdict_comment(SHA, "ACCEPTED", author="pequalnp-intake[bot]")
+        c["author_id"] = config.CHECKER_INTAKE_BOT_ID
+        resolve = FakeGH().repository_id
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["app_id"] = config.CHECKER_INTAKE_APP_ID
+        self.assertEqual(reconcile.current_verdict([c], SHA, resolve), "ACCEPTED")
+        c["app_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+        c["app_id"] = config.CHECKER_INTAKE_APP_ID
+        c["author_id"] = 999
+        self.assertIsNone(reconcile.current_verdict([c], SHA, resolve))
+
+    def test_competitor_pr_cannot_credit_our_gap(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "author_id": 999,
+                               "head_sha": SHA, "merged": True}
+        gh.pr_comments = mock.Mock(return_value=[verdict_comment(SHA, "ACCEPTED")])
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(r["result"], "invalid-pr")
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        gh.pr_comments.assert_not_called()
+
     def test_old_or_untrusted_verdict_ignored(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
         gh = FakeGH()
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open"}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open"}
         gh.pr_comments = lambda n: [verdict_comment("b"*40, "REJECTED", date="2027"),
                                     verdict_comment(SHA, "ACCEPTED", author="other")]
         reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
@@ -697,7 +742,7 @@ class TestReconcile(unittest.TestCase):
     def test_checker_acceptance_without_merge_is_not_terminal(self):
         new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
         gh = FakeGH()
-        gh.get_pr = lambda n: {"url": "u", "head_sha": SHA, "state": "open", "merged": False}
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "head_sha": SHA, "state": "open", "merged": False}
         gh.pr_comments = lambda n: [verdict_comment(SHA, "ACCEPTED")]
         reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
         self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
@@ -710,7 +755,7 @@ class TestReconcile(unittest.TestCase):
                   worktree=str(Path(candidate).parent), path=Path(candidate).name,
                   branch=config.branch_for(GAP))
         gh = FakeGH()
-        gh.get_pr = lambda number: {"url": "https://example.test/pr/123",
+        gh.get_pr = lambda number: {**owned_pr_identity(), "url": "https://example.test/pr/123",
                                     "number": number}
         gh.pr_comments = lambda number: []
         g = FakeGit(remote=SHA)

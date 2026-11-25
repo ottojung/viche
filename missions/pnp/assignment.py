@@ -76,7 +76,7 @@ def first_attempt(gap):
         return False
 
 
-def prepare(gap, checkout=True, worker=None, base=None):
+def prepare(gap, checkout=True, worker=None, base=None, expected=None):
     """Executive calls once per assignment. Never relabel an old checkout."""
     from . import gitctl, focus
     if not isinstance(gap, str) or not config.GAP_ID_RE.fullmatch(gap):
@@ -86,6 +86,8 @@ def prepare(gap, checkout=True, worker=None, base=None):
         if not rec or (rec.get("state") not in ("LEASED", "RESEARCHING") and not focus.correction(rec)) or not rec.get("lease"):
             raise ValueError("no live research assignment")
         lease = rec["lease"]
+        if expected is not None and lease != expected:
+            raise ValueError("assignment generation changed")
         root = Path(state.gap_dir(gap))
         old = root / "path"
         legacy = root / "research-assignment.json"

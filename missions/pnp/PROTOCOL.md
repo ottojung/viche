@@ -4,7 +4,7 @@ Founder task design, 2026-11-23. Execution host: billy-dev.
 ## Authority and lifetime
 Standing board issue: IL6wUXaBGXiOmp4aAI8B4c-possesses.
 Implementation issue: R4WYVaWyRxoD911soUtcAo-sciatic.
-The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop remains part of ordinary Viche Executive scheduling. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
+The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop is maintained by the standing staffing controller; Executive monitors and repairs it. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
 
 ## Precise interfaces
 Upstream: GitHub repository ID 1468025030, base branch main.
@@ -28,13 +28,13 @@ Define the stable operator interface:
   python3 missions/pnp/cli.py status
   python3 missions/pnp/cli.py acquire [--hard]
   python3 missions/pnp/cli.py beat <gap-id>
-  python3 missions/pnp/cli.py release <gap-id> <reason>
+  python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
   python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
   python3 missions/pnp/cli.py reconcile
 The exact file structure can vary only if the commands and behaviors remain equally clear and tested.
 
 ## Responsibilities (do not conflate)
-1. **Viche Executive/research coordinator** chooses whether to invest effort and dispatches independently chosen mathematical approaches to Antonina-managed workers. The automatic allocator requests ordinary gaps first, then hard gaps to fill all available lease slots. No numeric cap on researchers except the desk's active lease limit and actual resource constraints.
+1. **Viche Executive/research coordinator** monitors and repairs the standing staffing controller, which reconciles desired research positions using the allocator’s exact assignments. The automatic allocator requests ordinary gaps first, then hard gaps to fill all available lease slots. No numeric cap on researchers except the desk's active lease limit and actual resource constraints.
 2. **Desk broker** exclusively owns desk claims/lease renewals/release/reconciliation for the ottojung handle. Research agents do not independently consume leases. Max five active leases under the current desk rule; every researchable lease has one general researcher; only the selected focus receives additional specialists. Re-read desk docs on startup, rather than trusting old pnp.sh comments.
 3. **Research workers** produce Lean candidate files, mathematical arguments, and negative results. They never call authenticated GitHub mutating operations as part of their task. They may read public repositories, use Lean, and communicate with the coordinator. A candidate is input data, not an approved Git commit.
 4. **Publisher** is a deterministic program, not a reasoning agent. It is the only *supported workflow* for authenticated repository mutations. Its parameters are only gap ID and local candidate filename. It never accepts a repository, URL, PR target, author, committer, signing key, shell command, or branch from the worker. It signs and constructs the commit itself.

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Durable nonblocking P vs NP lease maintenance, invoked each Town boot cycle.
-# No agent/model starts here: the Executive assigns mathematical research.
+# Staffing is independently reconciled under the standing founder order.
 set -eu
 . "$(dirname "$0")/runtime.sh"
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
@@ -11,6 +11,12 @@ cd "$town"
 mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}"
 nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
     >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
+# Supervise the standing staffing controller independently of model sessions.
+# It owns its lifetime lock, and each tick is bounded and crash-recoverable.
+if [ ! -d /run/service/viche-pnp-staffing ]; then
+    nohup setsid /bin/sh "$town/missions/pnp/staffing.sh" </dev/null \
+        >/dev/null 2>&1 &
+fi
 # Start independent local resource reclamation before any network I/O.
 python3 -m missions.pnp.watchdog || :
 # Independent checked-proof scout. A slow fetch/index never blocks leasing,
@@ -22,7 +28,16 @@ nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/suppo
 nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.lock" \
     timeout 25 python3 -m missions.pnp.brief --refresh \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/brief-refresh.log" 2>&1 &
+# Independent cheap generators do not wait for a model or the compiler.
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof-preflight.lock" \
+    timeout 30 python3 -m missions.pnp.preflight --scan \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof-preflight.log" 2>&1 &
 # Renew leases and recover queued publications before the optional score poll.
+# Cumulative research maintenance is local/read-mostly and independently
+# locked. Finished async proofs survive agent exit and lease rotation.
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.lock" \
+    timeout 90 /bin/sh -c 'python3 -m missions.pnp.research.knowledge ingest && python3 -m missions.pnp.research.obligations reconcile' \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.log" 2>&1 &
 python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile
 # A 20-minute desk lease TTL cannot be maintained by a 24-hour boot hook.

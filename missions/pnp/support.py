@@ -11,6 +11,7 @@ from .proofs import corpus
 
 ROLES = ("knowledge", "methods", "flow")
 DECISION_ROLES = ("portfolio", "lease-evaluation")
+FAMILY_ROLES = ("method", "tool")
 PREFIX = "Viche P vs NP support:"
 KINDS = (*ROLES, "checked")
 LIVE = ("LEASED", "RESEARCHING")
@@ -117,7 +118,12 @@ def finding(evidence, message, cwd=None):
         obj["at"] = time.time()
         state.atomic_write(str(path),json.dumps(obj,ensure_ascii=False,sort_keys=True)+"\n")
         state.event(gap,"research_finding",obj)
-        return obj
+    try:
+        from .research import knowledge
+        knowledge.record_finding(rec,obj)
+    except Exception:
+        pass  # Historical event replay repairs a missed indexing write.
+    return obj
 
 
 def targets(all_held=False):
@@ -218,10 +224,17 @@ def scan(refresh=False):
 
 
 def roles(agent):
+    try:
+        cwd=Path(agent.get("cwd") or "").resolve()
+        for role in (*ROLES,*DECISION_ROLES,*FAMILY_ROLES):
+            group="independent" if role in FAMILY_ROLES else "standing-support"
+            if cwd==Path(config.STATE_ROOT,"swarm",group,role).resolve():
+                return [role]
+    except (OSError,ValueError,TypeError):pass
     title = agent.get("title") or ""
     if not isinstance(title, str) or not title.startswith(PREFIX):
         return []
-    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES + DECISION_ROLES))
+    return sorted({part.strip() for part in title[len(PREFIX):].split(",")} & set(ROLES + DECISION_ROLES + FAMILY_ROLES))
 
 
 def main():
