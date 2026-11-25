@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-25T13:47:27Z",
+  "authority": "P-1795613709-0545",
+  "authorized_count": 21,
+  "dest_remaining": 0,
+  "df_after": {
+    "avail_kb": 19353472,
+    "device": "/dev/mapper/cryptroot",
+    "size_kb": 244540724,
+    "used_kb": 212692404,
+    "used_pct": 92
+  },
+  "errors": [],
+  "phase": "post",
+  "preserve_present": {
+    "L-meta-2149": true,
+    "L-meta-2232": true,
+    "L-meta-2341": true,
+    "L-meta-2373": true,
+    "L-meta-2382": true,
+    "L-meta-3321": true
+  }
+}
