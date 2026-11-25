@@ -23,6 +23,13 @@ class Research(unittest.TestCase):
         self.base="a"*40
     def obligation(self,stmt,deps=()):
         return k.add(self.c,"obligation","test",stmt,k.canon({"imports":["Mathlib"]}),"test fixture",base=self.base,deps=deps)
+    def fixture_receipt(self,a,body):
+        h=k.store_bytes(body.encode())
+        source=k.store_bytes(o.build(self.c,a,body).encode())
+        r={"status":"kernel_checked","compiler":{"status":"elaborated","exit_code":0,
+            "base":self.base,"source_sha256":source,"diagnostic":f"'{o.symbol(a)}' does not depend on any axioms"}}
+        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(a,self.base,h,source,k.canon(r),1))
+        return h
     def test_graph(self):
         a=self.obligation("True")
         self.assertEqual(a,self.obligation("True"))
@@ -40,12 +47,27 @@ class Research(unittest.TestCase):
         self.assertTrue(o.verify_output(f"'{name}' does not depend on any axioms",a))
         self.assertFalse(o.verify_output(f"'{name}' depends on axioms: [sorryAx]",a))
         self.assertFalse(o.verify_output("",a))
-        with self.assertRaises(ValueError):o.clean_body("by sorry")
+        valid=f"'{name}' does not depend on any axioms"
+        self.assertFalse(o.verify_output("trace: "+valid,a))
+        self.assertFalse(o.verify_output(valid+"\n"+f"'{name}' depends on axioms: [sorryAx]",a))
+        self.assertFalse(o.verify_output(valid+"\ntrailing message",a))
+        for body in ("by sorry","by native_decide","by trace \"fake\"","by trivial\n#print axioms x",
+                     "by trivial /- unclosed","set_option pp.universes 1 in\nby trivial",
+                     "by trivial\nlemma fake : False := by trivial"):
+            with self.subTest(body=body),self.assertRaises(ValueError):o.clean_body(body)
+        o.clean_body("set_option maxHeartbeats 4000000 in\nby /- nested /- comment -/ -/ trivial")
+        source=o.build(self.c,a,"by trivial")
+        self.assertTrue(o.source_verified(source,a))
+        self.assertFalse(o.source_verified(source+"\n",a))
+        self.assertFalse(o.source_verified(source,"another"))
+        self.assertFalse(o.source_verified(source.replace("by trivial","by native_decide"),a))
+        self.assertFalse(o.source_verified(source.replace("by trivial","by trivial\n#exit"),a))
+        injected=self.obligation("True\naxiom bogus : False")
+        with self.assertRaises(ValueError):o.build(self.c,injected,"by trivial")
+
     def test_candidate(self):
         a=self.obligation("True")
-        with tempfile.NamedTemporaryFile(mode="w") as f:
-            f.write("by trivial");f.flush();h=k.store_artifact(f.name)
-        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(a,self.base,h,"fixture",k.canon({"status":"kernel_checked"}),1))
+        self.fixture_receipt(a,"by trivial")
         rec={"gap_id":"L-meta-1","module":"PEqualNP.Outside.L_meta_1","path":"lean/PEqualNP/Outside/L_meta_1.lean","statement":"True","imports":[]}
         code=o.candidate(self.c,a,rec,self.base)
         self.assertIn("namespace PEqualNP.Outside.L_meta_1_aux",code)
@@ -154,7 +176,9 @@ class Research(unittest.TestCase):
     def test_async_receipt_identity(self):
         oid=self.obligation("True")
         body=k.store_bytes(b"by trivial")
-        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,"source")
+        source=o.build(self.c,oid,"by trivial")
+        k.store_bytes(source.encode())
+        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,source)
         ident={x:job[x] for x in ("job","base","toolchain","attempt","source_sha256")}
         ident["origin"]={"gap":None,"attempt":"method-research"}
         async_check.table(self.c)
@@ -193,11 +217,9 @@ class Research(unittest.TestCase):
         self.assertNotIn(d.MARKER,src)
         bad=json.loads(body[len(d.MARKER):]);bad["output"]=0
         with self.assertRaises(ValueError):o.build(self.c,a,d.artifact(bad))
-        h=k.store_bytes(body.encode())
-        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(a,self.base,h,"fixture",k.canon({"status":"kernel_checked"}),1))
+        self.fixture_receipt(a,body)
         b=self.obligation("True",[a])
-        h=k.store_bytes(b"by trivial")
-        with self.c:self.c.execute("INSERT INTO proof VALUES(?,?,?,?,?,?)",(b,self.base,h,"fixture",k.canon({"status":"kernel_checked"}),1))
+        self.fixture_receipt(b,"by trivial")
         rec={"gap_id":"L-meta-1","module":"PEqualNP.Outside.L_meta_1","path":"lean/PEqualNP/Outside/L_meta_1.lean","statement":"True","imports":["Mathlib"]}
         result=o.candidate(self.c,b,rec,self.base)
         self.assertIn("namespace viche_r_"+a,result)

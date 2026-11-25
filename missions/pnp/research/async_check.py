@@ -136,15 +136,17 @@ def proof_result(c,row,result,stderr=""):
     ident=json.loads(row["identity"])
     expected={x:ident[x] for x in ("job","base","toolchain","attempt","source_sha256")}
     valid=all(result.get(x)==v for x,v in expected.items())
-    ok=(valid and result.get("status")=="elaborated" and result.get("exit_code")==0
+    try:source_ok=o.source_verified(k.artifact(row["source"]).read_text(),row["node"])
+    except (OSError,ValueError):source_ok=False
+    ok=(valid and source_ok and result.get("status")=="elaborated" and result.get("exit_code")==0
         and o.verify_output(result.get("diagnostic",""),row["node"]))
     out={"status":"kernel_checked" if ok else "not_verified","compiler":result if valid else {},
          "stderr":stderr[-1000:],**ident["origin"],"collect_agent":os.environ.get("ANTONINA_AGENT_ID")}
     # A later failed retry must not erase a valid proof of identical body/base.
     with c:
-        prev=c.execute("SELECT result FROM proof WHERE node=? AND base=? AND artifact=?",
+        prev=c.execute("SELECT node,base,artifact,source_digest,result FROM proof WHERE node=? AND base=? AND artifact=?",
                        (row["node"],row["base"],row["body"])).fetchone()
-        if ok or not prev or json.loads(prev[0]).get("status")!="kernel_checked":
+        if ok or not prev or not o.verified_record(prev):
             c.execute("INSERT OR REPLACE INTO proof VALUES(?,?,?,?,?,?)",
                       (row["node"],row["base"],row["body"],row["source"],k.canon(out),time.time()))
         c.execute("UPDATE pending_check SET state='done',result=? WHERE id=? AND at=?",(k.canon(out),row["id"],row["at"]))
@@ -152,7 +154,14 @@ def proof_result(c,row,result,stderr=""):
 
 def collect(c,check,seconds=1100):
     row=snapshot(c,check)
-    if row["state"]=="done":return json.loads(row["result"])
+    if row["state"]=="done":
+        from . import obligations as o
+        out=json.loads(row["result"])
+        if out.get("status")=="kernel_checked" and not o.verified_record(
+                {"node":row["node"],"base":row["base"],"artifact":row["body"],
+                 "source_digest":row["source"],"result":row["result"]}):
+            return {**out,"status":"not_verified","reason":"historical receipt needs exact-source audit or recheck"}
+        return out
     if row["state"]=="transport_failed":
         return {"status":"transport_failed","check":row["id"],"detail":json.loads(row["result"] or "{}")}
     request=row["request"] or recover_request(row["id"])

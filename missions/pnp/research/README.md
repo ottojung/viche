@@ -59,7 +59,16 @@ across origins when type, imports/options, revision and dependencies match.
 
 Remote async submission stores the immutable full source and request identity.
 Repeating the same check returns its existing ID. Collection validates the
-exact result identity, Lean exit status and axiom report. Completed remote
+exact result identity, Lean exit status and axiom report. Generated checks
+append a trusted Lean command that collects actual theorem axioms and rejects
+anything outside propext, Classical.choice and Quot.sound. Proof inputs may
+not contain native_decide, arbitrary commands or diagnostic-spoofing strings.
+Only approved scoped resource options are accepted; use the structured
+certificate format for generated reflection helpers. This is not a general
+sandbox for arbitrary Lean programs. Historical receipts count as checked
+only if the intact body, exact source digest, compiler identity and unique
+final axiom report pass the strict audit; otherwise recheck the proof.
+Completed remote
 checks can be recovered after agent exit or lease rotation by maintenance.
 A terminal failure may be retried explicitly with `--retry` on solve, or
 using a changed body/resource budget. A pending check is not a failed proof.

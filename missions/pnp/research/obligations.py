@@ -10,6 +10,7 @@ import re
 import subprocess
 import tempfile
 import time
+import unicodedata
 
 from .. import assignment, state, support
 from . import knowledge as k
@@ -72,9 +73,8 @@ def plan(c, oid):
     return result
 
 def checked_body(c,node,base):
-    for row in c.execute("SELECT artifact,result FROM proof WHERE node=? AND base=? ORDER BY checked DESC",(node,base)):
-        d=json.loads(row["result"])
-        if d.get("status")=="kernel_checked":return k.artifact(row["artifact"]).read_text()
+    for row in c.execute("SELECT node,base,artifact,source_digest,result FROM proof WHERE node=? AND base=? ORDER BY checked DESC",(node,base)):
+        if verified_record(row):return k.artifact(row["artifact"]).read_text()
     raise ValueError("unresolved dependency "+node+"; inspect obligations show "+node+" and solve/check it before assembly")
 
 def declaration_options(meta):
@@ -90,19 +90,24 @@ def proof_parts(node,text):
     from . import dnf_reflection
     if text.startswith(dnf_reflection.MARKER):
         return dnf_reflection.unpack(text,node["statement"],"viche_r_"+node["id"])
+    clean_body(text)
     return "",text
 
 def build(c,oid,body=None):
     nodes=plan(c,oid); base=nodes[-1]["base"]
-    imports=set(); lines=[]
+    imports={"Lean"}; lines=[]
     for o in nodes:
         meta=json.loads(o["detail"])
         imports.update(meta["imports"])
+        clean_term(o["statement"])
+        if any(not re.fullmatch(r"[A-Za-z0-9_.]+",i) for i in imports):raise ValueError("invalid import")
         text=body if o["id"]==oid and body is not None else checked_body(c,o["id"],base)
         helpers,text=proof_parts(o,text)
+        clean_term(text)
         lines.append(helpers+declaration_options(meta)+f"theorem {symbol(o['id'])} : {o['statement']} :=\n{text}\n")
     src="\n".join("import "+x for x in sorted(imports))+"\n\n"+"\n".join(lines)
-    return src+"\n#print axioms "+symbol(oid)+"\n"
+    clean_source(src)
+    return src+axiom_guard(symbol(oid))
 
 def candidate(c,oid,rec,base):
     from .. import validate
@@ -122,19 +127,100 @@ def candidate(c,oid,rec,base):
     return src
 
 
-def clean_body(text):
-    if not text.strip() or re.search(r"\b(sorry|admit|sorryAx|axiom|unsafe|run_tac|run_cmd)\b",text):
-        raise ValueError("proof body must be complete, without new axioms or placeholders")
+# Proof terms are data. The only executable verification command in a
+# generated source is the fixed, trusted axiom guard below.
+FORBIDDEN = re.compile(r"(?<![\w.])(?:sorry|admit|sorryAx|axiom|unsafe|native_decide|run_tac|run_cmd|initialize|macro|syntax|notation|elab|trace|dbg_trace|logInfo|logWarning|logError)\b")
+DECLARATIONS = re.compile(r"(?<![\w.])(?:import|theorem|lemma|def|abbrev|namespace|section|end|mutual|attribute|instance|open|export|variable|universe)\b")
+OPTIONS = {"maxHeartbeats","maxRecDepth","synthInstance.maxSize","synthInstance.maxHeartbeats"}
 
-def verify_output(output,oid):
-    # Lean emits either no axioms or an explicit list. Missing/truncated output
-    # is not verification. Do not equate arbitrary scratch elaboration with proof.
-    name=symbol(oid)
-    if re.search(r"'"+name+r"' does not depend on any axioms",output):
-        return True
-    m=re.search(r"'"+name+r"' depends on axioms: \[([^\]]*)\]",output)
+def uncomment(text):
+    # Lean has nested block comments. Preserve newlines and reject an open
+    # comment rather than allowing it to swallow the verifier's suffix.
+    out=[];i=0;depth=0
+    while i<len(text):
+        if text.startswith("/-",i):depth+=1;i+=2;continue
+        if text.startswith("-/",i):
+            if not depth:raise ValueError("unbalanced Lean comment")
+            depth-=1;i+=2;continue
+        if not depth and text.startswith("--",i):
+            j=text.find("\n",i);i=len(text) if j<0 else j;continue
+        if not depth or text[i]=="\n":out.append(text[i])
+        i+=1
+    if depth:raise ValueError("unterminated Lean comment")
+    return "".join(out)
+
+def clean_source(text):
+    code=unicodedata.normalize("NFKC",uncomment(text))
+    if any(unicodedata.category(x) in ("Cf","Cc") and x not in "\n\r\t" for x in code):
+        raise ValueError("control character in Lean input")
+    if any(x in code for x in ('"', '#', '«', '»')) or FORBIDDEN.search(code):
+        raise ValueError("untrusted Lean command, trace, string or non-kernel proof")
+    options=list(re.finditer(r"(?m)^\s*set_option\s+([A-Za-z.]+)\s+(\d+)\s+in\s*$",code))
+    if len(options)!=len(re.findall(r"(?<![\w.])set_option\b",code)) or any(
+        m[1] not in OPTIONS or int(m[2])>10_000_000 for m in options):
+        raise ValueError("only scoped, approved resource options are permitted")
+    return code
+
+def clean_term(text):
+    code=clean_source(text)
+    if not code.strip() or DECLARATIONS.search(code):
+        raise ValueError("expected a complete Lean term, not declarations")
+
+def clean_body(text):
+    from . import dnf_reflection
+    if text.startswith(dnf_reflection.MARKER):
+        # Parsed and verified against the exact statement by proof_parts.
+        if not isinstance(json.loads(text[len(dnf_reflection.MARKER):]),dict):
+            raise ValueError("invalid reflected proof artifact")
+        return
+    clean_term(text)
+
+def axiom_guard(name):
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*",name):raise ValueError("invalid theorem name")
+    return ("\nopen Lean in\nrun_cmd do\n"
+            f"  let axs ← Lean.collectAxioms `{name}\n"
+            "  for ax in axs do\n"
+            "    unless #[`propext, `Classical.choice, `Quot.sound].contains ax do\n"
+            '      throwError "forbidden axiom {ax}"\n'
+            f"#print axioms {name}\n")
+
+def verify_report(output,name):
+    # Require exactly one report, as a complete final nonblank line.
+    # A trace with a favorable substring cannot hide a later bad report.
+    if not isinstance(output,str):return False
+    prefix="'"+name+"'"
+    lines=[x.strip() for x in output.splitlines() if x.strip()]
+    if not lines or sum(prefix in x and ("depends on axioms" in x or "does not depend on any axioms" in x) for x in lines)!=1:return False
+    if lines[-1]==prefix+" does not depend on any axioms":return True
+    m=re.fullmatch(re.escape(prefix)+r" depends on axioms: \[([^\]]*)\]",lines[-1])
     if not m:return False
     return {x.strip() for x in m[1].split(",") if x.strip()} <= {"propext","Classical.choice","Quot.sound"}
+
+def verify_output(output,oid):
+    return verify_report(output,symbol(oid))
+
+def source_verified(source,oid,legacy=False):
+    suffix=axiom_guard(symbol(oid))
+    if not source.endswith(suffix):
+        if not legacy:return False
+        suffix="\n#print axioms "+symbol(oid)+"\n"
+        if not source.endswith(suffix):return False
+    try:
+        clean_source(source[:-len(suffix)])
+    except ValueError:return False
+    return True
+
+def verified_record(row):
+    """Read only intact evidence. Legacy receipts need the same strict audit;
+    new receipts additionally have a compiler-enforced axiom guard."""
+    try:
+        d=json.loads(row["result"]);r=d["compiler"]
+        if not (d["status"]=="kernel_checked" and r["status"]=="elaborated" and r["exit_code"]==0
+                and r["base"]==row["base"] and r["source_sha256"]==row["source_digest"]
+                and verify_output(r["diagnostic"],row["node"])):return False
+        clean_body(k.artifact(row["artifact"]).read_text())
+        return source_verified(k.artifact(row["source_digest"]).read_text(),row["node"],legacy=True)
+    except (OSError,ValueError,KeyError,TypeError):return False
 
 def solve(c,oid,path,local=False,method=False):
     obj=k.get(c,oid)
@@ -169,14 +255,14 @@ def solve(c,oid,path,local=False,method=False):
                 except (ValueError,AttributeError):result={}
     ok=(proc.returncode==0 and result.get("status")=="elaborated" and result.get("exit_code")==0
         and result.get("base")==base and result.get("source_sha256")==sourcehash
-        and verify_output(result.get("diagnostic",""),oid))
+        and source_verified(src,oid) and verify_output(result.get("diagnostic",""),oid))
     result={"status":"kernel_checked" if ok else "not_verified","compiler":result,
             "stderr":proc.stderr[-1000:],"gap":rec["gap_id"] if rec else None,
             "attempt":support.attempt(rec) if rec else "method-research",
             "submit_agent":os.environ.get("ANTONINA_AGENT_ID"),"collect_agent":os.environ.get("ANTONINA_AGENT_ID")}
     with c:
-        prev=c.execute("SELECT result FROM proof WHERE node=? AND base=? AND artifact=?",(oid,base,bodyhash)).fetchone()
-        if ok or not prev or json.loads(prev[0]).get("status")!="kernel_checked":
+        prev=c.execute("SELECT node,base,artifact,source_digest,result FROM proof WHERE node=? AND base=? AND artifact=?",(oid,base,bodyhash)).fetchone()
+        if ok or not prev or not verified_record(prev):
             c.execute("INSERT OR REPLACE INTO proof VALUES(?,?,?,?,?,?)",
                       (oid,base,bodyhash,sourcehash,k.canon(result),time.time()))
     return result
@@ -184,12 +270,12 @@ def solve(c,oid,path,local=False,method=False):
 def ready(c,base=None,family=None):
     rows=[];checked=set()
     try:
-        verified=c.execute("SELECT node,base,artifact FROM proof WHERE json_extract(result,'$.status')='kernel_checked'").fetchall()
+        verified=c.execute("SELECT node,base,artifact,source_digest,result FROM proof WHERE json_extract(result,'$.status')='kernel_checked'").fetchall()
     except Exception:
-        verified=[row for row in c.execute("SELECT node,base,artifact,result FROM proof")
+        verified=[row for row in c.execute("SELECT node,base,artifact,source_digest,result FROM proof")
                   if json.loads(row["result"]).get("status")=="kernel_checked"]
     for row in verified:
-        if (k.root()/"artifacts"/row["artifact"]).is_file():checked.add((row["node"],row["base"]))
+        if verified_record(row):checked.add((row["node"],row["base"]))
     for row in c.execute("SELECT id,statement,family,base FROM object WHERE kind='obligation' ORDER BY created"):
         obj=dict(row)
         if base and obj["base"]!=base:continue
@@ -247,6 +333,7 @@ def main():
                 r=None;b=a.base
             else:r,w,b=binding()
             if any(not re.fullmatch(r"[A-Za-z0-9_.]+",i) for i in imports):raise ValueError("invalid import")
+            clean_term(a.statement)
             fam=a.family or k.family((r.get("gap_title") or "")+" "+r["statement"])
             prov=a.provenance if r is None else f"{r['gap_id']} / {support.attempt(r)}"
             oid=k.add(c,"obligation",fam,a.statement,k.canon({"imports":sorted(set(imports))}),

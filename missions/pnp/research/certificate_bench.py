@@ -4,7 +4,6 @@ from contextlib import closing
 import json
 import os
 from pathlib import Path
-import re
 import sqlite3
 import subprocess
 import time
@@ -26,9 +25,7 @@ def rows():
     return revision,result
 
 def acceptable(log,name):
-    if re.search(r"'"+re.escape(name)+r"' does not depend on any axioms",log):return True
-    m=re.search(r"'"+re.escape(name)+r"' depends on axioms: \[([^\]]*)\]",log)
-    return bool(m and {x.strip() for x in m[1].split(",") if x.strip()}<={"propext","Classical.choice","Quot.sound"})
+    return obligations.verify_report(log,name)
 
 def run(base,output,limit=None):
     revision,items=rows()
@@ -44,6 +41,7 @@ def run(base,output,limit=None):
     for meta in items:
         z=certificate.render(meta)
         source=z.get("candidate")
+        if source:source+=obligations.axiom_guard(meta["module"])
         digest=knowledge.digest(source.encode()) if source else None
         old=seen.get(meta["id"])
         if old and old.get("base")==base and old.get("source_digest")==digest and old.get("status")=="kernel_checked":continue
@@ -53,10 +51,10 @@ def run(base,output,limit=None):
         if source:
             try:
                 proc,r=obligations.method_check(base,"benchmark:"+meta["id"]+":"+digest,
-                                             source+"\n#print axioms "+meta["module"]+"\n")
+                                             source)
                 row["compiler_status"]=r.get("status")
                 row["lean_ms"]=r.get("elapsed_ms")
-                row["status"]="kernel_checked" if proc.returncode==0 and r.get("status")=="elaborated" and acceptable(r.get("diagnostic",""),meta["module"]) else "not_verified"
+                row["status"]="kernel_checked" if proc.returncode==0 and r.get("status")=="elaborated" and r.get("exit_code")==0 and acceptable(r.get("diagnostic",""),meta["module"]) else "not_verified"
                 if row["status"]!="kernel_checked":
                     row["diagnostic"]=r.get("diagnostic",proc.stderr)[-1500:]
             except (OSError,ValueError,subprocess.SubprocessError) as exc:

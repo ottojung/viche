@@ -199,6 +199,8 @@ def get(c, oid):
     obj["links"]=[dict(r) for r in c.execute("SELECT source,target,relation FROM edge WHERE source=? OR target=?",(oid,oid))]
     obj["checks"]=[dict(r) for r in c.execute("SELECT base,artifact,source_digest,result,checked FROM proof WHERE node=? ORDER BY checked DESC",(oid,))]
     for check in obj["checks"]:
+        from . import obligations
+        check["verified_now"]=obligations.verified_record({**check,"node":oid})
         p=root()/"artifacts"/check["source_digest"]
         if p.is_file():check["source_path"]=str(p)
     obj["assignments"]=[dict(r) for r in c.execute("SELECT attempt,worker,at FROM assignment WHERE node=?",(oid,))]
