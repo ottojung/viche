@@ -1,0 +1,97 @@
+{
+  "all_assertions_pass": true,
+  "assertion_count": 18,
+  "assertions": {
+    "A10_liability_not_reduced": true,
+    "A11_guard_after_ok": true,
+    "A12_no_agent_replay": true,
+    "A1_snapshot_succeeded": true,
+    "A2_snapshot_meter_zero_tokens": true,
+    "A3_guard_before_refused": true,
+    "A4_resolve_rc0": true,
+    "A5_row_closed": true,
+    "A6_closed_reason_provenance": true,
+    "A7_resolved_by_recorded": true,
+    "A8_attestation_sid_matches": true,
+    "A9_attestation_status_source": true,
+    "B1_wrong_sid_stays_held": true,
+    "B2_wrong_sid_reason": true,
+    "B3_wrong_sid_no_liability_cut": true,
+    "C1_unreadable_stays_held": true,
+    "C2_unreadable_reason": true,
+    "C3_unreadable_no_liability_cut": true
+  },
+  "capture_utc": "2026-11-25T13:44:31Z",
+  "cases": {
+    "nominal": {
+      "agent_kill_stop_calls": "",
+      "attestation": {
+        "agent_id": "15bm8Esub3exygbtVQDIMX-issues",
+        "command": "resolve-session",
+        "observed_at": 1795614278,
+        "reason": "statistics-independent-probe",
+        "resolver": "statistics-independent-probe",
+        "session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+        "state": "killed",
+        "status_source": "antonina agent status"
+      },
+      "cap_tokens": 11320103,
+      "charge_tokens": 11320103,
+      "closed_reason": "operator_resolved_session:statistics-independent-probe",
+      "guard_after": {
+        "rc": 0,
+        "stderr": "",
+        "stdout": "guard ok: foresight"
+      },
+      "guard_before": {
+        "rc": 1,
+        "stderr": "knowledge-budget: office foresight has an open reservation: r1795595445-NZIjZE34",
+        "stdout": ""
+      },
+      "history_last": {
+        "agent_id": "15bm8Esub3exygbtVQDIMX-issues",
+        "at": 1795614278,
+        "event": "operator_resolved_session",
+        "reason": "statistics-independent-probe",
+        "resolver": "statistics-independent-probe",
+        "session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+        "state": "killed"
+      },
+      "liability_not_reduced": true,
+      "resolve": {
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "resolved_by": "statistics-independent-probe",
+      "row_state": "closed",
+      "snapshot_cost_reported": true,
+      "snapshot_succeeded": true,
+      "snapshot_tokens": 0,
+      "usage_tokens": 11320103
+    },
+    "unreadable_status": {
+      "charge_tokens": 11320103,
+      "held_reason": "operator_resolution_status_unreadable",
+      "liability_not_reduced": true,
+      "resolve": {
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "row_state": "held"
+    },
+    "wrong_sid": {
+      "charge_tokens": 11320103,
+      "held_reason": "operator_resolution_session_mismatch",
+      "liability_not_reduced": true,
+      "resolve": {
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "row_state": "held"
+    }
+  },
+  "failed_assertions": []
+}

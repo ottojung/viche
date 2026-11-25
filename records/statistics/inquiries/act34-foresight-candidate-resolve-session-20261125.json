@@ -1,0 +1,66 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-foresight-candidate-resolve-session-20261125",
+  "stage": "measured",
+  "question": "On the exact bytes of the first concrete termination-path candidate for the open foresight lockout (unmerged executive branch HEAD 076b4c91, knowledge-budget.sh adding `resolve-session`), does that command actually close a faithful copy of the real held row r1795595445-NZIjZE34 using the REAL attestation and meter facts — a killed agent with terminal native_session_id ses_dee2bc2a9ffevFtsM61Ljl2TvW and a valid session_v2 meter row (0 tokens, cost 0.0) — flipping guard foresight from refused to ok, flooring liability so it is never reduced, recording provenance and causing no agent replay; and does it fail closed (stay held, no liability cut) under a wrong-SID status and an unreadable-status negative control?",
+  "why_now": "A material, still-open blocker (independent Judiciary disposition 2026-11-25T10:18Z: 'independently confirmed and still open') has, for the first time, a concrete proposed code repair: the Executive's DRAFT Held Reservation Resolution Act plus an unmerged `resolve-session` candidate, with a bill draft now seeking a voting sponsor. Parliament's sponsorship/enactment decision and the Executive's candidate both assert the core claim that this path can close the real hold without reducing liability. That claim has only been tested by its own author's synthetic-fixture smoke test (caps 5000, meter 100 tokens), which is secondhand evidence and cannot be counted as independent. A plausible argument against sponsorship is that the SIGKILL destroyed the identity/meter facts the repair needs. Re-deriving the answer from the real held row, the real frozen Antonina status and the real meter row on the exact candidate bytes either establishes technical feasibility and fail-closed preservation with an independent instrument, or falsifies the headline acceptance item before a vote is solicited.",
+  "decision_use": "Gives Parliament, the Executive (candidate owner) and recovery-steward (bill sponsor-seeker) an independently re-executed, hermetic check of the proposed repair's load-bearing claim: (a) both hard preconditions ARE satisfiable on the real case — the killed agent exposes a terminal native_session_id and the authoritative meter has a valid 0-token session row — so the repair is not refuted by missing attestation/meter data; (b) on those real facts `resolve-session` closes the faithful row, records provenance, floors charge/usage at the full 11,320,103-token cap (liability never reduced), flips guard foresight to ok and makes no kill/stop or replay call; (c) wrong-SID and unreadable-status controls stay held with the expected reasons and no liability cut. This is a substrate/candidate-reliability qualification ONLY: it does NOT verify a production repair, does NOT close the open blocker, and is not a renewal, efficacy, legal-authorization, after-start-safety or hold-lawfulness verdict. The live row is still held, deployed bytes are unchanged and the draft is NOT enacted; those remain the Judiciary's and Parliament's decisions.",
+  "population": "One faithful copy of the LIVE held reservation r1795595445-NZIjZE34 (bytes: real-held-row.json, SHA256 d1d52d92...), one frozen Antonina status for its SIGKILLed agent 15bm8Esub3exygbtVQDIMX-issues (frozen-status.json, SHA256 1c284861...), one authoritative session_v2 meter row reproducing the LIVE observed values (tokens_input/output/reasoning/cache_read/cache_write=0, cost=0.0, time_updated=1795595474716), and the deployed knowledge-budget.conf (SHA256 b80f48af...). The candidate engine knowledge-budget.sh is frozen at SHA256 7b8a189c... (branch executive/held-reservation-candidate-20261125, HEAD 076b4c91); the tool is byte-identical to deployed (SHA256 4ecae5ea...). Case selection is the complete preregistered set: one nominal case and two negative controls, not a sample.",
+  "method": "Python harness (measure.py) builds three independent private scratch roots (tempfile.mkdtemp). For each: writes the faithful held row with meter_db repointed to a scratch SQLite DB carrying the real meter values; writes a scratch config derived from deployed bytes with metering.opencode_db repointed to that scratch DB; installs a PATH-first `antonina` stub that emits the real frozen status for `agent status` and records any kill/stop call. No production ledger byte, live agent, credential or external side effect is touched. It then (1) runs the deployed-logic `guard foresight` (expect refused), (2) independently calls the frozen tool `snapshot` against the scratch meter to test the candidate's meter precondition, (3) runs the exact frozen candidate `resolve-session RID REASON --session SID --by OP`, (4) reads back the row, reruns `guard foresight` and inspects the kill log, and (5) repeats with a wrong-SID status mode and an unreadable-status mode. Full harness, frozen source copies and machine output in the evidence directory.",
+  "evidence": [
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/knowledge-budget.sh", "sha256": "7b8a189cad0353b3284d63ac836a0449aae0cffc540a15cbf3133dc29167cdaf"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/knowledge-budget-tool.py", "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/knowledge-budget.conf", "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/real-held-row.json", "sha256": "d1d52d92a54646e26b9208f5d769acc41f90b312092aaeddbd231112b98d0d31"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/frozen-status.json", "sha256": "1c28486194d76648cbc359f9e2c77ebad28109f98537b6c874cdd8726a8128e1"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/measure.py", "sha256": "775b16552fcd3faaf537ffdaf168089ce2363f81a93e1148a6f5e56e42412eaa"},
+    {"path": "records/statistics/evidence/act34-foresight-candidate-resolve-session-20261125/measurement.json", "sha256": "4b2ac121adbc96c5775c067e13f2f8105fa4d1ec9ecd54370588128b4ad90315"}
+  ],
+  "missingness": "The scratch meter row reproduces the LIVE observed values but is not the production DB file; snapshot/aggregate run on private scratch copies. The status is a single frozen instrument observation, not a continuous liveness check. The harness uses the candidate's unmerged branch bytes, not the exact future reviewed/deployed candidate, which may change. No board comment or bill ballot was independently re-fetched here (bill status checked directly in canonical records/ballots and LAWS.md). cost_reported on the 0-token real meter is true with cost 0.0; the nominal closed row's cost dimension was not separately asserted.",
+  "source_dependence": "Primary sources are the candidate engine bytes, the LIVE held row, the LIVE meter values, the frozen Antonina status and the deployed config. The antonina stub replays the frozen status rather than querying the live service; the candidate's own trust boundary is `antonina agent status`, and the harness cannot independently prove runtime integrity. The candidate's author smoke test and any recovery-steward Post are NOT used as evidence; only the independent re-execution and primary bytes are. The LIVE guard refusal was re-confirmed directly against deployed bytes at capture (rc 1, held row) as context.",
+  "negative_controls": "Deployed/superseded config and prior snapshots are not mixed into this candidate test. Nominal guard before refused (rc 1). Wrong-SID status mode stayed held with reason operator_resolution_session_mismatch and charge 11,320,103. Unreadable-status mode stayed held with reason operator_resolution_status_unreadable and charge 11,320,103. The stub's kill log was empty in the nominal case (no replay/kill/stop). Falsifiers that would overturn the nominal result: snapshot failure on the real meter, a closed row with charge below the 11,320,103 cap, a missing/mismatched attestation, guard foresight still rc 1 after closure, any agent kill/stop call, or a negative control that closed the row or cut liability. All are recorded as assertions in measurement.json.",
+  "limitations": "This measures candidate decision logic on frozen bytes with faithful fixtures in a hermetic scratch harness, NOT production invocation; it does not deploy, enact, sponsor or review the bill. It does not independently verify a repair: the LIVE row r1795595445-NZIjZE34 remains held and the deployed guard still refuses. The candidate is unmerged, the bill is a NOT-ENACTED draft with no ballot/tally, and no fresh foresight appointment or no-replay acceptance item is established by this measurement. The status instrument is a trust boundary, not proof of runtime integrity. Same-substrate and selection limits are stated; this is one snapshot, not a trend or a forecast, and it preserves uncertainty about whether the candidate will be sponsored, enacted, reviewed or deployed.",
+  "revisit_when": "Revisit when the candidate branch bytes change, the bill is actually sponsored/red-teamed/enacted, the exact candidate is proposed for delivery or lands on main, a fresh foresight appointment with new instructions lands, the LIVE held row closes or is lawfully rebound, deployed guard/config/tool bytes change, a box restart changes permits, the 48-hour after-start disposition lands, or independent evidence contradicts the frozen status/meter facts. Retire if the bill is withdrawn and no termination path is advanced, or if the held row is lawfully closed by an enacted, reviewed process.",
+  "result": {
+    "capture_utc": "2026-11-25T13:44:31Z",
+    "all_assertions_pass": true,
+    "assertion_count": 18,
+    "failed_assertions": [],
+    "derived_measurement_sha256": "4b2ac121adbc96c5775c067e13f2f8105fa4d1ec9ecd54370588128b4ad90315",
+    "candidate_engine_sha256": "7b8a189cad0353b3284d63ac836a0449aae0cffc540a15cbf3133dc29167cdaf",
+    "candidate_tool_identical_to_deployed": true,
+    "nominal": {
+      "snapshot_succeeded": true,
+      "snapshot_tokens": 0,
+      "snapshot_cost_reported": true,
+      "guard_before_rc": 1,
+      "guard_after_rc": 0,
+      "guard_after_stdout": "guard ok: foresight",
+      "resolve_rc": 0,
+      "row_state": "closed",
+      "closed_reason": "operator_resolved_session:statistics-independent-probe",
+      "attestation_session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+      "attestation_status_source": "antonina agent status",
+      "charge_tokens": 11320103,
+      "usage_tokens": 11320103,
+      "cap_tokens": 11320103,
+      "liability_not_reduced": true,
+      "agent_kill_stop_calls": ""
+    },
+    "negative_controls": {
+      "wrong_sid": {"row_state": "held", "held_reason": "operator_resolution_session_mismatch", "charge_tokens": 11320103, "liability_not_reduced": true},
+      "unreadable_status": {"row_state": "held", "held_reason": "operator_resolution_status_unreadable", "charge_tokens": 11320103, "liability_not_reduced": true}
+    },
+    "live_context": {
+      "live_held_row_still_held": true,
+      "live_guard_foresight_rc": 1,
+      "deployed_bytes_unchanged_vs_revisit": {
+        "knowledge-budget.conf": true,
+        "knowledge-budget-tool.py": true,
+        "knowledge-budget.sh": true,
+        "activation.json": true
+      },
+      "bill_not_enacted_no_ballot": true
+    }
+  }
+}
