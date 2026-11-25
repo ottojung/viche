@@ -47,13 +47,17 @@ def board_trail():
     if shutil.which('antonina') is None:
         out['reason']='antonina CLI unavailable'; return out
     try:
-        # The live eight-issue scan has independently measured at 42.368 s.
-        # Keep a bounded timeout, but leave headroom so that a complete scan
-        # does not get misreported as unavailable solely due to this wrapper.
+        # The scan paginates every originating issue, so its cost grows with
+        # board history. It independently completed in 103 s on 2026-11-25
+        # (8 origins, all board_readable=true), but the former 60 s default
+        # made the Act 18 §5 lens chronically "not_measured" even though the
+        # check itself succeeds. Keep the env override and ValueError fallback;
+        # raise the default so the mandated lens actually runs. This changes
+        # only the runtime budget, never the classification criteria/verdicts.
         try:
-            timeout=max(1,int(os.environ.get('VICHE_BOARD_TRAIL_TIMEOUT','60')))
+            timeout=max(1,int(os.environ.get('VICHE_BOARD_TRAIL_TIMEOUT','180')))
         except ValueError:
-            timeout=60
+            timeout=180
         done=subprocess.run(['/bin/sh',str(script)],capture_output=True,text=True,timeout=timeout)
     except (subprocess.TimeoutExpired,OSError) as err:
         out['reason']='cross-check unavailable: '+str(err)[:160]; return out
