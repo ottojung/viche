@@ -31,6 +31,13 @@ class CorpusDedup(unittest.TestCase):
         for name in ("a.lean", "b.lean"):
             with open(os.path.join(src, "lean", "PEqualNP", "Outside", name), "w") as f:
                 f.write("theorem " + name.replace(".", "_") + " : True := trivial\n")
+        # A tracked executable, as in the real pinned tree (tools/bin/lake etc.).
+        bindir = os.path.join(src, "tools", "bin")
+        os.makedirs(bindir)
+        exe = os.path.join(bindir, "lake")
+        with open(exe, "w") as f:
+            f.write("#!/bin/sh\nexit 0\n")
+        os.chmod(exe, 0o755)
         with open(os.path.join(src, "README.md"), "w") as f:
             f.write("pinned\n")
         git("add", "-A", cwd=src)
@@ -59,6 +66,13 @@ class CorpusDedup(unittest.TestCase):
                          os.stat(os.path.join(central, rel)).st_ino)
         # The shared corpus is immutable so an edit cannot corrupt peers.
         self.assertEqual(os.stat(os.path.join(central, rel)).st_mode & 0o222, 0)
+        # Tracked executables keep the exec bit in both the central corpus and
+        # the worker worktree, so git still sees a clean pinned revision.
+        exerel = os.path.join("tools", "bin", "lake")
+        for root in (self.wt, central):
+            mode = os.stat(os.path.join(root, exerel)).st_mode
+            self.assertTrue(mode & 0o111, "exec bit lost in " + root)
+            self.assertEqual(mode & 0o222, 0, "write bit present in " + root)
         # Git still sees the worktree as exactly the pinned revision.
         self.assertEqual(git("status", "--porcelain", cwd=self.wt), "")
 

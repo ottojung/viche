@@ -142,8 +142,10 @@ def share_pinned_corpus(worktree, base):
 
     The shared corpus is made immutable so an in-place worker edit cannot
     corrupt every attempt that hardlinks it; workers add new candidate files
-    rather than rewriting pinned sources. Best effort: a failure here leaves
-    the ordinary full checkout in place rather than blocking research.
+    rather than rewriting pinned sources. Only write bits are removed: read and
+    executable bits are preserved so tracked executables stay executable and git
+    still sees a clean pinned revision. Best effort: a failure here leaves the
+    ordinary full checkout in place rather than blocking research.
     """
     import fcntl
     import re
@@ -167,7 +169,7 @@ def share_pinned_corpus(worktree, base):
                 ["git", "--git-dir=" + MIRROR, "archive", sha],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             extract = subprocess.Popen(
-                ["tar", "-x", "-C", tmp], stdin=archive.stdout,
+                ["tar", "-x", "-p", "-C", tmp], stdin=archive.stdout,
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             archive.stdout.close()
             extract_err = extract.communicate()[1]
@@ -181,7 +183,11 @@ def share_pinned_corpus(worktree, base):
                                    "utf-8", "replace")[:300])
             for r, _dirs, files in os.walk(tmp):
                 for name in files:
-                    os.chmod(os.path.join(r, name), 0o444)
+                    p = os.path.join(r, name)
+                    # Strip write bits to make the shared corpus immutable, but
+                    # keep read/exec bits: a tracked executable must stay
+                    # executable in every worker or git status goes dirty.
+                    os.chmod(p, os.stat(p).st_mode & ~0o222)
             os.replace(tmp, central)
     finally:
         os.close(fd)
