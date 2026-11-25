@@ -189,8 +189,11 @@ def main():
     queued = QUEUED
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         if source_changed():
+            # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
+            # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
             log('source changed; exiting for clean restart')
-            return 0
+            pool.shutdown(wait=False, cancel_futures=True)
+            os._exit(0)
         try:
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
