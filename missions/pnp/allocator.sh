@@ -15,10 +15,11 @@ while [ -f missions/pnp/allocator.py ]; do
     if [ ! -f "$state/lbcert/STOP" ] && flock -n "$state/lbcert/autosolve.lock" true; then
         nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 &
     fi
-    # ... and exactly one bulk lane (publishes generated proofs of unheld, unclaimed steps; see bulk.py).
-    if [ ! -f "$state/bulk/STOP" ] && flock -n "$state/bulk/bulk.lock" true; then
-        nohup python3 -m missions.pnp.bulk >> "$state/bulk/bulk.log" 2>&1 &
-    fi
+    # Keep receipt collection independent of agent turns and expensive desk I/O.
+    mkdir -p "$state/cache"
+    nohup flock -n "$state/cache/research-reconcile.lock" timeout 90 \
+        python3 -m missions.pnp.research.obligations reconcile \
+        </dev/null >>"$state/cache/research-reconcile.log" 2>&1 &
     # Each desk request has bounded I/O; never kill a claim between receipt
     # and durable recording just because a tick took longer than expected.
     python3 -m missions.pnp.allocator || :

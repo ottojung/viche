@@ -14,6 +14,7 @@ from . import knowledge as k
 from .. import support
 
 RELAY = str(Path.home()/".local/bin/marceline-request")
+REQUEST_LIFETIME = 40 * 60  # relay TTL 30 min + clock skew + recovery grace
 ID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 
 def table(c):
@@ -74,7 +75,8 @@ def recover_request(job):
         try:
             if p.stat().st_size>4*1024*1024:continue
             d=json.loads(p.read_text())
-            if d.get("payload",{}).get("job")==job and ID.fullmatch(d.get("id","")):
+            if (d.get("payload",{}).get("job")==job and ID.fullmatch(d.get("id",""))
+                    and d.get("expires",0)>time.time()*1000):
                 return d["id"]
         except (OSError,ValueError,AttributeError):continue
     return None
@@ -193,27 +195,33 @@ def pending(c):
 
 
 def reconcile(c):
-    """One status fetch, then collect at most four completed checks.
-
-    The original agent can die or lose its lease; exact mathematical results
-    still become durable. This never starts an agent or acquires a lease.
-    """
+    """Collect finished work promptly; expired transport is not a false proof."""
     table(c)
     rows=[dict(x) for x in c.execute("SELECT * FROM pending_check WHERE state IN ('submitting','queued') ORDER BY at")]
     if not rows:return {"pending":0,"collected":[]}
     try:
         status=json.loads(subprocess.check_output([RELAY,"status"],text=True,timeout=10))
-        finished={x["id"] for x in status.get("entries",[]) if x.get("state") in ("done","error")}
-    except (OSError,ValueError,subprocess.SubprocessError):return {"pending":len(rows),"collected":[],"status":"relay unavailable"}
-    out=[]
+        entries={x["id"]:x["state"] for x in status.get("entries",[])}
+        fresh=isinstance(status.get("age_seconds"),(int,float)) and status["age_seconds"]<=180
+    except (OSError,ValueError,subprocess.SubprocessError,KeyError,TypeError):
+        return {"pending":len(rows),"collected":[],"status":"relay unavailable"}
+    out=[];expired=[]
     for row in rows:
-        if len(out)>=4:break
         request=row["request"] or recover_request(row["id"])
         local=Path.home()/".local/state/marceline-relay/receipts"/((request or "")+".json")
-        if request in finished or local.is_file():
-            r=collect(c,row["id"],3)
-            out.append({"id":row["id"],"node":row["node"],"status":r["status"]})
-        elif time.time()-row["at"]>24*3600:
-            with c:c.execute("UPDATE pending_check SET state='transport_failed',result=? WHERE id=?",
-                             (k.canon({"error":"remote receipt expired"}),row["id"]))
-    return {"pending":len(rows),"collected":out}
+        if entries.get(request) in ("done","error") or local.is_file():
+            if len(out)>=16:continue
+            try:
+                r=collect(c,row["id"],3)
+                out.append({"id":row["id"],"node":row["node"],"status":r["status"]})
+            except (OSError,ValueError,subprocess.SubprocessError):
+                continue
+        elif fresh and request not in entries and time.time()-row["at"]>REQUEST_LIFETIME:
+            # Check revision identity in the UPDATE: a concurrent explicit
+            # retry or collection must not be overwritten by this sweep.
+            with c:
+                cur=c.execute("""UPDATE pending_check SET state='transport_failed',result=?
+                    WHERE id=? AND at=? AND state IN ('queued','submitting')""",
+                    (k.canon({"error":"relay request expired; source retained; retry explicitly"}),row["id"],row["at"]))
+            if cur.rowcount:expired.append(row["id"])
+    return {"pending":len(rows),"collected":out,"expired":expired}
