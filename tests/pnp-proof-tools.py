@@ -36,6 +36,33 @@ class ProofTools(unittest.TestCase):
         bad = dict(META, statement=META["statement"].replace("((x 0 && x 1))", "((x 0 && x 1) && (x 0 && x 1))"))
         self.assertIsNone(circuit.explicit_circuit(bad))
 
+    def test_joint_reread_certificate(self):
+        # AND(AND(x0,x1),OR(x0,x1)) computes one edge. Each scalar
+        # minimum is 1, but no single proof tree is simultaneously read-1.
+        from missions.pnp.proofs import reread
+        c = "PEqualNP.CircuitLowerBounds."
+        gates = ", ".join("{ op := "+c+"GateOp."+op+", inputs := ["+str(a)+", "+str(b)+"] }"
+                          for op,a,b in (("and",0,1),("or",0,1),("and",2,3)))
+        edge = "([(0, 1)] : List (Fin 2 × Fin 2))"
+        statement = (f"∀ C : {c}Circuit, C = ({{ gates := [{gates}], output := 4 }} : {c}Circuit) → "
+          f"PEqualNP.TopForm.IsAO2 2 C ∧ C.size = 3 ∧ "
+          f"(∀ x : Fin 2 → Bool, PEqualNP.MetaComplexity.circuitFun 2 C x = decide (∃ e ∈ {edge}, x e.1 = true ∧ x e.2 = true)) ∧ "
+          f"(∀ e ∈ {edge}, PEqualNP.Core.ReadTwiceAt 2 C (C.output - 2) e.1 e.2 ↔ e ∈ {edge})")
+        meta = dict(META,statement=statement)
+        r = circuit.explicit_circuit(meta)
+        self.assertEqual(r["actual_reread"],[(0,1)])
+        self.assertTrue(r["verified"])
+        src=circuit.render(meta,"decide")
+        self.assertIn("subst C",src)
+        validate.validate(meta,src.encode())
+        bad = dict(meta,statement=statement.removesuffix(edge+")")+"([] : List (Fin 2 × Fin 2)))")
+        self.assertFalse(circuit.explicit_circuit(bad)["verified"])
+        with self.assertRaises(ValueError):
+            circuit.render(bad,"decide")
+        self.assertIsNone(circuit.explicit_circuit(dict(meta,statement=statement+" ∧ False")))
+        self.assertFalse(reread.read_once(2,[("and",0,1),("or",0,1),("and",2,3)],4,0,1))
+        self.assertTrue(reread.read_once(2,[("and",0,1)],2,0,1))
+
     def test_synthesis_bound_and_truth_table(self):
         meta = dict(META, statement=("∃ C : PEqualNP.CircuitLowerBounds.Circuit, "
           "PEqualNP.MetaComplexity.Monotone2 C ∧ C.size ≤ 3 ∧ ∀ x : Fin 4 → Bool, "
