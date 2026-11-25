@@ -276,6 +276,21 @@ detached process with a durable log rather than blocking an agent tool call.
 Cancel obsolete work, not merely old work.
 
 
+## Role-specific instructions at dispatch (Founder priority)
+
+Every P vs NP agent invocation receives actionable instructions in its initial
+prompt. Never delegate discovery to a README. The mechanical staff helper
+injects instructions for general researchers, integrators and specialists.
+For each support or engineering agent, Executive uses
+`PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.role_prompt ROLE --agent ID --cwd WORKSPACE --task "specific assignment"`
+for dispatch after creating/reusing an idle agent. This helper inserts role
+instructions into the actual agent invocation; do not send an unadorned task. Roles: knowledge, methods, flow, portfolio,
+lease-evaluation, transport, adapter, benchmark. For a combined support role,
+include the other role’s generated instructions in the specific task. Prefer short role-specific commands over
+a long generic inventory; do not require irrelevant tool calls. Replenishment
+and reassignment use the same prompt mechanism. Existing agents receive
+updated guidance at their next natural checkpoint or a justified steer.
+
 ## Continuous parallel research support (Founder priority)
 
 Optimize accepted contributions per elapsed and resource hour. Keep the
@@ -376,6 +391,48 @@ split ongoing research across two gaps just to fix a pending correction.
 The lease evaluator may release a genuinely unpromising gap. The portfolio
 researcher may change focus. The automated heartbeat renews the whole pool.
 
+## Cumulative research and mathematical families (Founder priority)
+
+Maintain theorem research, independent mathematical method research, and
+tool research concurrently. Method and tool researchers are not leased proof
+owners and do not count toward the five baseline researchers. Executive
+allocates useful independent method fronts by mathematical family and keeps
+them working across lease changes. Each method front produces exact reusable
+lemmas, obstructions or certificates; tool fronts produce independently
+verified automation and held-out family benchmarks. Prefer results over reports.
+
+At dispatch inject the role-specific executable workflow directly into the
+initial prompt. The standing staff/continuity helper does this automatically
+for bound and support roles. Workers first run pnp-research start for their
+actual work packet; pnp-research guide ROLE gives examples on demand.
+Do not require reading the entire mandate or a documentation quiz before
+research. Measure actual adoption with pnp-research adoption, and separately
+measure checked output. For explicit independent method/tool researchers,
+knowledge curators and portfolio evaluators, after creating/reusing the idle agent run
+`pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task "specific task"`
+(or include the role text from `pnp-research dispatch ROLE` with the existing
+role instructions). This is an Executive lifecycle action, not a worker tool
+for launching other agents. The existing baseline and focus rules remain.
+
+When an approach admits a useful decomposition, the proof integrator
+requests exact Lean obligations with `pnp-research obligations request`
+and specifies their dependencies. Executive assigns unresolved ready nodes
+to complementary specialists; do not allocate every specialist the same
+complete theorem. Keep independent approaches when useful. New focused
+specialists should share the general researcher's exact pinned base. Existing
+workspaces need not be reset: fork obligations and independently recheck on
+another base. Check proof bodies with `pnp-research obligations solve`;
+complete roots can be assembled as ordinary validated candidates. Only the
+existing submission pipeline publishes. A failed check is not a refutation.
+
+Use `pnp-research knowledge` for persistent mathematical objects and
+`pnp-research yield` for empirical family-level baseline, actual graph
+progress, available techniques and competition. Historical import includes
+quarantined attempts. Index missed findings with `knowledge ingest`.
+The guard and portfolio expose these as advisory information. Estimates do
+not themselves authorize release, focus change, or publication. No extra
+approval gates. See missions/pnp/research/README.md for operator details.
+
 ## Independent portfolio decisions (Founder priority; supersedes no-preemption)
 
 Executive must maintain two distinct useful researcher roles, independently of
@@ -414,6 +471,13 @@ active proof swarm before abandoning its focus. A difficult label, age or
 one unsuccessful tactic is insufficient. If a lease is genuinely not worth
 holding, directly decide:
 `python3 -m missions.pnp.portfolio release GAP ATTEMPT --reason 'specific mathematical obstacles and opportunity cost' --evidence 'checked lemmas, failed route artifacts or reproducible experiments'`
+Direct operator CLI release is reserved for deliberate exceptional repair;
+it requires --operator-override, exact current --attempt and --evidence.
+It cannot release an assignment owned by the publisher or a superseded
+attempt. Routine releases must go through the independent lease evaluator;
+do not mass-release live research assignments from external maintenance.
+No additional approval is required for the normal evaluator path.
+
 The allocator executes the documented reason other, preserves artifacts,
 protects queued/publishing candidates, honors hard-step minimum holding time,
 and refills the slot. No additional review or approval. Never release

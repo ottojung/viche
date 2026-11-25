@@ -10,8 +10,10 @@ from . import assignment, config, focus, staff, state, status, support
 SUPPORT = {
     "knowledge": "Find checked equivalents, opposite conclusions, stronger reusable proofs and admissible imports. Send verified applicability and concrete proof fragments, not just scores.",
     "methods": "Independently attack the focused claim. Derive a concrete sublemma, construction, refutation or identify a precise false premise. Use full-function checks; never duplicate an existing search.",
-    "flow": "Investigate actual idle time, duplicated computation, correction and publication delay. Deliver concrete improvements that increase checked contributions; do not monitor tool calls.",
+    "flow": "Investigate actual idle time, duplicated computation, correction and publication delay. Deliver concrete improvements that increase checked contributions; use adoption evidence to diagnose discovery friction, not as a substitute for checked results.",
     "portfolio": "Use portfolio inspect and compare all live leases and eligible published-proof corrections using their researchers' findings and actual artifacts. Make the evidence-based switch decision directly with portfolio switch if justified.",
+    "method": "Independent mathematical method research: develop graph-circuit normalization, read-once/ownership arguments and dense incidence bounds across families. Work on a general lemma with exact hypotheses, prove it on a cached public base, test at least two distinct applications, preserve failed generalizations. Continue the durable backlog in this workspace across lease changes.",
+    "tool": "Independent tool research: extend the existing symbolic star-cover and Lean certificate generator, verified proof adaptation and benchmark holdouts. Produce runnable code and checked output, measure time and success. Continue the durable backlog in this workspace across lease changes.",
     "lease-evaluation": "Use portfolio inspect. Investigate actual mathematical blockers and alternatives. Decide justified releases through portfolio release; never release because of vacancies, age alone or temporary compiler contention.",
 }
 FRONTS = (
@@ -26,6 +28,12 @@ def live():
 
 
 def signature(role, records, selected):
+    if role in support.FAMILY_ROLES:
+        # These standing fronts survive lease changes and continue on their
+        # own durable work. A bounded cadence allows a new useful pass even
+        # when no lease is available. Do not hash their own output.
+        from .research import playbook
+        return hashlib.sha256((role+"|"+playbook.guide(role)+"|"+str(int(time.time())//600)).encode()).hexdigest()
     scope = records if role in support.DECISION_ROLES else (
         [selected] if selected and support.active(selected) else records)
     # Only changes in assignments or primary mathematical evidence warrant a
@@ -40,8 +48,12 @@ def signature(role, records, selected):
     return hashlib.sha256(json.dumps(sorted(data)).encode()).hexdigest()
 
 
+def support_path(role):
+    return Path(config.STATE_ROOT,"swarm","independent" if role in support.FAMILY_ROLES else "standing-support",role)
+
+
 def support_pass(role, records, selected, agents):
-    path = Path(config.STATE_ROOT, "swarm", "standing-support", role)
+    path = support_path(role)
     path.mkdir(parents=True, exist_ok=True)
     receipt = path / "dispatch.json"
     sig = signature(role, records, selected)
@@ -71,16 +83,19 @@ def support_pass(role, records, selected, agents):
         {"signature": sig, "agent": aid, "at": time.time()}) + "\n")
     prompt = (
         "You are performing a bounded Executive-delegated research support pass. "
-        "Read /var/lib/lubko/wd/viche/missions/pnp/mandate.md. "
-        "Discover current mathematical and engineering capabilities using "
-        "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.tools. "
-        "Inspect actual tool adoption with tools --usage when useful; tool invocation is not success. "
+        "Use the injected role playbook and current work packet; tools lists other installed capabilities if needed. "
+        "Inspect actual outcomes, not merely invocation counts. "
         "Use PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support targets "
         "and python3 -m missions.pnp.portfolio inspect. "
         "Deliver substantive evidence directly via support advise (or portfolio decisions). "
         "Do not launch/steer agents, acquire leases, edit other workspaces, or open PRs. "
         "Finish when no further useful distinct work remains. "
         "Do not repeat the previous pass without a material reason.\n" + SUPPORT[role])
+    if role in support.FAMILY_ROLES:
+        prompt=("You are an independent, persistent mathematical-family research front. "
+                "Read your own durable backlog, choose a concrete next result and deliver usable artifacts. "
+                "No lease acquisition, publication, or agent launches. Do not work on another worker's claimed node. "
+                "Do not repeat a failed approach without new evidence. " + SUPPORT[role])
     answer = json.loads(staff.antonina("run", "--id", aid, "--cwd", str(path),
                                      "--prompt", prompt, "--detach", "--json"))
     if answer.get("state") != "running":
@@ -91,16 +106,15 @@ def support_pass(role, records, selected, agents):
 
 
 def required_support(records):
-    return (list(support.ROLES) + ["lease-evaluation"] +
-            (["portfolio"] if len(records) > 1 else [])) if records else []
+    active=(list(support.ROLES)+["lease-evaluation"]+(["portfolio"] if len(records)>1 else [])) if records else []
+    return active+list(support.FAMILY_ROLES)
 
 
 def completed_roles(records, selected):
     done = set()
     for role in required_support(records):
         try:
-            receipt = json.loads(Path(config.STATE_ROOT, "swarm", "standing-support",
-                                      role, "dispatch.json").read_text())
+            receipt = json.loads((support_path(role)/"dispatch.json").read_text())
             if receipt.get("completed") and receipt.get("signature") == signature(role, records, selected):
                 done.add(role)
         except (OSError, ValueError, AttributeError):
@@ -121,8 +135,31 @@ def focus_plans(selected, agents):
     if focus.correction(selected):
         return [] if labels else [("correction", "Repair exact published source using checker diagnostics.")]
     has_integrator = any("integrat" in label.lower() for label in labels)
-    has_alternative = any("integrat" not in label.lower() for label in labels)
-    return [p for p in FRONTS if not (has_integrator if p[0]=="integrator" else has_alternative)]
+    has_alternative = any("integrat" not in label.lower() and not label.startswith("ob-") for label in labels)
+    plans=[p for p in FRONTS if not (has_integrator if p[0]=="integrator" else has_alternative)]
+    try:
+        from .research import knowledge, obligations
+        from contextlib import closing
+        if not (Path(config.STATE_ROOT)/"research/knowledge.sqlite").exists():return plans
+        with closing(knowledge.db()) as c:
+            scope=selected["gap_id"]+" / "
+            nodes=[n for n in obligations.ready(c) if n["status"]=="ready"
+                   and knowledge.belongs(c,n["id"],scope)]
+            existing={l for l in labels if l.startswith("ob-")}
+            # At most two additional complementary obligations, independent of
+            # the alternative approach. No duplicate assignment of the same ID.
+            for n in nodes:
+                label="ob-"+n["id"]
+                if label in existing:continue
+                if any(x["attempt"]==support.attempt(selected) and x["worker"] in labels for x in n["assignments"]):continue
+                if len(existing)>=2:break
+                plans.append((label,"Solve exact proof obligation "+n["id"]+
+                    ". Run pnp-research obligations show "+n["id"]+
+                    "; supply a complete Lean proof body via obligations solve "+n["id"]+
+                    " BODY --async; collect its check. Preserve precise blockers and smaller obligations."))
+                existing.add(label)
+    except (OSError,ValueError,KeyError,AttributeError):pass
+    return plans
 
 
 def already_covered(records, selected, observed):
@@ -147,8 +184,6 @@ def already_covered(records, selected, observed):
 def execute():
     records = live()
     selected = focus.current()
-    if not records and not selected:
-        return {"status": "no research"}
     observed = status.workers()
     if observed["coverage"] != "complete":
         return {"status": "worker coverage unknown"}

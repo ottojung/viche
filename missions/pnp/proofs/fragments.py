@@ -51,6 +51,11 @@ def share(file, message, cwd=None):
         support.finding(str(path),message,cwd)
     except ValueError:
         pass
+    try:
+        from ..research import knowledge
+        knowledge.record_fragment(rec,info,path)
+    except Exception:
+        pass  # The immutable fragment remains available for replay.
     return {**info,"path":str(path)}
 
 

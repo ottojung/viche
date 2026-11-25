@@ -32,7 +32,7 @@ class Tests(unittest.TestCase):
         baseline.assert_called_once_with([],locked=True)
         self.assertEqual(dispatch.call_count,1)
         self.assertEqual([p[0] for p in dispatch.call_args.args[1]],["integrator","alternative"])
-        self.assertEqual(scout.call_count,5)
+        self.assertEqual(scout.call_count,7)
     def test_unknown_roster_does_not_dispatch(self):
         with patch.object(continuity.status,"workers",return_value={"coverage":"partial"}),patch.object(staff,"roster") as roster:
             self.assertEqual(continuity.execute()["status"],"worker coverage unknown")
