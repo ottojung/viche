@@ -125,8 +125,9 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
 ## Operations and decision support
 
 - The standing staffing controller manages lifecycle; it
-  injects the playbook before launching a worker. For explicit independent
-  dispatch: `pnp-research dispatch ROLE --agent ID --cwd WORKSPACE --task TASK`.
+  injects the playbook before launching a worker. Inspect role guidance with
+  `pnp-research guide ROLE`; declare extra focused positions through the
+  validated policy interface in staffing/README.md.
   Routine research-agent lifecycle actions belong to the standing controller; Executive monitors and debugs.
 - `pnp-research adoption` measures confirmed launches, discovery, substantive
   commands, help calls before first use, and time to first successful use

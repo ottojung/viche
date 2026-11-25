@@ -211,7 +211,9 @@ otherwise; explain the actual constraint and mitigate it. No numerical worker
 cap or artificial resource consumption. Preserve existing safety and funding
 policy. Do not wait for one worker or a long review before assigning other
 independent work. Delegate long investigations rather than monopolizing
-the Executive coordinator. Only the Executive dispatches workers.
+the Executive coordinator. Only the Executive dispatches workers outside
+missions with delegated programmatic staffing. For PnP the controller
+owns lifecycle; inspect health and adjust policy, never refill manually.
 EOF
 )
 cases='{"open_cases":[]}'

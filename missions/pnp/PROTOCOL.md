@@ -4,7 +4,7 @@ Founder task design, 2026-11-23. Execution host: billy-dev.
 ## Authority and lifetime
 Standing board issue: IL6wUXaBGXiOmp4aAI8B4c-possesses.
 Implementation issue: R4WYVaWyRxoD911soUtcAo-sciatic.
-The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop remains part of ordinary Viche Executive scheduling. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
+The standing issue remains open until Vitalik explicitly revokes the mission. No idle period, checker fault, single PR, or successful setup closes it. Implementation issues may close individually only after independently evidenced acceptance tests. The ongoing research loop is maintained by the standing staffing controller; Executive monitors and repairs it. No other host may run Viche agents. Preserve Viche resource policies and current Founder-authorized mission scope.
 
 ## Precise interfaces
 Upstream: GitHub repository ID 1468025030, base branch main.

@@ -68,10 +68,9 @@ For every Executive cycle:
   formalization and proof reuse) on that same gap. Allocate as much useful
   concurrency as resources permit; do not duplicate expensive builds or
   spawn redundant agents just to increase a counter.
-- Take over the preexisting managed agents/worktrees under the roster
-  /var/lib/lubko/wd/viche-state/pnp/swarm/agents.json if useful, or retire them
-  and replace them yourself. Never expect an outside operator to restart them.
-  Check their actual Antonina states, output, remaining leases and dependencies.
+- Verify adoption of exact-workspace identities by the controller. Diagnose
+  persistent adoption or retirement failures; preserve existing artifacts.
+  Check actual Antonina states, output, remaining leases and dependencies.
 - Prefer claimable, well-scoped proofs with high expected accepted-step
   throughput; keep a portfolio of harder/high-value results and rigorous
   refutations where useful. Demand completed exact Lean proofs or reproducible
@@ -79,7 +78,7 @@ For every Executive cycle:
   accepted steps per time and resource use; avoid duplicate expensive builds.
 - When all desk leases are held or claim service is cooling, DO NOT go idle:
   investigate published open claims and prepare proofs or bounded searches,
-  then promptly obtain official leases once available; never submit an
+  the allocator obtains official leases once available; never submit an
   unleased gap against the project's rules.
 - Investigate any slowdown in credit rate or lost leadership: stalled workers,
   model access, invalid checker, forgotten claims, unnecessary work, duplicate
@@ -160,13 +159,15 @@ resource/lease deferral, not a rejected theorem. Do not busy-retry; pursue
 independent reasoning or simplify the proof. A heavy build may use available
 RAM above the host reserve without a fixed per-proof cap. A resource-blocked
 publisher preserves its candidate and waits for increased headroom or new
-proof bytes. Executive owns reassignment; no process kills of researchers.
+proof bytes. The staffing controller reconciles assignments; no raw process
+kills of researchers.
 
 Research admission waits only briefly (at most 15 seconds) before returning
 75, so a queued compilation does not occupy an agent tool call indefinitely.
 Legacy raw PnP compiler processes are recognized as an admission constraint.
-The Executive must retire or cooperatively reassign obsolete workers rather
-than allow them to restart unnecessary full checkers.
+The staffing controller cooperatively retires obsolete workers rather than
+allowing them to restart unnecessary full checkers. Executive diagnoses
+persistent retirement failures.
 
 ## Revocable computation (Founder priority)
 
@@ -334,15 +335,14 @@ advice. Knowledge support still verifies matches, finds nontrivial semantic
 equivalences and mathematical reuse. No match is not proof of novelty.
 Neither advisory evidence nor a support outage changes guard decisions or
 publication eligibility. A confirmed checked refutation ends the impossible
-construction effort; retain evidence and let Executive handle assignment
-release and reassignment. A rival's unaccepted PR alone is not a refutation.
+construction effort; retain evidence for the lease evaluator and allocator,
+which decide release; the controller reconciles staffing. A rival's unaccepted PR alone is not a refutation.
 
 Primary researchers incorporate relevant guard advice at their normal
 checkpoints; use evidence critically, don't blindly execute it. Submit a
 complete proof immediately without waiting for any scout, review, or Executive
-approval. Executive delivers urgent coordination findings promptly; preempt
-only when confirmed material benefit outweighs interruption and preserve
-ongoing useful computations. Never dispatch, restart or steer an agent from
+approval. Executive delivers urgent coordination findings promptly and
+diagnoses controller failures; routine lifecycle actions remain programmatic. Never dispatch, restart or steer an agent from
 a support agent. The standing staffing controller executes lifecycle actions; Executive monitors and repairs it.
 
 ## Continuous lease allocation (Founder priority)
