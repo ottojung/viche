@@ -19,6 +19,12 @@ if [ ! -d /run/service/viche-pnp-staffing ]; then
 fi
 # Start independent local resource reclamation before any network I/O.
 python3 -m missions.pnp.watchdog || :
+# Compact only terminal, inactive research checkouts; keep unique deltas and
+# the exact Git base. Run independently of the allocation/publication cycle.
+mkdir -p "${PNP_STATE_ROOT}/cache"
+nohup flock -n "${PNP_STATE_ROOT}/cache/retention.lock" \
+    timeout 180 python3 -m missions.pnp.retention --limit 6 \
+    </dev/null >"${PNP_STATE_ROOT}/cache/retention.log" 2>&1 &
 # Independent checked-proof scout. A slow fetch/index never blocks leasing,
 # publication, or the Executive. The lock prevents overlapping refreshes.
 mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache"

@@ -7,6 +7,7 @@ python3 tests/pnp-research.py
 python3 tests/pnp-pipeline.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
+python3 tests/pnp-retention.py
 python3 tests/pnp-proof-tools.py
 python3 tests/pnp-bench.py
 
