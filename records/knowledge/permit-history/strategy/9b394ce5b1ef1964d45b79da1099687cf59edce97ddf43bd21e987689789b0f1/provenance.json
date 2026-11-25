@@ -1,0 +1,24 @@
+{
+  "original_budget_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+  "original_main_commit": "d7c2f84af08032327ae63aeefd65f41ad53eb8c8",
+  "original_permit_sha256": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1",
+  "preserved_artifacts": {
+    "permit.json": {
+      "original_path": "records/knowledge/permits/strategy.json",
+      "path": "records/knowledge/permit-history/strategy/9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1/permit.json",
+      "sha256": "9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1"
+    },
+    "review-attestation.json": {
+      "original_path": "records/knowledge/pilot-reviews/strategy-attestation.json",
+      "path": "records/knowledge/permit-history/strategy/9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1/review-attestation.json",
+      "sha256": "8b104b054eb2bf995eee338e85c83f9809f9e54213f56bcfb07b1fdf58e42ccb"
+    },
+    "review.json": {
+      "original_path": "records/knowledge/pilot-reviews/strategy.json",
+      "path": "records/knowledge/permit-history/strategy/9b394ce5b1ef1964d45b79da1099687cf59edce97ddf43bd21e987689789b0f1/review.json",
+      "sha256": "84f70fd78e01060d62b0e9e9ae18cdd8f3c30796d1307c6a694fe521b9b9a756"
+    }
+  },
+  "review_decision": "proceed",
+  "reviewed_at": 1795551268
+}

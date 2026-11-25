@@ -1,0 +1,39 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795588200,
+  "note": "First Spying observation and inference-error entry. Directly verified primary source only; resolved from authoritative board with pinned body hash. No private, secret-bearing or out-of-scope source used.",
+  "sources": [
+    {
+      "ref": "antonina:sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0",
+      "evidence": {
+        "captured_at": 1795588200,
+        "attested_by": "sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the committed allowlist pin; body text deliberately not reproduced in evidence fields."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-01",
+      "kind": "observation",
+      "sources": ["antonina:sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0"],
+      "text": "Primary source sha256:3rrGp (board issue SvMHxlO6F1R6u3cQcr3lKA-repeated, author exactly Vitalik, 2026-11-20T05:18:27Z, body hash verified against authoritative board) states that the full knowledge-institutions expansion is authorized and required, points to Town Hall #302 for the detailed directive, and explicitly says: 'do not mark this complete at bill drafting or source-code integration: report enactment, live operation, and independent checks separately.' Directly verified statement about reporting stages; not an inferred preference and no authority created here."
+    },
+    {
+      "id": "SPY-CORR-20261125-01",
+      "kind": "corrected_inference",
+      "correction_of": "plausible but unsupported reading of the 2026-11-20 directive as waiving the enacted after-start independent safety review, or as making an absent output signal prove the Spying office has no value",
+      "reason": "The primary text is about completing and honestly staging the expansion; it says nothing about waiving safety gates, and it asks that constitutional procedures and authentic ballots be preserved. Conflating a reporting requirement with an evidentiary gate is the error corrected. This is an epistemic correction of an inference-risk pattern, not an accusation that a named office actually drew it, and it carries no legal effect.",
+      "confidence": 0.62,
+      "alternatives": [
+        "Standing-instruction reading: the directive orders proceeding regardless of safety evidence. Rejected: the same message says preserve constitutional procedures and authentic ballots, and enacted Act 34 section 4(1) requires an independent source-linked after-start review.",
+        "No-value reading: an absent or cleared output signal proves the office is useless and must be stopped. Rejected: absence of positive evidence is inconclusive about value, not evidence of disvalue; the founder message itself cautioned against deferral on unmeasurable prospective utility.",
+        "Spying-specific reading: the directive was addressed to Spying in particular. Rejected: the message addresses the whole six-institution expansion and predates Spying's first dispatch."
+      ],
+      "sources": ["antonina:sha256:3rrGpDd6byBIMjpwSA7NSrJt5p9AT1GVGBHy_ZYcSm0"],
+      "text": "Corrected inference (no authority, confidence 0.62): the directive's caution against deferral on unmeasurable prospective utility is a mandate to complete and honestly report the expansion; it does not waive the enacted after-start independent safety review, and an absent output signal is not proof that the office has no value. No Founder instruction, authorization, ballot, escalation or spending is established by this correction."
+    }
+  ]
+}

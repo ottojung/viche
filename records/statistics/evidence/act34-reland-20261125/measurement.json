@@ -1,0 +1,254 @@
+{
+  "activation_note": "Act34 recurring-renewal activation. Genuine Executive c1e00002 signatures on exact origin commit aff4dedce272cd8c2fe9f73350fb5dce6cb915dc, board approve review + four act34-executive gate comments recorded on issue bpzNUUt9izRYOOcONcTy9K-implicate under appointment FxkZWjmZ1T5WXbO0h55tME-lightly. Budget b80f48 bound to Economy measured recurring envelope b85e4a5d; zero-billed free_only controls, non-resettable 45-day debt and original expiry 1799432516 preserved. Predecessor permits, adverse Spying review and attestations archived byte-identically with provenance under permit-history/; current review files removed atomically so each new permit opens a fresh 48h after-start Judiciary window. not_before=1795560059. No paid route, no new source scope, no efficacy claim.",
+  "activation_status": "ACTIVE",
+  "admit_new_config_at_current_charges": {
+    "foresight": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "spying": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "statistics": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "strategy": {
+      "admit": true,
+      "reason": "within caps"
+    }
+  },
+  "captured_from": "canonical main + /var/lib/lubko/wd/viche-state/knowledge/budget",
+  "captured_utc": "2026-11-25T06:24:32Z",
+  "charges": {
+    "by_office": {
+      "foresight": {
+        "cpu_seconds": 3699.4300000001676,
+        "tokens_total": 3733242,
+        "wall_seconds": 905
+      },
+      "spying": {
+        "cpu_seconds": 1969.3899999996647,
+        "tokens_total": 0,
+        "wall_seconds": 484
+      },
+      "statistics": {
+        "cpu_seconds": 11536.290000000037,
+        "tokens_total": 14577470,
+        "wall_seconds": 2868
+      },
+      "strategy": {
+        "cpu_seconds": 11087.0,
+        "tokens_total": 13829232,
+        "wall_seconds": 2770
+      }
+    },
+    "cpu_seconds": 28292.10999999987,
+    "tokens_total": 32139944,
+    "wall_seconds": 7027
+  },
+  "charges_counted": [
+    "r1795549284-UbpN96al",
+    "r1795549310-fUfef5Jf",
+    "r1795549312-5XZhL8gg",
+    "r1795549314-NF0T6ySo",
+    "r1795587665-AR7LhTnT",
+    "r1795587673-4BdLzlhX",
+    "r1795587676-SJSZkBC8"
+  ],
+  "charges_reproduce_frozen_aggregate": true,
+  "charges_skipped": [],
+  "config_checks": {
+    "accounting_window_seconds": 3888000,
+    "aggregate_equals_sum_of_office_caps": true,
+    "per_office_caps_match_permits": true,
+    "per_run_below_office_cap": true,
+    "per_run_caps_match_permits": true
+  },
+  "economy_checks": {
+    "control_hashes_match_frozen_controls": true,
+    "provider_snapshot_sha256": "7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb",
+    "report_ref": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md",
+    "report_sha256_matches_frozen_economy_report": true
+  },
+  "frozen_aggregate_sha256": "4d970be646e49fc0da253d9055590abe9cc5a5e0efe78be199cbe8155591d54d",
+  "negative_control_overload_statistics": {
+    "admit": false,
+    "reason": "tokens_total projected 509404636 exceeds statistics office cap 509404635"
+  },
+  "negative_control_superseded_config": {
+    "foresight": {
+      "admit": false,
+      "reason": "tokens_total projected 15053345 exceeds foresight office cap 11320103; cpu_seconds projected 36279.10999999987 exceeds aggregate cap 31948; cpu_seconds projected 11686.430000000168 exceeds foresight office cap 7987; wall_seconds projected 9024 exceeds aggregate cap 7988; wall_seconds projected 2902 exceeds foresight office cap 1997"
+    },
+    "spying": {
+      "admit": false,
+      "reason": "cpu_seconds projected 36279.10999999987 exceeds aggregate cap 31948; cpu_seconds projected 9956.389999999665 exceeds spying office cap 7987; wall_seconds projected 9024 exceeds aggregate cap 7988; wall_seconds projected 2481 exceeds spying office cap 1997"
+    },
+    "statistics": {
+      "admit": false,
+      "reason": "tokens_total projected 25897573 exceeds statistics office cap 11320103; cpu_seconds projected 36279.10999999987 exceeds aggregate cap 31948; cpu_seconds projected 19523.290000000037 exceeds statistics office cap 7987; wall_seconds projected 9024 exceeds aggregate cap 7988; wall_seconds projected 4865 exceeds statistics office cap 1997"
+    },
+    "strategy": {
+      "admit": false,
+      "reason": "tokens_total projected 25149335 exceeds strategy office cap 11320103; cpu_seconds projected 36279.10999999987 exceeds aggregate cap 31948; cpu_seconds projected 19074.0 exceeds strategy office cap 7987; wall_seconds projected 9024 exceeds aggregate cap 7988; wall_seconds projected 4767 exceeds strategy office cap 1997"
+    }
+  },
+  "own_statistics_reservation": {
+    "agent_id": "7DK7GGvK5cAABfRRcrLNzC-colour",
+    "created_at": 1795587673,
+    "id": "r1795587673-4BdLzlhX",
+    "state": "active"
+  },
+  "permit_checks": {
+    "foresight": {
+      "authorized_by": true,
+      "budget_sha256_matches_config": true,
+      "enabled_matches": true,
+      "enforcement_control_hashes_match": true,
+      "expiry_matches": true,
+      "matches_activation_permit_sha256": true,
+      "negative_acceptance_digest_consistent": true,
+      "not_before_matches": true,
+      "origin_commit": true,
+      "sha256": "57b9daa1495d4e6d40800f29dae05e6b72df91cd3190c3a8f7a5e00088acd7a9"
+    },
+    "spying": {
+      "authorized_by": true,
+      "budget_sha256_matches_config": true,
+      "enabled_matches": true,
+      "enforcement_control_hashes_match": true,
+      "expiry_matches": true,
+      "matches_activation_permit_sha256": true,
+      "negative_acceptance_digest_consistent": true,
+      "not_before_matches": true,
+      "origin_commit": true,
+      "sha256": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0"
+    },
+    "statistics": {
+      "authorized_by": true,
+      "budget_sha256_matches_config": true,
+      "enabled_matches": true,
+      "enforcement_control_hashes_match": true,
+      "expiry_matches": true,
+      "matches_activation_permit_sha256": true,
+      "negative_acceptance_digest_consistent": true,
+      "not_before_matches": true,
+      "origin_commit": true,
+      "sha256": "cb735305b408969b1e372a48ff2928dc736b594bf87dca5f3e65138587f70159"
+    },
+    "strategy": {
+      "authorized_by": true,
+      "budget_sha256_matches_config": true,
+      "enabled_matches": true,
+      "enforcement_control_hashes_match": true,
+      "expiry_matches": true,
+      "matches_activation_permit_sha256": true,
+      "negative_acceptance_digest_consistent": true,
+      "not_before_matches": true,
+      "origin_commit": true,
+      "sha256": "6121f77251694e24abf3f7da976fe5dc6fcd972fe157157552e64d1664a7f77c"
+    }
+  },
+  "sha256": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "budget-state/aggregate.json": "4d970be646e49fc0da253d9055590abe9cc5a5e0efe78be199cbe8155591d54d",
+    "budget-state/reservations/r1795549284-UbpN96al.json": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12",
+    "budget-state/reservations/r1795549310-fUfef5Jf.json": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24",
+    "budget-state/reservations/r1795549312-5XZhL8gg.json": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d",
+    "budget-state/reservations/r1795549314-NF0T6ySo.json": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c",
+    "budget-state/reservations/r1795587665-AR7LhTnT.json": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f",
+    "budget-state/reservations/r1795587673-4BdLzlhX.json": "a2c8c20418898ef737bcf5494b9c2d087b280923e0109f34bd9e4dda315cfcb8",
+    "budget-state/reservations/r1795587676-SJSZkBC8.json": "9a98e8b44113c9b9ee6bdb6158a13ec97f65804b42623ad46afcb42da5d627fe",
+    "economy-zero-billed-verification-1831z.md": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "knowledge-free-dispatch.sh": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a",
+    "knowledge-zero-billed-policy.json": "d462c5010d5c3eef736d539f609837f4daae0eded257f6e1267f58f44b708096",
+    "knowledge-zero-billed.py": "54c77efc3739a67c8945eb7fc4f7b379d5070ae20ee1aee6c474ad454636be92",
+    "permit-foresight.json": "57b9daa1495d4e6d40800f29dae05e6b72df91cd3190c3a8f7a5e00088acd7a9",
+    "permit-spying.json": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0",
+    "permit-statistics.json": "cb735305b408969b1e372a48ff2928dc736b594bf87dca5f3e65138587f70159",
+    "permit-strategy.json": "6121f77251694e24abf3f7da976fe5dc6fcd972fe157157552e64d1664a7f77c"
+  },
+  "third_wave_projection_tokens": {
+    "foresight": {
+      "office_cap": 509404635,
+      "office_runs_remaining_at_full_ceiling": 44,
+      "office_used": 3733242,
+      "run_cap": 11320103
+    },
+    "spying": {
+      "office_cap": 509404635,
+      "office_runs_remaining_at_full_ceiling": 45,
+      "office_used": 0,
+      "run_cap": 11320103
+    },
+    "statistics": {
+      "office_cap": 509404635,
+      "office_runs_remaining_at_full_ceiling": 43,
+      "office_used": 14577470,
+      "run_cap": 11320103
+    },
+    "strategy": {
+      "office_cap": 509404635,
+      "office_runs_remaining_at_full_ceiling": 43,
+      "office_used": 13829232,
+      "run_cap": 11320103
+    }
+  },
+  "validate_config_errors": [],
+  "waves": {
+    "foresight": {
+      "first_wave_0964bd1e": [
+        "r1795549314-NF0T6ySo"
+      ],
+      "second_wave_b80f48af": [
+        "r1795587665-AR7LhTnT"
+      ],
+      "second_wave_native_tokens": [
+        569585
+      ],
+      "second_wave_states": [
+        "closed"
+      ]
+    },
+    "spying": {
+      "first_wave_0964bd1e": [
+        "r1795549312-5XZhL8gg"
+      ],
+      "second_wave_b80f48af": [],
+      "second_wave_native_tokens": [],
+      "second_wave_states": []
+    },
+    "statistics": {
+      "first_wave_0964bd1e": [
+        "r1795549284-UbpN96al"
+      ],
+      "second_wave_b80f48af": [
+        "r1795587673-4BdLzlhX"
+      ],
+      "second_wave_native_tokens": [
+        467006
+      ],
+      "second_wave_states": [
+        "active"
+      ]
+    },
+    "strategy": {
+      "first_wave_0964bd1e": [
+        "r1795549310-fUfef5Jf"
+      ],
+      "second_wave_b80f48af": [
+        "r1795587676-SJSZkBC8"
+      ],
+      "second_wave_native_tokens": [
+        635416
+      ],
+      "second_wave_states": [
+        "active"
+      ]
+    }
+  }
+}

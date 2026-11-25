@@ -1,0 +1,94 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795592017,
+  "note": "Follow-up inference-error observation. Six exact-author Vitalik messages resolved from authoritative board data and pinned in records/knowledge/spying-source-allowlist.json (subject to independent Act 31 review). One author, one thread, ~58 hours: widening coverage of the author's own statements, not independent corroboration. No private, secret-bearing or out-of-scope source used.",
+  "sources": [
+    {
+      "ref": "antonina:sha256:ZQqE57n3VKM0kRC_FLwRRw8xviv83wy4KYe0TZ9fWDw",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:ZQqE57n3VKM0kRC_FLwRRw8xviv83wy4KYe0TZ9fWDw",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    },
+    {
+      "ref": "antonina:sha256:onFmcp0bRYqicjN0obKG358SrUpOvZ6YoKHKvVjbmB0",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:onFmcp0bRYqicjN0obKG358SrUpOvZ6YoKHKvVjbmB0",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    },
+    {
+      "ref": "antonina:sha256:BSTZyiNhjlqrolFxh5Iv6esaBICGKdSqeTIvTBXrAe4",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:BSTZyiNhjlqrolFxh5Iv6esaBICGKdSqeTIvTBXrAe4",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    },
+    {
+      "ref": "antonina:sha256:KQDgGa6Yqd63dBDDzRlQmnJKYkZfXdv3sOA5YpfhuOM",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:KQDgGa6Yqd63dBDDzRlQmnJKYkZfXdv3sOA5YpfhuOM",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    },
+    {
+      "ref": "antonina:sha256:i_KDrOgINbz2iLRaRkmNQ_aVXn5kKNtdSuZJghfdd1U",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:i_KDrOgINbz2iLRaRkmNQ_aVXn5kKNtdSuZJghfdd1U",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    },
+    {
+      "ref": "antonina:sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+      "evidence": {
+        "captured_at": 1795592017,
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Exact-author Vitalik board message resolved from authoritative board data; body hash matches the pinned allowlist pin."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-02",
+      "kind": "observation",
+      "sources": [
+        "antonina:sha256:ZQqE57n3VKM0kRC_FLwRRw8xviv83wy4KYe0TZ9fWDw",
+        "antonina:sha256:onFmcp0bRYqicjN0obKG358SrUpOvZ6YoKHKvVjbmB0",
+        "antonina:sha256:BSTZyiNhjlqrolFxh5Iv6esaBICGKdSqeTIvTBXrAe4",
+        "antonina:sha256:KQDgGa6Yqd63dBDDzRlQmnJKYkZfXdv3sOA5YpfhuOM",
+        "antonina:sha256:i_KDrOgINbz2iLRaRkmNQ_aVXn5kKNtdSuZJghfdd1U",
+        "antonina:sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs"
+      ],
+      "text": "Across six exact-author Vitalik messages in issue SvMHxlO6F1R6u3cQcr3lKA-repeated (2026-11-22T08:48:32Z through 2026-11-24T18:15:23Z, each re-resolved from authoritative board data with body hash matched to the pinned allowlist), the author repeatedly pressed to finish and activate the four offices ('zero usage is unacceptable', 'actual activation of all four offices, not another report', 'don't do small') and in the same messages repeatedly stated that safeguards remain: 'NOT permission to bypass Parliament, Judiciary independence, Act 32 K/D/E/H', 'Safety is not waived', 'no unilateral bypass of enacted Acts 32/33', and 'This is a mandate to finish, not a waiver of genuine financial or privacy safeguards'. Directly verified statements from one author in one thread over about 58 hours; distinct message IDs are not independent observations."
+    },
+    {
+      "id": "SPY-CORR-20261125-02",
+      "kind": "corrected_inference",
+      "correction_of": "reading the 2026-11-22 to 2026-11-24 repetition of activation complaints as an escalated preference for activity, a new grant of authority, or a relaxation of the enacted after-start independent review",
+      "reason": "Every cited message that presses for speed also reaffirms a safeguard in the same text. The repetition is therefore better explained as corrective attention about a delivery failure (offices not yet operating) than as a changed preference. This widens the same-author sample behind SPY-CORR-20261125-01; it does not claim independent corroboration or that any named office actually drew the error.",
+      "confidence": 0.73,
+      "alternatives": [
+        "Preference-shift reading: the repeated urgency means speed is now preferred over safety evidence. Rejected: the same messages state 'Safety is not waived', preserve independent after-start Judiciary review and require genuine ballots.",
+        "Authority reading: the messages grant Spying new scope or spending. Rejected: they describe themselves as ordinary-priority communications and require Parliament to enact changes with real ballots; this inference asserts no authority.",
+        "Paperwork-only reading: the messages ask only for reports and laws, not operation. Partially supported by 'Do not confuse producing a law or a report with operating the institutions', but it does not explain the repeated operational demands and concrete package references, so it is retained as a partial rival.",
+        "Independence reading: six message IDs are six independent observations. Rejected: all are from one author in one thread over about 58 hours and are correlated; they widen coverage of the same author's explicit statements."
+      ],
+      "sources": [
+        "antonina:sha256:ZQqE57n3VKM0kRC_FLwRRw8xviv83wy4KYe0TZ9fWDw",
+        "antonina:sha256:onFmcp0bRYqicjN0obKG358SrUpOvZ6YoKHKvVjbmB0",
+        "antonina:sha256:BSTZyiNhjlqrolFxh5Iv6esaBICGKdSqeTIvTBXrAe4",
+        "antonina:sha256:KQDgGa6Yqd63dBDDzRlQmnJKYkZfXdv3sOA5YpfhuOM",
+        "antonina:sha256:i_KDrOgINbz2iLRaRkmNQ_aVXn5kKNtdSuZJghfdd1U",
+        "antonina:sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs"
+      ],
+      "text": "Corrected inference (no authority, confidence 0.73): the 2026-11-22 to 2026-11-24 repetition is best read as corrective attention about non-activation, an observed delivery problem, rather than an escalated preference or a relaxation of the after-start independent review. The same author repeatedly paired urgency with explicit preservation of safeguards, which falsifies the waivers the repetition could be taken to imply. Falsifier: any cited message that explicitly waived the independent after-start review, set aside Parliament or Judiciary procedures, or directed Spying outside authorized sources; or primary evidence that all four offices were already live with independently checked outcomes at each message time. No Founder instruction, authorization, ballot or spending is established here."
+    }
+  ]
+}

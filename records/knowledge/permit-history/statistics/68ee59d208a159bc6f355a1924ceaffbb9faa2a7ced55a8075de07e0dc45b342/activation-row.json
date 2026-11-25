@@ -1,0 +1,16 @@
+{
+  "authorized_by": "act:34:statistics",
+  "enabled": true,
+  "expires_at": 1799432516,
+  "not_before": 1795544516,
+  "permit_attestation": {
+    "expected_reviewer": "c1e00002",
+    "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+    "officer_agent_id": "6DdpOd8W4yreoITvjZGDZf-quotas"
+  },
+  "permit_origin_commit": "7d49d49af0bb1b6b69aa011e2ecb78e5046b32cd",
+  "permit_ref": "records/knowledge/permits/statistics.json",
+  "permit_sha256": "68ee59d208a159bc6f355a1924ceaffbb9faa2a7ced55a8075de07e0dc45b342",
+  "signer": "c1e00002",
+  "trial_mode": "adaptive-v1"
+}

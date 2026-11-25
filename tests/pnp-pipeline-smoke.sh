@@ -17,6 +17,7 @@ python3 tests/pnp-allocator.py
 /bin/sh tests/pnp-runtime-isolation-smoke.sh
 
 python3 tests/pnp-continuity.py
+python3 tests/pnp-staffing.py
 
 python3 tests/pnp-brief.py
 python3 tests/pnp-tool-discovery.py

@@ -51,11 +51,22 @@ def guide(role):
     lines = [f"YOUR ROLE: {role}. {purpose}",
              "FIRST: run ~/.local/bin/pnp-research start --role " + role +
              " (a small current work packet, not a documentation reading task).",
-             guidance]
+             guidance,
+             "CONCRETE CIRCUIT-SIZE STEPS (statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S`, or a `¬ (...)` twin): "
+             "do not hand-prove them. The lb_cert generator pre-builds candidates on marceline-dev for every open step into "
+             "PNP_STATE_ROOT/lbcert/cands/GAP.lean (status in GAP.status) and the allocator fast lane submits them within one tick. "
+             "Build one yourself on marceline-dev (32 cores, ~20 s): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py "
+             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean  (exit 0 written, 3 bound false, 4 too big). See missions/pnp/lbcert/README.md.",
+             "SIBLING PROOFS: 37% of merged theorems share their statement shape (numerals aside) with another merged one, and "
+             "a sibling's proof with the statement swapped compiles about half the time. The town retries this automatically "
+             "every 5 minutes while a step is held (PNP_STATE_ROOT/lbcert/cands/GAP.status says `ok sibling SOURCE`). "
+             "Run it yourself (compiled on marceline-dev): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/sibremote.py "
+             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs  (exit 0 written, 5 no compiling sibling). "
+             "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method."]
     if role in BOUND:
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",
-          "Run pnp-remote-check --availability once per checkout. Use --scratch --async FILE.lean for experimental Lean or --async FILE.lean for complete candidates; pnp-remote-check --wait ID retrieves the result. Use managed local Lean if remote unavailable. Do not build the same file twice.",
+          "Run pnp-remote-check --availability once per checkout. Use --scratch --async FILE.lean for experimental Lean or --async FILE.lean for complete candidates; pnp-remote-check --wait ID retrieves the result. NEVER launch raw `lake`, `lake env lean`, `lean` or `checklemma` yourself: a single unmanaged lean/lake process in a pnp worktree makes build_control.legacy_compilers() defer EVERY managed compile (exit 75), blocking kernel receipts for the whole swarm. When remote is unavailable use ONLY the managed compiler: PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake ... (or --light for narrow scratch). Do not build the same file twice.",
           "Use pnp-research knowledge find QUERY; knowledge show ID retrieves artifacts. Share findings through the existing support channel. Complete exact proof: use the normal submit command immediately."
         ]
     elif role in METHOD:

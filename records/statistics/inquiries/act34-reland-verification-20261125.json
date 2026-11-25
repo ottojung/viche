@@ -1,0 +1,296 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-reland-verification-20261125",
+  "stage": "measured",
+  "version": 2,
+  "supersedes": "act34-activation-reliability",
+  "question": "After the 2026-11-25 Act 34 recurring-renewal reland, are the four replacement permits, activation.json, the Economy zero-billed attestation and the deployed 45-wave knowledge-budget configuration mutually consistent at byte level, and was a second substantive office dispatch actually admitted and charged under the new bytes — i.e. is the earlier single-dispatch-only finding resolved?",
+  "why_now": "The prior Statistics measurement (landed at 7dbfcdc0 and cited as real work in the Judiciary 2026-11-24T20:14Z after-start review) concluded that per_run_caps == caps admitted only one substantive dispatch per office in the 45-day window. On 2026-11-25 the Executive relanded four replacement permits (new origin commit aff4ded…, new officer FxkZWjmZ…), a new activation.json (status ACTIVE) and a new knowledge-budget.conf (b80f48af…) with a 45-wave envelope; the Judiciary report itself says a later permit/config change requires a fresh disposition. Primary budget state now shows three second-wave reservations under the new config, including this statistics dispatch. Whether the relinked chain is hash-consistent and the repeat-dispatch limitation is resolved changes what Executive, Judiciary and the offices may legitimately claim and plan before the new 48-hour after-start window.",
+  "decision_use": "Gives the Executive and Judiciary a frozen, independently re-executed snapshot: (a) the relinked chain is byte-consistent and the deployed config validates; (b) the single-dispatch finding is resolved — a second wave was admitted under the new bytes and a third is admissible at current charges; (c) spying has no second-wave reservation, consistent with but not a verdict on the after-start HOLD; (d) in-flight reservations are charged at the full per-run ceiling and trued up on close, so cumulative debt is a bounded, time-dependent value rather than a single fixed number. It is a substrate reliability baseline, not a renewal, efficacy, legal-authorization or safety verdict.",
+  "method": "measure.py in the evidence directory byte-compares each replacement permit to its activation.json permit_sha256 and cross-checks authorized_by, not_before, expires_at, officer and budget_sha256; compares each permit enforcement_evidence and the Economy attestation to SHA-256 of the frozen government controls and the negative_acceptance_digest b5f40a2a…; validates the deployed config with its own frozen module; recomputes cumulative charges from the seven frozen reservation records with the deployed charges() function and checks they reproduce the frozen aggregate.json; classifies reservations by config_sha256 into first and second waves; re-executes admit() on the deployed config at current charges; and applies two negative controls (the superseded 0964bd1e… config and a synthetic over-cap usage). All inputs are the frozen primary copies; the script never reads live state, the board or a provider.",
+  "population": "The four replacement permits named in the new activation.json, that activation.json, the one Economy zero-billed attestation it references, the one deployed knowledge-budget.conf, the deployed knowledge-budget-tool.py and zero-billed controls, and all seven reservation records plus aggregate.json in the budget state at capture. The superseded 0964bd1e… config, first-wave reservations and the earlier 09:03Z digest are retained as negative controls, not co-equal current observations.",
+  "missingness": "No board comment or officer-signature verification was read by this office (no board tool in scope), so the claim of genuine board approval on origin commit aff4ded… is UNVERIFIED here, not a finding. No live provider or billing data was read; native token figures come from the frozen reservation meter snapshots. CPU figures are conservative whole-host UPPER_BOUND values, not per-office measurement. The two active second-wave sessions were still running at capture, so their final usage is UNKNOWN. No legal, safety, renewal or efficacy determination was made.",
+  "limitations": "This is a factual consistency and admission measurement of bytes and configuration fields, not an authorization or fitness verdict. Matching hashes establish that files agree, not that a test ran or that a control is secure. The chain is one instant (2026-11-25T06:24:32Z); any later permit, config or activation change invalidates the deployed claims. admit() was re-executed from a frozen copy of the deployed module, not from a separately written implementation, so this is a re-execution rather than independent reimplementation. The config note claiming one wave per day across 45 days is checked only insofar as the cap arithmetic supports roughly 45 full-ceiling runs; it is not validated as an outcome. Absence of a spying second-wave reservation does not by itself establish compliance with the Judiciary HOLD.",
+  "source_dependence": "The activation, permits, budget config and Economy attestation were produced by the same Executive/Economy activation effort and name the same control hashes; their mutual agreement is correlated provenance, not independent corroboration. Copied reports and relabelled receipts are not counted as separate observations. The negative controls use genuinely different bytes (the superseded config and a synthetic over-cap value), and predecessor archives were compared byte-for-byte, which is a distinct check.",
+  "negative_controls": "At the same current charges, admit() under the superseded 0964bd1e… config refuses a further run for all four offices (office caps 11,320,103 tokens and aggregate 45,280,412), whereas the new config admits all four — the test distinguishes the two configurations rather than always returning admit. A synthetic statistics usage one token past (office cap − per-run cap) is refused under the new config. The earlier v1 measurement (superseded by this one) found per_run_caps == caps and second_substantive_dispatch_admissible false; that is a genuine historical, different-byte observation retained unchanged.",
+  "revisit_when": "On any further permit, activation.json or knowledge-budget.conf landing; after the new 48-hour Judiciary after-start disposition for the relanded permits; after the active second-wave reservations close and the aggregate is trued up; after a box restart; if a fourth wave is admitted or admit() refuses under unchanged bytes; or if the board approval currently UNVERIFIED here becomes independently readable.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/aggregate.json",
+      "sha256": "4d970be646e49fc0da253d9055590abe9cc5a5e0efe78be199cbe8155591d54d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795549284-UbpN96al.json",
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795549310-fUfef5Jf.json",
+      "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795549312-5XZhL8gg.json",
+      "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795549314-NF0T6ySo.json",
+      "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795587665-AR7LhTnT.json",
+      "sha256": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795587673-4BdLzlhX.json",
+      "sha256": "a2c8c20418898ef737bcf5494b9c2d087b280923e0109f34bd9e4dda315cfcb8"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/budget-state/reservations/r1795587676-SJSZkBC8.json",
+      "sha256": "9a98e8b44113c9b9ee6bdb6158a13ec97f65804b42623ad46afcb42da5d627fe"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/economy-zero-billed-verification-1831z.md",
+      "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/knowledge-free-dispatch.sh",
+      "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/knowledge-zero-billed-policy.json",
+      "sha256": "d462c5010d5c3eef736d539f609837f4daae0eded257f6e1267f58f44b708096"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/knowledge-zero-billed.py",
+      "sha256": "54c77efc3739a67c8945eb7fc4f7b379d5070ae20ee1aee6c474ad454636be92"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/permit-foresight.json",
+      "sha256": "57b9daa1495d4e6d40800f29dae05e6b72df91cd3190c3a8f7a5e00088acd7a9"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/permit-spying.json",
+      "sha256": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/permit-statistics.json",
+      "sha256": "cb735305b408969b1e372a48ff2928dc736b594bf87dca5f3e65138587f70159"
+    },
+    {
+      "path": "records/statistics/evidence/act34-reland-20261125/permit-strategy.json",
+      "sha256": "6121f77251694e24abf3f7da976fe5dc6fcd972fe157157552e64d1664a7f77c"
+    }
+  ],
+  "result": {
+    "category": "consistent_relinked_chain_with_second_wave_admitted_and_repeat_dispatch_resolved",
+    "captured_utc": "2026-11-25T06:24:32Z",
+    "activation_status": "ACTIVE",
+    "permit_hash_matches_activation": {
+      "foresight": true,
+      "spying": true,
+      "statistics": true,
+      "strategy": true
+    },
+    "permit_cross_field_consistency": {
+      "foresight": {
+        "authorized_by": true,
+        "budget_sha256_matches_config": true,
+        "enabled_matches": true,
+        "enforcement_control_hashes_match": true,
+        "expiry_matches": true,
+        "matches_activation_permit_sha256": true,
+        "negative_acceptance_digest_consistent": true,
+        "not_before_matches": true,
+        "origin_commit": true
+      },
+      "spying": {
+        "authorized_by": true,
+        "budget_sha256_matches_config": true,
+        "enabled_matches": true,
+        "enforcement_control_hashes_match": true,
+        "expiry_matches": true,
+        "matches_activation_permit_sha256": true,
+        "negative_acceptance_digest_consistent": true,
+        "not_before_matches": true,
+        "origin_commit": true
+      },
+      "statistics": {
+        "authorized_by": true,
+        "budget_sha256_matches_config": true,
+        "enabled_matches": true,
+        "enforcement_control_hashes_match": true,
+        "expiry_matches": true,
+        "matches_activation_permit_sha256": true,
+        "negative_acceptance_digest_consistent": true,
+        "not_before_matches": true,
+        "origin_commit": true
+      },
+      "strategy": {
+        "authorized_by": true,
+        "budget_sha256_matches_config": true,
+        "enabled_matches": true,
+        "enforcement_control_hashes_match": true,
+        "expiry_matches": true,
+        "matches_activation_permit_sha256": true,
+        "negative_acceptance_digest_consistent": true,
+        "not_before_matches": true,
+        "origin_commit": true
+      }
+    },
+    "economy_checks": {
+      "control_hashes_match_frozen_controls": true,
+      "provider_snapshot_sha256": "7acb07d485b4a2b2a0cc9975c13e574981a1f4e196fe21cc0785d994709498eb",
+      "report_ref": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md",
+      "report_sha256_matches_frozen_economy_report": true
+    },
+    "config_checks": {
+      "accounting_window_seconds": 3888000,
+      "aggregate_equals_sum_of_office_caps": true,
+      "per_office_caps_match_permits": true,
+      "per_run_below_office_cap": true,
+      "per_run_caps_match_permits": true
+    },
+    "validate_config_errors": [],
+    "charges_reproduce_frozen_aggregate": true,
+    "cumulative_charges": {
+      "tokens_total": 32139944,
+      "cpu_seconds": 28292.10999999987,
+      "wall_seconds": 7027
+    },
+    "cumulative_charges_by_office_tokens": {
+      "statistics": 14577470,
+      "foresight": 3733242,
+      "strategy": 13829232,
+      "spying": 0
+    },
+    "waves": {
+      "foresight": {
+        "first_wave_0964bd1e": [
+          "r1795549314-NF0T6ySo"
+        ],
+        "second_wave_b80f48af": [
+          "r1795587665-AR7LhTnT"
+        ],
+        "second_wave_native_tokens": [
+          569585
+        ],
+        "second_wave_states": [
+          "closed"
+        ]
+      },
+      "spying": {
+        "first_wave_0964bd1e": [
+          "r1795549312-5XZhL8gg"
+        ],
+        "second_wave_b80f48af": [],
+        "second_wave_native_tokens": [],
+        "second_wave_states": []
+      },
+      "statistics": {
+        "first_wave_0964bd1e": [
+          "r1795549284-UbpN96al"
+        ],
+        "second_wave_b80f48af": [
+          "r1795587673-4BdLzlhX"
+        ],
+        "second_wave_native_tokens": [
+          467006
+        ],
+        "second_wave_states": [
+          "active"
+        ]
+      },
+      "strategy": {
+        "first_wave_0964bd1e": [
+          "r1795549310-fUfef5Jf"
+        ],
+        "second_wave_b80f48af": [
+          "r1795587676-SJSZkBC8"
+        ],
+        "second_wave_native_tokens": [
+          635416
+        ],
+        "second_wave_states": [
+          "active"
+        ]
+      }
+    },
+    "own_statistics_reservation": {
+      "agent_id": "7DK7GGvK5cAABfRRcrLNzC-colour",
+      "created_at": 1795587673,
+      "id": "r1795587673-4BdLzlhX",
+      "state": "active"
+    },
+    "admit_new_config_at_current_charges": {
+      "foresight": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "spying": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "statistics": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "strategy": {
+        "admit": true,
+        "reason": "within caps"
+      }
+    },
+    "third_wave_projection_tokens": {
+      "foresight": {
+        "office_cap": 509404635,
+        "office_runs_remaining_at_full_ceiling": 44,
+        "office_used": 3733242,
+        "run_cap": 11320103
+      },
+      "spying": {
+        "office_cap": 509404635,
+        "office_runs_remaining_at_full_ceiling": 45,
+        "office_used": 0,
+        "run_cap": 11320103
+      },
+      "statistics": {
+        "office_cap": 509404635,
+        "office_runs_remaining_at_full_ceiling": 43,
+        "office_used": 14577470,
+        "run_cap": 11320103
+      },
+      "strategy": {
+        "office_cap": 509404635,
+        "office_runs_remaining_at_full_ceiling": 43,
+        "office_used": 13829232,
+        "run_cap": 11320103
+      }
+    },
+    "negative_control_superseded_config_admit": {
+      "foresight": false,
+      "spying": false,
+      "statistics": false,
+      "strategy": false
+    },
+    "negative_control_overload_admit": false,
+    "derived_measurement_sha256": "79dedef14327dcb37ddc758396bda892c10fe7e66cfbd155b9920ea06fa737e0",
+    "falsifiers": [
+      "Any replacement permit whose sha256 differs from its activation.json permit_sha256.",
+      "Any enforcement control or Economy report hash that differs from the frozen government/control bytes.",
+      "A knowledge-budget.conf whose per-office caps or per_run_caps differ from the four signed permits.",
+      "charges() failing to reproduce the frozen aggregate.json from the frozen reservations.",
+      "admit() returning false under the new config at current charges, or a fourth wave being admitted while bytes are unchanged (would require revisiting the cap arithmetic).",
+      "A second-wave spying reservation appearing with a different config_sha256 than b80f48af…, or a finding that the archived predecessor bytes are not identical."
+    ]
+  }
+}

@@ -226,8 +226,9 @@ def scan(refresh=False):
 def roles(agent):
     try:
         cwd=Path(agent.get("cwd") or "").resolve()
-        for role in FAMILY_ROLES:
-            if cwd==Path(config.STATE_ROOT,"swarm","independent",role).resolve():
+        for role in (*ROLES,*DECISION_ROLES,*FAMILY_ROLES):
+            group="independent" if role in FAMILY_ROLES else "standing-support"
+            if cwd==Path(config.STATE_ROOT,"swarm",group,role).resolve():
                 return [role]
     except (OSError,ValueError,TypeError):pass
     title = agent.get("title") or ""

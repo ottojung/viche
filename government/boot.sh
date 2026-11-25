@@ -253,7 +253,10 @@ if [ -f "$town/government/board-trail-refresh.sh" ]; then
     nonblocking_office board-trail 180 /bin/sh "$town/government/board-trail-refresh.sh"
 fi
 if [ -f "$town/government/judiciary-measurements.py" ]; then
-    nonblocking_office judiciary-measurements 180 python3 "$town/government/judiciary-measurements.py"
+    # Board-trail cross-check (bounded ~103 s) plus suite compliance (~57 s)
+    # must both fit inside one window; the old 180 s cap could kill a healthy
+    # run and leave a stale measurement file. Keep headroom.
+    nonblocking_office judiciary-measurements 360 python3 "$town/government/judiciary-measurements.py"
 fi
 
 # Founder directive 2026-11-16: ten-line daily digest on Town Hall, once per

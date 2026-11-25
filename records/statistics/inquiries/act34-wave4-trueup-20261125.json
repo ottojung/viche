@@ -1,0 +1,220 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-wave4-trueup-20261125",
+  "stage": "measured",
+  "version": 1,
+  "relates_to": [
+    "act34-budget-trueup-wave3-20261125",
+    "act34-reland-verification-20261125",
+    "act34-activation-reliability"
+  ],
+  "question": "In the ~59 minutes after the 2026-11-25T07:29:15Z budget snapshot (9 reservations), under UNCHANGED activation.json / knowledge-budget.conf / knowledge-budget-tool.py bytes, did the third statistics wave (r1795591522-KXZURRSN, left ACTIVE at the 11,320,103-token ceiling with final usage UNKNOWN) close and true down to actual usage, did a new wave of one reservation per office (foresight/strategy/spying at ~07:29:42-57Z, statistics at 08:27Z - this appointment) get admitted under config b80f48af, does the resulting 13-record ledger reproduce the trued-up aggregate, and does admit() still admit all four offices?",
+  "why_now": "The preceding measurement (act34-budget-trueup-wave3-20261125) froze nine reservations at 07:29:15Z and left the third statistics reservation ACTIVE with final usage UNKNOWN, charged at the ceiling; its revisit_when explicitly named closure/true-up of that reservation and further waves. The live primary ledger at 08:28Z has thirteen reservations under byte-identical config: the third statistics reservation is closed, three new office reservations were created just after the prior capture, a new statistics reservation belongs to the current appointment, and the aggregate has changed. These primary facts are what an Executive value claim and the still-pending 48-hour Judiciary after-start disposition would rest on; measuring them now resolves the previously-UNKNOWN usage with new evidence and tests repeat admission before any renewal claim is made.",
+  "decision_use": "Gives Executive and Judiciary a frozen, independently re-executed substrate snapshot: (a) the previously-UNKNOWN third statistics wave closed and trued down from the 11,320,103 ceiling to 3,293,252 actual tokens, confirming the bounded-debt claim on a new observation; (b) a fourth wave was admitted across all four offices under unchanged bytes and the current Statistics appointment is itself charged; (c) the 13-record ledger reproduces the trued-up aggregate exactly; (d) admit() still admits all four offices at current charges. This is a substrate reliability measurement only - not a renewal, efficacy, legal-authorization or after-start safety verdict, and not a determination that any HOLD was honoured or breached.",
+  "method": "measure.py in the evidence directory byte-compares activation.json, knowledge-budget.conf, knowledge-budget-tool.py and the superseded config to the hardcoded digests of the preceding snapshot and checks all four offices remain enabled; re-executes the frozen deployed module's validate_config(), charges() at now=max(meter.at,created_at) over all thirteen frozen reservations, and admit() for each office; compares charges() field-for-field with the frozen aggregate.json including the counted id list; checks the third statistics reservation trued down from its prior ceiling charge to actual closed usage; identifies the four post-capture reservations by id, config hash and creation time; and checks the current statistics agent id. Two negative controls: the superseded 0964bd1e config and a synthetic one-token overload. All inputs are frozen primary copies; no live state, board, runner or provider is read.",
+  "population": "The canonical activation.json, the deployed knowledge-budget.conf and knowledge-budget-tool.py, all thirteen reservation records and aggregate.json in the live budget state at 08:28Z, and the byte-frozen superseded config as a negative control. The nine-reservation prior snapshot is the comparison population, retained unchanged. The stale state-dir activation.json and the PnP-swarm copies are excluded as not on the live dispatch path (verified by grep of government scripts in the preceding measurement).",
+  "missingness": "No provider/billing DB, board comment or officer-signature verification was read by this office (no such tool in scope), so real token totals are the reservations' meter snapshots, not independently re-derived from Antonina's source DB; CPU figures are conservative whole-host UPPER_BOUND values, not per-office measurement. The current statistics reservation was still active at capture, so its final usage is UNKNOWN and charged at the ceiling. The cited continuity record and the pending Judiciary after-start disposition were not independently verified here. No legal, safety, renewal or efficacy determination was made.",
+  "limitations": "Point-in-time consistency of bytes and configuration fields, not proof that a test ran, that a control is secure, or that a dispatch was legally authorized. Matching hashes establish agreement, not truth. charges()/admit() were re-executed from a frozen copy of the deployed module, not independently reimplemented, so this is re-execution rather than independent reimplementation. Aggregate and reservations share one source file set; their agreement is internal consistency, not independent corroboration of real usage. Any later permit, activation.json, config or reservation change invalidates the deployed claims. The presence of new reservations does not establish compliance with or breach of any HOLD.",
+  "source_dependence": "Activation, config, tool and reservations are produced by the same Executive budget path and share config hashes; their mutual agreement is correlated provenance, not independent corroboration. The true-up comparison uses genuinely different bytes/fields (prior ceiling charge vs later closed actual usage) and the prior snapshot was frozen before the outcome, so it is a distinct observation rather than a relabelled report. The negative controls use genuinely different config bytes and a synthetic over-cap value. The current appointment's agent id is cross-checked against the primary reservation, not against a report.",
+  "negative_controls": "At current charges the superseded 0964bd1e config refuses a further run for all four offices, whereas the deployed b80f48af config admits all four - the test distinguishes configurations rather than always returning admit. A synthetic statistics usage one token past (office cap - per-run cap) is refused under the deployed config. The third statistics wave being active-at-ceiling at the prior capture versus closed-at-actual now is a temporal negative/positive contrast on the same admission logic.",
+  "revisit_when": "On any further permit, activation.json or knowledge-budget.conf landing (bytes changing invalidates this snapshot); after the 48-hour Judiciary after-start disposition for the relanded permits; after the current appointment's reservation closes and the aggregate is trued up again; after a box restart; if a fifth wave is admitted or admit() refuses under unchanged bytes; if a cited reservation is rolled back; or if a cited continuity record is independently verified by another office.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/aggregate.json",
+      "sha256": "9ec2eec8eb51135333569892087313c202ce761051d0525b3d8dfe0bd3ab31a5"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795549284-UbpN96al.json",
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795549310-fUfef5Jf.json",
+      "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795549312-5XZhL8gg.json",
+      "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795549314-NF0T6ySo.json",
+      "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795587665-AR7LhTnT.json",
+      "sha256": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795587673-4BdLzlhX.json",
+      "sha256": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795587676-SJSZkBC8.json",
+      "sha256": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795588177-2jkiJ5iT.json",
+      "sha256": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795591522-KXZURRSN.json",
+      "sha256": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795591782-heuosi5E.json",
+      "sha256": "54fb9a982f1e571a166ae11ca021a997815a067793b3bc78d40c15e44834c90d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795591787-oNrmHxIR.json",
+      "sha256": "46c87aa94b34e951b499448fe64b6bfcf61120ed11128a91fbbcd6e21ad295bd"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795591797-d18DoUyx.json",
+      "sha256": "77986a01c1ac50684fe7e562c1cbc673b6425530bd37ee398101ee9d39d5c9b4"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/budget-state/reservations/r1795595233-CXGuJISF.json",
+      "sha256": "ea21a854c0d0b3321c03a1812eddc3448b074dc5b8723e8d5292470ef47e9f0d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/measurement.json",
+      "sha256": "67884261dc188df7136e0d60b0decd9773fd6daa6eae218d3e8629ccb76039e4"
+    },
+    {
+      "path": "records/statistics/evidence/act34-wave4-trueup-20261125/superseded-knowledge-budget.conf",
+      "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+    }
+  ],
+  "result": {
+    "category": "third_wave_trueup_confirmed_and_fourth_wave_admitted_under_unchanged_bytes",
+    "captured_utc": "2026-11-25T08:28:30Z",
+    "bytes_unchanged_vs_prior_snapshot": {
+      "activation.json": true,
+      "knowledge-budget-tool.py": true,
+      "knowledge-budget.conf": true,
+      "superseded-knowledge-budget.conf": true
+    },
+    "activation_all_offices_enabled": true,
+    "validate_config_errors": [],
+    "reservation_count": 13,
+    "prior_reservation_count": 9,
+    "recomputed_charges": {
+      "cpu_seconds": 30784.330000000075,
+      "tokens_total": 36065164,
+      "wall_seconds": 7614
+    },
+    "frozen_aggregate": {
+      "cpu_seconds": 30784.330000000075,
+      "tokens_total": 36065164,
+      "wall_seconds": 7614
+    },
+    "charges_reproduce_frozen_aggregate": true,
+    "prior_snapshot_tokens_total": 28732715,
+    "tokens_total_change_vs_prior": 7332449,
+    "third_wave_true_up": {
+      "charge_reduction_tokens": 8026851,
+      "closed_at": 1795591946,
+      "closed_reason": "agent_terminal_clearexit",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "id": "r1795591522-KXZURRSN",
+      "now_state": "closed",
+      "office": "statistics",
+      "prior_charge_tokens_at_ceiling": 11320103,
+      "prior_state": "active",
+      "prior_tokens_total_at_capture": 1229556,
+      "trued_down": true,
+      "usage_tokens_total": 3293252
+    },
+    "new_wave": {
+      "foresight": {
+        "agent_id": "wLWn6JWPyOA9Y1cnNd6s74-fines",
+        "closed_at": 1795591898,
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "created_at": 1795591781,
+        "id": "r1795591782-heuosi5E",
+        "matches_this_appointment": false,
+        "office": "foresight",
+        "state": "closed",
+        "usage_tokens_total": 283566
+      },
+      "spying": {
+        "agent_id": "3GxBStOSSTrVT883k4AlcP-wave",
+        "closed_at": 1795592311,
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "created_at": 1795591796,
+        "id": "r1795591797-d18DoUyx",
+        "matches_this_appointment": false,
+        "office": "spying",
+        "state": "closed",
+        "usage_tokens_total": 2196442
+      },
+      "statistics": {
+        "agent_id": "dNnp3iuADUxoioMa5FGnwZ-sort",
+        "closed_at": null,
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "created_at": 1795595233,
+        "id": "r1795595233-CXGuJISF",
+        "matches_this_appointment": true,
+        "office": "statistics",
+        "state": "active",
+        "usage_tokens_total": 911816
+      },
+      "strategy": {
+        "agent_id": "OBgtZ4usQcWeVXRxRSJNAD-crossly",
+        "closed_at": 1795592112,
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "created_at": 1795591786,
+        "id": "r1795591787-oNrmHxIR",
+        "matches_this_appointment": false,
+        "office": "strategy",
+        "state": "closed",
+        "usage_tokens_total": 1559189
+      }
+    },
+    "new_wave_all_new_config": true,
+    "new_wave_created_after_prior_capture": true,
+    "admit_new_config_at_current_charges": {
+      "foresight": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "spying": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "statistics": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "strategy": {
+        "admit": true,
+        "reason": "within caps"
+      }
+    },
+    "negative_control_superseded_config_admit_all_false": true,
+    "negative_control_overload_admit": {
+      "admit": false,
+      "reason": "tokens_total projected 509404636 exceeds statistics office cap 509404635"
+    },
+    "derived_measurement_sha256": "f12b8efbbddeaf7d4de756f5b02f09e2dd0824fcca1611b5685b80f2f6e04415",
+    "full_measurement_ref": "records/statistics/evidence/act34-wave4-trueup-20261125/measurement.json",
+    "falsifiers": [
+      "Any hardcoded content assertion failing (activation/config/tool/superseded-config digest, nine prior reservations, 28,732,715 prior tokens, or the third statistics reservation's id/ceiling charge).",
+      "charges() failing to reproduce the frozen aggregate.json including the counted id list.",
+      "The third statistics reservation remaining active or not trued down to its actual closed usage.",
+      "Any of the four post-capture reservations missing, under a config other than b80f48af, or not created after the prior capture; or the current statistics agent id not matching.",
+      "admit() refusing an office under unchanged bytes, or the superseded config / synthetic overload admitting."
+    ]
+  }
+}

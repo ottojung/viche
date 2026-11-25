@@ -149,7 +149,8 @@ $resources
 Report utilization, avoidable waste and resource-specific constraints independently.
 Do not prescribe agent counts, staffing increments, concurrency caps, staffing
 freezes or workload assignments. Retract inherited staffing recommendations
-from earlier reports. Only the Executive decides staffing and allocation.
+from earlier reports. The Executive oversees staffing and allocation; mission-specific delegated
+controllers reconcile routine staffing according to their mandates.
 Report evidence and resource-cost mitigations, not a staffing plan.
 Your mandate is the availability of EVERY scarce resource, not only model funding
 (Act 29 section 6). government/economy-resources.py measures and forecasts and has

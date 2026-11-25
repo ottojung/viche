@@ -1,11 +1,11 @@
 {
   "authorized_by": "act:34:foresight",
-  "budget_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+  "budget_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
   "cancellation": "stop-agent-and-hold-budget",
   "caps": {
-    "cpu_seconds": 7987,
-    "tokens_total": 11320103,
-    "wall_seconds": 1997
+    "cpu_seconds": 359415,
+    "tokens_total": 509404635,
+    "wall_seconds": 89865
   },
   "enforcement_evidence": {
     "bounds_sha256": "12dfcdf5920f762b36d22140187a328dcc12a9daf8836211250c41d56fe8eaa2",
@@ -19,25 +19,37 @@
     "zero_billed_verifier_sha256": "54c77efc3739a67c8945eb7fc4f7b379d5070ae20ee1aee6c474ad454636be92"
   },
   "expires_at": 1799432516,
-  "funding_basis": "Existing authorized zero-billed Antonina routes under the exact-ID policy (nine primary + four source-verified Go routes, low variant); no new paid-spending authority.",
+  "funding_basis": "Economy measured recurring envelope b85e4a5d; same zero-billed exact-route policy; no paid or new source authority.",
   "host": "billy-dev",
   "inflight_overrun_risk_disclosed": true,
   "mission_source": "government/KNOWLEDGE-OFFICES.md -> foresight",
   "negative_acceptance_digest": "b5f40a2a99a17d75f100766ef8010bfc679c0b3bb79dff4a2c66dc59f6b978d2",
-  "not_before": 1795544516,
+  "not_before": 1795560059,
   "office": "foresight",
+  "per_run_caps": {
+    "cpu_seconds": 7987,
+    "tokens_total": 11320103,
+    "wall_seconds": 1997
+  },
   "permit_attestation_reference": {
     "expected_reviewer": "c1e00002",
     "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
-    "note": "Truthful reference to the Executive attribution channel and current appointment id; the genuine board approve review on this permit's exact new origin commit is still required.",
-    "officer_agent_id": "6DdpOd8W4yreoITvjZGDZf-quotas"
+    "note": "Genuine Executive c1e00002 attestation on issue bpzNUUt9izRYOOcONcTy9K-implicate; officer agent FxkZWjmZ1T5WXbO0h55tME-lightly appointed 2026-11-24T22:25:26Z; four gate comments + board review on exact permit origin commit are recorded on the board.",
+    "officer_agent_id": "FxkZWjmZ1T5WXbO0h55tME-lightly"
   },
-  "permit_id": "act34-executive-foresight",
+  "permit_id": "act34-executive-foresight-recurring-20261124",
+  "predecessor": {
+    "archive_ref": "records/knowledge/permit-history/foresight/a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+    "permit_sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+    "remediation": "Measured recurring envelope; deployed runtime recovery fix 2053b6a; no source or billing expansion. For HOLD, genuine Executive/Judiciary remediation determination is required, not an assumed PROCEED.",
+    "review_decision": "proceed",
+    "review_sha256": "de0a0739a81e2f32dbcf102e82f4d21e5edfd2b56df18cdd2e75b1b30309f8b9"
+  },
   "provider_budget_mode": "zero-billed-runtime-allowlist",
   "provider_tier": "free_only",
   "reboot_recovery": "reconcile-held-liability",
   "schema": "viche-act34-operating-permit-v1",
   "signature_status": "signed",
   "signer": "c1e00002",
-  "status_note": "PREP CANDIDATE BYTES ONLY - not installed, not dispatched. The signed flag is a candidate value for gate testing; no officer signature or board approval is claimed by this generator."
+  "status_note": "SIGNED recurring renewal permit. Executive c1e00002 examined exact bytes, budget b80f48... (Economy b85e4a5d measured envelope), unchanged zero-billed source/provider controls, preserved non-resettable 45-day debt and original expiry; predecessor and adverse review archived with provenance. Judiciary after-start review required within 48h of not_before. No paid or new source authority. not_before=1795560059."
 }

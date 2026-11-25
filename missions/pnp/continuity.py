@@ -53,6 +53,8 @@ def support_path(role):
 
 
 def support_pass(role, records, selected, agents):
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     path = support_path(role)
     path.mkdir(parents=True, exist_ok=True)
     receipt = path / "dispatch.json"
@@ -182,6 +184,8 @@ def already_covered(records, selected, observed):
 
 
 def execute():
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     records = live()
     selected = focus.current()
     observed = status.workers()
@@ -211,6 +215,10 @@ def execute():
 
 
 if __name__ == "__main__":
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        from .staffing import store
+        print(json.dumps(store.read_health(),indent=2))
+        raise SystemExit(0)
     try:
         print(json.dumps(execute(), ensure_ascii=False))
     except (OSError, ValueError, subprocess.SubprocessError) as exc:

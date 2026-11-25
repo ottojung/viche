@@ -9,7 +9,7 @@ authenticated GitHub mutation commands directly.
 ## Commands (stable interface)
 
     python3 missions/pnp/cli.py status
-    python3 -m missions.pnp.staff GAP --worker LABEL=APPROACH
+    python3 -m missions.pnp.staffing.controller status
     python3 missions/pnp/cli.py beat <gap-id>
     python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
     python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
@@ -84,9 +84,9 @@ contributors export it names. Run python3 missions/pnp/leaderboard.py update
 last verified snapshot through outages. Only checked steps credited to
 ottojung count. Source and observations persist under Viche state, never
 under government. The status.sh adapter reports leaderboard movement plus
-actual Antonina P vs NP worker visibility; only Executive dispatches them.
+actual Antonina P vs NP worker visibility; the standing controller dispatches them.
 
-The Executive runs python3 -m missions.pnp.staff --baseline to maintain one general researcher per researchable lease, and the staff batch helper for extra distinct approaches on the selected focus. Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
+The independent standing staffing controller maintains one general researcher per researchable lease and focused specialists. The Executive monitors and repairs it rather than dispatching agents manually. See [staffing](staffing/README.md). Findings flow directly through the bound guard and portfolio inspect. Manual acquisition is reserved for maintenance while the allocator is stopped. Raw desk next calls mutate state and are not diagnostics.
 
 
 ## Reusable mathematical search
