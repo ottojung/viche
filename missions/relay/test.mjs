@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {seal,open,live,event,makeRequest,enqueue,get,change,payload} from './relay.mjs';
+import {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted} from './relay.mjs';
 const c={key:'a'.repeat(64),request:'b'.repeat(64),response:'c'.repeat(64)};
 const a=makeRequest('ping','confidential'),b=makeRequest('ping','another');
 const v={v:1,entries:[a]};
@@ -28,6 +28,12 @@ try {
  fs.writeFileSync(file,JSON.stringify({...check,check_file_gz_b64:'A'.repeat(768*1024+4)}));
  assert.throws(()=>payload('lb-cert',[file]));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+const saturated=Array.from({length:6},()=>({op:'lb-cert',check:false,finished:false}));
+const generated={payload:{}}, checked={payload:{check_file_gz_b64:'eA=='}};
+assert.equal(lbAdmitted(generated,saturated),false);
+assert.equal(lbAdmitted(checked,saturated),true);
+assert.equal(lbAdmitted(checked,[...saturated,{op:'lb-cert',check:true,finished:false}]),false);
+assert.equal(lbAdmitted(generated,[{op:'lb-cert',check:true,finished:false}]),true);
 const store=new Map();let counter=0,conflicts=0;
 globalThis.fetch=async(url,o)=>{
  const key=url.split('/').at(-1),old=store.get(key);

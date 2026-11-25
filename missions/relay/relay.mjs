@@ -13,7 +13,7 @@ const HOME=os.homedir(), HERE=path.dirname(fileURLToPath(import.meta.url));
 const confPath=path.join(HOME,'.config/marceline-relay/config.json');
 const stateRoot=path.join(HOME,'.local/state/marceline-relay');
 const ops=new Set(['ping','lean-check','lb-cert','sibling']);
-const MAX_LB=6, LB_CHECK_MAX=768*1024;
+const MAX_LB=6, MAX_LB_CHECK=1, LB_CHECK_MAX=768*1024;
 function config(){
  const st=fs.lstatSync(confPath);
  if(!st.isFile()||st.uid!==process.getuid()||(st.mode&0o077))throw Error('private relay config required');
@@ -216,7 +216,7 @@ function capabilities(){
   const lean_bases=fs.readdirSync(cfg.manifests).filter(x=>/^[0-9a-f]{40}\.json$/.test(x))
    .filter(x=>{const st=fs.lstatSync(path.join(cfg.manifests,x));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);})
    .map(x=>x.slice(0,-5)).filter(base=>{try{const st=fs.lstatSync(path.join(cfg.manifests,base+'.provenance.json'));return st.isFile()&&st.uid===process.getuid()&&!(st.mode&0o077);}catch{return false;}}).sort();
-  return {ping:true,lean_bases,max_parallel_lean:MAX_LEAN,lb_cert:fs.existsSync(path.join(HERE,'lb-handler.py')),sibling:fs.existsSync(path.join(HERE,'sib-handler.py')),max_parallel_lb:MAX_LB};
+  return {ping:true,lean_bases,max_parallel_lean:MAX_LEAN,lb_cert:fs.existsSync(path.join(HERE,'lb-handler.py')),sibling:fs.existsSync(path.join(HERE,'sib-handler.py')),max_parallel_lb:MAX_LB,max_parallel_lb_check:MAX_LB_CHECK};
  }catch{return {ping:true,lean_bases:[]};}
 }
 function launchLean(req){
@@ -277,6 +277,13 @@ function launchHandler(req,script){
  });
  return {promise,cancel:()=>killGroup()};
 }
+// Generation and verification have independent admission; compiler memory
+// remains governed by the common compile_admission.py lock.
+function lbAdmitted(req,active){
+ const check=Boolean(req.payload.check_file_gz_b64);
+ const count=active.filter(a=>a.op==='lb-cert'&&!a.finished&&Boolean(a.check)===check).length;
+ return count<(check?MAX_LB_CHECK:MAX_LB);
+}
 async function worker(c){
  const host=os.hostname();
  if(host!=='marceline-dev')throw Error('worker must run on marceline-dev');
@@ -294,7 +301,7 @@ async function worker(c){
     return {...v,heartbeat:now,entries,capabilities:capabilities()};
    });
    const priority=req=>req.op==='ping'?0:req.op==='lean-check'&&req.payload.mode==='elaborate'?1:
-    req.op==='lb-cert'&&!req.payload.check_file_gz_b64?2:req.op==='lean-check'?3:req.op==='lb-cert'?4:5;
+    req.op==='lb-cert'&&req.payload.check_file_gz_b64?2:req.op==='lb-cert'?3:req.op==='lean-check'?4:5;
    for(const req of [...rq].sort((a,b)=>priority(a)-priority(b)||a.created-b.created)){
     const old=response.entries.find(e=>e.id===req.id);
     if(terminal(old))continue;
@@ -312,7 +319,7 @@ async function worker(c){
      const wanted=req.payload.rss_mib;
      if(running.length>=MAX_LEAN||running.reduce((n,a)=>n+a.rss,0)+wanted>LEAN_BUDGET)continue;
     }
-    if(req.op==='lb-cert'&&[...active.values()].filter(a=>a.op==='lb-cert'&&!a.finished).length>=MAX_LB)continue;
+    if(req.op==='lb-cert'&&!lbAdmitted(req,[...active.values()]))continue;
     if(req.op==='sibling'&&[...active.values()].filter(a=>a.op==='sibling'&&!a.finished).length>=4)continue;
     if(req.op==='ping'){
      const result=event({...entry,result:{host,echo:req.payload}},'done','ping complete');
@@ -320,7 +327,7 @@ async function worker(c){
     }else{
      entry=event(entry,'running','isolated Lean handler dispatched');
      await putResponse(c,entry);
-     const job=req.op==='lb-cert'?launchLb(req):req.op==='sibling'?launchHandler(req,'sib-handler.py'):launchLean(req),a={...job,op:req.op,rss:req.payload.rss_mib||0,finished:false};
+     const job=req.op==='lb-cert'?launchLb(req):req.op==='sibling'?launchHandler(req,'sib-handler.py'):launchLean(req),a={...job,op:req.op,check:Boolean(req.payload.check_file_gz_b64),rss:req.payload.rss_mib||0,finished:false};
      active.set(req.id,a);
      job.promise.then(out=>{
       a.finished=true;
@@ -414,4 +421,4 @@ async function main(){
  throw Error('unknown command; use --help');
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().then(n=>{process.exitCode=n;}).catch(e=>{console.error(e.message);process.exitCode=1;});
-export {seal,open,live,event,makeRequest,enqueue,get,change,payload};
+export {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted};
