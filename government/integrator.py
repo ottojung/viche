@@ -370,6 +370,50 @@ def resolve_ballot_append(wt, path, proposer):
         return False
 
 
+def reconcile_canonical(base):
+    """Propagate Founder work committed directly into the canonical checkout.
+
+    The canonical checkout is boot-owned and must stay on main. A Founder
+    operator can commit there between integration cycles; those commits then
+    sit ahead of origin/main and canonical_preflight() blocks *every* delivery
+    with "canonical checkout is at X, not main Y". Repeating a manual
+    fast-forward per incident is a workaround, not a repair of the shared
+    runtime, and the failure recurred twice on 2026-11-25.
+
+    When canonical main is a *strict fast-forward* of origin/main, advance the
+    origin ref with a non-force push and re-fetch so the queue flows again.
+    Never force, never push from a foreign/detached branch, and never guess on
+    divergence: any ambiguity is left to the existing preflight and an agent.
+    Returns (effective_base, note) where note is None / "reconciled" /
+    "diverged" / "push_failed".
+    """
+    try:
+        branch = git("symbolic-ref", "--quiet", "--short", "HEAD", check=False)
+        if branch.returncode != 0 or branch.stdout.strip() != "main":
+            return base, None
+        head = git("rev-parse", "HEAD", check=False)
+        local_main = git("rev-parse", "refs/heads/main", check=False)
+        if (head.returncode != 0 or local_main.returncode != 0 or
+                head.stdout.strip() != local_main.stdout.strip()):
+            return base, None
+        canonical = head.stdout.strip()
+        if canonical == base:
+            return base, None
+        # Only a strict descendant of base may be published. A true divergence
+        # (origin has commits canonical lacks) is escalated, never force-pushed.
+        if git("merge-base", "--is-ancestor", base, canonical, check=False).returncode != 0:
+            return base, "diverged"
+        if git("push", "-q", "origin", "refs/heads/main:refs/heads/main", check=False).returncode != 0:
+            return base, "push_failed"
+        git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main", check=False)
+        updated = git("rev-parse", "refs/remotes/origin/main", check=False)
+        if updated.returncode == 0 and updated.stdout.strip() != base:
+            return updated.stdout.strip(), "reconciled"
+        return base, "push_failed"
+    except GitError:
+        return base, None
+
+
 def canonical_preflight(base, candidate):
     """The canonical checkout must be at base and hold no untracked or edited
     file the landing would overwrite (same rule as reviewed-merge.sh)."""
@@ -574,6 +618,11 @@ def run_locked():
         log("fetch failed, nothing done: %s" % error)
         return 1
     base = git("rev-parse", "refs/remotes/origin/main")
+    base, reconcile_note = reconcile_canonical(base)
+    if reconcile_note == "reconciled":
+        log("canonical main fast-forwarded origin/main to %s" % base[:12])
+    elif reconcile_note:
+        log("canonical reconciliation %s; preflight may still block this cycle" % reconcile_note)
     state = load(ROOT / "state.json", {})
     all_reviews = reviews()
     ready = []
