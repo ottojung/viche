@@ -16,7 +16,7 @@ fi
 while [ -f missions/pnp/staffing/controller.py ]; do
     # Re-read code and policy on each pass. No long-running Python process
     # pins an old implementation after a canonical deployment.
-    timeout -k 5 180 python3 -m missions.pnp.staffing.controller tick || :
+    timeout -k 5 180 python3 -m missions.pnp.staffing.controller tick >/dev/null || :
     # Keep the log bounded via journaling in SQLite, not per-tick append.
     interval=$(python3 -c 'from missions.pnp.staffing.policy import load; print(load()["interval"])' 2>/dev/null) || interval=5
     if [ "${1:-}" != supervised ] && [ -d /run/service/viche-pnp-staffing ]; then
