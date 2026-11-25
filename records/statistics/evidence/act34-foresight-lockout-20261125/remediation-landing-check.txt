@@ -1,0 +1,12 @@
+captured_at=2026-11-25T10:37:47Z
+canonical_main_head=b98cf258abf5a1200780be24f76de5adce0037a8
+claimed_record_on_main:
+fatal: path 'records/investigations/recovery-steward-foresight-unbound-hold-20261125T0954Z.md' does not exist in 'main'
+ABSENT
+branches_containing_claimed_record:
+0010391b Recovery-steward: investigate foresight SIGKILL and unbound held-reservation lockout
+delivery_branch_ancestor_of_main_rc:
+1
+judiciary_mailbox_reviewed:
+20261125T0954Z-recovery-steward-foresight-unbound-hold-permanent-lockout.disposition.md
+20261125T0954Z-recovery-steward-foresight-unbound-hold-permanent-lockout.md
