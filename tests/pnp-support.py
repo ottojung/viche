@@ -137,10 +137,10 @@ class SupportTests(unittest.TestCase):
              patch.object(status.frontier.build_control, "legacy_compilers", return_value=[]), \
              patch.object(status.frontier.build_control, "headroom", return_value=1024):
             snap = status.snapshot()
-        self.assertEqual(snap["research_support"]["coverage_missing"], ["flow", "lease-evaluation"])
+        self.assertEqual(snap["research_support"]["coverage_missing"], ["flow", "lease-evaluation", "method", "tool"])
         self.assertTrue(snap["coordination_due"])
         self.assertEqual(snap["workers"]["count"], 1)
-        self.assertEqual(snap["dispatch_signal"]["missing_support"], ["flow", "lease-evaluation"])
+        self.assertEqual(snap["dispatch_signal"]["missing_support"], ["flow", "lease-evaluation", "method", "tool"])
 
 
 if __name__ == "__main__":
