@@ -6,7 +6,7 @@ stdout: {"module", "status": ok|false|toobig|unsupported|error, "engine", "state
          "file_gz_b64", "log"}   (status false = a circuit with K-1 gates exists: the twin is true)
 Tools: /home/lubko/pnp-infra/lbgen (lbgen.py, lbparse.py, lbassemble.py) and the engine files beside it.
 """
-import base64, gzip, hashlib, json, os, re, subprocess, sys, tempfile
+import base64, gzip, hashlib, io, json, os, re, subprocess, sys, tempfile
 
 TOOLS = '/home/lubko/pnp-infra/lbgen'
 ENGINES = ['/home/lubko/pnp-infra/engine7281.lean', '/home/lubko/pnp-infra/engine7281.pruned.lean']
@@ -21,7 +21,13 @@ if p.get('check_file_gz_b64'):
     # check mode (billy-dev lbcert/checkremote.py): compile a file built elsewhere (generator
     # plugins written by the town) against current upstream, through the same compile slots.
     import fcntl
-    data = gzip.decompress(base64.b64decode(p['check_file_gz_b64']))
+    encoded = p['check_file_gz_b64']
+    if len(encoded)>768*1024:
+        raise ValueError("oversized encoded proof")
+    with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(encoded, validate=True))) as stream:
+        data = stream.read(512*1024+1)
+    if not data or len(data)>512*1024:
+        raise ValueError("proof exceeds 512 KiB")
     checked_base = None
     with tempfile.TemporaryDirectory() as d:
         out = os.path.join(d, 'c.lean')

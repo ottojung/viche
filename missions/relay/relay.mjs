@@ -13,7 +13,7 @@ const HOME=os.homedir(), HERE=path.dirname(fileURLToPath(import.meta.url));
 const confPath=path.join(HOME,'.config/marceline-relay/config.json');
 const stateRoot=path.join(HOME,'.local/state/marceline-relay');
 const ops=new Set(['ping','lean-check','lb-cert','sibling']);
-const MAX_LB=6;
+const MAX_LB=6, LB_CHECK_MAX=768*1024;
 function config(){
  const st=fs.lstatSync(confPath);
  if(!st.isFile()||st.uid!==process.getuid()||(st.mode&0o077))throw Error('private relay config required');
@@ -31,7 +31,12 @@ function seal(c,box,value){
 // lb-cert: a lower-bound certificate request (data only: statement text, module name, two bounded integers).
 function lbOK(p){return !!p&&typeof p==='object'&&typeof p.statement==='string'&&Buffer.byteLength(p.statement)<=16384&&
  /^PEqualNP\.Outside\.[A-Za-z0-9_]{1,80}$/.test(p.module)&&Number.isSafeInteger(p.maxstates)&&p.maxstates>=1&&p.maxstates<=300000&&
- Number.isSafeInteger(p.chunks)&&p.chunks>=1&&p.chunks<=200;}
+ Number.isSafeInteger(p.chunks)&&p.chunks>=1&&p.chunks<=200&&
+ (p.check_file_gz_b64===undefined||(
+  p.statement==='check'&&typeof p.check_file_gz_b64==='string'&&
+  p.check_file_gz_b64.length>0&&p.check_file_gz_b64.length<=LB_CHECK_MAX&&
+  /^[A-Za-z0-9+/]+={0,2}$/.test(p.check_file_gz_b64)&&
+  Number.isSafeInteger(p.timeout)&&p.timeout>=1&&p.timeout<=900));}
 // sibling: transfer of a merged same-skeleton proof (data only: statement, module, imports, a bound).
 function sibOK(p){return !!p&&typeof p==='object'&&typeof p.statement==='string'&&Buffer.byteLength(p.statement)<=16384&&
  /^PEqualNP\.Outside\.[A-Za-z0-9_]{1,80}$/.test(p.module)&&Array.isArray(p.imports)&&p.imports.length<=16&&
@@ -359,7 +364,7 @@ function payload(op,args){
  }
  if(op==='lb-cert'){
   if(args.length!==1)throw Error('lb-cert requires one request JSON file');
-  const st=fs.statSync(args[0]);if(!st.isFile()||st.size>65536)throw Error('invalid lb-cert request file');
+  const st=fs.statSync(args[0]);if(!st.isFile()||st.size>LB_CHECK_MAX+65536)throw Error('invalid lb-cert request file');
   const value=JSON.parse(fs.readFileSync(args[0],'utf8'));
   if(!lbOK(value))throw Error('invalid lb-cert request: statement, module, maxstates, chunks');
   return value;
@@ -409,4 +414,4 @@ async function main(){
  throw Error('unknown command; use --help');
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().then(n=>{process.exitCode=n;}).catch(e=>{console.error(e.message);process.exitCode=1;});
-export {seal,open,live,event,makeRequest,enqueue,get,change};
+export {seal,open,live,event,makeRequest,enqueue,get,change,payload};

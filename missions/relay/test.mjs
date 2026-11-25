@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {seal,open,live,event,makeRequest,enqueue,get,change} from './relay.mjs';
+import {seal,open,live,event,makeRequest,enqueue,get,change,payload} from './relay.mjs';
 const c={key:'a'.repeat(64),request:'b'.repeat(64),response:'c'.repeat(64)};
 const a=makeRequest('ping','confidential'),b=makeRequest('ping','another');
 const v={v:1,entries:[a]};
@@ -10,6 +10,24 @@ const e=JSON.parse(raw);e.tag=Buffer.alloc(16).toString('base64');assert.throws(
 assert.throws(()=>open(c,'request',seal(c,'request',{v:1,entries:[a,a]})));
 assert(live({expires:1001},1000));assert(!live({expires:1000},121000));assert(live({expires:1800000+40000},0));
 assert.equal(event({events:[]},'ack','received').state,'ack');
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {randomBytes} from 'node:crypto';
+import {gzipSync} from 'node:zlib';
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'relay-large-'));
+try {
+ const file=path.join(dir,'check.json');
+ const check={statement:'check',module:'PEqualNP.Outside.L_meta_8479',maxstates:1,chunks:1,
+              timeout:900,check_file_gz_b64:gzipSync(randomBytes(446*1024)).toString('base64')};
+ fs.writeFileSync(file,JSON.stringify(check));
+ assert(fs.statSync(file).size>65536);
+ assert.deepEqual(payload('lb-cert',[file]),check);
+ const req=makeRequest('lb-cert',check), envelope={v:1,entries:[req]};
+ assert.deepEqual(open(c,'request',seal(c,'request',envelope)),envelope);
+ fs.writeFileSync(file,JSON.stringify({...check,check_file_gz_b64:'A'.repeat(768*1024+4)}));
+ assert.throws(()=>payload('lb-cert',[file]));
+}finally{fs.rmSync(dir,{recursive:true,force:true});}
 const store=new Map();let counter=0,conflicts=0;
 globalThis.fetch=async(url,o)=>{
  const key=url.split('/').at(-1),old=store.get(key);

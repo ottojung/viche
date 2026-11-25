@@ -18,6 +18,8 @@ REQ = os.path.expanduser('~/.local/bin/marceline-request')
 
 def check(path, module, timeout=900):
     data = open(path, 'rb').read()
+    if not data or len(data)>512*1024:
+        return 2, {'status':'invalid_proof_size'}
     req = {'statement': 'check', 'module': module, 'maxstates': 1, 'chunks': 1, 'timeout': timeout,
            'check_file_gz_b64': base64.b64encode(gzip.compress(data, 9)).decode()}
     with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
