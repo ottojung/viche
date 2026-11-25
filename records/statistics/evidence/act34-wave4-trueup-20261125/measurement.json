@@ -1,0 +1,217 @@
+{
+  "accounting_window_seconds": 3888000,
+  "activation_all_offices_enabled": true,
+  "admit_new_config_at_current_charges": {
+    "foresight": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "spying": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "statistics": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "strategy": {
+      "admit": true,
+      "reason": "within caps"
+    }
+  },
+  "bytes_unchanged_vs_prior_snapshot": {
+    "activation.json": true,
+    "knowledge-budget-tool.py": true,
+    "knowledge-budget.conf": true,
+    "superseded-knowledge-budget.conf": true
+  },
+  "captured_from": "canonical main records/knowledge/activation.json, government/knowledge-budget.* and /var/lib/lubko/wd/viche-state/knowledge/budget (aggregate + reservations)",
+  "captured_utc": "2026-11-25T08:28:30Z",
+  "charges_reproduce_frozen_aggregate": true,
+  "counted": [
+    "r1795549284-UbpN96al",
+    "r1795549310-fUfef5Jf",
+    "r1795549312-5XZhL8gg",
+    "r1795549314-NF0T6ySo",
+    "r1795587665-AR7LhTnT",
+    "r1795587673-4BdLzlhX",
+    "r1795587676-SJSZkBC8",
+    "r1795588177-2jkiJ5iT",
+    "r1795591522-KXZURRSN",
+    "r1795591782-heuosi5E",
+    "r1795591787-oNrmHxIR",
+    "r1795591797-d18DoUyx",
+    "r1795595233-CXGuJISF"
+  ],
+  "derived_measurement_sha256": "f12b8efbbddeaf7d4de756f5b02f09e2dd0824fcca1611b5685b80f2f6e04415",
+  "frozen_aggregate": {
+    "cpu_seconds": 30784.330000000075,
+    "tokens_total": 36065164,
+    "wall_seconds": 7614
+  },
+  "measurement_script": "measure.py in this directory (read-only on the frozen copies)",
+  "negative_control_overload_admit": {
+    "admit": false,
+    "reason": "tokens_total projected 509404636 exceeds statistics office cap 509404635"
+  },
+  "negative_control_superseded_config_admit": {
+    "foresight": {
+      "admit": false,
+      "reason": "tokens_total projected 47385267 exceeds aggregate cap 45280412; tokens_total projected 15336911 exceeds foresight office cap 11320103; cpu_seconds projected 38771.330000000075 exceeds aggregate cap 31948; cpu_seconds projected 12135.94000000041 exceeds foresight office cap 7987; wall_seconds projected 9611 exceeds aggregate cap 7988; wall_seconds projected 2988 exceeds foresight office cap 1997"
+    },
+    "spying": {
+      "admit": false,
+      "reason": "tokens_total projected 47385267 exceeds aggregate cap 45280412; tokens_total projected 16857974 exceeds spying office cap 11320103; cpu_seconds projected 38771.330000000075 exceeds aggregate cap 31948; cpu_seconds projected 14304.709999999497 exceeds spying office cap 7987; wall_seconds projected 9611 exceeds aggregate cap 7988; wall_seconds projected 3593 exceeds spying office cap 1997"
+    },
+    "statistics": {
+      "admit": false,
+      "reason": "tokens_total projected 47385267 exceeds aggregate cap 45280412; tokens_total projected 32163894 exceeds statistics office cap 11320103; cpu_seconds projected 38771.330000000075 exceeds aggregate cap 31948; cpu_seconds projected 22911.630000000354 exceeds statistics office cap 7987; wall_seconds projected 9611 exceeds aggregate cap 7988; wall_seconds projected 5686 exceeds statistics office cap 1997"
+    },
+    "strategy": {
+      "admit": false,
+      "reason": "tokens_total projected 47385267 exceeds aggregate cap 45280412; tokens_total projected 16986797 exceeds strategy office cap 11320103; cpu_seconds projected 38771.330000000075 exceeds aggregate cap 31948; cpu_seconds projected 13380.049999999814 exceeds strategy office cap 7987; wall_seconds projected 9611 exceeds aggregate cap 7988; wall_seconds projected 3335 exceeds strategy office cap 1997"
+    }
+  },
+  "new_wave": {
+    "foresight": {
+      "agent_id": "wLWn6JWPyOA9Y1cnNd6s74-fines",
+      "closed_at": 1795591898,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795591781,
+      "id": "r1795591782-heuosi5E",
+      "matches_this_appointment": false,
+      "office": "foresight",
+      "state": "closed",
+      "usage_tokens_total": 283566
+    },
+    "spying": {
+      "agent_id": "3GxBStOSSTrVT883k4AlcP-wave",
+      "closed_at": 1795592311,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795591796,
+      "id": "r1795591797-d18DoUyx",
+      "matches_this_appointment": false,
+      "office": "spying",
+      "state": "closed",
+      "usage_tokens_total": 2196442
+    },
+    "statistics": {
+      "agent_id": "dNnp3iuADUxoioMa5FGnwZ-sort",
+      "closed_at": null,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795595233,
+      "id": "r1795595233-CXGuJISF",
+      "matches_this_appointment": true,
+      "office": "statistics",
+      "state": "active",
+      "usage_tokens_total": 911816
+    },
+    "strategy": {
+      "agent_id": "OBgtZ4usQcWeVXRxRSJNAD-crossly",
+      "closed_at": 1795592112,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795591786,
+      "id": "r1795591787-oNrmHxIR",
+      "matches_this_appointment": false,
+      "office": "strategy",
+      "state": "closed",
+      "usage_tokens_total": 1559189
+    }
+  },
+  "new_wave_all_new_config": true,
+  "new_wave_created_after_prior_capture": true,
+  "prior_reservation_count": 9,
+  "prior_snapshot_tokens_total": 28732715,
+  "recomputed_charges": {
+    "cpu_seconds": 30784.330000000075,
+    "tokens_total": 36065164,
+    "wall_seconds": 7614
+  },
+  "recomputed_now_unix": 1795595405,
+  "reservation_count": 13,
+  "sha256": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "budget-state/aggregate.json": "9ec2eec8eb51135333569892087313c202ce761051d0525b3d8dfe0bd3ab31a5",
+    "budget-state/reservations/r1795549284-UbpN96al.json": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12",
+    "budget-state/reservations/r1795549310-fUfef5Jf.json": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24",
+    "budget-state/reservations/r1795549312-5XZhL8gg.json": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d",
+    "budget-state/reservations/r1795549314-NF0T6ySo.json": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c",
+    "budget-state/reservations/r1795587665-AR7LhTnT.json": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f",
+    "budget-state/reservations/r1795587673-4BdLzlhX.json": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628",
+    "budget-state/reservations/r1795587676-SJSZkBC8.json": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2",
+    "budget-state/reservations/r1795588177-2jkiJ5iT.json": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d",
+    "budget-state/reservations/r1795591522-KXZURRSN.json": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c",
+    "budget-state/reservations/r1795591782-heuosi5E.json": "54fb9a982f1e571a166ae11ca021a997815a067793b3bc78d40c15e44834c90d",
+    "budget-state/reservations/r1795591787-oNrmHxIR.json": "46c87aa94b34e951b499448fe64b6bfcf61120ed11128a91fbbcd6e21ad295bd",
+    "budget-state/reservations/r1795591797-d18DoUyx.json": "77986a01c1ac50684fe7e562c1cbc673b6425530bd37ee398101ee9d39d5c9b4",
+    "budget-state/reservations/r1795595233-CXGuJISF.json": "ea21a854c0d0b3321c03a1812eddc3448b074dc5b8723e8d5292470ef47e9f0d",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "superseded-knowledge-budget.conf": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+  },
+  "skipped": [],
+  "third_wave_true_up": {
+    "charge_reduction_tokens": 8026851,
+    "closed_at": 1795591946,
+    "closed_reason": "agent_terminal_clearexit",
+    "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "id": "r1795591522-KXZURRSN",
+    "now_state": "closed",
+    "office": "statistics",
+    "prior_charge_tokens_at_ceiling": 11320103,
+    "prior_state": "active",
+    "prior_tokens_total_at_capture": 1229556,
+    "trued_down": true,
+    "usage_tokens_total": 3293252
+  },
+  "tokens_total_change_vs_prior": 7332449,
+  "validate_config_errors": [],
+  "waves": {
+    "foresight": {
+      "new_config_b80f48af_ids": [
+        "r1795587665-AR7LhTnT",
+        "r1795591782-heuosi5E"
+      ],
+      "new_config_states": [
+        "closed",
+        "closed"
+      ],
+      "old_config_0964bd1e_count": 1
+    },
+    "spying": {
+      "new_config_b80f48af_ids": [
+        "r1795588177-2jkiJ5iT",
+        "r1795591797-d18DoUyx"
+      ],
+      "new_config_states": [
+        "closed",
+        "closed"
+      ],
+      "old_config_0964bd1e_count": 1
+    },
+    "statistics": {
+      "new_config_b80f48af_ids": [
+        "r1795587673-4BdLzlhX",
+        "r1795591522-KXZURRSN",
+        "r1795595233-CXGuJISF"
+      ],
+      "new_config_states": [
+        "active",
+        "closed",
+        "closed"
+      ],
+      "old_config_0964bd1e_count": 1
+    },
+    "strategy": {
+      "new_config_b80f48af_ids": [
+        "r1795587676-SJSZkBC8",
+        "r1795591787-oNrmHxIR"
+      ],
+      "new_config_states": [
+        "closed",
+        "closed"
+      ],
+      "old_config_0964bd1e_count": 1
+    }
+  }
+}
