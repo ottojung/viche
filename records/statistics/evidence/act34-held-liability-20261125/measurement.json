@@ -1,0 +1,383 @@
+{
+  "accounting_window_seconds": 3888000,
+  "admit_new_config_at_current_charges": {
+    "foresight": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "spying": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "statistics": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "strategy": {
+      "admit": true,
+      "reason": "within caps"
+    }
+  },
+  "all_assertions_pass": true,
+  "assertions": {
+    "activation_all_offices_enabled": true,
+    "active_unsafe_holds_empty_at_capture": true,
+    "admit_new_all_four": true,
+    "all_new_ids_after_prior_capture": true,
+    "all_new_ids_new_config": true,
+    "all_new_ids_present": true,
+    "bytes_unchanged_activation.json": true,
+    "bytes_unchanged_knowledge-budget-tool.py": true,
+    "bytes_unchanged_knowledge-budget.conf": true,
+    "bytes_unchanged_superseded-knowledge-budget.conf": true,
+    "caps_far_from_binding": true,
+    "charges_reproduce_frozen_aggregate": true,
+    "config_valid": true,
+    "held_agent_exit_signal_9": true,
+    "held_agent_has_session_in_antonina": true,
+    "held_agent_killed": true,
+    "held_agent_null_exit_code": true,
+    "held_has_no_meter": true,
+    "held_has_no_session_binding": true,
+    "held_has_no_usage": true,
+    "held_is_still_held": true,
+    "held_never_closed": true,
+    "held_reason_exact": true,
+    "negative_control_old_config_refused": true,
+    "negative_control_overload_refused": true,
+    "own_statistics_reservation_present": true,
+    "prior_active_was_statistics_third_wave": true,
+    "prior_held_count_was_0": true,
+    "prior_reservation_count_was_13": true,
+    "prior_state_counts_match_frozen_prior": true,
+    "reservation_count_grew_from_13": true
+  },
+  "cap_headroom": {
+    "aggregate": {
+      "cpu_seconds": {
+        "cap": 1437660,
+        "used": 63587.130000000354,
+        "used_share": 0.044229602270356244
+      },
+      "tokens_total": {
+        "cap": 2037618540,
+        "used": 81913486,
+        "used_share": 0.040200599077784206
+      },
+      "wall_seconds": {
+        "cap": 359460,
+        "used": 15781,
+        "used_share": 0.04390196405719691
+      }
+    },
+    "foresight": {
+      "cpu_seconds": {
+        "cap": 359415,
+        "used": 12135.94000000041,
+        "used_share": 0.033765813892020116
+      },
+      "tokens_total": {
+        "cap": 509404635,
+        "used": 15336911,
+        "used_share": 0.03010752149909276
+      },
+      "wall_seconds": {
+        "cap": 89865,
+        "used": 2988,
+        "used_share": 0.033249874812218326
+      }
+    },
+    "spying": {
+      "cpu_seconds": {
+        "cap": 359415,
+        "used": 17866.479999999516,
+        "used_share": 0.04970988968184276
+      },
+      "tokens_total": {
+        "cap": 509404635,
+        "used": 20882153,
+        "used_share": 0.04099325283916979
+      },
+      "wall_seconds": {
+        "cap": 89865,
+        "used": 4481,
+        "used_share": 0.04986368441551216
+      }
+    },
+    "statistics": {
+      "cpu_seconds": {
+        "cap": 359415,
+        "used": 16854.890000000596,
+        "used_share": 0.04689534382260227
+      },
+      "tokens_total": {
+        "cap": 509404635,
+        "used": 23923272,
+        "used_share": 0.04696320048206864
+      },
+      "wall_seconds": {
+        "cap": 89865,
+        "used": 4155,
+        "used_share": 0.04623602069771324
+      }
+    },
+    "strategy": {
+      "cpu_seconds": {
+        "cap": 359415,
+        "used": 16729.819999999832,
+        "used_share": 0.04654736168495981
+      },
+      "tokens_total": {
+        "cap": 509404635,
+        "used": 21771150,
+        "used_share": 0.04273842149080563
+      },
+      "wall_seconds": {
+        "cap": 89865,
+        "used": 4157,
+        "used_share": 0.046258276303343906
+      }
+    }
+  },
+  "captured_from": "canonical main records/knowledge/activation.json, government/knowledge-budget.* and /var/lib/lubko/wd/viche-state/knowledge/budget (aggregate + 19 reservations); Antonina agent status and liveness/unsafe-holds listing frozen at capture",
+  "captured_utc": "2026-11-25T09:35:55Z",
+  "counted": [
+    "r1795549284-UbpN96al",
+    "r1795549310-fUfef5Jf",
+    "r1795549312-5XZhL8gg",
+    "r1795549314-NF0T6ySo",
+    "r1795587665-AR7LhTnT",
+    "r1795587673-4BdLzlhX",
+    "r1795587676-SJSZkBC8",
+    "r1795588177-2jkiJ5iT",
+    "r1795591522-KXZURRSN",
+    "r1795591782-heuosi5E",
+    "r1795591787-oNrmHxIR",
+    "r1795591797-d18DoUyx",
+    "r1795595233-CXGuJISF",
+    "r1795595445-NZIjZE34",
+    "r1795595447-UyyfTafj",
+    "r1795595460-9V0XCjcF",
+    "r1795599016-P1J0KTe9",
+    "r1795599269-kgG5rTM0",
+    "r1795599289-mvLLnigN"
+  ],
+  "derived_measurement_sha256": "cbb387159fea61ac7c5efa2ec5bf63bb654f80c5bf0a5f4b699d2ae05913ec9b",
+  "frozen_aggregate": {
+    "cpu_seconds": 63587.130000000354,
+    "tokens_total": 81913486,
+    "wall_seconds": 15781
+  },
+  "held_agent_status": {
+    "alive": false,
+    "backend_error": null,
+    "exit_code": null,
+    "exit_signal": 9,
+    "finished_at": 1795595474.464,
+    "id": "15bm8Esub3exygbtVQDIMX-issues",
+    "last_error": null,
+    "native_session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+    "pid": 8527,
+    "prompts": 1,
+    "started_at": 1795595450.789,
+    "state": "killed"
+  },
+  "held_reservation": {
+    "agent_id": "15bm8Esub3exygbtVQDIMX-issues",
+    "caps": {
+      "cpu_seconds": 7987,
+      "tokens_total": 11320103,
+      "wall_seconds": 1997
+    },
+    "charge": {
+      "cpu_seconds": 7987,
+      "tokens_total": 11320103,
+      "wall_seconds": 1997
+    },
+    "closed_at": null,
+    "closed_reason": null,
+    "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "created_at": 1795595445,
+    "held_at": 1795595475,
+    "held_duration_seconds_at_capture": 3867,
+    "held_reason": "meter_or_session_binding_unknown_after_launch",
+    "history": [
+      {
+        "at": 1795595445,
+        "event": "reserved",
+        "office": "foresight"
+      },
+      {
+        "agent_id": "15bm8Esub3exygbtVQDIMX-issues",
+        "at": 1795595447,
+        "event": "dispatch_attempted"
+      },
+      {
+        "at": 1795595475,
+        "event": "held",
+        "reason": "meter_or_session_binding_unknown_after_launch"
+      }
+    ],
+    "id": "r1795595445-NZIjZE34",
+    "meter": null,
+    "monitor_pid": null,
+    "native_session_id": null,
+    "office": "foresight",
+    "runner_pid": null,
+    "state": "held",
+    "usage": null
+  },
+  "liability_basis": {
+    "active_ceiling_tokens": 33960309,
+    "by_office": {
+      "foresight": {
+        "active_ceiling_tokens": 0,
+        "closed_usage_tokens": 4016808,
+        "held_ceiling_tokens": 11320103
+      },
+      "spying": {
+        "active_ceiling_tokens": 11320103,
+        "closed_usage_tokens": 9562050,
+        "held_ceiling_tokens": 0
+      },
+      "statistics": {
+        "active_ceiling_tokens": 11320103,
+        "closed_usage_tokens": 12603169,
+        "held_ceiling_tokens": 0
+      },
+      "strategy": {
+        "active_ceiling_tokens": 11320103,
+        "closed_usage_tokens": 10451047,
+        "held_ceiling_tokens": 0
+      }
+    },
+    "ceiling_pinned_share": 0.5527833597510428,
+    "ceiling_pinned_tokens": 45280412,
+    "closed_usage_tokens": 36633074,
+    "held_ceiling_tokens": 11320103,
+    "held_stuck_share_of_aggregate": 0.1381958399377607
+  },
+  "measurement_script": "measure.py (read-only on the frozen copies)",
+  "negative_control_overload_admit": {
+    "admit": false,
+    "reason": "tokens_total projected 509404636 exceeds statistics office cap 509404635"
+  },
+  "negative_control_superseded_config_admit": {
+    "foresight": {
+      "admit": false,
+      "reason": "tokens_total projected 93233589 exceeds aggregate cap 45280412; tokens_total projected 26657014 exceeds foresight office cap 11320103; cpu_seconds projected 71574.13000000035 exceeds aggregate cap 31948; cpu_seconds projected 20122.94000000041 exceeds foresight office cap 7987; wall_seconds projected 17778 exceeds aggregate cap 7988; wall_seconds projected 4985 exceeds foresight office cap 1997"
+    },
+    "spying": {
+      "admit": false,
+      "reason": "tokens_total projected 93233589 exceeds aggregate cap 45280412; tokens_total projected 32202256 exceeds spying office cap 11320103; cpu_seconds projected 71574.13000000035 exceeds aggregate cap 31948; cpu_seconds projected 25853.479999999516 exceeds spying office cap 7987; wall_seconds projected 17778 exceeds aggregate cap 7988; wall_seconds projected 6478 exceeds spying office cap 1997"
+    },
+    "statistics": {
+      "admit": false,
+      "reason": "tokens_total projected 93233589 exceeds aggregate cap 45280412; tokens_total projected 35243375 exceeds statistics office cap 11320103; cpu_seconds projected 71574.13000000035 exceeds aggregate cap 31948; cpu_seconds projected 24841.890000000596 exceeds statistics office cap 7987; wall_seconds projected 17778 exceeds aggregate cap 7988; wall_seconds projected 6152 exceeds statistics office cap 1997"
+    },
+    "strategy": {
+      "admit": false,
+      "reason": "tokens_total projected 93233589 exceeds aggregate cap 45280412; tokens_total projected 33091253 exceeds strategy office cap 11320103; cpu_seconds projected 71574.13000000035 exceeds aggregate cap 31948; cpu_seconds projected 24716.819999999832 exceeds strategy office cap 7987; wall_seconds projected 17778 exceeds aggregate cap 7988; wall_seconds projected 6154 exceeds strategy office cap 1997"
+    }
+  },
+  "new_reservations_since_prior": {
+    "r1795595445-NZIjZE34": {
+      "agent_id": "15bm8Esub3exygbtVQDIMX-issues",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795595445,
+      "office": "foresight",
+      "state": "held"
+    },
+    "r1795595447-UyyfTafj": {
+      "agent_id": "xJoqIGqbCNo9rhT64tRroV-thirst",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795595447,
+      "office": "strategy",
+      "state": "closed"
+    },
+    "r1795595460-9V0XCjcF": {
+      "agent_id": "s0O9EFxL9kNGBHNL8bphLU-stitch",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795595460,
+      "office": "spying",
+      "state": "closed"
+    },
+    "r1795599016-P1J0KTe9": {
+      "agent_id": "vKIQz9W57p22fX8z3Q4TMt-magnitude",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795599015,
+      "office": "statistics",
+      "state": "active"
+    },
+    "r1795599269-kgG5rTM0": {
+      "agent_id": "iQmMeRzBW02G3sj0np30Qq-convinces",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795599269,
+      "office": "strategy",
+      "state": "active"
+    },
+    "r1795599289-mvLLnigN": {
+      "agent_id": "5KykBwcqot5bGkhbdrRMji-amounting",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795599289,
+      "office": "spying",
+      "state": "active"
+    }
+  },
+  "prior_snapshot": {
+    "captured_utc": "2026-11-25T08:28:30Z",
+    "cpu_seconds": 30784.330000000075,
+    "id": "act34-wave4-trueup-20261125",
+    "reservation_count": 13,
+    "state_counts": {
+      "active": 1,
+      "closed": 12,
+      "held": 0
+    },
+    "tokens_total": 36065164,
+    "wall_seconds": 7614
+  },
+  "recomputed_charges": {
+    "cpu_seconds": 63587.130000000354,
+    "tokens_total": 81913486,
+    "wall_seconds": 15781
+  },
+  "recomputed_now_unix": 1795599342,
+  "reservation_count": 19,
+  "sha256": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "budget-state/aggregate.json": "e98bbce7d7fb7820cfd8d08cf19490bbcc4d2b44efae6d6a8e7a77788769ff95",
+    "budget-state/reservations/r1795549284-UbpN96al.json": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12",
+    "budget-state/reservations/r1795549310-fUfef5Jf.json": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24",
+    "budget-state/reservations/r1795549312-5XZhL8gg.json": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d",
+    "budget-state/reservations/r1795549314-NF0T6ySo.json": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c",
+    "budget-state/reservations/r1795587665-AR7LhTnT.json": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f",
+    "budget-state/reservations/r1795587673-4BdLzlhX.json": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628",
+    "budget-state/reservations/r1795587676-SJSZkBC8.json": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2",
+    "budget-state/reservations/r1795588177-2jkiJ5iT.json": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d",
+    "budget-state/reservations/r1795591522-KXZURRSN.json": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c",
+    "budget-state/reservations/r1795591782-heuosi5E.json": "54fb9a982f1e571a166ae11ca021a997815a067793b3bc78d40c15e44834c90d",
+    "budget-state/reservations/r1795591787-oNrmHxIR.json": "46c87aa94b34e951b499448fe64b6bfcf61120ed11128a91fbbcd6e21ad295bd",
+    "budget-state/reservations/r1795591797-d18DoUyx.json": "77986a01c1ac50684fe7e562c1cbc673b6425530bd37ee398101ee9d39d5c9b4",
+    "budget-state/reservations/r1795595233-CXGuJISF.json": "6a4bf681020488bbfff5cc8b6688b86dd9f31a0230f1a223fd0577239b0f0c1c",
+    "budget-state/reservations/r1795595445-NZIjZE34.json": "d1d52d92a54646e26b9208f5d769acc41f90b312092aaeddbd231112b98d0d31",
+    "budget-state/reservations/r1795595447-UyyfTafj.json": "62517e508a8d746ab78cb2e0765a13aa311510553338b4c2e5c8732b270ab95e",
+    "budget-state/reservations/r1795595460-9V0XCjcF.json": "bd16fc973a49f7bad434863a13dfbfb8dfe225991441ec8eb4a2b97736a3d42c",
+    "budget-state/reservations/r1795599016-P1J0KTe9.json": "17871f0015c1f04f3f29ee12660da3378c39be5de39938b56ac73c2a95892f53",
+    "budget-state/reservations/r1795599269-kgG5rTM0.json": "f94ec26f33451a43de64317a833e03ec057e51803eb3e773ccebd0795fd4660e",
+    "budget-state/reservations/r1795599289-mvLLnigN.json": "ca3a5630140cbb3450ca5ff47d1f55b5676d0d4cb74e345fc26c3bf930f6feab",
+    "foresight-held-agent-status.json": "1c28486194d76648cbc359f9e2c77ebad28109f98537b6c874cdd8726a8128e1",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "liveness-unsafe-holds-listing.txt": "76915743cdd9e3d900b542f61809541675142162f165cec2802baace8f8d25fd",
+    "superseded-knowledge-budget.conf": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+  },
+  "skipped": [],
+  "state_counts": {
+    "active": 3,
+    "closed": 15,
+    "held": 1
+  },
+  "tokens_total_change_vs_prior": 45848322,
+  "validate_config_errors": []
+}
