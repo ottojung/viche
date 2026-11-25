@@ -67,7 +67,8 @@ def guide(role):
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",
           "Run pnp-remote-check --availability once per checkout. Use --scratch --async FILE.lean for experimental Lean or --async FILE.lean for complete candidates; pnp-remote-check --wait ID retrieves the result. NEVER launch raw `lake`, `lake env lean`, `lean` or `checklemma` yourself: a single unmanaged lean/lake process in a pnp worktree makes build_control.legacy_compilers() defer EVERY managed compile (exit 75), blocking kernel receipts for the whole swarm. When remote is unavailable use ONLY the managed compiler: PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake ... (or --light for narrow scratch). Do not build the same file twice.",
-          "Use pnp-research knowledge find QUERY; knowledge show ID retrieves artifacts. Share findings through the existing support channel. Complete exact proof: use the normal submit command immediately."
+          "Use pnp-research knowledge find QUERY; knowledge show ID retrieves artifacts. Share findings through the existing support channel. Complete exact proof: use the normal submit command immediately.",
+          "Research checkouts omit the upstream Outside proof corpus, not your new files. Search the pinned full corpus with git grep PATTERN HEAD -- lean/PEqualNP/Outside; read exact source with git show HEAD:lean/PEqualNP/Outside/NAME.lean. Use git sparse-checkout add /lean/PEqualNP/Outside/NAME.lean only if a physical file is needed. Never materialize the entire corpus routinely."
         ]
     elif role in METHOD:
         lines += [
