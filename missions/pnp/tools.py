@@ -74,6 +74,16 @@ def inventory():
         "At natural checkpoints, especially after expensive work.")
     add("cli.py", "cli submit GAP FILE", "Queue exact completed proof for publication",
         "Immediately when complete; never wait for an extra review.")
+    # Installed (not yet canonical) research CLI. Advertise only when present
+    # and describe limitations honestly: a successful command is not a receipt.
+    installed = Path.home() / ".local/bin/pnp-research"
+    if installed.is_file():
+        rows.append({"command": str(installed) + " start --role ROLE",
+            "purpose": "Short current role onboarding packet (knowledge, obligations, certificate, star, yield)",
+            "when": "At entry for every research role; see 'guide ROLE' for exact examples. Installed CLI, not canonical; successful use is not a kernel receipt or credited step."})
+        rows.append({"command": str(installed) + " guide ROLE",
+            "purpose": "Detailed role-specific commands, applicability and limits",
+            "when": "On demand; supplements, never replaces, the bound lease workflow and guard."})
     return rows
 
 

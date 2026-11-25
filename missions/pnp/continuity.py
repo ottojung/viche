@@ -8,11 +8,11 @@ import time
 from . import assignment, config, focus, staff, state, status, support
 
 SUPPORT = {
-    "knowledge": "Find checked equivalents, opposite conclusions, stronger reusable proofs and admissible imports. Send verified applicability and concrete proof fragments, not just scores.",
-    "methods": "Independently attack the focused claim. Derive a concrete sublemma, construction, refutation or identify a precise false premise. Use full-function checks; never duplicate an existing search.",
-    "flow": "Investigate actual idle time, duplicated computation, correction and publication delay. Deliver concrete improvements that increase checked contributions; do not monitor tool calls.",
-    "portfolio": "Use portfolio inspect and compare all live leases using their researchers' findings and actual artifacts. Make the evidence-based switch decision directly with portfolio switch if justified.",
-    "lease-evaluation": "Use portfolio inspect. Investigate actual mathematical blockers and alternatives. Decide justified releases through portfolio release; never release because of vacancies, age alone or temporary compiler contention.",
+    "knowledge": "Find checked equivalents, opposite conclusions, stronger reusable proofs and admissible imports. Send verified applicability and concrete proof fragments, not just scores. Use 'pnp-research knowledge find/add/link' to make results cumulative.",
+    "methods": "Independently attack the focused claim. Derive a concrete sublemma, construction, refutation or identify a precise false premise. Use full-function checks; never duplicate an existing search. Use 'pnp-research obligations' and 'certificate --check' for reproducible evidence.",
+    "flow": "Investigate actual idle time, duplicated computation, correction and publication delay. Deliver concrete improvements that increase checked contributions; do not monitor tool calls. Use 'pnp-research adoption' for real uptake evidence.",
+    "portfolio": "Use portfolio inspect and compare all live leases using their researchers' findings and actual artifacts. Make the evidence-based switch decision directly with portfolio switch if justified. Use 'pnp-research yield' and obligation readiness as advisory evidence, not a gate.",
+    "lease-evaluation": "Use portfolio inspect. Investigate actual mathematical blockers and alternatives. Decide justified releases through portfolio release; never release because of vacancies, age alone or temporary compiler contention. Use 'pnp-research obligations' to assess remaining concrete dependencies.",
 }
 FRONTS = (
     ("integrator", "Identify the precise missing inference, split the Lean proof into independent lemmas, reuse peer sources and checked upstream proofs, assemble and submit the exact theorem as soon as complete."),
