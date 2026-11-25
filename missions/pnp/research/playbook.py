@@ -56,7 +56,13 @@ def guide(role):
              "do not hand-prove them. The lb_cert generator pre-builds candidates on marceline-dev for every open step into "
              "PNP_STATE_ROOT/lbcert/cands/GAP.lean (status in GAP.status) and the allocator fast lane submits them within one tick. "
              "Build one yourself on marceline-dev (32 cores, ~20 s): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py "
-             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean  (exit 0 written, 3 bound false, 4 too big). See missions/pnp/lbcert/README.md."]
+             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean  (exit 0 written, 3 bound false, 4 too big). See missions/pnp/lbcert/README.md.",
+             "SIBLING PROOFS: 37% of merged theorems share their statement shape (numerals aside) with another merged one, and "
+             "a sibling's proof with the statement swapped compiles about half the time. The town retries this automatically "
+             "every 5 minutes while a step is held (PNP_STATE_ROOT/lbcert/cands/GAP.status says `ok sibling SOURCE`). "
+             "Run it yourself (compiled on marceline-dev): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/sibremote.py "
+             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs  (exit 0 written, 5 no compiling sibling). "
+             "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method."]
     if role in BOUND:
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",

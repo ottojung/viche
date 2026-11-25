@@ -31,8 +31,8 @@ DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 45
-REMOTE_WORKERS = 8
-MAXSTATES = 60000      # the 512 KiB file limit is the real bound (~4.6k states for n = 8)
+REMOTE_WORKERS = 4   # marceline-dev runs at most 4 lb-cert jobs and 3 compiles at once
+MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
 
 
@@ -70,6 +70,9 @@ def write_status(gid, text):
     os.replace(tmp, os.path.join(CANDS, gid + '.status'))
 
 
+QUEUED = set()
+
+
 def generate(g, engines):
     gid, mod = g['id'], g['module']
     if status(gid) is not None:
@@ -85,6 +88,10 @@ def generate(g, engines):
     except Exception:
         r = {'status': 'relay_error'}
     where = 'marceline'
+    if p.returncode == 1 and lbparse.family(g['statement']) == 'mono':
+        QUEUED.discard(gid)   # only marceline-dev builds this family: retry on a later poll
+        log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
+        return
     if p.returncode == 1:   # relay or handler trouble: build here, slower but independent
         where = 'local'
         r = {'status': 'error'}
@@ -163,7 +170,7 @@ def main():
     import threading
     threading.Thread(target=sibling_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
-    queued = set()
+    queued = QUEUED
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
             gaps = json.loads(get(DESK))['gaps']

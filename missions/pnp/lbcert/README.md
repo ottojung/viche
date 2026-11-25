@@ -57,6 +57,25 @@ with `ENGINE.lean = PNP_STATE_ROOT/lbcert/engine7281.lean`.
 * `twin_publish.py HELD TWIN FILE` — PR for the negated twin of a held step through the
   publisher's own gitctl/github/validate helpers.
 
+## Sibling transfer (any step)
+
+`sibremote.py STATEMENT.txt MODULE OUT.lean --imports PEqualNP.Defs` asks marceline-dev (relay op
+`sibling`, handler `~/.local/share/viche/relay/sib-handler.py`, corpus = upstream main in
+`/home/lubko/pnp-verify-2171/up2`, refreshed every 2 min) to find merged theorems with the same statement
+skeleton (numerals and binder names abstracted), swap in this statement (v1) or also remap the differing
+numerals consistently (v2), and compile each with `lake env lean`; the first that compiles is returned.
+Corpus measurement: 37% of merged theorems have a same-skeleton sibling; 7 of 14 tried pairs compiled.
+autosolve runs it for every held step without a candidate every 5 minutes; a success is written as
+`cands/GAP.lean` with status `ok sibling SOURCE` and the fast lane submits it.
+
+## Monotone-equals-general family
+
+Statements `∀ s, HasCircuitSize n f s → ∃ C, Monotone2 C ∧ C.size ≤ s ∧ ∀ x, C.eval … = f x` ("Table 2:
+for the monotone five-input f with table 0x…"). marceline-dev `monofam.py` computes the exact general
+complexity L (lb_cert at L, a circuit at L), searches an AND/OR circuit with exactly L gates, and emits
+the lb_cert lemma plus the explicit circuit; the lb-cert handler compiles it before returning it.
+No monotone circuit of size L = the statement is false (status `false`).
+
 ## Track record and limits
 
 ACCEPTED by `tools/check-lean.mjs`: L_meta_7309 (merged holdout), 5459, 8493, 8487, 8483 (pruned
