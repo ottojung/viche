@@ -35,7 +35,14 @@ case "$1 $2" in
   'agent status')
     printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL" ;;
   'agent run')
-    printf '%s\n' "$*" > "$PROMPT_FILE"
+    # The real cycle now passes a private prompt file; capture its bytes.
+    pfile= prev=
+    for arg in "$@"; do
+      [ "$prev" != '--prompt-file' ] || pfile=$arg
+      prev=$arg
+    done
+    [ -n "$pfile" ] && [ -f "$pfile" ] || { echo 'missing --prompt-file' >&2; exit 7; }
+    cat "$pfile" > "$PROMPT_FILE"
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac

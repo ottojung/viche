@@ -66,6 +66,7 @@ while [ "$#" -gt 0 ]; do
         --id) id=$2; shift 2 ;;
         --cwd|--title) shift 2 ;;
         --prompt) prompt=$2; shift 2 ;;
+        --prompt-file) prompt=$(cat "$2"); shift 2 ;;
         --json|--detach) shift ;;
         *) echo "Unexpected Antonina argument $1" >&2; exit 92 ;;
     esac

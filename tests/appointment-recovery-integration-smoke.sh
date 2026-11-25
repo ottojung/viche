@@ -48,7 +48,16 @@ case "$1 $2" in
     if [ "${MOCK_STOP_FAIL:-}" = yes ]; then exit 3; fi
     jq '.state="stopped"' "$MOCK_ROOT/$id.json" > "$MOCK_ROOT/$id.next"
     mv "$MOCK_ROOT/$id.next" "$MOCK_ROOT/$id.json" ;;
-  'agent run') printf 'run\n' >> "$MOCK_ROOT/runs"; printf '%s\n' "$*" >> "$MOCK_ROOT/run-args" ;;
+  'agent run')
+    printf 'run\n' >> "$MOCK_ROOT/runs"
+    # The prompt travels in a private file, not in argv; record its bytes.
+    pfile= prev=
+    for arg in "$@"; do
+      [ "$prev" != '--prompt-file' ] || pfile=$arg
+      prev=$arg
+    done
+    [ -n "$pfile" ] && [ -f "$pfile" ] || { echo 'missing --prompt-file' >&2; exit 7; }
+    cat "$pfile" >> "$MOCK_ROOT/run-args" ;;
   # An empty board: the ordinary eligible-issue inventory now always runs
   # beside open handoffs (Founder directive 2026-11-16).
   'board list') printf '[]\n' ;;
