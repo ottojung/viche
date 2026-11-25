@@ -222,6 +222,13 @@ def verified_record(row):
         return source_verified(k.artifact(row["source_digest"]).read_text(),row["node"],legacy=True)
     except (OSError,ValueError,KeyError,TypeError):return False
 
+def local_compile_command(path):
+    # Obligation sources always import Mathlib, so they require the exclusive
+    # heavy queue. Light mode is only for narrow scratch files.
+    return [str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
+            "--","lake","env","lean",str(path)]
+
+
 def solve(c,oid,path,local=False,method=False):
     obj=k.get(c,oid)
     if obj["kind"]!="obligation":raise ValueError("not an obligation")
@@ -240,9 +247,8 @@ def solve(c,oid,path,local=False,method=False):
             f.write(src);f.flush()
             if local:
                 env=dict(os.environ,PYTHONPATH="/var/lib/lubko/wd/viche")
-                proc=subprocess.run([str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
-                                     "--light","--","lake","env","lean",f.name],cwd=work/"lean",
-                                    env=env,capture_output=True,text=True,timeout=1200)
+                proc=subprocess.run(local_compile_command(f.name),cwd=work/"lean",
+                                   env=env,capture_output=True,text=True,timeout=1200)
                 result={"status":"elaborated" if proc.returncode==0 else "not_elaborated",
                         "exit_code":proc.returncode,"base":base,"source_sha256":sourcehash,
                         "diagnostic":(proc.stdout+"\n"+proc.stderr)[-16000:],"mode":"local-managed"}
