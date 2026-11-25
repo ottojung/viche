@@ -130,6 +130,92 @@ def pin_candidate(worktree, path, candidate_bytes, correction=False):
         raise GitError("unexpected additional worktree changes: %r" % other)
 
 
+def share_pinned_corpus(worktree, base):
+    """Hardlink byte-identical pinned source files to one central corpus.
+
+    `git worktree add` checks out a full copy of the pinned tree (~446 MB at
+    present) for every gap attempt, and reclaimed space immediately refills.
+    All attempts at the same pinned base are identical for their tracked
+    files, so replace those copies with hard links to one preserved central
+    corpus. Files a worker creates or mutates remain ordinary per-attempt
+    files. Never touches .git or the shared .lake packages.
+
+    The shared corpus is made immutable so an in-place worker edit cannot
+    corrupt every attempt that hardlinks it; workers add new candidate files
+    rather than rewriting pinned sources. Best effort: a failure here leaves
+    the ordinary full checkout in place rather than blocking research.
+    """
+    import fcntl
+    import re
+
+    sha = run(["git", "--git-dir=" + MIRROR, "rev-parse",
+               base + "^{commit}"]).stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise GitError("cannot resolve pinned base for corpus sharing")
+    root = os.path.join(config.CACHE_DIR, "pinned-corpus")
+    os.makedirs(root, exist_ok=True)
+    central = os.path.join(root, sha)
+    lock = os.path.join(root, sha + ".lock")
+    fd = os.open(lock, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        if not os.path.exists(central):
+            tmp = central + ".tmp-" + str(os.getpid())
+            shutil.rmtree(tmp, ignore_errors=True)
+            os.makedirs(tmp, exist_ok=True)
+            archive = subprocess.Popen(
+                ["git", "--git-dir=" + MIRROR, "archive", sha],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            extract = subprocess.Popen(
+                ["tar", "-x", "-C", tmp], stdin=archive.stdout,
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            archive.stdout.close()
+            extract_err = extract.communicate()[1]
+            archive_err = archive.stderr.read()
+            archive.stderr.close()
+            archive.wait()
+            if archive.returncode or extract.returncode:
+                shutil.rmtree(tmp, ignore_errors=True)
+                raise GitError("pinned corpus archive failed: " +
+                               (archive_err + extract_err).decode(
+                                   "utf-8", "replace")[:300])
+            for r, _dirs, files in os.walk(tmp):
+                for name in files:
+                    os.chmod(os.path.join(r, name), 0o444)
+            os.replace(tmp, central)
+    finally:
+        os.close(fd)
+    linked = 0
+    for r, dirs, files in os.walk(worktree):
+        if ".git" in dirs:
+            dirs.remove(".git")
+        if ".lake" in dirs:
+            dirs.remove(".lake")
+        rel = os.path.relpath(r, worktree)
+        for name in files:
+            dst = os.path.join(r, name)
+            src = os.path.join(central, name) if rel == "." else \
+                os.path.join(central, rel, name)
+            try:
+                if not os.path.isfile(src) or \
+                        os.path.getsize(src) != os.path.getsize(dst):
+                    continue
+                st = os.stat(dst)
+                # rename() of two hardlinks to the same inode is a no-op and
+                # would leave the temporary name behind. Already shared: skip.
+                if st.st_ino == os.stat(src).st_ino:
+                    continue
+                tmpdst = dst + ".pnp-link"
+                os.link(src, tmpdst)
+                os.utime(tmpdst, ns=(st.st_atime_ns, st.st_mtime_ns))
+                os.replace(tmpdst, dst)
+                linked += 1
+            except OSError:
+                if os.path.lexists(dst + ".pnp-link"):
+                    os.unlink(dst + ".pnp-link")
+    return linked
+
+
 def prepare_build_cache(worktree):
     """Share pinned dependency packages, never another proof's mutable .lake."""
     seed = os.environ.get("PNP_SHARED_LAKE",

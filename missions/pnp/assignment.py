@@ -121,6 +121,13 @@ def prepare(gap, checkout=True, worker=None, base=None, expected=None):
                 base = base or gitctl.ensure_mirror()
                 gitctl.run(["git", "--git-dir=" + gitctl.MIRROR, "worktree", "add",
                             "--detach", str(path), base])
+                try:
+                    gitctl.share_pinned_corpus(str(path), base)
+                except Exception as exc:
+                    # Best effort: a full checkout is slower but still correct.
+                    import sys
+                    print("pnp: pinned corpus sharing unavailable, using full "
+                          "checkout: " + str(exc), file=sys.stderr)
             gitctl.prepare_build_cache(str(path))
         except gitctl.GitError as exc:
             raise ValueError(str(exc)) from exc
