@@ -163,6 +163,8 @@ def staffing_lock():
 
 def dispatch(gap, plans, agents=None, locked=False):
     """adopt by exact cwd; ``agents`` may be a baseline's single snapshot."""
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     rec = state.load(gap)
     if not focus.eligible(rec) or rec.get("queued_lease"):
         raise ValueError("not a live research or correction assignment")
@@ -281,6 +283,8 @@ GENERAL_APPROACH = ("Develop a broad mathematical understanding of the exact pro
 
 
 def baseline(agents=None, locked=False):
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        raise RuntimeError("standing controller owns live dispatch")
     if not locked:
         with staffing_lock():
             return baseline(agents, locked=True)
@@ -316,6 +320,14 @@ def main():
     p.add_argument("--baseline", action="store_true", help="staff one general researcher on every live lease")
     p.add_argument("--worker", action="append", metavar="LABEL=APPROACH")
     args = p.parse_args()
+    # Interactive legacy entry points must not race the standing controller.
+    # Hermetic callers of the old helpers remain supported for regression tests.
+    if Path(config.STATE_ROOT).resolve() == Path("/var/lib/lubko/wd/viche-state/pnp"):
+        from .staffing import store
+        if args.worker:
+            p.error("declare exact-attempt extras in staffing/policy.json; controller owns launches")
+        print(json.dumps(store.read_health(),indent=2))
+        return
     try:
         if args.baseline:
             if args.gap or args.worker:
