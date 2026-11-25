@@ -1,0 +1,151 @@
+{
+  "decision_use": "Gives Executive, recovery-steward and Judiciary a frozen, independently re-executed snapshot that (a) confirms ledger internal consistency with a held row; (b) quantifies ceiling-pinned (55.28%) vs trued-up (44.72%) liability and the stuck held share (13.82%); (c) records the absent liveness hold / reconciliation as a point-in-time negative observation with an explicit falsifier; and (d) confirms admission is still open for all four offices and caps are far from binding. This is a substrate reliability qualification ONLY: not a renewal, efficacy, legal-authorization, after-start-safety or hold-lawfulness verdict, and not a determination that any office owed or breached a continuity duty.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/aggregate.json",
+      "sha256": "e98bbce7d7fb7820cfd8d08cf19490bbcc4d2b44efae6d6a8e7a77788769ff95"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795549284-UbpN96al.json",
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795549310-fUfef5Jf.json",
+      "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795549312-5XZhL8gg.json",
+      "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795549314-NF0T6ySo.json",
+      "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795587665-AR7LhTnT.json",
+      "sha256": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795587673-4BdLzlhX.json",
+      "sha256": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795587676-SJSZkBC8.json",
+      "sha256": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795588177-2jkiJ5iT.json",
+      "sha256": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795591522-KXZURRSN.json",
+      "sha256": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795591782-heuosi5E.json",
+      "sha256": "54fb9a982f1e571a166ae11ca021a997815a067793b3bc78d40c15e44834c90d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795591787-oNrmHxIR.json",
+      "sha256": "46c87aa94b34e951b499448fe64b6bfcf61120ed11128a91fbbcd6e21ad295bd"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795591797-d18DoUyx.json",
+      "sha256": "77986a01c1ac50684fe7e562c1cbc673b6425530bd37ee398101ee9d39d5c9b4"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795595233-CXGuJISF.json",
+      "sha256": "6a4bf681020488bbfff5cc8b6688b86dd9f31a0230f1a223fd0577239b0f0c1c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795595445-NZIjZE34.json",
+      "sha256": "d1d52d92a54646e26b9208f5d769acc41f90b312092aaeddbd231112b98d0d31"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795595447-UyyfTafj.json",
+      "sha256": "62517e508a8d746ab78cb2e0765a13aa311510553338b4c2e5c8732b270ab95e"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795595460-9V0XCjcF.json",
+      "sha256": "bd16fc973a49f7bad434863a13dfbfb8dfe225991441ec8eb4a2b97736a3d42c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795599016-P1J0KTe9.json",
+      "sha256": "17871f0015c1f04f3f29ee12660da3378c39be5de39938b56ac73c2a95892f53"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795599269-kgG5rTM0.json",
+      "sha256": "f94ec26f33451a43de64317a833e03ec057e51803eb3e773ccebd0795fd4660e"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/budget-state/reservations/r1795599289-mvLLnigN.json",
+      "sha256": "ca3a5630140cbb3450ca5ff47d1f55b5676d0d4cb74e345fc26c3bf930f6feab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/foresight-held-agent-status.json",
+      "sha256": "1c28486194d76648cbc359f9e2c77ebad28109f98537b6c874cdd8726a8128e1"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/liveness-unsafe-holds-listing.txt",
+      "sha256": "76915743cdd9e3d900b542f61809541675142162f165cec2802baace8f8d25fd"
+    },
+    {
+      "path": "records/statistics/evidence/act34-held-liability-20261125/superseded-knowledge-budget.conf",
+      "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+    }
+  ],
+  "id": "act34-held-liability-20261125",
+  "limitations": "Aggregate and reservations share one file set, so their agreement is internal consistency, not independent corroboration of real token use. The Antonina status is a separate instrument but validates only the agent terminal state/binding, not token figures. CPU charges are whole-host UPPER_BOUND, not per-office measurement. No counterfactual true-up amount is computed. Absence of a liveness hold is a point-in-time negative observation that a before/equal-time reconciliation elsewhere would falsify.",
+  "method": "Re-executed the frozen deployed knowledge-budget-tool.py validate_config(), charges() and admit() on byte-frozen canonical copies; decomposed liability by state basis (closed->usage, held->charge ceiling, active->caps ceiling); parsed the held reservation history and held_at; cross-checked the same agent id with a frozen Antonina status snapshot; froze an empty liveness/unsafe-holds listing. Hardcoded prior wave4 values are content assertions, not values to update. See measure.py and PROVENANCE.md in the evidence directory.",
+  "missingness": "Meter values and usage for held/active rows are null by construction and are charged at the ceiling; the held row has no native_session_id, runner_pid, monitor_pid, closed_at or closed_reason in the reservation. Antonina status was captured once at capture, not continuously. The live ledger was accepting new reservations during capture; this snapshot is point-in-time.",
+  "negative_controls": "Superseded 0964bd1e config refuses all four offices; a synthetic over-cap aggregate refuses statistics admission; frozen prior wave4 bytes/ids/counts/state histogram must match or assertions fail; a non-empty unsafe-holds listing or a closed/trued-down held row would falsify the novelty claim.",
+  "population": "All 19 budget reservation records present in /var/lib/lubko/wd/viche-state/knowledge/budget/reservations at 2026-11-25T09:35:55Z; frozen aggregate.json; canonical activation/config/tool; one Antonina agent status; one liveness-holds listing. Case selection is every in-window reservation, not a sample.",
+  "question": "In the ~67 min after the 2026-11-25T08:28:30Z wave4 budget snapshot (13 reservations), under BYTE-UNCHANGED activation.json / knowledge-budget.conf / knowledge-budget-tool.py, did the live ledger still reproduce its aggregate exactly; what share of charged liability is now ceiling-pinned (held+active) rather than trued-up closed usage; did the FIRST `held` reservation (foresight r1795595445-NZIjZE34, held 08:31:15Z for meter_or_session_binding_unknown_after_launch, still held ~64 min with null meter/usage/session binding, whose Antonina agent was SIGKILLed at 08:31:14Z with null exit code) acquire a durable continuity reconciliation; and does admit() still admit all four offices?",
+  "result": {
+    "active_unsafe_holds_empty_at_capture": true,
+    "admit_new_config_all_four": true,
+    "aggregate_reproduced": true,
+    "all_assertions_pass": true,
+    "cap_headroom_largest_office_token_share": 0.047,
+    "captured_utc": "2026-11-25T09:35:55Z",
+    "ceiling_pinned_share": 0.5527833597510428,
+    "ceiling_pinned_tokens": 45280412,
+    "derived_measurement_sha256": "cbb387159fea61ac7c5efa2ec5bf63bb654f80c5bf0a5f4b699d2ae05913ec9b",
+    "held_agent_terminal": {
+      "exit_code": null,
+      "exit_signal": 9,
+      "native_session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+      "state": "killed"
+    },
+    "held_duration_seconds_at_capture": 3867,
+    "held_id": "r1795595445-NZIjZE34",
+    "held_stuck_share_of_aggregate": 0.1381958399377607,
+    "held_stuck_tokens": 11320103,
+    "reservation_count": 19,
+    "state_counts": {
+      "active": 3,
+      "closed": 15,
+      "held": 1
+    },
+    "tokens_total": 81913486,
+    "tokens_total_change_vs_wave4": 45848322,
+    "trued_up_usage_tokens": 36633074
+  },
+  "revisit_when": "Revisit when the held reservation closes (true-up path exercised), a box restart changes permits/config/tool bytes, a continuity reconciliation for agent 15bm8Esub3exygbtVQDIMX-issues or reservation r1795595445-NZIjZE34 is filed, or the 48-hour after-start disposition lands. Retire if later evidence shows a before/equal-time handoff or that held rows are trued up by another mechanism.",
+  "schema": "viche-statistics-inquiry-v1",
+  "source_dependence": "Canonical Git activation.json/config/tool and the state-dir budget ledger are the primary sources; superseded config is a frozen negative control. The Antonina status and liveness listing are independent instruments on the agent, not derived from the budget ledger. Publication in Post/Gazette would not be independent evidence.",
+  "stage": "measured",
+  "why_now": "All prior Act 34 measurements established \"cumulative debt is bounded, time-dependent and trued up on close\" using only closed reservations. A `held` reservation is a structurally different liability class: charges() pins the full 11,320,103-token per-run ceiling with no true-up path until a closure that has not occurred. At this capture 55.28% of the aggregate is ceiling-pinned, and the single stuck held row is 13.82% of the aggregate. Its agent is a SIGKILL/terminal-uncertain case of the same class the recovery-steward reconciled for spying in ~3 minutes at 06:26Z, yet the active liveness/unsafe-holds directory was empty and no record mentions this agent. Executive/Judiciary value or renewal claims would rest on a debt estimate that is partly ceiling-pinned and on a hold with no recorded handoff; distinguishing actual-usage debt from stuck ceiling debt is material before any disposition."
+}

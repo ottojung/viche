@@ -222,6 +222,13 @@ def verified_record(row):
         return source_verified(k.artifact(row["source_digest"]).read_text(),row["node"],legacy=True)
     except (OSError,ValueError,KeyError,TypeError):return False
 
+def local_compile_command(path):
+    # Obligation sources always import Mathlib, so they require the exclusive
+    # heavy queue. Light mode is only for narrow scratch files.
+    return [str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
+            "--","lake","env","lean",str(path)]
+
+
 def solve(c,oid,path,local=False,method=False):
     obj=k.get(c,oid)
     if obj["kind"]!="obligation":raise ValueError("not an obligation")
@@ -240,9 +247,8 @@ def solve(c,oid,path,local=False,method=False):
             f.write(src);f.flush()
             if local:
                 env=dict(os.environ,PYTHONPATH="/var/lib/lubko/wd/viche")
-                proc=subprocess.run([str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
-                                     "--light","--","lake","env","lean",f.name],cwd=work/"lean",
-                                    env=env,capture_output=True,text=True,timeout=1200)
+                proc=subprocess.run(local_compile_command(f.name),cwd=work/"lean",
+                                   env=env,capture_output=True,text=True,timeout=1200)
                 result={"status":"elaborated" if proc.returncode==0 else "not_elaborated",
                         "exit_code":proc.returncode,"base":base,"source_sha256":sourcehash,
                         "diagnostic":(proc.stdout+"\n"+proc.stderr)[-16000:],"mode":"local-managed"}
@@ -275,13 +281,23 @@ def ready(c,base=None,family=None):
                   if json.loads(row["result"]).get("status")=="kernel_checked"]
     for row in verified:
         if verified_record(row):checked.add((row["node"],row["base"]))
+    # A checked exact negation linked as counterexample_to is durable evidence
+    # that the target obligation is impossible.  An unverified assertion or a
+    # bare counterexample note must not suppress research.
+    refuted={}
+    for edge in c.execute("""SELECT e.source,e.target,o.base FROM edge e
+                             JOIN object o ON o.id=e.target
+                             WHERE e.relation='counterexample_to'"""):
+        if (edge["source"],edge["base"]) in checked:
+            refuted.setdefault(edge["target"],[]).append(edge["source"])
     for row in c.execute("SELECT id,statement,family,base FROM object WHERE kind='obligation' ORDER BY created"):
         obj=dict(row)
         if base and obj["base"]!=base:continue
         if family and not c.execute("SELECT 1 FROM origin WHERE node=? AND family=?",(obj["id"],family)).fetchone():continue
         deps=[r[0] for r in c.execute("SELECT target FROM edge WHERE source=? AND relation='requires' ORDER BY target",(obj["id"],))]
-        status="checked" if (obj["id"],obj["base"]) in checked else "ready" if all((d,obj["base"]) in checked for d in deps) else "blocked"
+        status="checked" if (obj["id"],obj["base"]) in checked else "refuted" if obj["id"] in refuted else "ready" if all((d,obj["base"]) in checked for d in deps) else "blocked"
         rows.append({**obj,"symbol":symbol(obj["id"]),"status":status,"dependencies":deps,
+                     "refuted_by":refuted.get(obj["id"],[]),
                      "assignments":[dict(r) for r in c.execute("SELECT attempt,worker,at FROM assignment WHERE node=?",(obj["id"],))]})
     return rows
 

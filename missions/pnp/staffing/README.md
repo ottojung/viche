@@ -34,6 +34,9 @@ cooperatively after exact revalidation; the existing owner is preferred.
 Uncertain observations never justify a new start or stop. Terminal or
 superseded assignments and off-focus specialists are retired, never their
 workspaces. Completed obligation specialists may finish their current pass.
+Once their exact node is checked, refuted by a checked linked counterexample,
+or blocked, the controller retires that exact workspace identity; it never
+retires the general researcher or unrelated support work.
 
 A short or failed invocation backs off exponentially, bounded by policy.
 Repeated failures rotate the context while preserving the exact workspace

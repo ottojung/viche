@@ -69,4 +69,15 @@ sleep 2
 SLOW
 VICHE_BOARD_TRAIL_TIMEOUT=1 python3 "$scratch/town/government/judiciary-measurements.py" >/dev/null
 jq -e '.board_trail.status=="not_measured" and (.board_trail.reason|contains("timed out"))' "$report" >/dev/null
+# Recurrence regression (2026-11-25): a genuinely slow but successful scan must
+# be MEASURED under the default budget, not reported "not_measured" because a
+# fixed 60 s cap expired first. A 2 s mock exercises the same path hermetically.
+cat > "$scratch/town/government/board-trail-check.sh" <<'SLOWOK'
+#!/bin/sh
+sleep 2
+printf '%s\n' '{"issue":"100","work":"law-a","act":"1","type":"law","enacted_epoch":1000,"comments_total":1,"post_completion":1,"terminal":1,"stage_markers":"verification","chatter":0,"latest_iso":"1970-01-01T00:20:00Z","board_readable":true}'
+SLOWOK
+chmod +x "$scratch/town/government/board-trail-check.sh"
+python3 "$scratch/town/government/judiciary-measurements.py" >/dev/null
+jq -e '.board_trail.status=="measured" and .board_trail.completed_total==1 and .board_trail.terminal_reached==1' "$report" >/dev/null
 echo 'Board-trail completeness lens smoke passed'

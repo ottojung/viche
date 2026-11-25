@@ -41,6 +41,23 @@ class Research(unittest.TestCase):
         m=o.fork(self.c,b,"b"*40)
         self.assertEqual(k.get(self.c,m[b])["dependencies"],[m[a]])
         self.assertFalse(k.get(self.c,m[a])["checks"])
+    def test_checked_negation_marks_target_refuted(self):
+        target=self.obligation("True")
+        negation=self.obligation("¬ True")
+        self.fixture_receipt(negation,"by simp")
+        k.link(self.c,negation,target,"counterexample_to")
+        statuses={x["id"]:x for x in o.ready(self.c)}
+        self.assertEqual(statuses[target]["status"],"refuted")
+        self.assertEqual(statuses[target]["refuted_by"],[negation])
+        self.assertEqual(statuses[negation]["status"],"checked")
+
+        unverified=self.obligation("¬ True ∧ True")
+        other=self.obligation("True ∧ True")
+        k.link(self.c,unverified,other,"counterexample_to")
+        statuses={x["id"]:x for x in o.ready(self.c)}
+        self.assertEqual(statuses[other]["status"],"ready")
+        self.assertEqual(statuses[other]["refuted_by"],[])
+
     def test_axioms(self):
         a=self.obligation("True");name=o.symbol(a)
         self.assertTrue(o.verify_output(f"'{name}' depends on axioms: [propext, Classical.choice, Quot.sound]",a))
@@ -64,6 +81,12 @@ class Research(unittest.TestCase):
         self.assertFalse(o.source_verified(source.replace("by trivial","by trivial\n#exit"),a))
         injected=self.obligation("True\naxiom bogus : False")
         with self.assertRaises(ValueError):o.build(self.c,injected,"by trivial")
+
+    def test_local_compile_command_uses_heavy_queue(self):
+        cmd=o.local_compile_command("Proof.lean")
+        self.assertNotIn("--light",cmd)
+        self.assertIn("--",cmd)
+        self.assertEqual(cmd[-4:],["lake","env","lean","Proof.lean"])
 
     def test_sync_receipt(self):
         from types import SimpleNamespace
