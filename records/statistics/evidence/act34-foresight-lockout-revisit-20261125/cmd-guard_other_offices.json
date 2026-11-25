@@ -1,0 +1,32 @@
+{
+  "spying": {
+    "argv": [
+      "knowledge-budget.sh",
+      "guard",
+      "spying"
+    ],
+    "rc": 1,
+    "stderr": "knowledge-budget: office spying has an open reservation: r1795606837-wb8SAOVB",
+    "stdout": ""
+  },
+  "statistics": {
+    "argv": [
+      "knowledge-budget.sh",
+      "guard",
+      "statistics"
+    ],
+    "rc": 1,
+    "stderr": "knowledge-budget: office statistics has an open reservation: r1795606588-LhiP4Nec",
+    "stdout": ""
+  },
+  "strategy": {
+    "argv": [
+      "knowledge-budget.sh",
+      "guard",
+      "strategy"
+    ],
+    "rc": 1,
+    "stderr": "knowledge-budget: office strategy has an open reservation: r1795606816-huTkAUah",
+    "stdout": ""
+  }
+}

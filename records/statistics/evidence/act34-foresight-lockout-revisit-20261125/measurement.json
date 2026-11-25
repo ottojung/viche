@@ -1,0 +1,190 @@
+{
+  "admit_by_office": {
+    "foresight": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "spying": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "statistics": {
+      "admit": true,
+      "reason": "within caps"
+    },
+    "strategy": {
+      "admit": true,
+      "reason": "within caps"
+    }
+  },
+  "all_assertions_pass": true,
+  "assertions": {
+    "admit_all_four_true": true,
+    "aggregate_reproduced_exactly": true,
+    "bill_draft_explicitly_not_enacted": true,
+    "bytes_unchanged_vs_1037_activation.json": true,
+    "bytes_unchanged_vs_1037_knowledge-budget-tool.py": true,
+    "bytes_unchanged_vs_1037_knowledge-budget.conf": true,
+    "bytes_unchanged_vs_1037_knowledge-budget.sh": true,
+    "claimed_commits_all_ancestors_of_main": true,
+    "claimed_records_present_on_main": true,
+    "foresight_alone_blocked_by_held_row": true,
+    "frozen_config_valid": true,
+    "guard_flips_ok_when_held_removed": true,
+    "guard_foresight_blames_held_row": true,
+    "guard_foresight_refused": true,
+    "held_charge_at_frozen_ceiling": true,
+    "held_longer_than_prior_7553s": true,
+    "held_meter_and_usage_null": true,
+    "held_native_session_null": true,
+    "held_no_closure_fields": true,
+    "held_reason_unchanged": true,
+    "held_row_still_present": true,
+    "held_state_still_held": true,
+    "landing_did_not_change_substrate": true,
+    "no_ballot_or_tally_for_draft": true,
+    "no_law_entry_for_draft": true,
+    "no_live_antonina_call_in_scratch": true,
+    "other_offices_refuse_on_own_active_rows": true,
+    "over_cap_refuses_statistics": true,
+    "prior_count_was_21": true,
+    "reservation_count_grew": true,
+    "resolve_did_not_close": true,
+    "resolve_kept_full_ceiling": true,
+    "resolve_left_row_held": true,
+    "resolve_rc_zero": true,
+    "resolve_reason_was_identity_unresolved": true,
+    "superseded_config_refuses_all": true,
+    "unsafe_holds_still_empty": true
+  },
+  "capture_utc": "2026-11-25T11:43:00Z",
+  "captured_unix": 1795606980,
+  "ceiling_pinned_share": 0.4694664076565542,
+  "ceiling_pinned_tokens": 45280412,
+  "commands": {
+    "guard_foresight": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 1,
+      "stderr": "knowledge-budget: office foresight has an open reservation: r1795595445-NZIjZE34",
+      "stdout": ""
+    },
+    "guard_foresight_without_held_row": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "guard ok: foresight"
+    },
+    "guard_other_offices": {
+      "spying": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "spying"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office spying has an open reservation: r1795606837-wb8SAOVB",
+        "stdout": ""
+      },
+      "statistics": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "statistics"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office statistics has an open reservation: r1795606588-LhiP4Nec",
+        "stdout": ""
+      },
+      "strategy": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "strategy"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office strategy has an open reservation: r1795606816-huTkAUah",
+        "stdout": ""
+      }
+    },
+    "resolve_held_row": {
+      "argv": [
+        "knowledge-budget.sh",
+        "resolve",
+        "r1795595445-NZIjZE34",
+        "statistics-hermetic-revisit"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "correction_of_prior_finding_d": {
+    "honest_scope": "the earlier observation was correct at its capture; this is a later-time update, not a rewrite. The landed material is an investigation record and an explicitly NOT-ENACTED draft, not a closure or repair of held row r1795595445-NZIjZE34.",
+    "prior_statement": "claimed reconciliation record absent from canonical main (point-in-time, 10:37:47Z)",
+    "status_now": "superseded at 11:43:00Z: both artifacts present on canonical main",
+    "version": "v2 (revisit); v1 = act34-foresight-lockout-20261125, retained unchanged"
+  },
+  "derived_measurement_sha256": "869fa50bc8616609c3feb6fac124f3c46e23e24d1b2d8dd1a87cc668cb02c0f6",
+  "hashes": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "knowledge-budget.sh": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56",
+    "superseded-knowledge-budget.conf": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+  },
+  "held_duration_seconds_at_capture": 11505,
+  "held_id": "r1795595445-NZIjZE34",
+  "held_share_of_aggregate": 0.11736660191413854,
+  "held_tokens": 11320103,
+  "liability_basis_tokens": {
+    "active_caps": 33960309,
+    "closed_usage": 51170391,
+    "held_charge": 11320103,
+    "reserved_caps": 0
+  },
+  "minutes_since_prior": 65.87,
+  "open_reservations_by_office": {
+    "foresight": [
+      "r1795595445-NZIjZE34"
+    ],
+    "spying": [
+      "r1795606837-wb8SAOVB"
+    ],
+    "statistics": [
+      "r1795606588-LhiP4Nec"
+    ],
+    "strategy": [
+      "r1795606816-huTkAUah"
+    ]
+  },
+  "prior_capture_utc": "2026-11-25T10:37:08Z",
+  "prior_reservation_count": 21,
+  "prior_tokens_total": 77845120,
+  "reservation_count": 25,
+  "resolve_row_after": {
+    "charge": {
+      "cpu_seconds": 7987,
+      "tokens_total": 11320103,
+      "wall_seconds": 1997
+    },
+    "closed_at": null,
+    "closed_reason": null,
+    "held_reason": "operator_resolution_identity_unresolved",
+    "resolved_by": null,
+    "state": "held"
+  },
+  "state_counts": {
+    "active": 3,
+    "closed": 21,
+    "held": 1
+  },
+  "tokens_total": 96450803
+}

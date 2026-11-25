@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "knowledge-budget.sh",
+    "guard",
+    "foresight"
+  ],
+  "rc": 0,
+  "stderr": "",
+  "stdout": "guard ok: foresight"
+}
