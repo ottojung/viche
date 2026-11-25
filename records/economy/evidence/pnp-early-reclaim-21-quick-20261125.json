@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-25T13:46:48Z",
+  "authority": "P-1795613709-0545",
+  "dest_present": 21,
+  "df": {
+    "avail_kb": 6399096,
+    "device": "/dev/mapper/cryptroot",
+    "size_kb": 244540724,
+    "used_kb": 225646780,
+    "used_pct": 98
+  },
+  "errors": [],
+  "phase": "quick",
+  "proc_mount_refs": [],
+  "scan_errors": 0
+}

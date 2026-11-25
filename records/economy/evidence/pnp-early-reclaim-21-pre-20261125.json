@@ -1,0 +1,229 @@
+{
+  "at": "2026-11-25T13:43:20Z",
+  "authority": "P-1795613709-0545",
+  "authorized_count": 21,
+  "authorized_names": [
+    "L-meta-5012",
+    "L-meta-4305",
+    "L-meta-3566",
+    "L-meta-2976",
+    "L-meta-2583",
+    "L-meta-4478",
+    "L-meta-2223",
+    "L-meta-4215",
+    "L-meta-4199",
+    "L-meta-1692",
+    "L-meta-2585",
+    "L-meta-3646",
+    "L-meta-1782",
+    "L-meta-4707",
+    "L-meta-2625",
+    "L-meta-1967",
+    "L-meta-2270",
+    "L-meta-2872",
+    "L-meta-3774",
+    "L-meta-1745",
+    "L-meta-5760"
+  ],
+  "df_before": {
+    "avail_kb": 6426488,
+    "device": "/dev/mapper/cryptroot",
+    "size_kb": 244540724,
+    "used_kb": 225619388,
+    "used_pct": 98
+  },
+  "du_total_kb": 12938028,
+  "errors": [],
+  "ledger_rows": 21,
+  "ledger_size_total_kb": 12938028,
+  "phase": "pre",
+  "preserve_names": [
+    "L-meta-3321",
+    "L-meta-2149",
+    "L-meta-2382",
+    "L-meta-2341",
+    "L-meta-2373",
+    "L-meta-2232"
+  ],
+  "preserve_present": {
+    "L-meta-2149": true,
+    "L-meta-2232": true,
+    "L-meta-2341": true,
+    "L-meta-2373": true,
+    "L-meta-2382": true,
+    "L-meta-3321": true
+  },
+  "proc_mount_refs": [],
+  "recoverability": "reversible move already complete; recovery only from quarantine copy until reclaimed",
+  "rows": [
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-5012-20261125121315",
+      "du_kb": 2401396,
+      "name": "L-meta-5012",
+      "qat": "1795608788",
+      "size_kb": 2401396,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5012"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4305-20261125121315",
+      "du_kb": 826956,
+      "name": "L-meta-4305",
+      "qat": "1795608788",
+      "size_kb": 826956,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4305"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3566-20261125121315",
+      "du_kb": 818412,
+      "name": "L-meta-3566",
+      "qat": "1795608788",
+      "size_kb": 818412,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3566"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2976-20261125121315",
+      "du_kb": 771640,
+      "name": "L-meta-2976",
+      "qat": "1795608788",
+      "size_kb": 771640,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2976"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2583-20261125121315",
+      "du_kb": 737284,
+      "name": "L-meta-2583",
+      "qat": "1795608788",
+      "size_kb": 737284,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2583"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4478-20261125121315",
+      "du_kb": 685092,
+      "name": "L-meta-4478",
+      "qat": "1795608788",
+      "size_kb": 685092,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4478"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2223-20261125121315",
+      "du_kb": 619236,
+      "name": "L-meta-2223",
+      "qat": "1795608788",
+      "size_kb": 619236,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2223"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4215-20261125121315",
+      "du_kb": 592424,
+      "name": "L-meta-4215",
+      "qat": "1795608788",
+      "size_kb": 592424,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4215"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4199-20261125121315",
+      "du_kb": 588380,
+      "name": "L-meta-4199",
+      "qat": "1795608788",
+      "size_kb": 588380,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4199"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1692-20261125121315",
+      "du_kb": 588376,
+      "name": "L-meta-1692",
+      "qat": "1795608788",
+      "size_kb": 588376,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1692"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2585-20261125121315",
+      "du_kb": 560844,
+      "name": "L-meta-2585",
+      "qat": "1795608788",
+      "size_kb": 560844,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2585"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3646-20261125121315",
+      "du_kb": 546132,
+      "name": "L-meta-3646",
+      "qat": "1795608788",
+      "size_kb": 546132,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3646"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1782-20261125121315",
+      "du_kb": 481948,
+      "name": "L-meta-1782",
+      "qat": "1795608788",
+      "size_kb": 481948,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1782"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-4707-20261125121315",
+      "du_kb": 391424,
+      "name": "L-meta-4707",
+      "qat": "1795608788",
+      "size_kb": 391424,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4707"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2625-20261125121315",
+      "du_kb": 390196,
+      "name": "L-meta-2625",
+      "qat": "1795608788",
+      "size_kb": 390196,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2625"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1967-20261125121315",
+      "du_kb": 383988,
+      "name": "L-meta-1967",
+      "qat": "1795608788",
+      "size_kb": 383988,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1967"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2270-20261125121315",
+      "du_kb": 366036,
+      "name": "L-meta-2270",
+      "qat": "1795608788",
+      "size_kb": 366036,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2270"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-2872-20261125121315",
+      "du_kb": 304520,
+      "name": "L-meta-2872",
+      "qat": "1795608788",
+      "size_kb": 304520,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2872"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-3774-20261125121315",
+      "du_kb": 299572,
+      "name": "L-meta-3774",
+      "qat": "1795608788",
+      "size_kb": 299572,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3774"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-1745-20261125121315",
+      "du_kb": 292440,
+      "name": "L-meta-1745",
+      "qat": "1795608788",
+      "size_kb": 292440,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1745"
+    },
+    {
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/L-meta-5760-20261125121315",
+      "du_kb": 291732,
+      "name": "L-meta-5760",
+      "qat": "1795608788",
+      "size_kb": 291732,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5760"
+    }
+  ],
+  "scan_errors": 0
+}
