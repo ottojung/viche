@@ -46,10 +46,23 @@ review within that pass. This is the known head-of-line class (handoff
 - By 02:12:17Z the E2BIG delivery state was `approved` (reason null) and the
   canonical queue had commissioned two other independent reviewers. The pass
   then proceeds to land the approved code candidate through the Act 21 exact-
-  candidate full suite. **Outcome is not claimed here**; verify from
-  `state.json` (`status: landed`), `origin/main` containing `--prompt-file` in
-  `government/executive-cycle.sh`, the next Executive dispatch's prompt count
-  and `backend_error`, and the case's clear-observation run.
+  candidate full suite. **Outcome not yet verified; being recorded below.**
+
+## Boot-smoke red diagnosed and adapted (self-observed fix, not yet landed)
+
+- Running the suite exposed that `tests/boot-smoke.sh`'s antonina mock rejected
+  the new `--prompt-file` argument with exit 92, so the smoke's `executive-ran`
+  marker never appeared (the suite's first red; observed in the
+  `suite-af343bcc...` log ending at `tests/boot-smoke.sh:183` "cannot open
+  .../mock/executive-ran").
+- The mock now reads the prompt from the file (`--prompt-file) prompt=$(cat "$2"); shift 2 ;;`),
+  consistent with the adaptation of `tests/executive-cycle-smoke.sh`,
+  `tests/appointment-recovery-integration-smoke.sh` and
+  `tests/act19-office-continuity-smoke.sh` (2026-11-24).
+- Verified on the branch: `/bin/sh tests/boot-smoke.sh` exits 0.
+- `tests/boot-smoke.sh` runs in `tests/run-all.sh`; the integrator runs its own
+  authoritative suite on the exact merged candidate, so a second independent
+  result will come from the queue.
 
 ## Standing duties re-verified this pass
 
