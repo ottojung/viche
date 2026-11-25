@@ -27,6 +27,11 @@ nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof
     timeout 30 python3 -m missions.pnp.preflight --scan \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/proof-preflight.log" 2>&1 &
 # Renew leases and recover queued publications before the optional score poll.
+# Cumulative research maintenance is local/read-mostly and independently
+# locked. Finished async proofs survive agent exit and lease rotation.
+nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.lock" \
+    timeout 90 /bin/sh -c 'python3 -m missions.pnp.research.knowledge ingest && python3 -m missions.pnp.research.obligations reconcile' \
+    </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.log" 2>&1 &
 python3 -m missions.pnp.frontier || :
 python3 missions/pnp/cli.py reconcile
 # A 20-minute desk lease TTL cannot be maintained by a 24-hour boot hook.

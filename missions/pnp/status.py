@@ -136,7 +136,7 @@ def snapshot():
     scouts = w.pop("support", [])
     covered = {role for agent in scouts for role in agent["roles"]}
     useful = bool(active or corrections or w["count"] or ordinary or observed.get("offerable"))
-    needed = set(support.ROLES) if useful else set()
+    needed = (set(support.ROLES) if useful else set()) | set(support.FAMILY_ROLES)
     if active:
         needed.add("lease-evaluation")
     if len(active) > 1:

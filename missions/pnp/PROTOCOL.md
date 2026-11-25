@@ -28,7 +28,7 @@ Define the stable operator interface:
   python3 missions/pnp/cli.py status
   python3 missions/pnp/cli.py acquire [--hard]
   python3 missions/pnp/cli.py beat <gap-id>
-  python3 missions/pnp/cli.py release <gap-id> <reason>
+  python3 missions/pnp/cli.py release <gap-id> <reason> --operator-override --attempt ATTEMPT --evidence EVIDENCE
   python3 missions/pnp/cli.py submit <gap-id> <candidate-file>
   python3 missions/pnp/cli.py reconcile
 The exact file structure can vary only if the commands and behaviors remain equally clear and tested.

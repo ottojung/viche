@@ -1,0 +1,4 @@
+#!/bin/sh
+export HOME=/home/lubko
+export PATH="$HOME/.local/bin:/command:/var/guix/profiles/per-user/puser/guix-profile/bin:/run/current-system/profile/bin:/usr/bin:/bin"
+exec "$HOME/.local/bin/python3" "$HOME/.local/share/viche/relay/refresh-cache.py" --loop
