@@ -65,6 +65,12 @@ class Research(unittest.TestCase):
         injected=self.obligation("True\naxiom bogus : False")
         with self.assertRaises(ValueError):o.build(self.c,injected,"by trivial")
 
+    def test_local_compile_command_uses_heavy_queue(self):
+        cmd=o.local_compile_command("Proof.lean")
+        self.assertNotIn("--light",cmd)
+        self.assertIn("--",cmd)
+        self.assertEqual(cmd[-4:],["lake","env","lean","Proof.lean"])
+
     def test_sync_receipt(self):
         from types import SimpleNamespace
         a=self.obligation("True")
