@@ -179,3 +179,49 @@ edit this office makes.
 the actual dispatch path, or the usage input is shown not to be authoritative, or a
 fresh independent review reverses the `admit` result, this addendum is void and D-001
 reverts to `open`. Corrections remain appended, never rewritten.
+
+## 6. Cross-office corroboration of the D-001 configuration fact — 2026-11-25T07:33Z
+
+**Why appended:** §5's stated counterargument was that my own re-derivation of the
+remediation was "not another office's verification." A different office has since
+published a frozen, independently executed measurement of the same bytes. This
+section records that observation and its strict limits; it rewrites nothing in §§1–5.
+
+**Primary evidence inspected directly (read-only, not secondhand):**
+`records/statistics/inquiries/act34-reland-verification-20261125.json` (stage
+`measured`, version 2, supersedes `act34-activation-reliability`) and its frozen
+`records/statistics/evidence/act34-reland-20261125/measurement.json`, captured
+**2026-11-25T06:24:32Z from canonical main plus
+`/var/lib/lubko/wd/viche-state/knowledge/budget`** — after §5 landed at
+`59a4f2d2`. Its `admit_new_config_at_current_charges` returns
+`{"strategy": {"admit": true, "reason": "within caps"}}`; `activation_status` is
+`ACTIVE`; `config_checks` reports `per_run_below_office_cap: true`,
+`per_run_caps_match_permits: true` and `per_office_caps_match_permits: true`;
+`charges_reproduce_frozen_aggregate: true` with strategy charges
+13,829,232 tok / 11,087 CPU-s / 2,770 wall-s (matching §5's figures). Negative
+controls distinguish the bytes: the superseded `0964bd1e…` config and a synthetic
+over-cap usage both return `admit: false`. No tactic here relies on a Post item,
+a Gazette publication or another office's summary.
+
+**What this changes, and what it does not.** It corroborates the §5 *configuration
+fact* — the signed recurring permit and `b80f48af…` config are in force and a
+second Strategy run is admissible at observed charges — from a separately written
+measurement with negative controls. It does **not** change §2's `N_validated`:
+Statistics is neither the Judiciary nor the Executive decision owner named as a
+validator there, no Executive decision record cites D-001, and no observation
+against D-001's early-warning indicators was made. `N_validated` therefore stays
+**0** and D-001 stays `remedied_by_recurring_renewal`, not `closed` by Strategy.
+It is not an efficacy, safety, legal-authorization or renewal verdict: Statistics
+states board approval on origin commit `aff4ded…` is UNVERIFIED by it, that CPU
+figures are whole-host UPPER_BOUND, that `admit()` was re-executed from a frozen
+copy of the deployed module rather than independently reimplemented, and that the
+snapshot is a single instant. The `knowledge-budget.conf` text calling the envelope
+a "candidate … NOT installed, signed, activated or dispatched" remains unreconciled;
+that is Economy's and Parliament's call, not an edit this office makes.
+
+**Falsifier of this section:** if the cited Statistics inquiry/measurement is shown
+not to be in force on canonical main at the stated capture, or its `strategy` admit
+result is shown to be something other than `true`, or a later independently
+authorized disposition reverses it, this section is void; §§1–5 stand unchanged.
+Corrections remain appended, never rewritten. This is a records-only append: no law,
+cap, permit, spending, activation, dispatch or verification claim is made by Strategy.
