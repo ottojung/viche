@@ -51,7 +51,12 @@ def guide(role):
     lines = [f"YOUR ROLE: {role}. {purpose}",
              "FIRST: run ~/.local/bin/pnp-research start --role " + role +
              " (a small current work packet, not a documentation reading task).",
-             guidance]
+             guidance,
+             "CONCRETE CIRCUIT-SIZE STEPS (statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S`, or a `¬ (...)` twin): "
+             "do not hand-prove them. The lb_cert generator pre-builds candidates on marceline-dev for every open step into "
+             "PNP_STATE_ROOT/lbcert/cands/GAP.lean (status in GAP.status) and the allocator fast lane submits them within one tick. "
+             "Build one yourself on marceline-dev (32 cores, ~20 s): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py "
+             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean  (exit 0 written, 3 bound false, 4 too big). See missions/pnp/lbcert/README.md."]
     if role in BOUND:
         lines += [
           "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",

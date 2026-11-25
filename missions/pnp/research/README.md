@@ -14,6 +14,20 @@ Independent method/tool agents run `pnp-research start --role method` or
 and proof-producing automation without acquiring desk leases. The Executive
 maintains these independent roles alongside baseline and focused researchers.
 
+## Concrete circuit-size steps: generated on marceline-dev
+
+Statements `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S` and their `¬ (...)` twins
+are handled by software (missions/pnp/lbcert/README.md). Candidates are pre-built on marceline-dev
+for every open step into PNP_STATE_ROOT/lbcert/cands/GAP.lean and the allocator fast lane submits
+them within one tick of acquisition. To build one yourself on marceline-dev (32 cores, ~20 s):
+```sh
+python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py STATEMENT.txt \
+    PEqualNP.Outside.L_meta_N OUT.lean          # 0 written, 3 bound false, 4 too big
+marceline-request status                        # capabilities.lb_cert must be true
+```
+Do not spend a research session on such a step: if its status is `toobig`, the open problem is a
+stronger engine (tool role), not the instance.
+
 ## Use the mathematical memory
 
 ```sh

@@ -7,10 +7,10 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, config, desk, frontier, focus, state, status, portfolio
+from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio
 
 POLL_SECONDS = 30
-NULL_RETRY_SECONDS = 120
+NULL_RETRY_SECONDS = 60   # new concrete batches are taken within minutes
 
 
 def memory_path():
@@ -145,6 +145,14 @@ def tick(d=None, now=None):
         except Exception as exc:
             snapshot = {}
             print("allocator frontier unavailable:", exc, flush=True)
+        # Fast lane: submit ready certificates, settle false twins, keep two slots cycling.
+        try:
+            lane = fastlane.tick(d, mem, now)
+            if any(lane.values()):
+                print("fastlane", json.dumps(lane), flush=True)
+                released = list(released) + lane["released"]
+        except Exception as exc:
+            print("fastlane deferred:", type(exc).__name__, str(exc)[:300], flush=True)
         acquired = fill(d, mem, now, snapshot)
         if acquired:
             print("new assignments:", acquired, flush=True)

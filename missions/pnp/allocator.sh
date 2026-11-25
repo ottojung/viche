@@ -9,7 +9,12 @@ cd "$town"
 mkdir -p "$state"
 exec 9>"$state/allocator-loop.lock"
 flock -n 9 || exit 0
+mkdir -p "$state/lbcert"
 while [ -f missions/pnp/allocator.py ]; do
+    # Keep exactly one certificate pre-generator alive (it holds its own lock; see missions/pnp/lbcert).
+    if [ ! -f "$state/lbcert/STOP" ] && flock -n "$state/lbcert/autosolve.lock" true; then
+        nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 &
+    fi
     # Each desk request has bounded I/O; never kill a claim between receipt
     # and durable recording just because a tick took longer than expected.
     python3 -m missions.pnp.allocator || :
