@@ -104,7 +104,7 @@ def generate(g, engines):
     except Exception:
         r = {'status': 'relay_error'}
     where = 'marceline'
-    if p.returncode == 1 and lbparse.family(g['statement']) == 'mono':
+    if p.returncode == 1 and lbparse.family(g['statement']) in ('mono', 'onenot'):
         QUEUED.discard(gid)   # only marceline-dev builds this family: retry on a later poll
         log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
         return
@@ -216,9 +216,13 @@ def main():
                 tmp = os.path.join(WORK, name + '.tmp')
                 json.dump(obj, open(tmp, 'w'))
                 os.replace(tmp, os.path.join(WORK, name))
-            # newest first: fresh batches are where the races are
+            # newest first: fresh batches are where the races are. The one-NOT family is the live
+            # race (hundreds posted at once, cleared within the hour): first, and only while unclaimed.
             for g in sorted((g for g in gaps if g['id'] in fam),
-                            key=lambda g: (g.get('pr_open', 0) > 0, -int(re.sub(r'\D', '', g['id']) or 0))):
+                            key=lambda g: (fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
+                                           -int(re.sub(r'\D', '', g['id']) or 0))):
+                if fam[g['id']] == 'onenot' and g.get('pr_open', 0):
+                    continue
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
                     pool.submit(generate, g, engines)

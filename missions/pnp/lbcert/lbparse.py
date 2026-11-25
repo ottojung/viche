@@ -114,11 +114,20 @@ MONO_RE = re.compile(r'^∀ (\w+) : ℕ, PEqualNP\.MetaComplexity\.HasCircuitSiz
                      r'PEqualNP\.CircuitLowerBounds\.Circuit, PEqualNP\.MetaComplexity\.Monotone2 \2 ∧ \2\.size ≤ \1 ∧ ∀ ')
 
 
+ONENOT_RE = re.compile(r'^∀ \(gates : List PEqualNP\.CircuitLowerBounds\.Gate\) \(o : ℕ\), .*'
+                       r'GateOp\.not → \(gates\.get j\)\.op = PEqualNP\.CircuitLowerBounds\.GateOp\.not → i = j\) → '
+                       r'\(∀ x : Fin [78] → Bool, .* → ∃ \(gates\' : List PEqualNP\.CircuitLowerBounds\.Gate\) ')
+
+
 def family(stmt):
     """'lb' (lower bound / its ¬ form), 'mono' (monotone-equals-general, built by monofam.py on
-    marceline-dev) or None."""
+    marceline-dev), 'onenot' ("one NOT gate saves nothing", built by onenot.py on marceline-dev)
+    or None."""
     if classify(stmt):
         return 'lb'
-    if MONO_RE.match(norm(stmt)):
+    s = norm(stmt)
+    if MONO_RE.match(s):
         return 'mono'
+    if ONENOT_RE.match(s):
+        return 'onenot'
     return None
