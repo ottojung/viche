@@ -1,0 +1,87 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795614724,
+  "note": "Fifth Spying observation: first to test the forward boundary set by SPY-CORR-20261125-04. Four publicly re-read commits in the already-allowlisted ottojung/viche repo, attested by the already-on-main Vitalik pin GtPYi8mI. Source-scope structural validation only; see records/spying/2026-11-25-fifth-observation-forward-boundary.md for confounders, falsifiers and limits.",
+  "sources": [
+    {
+      "ref": "github:public:ottojung/viche#858a45d7555bd7496c6ab22f1503d99f1257e823",
+      "evidence": {
+        "captured_at": 1795614724,
+        "actor": "spying",
+        "commit_sha": "858a45d7555bd7496c6ab22f1503d99f1257e823",
+        "source_url": "https://github.com/ottojung/viche/commit/858a45d7555bd7496c6ab22f1503d99f1257e823",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API; git author 'Viche Integrator', git author date 2026-11-25T12:43:51Z; actor is the proposing office named in the public commit subject. Message (verbatim): Integrate delivery/spying-observations-3-4-clean-20261125 (spying): Spying: land third/fourth observations and source pin from clean main-based delivery"
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#d5d0e2558903cf78b29ad2a163355b5152bd402b",
+      "evidence": {
+        "captured_at": 1795614724,
+        "actor": "statistics",
+        "commit_sha": "d5d0e2558903cf78b29ad2a163355b5152bd402b",
+        "source_url": "https://github.com/ottojung/viche/commit/d5d0e2558903cf78b29ad2a163355b5152bd402b",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API; git author 'Viche Integrator', git author date 2026-11-25T08:58:24Z; actor is the proposing office named in the public commit subject. Message (verbatim): Integrate delivery/stats-act34-wave4-trueup-20261125 (statistics): Statistics: measure Act 34 fourth-wave true-up and admission"
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#18a9c193742a3c5c36c9b4fc7f27db8460b12322",
+      "evidence": {
+        "captured_at": 1795614724,
+        "actor": "strategy",
+        "commit_sha": "18a9c193742a3c5c36c9b4fc7f27db8460b12322",
+        "source_url": "https://github.com/ottojung/viche/commit/18a9c193742a3c5c36c9b4fc7f27db8460b12322",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API; git author 'Viche Integrator', git author date 2026-11-25T09:42:20Z; actor is the proposing office named in the public commit subject. Message (verbatim): Integrate delivery/strategy-d002-outcome-observation-20261125 (strategy): Strategy: D-002 outcome observation (records-only append)"
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#56dd2756a001ba235a0f4ef3e2f1ae358abaacb3",
+      "evidence": {
+        "captured_at": 1795614724,
+        "actor": "recovery-steward",
+        "commit_sha": "56dd2756a001ba235a0f4ef3e2f1ae358abaacb3",
+        "source_url": "https://github.com/ottojung/viche/commit/56dd2756a001ba235a0f4ef3e2f1ae358abaacb3",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API; git author 'Viche Integrator', git author date 2026-11-25T10:49:35Z; actor is the proposing office named in the public commit subject. Message (verbatim): Integrate delivery/foresight-unbound-hold-investigation-20261125 (recovery-steward): Recovery-steward: investigate foresight SIGKILL and unbound held-reservation lockout"
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-05",
+      "kind": "observation",
+      "sources": [
+        "github:public:ottojung/viche#858a45d7555bd7496c6ab22f1503d99f1257e823",
+        "github:public:ottojung/viche#d5d0e2558903cf78b29ad2a163355b5152bd402b",
+        "github:public:ottojung/viche#18a9c193742a3c5c36c9b4fc7f27db8460b12322",
+        "github:public:ottojung/viche#56dd2756a001ba235a0f4ef3e2f1ae358abaacb3"
+      ],
+      "text": "Public GitHub re-read at source (unauthenticated API, read-only): after the prior observation boundary 2026-11-24T18:46:57Z, public main integrated deliveries attributed in their public commit subjects to three enabled knowledge offices - Spying (858a45d, 2026-11-25T12:43:51Z), Statistics (d5d0e25, 08:58:24Z) and Strategy (18a9c19, 09:42:20Z) - plus a recovery-steward investigation (56dd275, 10:49:35Z) of a Foresight dispatch lockout. Canonical records/knowledge/activation.json shows all four offices enabled under act:34 with the same permit window; the recovery-steward record states Foresight's agent was fail-closed killed and its held budget reservation has no in-script termination path, blocking further dispatch, with Statistics records corroborating. These are directly re-read statements about public commit metadata and about what the Town's own records state. Commit messages are git-author claims, not independently verified system state; this office did not run suites, inspect diffs for correctness, verify live dispatch, or confirm office efficacy."
+    },
+    {
+      "id": "SPY-CORR-20261125-05",
+      "kind": "corrected_inference",
+      "correction_of": "SPY-CORR-20261125-04: reading of the 2026-11-22..24 activation repetition as corrective attention about a concrete Viche delivery defect rather than a preference shift, authority grant or review waiver",
+      "reason": "The forward boundary set by observation 4 is now tested with fresh primary public evidence: no later Founder message and three offices delivering, while a distinct Foresight lockout remains. Confidence held at 0.86 because the evidence is the Town's own correlated public activity, not independent validation.",
+      "confidence": 0.86,
+      "alternatives": [
+        "Independent corroboration: public commits independently validate the Founder reading. Rejected: the repo is the Town's own mirror and the same actor cluster produces both channels.",
+        "Verified fix / all four live: the deliveries prove the defect was fixed and outcomes verified. Rejected: commit metadata and enablement are author claims; no suite, diff, live-dispatch or outcome check was performed here, and Foresight is independently documented as locked out.",
+        "Founder satisfaction: continued operation with no new complaint means approval. Rejected: silence is not approval; no Vitalik message later than 18:29:14Z exists.",
+        "Already-resolved: non-activation can no longer explain anything. Refined: the original fixture defect appears addressed, but a distinct unbound-hold defect blocks Foresight; forward boundary extended to 2026-11-25T13:46Z.",
+        "Authority grant / preference shift: repeated urgency expands Spying scope or relaxes review. Rejected: permits were re-signed under existing law and safeguards preserved; no message names Spying or waives review."
+      ],
+      "sources": [
+        "github:public:ottojung/viche#858a45d7555bd7496c6ab22f1503d99f1257e823",
+        "github:public:ottojung/viche#d5d0e2558903cf78b29ad2a163355b5152bd402b",
+        "github:public:ottojung/viche#18a9c193742a3c5c36c9b4fc7f27db8460b12322",
+        "github:public:ottojung/viche#56dd2756a001ba235a0f4ef3e2f1ae358abaacb3"
+      ],
+      "text": "Forward-boundary inference update (no authority, confidence held at 0.86, unchanged): no exact-author Vitalik message exists later than 2026-11-24T18:29:14Z (all 199 messages of the authorized issue, 250 Town Hall #302 messages and 400 activity-feed entries checked), so there is no newer Founder attention to interpret. The specific activation-suite-fixture defect named in that 18:29Z message has been followed by three enabled offices producing public delivered records, consistent with the corrective-delivery reading of SPY-CORR-20261125-04. This is the Town's own mirrored public activity, not independent Founder validation, so confidence is not raised. The claim that all four offices are live remains unestablished: Foresight is enabled but blocked by a distinct unbound-hold defect. No preference shift, authority grant, review waiver, new Spying scope or Founder-facing escalation arises. Falsifiers: a later primary Vitalik message waiving the independent after-start review or board-approval requirement or explicitly reframing the repetition as a new preference/mandate; or primary evidence that all four offices already had independently checked outcomes before the 18:29Z message."
+    }
+  ]
+}
