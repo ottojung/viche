@@ -385,6 +385,27 @@ class Tests(unittest.TestCase):
         portfolio.apply_switch(mem,time.time())
         self.assertEqual(mem["focus"],list(focus.key(b)))
 
+    def test_portfolio_switch_to_correction_is_revision_bound(self):
+        a,b,mem=self.portfolio_fixture()
+        c=state.create("L-meta-3",state="PR_OPEN",lease="old-correction",statement="True",
+                       pr_number=42,commit_sha="a"*40,local_check_status="failed",
+                       external_verdict="pending",lease_expires_at=0)
+        with patch.object(allocator.status,"workers",return_value={"agents":[],"coverage":"complete"}):
+            self.assertEqual(portfolio.view()["corrections"][0]["gap"],c["gap_id"])
+        with self.assertRaises(ValueError):
+            portfolio.submit("release",c["gap_id"],support.attempt(c),"failed check","release")
+        portfolio.submit("switch",c["gap_id"],support.attempt(c),"exact checker failure",
+                         "repair likely high value",a["gap_id"],support.attempt(a))
+        state.update(c["gap_id"],commit_sha="b"*40)
+        portfolio.apply_switch(mem,time.time())
+        self.assertTrue(mem["last_switch"]["outcome"].startswith("obsolete"))
+        c=state.load(c["gap_id"])
+        portfolio.submit("switch",c["gap_id"],support.attempt(c),"new exact failure",
+                         "repair likely high value",a["gap_id"],support.attempt(a))
+        portfolio.apply_switch(mem,time.time())
+        self.assertEqual(mem["focus"],list(focus.key(c)))
+        self.assertEqual(state.load(a["gap_id"])["state"],"LEASED")
+
     def test_portfolio_rejects_switch_after_source_reacquired(self):
         a,b,mem=self.portfolio_fixture()
         portfolio.submit("switch",b["gap_id"],support.attempt(b),"lemma","b substantially easier",
