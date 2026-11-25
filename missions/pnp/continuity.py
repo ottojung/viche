@@ -11,7 +11,7 @@ SUPPORT = {
     "knowledge": "Find checked equivalents, opposite conclusions, stronger reusable proofs and admissible imports. Send verified applicability and concrete proof fragments, not just scores.",
     "methods": "Independently attack the focused claim. Derive a concrete sublemma, construction, refutation or identify a precise false premise. Use full-function checks; never duplicate an existing search.",
     "flow": "Investigate actual idle time, duplicated computation, correction and publication delay. Deliver concrete improvements that increase checked contributions; do not monitor tool calls.",
-    "portfolio": "Use portfolio inspect and compare all live leases using their researchers' findings and actual artifacts. Make the evidence-based switch decision directly with portfolio switch if justified.",
+    "portfolio": "Use portfolio inspect and compare all live leases and eligible published-proof corrections using their researchers' findings and actual artifacts. Make the evidence-based switch decision directly with portfolio switch if justified.",
     "lease-evaluation": "Use portfolio inspect. Investigate actual mathematical blockers and alternatives. Decide justified releases through portfolio release; never release because of vacancies, age alone or temporary compiler contention.",
 }
 FRONTS = (
@@ -32,6 +32,11 @@ def signature(role, records, selected):
     # completed support pass. Its own advice does not trigger itself.
     data = [(support.attempt(r), sorted([f["id"] for f in support.findings(r)] + [a["id"] for a in support.read(r) if a["kind"] == "checked"]))
             for r in scope]
+    if role == "portfolio":
+        for gap in state.all_gaps():
+            rec = state.load(gap)
+            if focus.correction(rec) and rec.get("lease") and isinstance(rec.get("statement"), str):
+                data.append((support.attempt(rec), ["correction", rec.get("commit_sha") or "", rec.get("local_check_status") or "", rec.get("external_verdict") or ""]))
     return hashlib.sha256(json.dumps(sorted(data)).encode()).hexdigest()
 
 
@@ -67,6 +72,9 @@ def support_pass(role, records, selected, agents):
     prompt = (
         "You are performing a bounded Executive-delegated research support pass. "
         "Read /var/lib/lubko/wd/viche/missions/pnp/mandate.md. "
+        "Discover current mathematical and engineering capabilities using "
+        "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.tools. "
+        "Inspect actual tool adoption with tools --usage when useful; tool invocation is not success. "
         "Use PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.support targets "
         "and python3 -m missions.pnp.portfolio inspect. "
         "Deliver substantive evidence directly via support advise (or portfolio decisions). "

@@ -8,6 +8,8 @@ missions.pnp.proofs.synthesis.parse.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
+import re
 import sqlite3
 from pathlib import Path
 
@@ -24,7 +26,30 @@ def _open_ro(path):
     return sqlite3.connect(uri, uri=True, timeout=15)
 
 
-def load_graph_circuits(db_path=DEFAULT_DB, limit=None):
+def checked_timestamps(export):
+    """Use official public checked-step times, never PR creation or module order."""
+    entries = export.get("contributors", export.get("entries"))
+    if not isinstance(entries, list):
+        raise ValueError("missing public contributor entries")
+    times = {}
+    for entry in entries:
+        for lemma in entry.get("lemmas", []):
+            gid, at = lemma.get("id"), lemma.get("at")
+            if not isinstance(gid, str) or not re.fullmatch(r"L-[a-z]+-[0-9]+", gid):
+                continue
+            try:
+                dt = datetime.fromisoformat(at.replace("Z", "+00:00"))
+                if dt.tzinfo is None:
+                    continue
+                canonical = dt.astimezone(timezone.utc).isoformat(timespec="microseconds")
+            except (AttributeError, TypeError, ValueError):
+                continue
+            # Keep the earliest recorded checked event if there are duplicates.
+            times[gid] = min(times.get(gid, canonical), canonical)
+    return times
+
+
+def load_graph_circuits(db_path=DEFAULT_DB, limit=None, timestamps=None):
     """Return checked-corpus graph-circuit construction metadata rows.
 
     Each row contains only public metadata derived from the checked corpus:
@@ -60,6 +85,9 @@ def load_graph_circuits(db_path=DEFAULT_DB, limit=None):
                 "statement": statement,
             }
         )
+        if timestamps is not None:
+            gid = module.split(".")[-1].replace("_", "-")
+            out[-1]["checked_at"] = timestamps.get(gid)
         if limit is not None and len(out) >= limit:
             break
     return out

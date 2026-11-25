@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-from .corpus import DEFAULT_DB, load_graph_circuits
+from .corpus import DEFAULT_DB, load_graph_circuits, checked_timestamps
 from .evaluate import evaluate_row, evaluate_with_holdouts, summarize
 from .generators import GENERATORS, get as get_generator
 
@@ -71,6 +71,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus-db", default=str(DEFAULT_DB),
                         help="Public checked-corpus sqlite index (read-only).")
+    parser.add_argument("--contributors-export", type=Path,
+                        help="Frozen public official contributors JSON export; enables real checked-time splits.")
     parser.add_argument("--generator", action="append", default=[],
                         choices=sorted(GENERATORS),
                         help="Generator to run. May be given multiple times.")
@@ -88,7 +90,14 @@ def main(argv=None):
                         help="Omit per-row results from JSON.")
     args = parser.parse_args(argv)
 
-    rows = load_graph_circuits(args.corpus_db, limit=args.limit)
+    timestamps = None
+    export_sha256 = None
+    if args.contributors_export is not None:
+        import hashlib
+        raw = args.contributors_export.read_bytes()
+        timestamps = checked_timestamps(json.loads(raw))
+        export_sha256 = hashlib.sha256(raw).hexdigest()
+    rows = load_graph_circuits(args.corpus_db, limit=args.limit, timestamps=timestamps)
     if not rows:
         print("no graph-circuit constructions found in corpus", file=sys.stderr)
         return 2
@@ -100,6 +109,7 @@ def main(argv=None):
         "corpus_db": str(args.corpus_db),
         "rows": len(rows),
         "test_fraction": args.test_fraction,
+        "contributors_export_sha256": export_sha256,
         "reports": reports,
     }
     if args.no_results:

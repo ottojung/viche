@@ -213,6 +213,21 @@ class TestValidate(unittest.TestCase):
                 with self.assertRaises(validate.InvalidCandidate):
                     validate.validate(gap_meta(), content.encode())
 
+    def test_narrow_imports_and_nested_namespace(self):
+        src = GOOD.replace("import Mathlib", "import Mathlib.Tactic.NormNum")
+        src = src.replace("lemma helper", "namespace Inner\nlemma helper").replace(
+            "end "+MODULE, "end Inner\nend "+MODULE)
+        self.assertEqual(len(validate.validate(gap_meta(),src.encode())),64)
+        for bad in (
+            src.replace("namespace Inner","namespace _root_.Other"),
+            src.replace("end Inner","end Wrong"),
+            src.replace("namespace Inner\n",""),
+            src.replace("import Mathlib.Tactic.NormNum","import Evil"),
+            src.replace("namespace "+MODULE,"namespace Other"),
+        ):
+            with self.assertRaises(validate.InvalidCandidate):
+                validate.validate(gap_meta(),bad.encode())
+
     def test_size_and_encoding(self):
         with self.assertRaises(validate.InvalidCandidate):
             validate.validate(gap_meta(), GOOD.encode() + b"x" * (513 * 1024))
