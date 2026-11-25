@@ -1,0 +1,182 @@
+{
+  "schema": "viche-statistics-inquiry-v1",
+  "id": "act34-budget-trueup-wave3-20261125",
+  "stage": "measured",
+  "version": 1,
+  "relates_to": [
+    "act34-reland-verification-20261125",
+    "act34-activation-reliability"
+  ],
+  "question": "In the ~65 minutes after the 2026-11-25T06:24:32Z Act 34 reland snapshot, did the primary knowledge-budget state confirm that snapshot’s predictions under UNCHANGED bytes: were the two in-flight second-wave reservations trued down from the full per-run ceiling to actual usage on close, and do all nine reservation records reproduce the trued-up aggregate; was the replacement spying officer’s dispatch (named in the 06:26–06:29Z continuity reconciliation) actually admitted, completed and charged under config b80f48af; and is a third statistics wave active while admit() still admits all four offices?",
+  "why_now": "The preceding measurement (landed as 35143f18, cited as real work) froze seven reservations at 06:24:32Z with two in-flight second-wave reservations charged at the full 11,320,103-token ceiling, stated that cumulative debt is a bounded, time-dependent value trued up on close, and recorded that spying had no second-wave reservation. Its revisit_when explicitly names true-up on close and a further wave. The live ledger at 07:29Z has nine reservations, a changed aggregate, a completed spying reservation whose agent id is the replacement officer from records/investigations/recovery-steward-spying-unsafe-hold-reconciliation-20261125T0626Z.md, and a third statistics reservation belonging to this appointment. These primary facts are what an Executive value claim and the still-pending 48-hour Judiciary after-start disposition would rest on; measuring them now either confirms the stated true-up property with new evidence or falsifies it before any renewal claim is made.",
+  "decision_use": "Gives Executive and Judiciary a frozen, independently re-executed substrate snapshot: (a) the ceiling-to-actual true-up happened and the nine-record ledger still reproduces the aggregate exactly, so the earlier “bounded, time-dependent debt” claim survives new evidence — total tokens actually fell by 3,407,229 despite two new reservations; (b) the replacement spying officer produced a real, completed, zero-cost dispatch under the unchanged reland config, updating the earlier “no spying second-wave reservation” observation with an independent instrument; (c) a third statistics wave is active at current charges and a further run remains admissible for all four offices. This is a substrate reliability measurement only: not a renewal, efficacy, legal-authorization or after-start safety verdict, and not a determination that the HOLD was honoured or breached.",
+  "method": "measure.py in the evidence directory byte-compares activation.json, knowledge-budget.conf and knowledge-budget-tool.py to the hardcoded digests of the preceding snapshot and checks all four offices remain enabled; re-executes the frozen deployed module’s validate_config(), charges() at now=max(meter.at,created_at) over all nine frozen reservations, and admit() for each office; compares charges() field-for-field with the frozen aggregate.json including the counted id list; contrasts each formerly in-flight reservation’s prior ceiling charge with its now-closed actual usage; classifies reservations by config_sha256 into waves; and checks the spying reservation’s agent id against the replacement officer named in the cited continuity record. Two negative controls: the superseded 0964bd1e… config and a synthetic one-token overload. All inputs are frozen primary copies; no live state, board, runner or provider is read.",
+  "population": "The canonical activation.json, the deployed knowledge-budget.conf and knowledge-budget-tool.py, all nine reservation records and aggregate.json in the live budget state at 07:29:15Z, and the byte-frozen superseded config as a negative control. The seven-reservation prior snapshot is the comparison population, retained unchanged. The stale state-dir activation.json and the PnP-swarm copies are excluded as not on the live dispatch path (verified by grep of government scripts).",
+  "missingness": "No provider/billing DB, board comment or officer-signature verification was read by this office (no such tool in scope), so real token totals are the reservations’ meter snapshots, not independently re-derived from Antonina’s source DB; CPU figures are conservative whole-host UPPER_BOUND values, not per-office measurement. The third-wave statistics reservation was still active at capture, so its final usage is UNKNOWN and charged at the ceiling. The recovery-steward reconciliation record and the pending Judiciary after-start disposition were not independently verified here. No legal, safety, renewal or efficacy determination was made.",
+  "limitations": "Point-in-time consistency of bytes and configuration fields, not proof that a test ran, that a control is secure, or that a dispatch was legally authorized. Matching hashes establish agreement, not truth. charges()/admit() were re-executed from a frozen copy of the deployed module, not independently reimplemented, so this is re-execution rather than independent reimplementation. Aggregate and reservations share one source file set; their agreement is internal consistency, not independent corroboration of real usage. Any later permit, activation.json, config or reservation change invalidates the deployed claims. Absence of a new spying reservation earlier did not establish compliance with any HOLD, and its presence now does not establish a breach.",
+  "source_dependence": "Activation, config, tool and reservations are produced by the same Executive budget path and share config hashes; their mutual agreement is correlated provenance, not independent corroboration. The true-up comparison uses genuinely different bytes/fields (prior ceiling charge vs later closed usage) and the prior snapshot was frozen before the outcome, so it is a distinct observation rather than a relabelled report. The negative controls use genuinely different config bytes and a synthetic over-cap value. The cited continuity reconciliation is an actor report, not counted as an independent source; only its named agent id is cross-checked against the primary reservation.",
+  "negative_controls": "At the current charges the superseded 0964bd1e… config refuses a further run for all four offices, whereas the deployed b80f48af… config admits all four — the test distinguishes configurations rather than always returning admit. A synthetic statistics usage one token past (office cap − per-run cap) is refused under the deployed config. The prior snapshot’s empty spying second wave versus the later single closed spying reservation is a temporal negative/positive contrast on the same admission logic.",
+  "revisit_when": "On any further permit, activation.json or knowledge-budget.conf landing; after the 48-hour Judiciary after-start disposition for the relanded permits; after the active third-wave statistics reservation closes and the aggregate is trued up again; after a box restart; if a fifth wave is admitted or admit() refuses under unchanged bytes; if the spying reservation is rolled back or a second spying reservation appears; or if the cited continuity record is independently verified by another office.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/aggregate.json",
+      "sha256": "51d09004e12f6374d8381cd0245679285b4469520f536cfd1180202b0f2f900a"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795549284-UbpN96al.json",
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795549310-fUfef5Jf.json",
+      "sha256": "b6fe691304ffde10d837e0f8098cb8b6ad40924fea2b2b0facd58d59536abd24"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795549312-5XZhL8gg.json",
+      "sha256": "c5574067606347ca143e0fd1c84efa5b238b349d97d1e3ea2a22a6ef99715d1d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795549314-NF0T6ySo.json",
+      "sha256": "509d30f55928a33dc414f149e5232ff08e1445bf81ebf3081f075c5f13c69f7c"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795587665-AR7LhTnT.json",
+      "sha256": "5ecc347138ef4f11256406d7e1d1936a0e831b4caabc16f3404fac378e4d295f"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795587673-4BdLzlhX.json",
+      "sha256": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795587676-SJSZkBC8.json",
+      "sha256": "5c9b1db4d56eea887036d774842cd8658b4332db58ca3275141004141e91e4b2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795588177-2jkiJ5iT.json",
+      "sha256": "e97be6d98b30b0484f6f60ca1ef958ea38622c7a94ad4bf67181d708c6e4ad5d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/budget-state/reservations/r1795591522-KXZURRSN.json",
+      "sha256": "f53e85d39cfc28e2ba23b1b4cb13cf2b8fb3654d21122246bae67a2dd4d9286b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-budget-trueup-20261125/superseded-knowledge-budget.conf",
+      "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+    }
+  ],
+  "result": {
+    "category": "true_up_confirmed_with_new_primary_evidence_and_new_waves_admitted_under_unchanged_bytes",
+    "captured_utc": "2026-11-25T07:29:15Z",
+    "bytes_unchanged_vs_prior_snapshot": {
+      "activation.json": true,
+      "knowledge-budget-tool.py": true,
+      "knowledge-budget.conf": true
+    },
+    "activation_all_offices_enabled": true,
+    "validate_config_errors": [],
+    "reservation_count": 9,
+    "recomputed_charges": {
+      "cpu_seconds": 25648.819999999832,
+      "tokens_total": 28732715,
+      "wall_seconds": 6325
+    },
+    "frozen_aggregate": {
+      "cpu_seconds": 25648.819999999832,
+      "tokens_total": 28732715,
+      "wall_seconds": 6325
+    },
+    "charges_reproduce_frozen_aggregate": true,
+    "prior_snapshot_tokens_total": 32139944,
+    "tokens_total_change_vs_prior": -3407229,
+    "true_up": {
+      "r1795587673-4BdLzlhX": {
+        "actual_usage_tokens": 2973069,
+        "charge_reduction_tokens": 8347034,
+        "closed_at": 1795588116,
+        "closed_reason": "agent_terminal_clearexit",
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "now_state": "closed",
+        "office": "statistics",
+        "prior_charge_tokens_at_ceiling": 11320103,
+        "prior_state": "active",
+        "trued_down": true
+      },
+      "r1795587676-SJSZkBC8": {
+        "actual_usage_tokens": 1598376,
+        "charge_reduction_tokens": 9721727,
+        "closed_at": 1795587960,
+        "closed_reason": "agent_terminal_clearexit",
+        "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+        "now_state": "closed",
+        "office": "strategy",
+        "prior_charge_tokens_at_ceiling": 11320103,
+        "prior_state": "active",
+        "trued_down": true
+      }
+    },
+    "spying_new_config_reservation": {
+      "agent_id": "RdprsTnAGd7R1ZfoUhUlfV-elements",
+      "closed_at": 1795588811,
+      "closed_reason": "agent_terminal_clearexit",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "cost": 0.0,
+      "created_at": 1795588175,
+      "id": "r1795588177-2jkiJ5iT",
+      "matches_reconciliation_replacement_agent": true,
+      "state": "closed",
+      "tokens_total": 3341429
+    },
+    "own_statistics_reservation": {
+      "agent_id": "gwecoglvJR6RP10r8k6o6p-sundial",
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "created_at": 1795591521,
+      "id": "r1795591522-KXZURRSN",
+      "matches_this_appointment": true,
+      "state": "active",
+      "tokens_total_at_capture": 1229556
+    },
+    "admit_new_config_at_current_charges": {
+      "foresight": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "spying": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "statistics": {
+        "admit": true,
+        "reason": "within caps"
+      },
+      "strategy": {
+        "admit": true,
+        "reason": "within caps"
+      }
+    },
+    "negative_control_superseded_config_admit_all_false": true,
+    "negative_control_overload_admit": {
+      "admit": false,
+      "reason": "tokens_total projected 509404636 exceeds statistics office cap 509404635"
+    },
+    "derived_measurement_sha256": "f7c370d57f1b44ad1340aacfdc433b45d2ea1b88406ab8fb92526a29578490f0",
+    "full_measurement_ref": "records/statistics/evidence/act34-budget-trueup-20261125/measurement.json",
+    "falsifiers": [
+      "Any hardcoded prior content assertion failing (activation/config/tool digest, seven-reservation count, 32,139,944 prior tokens, either 11,320,103 ceiling charge, or an empty spying second wave at the prior snapshot).",
+      "charges() failing to reproduce the frozen aggregate.json including the counted id list.",
+      "A formerly in-flight reservation remaining active or not trued down to its actual usage on close.",
+      "admit() refusing an office under unchanged bytes that the prior snapshot admitted, or the superseded config / synthetic overload admitting.",
+      "The replacement spying reservation missing, belonging to a different agent id, or being charged under a config other than b80f48af…"
+    ]
+  }
+}
