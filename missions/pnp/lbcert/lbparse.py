@@ -108,3 +108,17 @@ def py_truth_table(n, fun):
 
 def truth_table(n, fun):
     return py_truth_table(n, fun), 'py'
+
+
+MONO_RE = re.compile(r'^∀ (\w+) : ℕ, PEqualNP\.MetaComplexity\.HasCircuitSize \d+ \(fun .*?\) \1 → ∃ (\w+) : '
+                     r'PEqualNP\.CircuitLowerBounds\.Circuit, PEqualNP\.MetaComplexity\.Monotone2 \2 ∧ \2\.size ≤ \1 ∧ ∀ ')
+
+
+def family(stmt):
+    """'lb' (lower bound / its ¬ form), 'mono' (monotone-equals-general, built by monofam.py on
+    marceline-dev) or None."""
+    if classify(stmt):
+        return 'lb'
+    if MONO_RE.match(norm(stmt)):
+        return 'mono'
+    return None

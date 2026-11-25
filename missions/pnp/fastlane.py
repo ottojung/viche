@@ -54,7 +54,7 @@ def cand_ready(gap):
 
 def concrete(rec):
     s = rec.get("statement") or ""
-    return bool(lbparse.classify(s) or re.fullmatch(r"¬ ?\((.*)\)", lbparse.norm(s)) and
+    return bool(lbparse.family(s) or re.fullmatch(r"¬ ?\((.*)\)", lbparse.norm(s)) and
                 lbparse.classify(re.fullmatch(r"¬ ?\((.*)\)", lbparse.norm(s)).group(1)))
 
 

@@ -103,6 +103,56 @@ def generate(g, engines):
     log('generated', gid, st, where, r.get('states'), '%.0fs' % (time.time() - t0))
 
 
+SIB_RETRY = 300
+SIB_STATE = os.path.join(WORK, 'sibling.json')
+
+
+def sibling_pass():
+    """Sibling transfer for held steps with no candidate (relay op `sibling`, compiled on marceline-dev).
+    Retried every SIB_RETRY seconds while held: merged siblings appear in bursts."""
+    gaps_dir = os.path.join(STATE, 'gaps')
+    try:
+        tried = json.load(open(SIB_STATE))
+    except (OSError, ValueError):
+        tried = {}
+    now = time.time()
+    for gid in os.listdir(gaps_dir):
+        try:
+            rec = json.load(open(os.path.join(gaps_dir, gid, 'state.json')))
+        except (OSError, ValueError):
+            continue
+        if rec.get('state') not in ('LEASED', 'RESEARCHING') or rec.get('candidate_digest') or status(gid):
+            continue
+        if now - tried.get(gid, 0) < SIB_RETRY:
+            continue
+        tried[gid] = now
+        sf = os.path.join(CANDS, gid + '.sib.stmt')
+        open(sf, 'w').write(rec['statement'])
+        out = os.path.join(CANDS, gid + '.lean')
+        p = subprocess.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, rec['module'], out,
+                            '--imports', ','.join(rec.get('imports') or ['PEqualNP.Defs']), '--max-tries', '6'],
+                           capture_output=True, text=True, timeout=2000)
+        try:
+            r = json.loads(p.stdout.strip().split('\n')[-1])
+        except Exception:
+            r = {}
+        if p.returncode == 0:
+            write_status(gid, 'ok sibling %s %s marceline compiled tried=%s' % (r.get('source'), r.get('variant'), r.get('tried')))
+        log('sibling', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'), 'siblings', r.get('siblings'))
+    tmp = SIB_STATE + '.tmp'
+    json.dump(tried, open(tmp, 'w'))
+    os.replace(tmp, SIB_STATE)
+
+
+def sibling_loop():
+    while not os.path.exists(os.path.join(WORK, 'STOP')):
+        try:
+            sibling_pass()
+        except Exception as e:
+            log('sibling error', type(e).__name__, str(e)[:200])
+        time.sleep(30)
+
+
 def main():
     lock = open(os.path.join(WORK, 'autosolve.lock'), 'w')
     try:
@@ -110,16 +160,22 @@ def main():
     except BlockingIOError:
         return 0
     engines = ensure_engines()
+    import threading
+    threading.Thread(target=sibling_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
     queued = set()
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
             gaps = json.loads(get(DESK))['gaps']
             pos, twins, desk = {}, {}, {}
+            fam = {}
             for g in gaps:
-                if lbparse.classify(g['statement']):
-                    pos[lbparse.norm(g['statement'])] = g['id']
+                f = lbparse.family(g['statement'])
+                if f:
+                    fam[g['id']] = f
                     desk[g['id']] = g.get('pr_open', 0)
+                if f == 'lb':
+                    pos[lbparse.norm(g['statement'])] = g['id']
             for g in gaps:
                 m = re.fullmatch(r'¬ ?\((.*)\)', lbparse.norm(g['statement']))
                 if m and m.group(1) in pos:
@@ -130,7 +186,7 @@ def main():
                 json.dump(obj, open(tmp, 'w'))
                 os.replace(tmp, os.path.join(WORK, name))
             # newest first: fresh batches are where the races are
-            for g in sorted((g for g in gaps if g['id'] in pos.values()),
+            for g in sorted((g for g in gaps if g['id'] in fam),
                             key=lambda g: (g.get('pr_open', 0) > 0, -int(re.sub(r'\D', '', g['id']) or 0))):
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
