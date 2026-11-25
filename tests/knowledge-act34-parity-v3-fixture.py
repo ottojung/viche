@@ -99,7 +99,7 @@ def build(repo, town, state, variant="valid"):
             "## Act 34 — Rapid Full Institutional Activation and Continuous Improvement Act "
             "(enacted 2026-11-23)\n")
     if variant != "pre-enactment":
-        laws += ("\n## Act 35 — Knowledge Offices Ordinary Funding and Operations Parity Act 2026 "
+        laws += ("\n## Act 34 — Knowledge Offices Ordinary Funding and Operations Parity Act (v3) "
                  "(enacted 2026-11-24, synthetic fixture)\n\n"
                  "Enacts: " + BILL + "\nsha256 " + BILL_SHA + "\n")
     (town / "government/LAWS.md").write_text(laws, encoding="utf-8")

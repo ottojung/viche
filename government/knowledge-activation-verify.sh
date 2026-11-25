@@ -22,6 +22,8 @@ case "$office" in
   *) exit 1 ;;
 esac
 
+certified_bill=act34-ordinary-funding-operations-parity-v3
+certified_sha=5aed6101425568af6111b0bc6a85a85ce5733cae29254f30ccb90db240a109e9
 laws=$town/government/LAWS.md
 [ -s "$laws" ] || exit 1
 # Act34's explicit new ordinary-law permission supersedes the first-use
@@ -37,10 +39,20 @@ if grep -Eq '^## Act 34 — Rapid Full Institutional Activation and Continuous I
     ' "$activation") || exit 1
     permit=$town/$permit_ref
     [ -s "$permit" ] || exit 1
-    # The v3 verifier is opt-in per durable Executive permit and is unavailable
-    # until the exact Act 35 text is genuinely enacted. Legacy bytes/path stay intact.
+    # The v3 verifier is opt-in per durable Executive permit. Route on the
+    # genuine enacted bill identity (Enacts trailer + exact SHA), never a
+    # hard-coded Act number: codification may use any section number. Legacy
+    # bytes/path stay intact.
     if jq -e '.control_certification != null' "$permit" >/dev/null 2>&1; then
-      if grep -Eq '^## Act 35 — Knowledge Offices Ordinary Funding and Operations Parity Act 2026 \(enacted ' "$laws"; then
+      if python3 - "$laws" "$certified_bill" "$certified_sha" <<'PY'
+import re,sys
+laws=open(sys.argv[1],encoding='utf-8').read();bill,sha=sys.argv[2],sys.argv[3]
+parts=re.split(r'(?m)^## Act \d+ — [^\n]*\(enacted [^\n]*\)\n',laws)[1:]
+if sum(bool(re.search(r'(?m)^Enacts:\s*'+re.escape(bill)+r'\b',p) and sha in p) for p in parts)==1:
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+      then
         [ -s "$town/government/knowledge-act34-certified-gate.py" ] || exit 1
         timeout 30 python3 "$town/government/knowledge-act34-certified-gate.py" "$office" "$town"
         exit $?
