@@ -1,0 +1,6 @@
+captured_at=2026-11-25T11:43:00Z
+path=/var/lib/lubko/wd/viche-state/liveness/unsafe-holds
+--- listing ---
+total 8
+drwxr-xr-x  2 lubko lubko 4096 Nov 25 06:29 .
+drwxr-xr-x 63 lubko lubko 4096 Nov 25 00:40 ..

@@ -1,0 +1,13 @@
+captured_at=2026-11-25T11:43:00Z
+--- landed artifact bytes on canonical main ---
+d23a9b0591a55b73994d241fbbe9757c13aaf9c2a383a0d637d80d7f807047f9  records/investigations/recovery-steward-foresight-unbound-hold-20261125T0954Z.md
+49d06d084accc288ceb378136364c5170e556f63d7042f16b59e136d3d3c71da  records/bills/held-reservation-resolution-act.md
+--- bill draft status line ---
+# DRAFT — Held Reservation Resolution Act
+
+Status: evidence-backed proposal for Parliamentary sponsorship, independent
+red-team review and recorded vote. **NOT ENACTED.** This document changes no
+law, ballot, appointment, appointment hold, budget state, ledger file, verdict
+or Founder-owned file, and authorizes no dispatch or agent replay.
+
+Sponsor sought: a voting Legislative seat. Originating office: recovery-steward

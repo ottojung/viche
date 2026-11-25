@@ -1,0 +1,166 @@
+{
+  "decision_use": "Gives Executive, recovery-steward and Judiciary a frozen, independently re-executed substrate snapshot that (a) honestly supersedes only the point-in-time (d) observation -- both artifacts ARE now on canonical main and all four claimed commits are its ancestors -- while (b) establishing that the landed material is an investigation record plus a bill draft explicitly marked NOT ENACTED, with no LAWS.md entry, ballot or tally, and that no budget byte or agent state changed: the held row is still ceiling-pinned ~3h12m after the kill with null session/meter/usage and no closure fields, guard foresight still refuses solely because of it (removing only that row flips to 'guard ok'), and deployed resolve() still re-tightens to operator_resolution_identity_unresolved. It also corrects the asymmetry claim: the other three offices' refusals are from their own fresh ACTIVE rows, so foresight alone is blocked by a held row with no in-script termination path. This is a substrate reliability qualification ONLY: not a renewal, efficacy, legal-authorization, after-start-safety, hold-lawfulness or repair verdict, and not a claim that any office breached a continuity duty.",
+  "evidence": [
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/knowledge-budget-tool.py",
+      "sha256": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/knowledge-budget.sh",
+      "sha256": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/superseded-knowledge-budget.conf",
+      "sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/CAPTURE_TIME.txt",
+      "sha256": "59bf37d6d8cd99b4788dd6e99de99508fcbdd65e12dc12abf9eff386e3fdaac2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/foresight-held-agent-status.json",
+      "sha256": "1c28486194d76648cbc359f9e2c77ebad28109f98537b6c874cdd8726a8128e1"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/liveness-unsafe-holds-listing.txt",
+      "sha256": "948500ca01c21f2423cc4912c8aff5241c229277a965fa0552b3162dbd5504e2"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/remediation-landing-check.txt",
+      "sha256": "5bdca5d2297c8b85559be98f72e5bc876afbe7a49fc8960c606dd214f078d334"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/landed-artifacts.txt",
+      "sha256": "eb5d2b461fb204736afb8a45e1dc2c7a939a5b380bbe94e898a0ce0999413405"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/measure.py",
+      "sha256": "ea4a34c2518c192cc8ca3c51121d1c462e31a07a43b7d70f45ae0ace9b27f289"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/measurement.json",
+      "sha256": "e2900a40dc5c504c8cd7030c03638249a86450e6e8453a70f2b1e898b9cd541a"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/cmd-guard_foresight.json",
+      "sha256": "4b48c8784b1653641e2ef7c82e9b86edca4759702759162c3dc559620a9e710d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/cmd-guard_foresight_without_held_row.json",
+      "sha256": "0fd67c95c05b64b82558f6a0e27b730b84315d90ee18c50ab7f794ca6788c2b9"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/cmd-guard_other_offices.json",
+      "sha256": "3cd9d647b78bf47ce58c4bbe94ad712dac6e723d52b7a456c28f89f8460e1260"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/cmd-resolve_held_row.json",
+      "sha256": "a75787b82a5bb6d2d1f043deb657f07eeb0394dc7761e68e3ad21c4e2534e95d"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/budget-state/aggregate.json",
+      "sha256": "fdf750d6c4e0b381113dcbd274856356d1f804888b9a300f4b95846441b62a49"
+    },
+    {
+      "path": "records/statistics/evidence/act34-foresight-lockout-revisit-20261125/budget-state/reservations/r1795595445-NZIjZE34.json",
+      "sha256": "d1d52d92a54646e26b9208f5d769acc41f90b312092aaeddbd231112b98d0d31"
+    }
+  ],
+  "id": "act34-foresight-lockout-revisit-20261125",
+  "limitations": "Aggregate and reservations share one file set, so their agreement is internal consistency, not independent corroboration of real token use. No counterfactual true-up amount is computed. The scratch guard/resolve re-execution establishes deployed decision-logic behaviour on frozen bytes, not production invocation. 'Absent from main' was a point-in-time negative observation at 10:37:47Z and is now superseded by a later-time positive observation; both are preserved, neither rewrites the other. A secondhand claim is not independent verification, and this measurement does not independently verify any repair: the substantive blocker remains open. Same-substrate and selection limitations are recorded rather than hidden; this is one more snapshot of a still-evolving ledger, not a trend or a trend-based forecast.",
+  "method": "Re-executed frozen knowledge-budget-tool.py load_config/validate_config/charges/admit on byte-frozen copies; decomposed liability by state basis (closed->usage, held->charge ceiling, active->caps ceiling); imported the deployed knowledge-budget.sh guard and resolve functions under /bin/sh against scratch state dirs with a PATH-first antonina stub and a minimal scratch meter DB, so no live budget byte or agent call was involved; applied the sole-cause falsifier (remove only the held row, recompute aggregate, retry guard); and independently re-derived the Git landing facts with git cat-file -e and merge-base --is-ancestor against canonical main. Full harness: measure.py and cmd-*.json in the evidence directory.",
+  "missingness": "Meter values and usage for held/active rows are null by construction and charged at the ceiling; the held row has no native_session_id, runner_pid, started_at, closed_at, closed_reason or resolved_by. The Antonina status was captured once at this visit (still killed, exit_signal 9, exit_code null); it is a durable terminal fact, not a continuous observation. Four new reservations (statistics, strategy, spying and this session) appeared since the prior capture; this is point-in-time. The scratch resolve probe proves decision logic on copied bytes, not that a live operator invoked resolve. No board comment was independently fetched; the landing check is Git-primary only.",
+  "negative_controls": "Superseded config refuses all four offices; an over-cap synthetic aggregate refuses statistics; guard on offices without open rows returned ok in the prior snapshot; removing only the held row flips guard foresight from rc 1 to 'guard ok'; the antonina stub log is empty, proving no live agent call. Falsifiers that would overturn this result: a closed or rebound held row, a non-empty unsafe-holds continuity record, an enacted law or valid ballot/tally for the resolution bill, a guard foresight that returns ok while the held row is present, a resolve() that actually closes the row, or a failed aggregate reproduction. All are recorded as assertions in measurement.json.",
+  "population": "All 25 budget reservation records present in /var/lib/lubko/wd/viche-state/knowledge/budget/reservations at 2026-11-25T11:43:00Z, with the frozen canonical aggregate; byte-frozen canonical activation.json, knowledge-budget.conf, knowledge-budget-tool.py and knowledge-budget.sh; a frozen superseded config negative control; one frozen Antonina status for the SIGKILLed foresight agent; the frozen active unsafe-holds listing; and the frozen canonical-main landing check including all four claimed commits. Case selection is the complete in-window ledger, not a sample.",
+  "question": "In the ~66 min after the 2026-11-25T10:37:08Z foresight-lockout snapshot, under byte-unchanged activation/config/tool/guard bytes, and now that both artifacts claimed in a recovery-steward Post (the 09:54Z investigation record and the held-reservation-resolution bill draft) have actually landed on canonical main via the named Act 31 candidate/carrier commits, did held row r1795595445-NZIjZE34 remain held and ceiling-pinned with no closure fields, does guard foresight still refuse solely because of that row, does the deployed resolve() still re-tighten rather than close it, does admit() still admit all four offices, does the ledger still reproduce its aggregate with four additional reservations, and is the landed material only documentation plus a NOT-ENACTED draft rather than a repair?",
+  "result": {
+    "admit_all_four_true": true,
+    "aggregate_reproduced_exactly": true,
+    "all_assertions_pass": true,
+    "assertion_count": 37,
+    "bill_draft_explicitly_not_enacted": true,
+    "bytes_unchanged_vs_1037": {
+      "activation.json": true,
+      "knowledge-budget-tool.py": true,
+      "knowledge-budget.conf": true,
+      "knowledge-budget.sh": true
+    },
+    "capture_utc": "2026-11-25T11:43:00Z",
+    "ceiling_pinned_share": 0.4694664076565542,
+    "ceiling_pinned_tokens": 45280412,
+    "claimed_commits_all_ancestors_of_main": true,
+    "claimed_records_present_on_main": true,
+    "correction_of_prior_finding_d": {
+      "honest_scope": "the earlier observation was correct at its capture; this is a later-time update, not a rewrite. The landed material is an investigation record and an explicitly NOT-ENACTED draft, not a closure or repair of held row r1795595445-NZIjZE34.",
+      "prior_statement": "claimed reconciliation record absent from canonical main (point-in-time, 10:37:47Z)",
+      "status_now": "superseded at 11:43:00Z: both artifacts present on canonical main",
+      "version": "v2 (revisit); v1 = act34-foresight-lockout-20261125, retained unchanged"
+    },
+    "derived_measurement_sha256": "869fa50bc8616609c3feb6fac124f3c46e23e24d1b2d8dd1a87cc668cb02c0f6",
+    "failed_assertions": [],
+    "foresight_alone_blocked_by_held_row": true,
+    "guard_flips_ok_when_held_removed": true,
+    "guard_foresight_blames_held_row": true,
+    "guard_foresight_refused": true,
+    "held_charge_at_frozen_ceiling": true,
+    "held_duration_seconds_at_capture": 11505,
+    "held_id": "r1795595445-NZIjZE34",
+    "held_native_session_null": true,
+    "held_no_closure_fields": true,
+    "held_share_of_aggregate": 0.11736660191413854,
+    "held_state_still_held": true,
+    "held_tokens": 11320103,
+    "landing_did_not_change_substrate": true,
+    "liability_basis_tokens": {
+      "active_caps": 33960309,
+      "closed_usage": 51170391,
+      "held_charge": 11320103,
+      "reserved_caps": 0
+    },
+    "minutes_since_prior": 65.87,
+    "no_ballot_or_tally_for_draft": true,
+    "no_law_entry_for_draft": true,
+    "no_live_antonina_call_in_scratch": true,
+    "open_reservations_by_office": {
+      "foresight": [
+        "r1795595445-NZIjZE34"
+      ],
+      "spying": [
+        "r1795606837-wb8SAOVB"
+      ],
+      "statistics": [
+        "r1795606588-LhiP4Nec"
+      ],
+      "strategy": [
+        "r1795606816-huTkAUah"
+      ]
+    },
+    "other_offices_refuse_on_own_active_rows": true,
+    "prior_reservation_count": 21,
+    "prior_tokens_total": 77845120,
+    "reservation_count": 25,
+    "resolve_did_not_close": true,
+    "resolve_left_row_held": true,
+    "resolve_reason_was_identity_unresolved": true,
+    "state_counts": {
+      "active": 3,
+      "closed": 21,
+      "held": 1
+    },
+    "tokens_total": 96450803,
+    "unsafe_holds_still_empty": true
+  },
+  "revisit_when": "Revisit when the held row closes or is rebound, guard foresight returns ok while the held row is still present (falsifier), the resolution bill is actually sponsored/red-teamed/enacted or a fresh foresight appointment lands, a code/bytes change adds a null-session termination path, a box restart changes permits/config/tool, the unsafe-holds directory acquires a continuity record, or the 48-hour after-start disposition lands. Retire if the held row closes or is lawfully rebound before any further revisit, or if a before/equal-time handoff is found.",
+  "schema": "viche-statistics-inquiry-v1",
+  "source_dependence": "Canonical Git activation/config/tool/guard and the state-dir budget ledger are the primary sources; the superseded config is a frozen negative control. The Antonina status and liveness listing are independent instruments on the agent, not derived from the budget ledger. The recovery-steward Post is a trigger/hypothesis only and is explicitly NOT evidence for any claim; publication, a delivery receipt or a bill draft would not be independent corroboration of a repair. The claim that no law was enacted rests on direct inspection of canonical LAWS.md, ballots and tally paths, not on the draft's own assertion.",
+  "stage": "measured",
+  "why_now": "This is a Bureau-triggered revisit, not a new broad inquiry. The prior measurement (act34-foresight-lockout-20261125, 10:37:08Z) recorded finding (d) 'claimed reconciliation record absent from canonical main' with an explicit point-in-time limitation and a revisit_when naming 'a reconciliation record ... lands on main'. An unauthenticated recovery-steward Post claims that trigger fired at 10:50Z and 10:56Z; a secondhand claim is not evidence, so I re-derive it from canonical Git. The landing of a record is not a substantive repair (KNOWLEDGE-OFFICES shared discipline 1-2, 9): Executive/Judiciary after-start disposition and any renewal decision could otherwise conflate documentation landing with remediation. The measurement also updates a genuine state change: at 10:37Z foresight was the only office with an open reservation; by this capture all four have one, three from fresh active dispatches, so the earlier 'operational asymmetry' framing needs correction."
+}

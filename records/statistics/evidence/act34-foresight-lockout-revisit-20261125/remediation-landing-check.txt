@@ -1,0 +1,17 @@
+captured_at=2026-11-25T11:43:00Z
+canonical_main_head=d8c906cb2fe6f021eed4cdd1302fd99b78141ac6
+--- claimed artifacts presence on canonical main (git cat-file -e HEAD:path) ---
+PRESENT records/investigations/recovery-steward-foresight-unbound-hold-20261125T0954Z.md
+PRESENT records/bills/held-reservation-resolution-act.md
+--- claimed commits / ancestor of main ---
+56dd2756a001 56dd2756a001ba235a0f4ef3e2f1ae358abaacb3 ANCESTOR
+30b8fe5fbf3f 30b8fe5fbf3fcfdc54ffb24724fd791f705112b7 ANCESTOR
+f3d9b6fae906 f3d9b6fae9067acbd6332d0534ca370c8050eb8d ANCESTOR
+249ff921f4a0 249ff921f4a062af44453ef777c34343ee67b237 ANCESTOR
+--- integration commits on main mentioning these deliveries ---
+f3d9b6fa Integrate delivery/held-reservation-resolution-bill-draft (recovery-steward): Recovery-steward: sponsorship-ready bill draft for unbound held-reservation lockout
+56dd2756 Integrate delivery/foresight-unbound-hold-investigation-20261125 (recovery-steward): Recovery-steward: investigate foresight SIGKILL and unbound held-reservation lockout
+--- no-enactment evidence ---
+LAWS_MENTION: NO
+ABSENT records/ballots/held-reservation-resolution-act.tsv
+ABSENT records/tally/held-reservation-resolution-act
