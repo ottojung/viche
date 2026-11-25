@@ -58,6 +58,14 @@ COOLDOWNS = pathlib.Path(os.environ.get(
         os.environ.get("XDG_STATE_HOME", str(HOME / ".local" / "state")))) / "antonina" / "model-cooldowns")))
 LIVE_TOWN = pathlib.Path("/var/lib/lubko/wd/viche")
 LIVE_STATE = pathlib.Path("/var/lib/lubko/wd/viche-state")
+# The production ladder lives under the canonical home, never under whatever
+# HOME/XDG a caller happens to inherit. These absolute paths are the authority
+# for "live" in the noncanonical guard below; deriving it from Path.home() or
+# XDG_CONFIG_HOME lets a scratch invocation point VICHE_ANTONINA_CONFIG at the
+# real ladder while disguising it as a fixture.
+LIVE_HOME = pathlib.Path("/home/lubko")
+LIVE_CONFIG = LIVE_HOME / ".config/antonina/config.json"
+LIVE_COOLDOWNS = LIVE_HOME / ".local/state/antonina/model-cooldowns"
 MAX_MODELS = int(os.environ.get("VICHE_ECONOMY_MAX_MODELS", "32"))
 PROBE_FRESH_SECONDS = 14 * 86400
 PROBE_TIMEOUT = int(os.environ.get("VICHE_ECONOMY_PROBE_TIMEOUT", "120"))
@@ -506,22 +514,42 @@ def build_report(final, cfg_before, dropped, new_free, ran, changed, backup, cur
     }
 
 
-def refresh(args):
-    # Smoke tests and temporary checkouts must never probe or rewrite the
-    # production Antonina service, even when inherited HOME is real.
+def noncanonical_refusal():
+    """Reason string when a noncanonical invocation would touch live state, else None.
+
+    Pure: reads module constants and the environment only. It performs no
+    discovery and no writes, so callers (including tests) can check the gate
+    safely before any refresh can publish a ladder.
+    """
     canonical = (pathlib.Path(__file__).resolve().parent.parent == LIVE_TOWN
                  and STATE.resolve() == LIVE_STATE
                  and pathlib.Path(os.environ.get("VICHE_TOWN_ROOT", str(LIVE_TOWN))).resolve() == LIVE_TOWN)
-    if not canonical:
-        fixture = all(os.environ.get(k) for k in (
-            "VICHE_ANTONINA_CONFIG", "VICHE_ANTONINA_COOLDOWNS", "VICHE_OPENCODE_MODELS"))
-        live_config = pathlib.Path.home() / ".config/antonina/config.json"
-        live_cooldowns = pathlib.Path.home() / ".local/state/antonina/model-cooldowns"
-        if (not fixture or CONFIG.resolve() == live_config.resolve()
-                or COOLDOWNS.resolve() == live_cooldowns.resolve()
-                or STATE.resolve() == LIVE_STATE):
-            print("economy: noncanonical refresh skipped before discovery or writes", file=sys.stderr)
-            return 1
+    if canonical:
+        return None
+    fixture = all(os.environ.get(k) for k in (
+        "VICHE_ANTONINA_CONFIG", "VICHE_ANTONINA_COOLDOWNS", "VICHE_OPENCODE_MODELS"))
+    # Compare against BOTH the fixed production paths and the caller's
+    # HOME-derived paths. An inherited real HOME or XDG_CONFIG_HOME must never
+    # make the real ladder look like a scratch fixture (and a scratch HOME must
+    # never hide a VICHE_ANTONINA_CONFIG that points at live).
+    live_configs = (LIVE_CONFIG.resolve(),
+                    (pathlib.Path.home() / ".config/antonina/config.json").resolve())
+    live_cooldowns = (LIVE_COOLDOWNS.resolve(),
+                      (pathlib.Path.home() / ".local/state/antonina/model-cooldowns").resolve())
+    if (not fixture or CONFIG.resolve() in live_configs
+            or COOLDOWNS.resolve() in live_cooldowns
+            or STATE.resolve() == LIVE_STATE):
+        return "noncanonical refresh skipped before discovery or writes"
+    return None
+
+
+def refresh(args):
+    # Smoke tests and temporary checkouts must never probe or rewrite the
+    # production Antonina service, even when inherited HOME is real.
+    refusal = noncanonical_refusal()
+    if refusal is not None:
+        print("economy: " + refusal, file=sys.stderr)
+        return 1
     current = now()
     ROOT.mkdir(parents=True, exist_ok=True)
     cfg = read_config()
