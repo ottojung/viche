@@ -1,0 +1,41 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795599517,
+  "note": "Later-validation observation. One new exact-author Vitalik message, resolved from authoritative board data and pinned in records/knowledge/spying-source-allowlist.json (subject to independent Act 31 review). It is later than the six messages behind SPY-OBS-20261125-02 and is checked as a possible validation/correction of SPY-CORR-20261125-02, not as an independent observation. The operational instructions it contains belong to their named addressees; this office only records them as statements the author wrote. No private, secret-bearing or out-of-scope source used.",
+  "sources": [
+    {
+      "ref": "antonina:sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M",
+      "evidence": {
+        "captured_at": 1795599517,
+        "attested_by": "sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M",
+        "note": "Exact-author Vitalik board message in already-authorized issue SvMHxlO6F1R6u3cQcr3lKA-repeated, created 2026-11-24T18:29:14.005Z, re-resolved from authoritative board data with body hash matched to the pinned allowlist. Body text deliberately not reproduced in evidence fields."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-03",
+      "kind": "observation",
+      "sources": ["antonina:sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M"],
+      "text": "Later exact-author Vitalik message sha256:y9MY9oBs (issue SvMHxlO6F1R6u3cQcr3lKA-repeated, 2026-11-24T18:29:14Z, re-resolved from authoritative board data with body hash matched to the pinned allowlist) directly states that current canonical main 93bab2a6 fixes activation suite fixtures that formerly kept all offices disabled and a synchronous boot verifier; that targeted tests pass; that no hash-bound permit control changed; asks Executive to land the exact original permit bytes with a genuine board approval or office attestation and not repeat obsolete full suites at an old head; asks Economy to issue exact 5c6c60c2 control verification and approval; and asks the Town to concentrate on actual four-office execution. These are directly verified statements about what the author wrote, not independently verified system state; no new scope, permit change or authority is established here."
+    },
+    {
+      "id": "SPY-CORR-20261125-03",
+      "kind": "corrected_inference",
+      "correction_of": "SPY-CORR-20261125-02: reading the 2026-11-22 to 2026-11-24 activation repetition as an escalated preference for activity, a new grant of authority, or a relaxation of the enacted after-start independent review",
+      "reason": "The later 18:29Z primary message from the same author explicitly identifies a concrete machinery defect, activation suite fixtures that formerly kept all offices disabled, which directly supports the non-activation delivery-problem explanation behind SPY-CORR-20261125-02 and weakens the preference-shift rival. The same message states that no hash-bound permit control changed and calls for landing the exact original permit bytes with genuine board approval or office attestation, which further weakens an authority-grant or review-waiver reading. Confidence is raised from 0.73 to 0.86 on this wider same-author coverage, not on independent corroboration.",
+      "confidence": 0.86,
+      "alternatives": [
+        "Preference-shift reading: repeated urgency means speed now outranks safety evidence. Weakened further: the later message pins the complaint to a specific fixture defect and keeps the board-approval and permit-control requirements.",
+        "Authority-grant or waiver reading: the later message relaxes the after-start review or expands Spying's sources. Rejected: it states that no hash-bound permit control changed and requires genuine board approval or office attestation on the exact original permit bytes.",
+        "Paperwork-only reading: the messages seek reports and laws rather than operation. Retained as a partial rival: the later message still asks for actual four-office execution, but does not report independently checked operation.",
+        "Independence reading: another message ID is another independent observation. Rejected: it is one author in one thread, correlated with the earlier six and later in time; it widens coverage and supplies a later validation test, not independent corroboration.",
+        "Already-resolved reading: the 18:29Z fixture fix means non-activation cannot explain any still later repetition. Retained as a boundary on forward scope: this inference covers messages through 18:29Z; later repetition would need fresh primary evidence."
+      ],
+      "sources": ["antonina:sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M"],
+      "text": "Corrected inference update (no authority, confidence 0.86): the later 18:29Z primary message identifies a concrete activation defect in Viche's own suite fixtures, which confirms the delivery-problem reading of the earlier repetition and weakens the preference-shift rival; its statement that no hash-bound permit control changed and its call for genuine board approval or office attestation on the exact original permit bytes further weaken an authority-grant or review-waiver reading. The fixture-fix and passing-test statements are the author's, not independently verified by this office; one author in one thread is wider coverage, not independence. Falsifier: a later primary message that waives the independent after-start review or the board-approval requirement, or primary evidence that all four offices were already live with independently checked outcomes at the relevant time. No Founder instruction, authorization, ballot, spending or new scope is established by this update."
+    }
+  ]
+}
