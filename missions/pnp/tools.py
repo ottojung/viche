@@ -21,6 +21,10 @@ def inventory():
     def add(path, use, purpose, when):
         if present(path):
             rows.append({"command": PREFIX + use, "purpose": purpose, "when": when})
+    add("lbcert/lbremote.py", "lbcert.lbremote STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean",
+        "lb_cert lower-bound certificate built on marceline-dev (~20 s); exit 0 written, 3 bound false, 4 too big",
+        "Statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S` or its `¬ (...)` twin. "
+        "Usually already done: see PNP_STATE_ROOT/lbcert/cands/GAP.status; the allocator fast lane submits it.")
     add("brief.py", "brief", "Exact leased statement, original sketch, parent cuts and siblings",
         "At entry; before independent mathematics.")
     add("proofs/__main__.py", "proofs find [QUERY]", "Retrieve checked analogous proofs and structural hints",
