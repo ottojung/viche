@@ -1,0 +1,16 @@
+{
+  "authorized_by": "act:34:foresight",
+  "enabled": true,
+  "expires_at": 1799432516,
+  "not_before": 1795544516,
+  "permit_attestation": {
+    "expected_reviewer": "c1e00002",
+    "issue_id": "bpzNUUt9izRYOOcONcTy9K-implicate",
+    "officer_agent_id": "6DdpOd8W4yreoITvjZGDZf-quotas"
+  },
+  "permit_origin_commit": "7d49d49af0bb1b6b69aa011e2ecb78e5046b32cd",
+  "permit_ref": "records/knowledge/permits/foresight.json",
+  "permit_sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+  "signer": "c1e00002",
+  "trial_mode": "adaptive-v1"
+}

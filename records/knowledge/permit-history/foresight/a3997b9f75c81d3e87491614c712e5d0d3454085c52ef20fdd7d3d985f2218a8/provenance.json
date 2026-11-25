@@ -1,0 +1,24 @@
+{
+  "original_budget_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+  "original_main_commit": "d7c2f84af08032327ae63aeefd65f41ad53eb8c8",
+  "original_permit_sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8",
+  "preserved_artifacts": {
+    "permit.json": {
+      "original_path": "records/knowledge/permits/foresight.json",
+      "path": "records/knowledge/permit-history/foresight/a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8/permit.json",
+      "sha256": "a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8"
+    },
+    "review-attestation.json": {
+      "original_path": "records/knowledge/pilot-reviews/foresight-attestation.json",
+      "path": "records/knowledge/permit-history/foresight/a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8/review-attestation.json",
+      "sha256": "8b104b054eb2bf995eee338e85c83f9809f9e54213f56bcfb07b1fdf58e42ccb"
+    },
+    "review.json": {
+      "original_path": "records/knowledge/pilot-reviews/foresight.json",
+      "path": "records/knowledge/permit-history/foresight/a3997b9f75c81d3e87491614c712e5d0d3454085c52ef20fdd7d3d985f2218a8/review.json",
+      "sha256": "de0a0739a81e2f32dbcf102e82f4d21e5edfd2b56df18cdd2e75b1b30309f8b9"
+    }
+  },
+  "review_decision": "proceed",
+  "reviewed_at": 1795551268
+}
