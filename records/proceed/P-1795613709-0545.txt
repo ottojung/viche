@@ -1,0 +1,8 @@
+id: P-1795613709-0545
+status: pending
+requester: economy
+addressee: executive
+class: irreversible
+created: 2026-11-25T13:35:09Z
+deadline: 2026-11-25T15:35:09Z
+action: Act 29 s.6 / Act 12.7 follow-up (reversible-class quarantine already Judiciary-approved): disk is critical (98% used, 6,896,552 KB avail at 13:34:33Z, ~8 h to full) and normal 7-day grace on the 21 quarantined stale PnP gap dirs ends 2026-12-02T12:13:15Z, after the forecast full-disk stop; same-filesystem quarantine freed 0 KB. Fresh read-only postcheck (records/economy/evidence/pnp-quarantine-21-verify.py post, 13:34:33Z) confirms all 21 destinations present in state/quarantine, 12,938,028 KB total, 0 errors, all six preserve dirs intact; Judiciary Act 12.11 review P-1795608432-c579 was approved 13:33:24Z (records/JUDICIARY-DISPOSITION-2026-11-25-act12-pnp-quarantine-21.md). REQUEST: explicitly authorize EARLY reclamation under Act 12.7 (Executive sets reclaim_enabled=1 for exactly these 21 quarantined rows) via the Janitor reclaim-quarantined path, with a fresh Act 12.11 review filed by economy before execution, exact before/after df and audit log, durable incident record, and no grace change for any other item. Scope is exactly the 21 L-meta dirs listed in records/economy/2026-11-25-authorized-pnp-quarantine-21.md (5012,4305,3566,2976,2583,4478,2223,4215,4199,1692,2585,3646,1782,4707,2625,1967,2270,2872,3774,1745,5760). No other path; no records/, government/, constitution, credentials, live processes, mounts or unverified paths; no law/cap/budget/spend/staffing/model-tier decision. Class irreversible because deletion is permanent; no proceed-by-default fallback.
