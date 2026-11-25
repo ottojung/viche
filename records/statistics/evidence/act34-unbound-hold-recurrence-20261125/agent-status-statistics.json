@@ -1,0 +1,31 @@
+{
+  "id": "vMWHKp5ui3p137QYhQzKFF-citrus",
+  "state": "killed",
+  "alive": false,
+  "native_session_id": null,
+  "pid": 18060,
+  "pgid": 18060,
+  "runner_pid": 17981,
+  "cwd": "/var/lib/lubko/wd/viche-seats/branches/statistics",
+  "invocation_cwd": "/var/lib/lubko/wd/viche-seats/branches/statistics",
+  "title": "Viche: Statistics Bureau",
+  "created_at": 1795624236.011,
+  "started_at": 1795627845.748,
+  "finished_at": 1795627869.899,
+  "last_activity_at": 1795627869.899,
+  "exit_code": null,
+  "exit_signal": 9,
+  "last_error": null,
+  "prompts": 1,
+  "steers_pending": 0,
+  "next_steer": null,
+  "steer_preempting": false,
+  "steer_metadata_error": null,
+  "model": "opencode-go/hy4-flash-free",
+  "models_used": [
+    "opencode-go/hy4-flash-free"
+  ],
+  "variant": "low",
+  "backend_error": null,
+  "log": "/home/lubko/.local/state/antonina/agents/vMWHKp5ui3p137QYhQzKFF-citrus/output.log"
+}

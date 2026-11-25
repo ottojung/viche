@@ -1,0 +1,142 @@
+{
+  "aggregate_tokens_total": 114791979,
+  "all_assertions_pass": true,
+  "assertion_count": 50,
+  "assertions": {
+    "agent_killed_before_hold": true,
+    "agent_started_at_dispatch_attempt": true,
+    "aggregate_reproduced_exactly": true,
+    "both_held_counted_at_ceiling": true,
+    "both_held_same_config": true,
+    "control_spying_between_the_two_holds": true,
+    "control_spying_closed": true,
+    "control_spying_config_new": true,
+    "control_spying_sid_present": true,
+    "control_strategy_between_the_two_holds": true,
+    "control_strategy_closed": true,
+    "control_strategy_config_new": true,
+    "control_strategy_sid_present": true,
+    "foresight_meter_created_before_hold": true,
+    "foresight_meter_in_foresight_worktree": true,
+    "foresight_meter_row_exists": true,
+    "foresight_meter_zero_tokens": true,
+    "held_foresight_ceiling": true,
+    "held_foresight_config_new": true,
+    "held_foresight_dispatch_attempted": true,
+    "held_foresight_meter_null": true,
+    "held_foresight_no_closure": true,
+    "held_foresight_reason": true,
+    "held_foresight_sid_null": true,
+    "held_foresight_state": true,
+    "held_statistics_ceiling": true,
+    "held_statistics_config_new": true,
+    "held_statistics_dispatch_attempted": true,
+    "held_statistics_meter_null": true,
+    "held_statistics_no_closure": true,
+    "held_statistics_reason": true,
+    "held_statistics_sid_null": true,
+    "held_statistics_state": true,
+    "hold_reason_not_usage_dependent": true,
+    "my_agent_killed_by_signal9": true,
+    "my_agent_status_killed": true,
+    "my_agent_status_sid_null": true,
+    "no_new_foresight_reservation_since_hold": true,
+    "reservation_count_40": true,
+    "statistics_held_after_foresight_held": true,
+    "statistics_held_agent_is_my_appointment": true,
+    "statistics_held_within_70min_of_prior_capture": true,
+    "statistics_meter_consumed_tokens": true,
+    "statistics_meter_created_near_reservation": true,
+    "statistics_meter_in_statistics_worktree": true,
+    "statistics_meter_row_exists": true,
+    "unchanged_knowledge-act34-gate_py": true,
+    "unchanged_knowledge-budget-tool_py": true,
+    "unchanged_knowledge-budget_conf": true,
+    "unchanged_knowledge-budget_sh": true
+  },
+  "capture_utc": "2026-11-25T17:35:07Z",
+  "captured_unix": 1795628107,
+  "controls": {
+    "spying": {
+      "created_at": 1795626320,
+      "id": "r1795626321-B8gb7hXo",
+      "native_session_id": "ses_dec54a229ffeehEHZNBJ4gco6v",
+      "state": "closed"
+    },
+    "strategy": {
+      "created_at": 1795625564,
+      "id": "r1795625565-pZ0ZpW9z",
+      "native_session_id": "ses_dec6030b6ffe9JAIFHdVapZ39k",
+      "state": "closed"
+    }
+  },
+  "derived_measurement_sha256": "6451a9fe9b0f5b3c5c525d41f2ea400d945ed5334889e80aa7ca9c7971ba1372",
+  "falsifiers": [
+    "A held row whose state != held, reason != meter_or_session_binding_unknown_after_launch, native_session_id non-null, or charge != 11320103.",
+    "My agent status not killed, signal != 9, or native_session_id non-null.",
+    "No valid session_v2 meter row for the statistics worktree created between reservation creation and hold, or zero tokens consumed.",
+    "A new foresight reservation created after its hold (lockout did not hold).",
+    "Either clean control not closed with a native_session_id (recurrence not distinguishable).",
+    "Any deployed source hash differing from the 16:23Z fresh-window capture.",
+    "An aggregate the frozen charges() cannot reproduce from all 40 rows."
+  ],
+  "hashes": {
+    "knowledge-act34-gate.py": "13e6d68aaa1b32ce08e1a8ecd9f209486115aec077be7ef0f42f489306640d9a",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "knowledge-budget.sh": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56"
+  },
+  "held_rows": {
+    "foresight": {
+      "charge": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "held_at": 1795595475,
+      "held_reason": "meter_or_session_binding_unknown_after_launch",
+      "id": "r1795595445-NZIjZE34",
+      "native_session_id": null,
+      "office": "foresight",
+      "state": "held"
+    },
+    "statistics": {
+      "agent_id": "vMWHKp5ui3p137QYhQzKFF-citrus",
+      "charge": {
+        "cpu_seconds": 7987,
+        "tokens_total": 11320103,
+        "wall_seconds": 1997
+      },
+      "held_at": 1795627872,
+      "held_reason": "meter_or_session_binding_unknown_after_launch",
+      "id": "r1795627844-h4STKKF6",
+      "native_session_id": null,
+      "office": "statistics",
+      "state": "held"
+    }
+  },
+  "meters": {
+    "foresight": {
+      "directory": "/var/lib/lubko/wd/viche-seats/branches/foresight",
+      "id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+      "time_created": 1795595451766,
+      "time_updated": 1795595474716
+    },
+    "statistics": {
+      "directory": "/var/lib/lubko/wd/viche-seats/branches/statistics",
+      "id": "ses_dec3d7632ffe4MBEkReDeWfdxv",
+      "time_created": 1795627846166,
+      "time_updated": 1795628092257
+    }
+  },
+  "my_agent_status": {
+    "alive": false,
+    "exit_signal": 9,
+    "finished_at": 1795627869.899,
+    "id": "vMWHKp5ui3p137QYhQzKFF-citrus",
+    "native_session_id": null,
+    "started_at": 1795627845.748,
+    "state": "killed"
+  },
+  "reservation_count": 40
+}
