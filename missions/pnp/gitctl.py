@@ -144,8 +144,10 @@ def share_pinned_corpus(worktree, base):
     corrupt every attempt that hardlinks it; workers add new candidate files
     rather than rewriting pinned sources. Only write bits are removed: read and
     executable bits are preserved so tracked executables stay executable and git
-    still sees a clean pinned revision. Best effort: a failure here leaves the
-    ordinary full checkout in place rather than blocking research.
+    still sees a clean pinned revision. Symlinks are left untouched: following
+    one would replace it with a regular file and write mtime to its target.
+    Best effort: a failure here leaves the ordinary full checkout in place
+    rather than blocking research.
     """
     import fcntl
     import re
@@ -184,6 +186,11 @@ def share_pinned_corpus(worktree, base):
             for r, _dirs, files in os.walk(tmp):
                 for name in files:
                     p = os.path.join(r, name)
+                    # Leave symlinks intact: stat/chmod would follow the link
+                    # and mutate a file outside the central corpus (for example
+                    # the records/AGENDA*.md symlinks in the pinned tree).
+                    if os.path.islink(p):
+                        continue
                     # Strip write bits to make the shared corpus immutable, but
                     # keep read/exec bits: a tracked executable must stay
                     # executable in every worker or git status goes dirty.
@@ -202,6 +209,11 @@ def share_pinned_corpus(worktree, base):
             dst = os.path.join(r, name)
             src = os.path.join(central, name) if rel == "." else \
                 os.path.join(central, rel, name)
+            # A symlink is its own object: isfile/getsize/stat/utime follow
+            # the link, so hardlinking one would replace it with an ordinary
+            # file and write mtime to its target. Never dedup symlinks.
+            if os.path.islink(dst) or os.path.islink(src):
+                continue
             try:
                 if not os.path.isfile(src) or \
                         os.path.getsize(src) != os.path.getsize(dst):

@@ -40,6 +40,12 @@ class CorpusDedup(unittest.TestCase):
         os.chmod(exe, 0o755)
         with open(os.path.join(src, "README.md"), "w") as f:
             f.write("pinned\n")
+        # A tracked symlink as in the real pinned tree (records/AGENDA*.md).
+        os.makedirs(os.path.join(src, "records"), exist_ok=True)
+        with open(os.path.join(src, "records", "target.md"), "w") as f:
+            f.write("target pinned\n")
+        os.symlink("target.md",
+                   os.path.join(src, "records", "AGENDA-link.md"))
         git("add", "-A", cwd=src)
         git("commit", "-qm", "base", cwd=src)
         self.sha = git("rev-parse", "HEAD", cwd=src)
@@ -86,6 +92,25 @@ class CorpusDedup(unittest.TestCase):
                                                      "Outside", "new.lean")))
         self.assertEqual(git("status", "--porcelain", cwd=self.wt),
                          "?? lean/PEqualNP/Outside/new.lean")
+
+    def test_symlinks_are_preserved_and_target_mtime_untouched(self):
+        link = os.path.join(self.wt, "records", "AGENDA-link.md")
+        target = os.path.join(self.wt, "records", "target.md")
+        self.assertTrue(os.path.islink(link))
+        # Give the target a distinctive mtime: a dedup that follows the
+        # symlink would overwrite it via utime().
+        stamp = 1600000000123456789
+        os.utime(target, ns=(stamp, stamp))
+        before = os.stat(target).st_mtime_ns
+        gitctl.share_pinned_corpus(self.wt, self.sha)
+        central = os.path.join(self.cache, "pinned-corpus", self.sha)
+        # The symlink stays a symlink in both trees; it is never replaced by
+        # a regular hardlinked file, and chmod never follows it.
+        self.assertTrue(os.path.islink(
+            os.path.join(central, "records", "AGENDA-link.md")))
+        self.assertTrue(os.path.islink(link))
+        self.assertEqual(os.stat(target).st_mtime_ns, before)
+        self.assertEqual(git("status", "--porcelain", cwd=self.wt), "")
 
     def test_second_call_is_idempotent(self):
         first = gitctl.share_pinned_corpus(self.wt, self.sha)
