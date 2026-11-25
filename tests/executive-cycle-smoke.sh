@@ -35,9 +35,18 @@ case "$1 $2" in
         printf '{"state":"%s","model":"%s","variant":"low"}\n' "$MODE" "$MODEL"
     fi ;;
   "agent run")
-    case "$*" in *"Founder charter fixture"*"401"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"No work is authorized on SoringP1"*) : ;; *) exit 8 ;; esac
-    case "$*" in *"research-plan.md"*|*"depleted_after_empty_curation"*) exit 8 ;; esac
+    # The private prompt travels in a file, not in argv; read the same bytes
+    # the real agent receives before asserting its contents.
+    pfile= prev=
+    for arg in "$@"; do
+      [ "$prev" != '--prompt-file' ] || pfile=$arg
+      prev=$arg
+    done
+    [ -n "$pfile" ] && [ -f "$pfile" ] || { echo 'missing --prompt-file' >&2; exit 7; }
+    prompt=$(cat "$pfile")
+    case "$prompt" in *"Founder charter fixture"*"401"*) : ;; *) exit 8 ;; esac
+    case "$prompt" in *"No work is authorized on SoringP1"*) : ;; *) exit 8 ;; esac
+    case "$prompt" in *"research-plan.md"*|*"depleted_after_empty_curation"*) exit 8 ;; esac
     printf 'accepted\n' >> "$OUTPUT" ;;
   *) echo "Unexpected: $*" >&2; exit 10 ;;
 esac
