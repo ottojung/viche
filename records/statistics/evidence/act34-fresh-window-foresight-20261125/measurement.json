@@ -1,0 +1,161 @@
+{
+  "aggregate_tokens_total": 108079859,
+  "all_assertions_pass": true,
+  "archived_spying_hold": {
+    "decision": "hold",
+    "handoff": "H-1795550506-92c3",
+    "office": "spying",
+    "permit_sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec",
+    "permit_start": 1795544516,
+    "reviewed_at": 1795551268,
+    "reviewer": "c1e00008",
+    "statutory_deadline": 1795717316
+  },
+  "assertions": {
+    "activation_status_active": true,
+    "aggregate_reproduced_exactly": true,
+    "all_authorized_by_act34": true,
+    "all_expiry_preserved": true,
+    "all_four_enabled": true,
+    "all_not_before_new_start": true,
+    "archived_review_bytes_match_provenance": true,
+    "archived_review_deadline_first_wave": true,
+    "archived_review_in_window": true,
+    "archived_review_is_spying_hold": true,
+    "archived_review_original_path_was_pilot_reviews": true,
+    "archived_review_permit_sha256": true,
+    "archived_review_permit_start_first_wave": true,
+    "foresight_has_two_completed_new_config_dispatches": true,
+    "fresh_window_deadline_20261126_224059Z": true,
+    "gate_fail_closed_after_deadline": true,
+    "gate_has_no_budget_ledger_reference": true,
+    "gate_has_review_window_constant": true,
+    "gate_proceed_required": true,
+    "gate_reads_pilot_reviews": true,
+    "guard_blames_held_row": true,
+    "guard_flips_ok_when_only_held_removed": true,
+    "guard_foresight_refused": true,
+    "held_charge_at_ceiling": true,
+    "held_config_new": true,
+    "held_meter_usage_null": true,
+    "held_native_session_null": true,
+    "held_no_closure_fields": true,
+    "held_row_present": true,
+    "held_state_held": true,
+    "live_gate_all_four_fail_closed": true,
+    "live_gate_failure_is_board_query_not_permit_hash": true,
+    "live_gate_reaches_attestation_step": true,
+    "no_current_review_file": true,
+    "no_live_antonina_call_in_scratch": true,
+    "now_inside_fresh_window": true,
+    "permits_match_activation_and_prior": true,
+    "reservation_count_37": true,
+    "window_later_than_first_wave": true
+  },
+  "audit": {
+    "ledger_refs_found": []
+  },
+  "capture_utc": "2026-11-25T16:23:16Z",
+  "captured_unix": 1795623796,
+  "commands": {
+    "guard_foresight": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 1,
+      "stderr": "knowledge-budget: office foresight has an open reservation: r1795595445-NZIjZE34",
+      "stdout": ""
+    },
+    "guard_foresight_without_held_row": {
+      "argv": [
+        "knowledge-budget.sh",
+        "guard",
+        "foresight"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "guard ok: foresight"
+    },
+    "guard_other_offices": {
+      "spying": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "spying"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "guard ok: spying"
+      },
+      "statistics": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "statistics"
+        ],
+        "rc": 1,
+        "stderr": "knowledge-budget: office statistics has an open reservation: r1795622741-pG8sMnEc",
+        "stdout": ""
+      },
+      "strategy": {
+        "argv": [
+          "knowledge-budget.sh",
+          "guard",
+          "strategy"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "guard ok: strategy"
+      }
+    }
+  },
+  "derived_measurement_sha256": "c5bab2960e89e3095a8c40c848a5c50f601ffdfda609ba1179268055fbf9f078",
+  "dispatch_census_new_config": {
+    "foresight": {
+      "closed": 2,
+      "held": 1
+    },
+    "spying": {
+      "closed": 10
+    },
+    "statistics": {
+      "active": 1,
+      "closed": 9
+    },
+    "strategy": {
+      "closed": 10
+    }
+  },
+  "falsifiers": [
+    "Any office enabled=false, authorized_by != act:34:OFFICE, not_before != 1795560059 or expiry != 1799432516 in the frozen activation.json.",
+    "A replacement permit whose sha256 differs from its activation.json permit_sha256.",
+    "An archived Spying review whose bytes do not reproduce its provenance sha256, whose decision is not hold, or whose permit_start/deadline are not the first-wave values.",
+    "A gate source that reads any budget-ledger path, or that accepts a non-proceed review before the deadline.",
+    "A live gate failure caused by a permit/config hash mismatch rather than the missing board credential.",
+    "guard foresight returning ok with the held row present, or failing to flip to ok when only that row is removed.",
+    "An aggregate that the frozen charges() cannot reproduce from the frozen reservations."
+  ],
+  "first_wave_permit_start_unix": 1795544516,
+  "fresh_window_deadline_unix": 1795732859,
+  "fresh_window_remaining_seconds_at_capture": 109063,
+  "hashes": {
+    "activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b",
+    "gate-live.json": "c2906a164ffa3d8158826f6d1c8531a68263c14bbdbd2158f615dfd8b4fac49c",
+    "knowledge-act34-gate.py": "13e6d68aaa1b32ce08e1a8ecd9f209486115aec077be7ef0f42f489306640d9a",
+    "knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "knowledge-budget.sh": "4105567c3b902a23b917f2545effd51f5e6c167602aa6a9f0a2201cf76759c56"
+  },
+  "held_created_utc": "2026-11-25T08:30:45Z",
+  "held_id": "r1795595445-NZIjZE34",
+  "permit_hash_ok": {
+    "foresight": true,
+    "spying": true,
+    "statistics": true,
+    "strategy": true
+  },
+  "permit_start_unix": 1795560059,
+  "reservation_count": 37
+}

@@ -1,0 +1,24 @@
+{
+  "original_budget_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+  "original_main_commit": "d7c2f84af08032327ae63aeefd65f41ad53eb8c8",
+  "original_permit_sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec",
+  "preserved_artifacts": {
+    "permit.json": {
+      "original_path": "records/knowledge/permits/spying.json",
+      "path": "records/knowledge/permit-history/spying/3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec/permit.json",
+      "sha256": "3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec"
+    },
+    "review-attestation.json": {
+      "original_path": "records/knowledge/pilot-reviews/spying-attestation.json",
+      "path": "records/knowledge/permit-history/spying/3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec/review-attestation.json",
+      "sha256": "8b104b054eb2bf995eee338e85c83f9809f9e54213f56bcfb07b1fdf58e42ccb"
+    },
+    "review.json": {
+      "original_path": "records/knowledge/pilot-reviews/spying.json",
+      "path": "records/knowledge/permit-history/spying/3f5b92b9ff676dcbed44b6e4bb1df565776f13aa360ccd0ca6a823d82cd222ec/review.json",
+      "sha256": "733250d97c6529f865d4ccb915475a8a0129ed779a5ee4eada140915ae37c608"
+    }
+  },
+  "review_decision": "hold",
+  "reviewed_at": 1795551268
+}
