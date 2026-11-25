@@ -88,6 +88,16 @@
         "scope": "founder-mandate-hub: 2026-11-24 activation reaffirmation with no waiver of financial/privacy safeguards",
         "captured_at": 1795592017,
         "note": "Pinned from authoritative board data for Spying inference-error observation; an already-in-scope exact-author Vitalik message in an already-authorized issue, not a new source class or scope. Change is subject to independent Act 31 review."
+      },
+      "sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M": {
+        "id": "sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M",
+        "issue": "SvMHxlO6F1R6u3cQcr3lKA-repeated",
+        "author": "Vitalik",
+        "createdAt": "2026-11-24T18:29:14.005Z",
+        "body_sha256": "sha256:bb33db1e6280bb3d98f8fd573926949b3642ac98710bcc4bfb085b20379f51d3",
+        "scope": "founder-mandate-hub: 2026-11-24 later primary diagnosis of the activation defect (suite fixtures) with permit control explicitly unchanged",
+        "captured_at": 1795599517,
+        "note": "Pinned from authoritative board data for Spying later-validation observation; an already-in-scope exact-author Vitalik message in an already-authorized issue, not a new source class or scope. Change is subject to independent Act 31 review."
       }
     }
   },
