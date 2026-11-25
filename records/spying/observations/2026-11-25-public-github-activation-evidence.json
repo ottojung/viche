@@ -1,0 +1,74 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "observation",
+  "captured_at": 1795607376,
+  "note": "Fourth Spying observation and first from the github:public source class. Three publicly re-read commits in the already-allowlisted ottojung/viche repo, each re-fetched from the public GitHub API and checked for an attributable actor, a commit hash and a public https URL. Attestation uses the already-on-main Vitalik pin GtPYi8mI so the verdict depends on no pending allowlist change. Sources are structurally validated only; the verifier does not fetch commits or verify system state. See records/spying/2026-11-25-fourth-observation-public-github-activation-evidence.md for confounders, falsifiers and limits.",
+  "sources": [
+    {
+      "ref": "github:public:ottojung/viche#93bab2a6250e7fd2c90df8cbe899c78ca42bd3f3",
+      "evidence": {
+        "captured_at": 1795607376,
+        "actor": "recovery-steward",
+        "commit_sha": "93bab2a6250e7fd2c90df8cbe899c78ca42bd3f3",
+        "source_url": "https://github.com/ottojung/viche/commit/93bab2a6250e7fd2c90df8cbe899c78ca42bd3f3",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit; actor is the git author name, no GitHub account login is attached. Git author date 2026-11-24T18:28:43Z. Commit message and changed-file list re-read from the public GitHub API."
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#5f307a4979990f616c82826f34266899e0a80e57",
+      "evidence": {
+        "captured_at": 1795607376,
+        "actor": "recovery-steward",
+        "commit_sha": "5f307a4979990f616c82826f34266899e0a80e57",
+        "source_url": "https://github.com/ottojung/viche/commit/5f307a4979990f616c82826f34266899e0a80e57",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit; actor is the git author name, no GitHub account login is attached. Git author date 2026-11-24T18:32:36Z. Commit message and changed-file list re-read from the public GitHub API."
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#ed31229463917e7fad1a49fd67b83adfa86edef4",
+      "evidence": {
+        "captured_at": 1795607376,
+        "actor": "ottojung",
+        "commit_sha": "ed31229463917e7fad1a49fd67b83adfa86edef4",
+        "source_url": "https://github.com/ottojung/viche/commit/ed31229463917e7fad1a49fd67b83adfa86edef4",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit with an attached GitHub account login. Git author Otto Jung, date 2026-11-24T18:46:57Z. Commit message and changed-file list re-read from the public GitHub API."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261125-04",
+      "kind": "observation",
+      "sources": [
+        "github:public:ottojung/viche#93bab2a6250e7fd2c90df8cbe899c78ca42bd3f3",
+        "github:public:ottojung/viche#5f307a4979990f616c82826f34266899e0a80e57",
+        "github:public:ottojung/viche#ed31229463917e7fad1a49fd67b83adfa86edef4"
+      ],
+      "text": "Public GitHub re-read at source: (1) commit 93bab2a6 (git author date 2026-11-24T18:28:43Z, actor recovery-steward) titled 'Test disabled and limited-budget fixtures without requiring live offices to remain disabled', changing five tests/knowledge-*-smoke.sh fixture files; (2) commit 5f307a49 (2026-11-24T18:32:36Z, actor recovery-steward) titled 'Repair activation delayed native-session binding in knowledge budget' whose message states that no hash-bound Act34 file, config, permit or cap changed and there was no live dispatch, changing government/knowledge-budget.sh, a records/knowledge note and a test; (3) commit ed312294 (2026-11-24T18:46:57Z, GitHub login ottojung, git author Otto Jung) titled 'Restore continuous Executive research staffing and reusable proof search', changing 22 files under government/ and missions/pnp/. These are directly re-read statements about what the public commit metadata and changed-file lists say; commit messages are git-author claims, not independently verified system state, and all three commits are the Town's own mirrored public activity."
+    },
+    {
+      "id": "SPY-CORR-20261125-04",
+      "kind": "corrected_inference",
+      "correction_of": "SPY-CORR-20261125-03: the reading of the 2026-11-22 to 2026-11-24 activation repetition as corrective attention about a concrete Viche delivery defect rather than a preference shift, an authority grant or a review waiver",
+      "reason": "A different source class now supplies a cross-channel consistency check that observation 3 explicitly said it had not performed: commit 93bab2a6, one minute before the Founder's 18:29Z board message, has a message and changed-file list matching the activation-smoke-fixture defect that message described, and commit 5f307a49's message repeats that no permit control changed and no live dispatch occurred. This is consistent with and modestly broadens the delivery-problem reading. Confidence is deliberately NOT raised above 0.86 because the board messages and these public commits belong to the same project and likely the same human author cluster; a different channel is wider coverage, not an independent observation.",
+      "confidence": 0.86,
+      "alternatives": [
+        "Independence reading: a public GitHub commit is an independent corroboration of the board claim. Rejected: the repo is the Town's own mirrored repository and the commits appear to originate from the same actor cluster as the board messages; correlation is not independence.",
+        "Verified-fix reading: the public commit proves the fixture defect was fixed and the four offices went live. Rejected: a commit message and changed-file list are author claims; this office did not run the test, inspect the diff for correctness, or verify live dispatch or independently checked outcomes.",
+        "Founder-action reading: a commit by GitHub login ottojung is a Founder instruction or authorization to this office. Rejected: the Founder for initial trust is the exact Antonina board author Vitalik; an attributable public code commit is observable action, not a communication authorizing Spying, and the operational instructions in the 18:29Z message belong to their named addressees.",
+        "Preference-shift reading: repeated urgency means speed now outranks safety evidence. Not strengthened: the cross-channel commits describe fixture and binding repairs without any relaxation of review; the board messages continue to reaffirm safeguards.",
+        "Already-resolved reading: these commits mean non-activation cannot explain the repetition. Retained as a forward boundary: this observation covers public commits and board messages through 2026-11-24T18:46:57Z; any later repetition needs fresh primary evidence."
+      ],
+      "sources": [
+        "github:public:ottojung/viche#93bab2a6250e7fd2c90df8cbe899c78ca42bd3f3",
+        "github:public:ottojung/viche#5f307a4979990f616c82826f34266899e0a80e57",
+        "github:public:ottojung/viche#ed31229463917e7fad1a49fd67b83adfa86edef4"
+      ],
+      "text": "Cross-channel inference update (no authority, confidence held at 0.86): the public record contains, one minute before the Founder's 18:29Z board message, a commit whose message and changed-file list match the activation-smoke-fixture defect that message described, plus a follow-up commit reaffirming that no permit control changed and there was no live dispatch. This is consistent with the delivery-problem reading and weakens a preference-shift or waiver reading, but it is a correlated, same-project source and is therefore NOT independent corroboration; confidence is intentionally unchanged. Commit messages are author claims, not verified system state, and no Founder instruction, authorization, ballot, spending or new scope arises here. Falsifiers: a later primary message waiving the independent after-start review or the board-approval requirement, or primary evidence that the four offices were already live with independently checked outcomes at the relevant time."
+    }
+  ]
+}

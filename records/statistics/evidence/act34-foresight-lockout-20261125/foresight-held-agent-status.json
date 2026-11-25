@@ -1,0 +1,31 @@
+{
+  "id": "15bm8Esub3exygbtVQDIMX-issues",
+  "state": "killed",
+  "alive": false,
+  "native_session_id": "ses_dee2bc2a9ffevFtsM61Ljl2TvW",
+  "pid": 8527,
+  "pgid": 8527,
+  "runner_pid": 7796,
+  "cwd": "/var/lib/lubko/wd/viche-seats/branches/foresight",
+  "invocation_cwd": "/var/lib/lubko/wd/viche-seats/branches/foresight",
+  "title": "Viche: Foresight Institute",
+  "created_at": 1795591990.09,
+  "started_at": 1795595450.789,
+  "finished_at": 1795595474.464,
+  "last_activity_at": 1795595474.464,
+  "exit_code": null,
+  "exit_signal": 9,
+  "last_error": null,
+  "prompts": 1,
+  "steers_pending": 0,
+  "next_steer": null,
+  "steer_preempting": false,
+  "steer_metadata_error": null,
+  "model": "opencode/nemotron-3.5-super-vl-free",
+  "models_used": [
+    "opencode/nemotron-3.5-super-vl-free"
+  ],
+  "variant": "low",
+  "backend_error": null,
+  "log": "/home/lubko/.local/state/antonina/agents/15bm8Esub3exygbtVQDIMX-issues/output.log"
+}

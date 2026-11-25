@@ -1,0 +1,150 @@
+{
+  "schema": "viche-economy-resource-denominator-v1",
+  "office": "statistics",
+  "status": "prospective_meter_available_historical_comparator_unavailable",
+  "captured_at": "2026-11-25T09:43:26.240013Z",
+  "window_utc": ["2026-11-24T19:41:24Z", "2026-11-25T09:40:27Z"],
+  "population": "All five Act 34 Statistics Bureau reservations created in the window; all were closed at capture. No sampling.",
+  "exclusions": [
+    "Pre-Act-34 executions: no meter was active; historical cost remains unavailable, not zero.",
+    "Foresight, Strategy and Spying reservations: context only, never part of the Statistics denominator.",
+    "Agent exits, commits, reports, mail and readiness signals: process counts, never outcome numerators."
+  ],
+  "censoring": "None for the five Statistics rows at capture: every row is closed with usage present. Future active rows must be charged at the per-run ceiling and marked final_usage_unknown until close; never silently treated as zero.",
+  "method": {
+    "tokens": "Sum usage.tokens_total from the frozen reservation rows; source is opencode-service session_v2 absolute-session-total-upper-bound, including input/output/reasoning/cache read/cache write.",
+    "wall_time": "Sum usage.wall_seconds from the same rows.",
+    "machine_time": "Sum usage.cpu_seconds; conservative whole-host busy CPU UPPER_BOUND charged to the office, including unrelated workloads. This is not attributable per-office CPU.",
+    "reproducible": true,
+    "verification": "Each row hash was read twice and was stable; the five-row sums exactly match aggregate.json by_office.statistics at capture."
+  },
+  "values": {
+    "tokens_total": 15785921,
+    "machine_time_cpu_seconds_upper_bound": 11216.150000000373,
+    "wall_seconds": 2758,
+    "recorded_cost": 0.0,
+    "reservation_count": 5,
+    "closed_count": 5,
+    "active_count": 0
+  },
+  "hard_cap_units": {
+    "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "per_run": {"tokens_total": 11320103, "cpu_seconds_upper_bound": 7987, "wall_seconds": 1997},
+    "office_45d": {"tokens_total": 509404635, "cpu_seconds_upper_bound": 359415, "wall_seconds": 89865},
+    "aggregate_45d": {"tokens_total": 2037618540, "cpu_seconds_upper_bound": 1437660, "wall_seconds": 359460},
+    "monitor_interval_seconds": 20,
+    "overrun_action": "kill",
+    "note": "Caps use the same token, wall and whole-host CPU-bound units as the meter. Current lawful authority is Act 34; this record changes no cap or permit."
+  },
+  "negative_controls": [
+    "Other offices' usage is excluded from the Statistics subtotal.",
+    "Recorded zero cost is not treated as proof of provider billing; the exact-path zero-billed control is separate Economy evidence.",
+    "CPU UPPER_BOUND is never relabelled as measured per-office CPU.",
+    "The 2026-11-20 pre-activation comparator remains rejected; no historical resource value is backfilled."
+  ],
+  "rows": [
+    {
+      "id": "r1795549284-UbpN96al",
+      "state": "closed",
+      "created_at": 1795549284,
+      "started_at": 1795549328,
+      "closed_at": 1795550203,
+      "config_sha256": "0964bd1e9c55b7953b3fbcb9efd4ed3ae565b0c4832b736780b8ba4a8f3d7ea6",
+      "agent_id": "fjE3pUFI7g42bnK9L90nXY-hypertext",
+      "native_session_id": "ses_df0ebb036ffe2rOgJIHpehC8oU",
+      "tokens_total": 3257367,
+      "cpu_seconds_upper_bound": 3549.2900000000373,
+      "wall_seconds": 871,
+      "cost": 0.0,
+      "cost_reported": true,
+      "meter_at": 1795550198,
+      "sha256": "b657e09662c69c5e0ae7b56b58b9a8317b86ae1510f356bf3a117eb2c0836a12"
+    },
+    {
+      "id": "r1795587673-4BdLzlhX",
+      "state": "closed",
+      "created_at": 1795587673,
+      "started_at": 1795587700,
+      "closed_at": 1795588116,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "agent_id": "7DK7GGvK5cAABfRRcrLNzC-colour",
+      "native_session_id": "ses_deea24989ffebBgPejDwKcHRjF",
+      "tokens_total": 2973069,
+      "cpu_seconds_upper_bound": 1770.3100000000559,
+      "wall_seconds": 416,
+      "cost": 0.0,
+      "cost_reported": true,
+      "meter_at": 1795588115,
+      "sha256": "bda8da7e2a0c4ce5b5d5093f1c66af1e630e41297d27b0a2059fab48a8938628"
+    },
+    {
+      "id": "r1795591522-KXZURRSN",
+      "state": "closed",
+      "created_at": 1795591521,
+      "started_at": 1795591541,
+      "closed_at": 1795591946,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "agent_id": "gwecoglvJR6RP10r8k6o6p-sundial",
+      "native_session_id": "ses_dee67944dffeSPMp6yLb6lfV96",
+      "tokens_total": 3293252,
+      "cpu_seconds_upper_bound": 1618.0300000002608,
+      "wall_seconds": 405,
+      "cost": 0.0,
+      "cost_reported": true,
+      "meter_at": 1795591946,
+      "sha256": "04d5377c4798e6269fbb87a0b17a593c9d56dfaceeb88ad9f9f05cc4b30b628c"
+    },
+    {
+      "id": "r1795595233-CXGuJISF",
+      "state": "closed",
+      "created_at": 1795595233,
+      "started_at": 1795595251,
+      "closed_at": 1795595717,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "agent_id": "dNnp3iuADUxoioMa5FGnwZ-sort",
+      "native_session_id": "ses_dee2f008fffeTAlyXPVRd57v06",
+      "tokens_total": 3079481,
+      "cpu_seconds_upper_bound": 1930.2600000002421,
+      "wall_seconds": 466,
+      "cost": 0.0,
+      "cost_reported": true,
+      "meter_at": 1795595716,
+      "sha256": "6a4bf681020488bbfff5cc8b6688b86dd9f31a0230f1a223fd0577239b0f0c1c"
+    },
+    {
+      "id": "r1795599016-P1J0KTe9",
+      "state": "closed",
+      "created_at": 1795599015,
+      "started_at": 1795599027,
+      "closed_at": 1795599627,
+      "config_sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+      "agent_id": "vKIQz9W57p22fX8z3Q4TMt-magnitude",
+      "native_session_id": "ses_dedf54f8dffeiwLOOic1UJZ4P1",
+      "tokens_total": 3182752,
+      "cpu_seconds_upper_bound": 2348.2599999997765,
+      "wall_seconds": 600,
+      "cost": 0.0,
+      "cost_reported": true,
+      "meter_at": 1795599626,
+      "sha256": "7e32d50cd0e2caa8afafeb3a7f839a4603f639eccfe2d9955c4fa52608ea5fdb"
+    }
+  ],
+  "aggregate_at_capture": {
+    "sha256": "c9bab09c9646dca50e453eb0a074324383e9883caf6a1dea0b42c5f83257b5eb",
+    "statistics_matches": true,
+    "all_office_context": {"tokens_total": 63889372, "cpu_seconds_upper_bound": 51051.52000000002, "wall_seconds": 12646},
+    "note": "All-office context was mutable at capture and is not the Statistics denominator."
+  },
+  "source_hashes": {
+    "government/knowledge-budget.conf": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab",
+    "government/knowledge-budget-tool.py": "4ecae5ea0c1bd3edaa4cb2262cd9b8208a1ee66830ff92ff6edf6ee2a40ce9f3",
+    "records/knowledge/activation.json": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+  },
+  "limitations": [
+    "Token totals are reservation meter snapshots, not independently re-derived from Antonina's source DB in this record.",
+    "CPU is a conservative whole-host UPPER_BOUND, not per-office CPU.",
+    "Recorded cost 0.0 is not independent provider-billing proof; the separate exact-path zero-billed attestation remains the funding control.",
+    "No outcome numerator, causal effect, marginal utility or business-as-usual cost counterfactual is established.",
+    "The first row used the superseded 0964bd1e config; the next four used current b80f48af. The non-resettable cumulative debt includes all five."
+  ]
+}

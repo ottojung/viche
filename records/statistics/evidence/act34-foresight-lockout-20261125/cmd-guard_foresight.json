@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "knowledge-budget.sh",
+    "guard",
+    "foresight"
+  ],
+  "rc": 1,
+  "stderr": "knowledge-budget: office foresight has an open reservation: r1795595445-NZIjZE34",
+  "stdout": ""
+}

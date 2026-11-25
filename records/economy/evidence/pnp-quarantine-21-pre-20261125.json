@@ -1,0 +1,433 @@
+{
+  "at": "2026-11-25T12:05:32Z",
+  "authority": "P-1795598940-b3b2",
+  "authorized_count": 21,
+  "authorized_names": [
+    "L-meta-5012",
+    "L-meta-4305",
+    "L-meta-3566",
+    "L-meta-2976",
+    "L-meta-2583",
+    "L-meta-4478",
+    "L-meta-2223",
+    "L-meta-4215",
+    "L-meta-4199",
+    "L-meta-1692",
+    "L-meta-2585",
+    "L-meta-3646",
+    "L-meta-1782",
+    "L-meta-4707",
+    "L-meta-2625",
+    "L-meta-1967",
+    "L-meta-2270",
+    "L-meta-2872",
+    "L-meta-3774",
+    "L-meta-1745",
+    "L-meta-5760"
+  ],
+  "current_allocator_agent_refs": {},
+  "df_before": {
+    "avail_kb": 8311736,
+    "device": "/dev/mapper/cryptroot",
+    "size_kb": 244540724,
+    "used_kb": 223734140,
+    "used_pct": 97
+  },
+  "errors": [],
+  "git_worktree_refs": [],
+  "phase": "pre",
+  "preserve_names": [
+    "L-meta-2149",
+    "L-meta-2232",
+    "L-meta-2341",
+    "L-meta-2373",
+    "L-meta-2382",
+    "L-meta-3321"
+  ],
+  "preserve_overlap": [],
+  "proc_mount_refs": [],
+  "quick": false,
+  "recoverability": "same-filesystem move to live quarantine; normal 604800-second grace; no deletion",
+  "rows": [
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795592183.0141146,
+      "name": "L-meta-5012",
+      "size_kb": 2401396,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5012",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T07:25:22Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795565240.3724654,
+      "name": "L-meta-4305",
+      "size_kb": 826956,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4305",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-24T23:48:18Z"
+    },
+    {
+      "failure_reason": "other",
+      "has_dot_git": false,
+      "lease_expires_at": 1795577837.2110035,
+      "name": "L-meta-3566",
+      "size_kb": 818412,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3566",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T03:27:49Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795566806.2783527,
+      "name": "L-meta-2976",
+      "size_kb": 771640,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2976",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:17:13Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795567854.79781,
+      "name": "L-meta-2583",
+      "size_kb": 737284,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2583",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:35:01Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795565220.5701222,
+      "name": "L-meta-4478",
+      "size_kb": 685092,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4478",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-24T23:48:18Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795589083.8127337,
+      "name": "L-meta-2223",
+      "size_kb": 619236,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2223",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T06:31:23Z"
+    },
+    {
+      "failure_reason": "other",
+      "has_dot_git": false,
+      "lease_expires_at": 1795569839.3348339,
+      "name": "L-meta-4215",
+      "size_kb": 592424,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4215",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T01:08:44Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795566954.4780524,
+      "name": "L-meta-4199",
+      "size_kb": 588380,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4199",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:21:02Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795567501.6732862,
+      "name": "L-meta-1692",
+      "size_kb": 588376,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1692",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:28:42Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795590795.230723,
+      "name": "L-meta-2585",
+      "size_kb": 560844,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2585",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T06:57:05Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795566299.1602783,
+      "name": "L-meta-3646",
+      "size_kb": 546132,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3646",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:10:11Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795594550.4571006,
+      "name": "L-meta-1782",
+      "size_kb": 481948,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1782",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T07:58:47Z"
+    },
+    {
+      "failure_reason": "other",
+      "has_dot_git": false,
+      "lease_expires_at": 1795566627.289629,
+      "name": "L-meta-4707",
+      "size_kb": 391424,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-4707",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T00:13:23Z"
+    },
+    {
+      "failure_reason": "missing_lemma",
+      "has_dot_git": false,
+      "lease_expires_at": 1795564776.693289,
+      "name": "L-meta-2625",
+      "size_kb": 390196,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2625",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-24T23:48:19Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795592934.5049915,
+      "name": "L-meta-1967",
+      "size_kb": 383988,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1967",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T07:37:53Z"
+    },
+    {
+      "failure_reason": "other",
+      "has_dot_git": false,
+      "lease_expires_at": 1795585490.9157364,
+      "name": "L-meta-2270",
+      "size_kb": 366036,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2270",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T05:31:44Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795590069.820539,
+      "name": "L-meta-2872",
+      "size_kb": 304520,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-2872",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T06:51:52Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795593402.5776904,
+      "name": "L-meta-3774",
+      "size_kb": 299572,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-3774",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T07:44:51Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795592263.332275,
+      "name": "L-meta-1745",
+      "size_kb": 292440,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-1745",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T07:17:49Z"
+    },
+    {
+      "failure_reason": "out_of_time",
+      "has_dot_git": false,
+      "lease_expires_at": 1795589569.9100537,
+      "name": "L-meta-5760",
+      "size_kb": 291732,
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-5760",
+      "state": "RELEASED",
+      "state_checks": {
+        "gap_id_matches": true,
+        "lease_expired": true,
+        "no_pr_queue_retry_worktree": true,
+        "no_release_pending": true,
+        "no_researchers": true,
+        "state_released_or_stale": true
+      },
+      "updated_at": "2026-11-25T06:33:18Z"
+    }
+  ],
+  "scan_errors": 0,
+  "total_kb": 12938028
+}
