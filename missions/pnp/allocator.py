@@ -93,6 +93,23 @@ def fill(d, mem, now, snapshot):
     with cli.acquisition_lock():
         while len(cli.held_records()) < config.MAX_LEASES:
             held = len(cli.held_records())
+            from .lbcert import ready
+            target=next(iter(ready.offers(snapshot,mem,now)),None)
+            if target:
+                mem["proof_of_attempts"][target]=now
+                before={r["gap_id"] for r in cli.held_records()}
+                result=cli.acquire(SimpleNamespace(hard=False,another=bool(held),
+                                        proof_of=target),d,report=False)
+                after={r["gap_id"] for r in cli.held_records()}
+                if result==0 and after-before:
+                    acquired.extend(sorted(after-before))
+                    if target in after-before:
+                        try:fastlane.submit_ready(target)
+                        except Exception as exc:
+                            print("proof-of publication deferred:",str(exc)[:200],flush=True)
+                    continue
+                if result==2:
+                    return acquired
             for hard in (False, True):
                 key = "last_null_hard" if hard else "last_null_ordinary"
                 signal_key = "last_signal_hard" if hard else "last_signal_ordinary"

@@ -18,7 +18,8 @@ def arg(name, default):
 def main():
     stmt_f, module, out = sys.argv[1:4]
     req = {'statement': open(stmt_f).read().strip(), 'module': module,
-           'maxstates': arg('--maxstates', 60000), 'chunks': arg('--chunks', 40)}
+           'maxstates': arg('--maxstates', 60000), 'chunks': arg('--chunks', 40),
+           'defer_compile': '--defer-compile' in sys.argv}
     with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
         json.dump(req, f)
         rf = f.name
@@ -37,7 +38,7 @@ def main():
         print(json.dumps({'status': 'relay_error', 'id': rid, 'detail': w.stderr[-300:]})); return 1
     r = e.get('result') or {}
     st = r.get('status', 'error')
-    summary = {k: r.get(k) for k in ('status', 'engine', 'states', 'bytes', 'sha256')}
+    summary = {k: r.get(k) for k in ('status', 'engine', 'states', 'bytes', 'sha256', 'compiled', 'checked_base')}
     summary['id'] = rid
     if st == 'ok':
         data = gzip.decompress(base64.b64decode(r['file_gz_b64']))

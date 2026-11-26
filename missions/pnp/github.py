@@ -97,17 +97,19 @@ def pr_exists_for(branch, gap_id, api=None):
     return None
 
 
-def create_pr(branch, gap_id):
+def create_pr(branch, gap_id, lease=None):
     from urllib.parse import urlparse
     login = identity()
     upstream = repository_name(config.UPSTREAM_ID)
     fork = repository_name(config.FORK_ID)
     if fork.split("/")[0].lower() != login.lower():
         raise GitHubError("fork owner login differs from authenticated account")
+    import re
+    body = "Lease: "+lease+"\n" if isinstance(lease,str) and re.fullmatch(r"[A-Za-z0-9-]{1,64}",lease) else ""
     url = gh("pr", "create", "--repo", upstream,
              "--base", config.BASE_REF,
              "--head", login + ":" + branch,
-             "--title", gap_id, "--body", "").strip()
+             "--title", gap_id, "--body", body).strip()
     suffix = urlparse(url).path.rstrip("/").split("/")
     if len(suffix) < 2 or suffix[-2] != "pull" or not suffix[-1].isdigit():
         raise GitHubError("gh returned an unexpected pull request URL")

@@ -221,6 +221,15 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             _stop(gap_id, "resume lacks a signed commit or pinned base")
         expected_commits = rec.get("expected_commits") or [sha]
 
+    # Start checking the exact signed bytes while the PR is being opened.
+    # Never wait on the compiler or relay here; postcheck handles fallback.
+    if git is gitctl:
+        from . import earlycheck
+        try:
+            earlycheck.start(state.load(gap_id), data)
+        except Exception as exc:
+            state.event(gap_id, "parallel_check_deferred", {"error":str(exc)[:300]})
+
     # Before any mutation: authenticated identity and remote ground truth.
     try:
         gh.identity()
@@ -287,7 +296,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
                     _retry_later(gap_id, "lease recheck failed: %s" % exc)
         state.intent(gap_id, "create_pr", {"branch": branch, "gap": gap_id})
         try:
-            number = gh.create_pr(branch, gap_id)
+            number = gh.create_pr(branch, gap_id, lease=rec.get("lease"))
         except Exception as e:
             _retry_later(gap_id, "PR creation failed; reconcile before retry: %s" % e)
         # Persist the observed number before any fallible validation call.
