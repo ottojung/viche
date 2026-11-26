@@ -7,6 +7,7 @@ python3 tests/pnp-research.py
 python3 tests/pnp-pipeline.py
 python3 tests/pnp-generator-process.py
 python3 tests/pnp-generator-fairness.py
+python3 tests/pnp-circwit-outwire.py
 python3 tests/pnp-production-ready.py
 python3 tests/pnp-rectcover.py
 python3 tests/pnp-edgecover.py
