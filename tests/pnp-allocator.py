@@ -64,12 +64,22 @@ class Tests(unittest.TestCase):
     def test_prefer_ordinary_fill_hard_cap(self):
         d = Desk([(False,"L-meta-1"),(False,None)]+[(True,"L-meta-"+str(i)) for i in range(2,6)])
         mem = {}
-        self.assertEqual(len(allocator.fill(d,mem,NOW,{"ordinary":1,"offerable":3})),5)
-        self.assertEqual(len(cli.held_records()),5)
+        self.assertEqual(len(allocator.fill(d,mem,NOW,{"ordinary":1,"offerable":3})),4)
+        self.assertEqual(len(cli.held_records()),4)
         self.assertEqual(d.calls[:3],[(False,False),(False,True),(True,True)])
-        self.assertEqual(len(d.calls),6)
+        self.assertEqual(len(d.calls),5)
         self.assertEqual(allocator.fill(d,mem,NOW+30,{}),[])
-        self.assertEqual(len(d.calls),6)
+        self.assertEqual(len(d.calls),5)
+
+    def test_checked_candidate_does_not_preempt_full_roster(self):
+        from missions.pnp.lbcert import ready
+        for i in range(1,6):
+            self.add("L-meta-"+str(i))
+        d=Desk()
+        with patch.object(ready,"verified",return_value={"digest":"a"}):
+            self.assertIn("no free slot",allocator.proof_of_now("L-meta-99",d,NOW))
+        self.assertEqual(d.releases,[])
+        self.assertEqual(d.calls,[])
 
     def test_null_backoff_and_new_ordinary_signal(self):
         d = Desk()

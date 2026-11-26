@@ -41,7 +41,12 @@ def check(path, module, timeout=900):
     out['id'] = rid
     if r.get('engine') != 'check':
         return 2, dict(out, status='handler_without_check_mode')
-    return (0 if r.get('status') == 'ok' else 1), out
+    if r.get('status') == 'ok':
+        return 0,out
+    log=(r.get('log') or '').lower()
+    if any(x in log for x in ("unknown module prefix","object file","does not exist","out of memory","resource","timeout","timed out","cannot find","no space left")):
+        return 2,dict(out,status="compiler_unavailable")
+    return 1,out
 
 
 def main():

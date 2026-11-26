@@ -39,6 +39,8 @@ def normalize(raw, now):
             raise ValueError("duplicate gap")
         rows[gid] = {"held": count(item.get("held")),
                      "parallel": count(item.get("parallel")),
+                     "points": count(item.get("points")),
+                     "level": item.get("level"),
                      "title": item.get("title", "")[:300] if isinstance(item.get("title"), str) else ""}
     total = count(raw.get("open_gaps"))
     return {"observed": now, "source_updated_at": raw.get("updated_at"), "complete": total == len(rows),

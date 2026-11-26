@@ -22,6 +22,25 @@ class DeskError(Exception):
 CAPACITY_SECONDS = 3600
 
 
+def retry_path():
+    return os.path.join(config.STATE_ROOT, "desk-retry.json")
+
+
+def retry_until():
+    try:
+        v=json.loads(open(retry_path()).read()).get("until",0)
+        return v if isinstance(v,(float,int)) else 0
+    except (OSError,ValueError,TypeError):
+        return 0
+
+
+def record_retry(data):
+    seconds=data.get("retry_after_s")
+    if type(seconds) not in (int,float) or not 0 < seconds < 86400:return
+    from . import state
+    state.atomic_write(retry_path(),json.dumps({"until":max(retry_until(),time.time()+seconds)}))
+
+
 def _capacity_path():
     return os.path.join(config.STATE_ROOT, "desk-capacity.json")
 
@@ -41,10 +60,10 @@ def record_capacity(data):
 
 
 def capacity():
-    """Last desk-reported lease capacity if under an hour old, else None (2026-11-26: 3)."""
+    """Last desk-reported earned capacity, retained until a newer observation."""
     try:
         d = json.loads(open(_capacity_path()).read())
-        if time.time() - d["at"] < CAPACITY_SECONDS and type(d["capacity"]) is int:
+        if type(d["capacity"]) is int and d["capacity"] >= 1:
             return d["capacity"]
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -148,7 +167,9 @@ class Desk:
 
     def _next_gap(self, hard=False, another=False, proof_of=None):
         """Private wire operation; only the locked, recording broker calls it."""
-        params = {"handle": config.DESK_HANDLE}
+        if retry_until() > time.time():
+            return None
+        params = {"handle": config.DESK_HANDLE,"model":"unknown"}
         if hard:
             params["hard"] = "1"
         if another:
@@ -171,6 +192,7 @@ class Desk:
             # malformed shape stays a protocol error: never turn a parser
             # failure into "no gaps" (fail closed).
             if "gap" in data:
+                record_retry(data)
                 return None
             raise DeskError("desk next is missing gap key")
         if lease is None:

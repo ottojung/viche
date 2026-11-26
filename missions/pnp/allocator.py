@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio, support
 
 POLL_SECONDS = 30
+STOCK_RESERVE = 1  # keep room for a verified, high-conversion proof
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
 
 
@@ -76,7 +77,7 @@ def bound_roster():
 
 
 def fill(d, mem, now, snapshot):
-    """Ordinary first, hard fallback, only documented allocator requests."""
+    """Verified proof stock first; reserve capacity rather than preempt research."""
     ordinary = snapshot.get("ordinary")
     total = snapshot.get("offerable")
     revision = snapshot.get("source_updated_at")
@@ -110,6 +111,8 @@ def fill(d, mem, now, snapshot):
                     continue
                 if result==2:
                     return acquired
+            if held >= max(1, desk.lease_limit() - STOCK_RESERVE):
+                break
             for hard in (False, True):
                 key = "last_null_hard" if hard else "last_null_ordinary"
                 signal_key = "last_signal_hard" if hard else "last_signal_ordinary"
@@ -140,10 +143,7 @@ def fill(d, mem, now, snapshot):
 
 
 def proof_of_now(gid, d=None, now=None):
-    """Event-driven proof-of: called the moment a step gets an exact compiler receipt
-    (lbcert.ready.record) instead of waiting for the next tick.  If every slot is taken, the
-    oldest non-focus research lease without a candidate or PR makes room: a checked proof is
-    worth more than a research attempt.  Returns a short outcome string."""
+    """Offer an exact checked proof without preempting productive research."""
     from .lbcert import ready
     d = d or desk.Desk()
     now = time.time() if now is None else now
@@ -155,20 +155,14 @@ def proof_of_now(gid, d=None, now=None):
             fastlane.submit_ready(gid)
             return "already held"
         if len(held) >= desk.lease_limit():
-            chosen = focus.current()
-            research = sorted((r for r in held if support.active(r, now) and not fastlane.concrete(r)
-                               and not r.get("queued_lease") and not r.get("candidate_digest")
-                               and not r.get("pr_number")
-                               and not (chosen and focus.key(chosen) == focus.key(r))),
-                              key=lambda r: r.get("lease_obtained_at") or now)
-            freed = False
-            for r in research:
-                if fastlane.release(d, {}, r["gap_id"], "out_of_time",
-                                    "slot for a checked proof of %s (proof-of acquisition)" % gid):
-                    freed = True
-                    break
-            if not freed:
-                return "no free slot"
+            return "no free slot; retained checked proof"
+        snapshot = frontier.load(now)
+        if snapshot.get("complete"):
+            row = snapshot.get("gaps", {}).get(gid)
+            if row is None:
+                return "not open"
+            if (row.get("held") or 0) >= (row.get("parallel") or 1):
+                return "all parallel slots occupied"
         held = cli.held_records()
         before = {r["gap_id"] for r in held}
         result = cli.acquire(SimpleNamespace(hard=False, another=bool(held), proof_of=gid), d, report=False)

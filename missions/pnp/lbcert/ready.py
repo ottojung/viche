@@ -55,14 +55,20 @@ def offers(snapshot, mem, now):
     attempts=mem.setdefault("proof_of_attempts",{})
     mem["proof_of_attempts"]=attempts={k:v for k,v in attempts.items()
                                        if now-v<600}
+    paths=list(directory().glob("*.checked.json"))
+    if not paths:return []
     out=[]
     open_now=None
+    rows=snapshot.get("gaps",{})
     if not snapshot.get("complete"):
         # The allocator's desk/status snapshot often times out (8 s curl); without it, use the
         # cached live frontier: gaps.json also lists closed/unofferable steps (2026-11-26).
         from . import live
-        open_now=live.open_ids()
-    for path in directory().glob("*.checked.json"):
+        current=live.snapshot()
+        if current is None:return []
+        rows=current["gaps"]
+        open_now=set(rows)
+    for path in paths:
         gid=path.name[:-13]
         if now-attempts.get(gid,0)<120:
             continue
@@ -73,7 +79,10 @@ def offers(snapshot, mem, now):
             continue
         if snapshot.get("complete") and gid not in snapshot.get("gaps",{}):
             continue
+        row=rows.get(gid,{})
+        if (row.get("held") or 0) >= (row.get("parallel") or 1):
+            continue
         m=verified(gid)
         if m:
-            out.append((m["at"],gid))
-    return [gid for _,gid in sorted(out,reverse=True)]
+            out.append((row.get("held") or 0, -(row.get("points") or 0), -m["at"], gid))
+    return [gid for _,_,_,gid in sorted(out)]
