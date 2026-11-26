@@ -46,8 +46,11 @@ GIT_AUTH_HELPER = os.path.join(os.path.dirname(__file__), "git-auth.sh")
 LEAN_TOOLCHAIN = "leanprover/lean4:v4.36.0"
 MAX_FILE_BYTES = 512 * 1024
 MAX_LEASES = 5
-BEAT_INTERVAL_SECONDS = 9 * 60       # live docs: renew every 10 minutes
-LEASE_TTL_SECONDS = 20 * 60          # live docs: 20 min after last renewal
+# Live desk (2026-11-26): /beat answers expires_at = now + 10 min and next_beat_s = 300; join.txt
+# says beat every 5 minutes.  With the old 9/20-minute model the town renewed about every 14 min
+# and lost leases to expiry (25 of the last 41 STALE leases were 430-870 s past their last renewal).
+BEAT_INTERVAL_SECONDS = 4 * 60
+LEASE_TTL_SECONDS = 10 * 60
 REQUEST_MIN_INTERVAL = 3.0           # be gentle with the desk
 
 # Desk gap ids are opaque but constrained (e.g. L-meta-582, L-gct-086).

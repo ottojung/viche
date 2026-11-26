@@ -49,7 +49,9 @@ def _heartbeat(gap_id, rec, desk, force=False):
     if status == 410:
         state.stale_lease(gap_id, rec["lease"], "lease returned 410")
     else:
-        state.update(gap_id, lease_expires_at=now + config.LEASE_TTL_SECONDS)
+        exp = getattr(desk, "last_expires_at", None)
+        state.update(gap_id, lease_expires_at=exp if isinstance(exp, float) and exp > now
+                     else now + config.LEASE_TTL_SECONDS)
 
 
 def recover_fault(gap_id, rec, desk, gh):

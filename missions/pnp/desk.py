@@ -180,8 +180,16 @@ class Desk:
         return {"gap": gap, "lease": lease, **{k: data[k] for k in ("shard", "shards") if k in data}}
 
     def beat(self, lease):
-        status, _ = self._call("POST", "/beat", {"lease": lease},
-                               expect_json=False)
+        status, body = self._call("POST", "/beat", {"lease": lease},
+                                  expect_json=False)
+        # Keep the desk's own expiry when it states one (lease.expires_at, ISO 8601).
+        self.last_expires_at = None
+        try:
+            import datetime
+            exp = json.loads(body)["lease"]["expires_at"]
+            self.last_expires_at = datetime.datetime.fromisoformat(exp.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            pass
         return status  # 410 means the gap was settled/withdrawn: stop work
 
     def release(self, lease, reason, program=None):

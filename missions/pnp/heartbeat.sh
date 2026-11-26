@@ -23,10 +23,11 @@ flock -n 9 || exit 0
 
 i=0
 idle=0
-# 240 iterations * 7 min = 28 h upper bound, longer than the 24 h boot cycle.
-while [ "$i" -lt 240 ]; do
+# 840 iterations * 2 min = 28 h upper bound, longer than the 24 h boot cycle (the desk's lease
+# lasts 10 minutes; the allocator also renews every tick).
+while [ "$i" -lt 840 ]; do
     i=$((i + 1))
-    sleep 420
+    sleep 120
     active=$(python3 - "$state" <<'PY'
 import glob, json, os, sys
 root = os.path.join(sys.argv[1], "pnp", "gaps")

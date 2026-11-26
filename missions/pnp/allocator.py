@@ -199,6 +199,14 @@ def tick(d=None, now=None):
         state.atomic_write(memory_path(), json.dumps(mem, sort_keys=True)+"\n")
         if released:
             print("released by evaluator", released, flush=True)
+        # Renew due leases every tick (30 s cadence): the separate heartbeat loop sleeps 7 min,
+        # longer than half the desk's 10-minute lease.  _heartbeat only calls the desk when due.
+        try:
+            from . import reconcile
+            for rec in cli.held_records():
+                reconcile._heartbeat(rec["gap_id"], rec, d)
+        except Exception as exc:
+            print("allocator heartbeat deferred:", type(exc).__name__, str(exc)[:200], flush=True)
         # Read the cheap snapshot ourselves, independent of slow Executive.
         try:
             snapshot = frontier.refresh()
