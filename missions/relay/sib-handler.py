@@ -64,20 +64,37 @@ def git(*a, check=False):
 def refresh():
     """Move the tree to origin/main (exclusive lock; compiles hold a shared lock)."""
     stamp = os.path.join(STATE, 'fetched')
-    if os.path.exists(stamp) and time.time() - os.path.getmtime(stamp) < 120:
+    defs = os.path.join(TREE,'lean/.lake/build/lib/lean/PEqualNP/Defs.olean')
+    if os.path.isfile(defs) and os.path.exists(stamp) and time.time() - os.path.getmtime(stamp) < 120:
         return
     with open(os.path.join(STATE, 'tree.lock'), 'w') as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
-        if os.path.exists(stamp) and time.time() - os.path.getmtime(stamp) < 120:
+        if os.path.isfile(defs) and os.path.exists(stamp) and time.time() - os.path.getmtime(stamp) < 120:
             return
-        git('fetch', '-q', 'origin', 'main')
+        changed=False
+        git('fetch', '-q', 'origin', 'main',check=True)
         if git('rev-parse', 'HEAD').stdout.strip() != git('rev-parse', 'origin/main').stdout.strip():
             changed=git('diff','--quiet','HEAD','origin/main','--','lean/PEqualNP/Defs','lean/PEqualNP/Defs.lean','lean/lean-toolchain','lean/lake-manifest.json','lean/lakefile.toml').returncode
             git('checkout', '-q', '--detach', 'origin/main',check=True)
-            if changed:
-                with compile_slot():
-                    subprocess.run(['lake', 'build', 'PEqualNP.Defs'], cwd=TREE + '/lean', env=ENV,
-                                   capture_output=True, timeout=900,check=True)
+        if changed or not os.path.isfile(defs):
+            # A cleanup can evict the build even when HEAD never changes.
+            # Restore the official Mathlib dependency cache, then compile
+            # definitions under the same admission lock as all proof jobs.
+            from pathlib import Path
+            lean=Path(TREE)/"lean"
+            modules=set()
+            for source in (lean/"PEqualNP").glob("Defs*.lean"):
+                modules.update(re.findall(r"^import (Mathlib[^\s]+)",source.read_text(),re.M))
+            for source in (lean/"PEqualNP/Defs").rglob("*.lean"):
+                modules.update(re.findall(r"^import (Mathlib[^\s]+)",source.read_text(),re.M))
+            with compile_slot():
+                if modules:
+                    result=run_group(["lake","exe","cache","get",*sorted(modules)],cwd=str(lean),env=ENV,timeout=600)
+                    result.check_returncode()
+                result=run_group(["lake","build","PEqualNP.Defs"],cwd=str(lean),env=dict(ENV,LEAN_NUM_THREADS="2"),timeout=900)
+                result.check_returncode()
+            if not os.path.isfile(defs):
+                raise RuntimeError("definition build completed without Defs.olean")
         open(stamp, 'w').close()
 
 
@@ -110,7 +127,7 @@ def index():
 
 def compile_slot():
     from compile_admission import slot
-    return slot(12288, timeout=180)
+    return slot(7168, timeout=180)
 
 def compiles(text):
     with tempfile.TemporaryDirectory() as d, open(os.path.join(STATE, 'tree.lock'), 'w') as lk:
@@ -119,7 +136,7 @@ def compiles(text):
             f = os.path.join(d, 'Candidate.lean')
             open(f, 'w').write(text)
             try:
-                p = run_group(['lake', 'env', 'lean', '-M', '11776', f], cwd=TREE + '/lean', env=ENV,
+                p = run_group(['lake', 'env', 'lean', '-M', '6500', f], cwd=TREE + '/lean', env=ENV,
                                    capture_output=True, text=True, timeout=600)
             except subprocess.TimeoutExpired:
                 return False, 'timeout'

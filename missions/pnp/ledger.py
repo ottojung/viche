@@ -10,12 +10,14 @@ report: python3 -m missions.pnp.ledger [HOURS]
 import json
 import os
 import statistics
+import math
 import sys
 import time
 
 from . import config
 
-PATH = os.path.join(config.STATE_ROOT, "ledger.jsonl")
+def path():
+    return os.path.join(config.STATE_ROOT, "ledger.jsonl")
 ORDER = ("seen", "generated", "checked", "leased", "pr_opened", "verdict")
 
 
@@ -23,7 +25,7 @@ def mark(stage, gid, **fields):
     try:
         line = json.dumps(dict(t=round(time.time(), 3), stage=stage, gid=gid, **fields),
                           sort_keys=True, default=str)
-        with open(PATH, "a", encoding="utf-8") as f:
+        with open(path(), "a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass
@@ -55,7 +57,7 @@ def read(hours=24):
     since = time.time() - hours * 3600
     out = []
     try:
-        with open(PATH, encoding="utf-8") as f:
+        with open(path(), encoding="utf-8") as f:
             for line in f:
                 try:
                     e = json.loads(line)
@@ -85,7 +87,7 @@ def report(hours=24):
         d = sorted(s[b] - s[a] for s in first.values() if a in s and b in s and s[b] >= s[a])
         if d:
             lines.append("| %s -> %s | %d | %.0f | %.0f |" % (a, b, len(d), statistics.median(d),
-                                                         d[int(0.9 * (len(d) - 1))]))
+                                                         d[max(0,math.ceil(.9*len(d))-1)]))
     if timings:
         lines += ["", "Publication sub-stages (median s over %d):" % len(timings)]
         keys = sorted({k for e in timings for k in (e.get("laps") or {})})

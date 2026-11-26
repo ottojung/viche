@@ -29,7 +29,7 @@ ROLES = {
     "portfolio": ("Choose the best focus using actual remaining mathematical work and expected yield.",
         "Compare actual generator readiness and runtime, exact checked/ready/blocked obligations, compatible techniques, and fresh competing PR counts. A ready candidate goes to the publisher; prefer focus on a small number of unresolved, complementary obligations. Use the existing portfolio switch if justified."),
     "lease-evaluation": ("Evaluate whether to continue or release a live lease.",
-        "Use concrete remaining dependencies and competing opportunities, not age, temporary compile contention or raw family scores. Preserve reusable knowledge."),
+        "Use concrete remaining dependencies and competing opportunities, including the eligible checked proof stock and its advertised points. Compare likely remaining slot time against immediate checked work. Age alone, temporary compile contention or raw family scores do not justify release. Preserve reusable knowledge."),
     "transport": ("Keep remote compilation fast, reliable and cache-compatible.",
         "Inspect relay status and real check times; improve throughput without duplicating caches."),
     "adapter": ("Automate application of checked proof families to new statements.",

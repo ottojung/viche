@@ -11,6 +11,8 @@ python3 tests/pnp-circwit-outwire.py
 python3 tests/pnp-production-ready.py
 python3 tests/pnp-rectcover.py
 python3 tests/pnp-edgecover.py
+python3 tests/pnp-promise.py
+python3 tests/pnp-promise-batch.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
 python3 tests/pnp-retention.py

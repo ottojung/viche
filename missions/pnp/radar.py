@@ -31,9 +31,21 @@ SWARM = os.path.join(config.STATE_ROOT, 'swarm', 'independent')
 HOURS = 6
 
 
+def normalize_skeleton(sk):
+    # The sibling matcher deliberately retains projection-like numerals.
+    # For economic family grouping, a bitmask before .testBit is data.
+    return re.sub(r'(?<![\w.])\d+(?=\.testBit\b)', '#', sk)
+
+
+def family_key(g):
+    title = g.get('title') or ''
+    if title:
+        return 'title:'+re.sub(r'\d+', '#', ' '.join(title.split()))
+    return 'statement:'+normalize_skeleton(sibling.skeleton(g['statement']))
+
+
 def label(g):
-    t = g.get('title') or ''
-    return re.sub(r'\d+', '#', t)[:90] if t else sibling.skeleton(g['statement'])[:90]
+    return family_key(g).split(':',1)[1]
 
 
 def recent_merges(hours=HOURS):
@@ -66,7 +78,10 @@ def build():
     gaps = [g for g in json.loads(live.gaps_bytes(timeout=60))['gaps']   # shared conditional fetch
             if isinstance(g.get('statement'), str)]
     head, idx = sibling.index(gitctl.MIRROR, os.path.join(config.STATE_ROOT, 'lbcert'))
-    mod_sk = {m: sk for sk, ms in idx.items() for m in ms}
+    mod_sk = {m: normalize_skeleton(sk) for sk, ms in idx.items() for m in ms}
+    sk_mods = collections.defaultdict(set)
+    for m,sk in mod_sk.items():sk_mods[sk].add(m)
+    sk_families=collections.defaultdict(set)
     found = plugins.discover()
     # gaps.json also lists closed steps and cut-of-cut sub-steps nobody can take (2359 vs 1820 open on
     # 2026-11-26); the live desk status says which are open, their points and how many hold them.
@@ -77,11 +92,14 @@ def build():
     for g in gaps:
         if lg is not None and g['id'] not in lg:
             continue
-        sk = sibling.skeleton(g['statement'])
-        f = fams.setdefault(sk, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
+        sk = normalize_skeleton(sibling.skeleton(g['statement']))
+        key = family_key(g)
+        sk_families[sk].add(key)
+        f = fams.setdefault(key, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
                                  'statuses': collections.Counter(), 'coverage': None,
-                                 'points': 0, 'free_points': 0})
+                                 'points': 0, 'free_points': 0, '_skeletons':set(), '_coverage':collections.Counter()})
+        f['_skeletons'].add(sk)
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
         s = (lg or {}).get(g['id']) or {}
@@ -95,26 +113,30 @@ def build():
         st = status(g['id'])
         if st:
             f['statuses'][st] += 1
-        if f['coverage'] is None:
-            fam = lbparse.family(g['statement'])
-            hit = None if fam else plugins.family_of(g['statement'], found)
-            f['coverage'] = fam or (hit and 'plugin:' + hit[0]) or ''
+        fam = lbparse.family(g['statement'])
+        hit = None if fam else plugins.family_of(g['statement'], found)
+        f['_coverage'][fam or (hit and 'plugin:' + hit[0]) or '']+=1
     for mod, who, at in recent_merges():
-        f = fams.get(mod_sk.get(mod))
+        keys=sk_families.get(mod_sk.get(mod),set())
+        f = fams.get(next(iter(keys))) if len(keys)==1 else None
         if f:
             f['merged_6h'] += 1
             f['authors'][who] += 1
             if len(f['newest_merged']) < 3:
                 f['newest_merged'].append(mod)
     for sk, f in fams.items():
-        f['siblings'] = len(idx.get(sk, []))
+        siblings=set().union(*(sk_mods[x] for x in f.pop('_skeletons')))
+        f['siblings'] = len(siblings)
+        cov=f.pop('_coverage')
+        f['coverage_counts']=dict(cov)
+        f['coverage']=next(iter(cov)) if len(cov)==1 else 'partial: '+', '.join(k for k in cov if k)
         if not f['newest_merged'] and f['siblings']:
-            f['newest_merged'] = sorted(idx[sk], key=lambda m: -int(m.rsplit('_', 1)[1]))[:3]
+            f['newest_merged'] = sorted(siblings, key=lambda m: -int(m.rsplit('_', 1)[1]))[:3]
         # value of a generator: what is open for us now plus the recent pace of the family
         # Desk points differ 100-fold between families (warmups ~10, open rows ~1000): weigh by the points
         # still takeable (open, no PR, a free parallel slot), in units of 100.
         f['score'] = (f['free_points'] / 100.0 if lg is not None else f['unclaimed']) + 0.5 * f['merged_6h']
-        if sk.startswith('¬') and not f['merged_6h']:
+        if (sk.startswith('statement:¬') or f['label'].startswith('It is false that:')) and not f['merged_6h']:
             f['score'] = 0      # twins of statements expected true: "none is expected" (desk sketch)
         f['authors'] = dict(f['authors'].most_common(5))
         f['statuses'] = dict(f['statuses'])

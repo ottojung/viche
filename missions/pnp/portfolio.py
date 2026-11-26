@@ -84,8 +84,12 @@ def view():
                             "artifacts": state.gap_dir(gap),
                             "worktree": rec.get("worktree"),
                             "focus": bool(chosen and focus.key(chosen) == focus.key(rec))})
+    from .lbcert import ready
+    from . import desk
+    stock=ready.inventory(observed)
     result = {"focus": chosen["gap_id"] if chosen else None,
-            "leases": rows, "corrections": corrections, "worker_roster_coverage":roster["coverage"]}
+            "leases": rows, "corrections": corrections, "worker_roster_coverage":roster["coverage"],
+            "checked_proof_stock":stock,"lease_limit":desk.lease_limit()}
     try:
         from .research import yield_model
         result["empirical_yield"]=yield_model.view()

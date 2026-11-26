@@ -29,7 +29,10 @@ def replay(events, now):
         if kind == "acquired":
             if current and current["end"] is None:
                 current.update(end=max(current["start"], t), outcome="superseded")
-            current = dict(start=t, end=None, outcome="active", candidate=None, pr=None)
+            terms=d.get("lease_terms")
+            points=terms.get("points") if isinstance(terms,dict) else None
+            current = dict(start=t, end=None, outcome="active", candidate=None, pr=None,
+                           lease_points=points if type(points) is int and points>=0 else None)
             attempts.append(current)
         elif kind == "state":
             target = d.get("to")
@@ -49,7 +52,7 @@ def replay(events, now):
             if not isinstance(pr, int) or isinstance(pr, bool):
                 continue
             if pr not in prs:
-                prs[pr] = dict(first=t, sha=d.get("sha"), accepted=None)
+                prs[pr] = dict(first=t, sha=d.get("sha"), accepted=None, lease_points=current.get("lease_points") if current else None)
             else:
                 prs[pr]["sha"] = d.get("sha")
             if current and current["end"] is None:
@@ -90,6 +93,7 @@ def snapshot(now=None):
         return round(statistics.median(values), 1) if values else None
     accepted = [p for p in prs.values() if p["accepted"] is not None]
     board = leaderboard.load()
+    priced=[p for p in prs.values() if p.get("lease_points") is not None]
     return {
         "at": datetime.fromtimestamp(now, timezone.utc).isoformat(),
         "observed_acquisitions": len(attempts),
@@ -100,12 +104,16 @@ def snapshot(now=None):
         "median_acquisition_to_submission_seconds": median([a["slot_seconds"] for a in attempts if a["outcome"]=="submitted"]),
         "unique_published_prs": len(prs),
         "observed_accepted_prs": len(accepted),
+        "submitted_prs_with_recorded_lease_price": len(priced),
+        "submitted_lease_points_known": sum(p["lease_points"] for p in priced),
+        "unaccepted_lease_points_known": sum(p["lease_points"] for p in priced if p["accepted"] is None),
         "median_submission_to_acceptance_seconds": median([max(0,p["accepted"]-p["first"]) for p in accepted]),
         "local_check_events": dict(checks),
+        "official_credited_points": board.get("our_points") if board.get("available") else None,
         "official_checked_steps": board.get("our_steps") if board.get("available") else None,
         "official_score_observed_at": board.get("observed_at"),
         "malformed_events_skipped": malformed,
-        "notes": "Event history only; active durations censored; unresolved histories excluded from slot-hour denominator; repeated checks count as events, not distinct proofs. Not agent-hours or CPU-hours. Official score is authoritative."
+        "notes": "Event history only; active durations censored; unresolved histories excluded from slot-hour denominator; repeated checks count as events, not distinct proofs. Not agent-hours or CPU-hours. Lease prices are potential value, never credit. Official score is authoritative."
     }
 
 

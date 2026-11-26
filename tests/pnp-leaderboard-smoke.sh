@@ -12,27 +12,33 @@ from unittest.mock import patch
 from missions.pnp import leaderboard, status, frontier
 
 def people(*pairs):
-    return [{"github": name, "steps": steps, "first_proof_at":
+    return [{"github": name, "steps": steps, "points": steps, "first_proof_at":
              "2026-11-23T12:00:00Z"} for name, steps in pairs]
 
 first = leaderboard.scoreboard(people(("a", 4), ("ottojung", 5), ("b", 3)))
 assert first["rank"] == 1
-assert first["our_steps"] == 5
+assert first["our_steps"] == 5 and first["our_points"] == 5
 assert first["lead_over_second"] == 1
-assert first["additional_steps_to_clear_first"] == 0
+assert first["additional_points_to_clear_first"] == 0
 
 unranked = leaderboard.scoreboard(people(("kongeskog", 53), ("sanchan", 46)))
 assert unranked["rank"] is None and unranked["our_steps"] == 0
-assert unranked["additional_steps_to_clear_first"] == 54
+assert unranked["additional_points_to_clear_first"] == 54
 assert unranked["our_margin_vs_best_competitor"] == -53
 
 third = leaderboard.scoreboard(people(("a", 11), ("b", 8), ("ottojung", 2)))
 assert third["rank"] == 3 and third["lead_over_second"] is None
-assert third["additional_steps_to_clear_first"] == 10
+assert third["additional_points_to_clear_first"] == 10
 
 same = leaderboard.scoreboard(people(("ottojung", 5), ("b", 5)))
 assert same["rank"] in (1,2)
 assert same["our_margin_vs_best_competitor"] == 0
+
+# A lower proof count with more credited points must rank first.
+weighted = leaderboard.scoreboard([{"github":"a","steps":100,"points":1000},
+                                   {"github":"ottojung","steps":2,"points":1500}])
+assert weighted["rank"] == 1 and weighted["our_points"] == 1500 and weighted["our_steps"] == 2
+assert weighted["lead_over_second"] == 500
 
 for bad in (
     [{"github":"a","steps":0}], [{"github":"a","steps":True}],
