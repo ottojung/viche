@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Hermetic failure-injection tests of the standing staffing controller."""
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -339,6 +340,25 @@ class Tests(unittest.TestCase):
         m=store.metrics()
         self.assertEqual(m["general_covered_seconds"],60)
         self.assertEqual(m["unobserved_seconds"],140)
+
+class StatusSnapshotTests(unittest.TestCase):
+    def test_uncovered_fronts_use_controller_keys_not_replanning(self):
+        from missions.pnp import status
+        def key(path):
+            return hashlib.sha256(path.encode()).hexdigest()[:32]
+        health={"slots":[
+            {"gap":"L-meta-1","label":"general","key":key("/general")},
+            {"gap":"L-meta-1","label":"integrator","key":key("/integrator")},
+            {"gap":"L-meta-1","label":"alternative","key":key("/alternative")},
+            {"gap":"L-meta-2","label":"general","key":key("/other")}]}
+        self.assertEqual(
+            status.uncovered_fronts(health,{"/general"},"L-meta-1"),
+            ["integrator","alternative"])
+        self.assertEqual(
+            status.uncovered_fronts(health,{"/general","/integrator","/alternative"},
+                                    "L-meta-1"),[])
+        self.assertEqual(status.uncovered_fronts(health,{"/general"},"L-meta-3"),[])
+
 
 if __name__=="__main__":
     unittest.main(verbosity=2)

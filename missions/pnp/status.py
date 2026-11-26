@@ -2,6 +2,7 @@
 """Read-only P vs NP mission state and independent, Executive-owned worker signal."""
 import collections
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -18,6 +19,24 @@ else:
 
 STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
+
+
+def uncovered_fronts(health, running_paths, focus_gap):
+    """Desired focus positions the controller has not observed live.
+
+    The controller already derives exact slots (including obligation nodes)
+    and publishes their stable path keys in its health record. Using that
+    record avoids repeating a full obligation audit in a read-only status
+    snapshot: the redundant planning pass cost ~26 s and made both the
+    Executive diagnostic and mission-cycle status exceed their 15 s bound.
+    Unknown or stale controller health is surfaced separately in
+    staffing_alerts; it is not silently treated as full coverage.
+    """
+    keys = {hashlib.sha256(str(path).encode()).hexdigest()[:32]
+            for path in running_paths if path}
+    return [str(slot.get("label", "")) for slot in health.get("slots", [])
+            if slot.get("gap") == focus_gap and slot.get("label") != "general"
+            and slot.get("key") not in keys]
 
 
 def workers():
@@ -127,15 +146,15 @@ def snapshot():
             related.append({"gap": gid, "title": item.get("title"), "held": held, "parallel": parallel})
     related.sort(key=lambda x: (x["held"], x["gap"]))
     from missions.pnp import continuity
-    from missions.pnp.staffing import plan as staffing_plan, policy as staffing_policy, store as staffing_store
+    from missions.pnp.staffing import store as staffing_store
     controller_health=staffing_store.read_health()
     missing_fronts=[]
     if w["coverage"]=="complete":
         try:
-            running_paths={a.get("cwd") for a in w["agents"]}
-            missing_fronts=[slot.label for slot in staffing_plan.desired(staffing_policy.load(),w["agents"])
-                            if slot.gap==focus_gap and slot.label!="general" and slot.path not in running_paths]
-        except (OSError,ValueError,RuntimeError):
+            missing_fronts=uncovered_fronts(controller_health,
+                                            {a.get("cwd") for a in w["agents"]},
+                                            focus_gap)
+        except (OSError,ValueError,RuntimeError,AttributeError,TypeError):
             pass
     coordination_due = bool(w["coverage"] == "complete" and (
         stale_workers or unstaffed or missing_general or off_focus or
