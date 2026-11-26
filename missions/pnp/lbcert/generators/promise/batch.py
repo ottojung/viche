@@ -17,7 +17,7 @@ import sqlite3
 import tempfile
 import time
 
-from . import gen
+from . import gen, dag
 from ... import checkremote, live, ready
 from .... import config, state, support, validate, ledger, fastlane
 
@@ -40,7 +40,7 @@ def root():
 
 
 def version():
-    return hashlib.sha256(Path(__file__).read_bytes()+Path(gen.__file__).read_bytes()).hexdigest()[:20]
+    return hashlib.sha256(Path(__file__).read_bytes()+Path(gen.__file__).read_bytes()+Path(dag.__file__).read_bytes()).hexdigest()[:20]
 
 
 def heartbeat_path():
@@ -130,6 +130,7 @@ def candidate(q,p):
                 sol=gen.compact(p,*gen.compile_expr(n,e))
                 if sol and gen.valid(p,sol):break
                 sol=None
+    if not sol:sol=dag.search(p)
     if not sol:return None,None,time.monotonic()-start
     if not gen.valid(p,sol):raise ValueError("independent semantic audit failed")
     source=gen.emit(q["id"],q["statement"],p,sol)

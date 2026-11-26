@@ -9,7 +9,8 @@ The batch lane shares bounded formula tables between five- and six-input two-lit
 instances. One generator and two verification workers keep up to 32 eligible
 checked proofs in reserve; at most 256 eligible unverified attempts are staged.
 Held work has priority. Attempts are keyed by exact statement digest and solver
-version, persisted in SQLite, and retried on infrastructure failures. A bounded
+version, persisted in SQLite, and retried on infrastructure failures. A sharing-aware root-pair fallback counts the union of actual gate
+subexpressions instead of their formula costs. A bounded
 search refusal is not a mathematical impossibility result; it permits ordinary
 plugin and sibling-search fallback.
 
@@ -26,4 +27,5 @@ desk acquisitions are made by this lane.
 2026-11-26 pilot: shared formula search generated 157 independent semantically
 valid six-input witnesses (advertised 4719 points, not credited points). Exact
 standalone verification and normal proof-of publication are separate stages.
-The desk's actual frozen lease price and eventual accepted score are distinct.
+A subsequent sharing-aware pilot found 68 additional witnesses on its first
+200 targets. The desk's actual frozen lease price and eventual accepted score are distinct.

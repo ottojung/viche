@@ -54,6 +54,13 @@ class Tests(unittest.TestCase):
             with patch.object(b.checkremote,"check",return_value=(0,receipt)):
                 self.assertEqual(b.verify(Q,source)[0],"checked")
                 self.assertEqual(ready.verified(GID)["digest"],receipt["sha256"])
+    def test_shared_dag_reduces_formula_cost(self):
+        from missions.pnp.lbcert.generators.promise import dag
+        p=("two",6,6,9,4362044,"FanInTwo")
+        witness=dag.search(p,3)
+        self.assertTrue(witness)
+        self.assertTrue(b.gen.valid(p,witness))
+        self.assertLessEqual(len(witness[0]),9)
     def test_transient_does_not_become_checked(self):
         with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
             b.root().mkdir()

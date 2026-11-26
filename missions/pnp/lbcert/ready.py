@@ -101,3 +101,19 @@ def offers(snapshot, mem, now):
         if m:
             out.append((row.get("held") or 0, -(row.get("points") or 0), -m["at"], gid))
     return [gid for _,_,_,gid in sorted(out)]
+
+
+def inventory(snapshot,now=None):
+    """A read-only opportunity estimate; no desk request or credit assertion."""
+    now=time.time() if now is None else now
+    if not snapshot.get("complete") or not isinstance(snapshot.get("gaps"),dict):
+        return {"available":False,"reason":"complete fresh frontier unavailable"}
+    ids=offers(snapshot,{},now)
+    rows=snapshot["gaps"]
+    values=[rows[g].get("points") for g in ids]
+    known=[p for p in values if type(p) is int and p>=0]
+    return {"available":True,"eligible_checked":len(ids),
+            "advertised_points_known":sum(known),"priced_candidates":len(known),
+            "top":[{"gap":g,"advertised_points":rows[g].get("points"),
+                    "held":rows[g].get("held")} for g in ids[:5]],
+            "note":"Advertised prices, not guaranteed leases or credited points."}

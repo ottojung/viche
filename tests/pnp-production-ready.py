@@ -23,6 +23,9 @@ class TestReady(unittest.TestCase):
             self.assertFalse(ready.record(gid,{**r,"compiled":False},p.read_bytes()))
             self.assertTrue(ready.record(gid,r,p.read_bytes()))
             self.assertEqual(ready.offers({"complete":True,"gaps":{gid:{}}},{},time.time()),[gid])
+            inv=ready.inventory({"complete":True,"gaps":{gid:{"points":37,"held":0,"parallel":2}}})
+            self.assertEqual((inv["eligible_checked"],inv["advertised_points_known"]),(1,37))
+            self.assertFalse(ready.inventory({})["available"])
             p.write_bytes(b"changed")
             self.assertIsNone(ready.verified(gid))
     def test_memory_with_active_cache_and_tmpfs(self):
