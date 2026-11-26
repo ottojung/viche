@@ -45,6 +45,13 @@ nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/resea
     timeout 90 /bin/sh -c 'python3 -m missions.pnp.research.knowledge ingest && python3 -m missions.pnp.research.obligations reconcile' \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.log" 2>&1 &
 python3 -m missions.pnp.frontier || :
+# Score updates and PR reconciliation have independent locks and deadlines.
+# The score fetch must not be starved by a growing PR backlog.
+if python3 -c 'from missions.pnp.leaderboard import scoreboard; assert scoreboard([{"github":"example","points":17,"steps":1}]).get("score_metric") == "points"' 2>/dev/null; then
+    nohup flock -n "${PNP_STATE_ROOT}/cache/leaderboard.lock" \
+        timeout 45 python3 missions/pnp/leaderboard.py update \
+        </dev/null >"${PNP_STATE_ROOT}/cache/leaderboard.log" 2>&1 &
+fi
 python3 missions/pnp/cli.py reconcile
 # A 20-minute desk lease TTL cannot be maintained by a 24-hour boot hook.
 # Start (once per host) a bounded detached loop that renews active leases
@@ -52,4 +59,3 @@ python3 missions/pnp/cli.py reconcile
 if [ -f "$town/missions/pnp/heartbeat.sh" ]; then
     nohup /bin/sh "$town/missions/pnp/heartbeat.sh" </dev/null >/dev/null 2>&1 &
 fi
-python3 missions/pnp/leaderboard.py update || echo "PnP public leaderboard unavailable; retry next cycle" >&2

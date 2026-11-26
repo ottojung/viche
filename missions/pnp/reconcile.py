@@ -3,6 +3,7 @@
 Queries remote ground truth (desk, fork, upstream PRs) before retrying.
 Never opens a PR itself and never mistakes a checker verdict for novelty.
 """
+import fcntl
 import os
 import re
 import time
@@ -118,7 +119,7 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     remote = (git.remote_branch_sha(branch)
-              if rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN")
+              if rec["state"] in ("SIGNED", "PUSHED")
               else None)
     if remote and rec["state"] == "SIGNED":
         if remote == rec.get("commit_sha"):
@@ -227,19 +228,51 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
             "pr": rec.get("pr_number")}
 
 
-def reconcile_all(desk=None, gh=None, git=None):
+def reconcile_order():
+    """Oldest attempted nonterminal records first; terminal leases need no polling."""
+    candidates = []
+    for gid in state.all_gaps():
+        try:
+            rec = state.load(gid)
+            if not rec:
+                continue
+            if rec["state"] in ("ACCEPTED", "RELEASED", "STALE") and not rec.get("release_pending"):
+                continue
+            candidates.append((rec.get("last_reconcile") or "", gid))
+        except (OSError, ValueError, KeyError, TypeError):
+            # A corrupt record must not prevent the rest of the frontier being checked.
+            continue
+    return [gid for _, gid in sorted(candidates)]
+
+
+def reconcile_all(desk=None, gh=None, git=None, budget=85):
+    """Single flight, fair across cycles, bounded between independent gap attempts."""
+    os.makedirs(config.STATE_ROOT, exist_ok=True)
+    with open(os.path.join(config.STATE_ROOT, "reconcile.lock"), "a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return [{"result": "already-running"}]
+        return _reconcile_batch(desk, gh, git, budget)
+
+
+def _reconcile_batch(desk, gh, git, budget):
     results = []
     observed = frontier.load()
     desk = desk or desk_mod.Desk()
-    for gap_id in state.all_gaps():
+    deadline = time.monotonic() + budget
+    for gap_id in reconcile_order():
+        if time.monotonic() >= deadline:
+            break
         try:
+            # Persist the attempt *before* remote I/O so an interrupted or
+            # timed-out check cannot starve later PRs on the next cycle.
+            state.update(gap_id, last_reconcile=time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
             results.append(reconcile_gap(gap_id, desk=desk, gh=gh, git=git, observed=observed))
-        except Exception as e:                       # nonfatal by construction
+        except Exception as e:
             try:
-                rec = state.load(gap_id)
-                if rec:
-                    # Network or checker outages must not expire unrelated
-                    # running research: preserve current state and retry.
+                if state.load(gap_id):
                     state.update(gap_id, failure_reason="reconcile: %s" % e)
             except Exception:
                 pass

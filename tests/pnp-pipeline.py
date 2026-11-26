@@ -642,6 +642,40 @@ class TestReconcile(unittest.TestCase):
     def setUp(self):
         fresh()
 
+    def test_reconcile_batches_oldest_first_and_skips_terminal(self):
+        new_state("PR_OPEN", last_reconcile="2000-01-02T19:00:00Z")
+        older = "L-meta-900"
+        terminal = "L-meta-100"
+        state.create(older, state="PR_OPEN", last_reconcile="2000-01-02T18:00:00Z")
+        state.create(terminal, state="ACCEPTED")
+        self.assertEqual(reconcile.reconcile_order(), [older, GAP])
+        with mock.patch.object(reconcile, "reconcile_gap", side_effect=OSError("offline")) as run:
+            with mock.patch.object(reconcile.time, "monotonic", side_effect=[0, 1, 100]):
+                result = reconcile.reconcile_all(desk=FakeDesk(), budget=85)
+            self.assertEqual(result[0]["result"], "error")
+            self.assertEqual(run.call_count, 1)
+        self.assertEqual(reconcile.reconcile_order(), [GAP, older])
+
+    def test_reconcile_does_not_overlap(self):
+        import fcntl
+        os.makedirs(config.STATE_ROOT, exist_ok=True)
+        with open(os.path.join(config.STATE_ROOT, "reconcile.lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.assertEqual(reconcile.reconcile_all(desk=FakeDesk()),
+                             [{"result": "already-running"}])
+
+    def test_open_pr_does_not_query_unused_remote_branch(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "number": n,
+                               "head_sha": SHA, "merged": True}
+        gh.pr_comments = lambda n: []
+        git = FakeGit()
+        git.remote_branch_sha = mock.Mock(side_effect=AssertionError("unused lookup"))
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=git)
+        git.remote_branch_sha.assert_not_called()
+        self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
+
     def test_pushed_to_accepted(self):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
                   branch=config.branch_for(GAP))
