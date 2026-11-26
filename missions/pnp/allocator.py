@@ -7,7 +7,7 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, competition, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting
+from . import assignment, cli, competition, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting, freshness, ledger
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
@@ -114,11 +114,71 @@ def observed_roster(now=None):
         return None
 
 
-def fill(d, mem, now, snapshot):
-    """Reserve most capacity for posting-time solid work, never for late stock.
+def ready_attempt(gid,d,mem,now,held,reason):
+    """Called with acquisition lock. Exact receipt + broker-side lease recording."""
+    from .lbcert import ready
+    if (not ready.verified(gid) or desk.retry_until(gid)>time.time()
+            or len(held)>=desk.lease_limit()):
+        return None
+    before={r["gap_id"] for r in held}
+    if gid in before:
+        return None
+    # Separate event-path throttle from allocator memory; multiple generators
+    # can finish one gap concurrently. A single writer owns this file.
+    marker=Path(config.STATE_ROOT,"lbcert","target-attempts",gid+".json")
+    try:
+        old=json.loads(marker.read_text())
+        if 0<=now-old["at"]<30:
+            return None
+    except (OSError,ValueError,KeyError,TypeError):
+        pass
+    state.atomic_write(str(marker),json.dumps({"at":now,"reason":reason}))
+    mem.setdefault("proof_of_attempts",{})[gid]=now
+    try:
+        result=cli.acquire(SimpleNamespace(hard=False,another=bool(held),
+                           proof_of=gid,work_lane="posting"),d,report=False)
+    except desk.DeskError as e:
+        ledger.mark("proof_of_attempt",gid,result="error",reason=reason)
+        return None
+    new={r["gap_id"] for r in cli.held_records()}-before
+    ledger.mark("proof_of_attempt",gid,result=result,reason=reason)
+    if result==0 and gid in new:
+        # The returned exact statement is independently checked by jobs.submit.
+        # Publish now rather than spawn a generator that already has a proof.
+        try:
+            if not fastlane.submit_ready(gid):posting.launch(gid)
+        except Exception:posting.launch(gid)
+        return gid
+    # If desk unexpectedly gave a different valid assignment, don't drop it.
+    for other in new:
+        posting.launch(other)
+    return None
 
-    A positive fresh frontier can wake an ordinary probe, but server-supplied
-    retry_after_s always wins. At most one expensive open research lease.
+
+def fresh_targets(snapshot,now,seen):
+    from .lbcert import ready
+    counts=ready.competition(now)
+    rows=snapshot.get("gaps",{})
+    result=[]
+    for gid,t in seen.items():
+        if counts.get(gid,0)>0 or not freshness.available(gid,snapshot,t):
+            continue
+        r=state.load(gid)
+        if r and (r.get("pr_number") or r["state"] not in ("RELEASED","STALE")):
+            continue
+        if desk.retry_until(gid)>now:
+            continue
+        if freshness.fresh(gid,ready.verified(gid),seen,now):
+            result.append(gid)
+    return sorted(result,key=lambda g:(-(rows.get(g,{}).get("points") or 0),-seen[g],g))
+
+
+def fill(d, mem, now, snapshot):
+    """Hybrid: fresh checked proofs first, ordinary posting lanes second.
+
+    Old stock is a fallback only with a direct zero-rival observation.
+    A short reservation leaves capacity for new arrivals while their exact
+    checks are running. Never exceed earned capacity or server pacing.
     """
     from .lbcert import ready
     acquired=[]
@@ -129,19 +189,39 @@ def fill(d, mem, now, snapshot):
         mem.pop("posting_retry_at",None)
     if desk.retry_until()>time.time():
         return acquired
+    seen=freshness.recent(now)
+    urgent=fresh_targets(snapshot,now,seen)
+    # Network reads for older stock happen before, not inside, the claim lock.
+    old_target=None
+    if not urgent and now<mem.get("posting_retry_at",0) and snapshot.get("complete"):
+        old_target=competition.fallback_target(ready.offers(snapshot,mem,now,uncontested=True),mem,now)
     with cli.acquisition_lock():
         for _ in range(desk.lease_limit()):
             held=cli.held_records()
             if len(held)>=desk.lease_limit() or desk.retry_until()>time.time():
                 break
-            # A research lease is optional. Only the high-value open lane is
-            # probed, and only if the fresh public status confirms opportunity.
+            if urgent:
+                gid=urgent.pop(0)
+                result=ready_attempt(gid,d,mem,now,held,"fresh")
+                if result:
+                    acquired.append(result)
+                    continue
+                if desk.retry_until()>time.time():break
+                # One targeted miss per tick; ordinary can use remaining
+                # capacity, but never spin against a server cooldown.
             research=any(support.active(r,now) and r.get("work_lane")!="posting" for r in held)
             rows=snapshot.get("gaps",{})
             high=any(row.get("level")=="open" and type(row.get("points")) is int
                      and row["points"]>=posting.MIN_RESEARCH_POINTS
                      and type(row.get("held")) is int and type(row.get("parallel")) is int
                      and row["held"]<row["parallel"] for row in rows.values())
+            # Reserve only when genuinely new units are still being solved.
+            # On a quiet frontier, use the whole earned desk capacity.
+            reserve=bool(seen and any(freshness.available(g,snapshot,seen[g])
+                       and not state.load(g) and not ready.verified(g)
+                       for g in seen))
+            if reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
+                break
             open_probe=(not research and high and desk.lease_limit()>1 and len(held)==desk.lease_limit()-1
                         and now-mem.get("last_open_probe",0)>=300)
             if open_probe:
@@ -150,20 +230,9 @@ def fill(d, mem, now, snapshot):
             else:
                 level,lane="solid","posting"
                 if now < mem.get("posting_retry_at",0):
-                    # When no solid work is offered, checked *uncontested*
-                    # stock is the only permitted targeted fallback.
-                    target=competition.fallback_target(ready.offers(snapshot,mem,now,uncontested=True),mem,now) if snapshot.get("complete") else None
-                    if not target:
-                        break
-                    mem["proof_of_attempts"][target]=now
-                    before={r["gap_id"] for r in held}
-                    result=cli.acquire(SimpleNamespace(hard=False,another=bool(held),
-                                        proof_of=target,work_lane="posting"),d,report=False)
-                    new={r["gap_id"] for r in cli.held_records()}-before
-                    if result==0 and new:
-                        acquired.extend(sorted(new))
-                        for gid in sorted(new):posting.launch(gid)
-                    # Only one fallback probe per tick.
+                    if old_target:
+                        result=ready_attempt(old_target,d,mem,now,held,"checked_stock")
+                        if result:acquired.append(result)
                     break
             before={r["gap_id"] for r in held}
             result=cli.acquire(SimpleNamespace(hard=level=="open",another=bool(held),
@@ -180,23 +249,50 @@ def fill(d, mem, now, snapshot):
             if level=="solid":
                 mem["posting_retry_at"]=now+NULL_RETRY_SECONDS
                 break
-            # No high-value open offer: try solid next, not another hard unit.
     return acquired
 
 
 def proof_of_now(gid, d=None, now=None):
-    """No asynchronous stock event may take capacity from the fresh broker."""
+    """Immediate event path for freshly seen, exactly checked proofs."""
     from .lbcert import ready
-    if not ready.verified(gid):
-        return "no receipt"
+    now=time.time() if now is None else now
+    receipt=ready.verified(gid)
+    if not receipt:return "no receipt"
     if any(r["gap_id"]==gid for r in cli.held_records()):
-        rec=state.load(gid)
-        if rec.get("work_lane")=="posting":
-            posting.launch(gid)
-        else:
-            fastlane.submit_ready(gid)
+        fastlane.submit_ready(gid)
         return "already held"
-    return "retained for uncontested allocator fallback"
+    seen=freshness.recent(now)
+    if not freshness.fresh(gid,receipt,seen,now):
+        return "retained for uncontested allocator fallback"
+    snap=frontier.load(now)
+    if ready.competition(now).get(gid,0)>0 or not freshness.available(gid,snap,seen[gid]):
+        return "known contested or unavailable"
+    d=d or desk.Desk()
+    if desk.retry_until(gid)>time.time():return "desk backoff"
+    with cli.acquisition_lock():
+        held=cli.held_records()
+        if any(r["gap_id"]==gid for r in held):
+            fastlane.submit_ready(gid)
+            return "already held"
+        if len(held)>=desk.lease_limit():
+            # Never preempt young, focused or concrete work for a race.
+            chosen=focus.current()
+            candidates=[r for r in held if support.active(r,now)
+                and r.get("work_lane")!="posting" and not fastlane.concrete(r)
+                and not r.get("candidate_digest") and not r.get("queued_lease")
+                and not r.get("intent") and not r.get("pr_number")
+                and now-(r.get("lease_obtained_at") or now)>=posting.HARD_MIN_SECONDS
+                and posting.points(r,snap) is not None and posting.points(r,snap)<posting.MIN_RESEARCH_POINTS
+                and not (chosen and focus.key(chosen)==focus.key(r))]
+            candidates.sort(key=lambda r:r.get("lease_obtained_at") or now)
+            if not candidates:return "no free slot"
+            r=candidates[0]
+            if not fastlane.release(d,{},r["gap_id"],"out_of_time",
+                    "fresh exact checked proof "+gid,expected_lease=r["lease"]):
+                return "no free slot"
+            held=cli.held_records()
+        result=ready_attempt(gid,d,{},now,held,"fresh_event")
+        return "acquired" if result else "deferred"
 
 
 def posting_tick(d=None, now=None):
@@ -264,6 +360,8 @@ def tick(d=None, now=None, cached=False):
         # The cheap loop fills every five seconds; on this maintenance pass
         # use its freshly observed frontier and do not wait for the next tick.
         released = list(released) + posting.maintain(d,mem,now,snapshot,cli.held_records())
+        if released:
+            mem.pop("posting_retry_at",None)
         acquired = fill(d, mem, now, snapshot)
         if acquired:
             print("new assignments:", acquired, flush=True)

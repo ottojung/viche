@@ -224,6 +224,7 @@ def apply_release(d, mem, now):
         # Newly vacant capacity should be filled immediately.
         mem.pop("last_null_ordinary", None)
         mem.pop("last_null_hard", None)
+        mem.pop("posting_retry_at", None)
         finish(mem, obj, "applied")
         return [gap]
     finally:

@@ -127,6 +127,46 @@ class Tests(unittest.TestCase):
         self.assertEqual(d.releases,[])
         self.assertEqual(d.calls,[])
 
+    def test_fresh_receipt_immediately_uses_have_proof(self):
+        from missions.pnp.lbcert import ready
+        class TargetDesk(Desk):
+            def _next_gap(self,hard=False,another=False,proof_of=None,level=None):
+                self.calls.append((level,proof_of))
+                self.assert_target=proof_of
+                return {"gap":{"id":proof_of,"statement":"True","module":"PEqualNP.Outside.L_meta_99",
+                         "file":"lean/PEqualNP/Outside/L_meta_99.lean"},
+                        "lease":{"id":"fixture","terms":{"points":351,"level":"hard","race":False}}}
+        d=TargetDesk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}),patch.object(allocator.frontier,"load",return_value={}),patch.object(allocator.fastlane,"submit_ready",return_value={"status":"queued"}) as send:
+            self.assertEqual(allocator.proof_of_now("L-meta-99",d,NOW),"acquired")
+            send.assert_called_once_with("L-meta-99")
+        self.assertEqual(d.calls,[(None,"L-meta-99")])
+        self.assertEqual(state.load("L-meta-99")["work_lane"],"posting")
+
+    def test_fresh_ordinary_reserves_one_slot(self):
+        d=Desk([(False,"L-meta-"+str(i)) for i in range(1,6)])
+        with patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}):
+            self.assertEqual(len(allocator.fill(d,{},NOW,{})),4)
+        self.assertEqual(len(d.calls),4)
+
+    def test_no_fast_target_for_known_rival_or_old_receipt(self):
+        from missions.pnp.lbcert import ready
+        d=Desk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={"L-meta-99":1}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}):
+            self.assertIn("contested",allocator.proof_of_now("L-meta-99",d,NOW))
+        self.assertEqual(d.calls,[])
+        self.assertFalse(allocator.freshness.fresh("L-meta-99",{"at":NOW-121},{"L-meta-99":NOW-200},NOW))
+        self.assertTrue(allocator.freshness.available("L-meta-99",{"complete":True,"observed":NOW-30,"gaps":{}},NOW-10))
+        self.assertFalse(allocator.freshness.available("L-meta-99",{"complete":True,"observed":NOW-5,"gaps":{}},NOW-10))
+
+    def test_fresh_event_honors_server_backoff_before_release(self):
+        from missions.pnp.lbcert import ready
+        d=Desk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}),patch.object(allocator.frontier,"load",return_value={}),patch.object(desk,"retry_until",return_value=time.time()+60):
+            self.assertEqual(allocator.proof_of_now("L-meta-99",d,NOW),"desk backoff")
+        self.assertEqual(d.calls,[])
+        self.assertEqual(d.releases,[])
+
     def test_null_backoff_and_new_ordinary_signal(self):
         d=Desk();mem={}
         allocator.fill(d,mem,NOW,{"ordinary":0})

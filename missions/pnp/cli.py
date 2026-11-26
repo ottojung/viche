@@ -127,7 +127,7 @@ def acquire(args, d, report=True):
         if type(raw_terms.get("race")) is bool:terms["race"]=raw_terms["race"]
     level = getattr(args,"level",None)
     lane = getattr(args,"work_lane",None)
-    if terms.get("level") in ("hard","open"):
+    if terms.get("level") in ("hard","open") and not proof_of:
         lane = "research"
     hard = bool(args.hard or level in ("hard","open") or terms.get("level") in ("hard","open"))
     if not isinstance(lease, str) or not lease:

@@ -19,7 +19,7 @@ import time
 
 from . import gen, dag
 from ... import checkremote, live, ready
-from .... import config, state, support, validate, ledger, fastlane
+from .... import config, state, support, validate, ledger, fastlane, freshness
 
 STOCK_TARGET = 32
 VERIFY_WORKERS = 2
@@ -108,8 +108,12 @@ def eligible(q,row,rec):
     return not q.get("pr_open") and (row.get("held") or 0)<(row.get("parallel") or 1)
 
 
-def priority(q,p,row,rec):
-    return (not support.active(rec),row.get("level") not in ("solid","warmup"),
+def priority(q,p,row,rec,seen=None):
+    # Fresh free proofs outrank old speculative stock; held work still gets
+    # prompt service. Largest gate budget is a useful easy-witness signal.
+    seen=seen or {}
+    return (not support.active(rec),q["id"] not in seen,
+            row.get("level") not in ("solid","warmup"),
             -p[3],-(row.get("points") or 0),row.get("held") or 0,-int(q["id"].split("-")[-1]))
 
 
@@ -156,9 +160,12 @@ def verify(q,source):
     if not ready.record(gid,receipt,data):
         return "transient","receipt mismatch"
     state.atomic_write(str(dst.with_suffix(".status")),"ok plugin promise batch standalone compiled\n")
-    if support.active(state.load(gid)):
-        try:fastlane.submit_ready(gid)
-        except Exception as e:print("held submission deferred",gid,type(e).__name__,flush=True)
+    # Every checked proof gets the same immediate broker notification;
+    # the broker distinguishes new release, old stock and held units.
+    try:
+        from .... import allocator
+        print("checked proof broker",gid,allocator.proof_of_now(gid),flush=True)
+    except Exception as e:print("checked proof broker deferred",gid,type(e).__name__,flush=True)
     return "checked",r.get("id") or "exact receipt"
 
 
@@ -167,6 +174,7 @@ def current(v):
     if not snap or time.time()-snap["at"]>=120:return []
     gaps=json.loads(live.gaps_bytes(timeout=30))["gaps"]
     out=[]
+    seen=freshness.recent()
     for q in gaps:
         gid=q.get("id");row=snap["gaps"].get(gid)
         if not row or not isinstance(gid,str) or not config.GAP_ID_RE.fullmatch(gid):continue
@@ -174,7 +182,7 @@ def current(v):
         if not p or not owns(q["statement"]):continue
         rec=state.load(gid)
         if not eligible(q,row,rec) or ready.verified(gid):continue
-        out.append((priority(q,p,row,rec),q,p,row,key(q,v)))
+        out.append((priority(q,p,row,rec,seen),q,p,row,key(q,v)))
     return sorted(out,key=lambda x:x[0])
 
 
@@ -216,7 +224,7 @@ def main():
                               for r in db.execute("SELECT * FROM attempt WHERE version=?",(v,))}
                     stock=len(ready.offers({}, {},now,uncontested=True))
                     state.atomic_write(str(heartbeat_path()),json.dumps({"at":now,"version":v,"stock":stock,"eligible":len(items)}))
-                    next_refresh=time.monotonic()+45
+                    next_refresh=time.monotonic()+12
                 except Exception as e:
                     items=[];next_refresh=time.monotonic()+15
                     print("frontier unavailable",type(e).__name__,str(e)[:140],flush=True)
@@ -228,7 +236,7 @@ def main():
                 for pr,q,p,row,k in items:
                     if k in keys:continue
                     r=attempts.get(k)
-                    if r and r["status"] in ("staged","checked") and r["source"] and r["retry"]<=now and ver_busy<VERIFY_WORKERS and (stock+ver_busy<STOCK_TARGET or not pr[0]):
+                    if r and r["status"] in ("staged","checked") and r["source"] and r["retry"]<=now and ver_busy<VERIFY_WORKERS and (stock+ver_busy<STOCK_TARGET or not pr[0] or not pr[1]):
                         if ready.verified(q["id"]):continue
                         running[verification.submit(verify,q,r["source"])]=("verify",q,k,r)
                         keys.add(k);ver_busy+=1

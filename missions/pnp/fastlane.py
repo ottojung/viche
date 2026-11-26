@@ -106,6 +106,7 @@ def release(d, mem, gap, reason, evidence, expected_lease=None):
             state.event(gap, "fastlane_release", {"reason": reason, "evidence": evidence})
         mem.pop("last_null_ordinary", None)
         mem.pop("last_null_hard", None)
+        mem.pop("posting_retry_at", None)
         return True
     finally:
         os.close(fd)

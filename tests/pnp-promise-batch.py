@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from missions.pnp.lbcert.generators.promise import batch as b
-from missions.pnp import config
+from missions.pnp import config, allocator
 from missions.pnp.lbcert import ready
 
 GID="L-meta-24806"
@@ -51,8 +51,9 @@ class Tests(unittest.TestCase):
                 self.assertIsNone(ready.verified(GID))
                 self.assertFalse((ready.directory()/(GID+".lean")).exists())
             receipt={"status":"ok","sha256":hashlib.sha256(source.encode()).hexdigest(),"checked_base":"a"*40,"id":"fixture"}
-            with patch.object(b.checkremote,"check",return_value=(0,receipt)):
+            with patch.object(b.checkremote,"check",return_value=(0,receipt)),patch.object(allocator,"proof_of_now",return_value="acquired") as claim:
                 self.assertEqual(b.verify(Q,source)[0],"checked")
+                claim.assert_called_once_with(GID)
                 self.assertEqual(ready.verified(GID)["digest"],receipt["sha256"])
     def test_shared_dag_reduces_formula_cost(self):
         from missions.pnp.lbcert.generators.promise import dag
