@@ -75,8 +75,8 @@ Produced 4/4 evidence-backed verdicts, 0 corrections, 0 `verified_fixed` filings
 
 ## Act 8 priorities observed (in stated order)
 
-- **Quality:** case 2's verifier has genuine trust-model design and a recorded exact-commit gate; case 3's fallback repair has a real, lawful effect; case 1's supersession is documented on authoritative board issues but its code cannot be independently re-verified; case 4 has a concrete verification-evidence defect. Mixed, not uniformly good.
-- **Timeliness:** case 1's last activity is 2026-11-24 with no new evidence since; case 3's Act 34 activation changed within days; case 4's decision was followed by later economy work. No deadline quota is inferred; no deadline was treated as a ceiling on work.
+- **Quality:** case 2's verifier has genuine trust-model design and a recorded exact-commit gate; case 4's fallback repair has a real, lawful effect; case 3's supersession is documented on authoritative board issues but its code cannot be independently re-verified; case 4 also has a concrete verification-evidence defect. Mixed, not uniformly good.
+- **Timeliness:** case 2's last activity is 2026-11-24 with no new evidence since; case 2's Act 34 activation changed within days; case 4's decision was followed by later economy work. No deadline quota is inferred; no deadline was treated as a ceiling on work.
 - **Attention economy:** one new finding and three scoped dispositions, no Founder escalation. I did not create a `NEEDS-FOUNDER` line; the recovery-steward terminal failure was routed as an operational observation, not a page.
 
 ## Escalations
