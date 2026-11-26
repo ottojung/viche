@@ -55,6 +55,7 @@ PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound 
 PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
+GEN_TIMEOUT = 900      # successful runs take <= 546 s; a hung relay call must not hold a worker for 2000 s
 os.makedirs(CANDS, exist_ok=True)
 
 
@@ -172,8 +173,20 @@ def generate(g, engines):
     from missions.pnp import state, support
     rec = state.load(gid)
     defer = bool(support.active(rec) and rec['statement'] == g['statement'])
-    p = managed_process.run([sys.executable, os.path.join(HERE, 'lbremote.py'), sf, mod, out,
-                        '--maxstates', str(MAXSTATES), '--chunks', '40'] + (['--defer-compile'] if defer else []), capture_output=True, text=True, timeout=2000)
+    try:
+        p = managed_process.run([sys.executable, os.path.join(HERE, 'lbremote.py'), sf, mod, out,
+                            '--maxstates', str(MAXSTATES), '--chunks', '40'] + (['--defer-compile'] if defer else []),
+                           capture_output=True, text=True, timeout=GEN_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        # A hung relay call otherwise raises out of generate(), leaves no status, and is
+        # re-queued on the very next poll: three such steps held all REMOTE_WORKERS for hours
+        # (9750/9756/9822 on 2026-11-26).  Record a retryable status so the worker is freed
+        # for other steps and this step gets the normal RETRY_DELAY backoff.
+        write_status(gid, 'deferred generation timeout %ss' % GEN_TIMEOUT)
+        from missions.pnp import ledger
+        ledger.mark('generated', gid, status='timeout', secs=GEN_TIMEOUT, where='relay')
+        log('generated', gid, 'timeout', 'relay', None, '%ss' % GEN_TIMEOUT)
+        return
     try:
         r = json.loads(p.stdout.strip().split('\n')[-1])
     except Exception:
@@ -226,13 +239,29 @@ SIB_STATE = os.path.join(WORK, 'sibling.json')
 
 def sibling_pass():
     """Sibling transfer for held steps with no candidate (relay op `sibling`, compiled on marceline-dev).
-    Retried every SIB_RETRY seconds while held: merged siblings appear in bursts."""
+
+    A step whose statement skeleton is absent from the merged corpus cannot succeed: the relay
+    returns tried=0/siblings=0 only after the handler has burned minutes of marceline compile time
+    (measured 337 s for L-meta-8400, 2026-11-26).  Retried blindly every SIB_RETRY seconds this
+    occupied the sibling thread and the shared Lean slots for hours with zero candidates.  Now a
+    definitive no-match is remembered for the current corpus head; the step is retried when a new
+    merge lands, or after SIB_RETRY seconds for a transient relay error.
+    """
     gaps_dir = os.path.join(STATE, 'gaps')
     try:
         tried = json.load(open(SIB_STATE))
     except (OSError, ValueError):
         tried = {}
+    head = None
+    try:
+        import sibling
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
+        from missions.pnp import gitctl
+        head, _idx = sibling.index(gitctl.MIRROR, WORK)
+    except Exception:
+        pass   # no corpus fingerprint: fall back to the time-based retry below
     now = time.time()
+    changed = False
     for gid in os.listdir(gaps_dir):
         try:
             rec = json.load(open(os.path.join(gaps_dir, gid, 'state.json')))
@@ -240,9 +269,13 @@ def sibling_pass():
             continue
         if rec.get('state') not in ('LEASED', 'RESEARCHING') or rec.get('candidate_digest') or status(gid):
             continue
-        if now - tried.get(gid, 0) < SIB_RETRY:
+        prev = tried.get(gid)
+        prev = prev if isinstance(prev, dict) else {}
+        settled = bool(prev.get('settled')) and bool(head) and prev.get('head') == head
+        if settled or now - prev.get('at', 0) < SIB_RETRY:
             continue
-        tried[gid] = now
+        tried[gid] = {'head': head, 'at': now, 'settled': False}
+        changed = True
         sf = os.path.join(CANDS, gid + '.sib.stmt')
         open(sf, 'w').write(rec['statement'])
         out = os.path.join(CANDS, gid + '.lean')
@@ -255,10 +288,14 @@ def sibling_pass():
             r = {}
         if p.returncode == 0:
             write_status(gid, 'ok sibling %s %s marceline compiled tried=%s' % (r.get('source'), r.get('variant'), r.get('tried')))
+        elif head and (p.returncode == 5 or r.get('siblings') == 0):
+            # Definitive no-match on this corpus: do not recompile it until a merge changes the index.
+            tried[gid] = {'head': head, 'at': now, 'settled': True}
         log('sibling', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'), 'siblings', r.get('siblings'))
-    tmp = SIB_STATE + '.tmp'
-    json.dump(tried, open(tmp, 'w'))
-    os.replace(tmp, SIB_STATE)
+    if changed:
+        tmp = SIB_STATE + '.tmp'
+        json.dump(tried, open(tmp, 'w'))
+        os.replace(tmp, SIB_STATE)
 
 
 def gen_plugin(g, name, sha):
