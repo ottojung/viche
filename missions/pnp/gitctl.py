@@ -5,6 +5,8 @@ committer and signing key are fixed in config.py; no candidate or worker
 prompt can supply them.
 """
 import os
+import fcntl
+import time
 import shutil
 import subprocess
 import tempfile
@@ -60,14 +62,46 @@ def fork_url():
 
 
 def ensure_mirror():
+    """Serialize writers to the shared upstream ref across all town processes.
+
+    Concurrent callers can share a fetch completed within the last three
+    seconds, but always resolve the actual pinned ref while holding the lock.
+    A failed refresh never publishes a freshness marker.
+    """
     os.makedirs(config.CACHE_DIR, exist_ok=True)
-    if not os.path.exists(os.path.join(MIRROR, "HEAD")):
-        run(["git", "clone", "--bare", "--quiet", fork_url(), MIRROR])
-    # Upstream objects are needed to build from a pinned public base SHA.
-    run(["git", "--git-dir=" + MIRROR, "fetch", "--quiet", upstream_url(),
-         "+refs/heads/main:refs/remotes/upstream/main"])
-    return run(["git", "--git-dir=" + MIRROR, "rev-parse",
-                "refs/remotes/upstream/main"]).stdout.strip()
+    marker = os.path.join(config.CACHE_DIR, "mirror-fetch.stamp")
+    with open(os.path.join(config.CACHE_DIR, "mirror-fetch.lock"), "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not os.path.exists(os.path.join(MIRROR, "HEAD")):
+            run(["git", "clone", "--bare", "--quiet", fork_url(), MIRROR])
+        try:
+            age = time.time() - os.stat(marker).st_mtime
+            with open(marker, encoding="ascii") as f:
+                previous = f.read().strip()
+            current = run(["git", "--git-dir=" + MIRROR, "rev-parse",
+                           "refs/remotes/upstream/main"]).stdout.strip()
+            if 0 <= age <= 3 and previous == current and len(current) == 40:
+                return current
+        except (OSError, GitError):
+            pass
+        run(["git", "--git-dir=" + MIRROR, "fetch", "--quiet", upstream_url(),
+             "+refs/heads/main:refs/remotes/upstream/main"])
+        current = run(["git", "--git-dir=" + MIRROR, "rev-parse",
+                       "refs/remotes/upstream/main"]).stdout.strip()
+        with open(marker, "w", encoding="ascii") as f:
+            f.write(current)
+        return current
+
+
+def upstream_has_path(base_sha, path):
+    """A public pinned base already containing the path cannot accept an add."""
+    import re
+    if not re.fullmatch(r"[0-9a-f]{40}", base_sha or ""):
+        raise GitError("base is not a full SHA")
+    if not path.startswith("lean/") or ".." in path.split("/"):
+        raise GitError("candidate path is outside lean/")
+    return run(["git", "--git-dir=" + MIRROR, "cat-file", "-e",
+                base_sha + ":" + path], check=False).returncode == 0
 
 
 def remote_branch_sha(branch):

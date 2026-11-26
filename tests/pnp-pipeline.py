@@ -94,6 +94,27 @@ class TestGitRunCwd(unittest.TestCase):
         self.assertEqual(captured["cwd"], "/example/worktree")
 
 
+class TestMirrorRefresh(unittest.TestCase):
+    def test_concurrent_refresh_shares_one_fetch(self):
+        import concurrent.futures
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as cache:
+            mirror=os.path.join(cache,"fork.git")
+            os.mkdir(mirror)
+            open(os.path.join(mirror,"HEAD"),"w").close()
+            calls=[]
+            def run(argv, **kw):
+                if "fetch" in argv:
+                    calls.append("fetch")
+                    time.sleep(.05)
+                return SimpleNamespace(stdout=SHA+"\n",returncode=0)
+            with mock.patch.object(config,"CACHE_DIR",cache), mock.patch.object(gitctl,"MIRROR",mirror), mock.patch.object(gitctl,"run",run), mock.patch.object(gitctl,"upstream_url",return_value="https://example.invalid/repo"):
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+                    result=list(ex.map(lambda _:gitctl.ensure_mirror(),range(4)))
+            self.assertEqual(result,[SHA]*4)
+            self.assertEqual(calls,["fetch"])
+
+
 class FakeDesk:
     def __init__(self, beat=200):
         self.beat_status = beat
@@ -281,6 +302,16 @@ class TestPublish(unittest.TestCase):
         self.assertEqual(h.created, 1)
         self.assertEqual(d.releases, [("lease-1", "submitted")])
         self.assertIn(("push", config.branch_for(GAP)), g.calls)
+
+    def test_already_merged_path_not_published(self):
+        new_state()
+        d,g,h=FakeDesk(),FakeGit(),FakeGH()
+        g.upstream_has_path=lambda base,path: True
+        with self.assertRaises(publish.StopPublish):
+            publish.publish(GAP,self.file,desk=d,git=g,gh=h)
+        self.assertEqual(state.load(GAP)["state"],"STALE")
+        self.assertEqual(h.created,0)
+        self.assertFalse(g.calls)
 
     def test_restart_after_push_does_not_duplicate(self):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
@@ -477,6 +508,29 @@ class TestGitHubValidation(unittest.TestCase):
                 github.repository_name(config.FORK_ID)
 
 
+    def test_batch_prs_require_pinned_repo_and_normalize(self):
+        import json
+        item = {"number": 12, "title": GAP, "state": "MERGED", "merged": True,
+                "url": "u", "author": {"login": "renamed", "databaseId": config.CONTRIBUTOR_ID},
+                "headRefOid": SHA, "headRefName": config.branch_for(GAP), "baseRefName": "main",
+                "headRepository": {"databaseId": config.FORK_ID},
+                "repository": {"databaseId": config.UPSTREAM_ID}, "comments": {"totalCount": 0}}
+        envelope = {"data": {"repository": {"databaseId": config.UPSTREAM_ID, "p12": item}}}
+        with mock.patch.object(github, "repository_name", return_value="renamed/repo"), \
+             mock.patch.object(github, "gh", return_value=json.dumps(envelope)) as call:
+            result = github.get_prs([12, 13, 12])
+            self.assertEqual(list(result), [12])
+            self.assertEqual(result[12]["state"], "closed")
+            self.assertEqual(result[12]["head_sha"], SHA)
+            self.assertEqual(result[12]["comment_count"], 0)
+            self.assertEqual(result[12]["author_id"], config.CONTRIBUTOR_ID)
+            self.assertIn("p13:pullRequest(number:13)", call.call_args.args[-1])
+        envelope["data"]["repository"]["databaseId"] = 999
+        with mock.patch.object(github, "repository_name", return_value="renamed/repo"), \
+             mock.patch.object(github, "gh", return_value=json.dumps(envelope)):
+            with self.assertRaises(github.GitHubError):
+                github.get_prs([12])
+
     def test_repository_rename_and_identity(self):
         pr = {"author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID, "head_repo": "renamed-contributor/proofs",
               "head_repo_id": config.FORK_ID, "base_repo": "renamed/project",
@@ -641,6 +695,66 @@ def owned_pr_identity():
 class TestReconcile(unittest.TestCase):
     def setUp(self):
         fresh()
+
+    def test_reconcile_batches_oldest_first_and_skips_terminal(self):
+        new_state("PR_OPEN", last_reconcile="2000-01-02T19:00:00Z")
+        older = "L-meta-900"
+        terminal = "L-meta-100"
+        state.create(older, state="PR_OPEN", last_reconcile="2000-01-02T18:00:00Z")
+        state.create(terminal, state="ACCEPTED")
+        self.assertEqual(reconcile.reconcile_order(), [older, GAP])
+        with mock.patch.object(reconcile, "reconcile_gap", side_effect=OSError("offline")) as run:
+            with mock.patch.object(reconcile.time, "monotonic", side_effect=[0, 1, 100]):
+                result = reconcile.reconcile_all(desk=FakeDesk(), budget=85)
+            self.assertEqual(result[0]["result"], "error")
+            self.assertEqual(run.call_count, 1)
+        self.assertEqual(reconcile.reconcile_order(), [GAP, older])
+
+    def test_reconcile_does_not_overlap(self):
+        import fcntl
+        os.makedirs(config.STATE_ROOT, exist_ok=True)
+        with open(os.path.join(config.STATE_ROOT, "reconcile.lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.assertEqual(reconcile.reconcile_all(desk=FakeDesk()),
+                             [{"result": "already-running"}])
+
+    def test_open_pr_does_not_query_unused_remote_branch(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = lambda n: {**owned_pr_identity(), "url": "u", "number": n,
+                               "head_sha": SHA, "merged": True}
+        gh.pr_comments = lambda n: []
+        git = FakeGit()
+        git.remote_branch_sha = mock.Mock(side_effect=AssertionError("unused lookup"))
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=git)
+        git.remote_branch_sha.assert_not_called()
+        self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
+
+    def test_batch_snapshot_avoids_empty_comments_and_individual_read(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = mock.Mock(side_effect=AssertionError("unexpected individual read"))
+        gh.pr_comments = mock.Mock(side_effect=AssertionError("unexpected empty comment read"))
+        pr = {**owned_pr_identity(), "url": "u", "number": 123, "head_sha": SHA,
+              "merged": True, "comment_count": 0}
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(),
+                                    pr_snapshot={123: pr})
+        self.assertEqual(r["state"], "ACCEPTED")
+        gh.get_pr.assert_not_called()
+        gh.pr_comments.assert_not_called()
+
+    def test_batch_snapshot_mismatched_head_falls_back(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        pr = {**owned_pr_identity(), "url": "u", "number": 123, "head_sha": SHA,
+              "merged": True}
+        gh.get_pr = mock.Mock(return_value=pr)
+        gh.pr_comments = mock.Mock(return_value=[])
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(),
+                                    pr_snapshot={123: dict(pr, head_sha="b"*40, comment_count=0)})
+        self.assertEqual(r["state"], "ACCEPTED")
+        gh.get_pr.assert_called_once_with(123)
+        gh.pr_comments.assert_called_once_with(123)
 
     def test_pushed_to_accepted(self):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
