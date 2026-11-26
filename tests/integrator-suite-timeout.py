@@ -93,6 +93,22 @@ try:
         time.sleep(0.05)
     assert not alive(pid), "hung child was orphaned (pid %d)" % pid
 
+    # GNU timeout normally starts a distinct PGID, still inside the
+    # verifier session. The old killpg(leader) leaked these processes.
+    script.write_text(
+        "#!/bin/sh\n"
+        "timeout 30 sh -c 'echo $$ > \"$RS_TEST_CHILD_PID_FILE\"; exec sleep 30' >/dev/null 2>&1 &\n"
+        "sleep 30\n")
+    child_file.unlink(missing_ok=True)
+    result3 = mod.verify_suite(worktree, "candidate789", "tests/run-all.sh", logs, {})
+    assert result3 is None
+    pid = child_pid()
+    assert pid, "nested timeout never spawned its child"
+    deadline = time.monotonic() + 3
+    while alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert not alive(pid), "nested timeout child leaked (pid %d)" % pid
+
     # A normal, completed verification returns a result and leaves the entry
     # untouched (so the existing green/red handling downstream still applies).
     script.write_text("#!/bin/sh\necho green\nexit 0\n")
@@ -101,6 +117,21 @@ try:
     assert result2 is not None and result2.returncode == 0, (result2,)
     assert "green" in (result2.stdout or ""), result2
     assert entry2 == {}, "a completed suite must not mutate the entry: %r" % (entry2,)
+    # Even green suites can launch a redirected background resource scan.
+    script.write_text(
+        "#!/bin/sh\n"
+        "timeout 30 sh -c 'echo $$ > \"$RS_TEST_CHILD_PID_FILE\"; exec sleep 30' >/dev/null 2>&1 &\n"
+        "while [ ! -s \"$RS_TEST_CHILD_PID_FILE\" ]; do sleep 0.01; done\n"
+        "echo green\n")
+    child_file.unlink(missing_ok=True)
+    result4 = mod.verify_suite(worktree, "candidate101", "tests/records-smoke.sh", logs, {})
+    assert result4 is not None and result4.returncode == 0
+    pid = child_pid()
+    assert pid
+    deadline = time.monotonic() + 3
+    while alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert not alive(pid), "successful verifier leaked child (pid %d)" % pid
 finally:
     reap_child()
 
