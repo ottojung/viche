@@ -1,5 +1,5 @@
 """Offline tests for version-bound staging and exact receipt admission."""
-import sys,tempfile,time,hashlib,unittest
+import sys,tempfile,time,hashlib,unittest,io,contextlib,json
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -27,7 +27,10 @@ class Tests(unittest.TestCase):
             b.put(db,k,"staged","candidate",4)
             self.assertEqual(b.get(db,k)["source"],"candidate")
             self.assertTrue(b.claimed(Q,b.fallback_keys()))
-            self.assertEqual(b.status()["attempts"],{"staged":1})
+            self.assertEqual(b.batch_status()["attempts"],{"staged":1})
+            with patch.object(sys,"argv",["batch","--status"]),contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(b.main(),0)
+                self.assertEqual(json.loads(output.getvalue())["attempts"],{"staged":1})
             db.close()
     def test_current_competition_and_exact_lease(self):
         row={"held":1,"parallel":1}

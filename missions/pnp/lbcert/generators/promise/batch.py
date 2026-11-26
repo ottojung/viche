@@ -177,7 +177,7 @@ def current(v):
     return sorted(out,key=lambda x:x[0])
 
 
-def status():
+def batch_status():
     info={"version":version(),"alive":alive(),"attempts":{}}
     try:info["heartbeat"]=json.loads(heartbeat_path().read_text())
     except (OSError,ValueError):pass
@@ -193,7 +193,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--status",action="store_true",help="read-only batch status")
     if parser.parse_args().status:
-        print(json.dumps(status(),sort_keys=True));return 0
+        print(json.dumps(batch_status(),sort_keys=True));return 0
     root().mkdir(parents=True,exist_ok=True)
     lock=(root()/"promise-batch.lock").open("a+")
     try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
