@@ -45,7 +45,8 @@ government/tally.sh BILL passes on the exact candidate; deliveries marked
   integrator.py office OFFICE   what an office needs to know about its deliveries
 
 Environment: VICHE_TOWN_ROOT, VICHE_STATE_ROOT, VICHE_INTEGRATOR=off,
-VICHE_INTEGRATOR_NOW (tests), VICHE_INTEGRATOR_NO_REVIEWER=1 (never commission).
+VICHE_INTEGRATOR_NOW (tests), VICHE_INTEGRATOR_NO_REVIEWER=1 (never commission),
+VICHE_SUITE_TIMEOUT (seconds bounding suite-status.sh; default 900).
 """
 import datetime
 import fcntl
@@ -55,6 +56,7 @@ import os
 import pathlib
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -71,6 +73,9 @@ REVIEW_ATTEMPTS = 2
 # Prefer ready short deliveries, but allow an old full-suite candidate first.
 FULL_SUITE_PRIORITY_AGE = 3600
 LANDED_VISIBLE = 3 * 86400
+# A hung suite must not hold the queue's single internal.lock forever. Bound the
+# verifier subprocess and fail the candidate closed on timeout; never waive Act 21.
+SUITE_TIMEOUT_SECONDS = int(os.environ.get("VICHE_SUITE_TIMEOUT", "900"))
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
 OFFICE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -445,6 +450,42 @@ def canonical_preflight(base, candidate):
     return None
 
 
+def verify_suite(wt, candidate, suite, logs, entry):
+    """Run the Act 21 suite on the exact candidate under a bounded wait.
+
+    The integrator holds the single internal.lock for the whole pass, so an
+    unbounded verifier hang serialises every delivery. The wait is therefore
+    bounded. On timeout the candidate FAILS CLOSED: the entry is marked red,
+    no push or gate waiver occurs, and the caller returns False. The verifier
+    runs in its own session so a timeout can terminate the whole test tree.
+
+    Returns the CompletedProcess on completion, or None after recording a
+    timeout failure in ``entry``.
+    """
+    try:
+        return subprocess.run(["/bin/sh", str(wt / "government" / "suite-status.sh"),
+                               "--commit", candidate, "--suite", suite],
+                              capture_output=True, text=True, cwd=str(wt),
+                              env=dict(os.environ, VICHE_TOWN_ROOT=str(wt),
+                                       SUITE_STATUS_VERIFIER="integrator",
+                                       SUITE_STATUS_LOG_DIR=str(logs)),
+                              timeout=SUITE_TIMEOUT_SECONDS, start_new_session=True)
+    except subprocess.TimeoutExpired as exc:
+        process = getattr(exc, "process", None)
+        if process is not None:
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+        entry.update({"status": "red",
+                      "reason": "%s exceeded the %ss verification bound; failed closed (no push, Act 21 gate intact)" % (
+                          suite, SUITE_TIMEOUT_SECONDS),
+                      "log": None})
+        log("%s timed out after %ss; candidate %s failed closed" % (
+            suite, SUITE_TIMEOUT_SECONDS, candidate[:12]))
+        return None
+
+
 def land(p, entry, review):
     git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main")
     base = git("rev-parse", "refs/remotes/origin/main")
@@ -518,12 +559,9 @@ def land(p, entry, review):
         suite = suite_for(info["paths"])
         logs = DELIVERY / "logs"
         logs.mkdir(parents=True, exist_ok=True)
-        check = subprocess.run(["/bin/sh", str(wt / "government" / "suite-status.sh"),
-                                "--commit", candidate, "--suite", suite],
-                               capture_output=True, text=True, cwd=str(wt),
-                               env=dict(os.environ, VICHE_TOWN_ROOT=str(wt),
-                                        SUITE_STATUS_VERIFIER="integrator",
-                                        SUITE_STATUS_LOG_DIR=str(logs)))
+        check = verify_suite(wt, candidate, suite, logs, entry)
+        if check is None:
+            return False
         status_file = wt / "records" / "suite-status.json"
         record = load(status_file, {})
         if check.returncode != 0 or record.get("result") != "green":
