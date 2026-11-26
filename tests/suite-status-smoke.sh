@@ -24,6 +24,9 @@ set -eu
 [ -z "${VICHE_BUDGET_STATE:-}" ]
 [ "$XDG_CONFIG_HOME" != "$ORIGINAL_HOME/config" ]
 [ "$VICHE_STATE_ROOT" != "$ORIGINAL_HOME/state" ]
+[ "$PNP_STATE_ROOT" = "$VICHE_STATE_ROOT/pnp" ]
+[ -d "$PNP_STATE_ROOT" ]
+[ "$PNP_STATE_ROOT" != "$ORIGINAL_HOME/pnp" ]
 [ -z "${ANTONINA_HOST_XDG_CONFIG_HOME:-}" ]
 [ -z "${VICHE_ANTONINA_CONFIG:-}" ]
 [ "$JANITOR_ROOTS" = "$VICHE_STATE_ROOT $VICHE_SEATS_ROOT $HOME" ]
@@ -58,7 +61,7 @@ check_result() {
 
 export ORIGINAL_HOME="$HOME"
 ANTONINA_HOST_XDG_CONFIG_HOME="$HOME/config" VICHE_ANTONINA_CONFIG="$HOME/config/antonina.json" \
-  VICHE_STATE_ROOT="$HOME/state" VICHE_BUDGET_STATE="$HOME/budget" run --suite tests/isolation.sh >/dev/null
+  VICHE_STATE_ROOT="$HOME/state" PNP_STATE_ROOT="$HOME/pnp" VICHE_BUDGET_STATE="$HOME/budget" run --suite tests/isolation.sh >/dev/null
 check_result green
 run --suite tests/green.sh >/dev/null
 check_result green
