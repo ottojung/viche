@@ -5,9 +5,10 @@
 Proof shape: that of the merged L-meta-13175 (Apache-2.0; live-set search of L-meta-8463/1449):
 a monotone circuit of M gates (SAT/cadical, exact minimum), and no circuit with M-2 binary gates
 (NOTs free) separating sampled row pairs (kernel `search`), so a circuit with a NOT has >= M gates and
-a NOT-free one is already monotone.  Deployed on marceline-dev beside onenot.py (template
-ref_13175.lean = upstream lean/PEqualNP/Outside/L_meta_13175.lean); missions/relay/lb-handler.py
-tries it first for Monotone2 statements.  Typical: generation ~5 s, compile ~5 s.
+a NOT-free one is already monotone.  Runs locally beside onenot.py (template
+ref_13175.lean = upstream lean/PEqualNP/Outside/L_meta_13175.lean); the retired relay handler is
+no longer used and exact checks go through the managed local compiler.
+Typical: generation ~5 s, compile ~5 s.
 
 usage: monosix.py GID STATEMENT_FILE OUT.lean      exit 0 ok, 3 beyond the method, 2 error
 """
