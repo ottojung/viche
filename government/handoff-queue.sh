@@ -56,15 +56,29 @@ case "$cmd" in
     ;;
   list-open)
     [ -d "$dir" ] || exit 0
+    # A shell pipeline per record made this a process storm as history grew.
+    # One awk reads all files; first matching header wins, as before.
+    set --
     for hof in "$dir"/*.txt; do
-      [ -f "$hof" ] || continue
-      hof_status=$(sed -n 's/^status:[[:space:]]*//p' "$hof" | head -n 1)
-      [ "$hof_status" = open ] || continue
-      hof_id=$(sed -n 's/^id:[[:space:]]*//p' "$hof" | head -n 1)
-      hof_created=$(sed -n 's/^created:[[:space:]]*//p' "$hof" | head -n 1)
-      hof_work=$(sed -n 's/^work:[[:space:]]*//p' "$hof" | head -n 1)
-      printf '%s\t%s\t%s\n' "$hof_created" "$hof_id" "$hof_work"
-    done | sort
+      if [ -f "$hof" ]; then set -- "$@" "$hof"; fi
+    done
+    [ "$#" -gt 0 ] || exit 0
+    awk '
+      function emit() {
+        if (status == "open")
+          printf "%s\t%s\t%s\n", created, id, work
+      }
+      FNR == 1 {
+        if (NR > 1) emit()
+        status = id = created = work = ""
+        ss = si = sc = sw = 0
+      }
+      !ss && /^status:/ { status=$0; sub(/^status:[[:space:]]*/, "", status); ss=1 }
+      !si && /^id:/ { id=$0; sub(/^id:[[:space:]]*/, "", id); si=1 }
+      !sc && /^created:/ { created=$0; sub(/^created:[[:space:]]*/, "", created); sc=1 }
+      !sw && /^work:/ { work=$0; sub(/^work:[[:space:]]*/, "", work); sw=1 }
+      END { if (NR) emit() }
+    ' "$@" | sort
     ;;
   mark)
     [ "$#" -eq 5 ] || {
