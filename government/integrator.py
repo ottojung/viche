@@ -450,32 +450,67 @@ def canonical_preflight(base, candidate):
     return None
 
 
+def _kill_verifier_group(proc):
+    """Kill the verifier and every child it spawned in its own session."""
+    try:
+        pgid = os.getpgid(proc.pid)
+    except (ProcessLookupError, PermissionError, OSError):
+        return
+    # start_new_session=True makes the child a session/group leader, so its
+    # pgid equals its pid. Never signal our own group if that ever stops being
+    # true; fall back to killing only the direct child.
+    if pgid == proc.pid:
+        try:
+            os.killpg(pgid, signal.SIGKILL)
+            return
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+    try:
+        proc.kill()
+    except (ProcessLookupError, OSError):
+        pass
+
+
 def verify_suite(wt, candidate, suite, logs, entry):
     """Run the Act 21 suite on the exact candidate under a bounded wait.
 
     The integrator holds the single internal.lock for the whole pass, so an
-    unbounded verifier hang serialises every delivery. The wait is therefore
-    bounded. On timeout the candidate FAILS CLOSED: the entry is marked red,
-    no push or gate waiver occurs, and the caller returns False. The verifier
-    runs in its own session so a timeout can terminate the whole test tree.
+    unbounded verifier hang serialises every delivery. The wait is bounded and
+    the verifier runs in its own session. On timeout the candidate FAILS CLOSED:
+    the entry is marked red, no push or gate waiver occurs, and the caller
+    returns False.
+
+    Popen is used deliberately instead of subprocess.run: Python 3.12's
+    TimeoutExpired carries no ``.process``, and run() only kills the top-level
+    shell. Without the retained child and an explicit process-group kill the
+    hung test tree would be orphaned while the queue moved on.
 
     Returns the CompletedProcess on completion, or None after recording a
     timeout failure in ``entry``.
     """
+    cmd = ["/bin/sh", str(wt / "government" / "suite-status.sh"),
+           "--commit", candidate, "--suite", suite]
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        cwd=str(wt),
+        env=dict(os.environ, VICHE_TOWN_ROOT=str(wt),
+                 SUITE_STATUS_VERIFIER="integrator",
+                 SUITE_STATUS_LOG_DIR=str(logs)),
+        start_new_session=True)
     try:
-        return subprocess.run(["/bin/sh", str(wt / "government" / "suite-status.sh"),
-                               "--commit", candidate, "--suite", suite],
-                              capture_output=True, text=True, cwd=str(wt),
-                              env=dict(os.environ, VICHE_TOWN_ROOT=str(wt),
-                                       SUITE_STATUS_VERIFIER="integrator",
-                                       SUITE_STATUS_LOG_DIR=str(logs)),
-                              timeout=SUITE_TIMEOUT_SECONDS, start_new_session=True)
-    except subprocess.TimeoutExpired as exc:
-        process = getattr(exc, "process", None)
-        if process is not None:
+        stdout, stderr = proc.communicate(timeout=SUITE_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        _kill_verifier_group(proc)
+        try:
+            proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
             try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            except (ProcessLookupError, PermissionError, OSError):
+                proc.kill()
+            except (ProcessLookupError, OSError):
+                pass
+            try:
+                proc.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
                 pass
         entry.update({"status": "red",
                       "reason": "%s exceeded the %ss verification bound; failed closed (no push, Act 21 gate intact)" % (
@@ -484,6 +519,7 @@ def verify_suite(wt, candidate, suite, logs, entry):
         log("%s timed out after %ss; candidate %s failed closed" % (
             suite, SUITE_TIMEOUT_SECONDS, candidate[:12]))
         return None
+    return subprocess.CompletedProcess(cmd, proc.returncode, stdout=stdout, stderr=stderr)
 
 
 def land(p, entry, review):
