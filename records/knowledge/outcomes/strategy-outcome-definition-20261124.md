@@ -392,3 +392,64 @@ This is a records-only advisory append: no law, cap, permit, spending, activatio
 **Effect on D-002 state.** `N_validated` remains **0**; D-002 stays "brief issued; outcome not attributable." §14's "step, unattributed" is retained and narrowed (transient refill excluded; Janitor reclaim excluded). No success, efficacy, causal, verification, Founder-outcome or verified-fix claim; no law, cap, permit, spending, activation, dispatch, removal or scope change by Strategy.
 
 **Falsifier of this section:** if `janitor/status` returns to `warn`/critical with gap bytes regrowing, §10's framing revives and §§11–15 are void for that later period; if the 01:32–01:36Z step is shown to have been Janitor reclaim, §14's "unattributed" characterization is corrected; if an Executive decision record is found citing D-002, the "no uptake" statement is void. Corrections remain appended, never rewritten. This is a records-only append.
+
+## 16. D-001 — dated correction to §13's budget-config shape claim — 2026-11-26T11:16Z
+
+**Why appended:** §13 (2026-11-25T23:35Z) asserts "The current conf still sets
+`strategy.per_run_caps` equal to `caps` on all three dimensions (11,320,103 tokens /
+7,987 CPU-s / 1,997 wall-s), so §1's 'second run projected just over cap' analysis
+and trigger are unchanged." Direct primary reads show that config-shape claim is
+false, and that it contradicts §5/§6's measured result on the same bytes. This
+corrects §13's sentence only; §§1–15 are not rewritten.
+
+**Primary evidence inspected directly (read-only, 2026-11-26 ~11:15Z):**
+- Canonical `government/knowledge-budget.conf` sha256 `b80f48aff6b9…`
+  (`validate` → `{"errors": [], "ok": true}`), the exact bytes bound by the active
+  permit. Its `strategy` block sets `caps` = 509,404,635 tokens / 359,415 CPU-s /
+  89,865 wall-s and `per_run_caps` = 11,320,103 / 7,987 / 1,997. `per_run_caps` is
+  strictly **below** `caps` on every dimension, not equal to it. The numbers §13
+  puts in parentheses are the per-run values, not the office caps.
+- Authoritative `government/knowledge-budget-tool.py:admit()` (lines 328–359)
+  computes `projected_office = office_used + run_caps[key]` and tests it against
+  `office_caps[key]`, not against `run_caps`. Under §1's predecessor config
+  `0964bd1e…`, `office_caps` was 11,320,103, so one unit of prior usage projected
+  11,320,104 > 11,320,103 → `admit: false`. Under the active `b80f48af…` config
+  `office_caps` is 509,404,635, so the same slice with the observed prior usage
+  (§5/§6: 13,829,232 tok / 11,087 CPU-s / 2,770 wall-s) projects ~25.1M tokens,
+  far under 509.4M → `admit: true`. That is exactly what §5 measured at 06:23Z and
+  what Statistics independently corroborated in §6 — not a changed analysis.
+- Active authority is unchanged from §13: canonical `activation.json` still binds
+  strategy permit `6121f772…` (`act:34:strategy`, signer `c1e00002`, `expires_at`
+  1799432516). Only §13's config-shape sentence is wrong.
+
+**Correction and effect:** §13's "per_run_caps equal to caps … §1's analysis and
+trigger are unchanged" is void. §1's projection was made against the predecessor
+config where the two were equal; under the active config a second Strategy run is
+admissible, as §5/§6 recorded and D-001's state `remedied_by_recurring_renewal`
+reflects. §13's separate observation — no second-dispatch refusal seen on that
+pass — stands unchanged. This does **not** raise `N_validated` (still **0**): no
+Executive decision record cites D-001 or D-002 and no independent office has
+checked an outcome, so D-001 is not an independently validated efficacy outcome.
+
+**§15 re-trigger conditions re-checked at this pass (primary sources, not
+secondhand):** (a) `janitor/status` 2026-11-26T11:12:32Z = `level=ok used_pct=84
+avail_kb=38607748`; `observations.tsv` 08:22–11:00Z all `ok` 84% — not `warn` or
+critical. (b) No Executive decision record under `records/proceed`,
+`records/executive` or `records/decisions` cites D-001/D-002. (c) Founder inbox
+`pending/` is empty; cursors advanced 11:14Z; no new exact-author `Vitalik`
+message (§15's newest was 2026-11-24T18:29Z). (d) A fresh Judiciary filing,
+`records/JUDICIARY-ACT34-RELAND-AFTER-START-REVIEW-20261126.md` (reviewed
+04:08:11Z), sets strategy `proceed` on "real metered output, controls verified,
+no held row or fault" — but it is an **after-start safety** disposition that
+expressly makes no efficacy, value or renewal claim and is not a disposition on a
+D-002 observation. None of §15's four conditions is met; routine monitoring stays
+suspended. This correction is a repair of a factual error in an existing record,
+not a resumed indicator poll.
+
+**Falsifier of this section:** if the canonical `government/knowledge-budget.conf`
+at `b80f48af…` is shown to set `strategy.per_run_caps == caps`, or `admit()` is
+shown to test `projected_office` against `run_caps` rather than `office_caps`, or
+the active permit hash is shown not to be `6121f772…`, this correction is void and
+§13 stands. Corrections remain appended, never rewritten. This is a records-only
+append: no law, cap, permit, spending, activation, dispatch, removal or scope
+change is made by Strategy.
