@@ -451,24 +451,47 @@ def canonical_preflight(base, candidate):
 
 
 def _kill_verifier_group(proc):
-    """Kill the verifier and every child it spawned in its own session."""
-    try:
-        pgid = os.getpgid(proc.pid)
-    except (ProcessLookupError, PermissionError, OSError):
+    """Kill the verifier's private session, including nested timeout groups.
+
+    GNU timeout creates another process group in the same session. Killing
+    only the original PGID leaves resource scans alive after gate timeouts.
+    Session IDs remain allocated while members exist; do not touch our own.
+    """
+    sid = proc.pid
+    if sid == os.getsid(0):
         return
-    # start_new_session=True makes the child a session/group leader, so its
-    # pgid equals its pid. Never signal our own group if that ever stops being
-    # true; fall back to killing only the direct child.
-    if pgid == proc.pid:
-        try:
-            os.killpg(pgid, signal.SIGKILL)
-            return
-        except (ProcessLookupError, PermissionError, OSError):
-            pass
     try:
-        proc.kill()
-    except (ProcessLookupError, OSError):
+        if os.getsid(proc.pid) != sid:
+            proc.kill()
+            return
+    except ProcessLookupError:
+        pass  # the leader may have exited while session members remain
+    except OSError:
+        return
+    try:
+        os.killpg(sid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError, OSError):
         pass
+    # The leader is stopped first; nested groups cannot keep a test subtree
+    # alive. Re-scan in case a surviving child forked during the first pass.
+    for _ in range(3):
+        found = False
+        try:
+            entries = os.listdir("/proc")
+        except OSError:
+            return
+        for name in entries:
+            if not name.isdigit():
+                continue
+            pid = int(name)
+            try:
+                if os.getsid(pid) == sid:
+                    os.kill(pid, signal.SIGKILL)
+                    found = True
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+        if not found:
+            break
 
 
 def verify_suite(wt, candidate, suite, logs, entry):
@@ -519,6 +542,8 @@ def verify_suite(wt, candidate, suite, logs, entry):
         log("%s timed out after %ss; candidate %s failed closed" % (
             suite, SUITE_TIMEOUT_SECONDS, candidate[:12]))
         return None
+    # A successful verifier must not leak a redirected background refresh.
+    _kill_verifier_group(proc)
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout=stdout, stderr=stderr)
 
 

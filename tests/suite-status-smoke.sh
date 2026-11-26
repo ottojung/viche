@@ -26,6 +26,9 @@ set -eu
 [ "$VICHE_STATE_ROOT" != "$ORIGINAL_HOME/state" ]
 [ -z "${ANTONINA_HOST_XDG_CONFIG_HOME:-}" ]
 [ -z "${VICHE_ANTONINA_CONFIG:-}" ]
+[ "$JANITOR_ROOTS" = "$VICHE_STATE_ROOT $VICHE_SEATS_ROOT $HOME" ]
+[ "$JANITOR_FILE_ROOTS" = "$JANITOR_ROOTS" ]
+[ "$JANITOR_SCRATCH_DIR" = "$(dirname "$HOME")" ]
 ! antonina agent status --id dummy
 ! opencode models
 EOF
