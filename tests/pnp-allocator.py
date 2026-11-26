@@ -64,6 +64,20 @@ class Tests(unittest.TestCase):
         fields.update(extra)
         return state.create(gap, **fields)
 
+    def test_observation_cache_is_read_only_and_expires(self):
+        with patch.object(allocator.frontier,"refresh") as refresh,patch.object(allocator,"bound_roster",return_value=({("L-meta-1","lease-1")},{"L-meta-2"})):
+            self.assertTrue(allocator.observe()["complete"])
+        refresh.assert_called_once()
+        self.assertEqual(allocator.observed_roster(),({("L-meta-1","lease-1")},{"L-meta-2"}))
+        self.assertIsNone(allocator.observed_roster(time.time()+60))
+        with patch.object(allocator.frontier,"refresh"),patch.object(allocator,"bound_roster",return_value=None):
+            self.assertFalse(allocator.observe()["complete"])
+        self.assertIsNone(allocator.observed_roster())
+
+    def test_cached_tick_does_not_fetch_slow_observations(self):
+        with patch.object(allocator,"bound_roster",side_effect=AssertionError("network roster")),patch.object(allocator.frontier,"refresh",side_effect=AssertionError("network frontier")):
+            self.assertEqual(allocator.tick(Desk(),now=NOW,cached=True)["held"],0)
+
     def test_fresh_solid_fill_and_cap(self):
         d=Desk([(False,"L-meta-"+str(i)) for i in range(1,6)])
         mem={}

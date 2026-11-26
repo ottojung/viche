@@ -10,10 +10,19 @@ mkdir -p "$state"
 exec 9>"$state/allocator-loop.lock"
 flock -n 9 || exit 0
 mkdir -p "$state/lbcert" "$state/bulk"
+mkdir -p "$state/cache"
 last_maintenance=0
+last_observation=0
 while [ -f missions/pnp/allocator.py ]; do
     # Keep fresh allocation and generation separate from slow roster/network
     # maintenance. Only this loop writes allocator memory and calls next.
+    now=$(date +%s)
+    if [ "$((now - last_observation))" -ge 15 ]; then
+        last_observation=$now
+        nohup flock -n "$state/cache/allocator-observe.lock" timeout 45 \
+            python3 -m missions.pnp.allocator --observe \
+            </dev/null >>"$state/cache/allocator-observe.log" 2>&1 9>&- &
+    fi
     python3 -m missions.pnp.allocator --posting || :
     now=$(date +%s)
     if [ "$((now - last_maintenance))" -lt 30 ]; then
@@ -23,15 +32,15 @@ while [ -f missions/pnp/allocator.py ]; do
     last_maintenance=$now
     # Keep exactly one certificate pre-generator alive (it holds its own lock; see missions/pnp/lbcert).
     if [ ! -f "$state/lbcert/STOP" ] && flock -n "$state/lbcert/autosolve.lock" true; then
-        nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 &
+        nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 9>&- &
     fi
     # Keep receipt collection independent of agent turns and expensive desk I/O.
     mkdir -p "$state/cache"
     nohup flock -n "$state/cache/research-reconcile.lock" timeout 90 \
         python3 -m missions.pnp.research.obligations reconcile \
-        </dev/null >>"$state/cache/research-reconcile.log" 2>&1 &
+        </dev/null >>"$state/cache/research-reconcile.log" 2>&1 9>&- &
     # Each desk request has bounded I/O; never kill a claim between receipt
     # and durable recording just because a tick took longer than expected.
-    python3 -m missions.pnp.allocator || :
+    python3 -m missions.pnp.allocator --cached || :
     sleep 5
 done

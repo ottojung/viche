@@ -75,6 +75,45 @@ def bound_roster():
     return bindings, uncertain
 
 
+def roster_path():
+    return os.path.join(config.STATE_ROOT, "cache", "allocator-roster.json")
+
+
+def observe():
+    """Only read remote observations; never claim, release, submit or staff."""
+    try:
+        frontier.refresh()
+    except Exception as exc:
+        print("allocator frontier unavailable:", type(exc).__name__, flush=True)
+    at=time.time()
+    roster=bound_roster()
+    payload={"at":at,"complete":roster is not None,
+             "bindings":sorted(roster[0]) if roster else [],
+             "uncertain":sorted(roster[1]) if roster else []}
+    state.atomic_write(roster_path(),json.dumps(payload)+"\n")
+    return {"complete":payload["complete"]}
+
+
+def observed_roster(now=None):
+    now=time.time() if now is None else now
+    try:
+        with open(roster_path(),encoding="utf-8") as f:
+            d=json.load(f)
+        if d.get("complete") is not True or not 0<=now-d["at"]<=45:
+            return None
+        bindings=d["bindings"]; uncertain=d["uncertain"]
+        if not isinstance(bindings,list) or not isinstance(uncertain,list):
+            return None
+        if any(not isinstance(b,list) or len(b)!=2 or
+               not all(isinstance(x,str) for x in b) for b in bindings):
+            return None
+        if any(not isinstance(g,str) for g in uncertain):
+            return None
+        return set(map(tuple,bindings)),set(uncertain)
+    except (OSError,ValueError,TypeError,KeyError):
+        return None
+
+
 def fill(d, mem, now, snapshot):
     """Reserve most capacity for posting-time solid work, never for late stock.
 
@@ -173,7 +212,8 @@ def posting_tick(d=None, now=None):
             # and the server's retry_after_s still constrain every request.
             mem.pop("posting_retry_at",None)
         acquired=fill(d,mem,now,snap)
-        selected=focus.choose([state.load(g) for g in state.all_gaps()],mem.get("focus"),(),time.time())
+        roster=observed_roster()
+        selected=focus.choose([state.load(g) for g in state.all_gaps()],mem.get("focus"),roster[0] if roster else (),time.time())
         mem["focus"]=list(focus.key(selected)) if selected else None
         mem["posting_at"]=time.time()
         return {"released":released,"acquired":acquired,"held":len(cli.held_records()),
@@ -182,7 +222,7 @@ def posting_tick(d=None, now=None):
         state.atomic_write(memory_path(),json.dumps(mem,sort_keys=True)+"\n")
 
 
-def tick(d=None, now=None):
+def tick(d=None, now=None, cached=False):
     d = d or desk.Desk()
     now = time.time() if now is None else now
     mem = read_memory()
@@ -190,7 +230,7 @@ def tick(d=None, now=None):
     mem.pop("observations", None)
     mem["observed_at"] = now
     try:
-        roster = bound_roster()
+        roster = observed_roster(now) if cached else bound_roster()
         portfolio.apply_switch(mem, now)
         released = portfolio.apply_release(d, mem, now)
         # Make a focus decision visible before potentially slow desk I/O.
@@ -209,7 +249,7 @@ def tick(d=None, now=None):
             print("allocator heartbeat deferred:", type(exc).__name__, str(exc)[:200], flush=True)
         # Read the cheap snapshot ourselves, independent of slow Executive.
         try:
-            snapshot = frontier.refresh()
+            snapshot = frontier.load(now) if cached else frontier.refresh()
         except Exception as exc:
             snapshot = {}
             print("allocator frontier unavailable:", exc, flush=True)
@@ -238,7 +278,7 @@ def tick(d=None, now=None):
 
 if __name__ == "__main__":
     try:
-        print(json.dumps(posting_tick() if "--posting" in sys.argv[1:] else tick()), flush=True)
+        print(json.dumps(observe() if "--observe" in sys.argv[1:] else posting_tick() if "--posting" in sys.argv[1:] else tick(cached="--cached" in sys.argv[1:])), flush=True)
     except Exception as exc:
         print("allocator tick deferred:", exc, file=sys.stderr, flush=True)
         sys.exit(1)
