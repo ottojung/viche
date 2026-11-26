@@ -651,7 +651,11 @@ def main():
         sketch=open(sf+".sketch").read(65537)
     except OSError:
         sketch=""
-    solution=sketch_witness(p,sketch) or heuristic(p) or two_order(p) or small_formula(p) or synth_sat(p)
+    try:
+        from . import anneal
+    except ImportError:
+        import anneal
+    solution=sketch_witness(p,sketch) or heuristic(p) or two_order(p) or small_formula(p) or anneal.search(p,sys.modules[__name__]) or synth_sat(p)
     if solution is None:
         print("bounded promise synthesis refused",file=sys.stderr);return 3
     if not valid(p,solution):raise ValueError("independent witness audit failed")

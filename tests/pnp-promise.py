@@ -32,6 +32,15 @@ class Promise(unittest.TestCase):
         try:import pysat
         except ImportError:self.skipTest("pysat unavailable")
         self.assertTrue(g.valid(p,g.synth_sat(p,.5)))
+    def test_compiled_anneal_semantics(self):
+        from missions.pnp.lbcert.generators.promise import anneal
+        from unittest.mock import patch
+        p=("matrix",2,2,1,1,"Monotone2")
+        if anneal.executable() is not None:
+            self.assertTrue(g.valid(p,anneal.search(p,g,.5)))
+        with patch.object(anneal,"executable",return_value=None):
+            self.assertIsNone(anneal.search(p,g))
+        self.assertIsNone(anneal.search(("matrix",10,10,2,1,"FanInTwo"),g))
     def test_corpus_literal(self):
         p=("matrix",2,2,1,1,"Monotone2")
         self.assertEqual(g.lean_witness(p,"def w := ⟨[⟨.and, [0, 2]⟩], 4⟩"),([("and",[0,2])],4))

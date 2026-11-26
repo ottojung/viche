@@ -29,3 +29,21 @@ valid six-input witnesses (advertised 4719 points, not credited points). Exact
 standalone verification and normal proof-of publication are separate stages.
 A subsequent sharing-aware pilot found 68 additional witnesses on its first
 200 targets. The desk's actual frozen lease price and eventual accepted score are distinct.
+
+### Optional bit-parallel stochastic synthesis
+
+The fallback annealer compiles a process-private C executable when a C compiler
+is available. It searches only topologically valid bounded circuits, evaluates
+their truth tables in one 64-bit word, and mutates/recombines a small population
+of candidates. The ordinary Python evaluator rechecks every returned witness,
+and the existing exact Lean compiler receipt is still mandatory. An unavailable
+compiler, timeout, or failure is an unknown result, never a lower bound.
+The batch attempt version includes both the Python wrapper and C source.
+
+A November 26 pilot on marceline-dev tested 40 known-solvable six-input
+two-lit instances with their supplied witnesses withheld: the initial
+compiled search recovered 23 within 0.5 seconds each, versus 4 using only
+the standalone Python heuristic. This is not a comparison with the entire
+existing solver (which also uses sketches, formula tables and DAG/SAT methods).
+On the harder remaining unclaimed rows, the exploratory searches did not
+find a witness; do not interpret the pilot as a promised conversion rate.
