@@ -28,6 +28,22 @@ class TestReady(unittest.TestCase):
             self.assertFalse(ready.inventory({})["available"])
             p.write_bytes(b"changed")
             self.assertIsNone(ready.verified(gid))
+    def test_uncontested_first_but_contested_not_discarded(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
+            root=ready.directory();root.mkdir(parents=True)
+            rows={}
+            for gid,points in (("L-meta-123",100),("L-meta-124",20)):
+                data=gid.encode()
+                (root/(gid+".lean")).write_bytes(data)
+                self.assertTrue(ready.record(gid,{"status":"ok","compiled":True,"sha256":hashlib.sha256(data).hexdigest(),"checked_base":"a"*40},data))
+                rows[gid]={"points":points,"held":0,"parallel":2}
+            cache=root.parent/"gaps-cache.json"
+            cache.write_text(json.dumps({"gaps":[{"id":"L-meta-123","pr_open":2},{"id":"L-meta-124","pr_open":0}]}))
+            Path(str(cache)+".meta").write_text(json.dumps({"at":time.time()}))
+            snap={"complete":True,"gaps":rows}
+            self.assertEqual(ready.offers(snap,{},time.time()),["L-meta-124","L-meta-123"])
+            inv=ready.inventory(snap)
+            self.assertEqual((inv["uncontested_checked"],inv["contested_checked"]),(1,1))
     def test_memory_with_active_cache_and_tmpfs(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);M=1024*1024

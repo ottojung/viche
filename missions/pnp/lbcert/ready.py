@@ -72,19 +72,9 @@ def offers(snapshot, mem, now):
         if current is None:return []
         rows=current["gaps"]
         open_now=set(rows)
-    # A recent public gaps cache identifies competing open PRs; an expired or
-    # unavailable cache is not negative evidence. No extra network request.
-    competing=set()
-    try:
-        cache=Path(config.STATE_ROOT)/"lbcert"/"gaps-cache.json"
-        meta=json.loads(Path(str(cache)+".meta").read_text())
-        if 0<=now-meta["at"]<120:
-            competing={q["id"] for q in json.loads(cache.read_text())["gaps"] if q.get("pr_open")}
-    except (OSError,ValueError,KeyError,TypeError):
-        pass
+    competing=competition(now)
     for path in paths:
         gid=path.name[:-13]
-        if gid in competing:continue
         if now-attempts.get(gid,0)<120 or desk.retry_until(gid)>now:
             continue
         if open_now is not None and gid not in open_now:
@@ -99,9 +89,22 @@ def offers(snapshot, mem, now):
             continue
         m=verified(gid)
         if m:
-            out.append((row.get("held") or 0, -(row.get("points") or 0), -m["at"], gid))
-    return [gid for _,_,_,gid in sorted(out)]
+            out.append((competing.get(gid,1),row.get("held") or 0, -(row.get("points") or 0), -m["at"], gid))
+    return [gid for _,_,_,_,gid in sorted(out)]
 
+
+
+def competition(now):
+    """Recent public PR counts, no extra network request; unknown is unknown."""
+    try:
+        cache=Path(config.STATE_ROOT)/"lbcert"/"gaps-cache.json"
+        meta=json.loads(Path(str(cache)+".meta").read_text())
+        if 0<=now-meta["at"]<120:
+            return {q["id"]:q["pr_open"] for q in json.loads(cache.read_text())["gaps"]
+                    if type(q.get("pr_open")) is int and q["pr_open"]>=0}
+    except (OSError,ValueError,KeyError,TypeError):
+        pass
+    return {}
 
 def inventory(snapshot,now=None):
     """A read-only opportunity estimate; no desk request or credit assertion."""
@@ -110,10 +113,15 @@ def inventory(snapshot,now=None):
         return {"available":False,"reason":"complete fresh frontier unavailable"}
     ids=offers(snapshot,{},now)
     rows=snapshot["gaps"]
+    competitors=competition(now)
+    uncontested=[g for g in ids if competitors.get(g)==0]
+    contested=[g for g in ids if competitors.get(g,0)>0]
     values=[rows[g].get("points") for g in ids]
     known=[p for p in values if type(p) is int and p>=0]
     return {"available":True,"eligible_checked":len(ids),
             "advertised_points_known":sum(known),"priced_candidates":len(known),
+            "uncontested_checked":len(uncontested),"contested_checked":len(contested),
+            "competition_unknown":len(ids)-len(uncontested)-len(contested),
             "top":[{"gap":g,"advertised_points":rows[g].get("points"),
-                    "held":rows[g].get("held")} for g in ids[:5]],
+                    "held":rows[g].get("held"),"competing_prs":competitors.get(g)} for g in ids[:5]],
             "note":"Advertised prices, not guaranteed leases or credited points."}
