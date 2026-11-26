@@ -127,7 +127,7 @@ def index():
 
 def compile_slot():
     from compile_admission import slot
-    return slot(12288, timeout=180)
+    return slot(7168, timeout=180)
 
 def compiles(text):
     with tempfile.TemporaryDirectory() as d, open(os.path.join(STATE, 'tree.lock'), 'w') as lk:
@@ -136,7 +136,7 @@ def compiles(text):
             f = os.path.join(d, 'Candidate.lean')
             open(f, 'w').write(text)
             try:
-                p = run_group(['lake', 'env', 'lean', '-M', '11776', f], cwd=TREE + '/lean', env=ENV,
+                p = run_group(['lake', 'env', 'lean', '-M', '6500', f], cwd=TREE + '/lean', env=ENV,
                                    capture_output=True, text=True, timeout=600)
             except subprocess.TimeoutExpired:
                 return False, 'timeout'

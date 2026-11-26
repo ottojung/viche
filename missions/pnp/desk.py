@@ -25,7 +25,7 @@ def retry_path():
 
 def _retry_data():
     try:
-        obj=json.loads(open(retry_path()).read())
+        with open(retry_path()) as f:obj=json.load(f)
         return obj if isinstance(obj,dict) else {}
     except (OSError,ValueError,TypeError):
         return {}
@@ -74,7 +74,7 @@ def record_capacity(data):
 def capacity():
     """Last desk-reported earned capacity, retained until a newer observation."""
     try:
-        d = json.loads(open(_capacity_path()).read())
+        with open(_capacity_path()) as f:d=json.load(f)
         if type(d["capacity"]) is int and d["capacity"] >= 1:
             return d["capacity"]
     except (OSError, ValueError, KeyError, TypeError):

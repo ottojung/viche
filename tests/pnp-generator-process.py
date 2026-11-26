@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from missions.pnp.lbcert import process
@@ -23,9 +24,20 @@ class TestProcess(unittest.TestCase):
             code = ("import subprocess,sys,time,pathlib; "
                     "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(90)']); "
                     "pathlib.Path(sys.argv[1]).write_text(str(p.pid));time.sleep(90)")
-            with self.assertRaises(subprocess.TimeoutExpired):
-                process.run([sys.executable,"-c",code,str(marker)],timeout=1,
-                            capture_output=True)
+            original=subprocess.Popen.communicate
+            def after_start(proc,*args,**kw):
+                if kw.get("timeout") is not None:
+                    deadline=time.monotonic()+30
+                    while not marker.exists() and time.monotonic()<deadline:
+                        time.sleep(.02)
+                    self.assertTrue(marker.exists(),"grandchild did not start")
+                return original(proc,*args,**kw)
+            # Start measuring the timeout once the grandchild actually exists.
+            # A loaded host may delay interpreter startup by over one second.
+            with patch.object(subprocess.Popen,"communicate",after_start):
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    process.run([sys.executable,"-c",code,str(marker)],timeout=1,
+                                capture_output=True)
             pid=int(marker.read_text())
             for _ in range(100):
                 if dead(pid):break
@@ -44,7 +56,7 @@ class TestProcess(unittest.TestCase):
             env=dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
             p=subprocess.Popen([sys.executable,str(script),str(marker)],env=env)
             try:
-                for _ in range(150):
+                for _ in range(1500):
                     if marker.exists():break
                     time.sleep(.02)
                 self.assertTrue(marker.exists())

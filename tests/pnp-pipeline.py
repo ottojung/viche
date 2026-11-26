@@ -867,6 +867,11 @@ class TestDeskNextGap(unittest.TestCase):
 
     def setUp(self):
         self.d = desk.Desk(min_interval=0, sleep=lambda _: None)
+        tmp=tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        scoped=mock.patch.object(desk,"retry_path",return_value=os.path.join(tmp.name,"retry.json"))
+        scoped.start()
+        self.addCleanup(scoped.stop)
 
     def call(self, data):
         with mock.patch.object(self.d, "_call", return_value=(200, data)):
@@ -879,6 +884,12 @@ class TestDeskNextGap(unittest.TestCase):
             "retry_after_s": 300,
         }))
 
+    def test_documented_cooldown_blocks_wire_requests(self):
+        self.assertIsNone(self.call({"gap":None,"retry_after_s":60}))
+        with mock.patch.object(self.d,"_call") as call:
+            self.assertIsNone(self.d._next_gap())
+            call.assert_not_called()
+
     def test_both_null_keys_is_no_gap(self):
         self.assertIsNone(self.call({"gap": None, "lease": None}))
 
@@ -888,7 +899,7 @@ class TestDeskNextGap(unittest.TestCase):
                 with mock.patch.object(self.d, "_call", return_value=(200, {"gap": None})) as call:
                     self.assertIsNone(self.d._next_gap(**flags))
                 self.assertEqual(call.call_args[0][1], "/next")
-                expected = {"handle": config.DESK_HANDLE}
+                expected = {"handle": config.DESK_HANDLE,"model":"unknown"}
                 expected.update({k: "1" for k in flags})
                 self.assertEqual(call.call_args[0][2], expected)
 

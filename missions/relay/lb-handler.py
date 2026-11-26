@@ -47,7 +47,7 @@ def run_group(argv, timeout=None, **kw):
         raise
     return subprocess.CompletedProcess(argv, p.returncode, out, err)
 
-def compile_slot(rss=12288):
+def compile_slot(rss=7168):
     from compile_admission import slot
     return slot(rss, timeout=180)
 
@@ -72,9 +72,9 @@ if p.get('check_file_gz_b64'):
         os.makedirs(st, exist_ok=True)
         with open(os.path.join(st, 'tree.lock'), 'w') as lk:
             fcntl.flock(lk, fcntl.LOCK_SH)
-            # Most checks need far less than the 12 GiB reservation, which admitted one compile at a
+            # Most checks need far less than the 7 GiB reservation, which admitted one compile at a
             # time: try a 4 GiB slot first and only a memory failure takes the large one.
-            for reserve, cap in ((4096, '3584'), (12288, '11776')):
+            for reserve, cap in ((4096, '3584'), (7168, '6500')):
                 with compile_slot(reserve):
                     env = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', ''))
                     try:
@@ -137,7 +137,7 @@ with tempfile.TemporaryDirectory() as d:
                 fcntl.flock(lk, fcntl.LOCK_SH)
                 with compile_slot():
                     env = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', ''))
-                    c = run_group(['lake', 'env', 'lean', '-M', '11776', out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
+                    c = run_group(['lake', 'env', 'lean', '-M', '6500', out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
                                        capture_output=True, text=True, timeout=900)
                     compiled_base = subprocess.check_output(['git','-C','/home/lubko/pnp-verify-2171/up2','rev-parse','HEAD'], text=True, timeout=5).strip()
             if c.returncode != 0 or 'error' in c.stdout:
