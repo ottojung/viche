@@ -225,6 +225,78 @@ def signed_commit(worktree, base_sha, message, signer=None, correction=False):
     return sha
 
 
+def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
+    """The same single signed commit as fresh_worktree + pin_candidate + signed_commit, built with
+    plumbing in the bare mirror (temporary index, no checkout of the whole repository): about 1 s
+    instead of 15-20 s on billy-dev.  Only for a new proof file on a pinned base; corrections keep
+    the worktree path.  The local branch ref is (re)pointed at the new commit; the remote branch
+    is checked by the publisher before any push, exactly as before."""
+    import re
+    if not config.BRANCH_RE.match(branch):
+        raise GitError("unsafe branch name")
+    if not re.fullmatch(r"[0-9a-f]{40}", base_sha or ""):
+        raise GitError("base is not a full SHA")
+    if not path.startswith("lean/") or ".." in path.split("/"):
+        raise GitError("candidate path is outside lean/")
+    gd = "--git-dir=" + MIRROR
+    if run(["git", gd, "cat-file", "-e", base_sha + ":" + path], check=False).returncode == 0:
+        raise GitError("candidate path already exists at base")
+    p = subprocess.run(["git", gd, "hash-object", "-w", "--stdin"], input=candidate_bytes,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, cwd=config.CACHE_DIR)
+    if p.returncode != 0:
+        raise GitError("hash-object failed: " + p.stderr.decode()[:300])
+    blob = p.stdout.decode().strip()
+    fd, index = tempfile.mkstemp(prefix="pnp-index-", dir=config.CACHE_DIR)
+    os.close(fd)
+    os.unlink(index)
+    env = dict(os.environ, GIT_INDEX_FILE=index,
+               GIT_AUTHOR_NAME=config.AUTHOR_NAME, GIT_AUTHOR_EMAIL=config.AUTHOR_EMAIL,
+               GIT_COMMITTER_NAME=config.AUTHOR_NAME, GIT_COMMITTER_EMAIL=config.AUTHOR_EMAIL)
+
+    def g(*argv, **kw):
+        q = subprocess.run(["git", gd] + list(argv), env=env, cwd=config.CACHE_DIR, text=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=90, **kw)
+        if q.returncode != 0:
+            raise GitError("git %s failed: %s" % (argv[0], q.stderr.strip()[:400]))
+        return q.stdout.strip()
+    try:
+        g("read-tree", base_sha)
+        g("update-index", "--add", "--cacheinfo", "100644,%s,%s" % (blob, path))
+        tree = g("write-tree")
+        sha = g("-c", "user.signingkey=" + config.SIGNING_KEY, "commit-tree", tree, "-p", base_sha,
+                "-S" + config.SIGNING_KEY, "-m", message)
+    finally:
+        try:
+            os.unlink(index)
+        except OSError:
+            pass
+    changed = run(["git", gd, "diff-tree", "--no-commit-id", "--name-status", "-r", base_sha, sha]).stdout.splitlines()
+    if changed != ["A\t" + path]:
+        raise GitError("commit is not exactly one added proof file: %r" % changed)
+    fmt = run(["git", gd, "log", "-1", "--format=%G?%n%GF%n%an%n%ae%n%cn%n%ce", sha]).stdout.splitlines()
+    check_commit_fields(fmt)
+    if run(["git", gd, "verify-commit", sha], check=False).returncode != 0:
+        raise GitError("git verify-commit failed")
+    run(["git", gd, "update-ref", "refs/heads/" + branch, sha])
+    return sha
+
+
+def sync_fork_base(latest=None):
+    """Keep the fork's object store current with upstream main by advancing one fork branch
+    (pnp/upstream-sync, never a PR head) to upstream main, off the critical path.  A proof
+    branch then pushes three new objects instead of every upstream commit since our last push
+    (the mirror's main was 9123 commits behind upstream on 2026-11-26)."""
+    latest = latest or run(["git", "--git-dir=" + MIRROR, "rev-parse", "refs/remotes/upstream/main"]).stdout.strip()
+    p = run(["git", "--git-dir=" + MIRROR, "push", "--quiet", fork_url(),
+             latest + ":refs/heads/" + SYNC_BRANCH], check=False)
+    if p.returncode != 0:
+        raise GitError("fork sync push failed: " + p.stderr.strip()[:300])
+    return latest
+
+
+SYNC_BRANCH = "pnp/upstream-sync"
+
+
 def push_branch(branch, pusher=None):
     """Non-force push of one branch to the fork only."""
     if pusher is not None:

@@ -152,6 +152,8 @@ def acquire(args, d, report=True):
             state.event(gid, "acquired", {"hard": bool(args.hard),
                                           "another": bool(args.another),
                                           "reacquired": True})
+            from . import ledger
+            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True)
             if report:
                 _printer({"gap": gid, "file": rec["path"],
                           "module": rec["module"], "lease": lease,
@@ -181,6 +183,8 @@ def acquire(args, d, report=True):
                        config.LEASE_TTL_SECONDS)
     state.event(gid, "acquired", {"hard": bool(args.hard),
                                   "another": bool(args.another)})
+    from . import ledger
+    ledger.mark("leased", gid, proof_of=bool(proof_of))
     if report:
         _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
                   "lease": lease, "headline": config.HEADER})

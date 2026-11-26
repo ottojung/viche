@@ -17,6 +17,42 @@ os.makedirs(STATE, exist_ok=True)
 sys.path.insert(0, TOOLS)
 import sibling  # noqa: E402
 
+
+def _descendants(pid):
+    out, todo = [], [pid]
+    while todo:
+        q = todo.pop()
+        try:
+            for t in os.listdir('/proc/%d/task' % q):
+                with open('/proc/%d/task/%s/children' % (q, t)) as f:
+                    kids = [int(x) for x in f.read().split()]
+                out += kids
+                todo += kids
+        except (OSError, ValueError):
+            pass
+    return out
+
+
+def run_group(argv, timeout=None, **kw):
+    """subprocess.run, but a timeout kills the child's whole process tree: `lake env lean` and
+    generator scripts leave `lean`/`cadical` running when only the parent is killed (two orphaned
+    lean compiles ran for 2-2.6 h on 2026-11-26).  The child stays in our process group, so the
+    relay's group kill of this handler still reaches it."""
+    import signal
+    kw.pop('capture_output', None)
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw)
+    try:
+        out, err = p.communicate(timeout=timeout)
+    except BaseException:
+        for q in [p.pid] + _descendants(p.pid):
+            try:
+                os.kill(q, signal.SIGKILL)
+            except OSError:
+                pass
+        p.communicate()
+        raise
+    return subprocess.CompletedProcess(argv, p.returncode, out, err)
+
 ENV = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', '/usr/bin:/bin'))
 ALLOWED = re.compile(r'^Mathlib(\.[A-Za-z][A-Za-z0-9_]*)*$')
 
@@ -83,7 +119,7 @@ def compiles(text):
             f = os.path.join(d, 'Candidate.lean')
             open(f, 'w').write(text)
             try:
-                p = subprocess.run(['lake', 'env', 'lean', '-M', '11776', f], cwd=TREE + '/lean', env=ENV,
+                p = run_group(['lake', 'env', 'lean', '-M', '11776', f], cwd=TREE + '/lean', env=ENV,
                                    capture_output=True, text=True, timeout=600)
             except subprocess.TimeoutExpired:
                 return False, 'timeout'

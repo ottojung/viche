@@ -62,8 +62,8 @@ def status(gid):
 
 
 def build():
-    r = urllib.request.Request(DESK, headers={'User-Agent': 'viche-town'})
-    gaps = [g for g in json.loads(urllib.request.urlopen(r, timeout=60).read())['gaps']
+    from .lbcert import live
+    gaps = [g for g in json.loads(live.gaps_bytes(timeout=60))['gaps']   # shared conditional fetch
             if isinstance(g.get('statement'), str)]
     head, idx = sibling.index(gitctl.MIRROR, os.path.join(config.STATE_ROOT, 'lbcert'))
     mod_sk = {m: sk for sk, ms in idx.items() for m in ms}

@@ -7,7 +7,7 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio
+from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio, support
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
@@ -137,6 +137,49 @@ def fill(d, mem, now, snapshot):
             else:
                 break
     return acquired
+
+
+def proof_of_now(gid, d=None, now=None):
+    """Event-driven proof-of: called the moment a step gets an exact compiler receipt
+    (lbcert.ready.record) instead of waiting for the next tick.  If every slot is taken, the
+    oldest non-focus research lease without a candidate or PR makes room: a checked proof is
+    worth more than a research attempt.  Returns a short outcome string."""
+    from .lbcert import ready
+    d = d or desk.Desk()
+    now = time.time() if now is None else now
+    if not ready.verified(gid):
+        return "no receipt"
+    with cli.acquisition_lock():
+        held = cli.held_records()
+        if any(r["gap_id"] == gid for r in held):
+            fastlane.submit_ready(gid)
+            return "already held"
+        if len(held) >= desk.lease_limit():
+            chosen = focus.current()
+            research = sorted((r for r in held if support.active(r, now) and not fastlane.concrete(r)
+                               and not r.get("queued_lease") and not r.get("candidate_digest")
+                               and not r.get("pr_number")
+                               and not (chosen and focus.key(chosen) == focus.key(r))),
+                              key=lambda r: r.get("lease_obtained_at") or now)
+            freed = False
+            for r in research:
+                if fastlane.release(d, {}, r["gap_id"], "out_of_time",
+                                    "slot for a checked proof of %s (proof-of acquisition)" % gid):
+                    freed = True
+                    break
+            if not freed:
+                return "no free slot"
+        held = cli.held_records()
+        before = {r["gap_id"] for r in held}
+        result = cli.acquire(SimpleNamespace(hard=False, another=bool(held), proof_of=gid), d, report=False)
+        after = {r["gap_id"] for r in cli.held_records()}
+    if result == 0 and gid in after - before:
+        try:
+            fastlane.submit_ready(gid)
+        except Exception as exc:
+            print("proof-of publication deferred:", str(exc)[:200], flush=True)
+        return "acquired"
+    return "desk declined (%s)" % result
 
 
 def tick(d=None, now=None):

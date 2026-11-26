@@ -34,6 +34,8 @@ def record(gid, result, data):
     state.atomic_write(str(marker(gid)),json.dumps({
         "gap":gid,"digest":digest,"base":result["checked_base"],
         "request":result.get("id"),"at":time.time()},sort_keys=True))
+    from .. import ledger
+    ledger.mark("checked",gid,base=result["checked_base"])
     return True
 
 

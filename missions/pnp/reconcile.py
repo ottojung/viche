@@ -137,7 +137,12 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
         # from its preserved proof file and pinned commit.
         candidate = os.path.join(rec.get("worktree") or "",
                                  rec.get("path") or "")
-        if rec.get("worktree") and os.path.isfile(candidate):
+        if not rec.get("worktree"):
+            # Fast publication (gitctl.fast_signed_commit) has no checkout; the publisher's own
+            # validated copy of the exact bytes is kept beside the state record.
+            from . import jobs
+            candidate = jobs.candidate_path(gap_id)
+        if os.path.isfile(candidate):
             try:
                 from . import publish
                 published = publish.publish(
@@ -196,10 +201,14 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
                         # in PR_OPEN forever (e.g. L-meta-10167). A checker success
                         # without a merge is still handled below and stays nonterminal.
                         latest.update(state="ACCEPTED", external_verdict="ACCEPTED", queued_lease=None)
+                        from . import ledger
+                        ledger.mark("verdict", gap_id, verdict="ACCEPTED")
                     elif pr.get("state") == "closed" and not pr.get("merged"):
                         latest.update(state="STALE", failure_reason="PR closed without merge", queued_lease=None)
                     elif verdict in ("REJECTED", "REFUSED"):
                         latest.update(state="REJECTED", external_verdict=verdict, queued_lease=None)
+                        from . import ledger
+                        ledger.mark("verdict", gap_id, verdict=verdict)
                     elif verdict == "FAULT":
                         latest.update(external_verdict="FAULT")
                     elif verdict == "ACCEPTED":

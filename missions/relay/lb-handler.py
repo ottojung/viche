@@ -11,9 +11,45 @@ import base64, gzip, hashlib, io, json, os, re, subprocess, sys, tempfile
 TOOLS = '/home/lubko/pnp-infra/lbgen'
 ENGINES = ['/home/lubko/pnp-infra/engine7281.lean', '/home/lubko/pnp-infra/engine7281.pruned.lean']
 
-def compile_slot():
+
+def _descendants(pid):
+    out, todo = [], [pid]
+    while todo:
+        q = todo.pop()
+        try:
+            for t in os.listdir('/proc/%d/task' % q):
+                with open('/proc/%d/task/%s/children' % (q, t)) as f:
+                    kids = [int(x) for x in f.read().split()]
+                out += kids
+                todo += kids
+        except (OSError, ValueError):
+            pass
+    return out
+
+
+def run_group(argv, timeout=None, **kw):
+    """subprocess.run, but a timeout kills the child's whole process tree: `lake env lean` and
+    generator scripts leave `lean`/`cadical` running when only the parent is killed (two orphaned
+    lean compiles ran for 2-2.6 h on 2026-11-26).  The child stays in our process group, so the
+    relay's group kill of this handler still reaches it."""
+    import signal
+    kw.pop('capture_output', None)
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw)
+    try:
+        out, err = p.communicate(timeout=timeout)
+    except BaseException:
+        for q in [p.pid] + _descendants(p.pid):
+            try:
+                os.kill(q, signal.SIGKILL)
+            except OSError:
+                pass
+        p.communicate()
+        raise
+    return subprocess.CompletedProcess(argv, p.returncode, out, err)
+
+def compile_slot(rss=12288):
     from compile_admission import slot
-    return slot(12288, timeout=180)
+    return slot(rss, timeout=180)
 
 p = json.load(sys.stdin)
 res = {'module': p['module'], 'status': 'error', 'engine': None, 'log': ''}
@@ -36,16 +72,21 @@ if p.get('check_file_gz_b64'):
         os.makedirs(st, exist_ok=True)
         with open(os.path.join(st, 'tree.lock'), 'w') as lk:
             fcntl.flock(lk, fcntl.LOCK_SH)
-            with compile_slot():
-                env = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', ''))
-                try:
-                    c = subprocess.run(['lake', 'env', 'lean', '-M', '11776', out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
-                                       capture_output=True, text=True, timeout=int(p.get('timeout', 900)))
-                    checked_base = subprocess.check_output(['git','-C','/home/lubko/pnp-verify-2171/up2','rev-parse','HEAD'], text=True, timeout=5).strip()
-                    text = c.stdout + c.stderr
-                    ok = c.returncode == 0 and 'error' not in c.stdout and 'sorry' not in text
-                except subprocess.TimeoutExpired:
-                    ok, text = False, 'timeout'
+            # Most checks need far less than the 12 GiB reservation, which admitted one compile at a
+            # time: try a 4 GiB slot first and only a memory failure takes the large one.
+            for reserve, cap in ((4096, '3584'), (12288, '11776')):
+                with compile_slot(reserve):
+                    env = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', ''))
+                    try:
+                        c = run_group(['lake', 'env', 'lean', '-M', cap, out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
+                                           capture_output=True, text=True, timeout=int(p.get('timeout', 900)))
+                        checked_base = subprocess.check_output(['git','-C','/home/lubko/pnp-verify-2171/up2','rev-parse','HEAD'], text=True, timeout=5).strip()
+                        text = c.stdout + c.stderr
+                        ok = c.returncode == 0 and 'error' not in c.stdout and 'sorry' not in text
+                    except subprocess.TimeoutExpired:
+                        ok, text = False, 'timeout'
+                if ok or 'memory' not in text.lower():
+                    break
     res.update(status='ok' if ok else 'error', engine='check', log=text[-1500:],
                bytes=len(data), sha256=hashlib.sha256(data).hexdigest(), checked_base=checked_base)
     print(json.dumps(res))
@@ -68,12 +109,12 @@ with tempfile.TemporaryDirectory() as d:
         if mono:
             # live-set instantiation of the merged L-meta-13175 first (seconds); monofam's lb_cert after
             gid = p['module'].rsplit('.', 1)[-1].replace('_', '-')
-            r = subprocess.run([sys.executable, '/home/lubko/pnp-infra/onenot/monosix.py', gid, sf, out],
+            r = run_group([sys.executable, '/home/lubko/pnp-infra/onenot/monosix.py', gid, sf, out],
                                cwd=TOOLS, capture_output=True, text=True, timeout=900)
             if r.returncode != 0:
                 r = None
         if r is None:
-            r = subprocess.run(cmd, cwd=TOOLS, capture_output=True, text=True, timeout=1700)
+            r = run_group(cmd, cwd=TOOLS, capture_output=True, text=True, timeout=1700)
         if onenot:
             mono = True    # same compile gate below
             if r.returncode == 3:
@@ -96,7 +137,7 @@ with tempfile.TemporaryDirectory() as d:
                 fcntl.flock(lk, fcntl.LOCK_SH)
                 with compile_slot():
                     env = dict(os.environ, PATH=os.path.expanduser('~/.elan/bin') + ':' + os.environ.get('PATH', ''))
-                    c = subprocess.run(['lake', 'env', 'lean', '-M', '11776', out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
+                    c = run_group(['lake', 'env', 'lean', '-M', '11776', out], cwd='/home/lubko/pnp-verify-2171/up2/lean', env=env,
                                        capture_output=True, text=True, timeout=900)
                     compiled_base = subprocess.check_output(['git','-C','/home/lubko/pnp-verify-2171/up2','rev-parse','HEAD'], text=True, timeout=5).strip()
             if c.returncode != 0 or 'error' in c.stdout:

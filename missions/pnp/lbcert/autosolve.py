@@ -49,10 +49,11 @@ CANDS = os.path.join(WORK, 'cands')
 DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
-POLL = 20
+POLL = 10            # gaps.json is a conditional GET now (304 when unchanged)
 REMOTE_WORKERS = 3   # expensive lower-bound search
 PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound search
 PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
+LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
 
@@ -62,8 +63,44 @@ def log(*a):
 
 
 def get(url):
+    if url == DESK:
+        import live
+        return live.gaps_bytes()
     r = urllib.request.Request(url, headers={'User-Agent': 'viche-town'})
     return urllib.request.urlopen(r, timeout=40).read()
+
+
+SEEN = os.path.join(WORK, 'seen.json')
+
+
+def note_seen(ids):
+    """Ledger stage 'seen': the first poll in which a step is open.  The first run records the
+    current frontier silently, so only steps posted afterwards get a seen time."""
+    from missions.pnp import ledger
+    try:
+        seen = set(json.load(open(SEEN)))
+        first = False
+    except (OSError, ValueError):
+        seen, first = set(), True
+    new = set(ids) - seen
+    if not new:
+        return
+    if not first:
+        for gid in sorted(new):
+            ledger.mark('seen', gid)
+    tmp = SEEN + '.tmp'
+    json.dump(sorted(seen | new), open(tmp, 'w'))
+    os.replace(tmp, SEEN)
+
+
+def lease_now(gid):
+    """A step just got an exact compiler receipt: ask the desk for it (proof-of) now, not at the
+    allocator's next tick (30 s sleep plus the tick itself)."""
+    try:
+        from missions.pnp import allocator
+        log('lease now', gid, allocator.proof_of_now(gid))
+    except Exception as exc:
+        log('lease now deferred', gid, type(exc).__name__, str(exc)[:160])
 
 
 def ensure_engines():
@@ -120,6 +157,14 @@ def generate(g, engines):
     gid, mod = g['id'], g['module']
     if not retryable(gid):
         return
+    # Record of every lb_cert run to 2026-11-26: 252 'ok' all at <= 11 inputs; at >= 12 inputs
+    # every run ended toobig/error/relay_error after 980-1780 s, holding a relay slot each
+    # (five such searches on 24-42 input edge-function rows were running at once).
+    m = re.search(r'HasCircuitSize (\d+) ', g['statement'])
+    if m and int(m.group(1)) > LB_MAX_INPUTS:
+        write_status(gid, 'toobig - precheck inputs=%s > %d' % (m.group(1), LB_MAX_INPUTS))
+        log('generated', gid, 'toobig precheck inputs', m.group(1))
+        return
     sf = os.path.join(CANDS, gid + '.stmt')
     open(sf, 'w').write(g['statement'])
     out = os.path.join(CANDS, gid + '.lean')
@@ -160,9 +205,12 @@ def generate(g, engines):
                     break
         finally:
             LOCAL_FALLBACK.release()
+    from missions.pnp import ledger
+    ledger.mark('generated', gid, status=r.get('status'), secs=round(time.time() - t0), where=where)
     if r.get('status')=='ok' and r.get('compiled'):
         from missions.pnp.lbcert import ready
-        ready.record(gid,r,open(out,'rb').read())
+        if ready.record(gid,r,open(out,'rb').read()) and not defer:
+            lease_now(gid)
     st = r.get('status')
     # Generation success is not an exact Lean compile receipt. Existing
     # checked/compiled marker semantics stay available to the bulk lane.
@@ -250,8 +298,10 @@ def gen_plugin(g, name, sha):
         return
     if crc == 0:
         os.replace(out + '.gen', out)
-        ready.record(gid,dict(res,status='ok',compiled=True),data)
+        recorded = ready.record(gid,dict(res,status='ok',compiled=True),data)
         write_status(gid, 'ok plugin %s %s marceline compiled secs=%.0f' % (name, sha, time.time() - t0))
+        if recorded:
+            lease_now(gid)
     else:
         write_status(gid, 'failed plugin %s %s compile: %s' % (name, sha, (res.get('log') or '').replace('\n', ' ')[-160:]))
     log('plugin', name, gid, 'ok' if crc == 0 else 'compile_error', '%.0fs' % (time.time() - t0))
@@ -279,6 +329,7 @@ def check_prepared(g):
         if ready.record(gid,dict(result,status='ok',compiled=True),data):
             log('prepared exact proof',gid,result.get('checked_base'))
             fastlane.submit_ready(gid)
+            lease_now(gid)
     else:
         log('prepared check',gid,code,result.get('status'),str(result.get('log',''))[-180:])
 
@@ -368,7 +419,11 @@ def sweep_loop():
     last_radar = 0
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
-            gitctl.ensure_mirror()      # fresh upstream/main: new merges are new siblings
+            latest = gitctl.ensure_mirror()      # fresh upstream/main: new merges are new siblings
+            try:
+                gitctl.sync_fork_base(latest)    # proof pushes then send only their own objects
+            except Exception as e:
+                log('fork sync deferred', type(e).__name__, str(e)[:160])
             if time.time() - last_radar > 600:
                 last_radar = time.time()
                 from missions.pnp import radar   # family radar + tool/method backlogs
@@ -434,6 +489,8 @@ def main():
             if open_now is not None:
                 gaps = [g for g in gaps if g['id'] in open_now]
             concrete = [g for g in gaps if isinstance(g.get('statement'), str)]
+            if open_now is not None:
+                note_seen(open_now)
             held = held_ids()
             pos, twins, desk = {}, {}, {}
             fam = {}

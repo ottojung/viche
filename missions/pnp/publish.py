@@ -93,6 +93,8 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             build_runner=None, signer=None, pusher=None, known_prs=None):
     """Publish a complete statically validated candidate immediately. Idempotent."""
     desk = desk or desk_mod.Desk()
+    from . import ledger
+    timer = ledger.Timer()
     git = git or gitctl
     gh = gh or github
     if not config.GAP_ID_RE.match(gap_id):
@@ -142,6 +144,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             _retry_later(gap_id, "lease renewal failed: %s" % e)
         state.update(gap_id, lease_expires_at=time.time() +
                      config.LEASE_TTL_SECONDS)
+    timer.lap("preflight")
 
     branch = rec.get("branch") or config.branch_for(gap_id)
     if not resume:
@@ -165,12 +168,21 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
                     _stop(gap_id, "correction requires the original open PR head")
                 state.update(gap_id, correction_from_sha=previous)
             state.update(gap_id, base_sha=base_sha, branch=branch)
-            worktree = git.fresh_worktree(gap_id, base_sha, branch)
-            state.update(gap_id, worktree=worktree)
-            if hasattr(git, "prepare_unpublished"):
+            # A new proof needs no checkout: build the signed commit with plumbing in the
+            # mirror (gitctl.fast_signed_commit, ~1 s instead of ~17 s of worktree work).
+            fast = not correction and signer is None and hasattr(git, "fast_signed_commit")
+            if fast:
+                worktree = None
+                state.update(gap_id, worktree=None)
+            else:
+                worktree = git.fresh_worktree(gap_id, base_sha, branch)
+                state.update(gap_id, worktree=worktree)
+            if not fast and hasattr(git, "prepare_unpublished"):
                 git.prepare_unpublished(worktree, branch, base_sha,
                                         previous if correction else None)
-            if correction:
+            if fast:
+                pass
+            elif correction:
                 git.pin_candidate(worktree, rec["path"], data, correction=True)
             else:
                 git.pin_candidate(worktree, rec["path"], data)
@@ -178,6 +190,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             raise
         except Exception as e:
             _retry_later(gap_id, "publication checkout unavailable: %s" % e)
+        timer.lap("mirror+stage")
         # No local build gate. Reuse exact managed evidence if available;
         # otherwise the signed revision is checked after PR creation.
         checked = evidence.matching(state.load(gap_id), digest, base_sha)
@@ -202,12 +215,15 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             if correction:
                 sha = git.signed_commit(worktree, base_sha, gap_id,
                                         signer=signer, correction=True)
+            elif worktree is None:
+                sha = git.fast_signed_commit(base_sha, branch, rec["path"], data, gap_id)
             else:
                 sha = git.signed_commit(worktree, base_sha, gap_id,
                                         signer=signer)
         except Exception as e:
             _stop(gap_id, "signed commit failed: %s" % e)
         state.clear_intent(gap_id)
+        timer.lap("beat+commit")
         if correction and not git.all_new_commits_signed(worktree, base_sha):
             _stop(gap_id, "a PR-range commit is unsigned or misattributed")
         expected_commits = (git.new_commits(worktree, base_sha) if correction
@@ -269,6 +285,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             _stop(gap_id, "pushed SHA differs from signed SHA")
     if state.load(gap_id)["state"] == "SIGNED":
         state.transition(gap_id, "PUSHED", commit_sha=sha)
+    timer.lap("push")
 
     try:
         ver = gh.commit_verification(sha)
@@ -279,6 +296,7 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
     if (ver.get("name") != config.AUTHOR_NAME or
             ver.get("email") != config.AUTHOR_EMAIL):
         _stop(gap_id, "GitHub commit identity mismatch; no PR opened")
+    timer.lap("verify")
 
     number = rec.get("pr_number") or rec.get("pending_pr_number") or gh.pr_exists_for(
         branch, gap_id, api=known_prs)
@@ -301,12 +319,16 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             _retry_later(gap_id, "PR creation failed; reconcile before retry: %s" % e)
         # Persist the observed number before any fallible validation call.
         state.update(gap_id, pending_pr_number=int(number), intent=None)
+    timer.lap("create_pr")
     number = int(number)
     pr, problems = gh.validate_created(number, sha, rec["path"],
                                        expected_commits=expected_commits)
     if problems:
         _stop(gap_id, "post-create PR validation failed: " + "; ".join(problems))
+    timer.lap("validate")
     record_pr(gap_id, state.load(gap_id), number, pr, desk)
+    ledger.mark("pr_opened", gap_id, pr=number)
+    ledger.mark("publish_timing", gap_id, laps=timer.laps, total=timer.total(), fast=not correction and not resume)
     return {"gap": gap_id, "sha": sha, "pr": number, "url": pr.get("url"),
             "digest": digest}
 

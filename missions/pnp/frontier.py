@@ -51,9 +51,15 @@ def refresh():
     url = config.DESK_BASE + "/status?" + urlencode({"handle": config.DESK_HANDLE})
     # The status document lists every open step (~1.8k rows); 8 s timed out often enough
     # (allocator.log 2026-11-25) that proof-of offers fell back to stale gaps.json rows.
-    result = subprocess.run(["curl", "-fsS", "--max-time", "20", url],
-                            capture_output=True, text=True, timeout=25, check=True)
-    snapshot = normalize(json.loads(result.stdout), time.time())
+    try:
+        # One shared fetch with lbcert.live (autosolve, radar, proof-of offers), at most 15 s old.
+        from .lbcert import live
+        doc = live.status_doc(max_age=15, timeout=20)
+    except Exception:
+        result = subprocess.run(["curl", "-fsS", "--max-time", "20", url],
+                                capture_output=True, text=True, timeout=25, check=True)
+        doc = json.loads(result.stdout)
+    snapshot = normalize(doc, time.time())
     state.atomic_write(cache_path(), json.dumps(snapshot) + "\n")
     return snapshot
 

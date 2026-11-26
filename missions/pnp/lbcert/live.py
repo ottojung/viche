@@ -10,6 +10,8 @@ behaviour, never "nothing is open").
 import json
 import os
 import time
+import threading
+import urllib.error
 import urllib.request
 
 STATE = os.environ.get('PNP_STATE_ROOT', '/var/lib/lubko/wd/viche-state/pnp')
@@ -26,14 +28,13 @@ def snapshot(max_age=CACHE_SECONDS):
     except (OSError, ValueError, KeyError):
         pass
     try:
-        r = urllib.request.Request(URL, headers={'User-Agent': 'viche-town'})
-        s = json.loads(urllib.request.urlopen(r, timeout=45).read())
+        s = status_doc(max_age=max_age)
         gaps = {g['id']: {k: g.get(k) for k in ('held', 'parallel', 'points', 'level', 'kind')}
                 for g in s.get('gaps', []) if isinstance(g, dict) and g.get('id')}
         if not gaps:
             return None
         d = {'at': time.time(), 'updated_at': s.get('updated_at'), 'gaps': gaps}
-        tmp = CACHE + '.tmp'
+        tmp = '%s.%d.%d.tmp' % (CACHE, os.getpid(), threading.get_ident())
         json.dump(d, open(tmp, 'w'))
         os.replace(tmp, CACHE)
         return d
@@ -43,6 +44,78 @@ def snapshot(max_age=CACHE_SECONDS):
             return d if time.time() - d['at'] < 900 else None
         except (OSError, ValueError, KeyError):
             return None
+
+
+STATUS_CACHE = os.path.join(STATE, 'lbcert', 'status-cache.json')
+
+
+def status_doc(max_age=15, timeout=45):
+    """The whole desk/status document (420 kB, 2-4 s from billy-dev), shared by the allocator's
+    frontier snapshot and this module: one fetch per max_age seconds instead of one per caller."""
+    try:
+        if time.time() - os.path.getmtime(STATUS_CACHE) < max_age:
+            return json.load(open(STATUS_CACHE))
+    except (OSError, ValueError):
+        pass
+    r = urllib.request.Request(URL, headers={'User-Agent': 'viche-town', 'Accept-Encoding': 'gzip'})
+    resp = urllib.request.urlopen(r, timeout=timeout)
+    body = resp.read()
+    if resp.headers.get('Content-Encoding') == 'gzip':
+        import gzip
+        body = gzip.decompress(body)
+    s = json.loads(body)
+    if not isinstance(s, dict) or 'open_gaps' not in s:
+        raise ValueError('unexpected desk status shape')
+    tmp = '%s.%d.%d.tmp' % (STATUS_CACHE, os.getpid(), threading.get_ident())
+    open(tmp, 'wb').write(body)
+    os.replace(tmp, STATUS_CACHE)
+    return s
+
+
+GAPS_URL = 'https://data.pequalnp.com/data/desk/gaps.json'
+GAPS_CACHE = os.path.join(STATE, 'lbcert', 'gaps-cache.json')
+
+
+def gaps_bytes(timeout=40):
+    """gaps.json is 6.2 MB (850 kB gzipped) and was fetched whole every 20 s by autosolve, plus by
+    the sweep and the radar.  Ask with gzip and If-None-Match against one shared on-disk copy:
+    unchanged -> 304 and the cached bytes; a failure with a copy younger than 10 minutes -> the
+    copy.  Same bytes as an unconditional GET."""
+    import gzip
+    meta = GAPS_CACHE + '.meta'
+    try:
+        m = json.load(open(meta))
+    except (OSError, ValueError):
+        m = {}
+    headers = {'User-Agent': 'viche-town', 'Accept-Encoding': 'gzip'}
+    if m.get('etag') and os.path.exists(GAPS_CACHE):
+        headers['If-None-Match'] = m['etag']
+    try:
+        r = urllib.request.urlopen(urllib.request.Request(GAPS_URL, headers=headers), timeout=timeout)
+        body = r.read()
+        if r.headers.get('Content-Encoding') == 'gzip':
+            body = gzip.decompress(body)
+        json.loads(body)                       # never cache a truncated or broken document
+        tmp = '%s.%d.%d.tmp' % (GAPS_CACHE, os.getpid(), threading.get_ident())
+        open(tmp, 'wb').write(body)
+        os.replace(tmp, GAPS_CACHE)
+        m = {'etag': r.headers.get('ETag'), 'at': time.time()}
+        tmp = '%s.%d.%d.tmp' % (meta, os.getpid(), threading.get_ident())
+        json.dump(m, open(tmp, 'w'))
+        os.replace(tmp, meta)
+        return body
+    except urllib.error.HTTPError as e:
+        if e.code == 304:
+            m['at'] = time.time()
+            tmp = '%s.%d.%d.tmp' % (meta, os.getpid(), threading.get_ident())
+            json.dump(m, open(tmp, 'w'))
+            os.replace(tmp, meta)
+            return open(GAPS_CACHE, 'rb').read()
+        raise
+    except Exception:
+        if os.path.exists(GAPS_CACHE) and time.time() - m.get('at', 0) < 600:
+            return open(GAPS_CACHE, 'rb').read()
+        raise
 
 
 def open_ids():

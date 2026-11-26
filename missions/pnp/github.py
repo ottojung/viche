@@ -28,7 +28,23 @@ REPO_NAME = re.compile(r"[A-Za-z0-9-]+/[A-Za-z0-9_.-]+")
 LOGIN = re.compile(r"[A-Za-z0-9-]{1,39}")
 
 
+_MEMO = {}
+
+
+def _memo(key, fn):
+    """Per-process memo for pinned identities: a publication asked GitHub for the same login and
+    repository names about eight times (one gh process and round trip each, about 1 s)."""
+    key = key + (id(gh), id(config))   # a test that swaps gh or config gets fresh answers
+    if key not in _MEMO:
+        _MEMO[key] = fn()
+    return _MEMO[key]
+
+
 def identity():
+    return _memo(("identity",), _identity)
+
+
+def _identity():
     account = json.loads(gh("api", "user", "--jq", "{id,login}"))
     if account.get("id") != config.CONTRIBUTOR_ID:
         raise GitHubError("authenticated account is not the authorized contributor ID")
@@ -42,6 +58,10 @@ def repository_name(repo_id):
     """Resolve a pinned repository ID to its current routing name."""
     if repo_id not in (config.UPSTREAM_ID, config.FORK_ID):
         raise GitHubError("repository ID is not authorized")
+    return _memo(("repo", repo_id), lambda: _repository_name(repo_id))
+
+
+def _repository_name(repo_id):
     data = json.loads(gh("api", "repositories/" + str(repo_id),
                          "--jq", "{id,full_name,owner_id:.owner.id}"))
     name = data.get("full_name")
@@ -153,17 +173,23 @@ def validate_created(number, expected_sha, expected_path,
         problems.append("PR head SHA differs from the signed revision")
     if pr.get("base_ref") != config.BASE_REF:
         problems.append("base ref is not main")
-    files = pr_files(number)
+    expected = expected_commits or [expected_sha]
+    # Independent reads: run them together (each is one gh round trip of about 1-2 s).
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(2 + len(expected)) as ex:
+        f_files = ex.submit(pr_files, number)
+        f_commits = ex.submit(pr_commits, number)
+        f_vers = [ex.submit(commit_verification, c) for c in expected]
+        files = f_files.result()
+        commits = f_commits.result()
+        vers = [f.result() for f in f_vers]
     if files != [expected_path]:
         problems.append("changed files are not exactly one added proof: %r" %
                         files)
-    commits = pr_commits(number)
-    expected = expected_commits or [expected_sha]
     if commits != expected:
         problems.append("PR commits are not the expected signed SHAs: %r" %
                         commits)
-    for commit_sha in expected:
-        ver = commit_verification(commit_sha)
+    for commit_sha, ver in zip(expected, vers):
         if ver.get("verified") is not True:
             problems.append("GitHub commit verification is not true: " +
                             commit_sha)
