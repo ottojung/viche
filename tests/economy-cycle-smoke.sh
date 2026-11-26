@@ -28,8 +28,17 @@ cat > "$g/economy-models.py" <<'STUB'
 #!/usr/bin/env python3
 import os, sys
 open(os.environ["MOCK_REFRESH_LOG"], "a").write(" ".join(sys.argv[1:]) + "\n")
-if os.environ.get("MOCK_REFRESH_SLOW"):
-    import time; time.sleep(2)
+if os.environ.get("MOCK_REFRESH_BARRIER"):
+    from pathlib import Path
+    import time
+    barrier = Path(os.environ["MOCK_REFRESH_BARRIER"])
+    (barrier / "entered").touch()
+    deadline = time.monotonic() + 120
+    while not (barrier / "release").exists():
+        if time.monotonic() >= deadline:
+            raise SystemExit("refresh barrier not released")
+        time.sleep(0.05)
+    (barrier / "finished").touch()
 STUB
 cat > "$g/economy-resources.py" <<'STUB'
 #!/usr/bin/env python3
@@ -75,7 +84,7 @@ settle() { # wait for the backgrounded refresh to finish
   # The mocked refresh logs before the background process releases its lock.
   # A simulated next six-hour interval must not race that previous refresh.
   if [ -f "$d/state/executive/economy/refresh.lock" ]; then
-    flock -w 5 "$d/state/executive/economy/refresh.lock" true
+    flock -w 60 "$d/state/executive/economy/refresh.lock" true
   fi
 }
 
@@ -160,10 +169,34 @@ printf '{"overall":"critical","resources":{"disk:state":{"status":"critical","us
 cycle
 test "$(dispatches)" -eq $((runs_before + 1))
 
-# A slow refresh never blocks the cycle.
+# A blocked refresh must not block the cycle. Use a causal barrier rather than
+# a 2-second timing threshold, which spuriously fails on a loaded, niced host.
+# The refresh cannot finish until this test releases it AFTER the dispatcher
+# exits. A synchronous dispatcher therefore cannot pass.
+settle none
 printf '1\n' > "$d/state/executive/economy/last-refresh"
-start=$(date +%s)
-MOCK_REFRESH_SLOW=1 cycle
-test $(( $(date +%s) - start )) -lt 2
+mkdir "$d/barrier"
+export MOCK_REFRESH_BARRIER="$d/barrier"
+(
+  cycle
+  touch "$d/barrier/dispatcher-returned"
+) &
+dispatcher=$!
+deadline=$(( $(date +%s) + 60 ))
+while [ ! -e "$d/barrier/entered" ] || [ ! -e "$d/barrier/dispatcher-returned" ]; do
+  if [ "$(date +%s)" -ge "$deadline" ]; then
+    touch "$d/barrier/release"
+    wait "$dispatcher" || :
+    echo 'economy cycle: dispatcher did not return while refresh blocked' >&2
+    exit 1
+  fi
+  sleep 0.1
+done
+test ! -e "$d/barrier/finished"
+wait "$dispatcher"
+touch "$d/barrier/release"
+flock -w 60 "$d/state/executive/economy/refresh.lock" true
+test -e "$d/barrier/finished"
+unset MOCK_REFRESH_BARRIER
 
 echo 'economy cycle smoke passed'
