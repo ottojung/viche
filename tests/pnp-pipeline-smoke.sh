@@ -38,5 +38,6 @@ python3 tests/pnp-rows.py
 
 python3 tests/pnp-metrics.py
 python3 tests/pnp-catalog-observer.py
+python3 tests/pnp-status-pacing.py
 
 python3 tests/pnp-remote-protocol.py

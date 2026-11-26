@@ -5,6 +5,7 @@ Only a recorded terminal state or a superseded lease tells a worker to stop.
 No agent commands or desk mutations are performed here.
 """
 import json
+import fcntl
 import os
 import subprocess
 import time
@@ -50,19 +51,19 @@ def normalize(raw, now):
 
 
 def refresh():
-    url = config.DESK_BASE + "/status?" + urlencode({"handle": config.DESK_HANDLE})
-    # The status document lists every open step (~1.8k rows); 8 s timed out often enough
-    # (allocator.log 2026-11-25) that proof-of offers fell back to stale gaps.json rows.
-    try:
-        # One shared fetch with lbcert.live (autosolve, radar, proof-of offers), at most 15 s old.
-        from .lbcert import live
-        doc = live.status_doc(max_age=15, timeout=20)
-    except Exception:
-        result = subprocess.run(["curl", "-fsS", "--max-time", "20", url],
-                                capture_output=True, text=True, timeout=25, check=True)
-        doc = json.loads(result.stdout)
-    snapshot = normalize(doc, time.time())
-    state.atomic_write(cache_path(), json.dumps(snapshot) + "\n")
+    # A second uncoordinated curl defeats shared pacing on contention/429.
+    # Retain the existing snapshot on failure, with its original timestamp.
+    from .lbcert import live
+    doc, observed = live.status_doc(max_age=15, timeout=20, with_time=True)
+    snapshot = normalize(doc, observed)
+    path=cache_path()
+    os.makedirs(os.path.dirname(path),exist_ok=True)
+    with open(path+".lock","a") as lk:
+        fcntl.flock(lk,fcntl.LOCK_EX)
+        existing=load()
+        if existing and existing.get("observed",0)>observed:
+            return existing
+        state.atomic_write(path,json.dumps(snapshot)+"\n")
     from . import observation
     observation.record(snapshot)
     return snapshot

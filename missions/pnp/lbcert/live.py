@@ -24,17 +24,17 @@ CACHE_SECONDS = 60
 def snapshot(max_age=CACHE_SECONDS):
     try:
         d = json.load(open(CACHE))
-        if time.time() - d['at'] < max_age:
+        if 0 <= time.time() - d['at'] < max_age:
             return d
     except (OSError, ValueError, KeyError):
         pass
     try:
-        s = status_doc(max_age=max_age)
+        s, observed = status_doc(max_age=max_age, with_time=True)
         gaps = {g['id']: {k: g.get(k) for k in ('held', 'parallel', 'points', 'level', 'kind')}
                 for g in s.get('gaps', []) if isinstance(g, dict) and g.get('id')}
         if not gaps:
             return None
-        d = {'at': time.time(), 'updated_at': s.get('updated_at'), 'gaps': gaps}
+        d = {'at': observed, 'updated_at': s.get('updated_at'), 'gaps': gaps}
         tmp = '%s.%d.%d.tmp' % (CACHE, os.getpid(), threading.get_ident())
         json.dump(d, open(tmp, 'w'))
         os.replace(tmp, CACHE)
@@ -50,27 +50,58 @@ def snapshot(max_age=CACHE_SECONDS):
 STATUS_CACHE = os.path.join(STATE, 'lbcert', 'status-cache.json')
 
 
-def status_doc(max_age=15, timeout=45):
-    """The whole desk/status document (420 kB, 2-4 s from billy-dev), shared by the allocator's
-    frontier snapshot and this module: one fetch per max_age seconds instead of one per caller."""
-    try:
-        if time.time() - os.path.getmtime(STATUS_CACHE) < max_age:
-            return json.load(open(STATUS_CACHE))
-    except (OSError, ValueError):
-        pass
-    r = urllib.request.Request(URL, headers={'User-Agent': 'viche-town', 'Accept-Encoding': 'gzip'})
-    resp = urllib.request.urlopen(r, timeout=timeout)
-    body = resp.read()
-    if resp.headers.get('Content-Encoding') == 'gzip':
-        import gzip
-        body = gzip.decompress(body)
-    s = json.loads(body)
-    if not isinstance(s, dict) or 'open_gaps' not in s:
-        raise ValueError('unexpected desk status shape')
-    tmp = '%s.%d.%d.tmp' % (STATUS_CACHE, os.getpid(), threading.get_ident())
-    open(tmp, 'wb').write(body)
-    os.replace(tmp, STATUS_CACHE)
-    return s
+def status_doc(max_age=15, timeout=45, with_time=False):
+    """Single-flight fresh status. Cached observations preserve their original age."""
+    os.makedirs(os.path.dirname(STATUS_CACHE), exist_ok=True)
+    def cached():
+        try:
+            with open(STATUS_CACHE,"rb") as f:
+                at=os.fstat(f.fileno()).st_mtime
+                if 0<=time.time()-at<max_age:
+                    doc=json.load(f)
+                    if isinstance(doc,dict) and "open_gaps" in doc:
+                        return doc,at
+        except (OSError,ValueError,TypeError):
+            pass
+        return None
+    with open(STATUS_CACHE+".lock","a") as lk:
+        try:
+            fcntl.flock(lk,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            hit=cached()
+            if hit is None:raise OSError("status observation already in flight")
+            return hit if with_time else hit[0]
+        hit=cached()
+        if hit is None:
+            from missions.pnp import desk
+            retry=desk.status_retry_until()
+            if retry>time.time():raise OSError("status observation cooldown")
+            # Share ordinary request-start pacing with the desk broker.
+            desk.pace(desk.config.REQUEST_MIN_INTERVAL)
+            if desk.status_retry_until()>time.time():raise OSError("status observation cooldown")
+            req=urllib.request.Request(URL,headers={'User-Agent':'viche-town','Accept-Encoding':'gzip'})
+            try:
+                with urllib.request.urlopen(req,timeout=timeout) as resp:
+                    body=resp.read()
+                    if resp.headers.get('Content-Encoding')=='gzip':
+                        import gzip
+                        body=gzip.decompress(body)
+            except urllib.error.HTTPError as exc:
+                if exc.code==429:
+                    desk.record_status_retry(desk.retry_response(exc.read(),exc.headers))
+                raise
+            doc=json.loads(body)
+            if not isinstance(doc,dict) or 'open_gaps' not in doc:
+                raise ValueError('unexpected desk status shape')
+            at=time.time()
+            tmp='%s.%d.%d.tmp'%(STATUS_CACHE,os.getpid(),threading.get_ident())
+            try:
+                with open(tmp,"wb") as f:f.write(body)
+                os.utime(tmp,(at,at));os.replace(tmp,STATUS_CACHE)
+            finally:
+                if os.path.exists(tmp):os.unlink(tmp)
+            hit=doc,at
+        return hit if with_time else hit[0]
 
 
 GAPS_URL = 'https://data.pequalnp.com/data/desk/gaps.json'

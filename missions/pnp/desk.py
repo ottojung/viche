@@ -6,6 +6,8 @@ closed).  Live instructions are re-read on startup rather than trusting the
 stale 30-minute beat comment in tools/pnp.sh.
 """
 import json
+import math
+from email.utils import parsedate_to_datetime
 import fcntl
 import os
 import time
@@ -41,9 +43,14 @@ def retry_until(target=None):
     return max((v for v in values if type(v) in (float,int)),default=0)
 
 
+def positive_seconds(value):
+    try:return type(value) in (int,float) and math.isfinite(value) and value>0
+    except OverflowError:return False
+
+
 def record_retry(data,target=None):
     seconds=data.get("retry_after_s")
-    if type(seconds) not in (int,float) or not 0 < seconds < 86400:return
+    if not positive_seconds(seconds):return
     from . import state
     os.makedirs(config.STATE_ROOT,exist_ok=True)
     with open(os.path.join(config.STATE_ROOT,"desk-retry.lock"),"a+") as lk:
@@ -98,6 +105,45 @@ def lease_limit():
     return min(config.MAX_LEASES, cap) if cap else config.MAX_LEASES
 
 
+def retry_response(body,headers=None):
+    """Prefer a positive server duration; honor a longer Retry-After header too."""
+    try:data=json.loads(body)
+    except (ValueError,TypeError):data={}
+    if not isinstance(data,dict):data={}
+    seconds=data.get("retry_after_s")
+    delays=[seconds] if positive_seconds(seconds) else []
+    header=headers.get("Retry-After") if headers else None
+    if header:
+        try:delay=float(header)
+        except (ValueError,TypeError):
+            try:delay=parsedate_to_datetime(header).timestamp()-time.time()
+            except (ValueError,TypeError,OverflowError):delay=0
+        if positive_seconds(delay):delays.append(delay)
+    data["retry_after_s"]=max(delays,default=60)
+    return data
+
+
+def status_retry_until():
+    try:
+        with open(os.path.join(config.STATE_ROOT,"desk-status-retry.json")) as f:
+            until=json.load(f)["until"]
+        return until if positive_seconds(until) else 0
+    except (OSError,ValueError,TypeError,KeyError):return 0
+
+
+def record_status_retry(data):
+    # Separate read-only endpoint cooldown; acquisition retry is not cleared.
+    from . import state,ledger
+    seconds=data.get("retry_after_s")
+    if not positive_seconds(seconds):return
+    os.makedirs(config.STATE_ROOT,exist_ok=True)
+    with open(os.path.join(config.STATE_ROOT,"desk-status-retry.lock"),"a") as lk:
+        fcntl.flock(lk,fcntl.LOCK_EX)
+        until=max(status_retry_until(),time.time()+seconds)
+        state.atomic_write(os.path.join(config.STATE_ROOT,"desk-status-retry.json"),json.dumps({"until":until}))
+    ledger.mark("desk_rate_limit","desk",endpoint="/status",method="GET",retry_after_s=data["retry_after_s"],until=until)
+
+
 def http_request(method, url, params=None):
     """Return (status, text).  Injected in unit tests."""
     if params:
@@ -108,7 +154,9 @@ def http_request(method, url, params=None):
         with urllib.request.urlopen(req, timeout=30) as r:
             return r.status, r.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as e:
-        return e.code, e.read().decode("utf-8", "replace")
+        raw=e.read().decode("utf-8","replace")
+        if e.code==429:raw=json.dumps(retry_response(raw,e.headers))
+        return e.code,raw
 
 
 def pace(interval,sleep=time.sleep):
@@ -143,6 +191,10 @@ class Desk:
         delay = 1.0
         for attempt in range(5):
             if self.shared_pace:pace(self.min_interval,self.sleep)
+            if path=="/next" and retry_until((params or {}).get("gap"))>time.time():
+                raise DeskError("desk acquisition cooldown")
+            if path=="/status" and status_retry_until()>time.time():
+                raise DeskError("desk status cooldown")
             self.last = time.monotonic()
             try:
                 status, text = self.request(method, url, params)
@@ -153,12 +205,14 @@ class Desk:
                 delay *= 2
                 continue
             if status == 429:
-                try:data=json.loads(text)
-                except ValueError:data={}
-                if not isinstance(data,dict):data={}
-                if type(data.get("retry_after_s")) not in (int,float):data["retry_after_s"]=60
-                record_retry(data)
-                raise DeskError("desk rate limited; honoring retry_after_s")
+                data=retry_response(text)
+                if path=="/status":record_status_retry(data)
+                else:
+                    record_retry(data)
+                    from . import ledger
+                    ledger.mark("desk_rate_limit","desk",endpoint=path,method=method,
+                                retry_after_s=data["retry_after_s"],until=retry_until())
+                raise DeskError("desk rate limited on %s; honoring retry_after_s=%s" % (path,data["retry_after_s"]))
             if 500 <= status < 600:
                 if attempt == 4:
                     raise DeskError("desk HTTP %d after retries" % status)
