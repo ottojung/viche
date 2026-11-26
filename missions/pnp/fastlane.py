@@ -26,7 +26,7 @@ from . import cli, config, focus, jobs, state, support
 
 WORK = os.path.join(config.STATE_ROOT, "lbcert")
 CANDS = os.path.join(WORK, "cands")
-RESEARCH_SLOTS = config.MAX_LEASES - 2
+RESEARCH_SLOTS = 1
 RESEARCH_MIN_AGE = 20 * 60
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "lbcert"))
@@ -61,6 +61,13 @@ def submit_ready(gap):
     rec = state.load(gap)
     if not support.active(rec) or rec.get("queued_lease") or rec.get("candidate_digest"):
         return None
+    if rec.get("work_lane") == "posting":
+        from . import posting
+        from .lbcert import ready
+        # A stock completion may race a freshly acquired assignment. Only
+        # exact receipts, and no already-observed rival, are useful here.
+        if posting.rival(rec,ready.competition(time.time())) or not ready.verified(gap):
+            return None
     path = cand_ready(gap)
     if not path:
         return None
@@ -75,14 +82,14 @@ def concrete(rec):
                 lbparse.classify(re.fullmatch(r"¬ ?\((.*)\)", lbparse.norm(s)).group(1)))
 
 
-def release(d, mem, gap, reason, evidence):
+def release(d, mem, gap, reason, evidence, expected_lease=None):
     fd = jobs.claim(gap)
     if fd is None:
         return False
     try:
         with state.lock(gap):
             rec = state.load(gap)
-            if (not support.active(rec) or rec.get("queued_lease") or rec.get("intent")
+            if (not support.active(rec) or (expected_lease and rec.get("lease") != expected_lease) or rec.get("queued_lease") or rec.get("intent")
                     or rec.get("pr_number") or rec.get("candidate_digest")):
                 return False
             rec["intent"] = {"what": "fastlane_release", "payload": {"reason": reason}}
@@ -99,18 +106,19 @@ def release(d, mem, gap, reason, evidence):
             state.event(gap, "fastlane_release", {"reason": reason, "evidence": evidence})
         mem.pop("last_null_ordinary", None)
         mem.pop("last_null_hard", None)
+        mem.pop("posting_retry_at", None)
         return True
     finally:
         os.close(fd)
 
 
-def tick(d, mem, now, roster_known=True):
+def tick(d, mem, now, roster_known=True, cycle_research=True):
     out = {"submitted": [], "twin_published": [], "released": []}
     twins, desk = _read("twins.json", {}), _read("desk.json", {})
     held = cli.held_records()
     for rec in held:
         gap = rec["gap_id"]
-        if not support.active(rec, now) or rec.get("queued_lease") or rec.get("candidate_digest"):
+        if not support.active(rec, now) or rec.get("work_lane") == "posting" or rec.get("queued_lease") or rec.get("candidate_digest"):
             continue
         path = cand_ready(gap)
         if path:
@@ -137,7 +145,7 @@ def tick(d, mem, now, roster_known=True):
     # Rule 3: keep two slots cycling.
     held = cli.held_records()
     chosen = focus.current()
-    research = [r for r in held if support.active(r, now) and not concrete(r) and not r.get("queued_lease")
+    research = [r for r in held if support.active(r, now) and r.get("work_lane") != "posting" and not concrete(r) and not r.get("queued_lease")
                 and not r.get("candidate_digest") and not r.get("pr_number")]
     # An incomplete worker roster means we cannot see who is working; never cycle then.
     # The desk's earned capacity (3 on 2026-11-26) may be below MAX_LEASES: cycle against it, keeping
@@ -145,7 +153,7 @@ def tick(d, mem, now, roster_known=True):
     from . import desk as desk_mod
     limit = desk_mod.lease_limit()
     slots = min(RESEARCH_SLOTS, max(1, limit - 2))
-    if roster_known and len(held) >= limit and len(research) > slots:
+    if cycle_research and roster_known and len(held) >= limit and len(research) > slots:
         old = sorted((r for r in research if not (chosen and focus.key(chosen) == focus.key(r))
                       and now - (r.get("lease_obtained_at") or now) >= RESEARCH_MIN_AGE),
                      key=lambda r: r.get("lease_obtained_at") or now)

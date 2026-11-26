@@ -90,7 +90,7 @@ def desired(p, running, issues=None):
     for gap in state.all_gaps():
         try:
             r=state.load(gap)
-            if support.active(r) and not r.get("queued_lease"):
+            if support.active(r) and not r.get("queued_lease") and r.get("work_lane") != "posting":
                 records.append(r)
         except Exception as exc:
             issues.append(gap+": state "+type(exc).__name__)
