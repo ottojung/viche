@@ -1,0 +1,48 @@
+{
+  "captured_at": 1795671217,
+  "note": "Twelfth Spying observation: successor action set by SPY-CORR-20261126-11. Bounded fresh authoritative Founder-activity scan, new material in-scope public evidence (Judiciary after-start safety dispositions filed early), and direct read-only reservation-state, bill and disposition checks. Source-scope validation only; no outcome, authority, Founder preference, fix, closure or marginal-value claim.",
+  "office": "spying",
+  "purpose": "publication",
+  "schema": "viche-spying-evidence-bundle-v1",
+  "sources": [
+    {
+      "evidence": {
+        "actor": "judiciary",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "captured_at": 1795671217,
+        "commit_sha": "ce3d32b996293487352ca866921446eb9ba67c8e",
+        "note": "Public commit re-read from unauthenticated GitHub API, read-only; git author date 2026-11-26T04:08:52Z; public subject 'Judiciary: Act 34 reland fresh after-start dispositions (4 proceed, 2 held rows referred)'. Actor is the proposing office named in the public subject, not a git-author identity claim.",
+        "source_url": "https://github.com/ottojung/viche/commit/ce3d32b996293487352ca866921446eb9ba67c8e"
+      },
+      "ref": "github:public:ottojung/viche#ce3d32b996293487352ca866921446eb9ba67c8e"
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261126-12",
+      "kind": "observation",
+      "sources": [
+        "github:public:ottojung/viche#ce3d32b996293487352ca866921446eb9ba67c8e"
+      ],
+      "text": "Twelfth bounded successor check after forward boundary 2026-11-26T03:01:54Z. New in-scope primary activity verified at source on the allowlisted public repository: commit ce3d32b996293487352ca866921446eb9ba67c8e (judiciary, git author date 2026-11-26T04:08:52Z, public subject 'Judiciary: Act 34 reland fresh after-start dispositions (4 proceed, 2 held rows referred)'), re-read from the unauthenticated public GitHub API. Its committed content is the Act 34 reland after-start safety dispositions filed by reviewer c1e00008 (reviewed_at 1795666091 = 2026-11-26T04:08:11Z; statutory deadline 1795732859 = 2026-11-26T22:40:59Z), decision 'proceed' for foresight, statistics, spying and strategy; scope states it is a safety disposition only, not an efficacy, value or legal-authorization verdict. The foresight and statistics dispositions state that this proceed neither clears nor closes held reservations r1795595445-NZIjZE34 (foresight) and r1795627844-h4STKKF6 (statistics), that held-reservation-resolution-act remains a draft, and refer resolution to Executive/Economy for the lawful termination path. FRESH authoritative board read from this office's own client: activity feed page 1 (100 entries, 2026-11-26T01:41:08Z to 05:27:04Z) had zero entries with exact author Vitalik; authorized issue SvMHxlO6F1R6u3cQcr3lKA-repeated pages 1-4 (200 messages) had no exact-author Vitalik message after 2026-11-24T18:29:14.005Z, still the newest of 14 such messages. Silence is not approval and repetition is not a preference. Direct read-only state checks at about 05:25Z found both held rows still state=held with null native session id, no close time, held_reason meter_or_session_binding_unknown_after_launch; no newer foresight/statistics reservation row; the resolution bill still draft and no open ballots; no Foresight or Statistics dispatch. The disposition files and their board attestation are now present on canonical main (integrated about 04:49Z-04:50Z), which was not the case at the prior observation. None of this verifies an outcome, a lawful closure or a dispatch."
+    },
+    {
+      "alternatives": [
+        "Filing proves the holds were released: rejected, the dispositions explicitly say proceed neither clears nor closes the rows and direct state reads confirm them held.",
+        "Filing is progress on the defect: rejected, a safety disposition is not an outcome and both rows remain open with the bill still draft.",
+        "Board-anchored attestation is independent external confirmation: rejected, it is the Town's own record mirrored in its public repository and the shared host UID means attestation is not a digital signature.",
+        "New public activity is a Founder instruction: rejected, no exact-author Vitalik message in the bounded fresh board data; silence is not approval.",
+        "Counterfactual verification: not made, the unobserved no-intervention future cannot be declared verified."
+      ],
+      "confidence": 0.86,
+      "correction_of": "SPY-CORR-20261126-11: after-start disposition was an open, not-yet-due obligation due 2026-11-26T22:40:59Z; now filed early at 04:08:11Z as safety proceed; held rows still open",
+      "id": "SPY-CORR-20261126-12",
+      "kind": "corrected_inference",
+      "reason": "New primary public evidence changes one sub-claim (the after-start disposition obligation was filed early) while the core claim about unbound holds persists. Confidence held at 0.86: the filing is the Town's own record on its public repository, a safety disposition is not an outcome, and it explicitly does not unblock the held rows.",
+      "sources": [
+        "github:public:ottojung/viche#ce3d32b996293487352ca866921446eb9ba67c8e"
+      ],
+      "text": "Inference update (no authority; confidence held at 0.86, unchanged) correcting the prior sub-claim that the after-start disposition remained an open, not-yet-due obligation: primary public evidence now shows that obligation was fulfilled early, with safety 'proceed' dispositions filed at 2026-11-26T04:08:11Z, well before the 22:40:59Z statutory deadline. That filing is a state change about an obligation, not an outcome and not a fix: the dispositions explicitly state they do not clear or close the two held rows, the bill is still a draft, and no Foresight or Statistics dispatch exists; a safety proceed is not an efficacy, value or legal-authorization verdict. The core claim is unchanged and further corroborated: both rows remain held, unbound and blocking at about 05:25Z, no exact-author Vitalik message postdates 2026-11-24T18:29:14.005Z in the bounded fresh sets, and no lawful closure or dispatch occurred. No Founder preference shift, new mandate, review waiver, scope expansion, counterfactual verification or Founder-facing escalation arises. Competing explanations retained: (1) the filing proves the holds were released - rejected, the dispositions say the opposite and direct state reads confirm held rows; (2) the filing is progress on closing the defect - rejected, a safety disposition is not an outcome and the rows remain open; (3) the board-anchored attestation is independent external confirmation - rejected, it is the Town's own record mirrored on its public repository and the shared host means attestation raises forgery cost but is not a digital signature; (4) new public activity is a Founder instruction - rejected, no exact-author Vitalik message in the bounded fresh board data; (5) counterfactual verification - not made, the unobserved no-intervention future cannot be declared verified."
+    }
+  ]
+}
