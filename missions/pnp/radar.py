@@ -68,14 +68,28 @@ def build():
     head, idx = sibling.index(gitctl.MIRROR, os.path.join(config.STATE_ROOT, 'lbcert'))
     mod_sk = {m: sk for sk, ms in idx.items() for m in ms}
     found = plugins.discover()
+    # gaps.json also lists closed steps and cut-of-cut sub-steps nobody can take (2359 vs 1820 open on
+    # 2026-11-26); the live desk status says which are open, their points and how many hold them.
+    from .lbcert import live
+    snap = live.snapshot(max_age=300)
+    lg = snap['gaps'] if snap else None
     fams = {}
     for g in gaps:
+        if lg is not None and g['id'] not in lg:
+            continue
         sk = sibling.skeleton(g['statement'])
         f = fams.setdefault(sk, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
-                                 'statuses': collections.Counter(), 'coverage': None})
+                                 'statuses': collections.Counter(), 'coverage': None,
+                                 'points': 0, 'free_points': 0})
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
+        s = (lg or {}).get(g['id']) or {}
+        pts = s.get('points') or 0
+        f['points'] += pts
+        if not g.get('pr_open') and (s.get('held') or 0) < (s.get('parallel') or 1):
+            # level 'open' = truth unknown to the desk (beat its best by one): discount, not ignore
+            f['free_points'] += pts * (0.3 if s.get('level') == 'open' else 1)
         if len(f['examples']) < 3:
             f['examples'].append({'id': g['id'], 'statement': g['statement'][:1500], 'sketch': (g.get('sketch') or '')[:400]})
         st = status(g['id'])
@@ -97,7 +111,9 @@ def build():
         if not f['newest_merged'] and f['siblings']:
             f['newest_merged'] = sorted(idx[sk], key=lambda m: -int(m.rsplit('_', 1)[1]))[:3]
         # value of a generator: what is open for us now plus the recent pace of the family
-        f['score'] = f['unclaimed'] + 0.5 * f['merged_6h']
+        # Desk points differ 100-fold between families (warmups ~10, open rows ~1000): weigh by the points
+        # still takeable (open, no PR, a free parallel slot), in units of 100.
+        f['score'] = (f['free_points'] / 100.0 if lg is not None else f['unclaimed']) + 0.5 * f['merged_6h']
         if sk.startswith('¬') and not f['merged_6h']:
             f['score'] = 0      # twins of statements expected true: "none is expected" (desk sketch)
         f['authors'] = dict(f['authors'].most_common(5))
@@ -129,12 +145,13 @@ def write(r):
     json.dump(r, open(tmp, 'w'), indent=1)
     os.replace(tmp, os.path.join(OUT, 'radar.json'))
     lines = ['# PnP family radar (%s, corpus %s)' % (time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime(r['at'])), r['corpus'][:12]),
-             '', 'score = unclaimed open steps + 0.5 x merges in the last %d h. coverage: built-in family, plugin, or none.' % HOURS,
-             '', '| score | unclaimed | open | merged %dh | top authors | coverage | our statuses | family |' % HOURS,
-             '|---|---|---|---|---|---|---|---|']
+             '', 'score = takeable desk points / 100 (open, no PR, a free parallel slot) + 0.5 x merges in the last %d h.'
+             ' coverage: built-in family, plugin, or none.' % HOURS,
+             '', '| score | free pts | unclaimed | open | merged %dh | top authors | coverage | our statuses | family |' % HOURS,
+             '|---|---|---|---|---|---|---|---|---|']
     for f in r['families'][:30]:
-        lines.append('| %.1f | %d | %d | %d | %s | %s | %s | %s |' % (
-            f['score'], f['unclaimed'], f['open'], f['merged_6h'],
+        lines.append('| %.1f | %d | %d | %d | %d | %s | %s | %s | %s |' % (
+            f['score'], f.get('free_points', 0), f['unclaimed'], f['open'], f['merged_6h'],
             ', '.join('%s %d' % kv for kv in f['authors'].items()) or '-', f['coverage'] or '**none**',
             ', '.join('%s %d' % kv for kv in f['statuses'].items()) or '-', f['label'].replace('|', '/')))
     open(os.path.join(OUT, 'radar.md'), 'w').write('\n'.join(lines) + '\n')
@@ -147,8 +164,9 @@ def write(r):
          'is already building (claim it by creating its generators/NAME directory in your delivery).', '']
     for i, f in enumerate(todo, 1):
         b += ['## %d. %s' % (i, f['label']),
-              '', 'unclaimed %d, open %d, merged in %d h: %d (%s)' % (
-                  f['unclaimed'], f['open'], HOURS, f['merged_6h'], ', '.join(f['authors']) or '-'),
+              '', 'takeable points %d, unclaimed %d, open %d, merged in %d h: %d (%s)' % (
+                  f.get('free_points', 0), f['unclaimed'], f['open'], HOURS, f['merged_6h'],
+                  ', '.join(f['authors']) or '-'),
               'newest merged proofs to study: %s' % (', '.join(f['newest_merged']) or 'none yet: derive the method'), '']
         for e in f['examples'][:2]:
             b += ['- %s: `%s`' % (e['id'], e['statement'][:700].replace('`', "'"))]
