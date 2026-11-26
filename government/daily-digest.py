@@ -39,6 +39,12 @@ import time
 
 WINDOW = 24 * 3600
 LINE_MAX = 300
+# The boot wrapper caps the whole digest at 600 s. Under host load the serial
+# antonina/git pagination (agent list, closed issues, Town Hall pages) can
+# exceed that cap, so no digest is posted at all. Bound the shared read budget
+# below the wrapper cap: a slower-than-usual source then degrades to an honest
+# "unavailable" line instead of suppressing the entire Founder report.
+DIGEST_READ_BUDGET = float(os.environ.get("VICHE_DIGEST_READ_BUDGET", "420"))
 NEEDS_FOUNDER = re.compile(r"^\s*NEEDS-FOUNDER:\s*(.+)$", re.M)
 # An external scheduler floods Town Hall with operational records that can quote
 # the phrase "NEEDS-FOUNDER". They are not requests to the Founder and must not
@@ -56,6 +62,22 @@ other_repos = [p for p in os.environ.get("VICHE_DIGEST_REPOS", str(home / "sorin
 
 class Unavailable(Exception):
     pass
+
+
+class ReadBudget:
+    """One wall-clock budget shared by the digest's expensive read paths.
+
+    Each reader checks it between pages; on exhaustion it raises Unavailable,
+    which the existing per-line guards already render as an honest
+    "unavailable" line. The wrapper's own 600 s cap stays the outer backstop.
+    """
+
+    def __init__(self, seconds=None):
+        self.end = time.monotonic() + (DIGEST_READ_BUDGET if seconds is None else seconds)
+
+    def check(self):
+        if time.monotonic() >= self.end:
+            raise Unavailable("read budget exhausted")
 
 
 def run(args, timeout=60):
@@ -112,7 +134,9 @@ def git_log(repo, since, ref):
     return changes
 
 
-def line_viche(now):
+def line_viche(now, budget=None):
+    if budget is not None:
+        budget.check()
     try:
         run(["git", "-C", str(town), "fetch", "-q", "origin", "main"], timeout=40)
         ref = "FETCH_HEAD"
@@ -145,9 +169,11 @@ def queue_summary():
     return "; queue: " + (", ".join(parts) if parts else "empty")
 
 
-def line_elsewhere(now):
+def line_elsewhere(now, budget=None):
     parts = []
     for repo in other_repos:
+        if budget is not None:
+            budget.check()
         name = pathlib.Path(repo).name
         try:
             try:
@@ -161,6 +187,8 @@ def line_elsewhere(now):
             parts.append("%s unavailable" % name)
     closed = []
     for page in range(1, 11):
+        if budget is not None:
+            budget.check()
         issues = antonina_json("board", "list", "--state", "closed", "--page", str(page))
         if not isinstance(issues, list):
             raise Unavailable("board list shape")
@@ -174,9 +202,11 @@ def line_elsewhere(now):
     return "Shipped (elsewhere): %s; board issues closed (whole board): %d%s" % (", ".join(parts) or "none tracked", len(closed), detail)
 
 
-def all_agents():
+def all_agents(budget=None):
     agents = []
     for page in range(1, 100):
+        if budget is not None:
+            budget.check()
         data = antonina_json("agent", "list", "--page", str(page), "--limit", "100")
         if data.get("unreadable"):
             raise Unavailable("%d unreadable agent records" % len(data["unreadable"]))
@@ -381,7 +411,7 @@ def line_inaction(now):
         gate, expired, defaulted, audited, ", ".join(quiet) or "n/a")
 
 
-def townhall_needs_messages(now):
+def townhall_needs_messages(now, budget=None):
     """Town Hall messages within WINDOW, newest first, deduplicated by id.
 
     The digest used to read only page 1. A high-rate external scheduler can push
@@ -396,6 +426,8 @@ def townhall_needs_messages(now):
     messages = []
     seen = set()
     for page in range(1, 1000):
+        if budget is not None:
+            budget.check()
         show = antonina_json("board", "show", "--id", townhall, "--page", str(page))
         batch = show.get("messages")
         if not isinstance(batch, list):
@@ -417,7 +449,7 @@ def townhall_needs_messages(now):
     return messages
 
 
-def line_needs(now, scan_ok):
+def line_needs(now, scan_ok, budget=None):
     needs = []
     try:
         models = [m["model"] for m in json.loads(ant_config.read_text())["models"]]
@@ -431,7 +463,7 @@ def line_needs(now, scan_ok):
     except (OSError, ValueError, KeyError):
         pass
     try:
-        for message in townhall_needs_messages(now):
+        for message in townhall_needs_messages(now, budget):
             body = message.get("body") or ""
             if message.get("author") == "Vitalik" or SCHEDULER_TURN.match(body):
                 continue
@@ -456,8 +488,9 @@ def line_needs(now, scan_ok):
 
 def build(now):
     stamp = datetime.datetime.fromtimestamp(now, datetime.timezone.utc)
+    budget = ReadBudget()
     try:
-        agents = all_agents()
+        agents = all_agents(budget)
         agents_line = line_agents(now, agents)
     except Unavailable as error:
         agents_line = "Agent runs: unavailable (%s)" % error
@@ -469,14 +502,14 @@ def build(now):
     lines = [
         "Viche daily digest — %s (24h to %s); detail in %s/digest/, records/handoffs/, institutional-cases/index.json; no model call" % (
             stamp.strftime("%Y-%m-%d"), stamp.strftime("%H:%MZ"), state),
-        guarded(lambda: line_viche(now), "Shipped (Viche main):"),
-        guarded(lambda: line_elsewhere(now), "Shipped (elsewhere):"),
+        guarded(lambda: line_viche(now, budget), "Shipped (Viche main):"),
+        guarded(lambda: line_elsewhere(now, budget), "Shipped (elsewhere):"),
         agents_line,
         guarded(lambda: line_handoffs(now), "Blocked (handoffs):"),
         guarded(lambda: line_cases(now), "Blocked (cases):"),
         line_quota(scan) if scan_ok else "Quota split: agent logs unavailable",
         guarded(lambda: line_models(now, scan), "Models:"),
-        line_needs(now, scan_ok),
+        line_needs(now, scan_ok, budget),
         guarded(lambda: line_inaction(now), "Inaction:"),
     ]
     lines = [(l if len(l) <= LINE_MAX else l[:LINE_MAX - 1] + "…") for l in lines]
