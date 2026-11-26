@@ -92,6 +92,11 @@ def emit(n, bound, statement, gates, outwire):
     notwire = gates[notpos][1]
     alts = " | ".join("h%d" % j for j in range(len(gates)))
     rcases = "rcases hg with " + alts + " <;> subst g <;> simp"
+    # The circuit's output is an arbitrary wire index o, not necessarily the
+    # last gate's wire. beam_search can find the target on an earlier wire (for
+    # example a bare input projection), in which case emitting the last wire
+    # yields a false theorem that fails to compile. Emit outwire itself, the
+    # wire actually verified to hold the target truth table.
     code = """import Mathlib
 import PEqualNP.Defs
 
@@ -118,7 +123,7 @@ theorem %s : %s := by
     simp [%s_aux.witness]
   · decide +kernel
   · decide +kernel
-""" % (mod, gs, n + len(gates) - 1 if False else n + len(gates) - 1, mod, mod, mod,
+""" % (mod, gs, outwire, mod, mod, mod,
        statement, mod, mod, rcases, notwire, mod)
     return code
 
