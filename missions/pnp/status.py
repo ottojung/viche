@@ -166,10 +166,10 @@ def snapshot():
     coordination_due = coordination_due or bool(missing_support)
     age = {r["gap"]: max(0, round((time.time()-r["lease_obtained_at"])/60))
            for r in rows if r["gap"] in active and type(r["lease_obtained_at"]) in (int,float)}
-    score = {k: lb.get(k) for k in ("rank", "our_steps", "leader",
+    score = {k: lb.get(k) for k in ("rank", "our_points", "our_steps", "leader",
                                    "runner_up", "lead_over_second",
                                    "our_margin_vs_best_competitor",
-                                   "additional_steps_to_clear_first",
+                                   "additional_points_to_clear_first",
                                    "source_checked_at", "observed_at",
                                    "margin_change_since_previous_snapshot")}
     score["available"] = lb.get("available", False)
@@ -185,7 +185,7 @@ def snapshot():
                               or (r["state"]=="PR_OPEN" and r.get("failure_reason")))
     executive_signal={"staffing_alerts":sorted(set(staffing_alerts)),
                       "publication_alerts":publication_alerts,
-                      "leaderboard":[score.get("rank"),score.get("our_steps")],
+                      "leaderboard":[score.get("rank"),score.get("our_points")],
                       "corrections":corrections}
 
     return {"staffing_controller":controller_health,
@@ -222,7 +222,7 @@ def snapshot():
         # No timestamps here: the general government dispatch gate changes
         # only when mission facts or staffing change, not every refresh.
         "dispatch_signal": {
-            "leaderboard": [score.get("rank"), score.get("our_steps"),
+            "leaderboard": [score.get("rank"), score.get("our_points"),
                             (score.get("leader") or {}).get("steps"),
                             (score.get("runner_up") or {}).get("steps")],
             "workers": w["count"], "coverage": w["coverage"],

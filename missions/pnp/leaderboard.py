@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The public, all-time P vs NP leaderboard is the research mission's scoreboard.
 
-Only the site's exported checked-step totals count, never agent/PR activity.
+Only the site's exported credited points count, never agent/PR activity.
 The immutable contributor-file path is taken from the site's live head.json.
 """
 import datetime
@@ -38,32 +38,34 @@ def scoreboard(entries, owner=OWNER):
     seen = set()
     for entry in entries:
         name = entry.get("github")
-        score = entry.get("steps")
+        score = entry.get("points")
+        steps = entry.get("steps")
         if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9-]{1,39}", name):
             raise ValueError("invalid contributor handle")
-        if type(score) is not int or score < 1 or name.lower() in seen:
-            raise ValueError("invalid or duplicated checked-step count")
+        if type(score) is not int or score < 0 or type(steps) is not int or steps < 0 or name.lower() in seen:
+            raise ValueError("invalid or duplicated points/step count")
         seen.add(name.lower())
-        rows.append({"handle": name, "steps": score,
+        rows.append({"handle": name, "steps": steps, "points": score,
                      "first": entry.get("first_proof_at") or ""})
-    # Official website: most checked steps first; first proof breaks ties.
-    rows.sort(key=lambda x: (-x["steps"], x["first"] or "9999",
+    # Official join.txt: rank by points. Earliest proof breaks equal scores.
+    rows.sort(key=lambda x: (-x["points"], x["first"] or "9999",
                              x["handle"].lower()))
     mine = next(((i + 1, p) for i, p in enumerate(rows)
                  if p["handle"].lower() == owner.lower()), None)
     rank = mine[0] if mine else None
     our_steps = mine[1]["steps"] if mine else 0
+    our_points = mine[1]["points"] if mine else 0
     competitors = [p for p in rows if p["handle"].lower() != owner.lower()]
     runner_up = competitors[0] if competitors else None
     leader = rows[0] if rows else None
-    their_best = runner_up["steps"] if runner_up else 0
+    their_best = runner_up["points"] if runner_up else 0
     return {"rank": rank, "contributors": len(rows),
-            "our_steps": our_steps, "leader": leader,
+            "score_metric": "points", "our_steps": our_steps, "our_points": our_points, "leader": leader,
             "runner_up": runner_up if rank == 1 else
                          (rows[1] if len(rows) > 1 else None),
-            "our_margin_vs_best_competitor": our_steps - their_best,
-            "lead_over_second": (our_steps - their_best if rank == 1 else None),
-            "additional_steps_to_clear_first": max(0, their_best + 1 - our_steps),
+            "our_margin_vs_best_competitor": our_points - their_best,
+            "lead_over_second": (our_points - their_best if rank == 1 else None),
+            "additional_points_to_clear_first": max(0, their_best + 1 - our_points),
             "rank_one": rank == 1}
 
 
@@ -75,7 +77,10 @@ def record_path():
 def load():
     path = record_path() / "latest.json"
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
+        if data.get("score_metric") != "points":
+            return {"available": False, "reason": "legacy proof-count snapshot; refresh required"}
+        return data
     except (OSError, ValueError):
         return {"available": False, "reason": "no verified leaderboard snapshot"}
 
@@ -87,9 +92,9 @@ def save(snapshot):
     old_margin = old.get("our_margin_vs_best_competitor")
     snapshot["margin_change_since_previous_snapshot"] = (
         snapshot["our_margin_vs_best_competitor"] - old_margin
-        if isinstance(old_margin, int) else None)
+        if isinstance(old_margin, int) and old.get("score_metric") == "points" else None)
     old_core = {k: old.get(k) for k in
-                ("rank", "our_steps", "leader", "runner_up")}
+                ("score_metric", "rank", "our_points", "our_steps", "leader", "runner_up")}
     new_core = {k: snapshot.get(k) for k in old_core}
     # Only append history when scoreboard values change.
     if old_core != new_core:

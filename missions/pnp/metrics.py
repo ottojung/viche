@@ -102,6 +102,7 @@ def snapshot(now=None):
         "observed_accepted_prs": len(accepted),
         "median_submission_to_acceptance_seconds": median([max(0,p["accepted"]-p["first"]) for p in accepted]),
         "local_check_events": dict(checks),
+        "official_credited_points": board.get("our_points") if board.get("available") else None,
         "official_checked_steps": board.get("our_steps") if board.get("available") else None,
         "official_score_observed_at": board.get("observed_at"),
         "malformed_events_skipped": malformed,
