@@ -67,9 +67,21 @@ class TestReady(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
             desk.record_retry({"retry_after_s":60,"note":"step rate limit"},"L-meta-123")
             self.assertGreater(desk.retry_until("L-meta-124"),time.time()+50)
-            d=desk.Desk(request=lambda *a:(429,json.dumps({"retry_after_s":90})),min_interval=0)
+            calls=[]
+            def rate_limited(*a):
+                calls.append(a)
+                return 429,json.dumps({"retry_after_s":90})
+            d=desk.Desk(request=rate_limited,min_interval=0)
+            # A recorded cooldown must prevent a new request even if it
+            # was entered between allocation and the paced wire operation.
             with self.assertRaises(desk.DeskError):d._call("GET","/next",{})
-            self.assertGreater(desk.retry_until(),time.time()+80)
+            self.assertEqual(calls,[])
+            # Expire only this synthetic fixture's prior retry, then
+            # independently verify global recording of the next HTTP 429.
+            with patch.object(desk.time,"time",return_value=time.time()+61):
+                with self.assertRaises(desk.DeskError):d._call("GET","/next",{})
+                self.assertEqual(len(calls),1)
+                self.assertGreater(desk.retry_until(),time.time()+80)
     def test_ledger_respects_dynamic_state_root(self):
         from missions.pnp import ledger
         with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
