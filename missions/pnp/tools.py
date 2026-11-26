@@ -21,13 +21,9 @@ def inventory():
     def add(path, use, purpose, when):
         if present(path):
             rows.append({"command": PREFIX + use, "purpose": purpose, "when": when})
-    add("lbcert/lbremote.py", "lbcert.lbremote STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean",
-        "lb_cert lower-bound certificate built on marceline-dev (~20 s); exit 0 written, 3 bound false, 4 too big",
-        "Statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S` or its `¬ (...)` twin. "
-        "Usually already done: see PNP_STATE_ROOT/lbcert/cands/GAP.status; the allocator fast lane submits it.")
-    add("lbcert/sibremote.py", "lbcert.sibremote STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs",
-        "Prove the step with a merged same-shape sibling's proof, compiled on marceline-dev; exit 0 written, 5 none",
-        "Any step. Retried automatically every 5 min while held; run it after a new sibling merges.")
+    add("lbcert/generators/promise/batch.py", "lbcert.generators.promise.batch --status",
+        "Inspect bounded local promise-family generation and staged source; status is not a compiler receipt",
+        "Promise-formula candidates are generated on billy-dev. Exact checks require an active bound workspace and managed compiler.")
     add("brief.py", "brief", "Exact leased statement, original sketch, parent cuts and siblings",
         "At entry; before independent mathematics.")
     add("proofs/__main__.py", "proofs find [QUERY]", "Retrieve checked analogous proofs and structural hints",
@@ -87,13 +83,11 @@ def inventory():
             {"command":"pnp-research guide ROLE","purpose":"Executable detailed examples for your role","when":"Only when you need the next unfamiliar operation."},
             {"command":"pnp-research knowledge find QUERY","purpose":"Cumulative mathematical objects from current and archived leases","when":"Before rediscovering a lemma or failed approach."},
             {"command":"pnp-research obligations ready --current","purpose":"Exact proof dependency graph for your current gap","when":"At decomposition and natural proof checkpoints."},
-            {"command":"pnp-research obligations solve NODE BODY --async","purpose":"Durable kernel check of a complete body and checked dependencies","when":"Parallel Lean iteration; collect CHECK_ID later."},
-            {"command":"pnp-research certificate --check --output Candidate.lean","purpose":"Generate and asynchronously check exact star-cover Lean certificate using reflection or list permutation","when":"Compatible graph-circuit construction; normal publication checks still apply."},
+            {"command":"pnp-research obligations solve NODE BODY --local","purpose":"Managed local check of a complete body and checked dependencies","when":"From the exact active bound workspace only."},
+            {"command":"pnp-research certificate --output Candidate.lean","purpose":"Generate exact star-cover candidate using reflection or list permutation; checking is a separate managed local step","when":"Compatible graph-circuit construction; generated source is not a kernel receipt."},
             {"command":"pnp-research yield","purpose":"Empirical family-level allocation baseline, current graph progress and competition","when":"Portfolio and lease evaluators."},
             {"command":"pnp-research adoption","purpose":"Observed role-prompt delivery and actual agent tool calls","when":"Flow and Executive evaluation; not mathematical success."},
         ]
-    if (Path.home()/".local/bin/pnp-remote-check").is_file():
-        rows.append({"command":"pnp-remote-check --scratch --async FILE.lean","purpose":"Remote Lean on exact pinned revision","when":"Heavy intermediate checks; use --availability once per checkout and --wait ID for result."})
     return rows
 
 
@@ -115,9 +109,8 @@ def snapshot():
     return {"revision":h.hexdigest()[:16],"command":PREFIX+"tools",
             "capabilities":rows,
             "sat_dependency_available":importlib.util.find_spec("pysat") is not None,
-            "remote_client_installed":(Path.home()/".local/bin/pnp-remote-check").is_file(),
-            "remote_build_available":None,
-            "note":"Only implemented tools are listed. Heuristic candidates and SAT results are not kernel verdicts. Use --help for exact syntax. Do not delay publication to run irrelevant tools."}
+            "out_of_host_proof_transport":"disabled",
+            "note":"Only implemented local tools are listed. Heuristic candidates and SAT results are not kernel verdicts. Lean checks require the managed compiler in an exact bound workspace. GitHub-hosted CI is allowed and separate. Do not delay publication to run irrelevant tools."}
 
 
 def record(name, cwd=None):

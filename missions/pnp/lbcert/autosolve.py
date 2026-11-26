@@ -2,12 +2,12 @@
 """Pre-generate lb_cert candidates for every open concrete circuit-size step on the public desk.
 
 Why: concrete lower-bound steps ("Table 2: ... at least K gates", "Graph t5-...") are won within
-10-20 minutes of posting. A candidate must exist BEFORE the town holds the step.
+10-20 minutes of posting. Local generation and candidate preservation remain enabled; all Lean
+checks must run through the managed compiler from an exact bound workspace.
 
 Every POLL seconds: read the public desk file, classify statements with lbparse, and generate a
-certificate for each new concrete step. Generation runs on marceline-dev through the relay op
-`lb-cert` (lbremote.py; ~20 s for a 4k-state certificate). billy-dev builds locally only when
-the relay fails. Output under PNP_STATE_ROOT/lbcert:
+certificate locally for each new concrete step. Out-of-host proof generation/check transports are
+disabled unconditionally. Output under PNP_STATE_ROOT/lbcert:
   cands/<gap>.lean, cands/<gap>.status   ok ENGINE | false | toobig | unsupported | error
   twins.json   {negation-twin gap id: lower-bound gap id}
   desk.json    {gap id: pr_open} for the concrete family
@@ -50,12 +50,12 @@ DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 10            # gaps.json is a conditional GET now (304 when unchanged)
-REMOTE_WORKERS = 3   # expensive lower-bound search
+LOCAL_GENERATORS = 1   # bounded local lower-bound generation
 PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound search
 PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
-MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
-GEN_TIMEOUT = 600      # successful runs take <= 546 s; keep a hung relay below the 900 s integration suite bound
+MAXSTATES = 4800       # keep local candidate generation below the 512 KiB certificate bound
+GEN_TIMEOUT = 300      # bounded local CPU work; generation never invokes Lean
 os.makedirs(CANDS, exist_ok=True)
 
 
@@ -158,6 +158,9 @@ def generate(g, engines):
     gid, mod = g['id'], g['module']
     if not retryable(gid):
         return
+    if not engines:
+        write_status(gid, 'deferred local engine unavailable')
+        return
     # Record of every lb_cert run to 2026-11-26: 252 'ok' all at <= 11 inputs; at >= 12 inputs
     # every run ended toobig/error/relay_error after 980-1780 s, holding a relay slot each
     # (five such searches on 24-42 input edge-function rows were running at once).
@@ -170,60 +173,28 @@ def generate(g, engines):
     open(sf, 'w').write(g['statement'])
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
-    from missions.pnp import state, support
-    rec = state.load(gid)
-    defer = bool(support.active(rec) and rec['statement'] == g['statement'])
     try:
-        p = managed_process.run([sys.executable, os.path.join(HERE, 'lbremote.py'), sf, mod, out,
-                            '--maxstates', str(MAXSTATES), '--chunks', '40'] + (['--defer-compile'] if defer else []),
-                           capture_output=True, text=True, timeout=GEN_TIMEOUT)
+        # Local bounded generator only. This constructs proof bytes but does not
+        # claim compilation; exact checking is a separate managed-workspace lane.
+        p = managed_process.run([sys.executable, 'lbassemble.py', engines[0], mod, sf, out + '.tmp',
+                            '--maxstates', str(MAXSTATES), '--chunks', '40'],
+                           cwd=HERE, capture_output=True, text=True, timeout=GEN_TIMEOUT)
     except subprocess.TimeoutExpired:
-        # A hung relay call otherwise raises out of generate(), leaves no status, and is
-        # re-queued on the very next poll: three such steps held all REMOTE_WORKERS for hours
-        # (9750/9756/9822 on 2026-11-26).  Record a retryable status so the worker is freed
-        # for other steps and this step gets the normal RETRY_DELAY backoff.
+        # A hung local generator must not monopolize the bounded worker.
         write_status(gid, 'deferred generation timeout %ss' % GEN_TIMEOUT)
         from missions.pnp import ledger
-        ledger.mark('generated', gid, status='timeout', secs=GEN_TIMEOUT, where='relay')
-        log('generated', gid, 'timeout', 'relay', None, '%ss' % GEN_TIMEOUT)
+        ledger.mark('generated', gid, status='timeout', secs=GEN_TIMEOUT, where='billy-dev')
+        log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % GEN_TIMEOUT)
         return
-    try:
-        r = json.loads(p.stdout.strip().split('\n')[-1])
-    except Exception:
-        r = {'status': 'relay_error'}
-    where = 'marceline'
+    where = 'billy-dev'
     if os.path.exists(os.path.join(WORK, 'STOP')):
         return
-    if p.returncode == 1 and lbparse.family(g['statement']) in ('mono', 'onenot'):
-        write_status(gid, 'deferred relay unavailable')
-        log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
-        return
-    if p.returncode == 1:   # relay or handler trouble: build here, slower but independent
-        if not LOCAL_FALLBACK.acquire(blocking=False):
-            write_status(gid, 'deferred local fallback busy')
-            log('local fallback deferred',gid)
-            return
-        try:
-            where = 'local'
-            r = {'status': 'error'}
-            for eng in engines:
-                q = managed_process.run([sys.executable, 'lbassemble.py', eng, mod, sf, out + '.tmp', '--maxstates', '4800',
-                                    '--chunks', '40'], cwd=HERE, capture_output=True, text=True, timeout=300)
-                if q.returncode == 0:
-                    os.replace(out + '.tmp', out)
-                    r = {'status': 'ok', 'engine': os.path.basename(eng)}
-                    break
-                r = {'status': {2: 'unsupported', 3: 'false', 4: 'toobig'}.get(q.returncode, 'error')}
-                if not (q.returncode == 4 and 'TOO LARGE' in q.stderr):
-                    break
-        finally:
-            LOCAL_FALLBACK.release()
+    r = {'status': {0: 'ok', 2: 'unsupported', 3: 'false', 4: 'toobig'}.get(p.returncode, 'error'),
+         'engine': os.path.basename(engines[0]) if engines else None}
+    if p.returncode == 0 and os.path.isfile(out + '.tmp'):
+        os.replace(out + '.tmp', out)
     from missions.pnp import ledger
     ledger.mark('generated', gid, status=r.get('status'), secs=round(time.time() - t0), where=where)
-    if r.get('status')=='ok' and r.get('compiled'):
-        from missions.pnp.lbcert import ready
-        if ready.record(gid,r,open(out,'rb').read()) and not defer:
-            lease_now(gid)
     st = r.get('status')
     # Generation success is not an exact Lean compile receipt. Existing
     # checked/compiled marker semantics stay available to the bulk lane.
@@ -238,68 +209,17 @@ SIB_STATE = os.path.join(WORK, 'sibling.json')
 
 
 def sibling_pass():
-    """Sibling transfer for held steps with no candidate (relay op `sibling`, compiled on marceline-dev).
-
-    A step whose statement skeleton is absent from the merged corpus cannot succeed: the relay
-    returns tried=0/siblings=0 only after the handler has burned minutes of marceline compile time
-    (measured 337 s for L-meta-8400, 2026-11-26).  Retried blindly every SIB_RETRY seconds this
-    occupied the sibling thread and the shared Lean slots for hours with zero candidates.  Now a
-    definitive no-match is remembered for the current corpus head; the step is retried when a new
-    merge lands, or after SIB_RETRY seconds for a transient relay error.
-    """
-    gaps_dir = os.path.join(STATE, 'gaps')
-    try:
-        tried = json.load(open(SIB_STATE))
-    except (OSError, ValueError):
-        tried = {}
-    head = None
-    try:
-        import sibling
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
-        from missions.pnp import gitctl
-        head, _idx = sibling.index(gitctl.MIRROR, WORK)
-    except Exception:
-        pass   # no corpus fingerprint: fall back to the time-based retry below
-    now = time.time()
-    changed = False
-    for gid in os.listdir(gaps_dir):
-        try:
-            rec = json.load(open(os.path.join(gaps_dir, gid, 'state.json')))
-        except (OSError, ValueError):
-            continue
-        if rec.get('state') not in ('LEASED', 'RESEARCHING') or rec.get('candidate_digest') or status(gid):
-            continue
-        prev = tried.get(gid)
-        prev = prev if isinstance(prev, dict) else {}
-        settled = bool(prev.get('settled')) and bool(head) and prev.get('head') == head
-        if settled or now - prev.get('at', 0) < SIB_RETRY:
-            continue
-        tried[gid] = {'head': head, 'at': now, 'settled': False}
-        changed = True
-        sf = os.path.join(CANDS, gid + '.sib.stmt')
-        open(sf, 'w').write(rec['statement'])
-        out = os.path.join(CANDS, gid + '.lean')
-        p = managed_process.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, rec['module'], out,
-                            '--imports', ','.join(rec.get('imports') or ['PEqualNP.Defs']), '--max-tries', '6'],
-                           capture_output=True, text=True, timeout=2000)
-        try:
-            r = json.loads(p.stdout.strip().split('\n')[-1])
-        except Exception:
-            r = {}
-        if p.returncode == 0:
-            write_status(gid, 'ok sibling %s %s marceline compiled tried=%s' % (r.get('source'), r.get('variant'), r.get('tried')))
-        elif head and (p.returncode == 5 or r.get('siblings') == 0):
-            # Definitive no-match on this corpus: do not recompile it until a merge changes the index.
-            tried[gid] = {'head': head, 'at': now, 'settled': True}
-        log('sibling', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'), 'siblings', r.get('siblings'))
-    if changed:
-        tmp = SIB_STATE + '.tmp'
-        json.dump(tried, open(tmp, 'w'))
-        os.replace(tmp, SIB_STATE)
+    """Refresh the local sibling index; do not generate/check via another host."""
+    import sibling
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
+    from missions.pnp import gitctl
+    head, idx = sibling.index(gitctl.MIRROR, WORK)
+    log('local sibling index', head[:12], 'shapes', len(idx or {}),
+        'adaptation disabled until exact bound managed check')
 
 
 def gen_plugin(g, name, sha):
-    """A town-written generator plugin (lbcert/plugins.py): generate here, compile on marceline-dev."""
+    """A town-written local plugin: generate and validate, then check only in bound workspaces."""
     import plugins, checkremote
     from missions.pnp import state, support, validate, fastlane, ledger
     from missions.pnp.lbcert import ready
@@ -331,7 +251,8 @@ def gen_plugin(g, name, sha):
         write_status(gid,'generated plugin %s %s secs=%.0f'%(name,sha,time.time()-t0))
         fastlane.submit_ready(gid)
         return
-    crc, res = checkremote.check(out + '.gen', g['module'])
+    from missions.pnp.lbcert import checklocal
+    crc, res = checklocal.check(out + '.gen', g['module'])
     if crc == 2:
         os.replace(out + '.gen', out)
         write_status(gid, 'generated plugin %s %s check deferred' % (name, sha))
@@ -340,7 +261,7 @@ def gen_plugin(g, name, sha):
     if crc == 0:
         os.replace(out + '.gen', out)
         recorded = ready.record(gid,dict(res,status='ok',compiled=True),data)
-        write_status(gid, 'ok plugin %s %s marceline compiled secs=%.0f' % (name, sha, time.time() - t0))
+        write_status(gid, 'ok plugin %s %s managed-local compiled secs=%.0f' % (name, sha, time.time() - t0))
         if recorded:
             lease_now(gid)
     else:
@@ -349,7 +270,7 @@ def gen_plugin(g, name, sha):
 
 
 def check_prepared(g):
-    import checkremote
+    from missions.pnp.lbcert import checklocal
     from missions.pnp import state, support, validate, fastlane
     from missions.pnp.lbcert import ready
     gid=g['id']
@@ -365,7 +286,7 @@ def check_prepared(g):
         log('prepared validation refused',gid,str(e)[:160]);return
     if ready.verified(gid):
         return
-    code,result=checkremote.check(path,g['module'],timeout=600)
+    code,result=checklocal.check(path,g['module'],timeout=600)
     if code==0:
         if ready.record(gid,dict(result,status='ok',compiled=True),data):
             log('prepared exact proof',gid,result.get('checked_base'))
@@ -401,53 +322,8 @@ SWEEP_MAX_TRIES = 4
 
 
 def sweep_pass():
-    """Sibling transfer for every open step nobody has claimed (pr_open == 0) and no generator owns,
-    whose statement skeleton matches a merged file: the bulk lane publishes what compiles.
-    Each step is tried once per upstream corpus commit."""
-    import sibling
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
-    from missions.pnp import gitctl
-    head, idx = sibling.index(gitctl.MIRROR, WORK)
-    try:
-        tried = json.load(open(SWEEP_STATE))
-    except (OSError, ValueError):
-        tried = {}
-    gaps = json.loads(get(DESK))['gaps']
-    import live
-    open_now = live.open_ids()
-    if open_now is not None:
-        gaps = [g for g in gaps if g['id'] in open_now]
-    from missions.pnp.lbcert.generators.promise import batch
-    batch_active=batch.alive()
-    batch_fallback=batch.fallback_keys() if batch_active else set()
-    todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
-            and status(g['id']) is None and not lbparse.family(g['statement'])
-            and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx
-            and not (batch_active and batch.claimed(g,batch_fallback))]
-    todo.sort(key=lambda g: -int(re.sub(r'\D', '', g['id']) or 0))
-    log('sweep', len(todo), 'open unclaimed steps with a merged sibling at', head[:12])
-    for g in todo:
-        if os.path.exists(os.path.join(WORK, 'STOP')):
-            break
-        gid = g['id']
-        sf = os.path.join(CANDS, gid + '.sib.stmt')
-        open(sf, 'w').write(g['statement'])
-        out = os.path.join(CANDS, gid + '.lean')
-        p = managed_process.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, g['module'], out,
-                            '--imports', ','.join(g.get('imports') or ['PEqualNP.Defs']),
-                            '--max-tries', str(SWEEP_MAX_TRIES)], capture_output=True, text=True, timeout=3000)
-        try:
-            r = json.loads(p.stdout.strip().split('\n')[-1])
-        except Exception:
-            r = {}
-        if p.returncode == 0:
-            write_status(gid, 'ok sibling %s %s marceline compiled tried=%s sweep' % (r.get('source'), r.get('variant'), r.get('tried')))
-        if p.returncode in (0, 5):
-            tried[gid] = head
-            tmp = SWEEP_STATE + '.tmp'
-            json.dump(tried, open(tmp, 'w'))
-            os.replace(tmp, SWEEP_STATE)
-        log('sweep', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'))
+    """Retain the local corpus index; sibling adaptation is deliberately not auto-checked."""
+    sibling_pass()
 
 
 def sibling_loop():
@@ -460,15 +336,9 @@ def sibling_loop():
 
 
 def sweep_loop():
-    from missions.pnp import gitctl
     last_radar = 0
     while not os.path.exists(os.path.join(WORK, 'STOP')):
         try:
-            latest = gitctl.ensure_mirror()      # fresh upstream/main: new merges are new siblings
-            try:
-                gitctl.sync_fork_base(latest)    # proof pushes then send only their own objects
-            except Exception as e:
-                log('fork sync deferred', type(e).__name__, str(e)[:160])
             if time.time() - last_radar > 600:
                 last_radar = time.time()
                 from missions.pnp import radar   # family radar + tool/method backlogs
@@ -496,12 +366,15 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         return 0
+    if os.path.exists(os.path.join(WORK, 'STOP')):
+        log('STOP file found; exiting before starting workers')
+        return 0
     engines = ensure_engines()
     import threading
     threading.Thread(target=sibling_loop, daemon=True).start()
     threading.Thread(target=sweep_loop, daemon=True).start()
     threading.Thread(target=promise_batch_loop, daemon=True).start()
-    pool = ThreadPoolExecutor(REMOTE_WORKERS)
+    pool = ThreadPoolExecutor(LOCAL_GENERATORS)
     plugin_pool = ThreadPoolExecutor(PLUGIN_WORKERS)
     prepare_pool = ThreadPoolExecutor(PREPARE_WORKERS)
     queued = QUEUED
@@ -595,7 +468,7 @@ def main():
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
                 if g.get('pr_open', 0) and g['id'] not in held:
                     continue
-                if len(outstanding) >= REMOTE_WORKERS:
+                if len(outstanding) >= LOCAL_GENERATORS:
                     break
                 if g['id'] not in queued and retryable(g['id']):
                     queued.add(g['id'])

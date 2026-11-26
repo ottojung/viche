@@ -154,10 +154,10 @@ Create `missions/pnp/lbcert/generators/NAME/gen.py` (read missions/pnp/lbcert/pl
   in your checkout; Apache-2.0, credit the source module in a comment). Most families are one generic library +
   per-instance data (a witness circuit, sampled rows, a certificate): compute the data, keep the library.
 - Test: `PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.lbcert.plugtest NAME --holdout 3 --open 2`
-  (generates, applies the town validator, compiles on marceline-dev; PASS = ready).
+  (local generation and static validation only; a candidate is not a compiler receipt).
 - Deliver it through the normal delivery/integration queue. Once on main, autosolve runs it on every unclaimed
   matching step within a minute and the bulk lane opens the PRs; a new gen.py version retries refused instances.
-Worked example of the method: missions/pnp/lbcert/onenot (one-NOT family; runs on marceline-dev).
+Worked example of the method: missions/pnp/lbcert/onenot (one-NOT family; local generation).
 """
 
 

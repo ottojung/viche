@@ -3,7 +3,6 @@ import argparse
 from contextlib import closing
 import hashlib
 import os
-import base64
 import json
 from pathlib import Path
 import re
@@ -36,25 +35,7 @@ def public_toolchain(base):
     return subprocess.check_output(prefix+["show",base+":lean/lean-toolchain"],text=True,timeout=5).strip()
 
 def method_check(base,oid,source):
-    toolchain=public_toolchain(base)
-    relay=str(Path.home()/".local/bin/marceline-request")
-    status=json.loads(subprocess.check_output([relay,"status",base],text=True,timeout=15))
-    if not status.get("base_available"):raise ValueError("remote pinned base unavailable")
-    raw=source.encode("utf-8")
-    if len(raw)>512*1024:raise ValueError("method source exceeds 512 KiB")
-    identity=k.digest(("method:"+oid).encode())
-    job={"version":1,"mode":"scratch","base":base,"toolchain":toolchain,
-         "attempt":identity[:24]+"-"+identity[24:40],"wall_seconds":600,"rss_mib":8192,
-         "source_sha256":k.digest(raw),"source_b64":base64.b64encode(raw).decode("ascii")}
-    job["job"]=k.digest(k.canon(job).encode())
-    with tempfile.NamedTemporaryFile(mode="w",suffix=".json") as f:
-        f.write(k.canon(job));f.flush()
-        proc=subprocess.run([relay,"lean-check",f.name],capture_output=True,text=True,timeout=1200)
-    try:
-        result=json.loads(proc.stdout)["result"]
-        if any(result.get(x)!=job[x] for x in ("job","base","source_sha256","toolchain","attempt")):result={}
-    except (ValueError,KeyError,TypeError):result={}
-    return proc,result
+    raise ValueError("independent method check has no exact bound workspace; out-of-host check disabled")
 
 
 def symbol(oid):
@@ -225,39 +206,30 @@ def verified_record(row):
 def local_compile_command(path):
     # Obligation sources always import Mathlib, so they require the exclusive
     # heavy queue. Light mode is only for narrow scratch files.
-    return [str(Path.home()/".local/bin/python3"),"-m","missions.pnp.compile",
-            "--","lake","env","lean",str(path)]
+    from .. import host_boundary
+    return host_boundary.managed_compile_command(["lake","env","lean",str(path)])
 
 
 def solve(c,oid,path,local=False,method=False):
     obj=k.get(c,oid)
     if obj["kind"]!="obligation":raise ValueError("not an obligation")
     if method:
-        if local:raise ValueError("method check uses the pinned remote compiler")
-        rec=None;work=None;base=obj["base"]
+        raise ValueError("independent method verification has no exact bound workspace; remote check disabled")
     else:rec,work,base=binding()
+    if not local:
+        raise ValueError("remote proof checks are disabled; use --local from the exact bound workspace")
     if obj["base"]!=base:raise ValueError("obligation requires another exact base")
     bodyhash=k.store_artifact(path)
     raw=k.artifact(bodyhash).read_text();clean_body(raw)
     src=build(c,oid,raw);sourcehash=k.store_bytes(src.encode())
-    if method:
-        proc,result=method_check(base,oid,src)
-    else:
-        with tempfile.NamedTemporaryFile(mode="w",suffix=".lean",prefix=".obligation-",dir=work) as f:
-            f.write(src);f.flush()
-            if local:
-                env=dict(os.environ,PYTHONPATH="/var/lib/lubko/wd/viche")
-                proc=subprocess.run(local_compile_command(f.name),cwd=work/"lean",
-                                   env=env,capture_output=True,text=True,timeout=1200)
-                result={"status":"elaborated" if proc.returncode==0 else "not_elaborated",
-                        "exit_code":proc.returncode,"base":base,"source_sha256":sourcehash,
-                        "diagnostic":(proc.stdout+"\n"+proc.stderr)[-16000:],"mode":"local-managed"}
-            else:
-                proc=subprocess.run([str(Path.home()/".local/bin/pnp-remote-check"),"--scratch",f.name],
-                                    capture_output=True,text=True,timeout=1200)
-                try:
-                    receipt=json.loads(proc.stdout);result=receipt.get("result",receipt)
-                except (ValueError,AttributeError):result={}
+    with tempfile.NamedTemporaryFile(mode="w",suffix=".lean",prefix=".obligation-",dir=work) as f:
+        f.write(src);f.flush()
+        env=dict(os.environ,PYTHONPATH="/var/lib/lubko/wd/viche")
+        proc=subprocess.run(local_compile_command(f.name),cwd=work/"lean",
+                           env=env,capture_output=True,text=True,timeout=1200)
+        result={"status":"elaborated" if proc.returncode==0 else "not_elaborated",
+                "exit_code":proc.returncode,"base":base,"source_sha256":sourcehash,
+                "diagnostic":(proc.stdout+"\n"+proc.stderr)[-16000:],"mode":"local-managed"}
     ok=(proc.returncode==0 and result.get("status")=="elaborated" and result.get("exit_code")==0
         and result.get("base")==base and result.get("source_sha256")==sourcehash
         and source_verified(src,oid) and verify_output(result.get("diagnostic",""),oid))
@@ -394,7 +366,7 @@ def main():
         elif a.cmd=="solve":
             if a.asynchronous:
                 from . import async_check
-                if a.local:raise ValueError("async uses remote Lean")
+                if a.local:raise ValueError("async checking is disabled; use synchronous --local in the exact bound workspace")
                 out=async_check.submit(c,a.id,a.body,a.method,a.wall,a.rss_mib,a.retry)
             else:
                 if a.retry or a.wall!=600 or a.rss_mib!=8192:raise ValueError("retry and resource overrides require --async")

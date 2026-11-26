@@ -46,12 +46,12 @@ class Tests(unittest.TestCase):
         self.assertTrue(source);self.assertLessEqual(gates,9)
         with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
             b.root().mkdir()
-            with patch.object(b.checkremote,"check",return_value=(0,{"status":"ok","sha256":"bad","checked_base":"a"*40})):
+            with patch.object(b.checklocal,"check",return_value=(0,{"status":"ok","sha256":"bad","checked_base":"a"*40})):
                 self.assertEqual(b.verify(Q,source)[0],"transient")
                 self.assertIsNone(ready.verified(GID))
                 self.assertFalse((ready.directory()/(GID+".lean")).exists())
             receipt={"status":"ok","sha256":hashlib.sha256(source.encode()).hexdigest(),"checked_base":"a"*40,"id":"fixture"}
-            with patch.object(b.checkremote,"check",return_value=(0,receipt)):
+            with patch.object(b.checklocal,"check",return_value=(0,receipt)):
                 self.assertEqual(b.verify(Q,source)[0],"checked")
                 self.assertEqual(ready.verified(GID)["digest"],receipt["sha256"])
     def test_shared_dag_reduces_formula_cost(self):
@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
             b.root().mkdir()
             source,_,_=b.candidate(Q,b.gen.parse(STATEMENT))
-            with patch.object(b.checkremote,"check",return_value=(2,{"status":"busy"})):
+            with patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})):
                 self.assertEqual(b.verify(Q,source)[0],"transient")
                 self.assertIsNone(ready.verified(GID))
 if __name__=="__main__":unittest.main()

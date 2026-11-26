@@ -18,7 +18,7 @@ import tempfile
 import time
 
 from . import gen, dag, anneal
-from ... import checkremote, live, ready
+from ... import checklocal, live, ready
 from .... import config, state, support, validate, ledger, fastlane
 
 STOCK_TARGET = 32
@@ -144,7 +144,7 @@ def verify(q,source):
     validate.validate(q,data)
     with tempfile.TemporaryDirectory(prefix="promise-check-",dir=root()) as d:
         p=Path(d)/"candidate.lean";p.write_bytes(data)
-        rc,r=checkremote.check(str(p),q["module"],timeout=120)
+        rc,r=checklocal.check(str(p),q["module"],timeout=120)
     if rc!=0:return ("transient" if rc==2 else "invalid"),str(r.get("status"))+": "+str(r.get("log") or "")[-300:]
     receipt=dict(r,compiled=True)
     if not ready.exact_receipt(receipt,data):return "transient","receipt mismatch"

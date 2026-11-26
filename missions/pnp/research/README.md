@@ -14,17 +14,13 @@ Independent method/tool agents run `pnp-research start --role method` or
 and proof-producing automation without acquiring desk leases. The Executive
 maintains these independent roles alongside baseline and focused researchers.
 
-## Concrete circuit-size steps: generated on marceline-dev
+## Concrete circuit-size steps: local candidate generation
 
 Statements `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S` and their `¬ (...)` twins
-are handled by software (missions/pnp/lbcert/README.md). Candidates are pre-built on marceline-dev
-for every open step into PNP_STATE_ROOT/lbcert/cands/GAP.lean and the allocator fast lane submits
-them within one tick of acquisition. To build one yourself on marceline-dev (32 cores, ~20 s):
-```sh
-python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py STATEMENT.txt \
-    PEqualNP.Outside.L_meta_N OUT.lean          # 0 written, 3 bound false, 4 too big
-marceline-request status                        # capabilities.lb_cert must be true
-```
+remain supported by bounded local candidate generation (missions/pnp/lbcert/README.md).
+Candidate source is never a compiler receipt. `lbremote.py`, `sibremote.py` and all relay
+clients refuse locally. Lean checks run only through the managed compiler from an exact bound
+workspace. GitHub-hosted CI is separately allowed.
 Do not spend a research session on such a step: if its status is `toobig`, the open problem is a
 stronger engine (tool role), not the instance. lb_cert has never succeeded above 11 inputs; rows
 with more are marked `toobig - precheck` at once.
@@ -39,9 +35,9 @@ with more are marked `toobig - precheck` at once.
 - An exact compiler receipt (lbcert/ready.py) triggers proof-of acquisition at once
   (allocator.proof_of_now), even if the step is held elsewhere; a research lease may be released
   to make room. A generator that ends with a compiled candidate needs no further action.
-- billy-dev has 4 cores and runs near load 10. Long searches (SAT, exhaustive enumeration) there
-  slow publication for everyone: keep them short, cap them with a timeout, and prefer the relay
-  ops on marceline-dev where one exists.
+- billy-dev is the only Viche/PnP agent execution host. Keep local SAT/exhaustive search bounded
+  by CPU, memory and time; external compute is prohibited. Managed Lean compilation is serialized
+  by the shared resource controller. GitHub-hosted Actions is allowed CI, not agent work.
 
 ## Use the mathematical memory
 
@@ -70,11 +66,8 @@ pnp-research obligations ready --current
 pnp-research obligations show NODE_ID
 pnp-research obligations request --statement '∀ n : Nat, n + 0 = n' --import Mathlib
 # Write proof.body containing a complete Lean term: by intro n; exact Nat.add_zero n
-pnp-research obligations solve NODE_ID proof.body --async
-# Keep investigating another obligation. Use CHECK_ID from the returned JSON.
-pnp-research obligations collect CHECK_ID --poll
-pnp-research obligations pending # --all also lists terminal checks
-# Exit 75 means pending; collect without --poll to wait.
+pnp-research obligations solve NODE_ID proof.body --local
+# Synchronous managed compilation in this exact bound workspace.
 pnp-research obligations assemble ROOT_ID --candidate --output Candidate.lean
 # Submit the exact complete candidate through the ordinary submission pipeline.
 ```
@@ -89,25 +82,17 @@ Executive assigns complementary nodes to specialists.
 Do not duplicate an active worker's obligation. Exact obligations deduplicate
 across origins when type, imports/options, revision and dependencies match.
 
-Remote async submission stores the immutable full source and request identity.
-Repeating the same check returns its existing ID. Collection validates the
-exact result identity, Lean exit status and axiom report. Generated checks
-append a trusted Lean command that collects actual theorem axioms and rejects
-anything outside propext, Classical.choice and Quot.sound. Proof inputs may
-not contain native_decide, arbitrary commands or diagnostic-spoofing strings.
-Only approved scoped resource options are accepted; use the structured
-certificate format for generated reflection helpers. This is not a general
-sandbox for arbitrary Lean programs. Historical receipts count as checked
-only if the intact body, exact source digest, compiler identity and unique
-final axiom report pass the strict audit; otherwise recheck the proof.
-Completed remote
-checks can be recovered after agent exit or lease rotation by maintenance.
-A terminal failure may be retried explicitly with `--retry` on solve, or
-using a changed body/resource budget. A pending check is not a failed proof.
-Synchronous solve and managed `--local` are also available in a bound workspace.
+Async transport submissions are disabled. Existing pending rows and immutable
+artifacts are preserved and reported as transport-disabled; they are not silently
+rewritten as success or mathematical failure. Existing historical receipts retain
+their original meaning and are not promoted. For a current bound obligation use
+`obligations solve NODE BODY --local`; this runs the managed compiler in the exact
+workspace and records a local result. Independent method checks without a bound
+workspace remain unverified. Proof inputs still use the strict validator; GitHub
+Actions may independently run project checks.
 
 Different base? `obligations fork OLD_ID` returns the node mapping;
-`obligations reuse OLD_ID NEW_ID --async` rechecks a reusable proof body.
+async rechecks are disabled and do not transfer verification.
 Verification does not transfer automatically between commits. To edit the
 remapped body first, use `obligations body OLD_ID --for-node NEW_ID --output FILE`.
 Only the existing publisher and authoritative checker determine acceptance.
@@ -119,8 +104,7 @@ The work packet provides a compatible public upstream revision when available:
 pnp-research obligations request --base PUBLIC_SHA --family graph-circuit \
   --provenance 'method research' --import Mathlib --statement 'True'
 # proof.body: by trivial
-pnp-research obligations solve NODE_ID proof.body --method --async
-pnp-research obligations collect CHECK_ID
+# Independent unbound check disabled; preserve source and method evidence only.
 ```
 
 Method research is not an extra desk claim and cannot publish to arbitrary gaps.
@@ -143,12 +127,10 @@ helper namespace. On the order-5 projective plane (62 inputs, 216 gates),
 the original direct obligation check took 252.3 s, while reflection through
 the same graph checker took 22.9 s. Both were checked on the same public revision.
 A generated file still needs kernel verification;
-a failed construction does not prove a lower bound. For direct kernel verification and durable graph storage, add `--check` to
-the bound generator or run `certificate GRAPH.json --base PUBLIC_SHA --check`.
-Collect the returned verification request with `obligations collect CHECK_ID`;
-no helper extraction or manual obligation creation is required. The ordinary proof
-synthesis and cheap preflight use this generator when applicable, with
-fallback to legacy synthesis.
+a failed construction does not prove a lower bound. The async `--check` path is
+disabled. Generate the source and use managed compilation only from the exact
+active bound workspace; unbound graph checks are not verified. The ordinary
+proof synthesis and cheap preflight retain local candidate generation.
 
 `pnp-research star GRAPH.json` returns only the computational witness.
 Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
@@ -169,7 +151,7 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
   shrinkage estimates, actual graph progress and competition. It is a
   heuristic, not calibrated individual prediction or automatic release policy.
 - `pnp-research knowledge ingest` replays live and quarantined research findings.
-  `pnp-research obligations reconcile` collects terminal async jobs.
+  `pnp-research obligations reconcile` preserves pending records without transport calls.
   The mission cycle runs both in independent bounded maintenance.
 - State lives under PNP_STATE_ROOT/research, independent of lease workspaces.
   SQLite stores graph and receipts; immutable artifact files use SHA-256.
@@ -193,9 +175,6 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
   where observed, exact-check receipt status, fresh competitor counts and
   unresolved/refuted obligations. Use these observations before qualitative
   focus or release decisions; no fabricated success probabilities.
-- The relay expires requests after 30 minutes plus clock skew. Reconcile
-  regularly (independent of agent turns); a missing request after the
-  grace period with a fresh relay heartbeat becomes a transport failure.
-  Preserve proof bodies and retry explicitly, never treat expiration as
-  mathematical refutation. The short start packet contains current work
-  rather than repeating the full guide.
+- Historical remote pending records remain unchanged and unverified; preserve
+  their proof bodies. No relay retry or polling is permitted. The short start
+  packet contains current work rather than repeating the full guide.

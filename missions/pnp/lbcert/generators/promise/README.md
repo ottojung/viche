@@ -6,13 +6,15 @@ target truth table and gate budget. Standalone Lean verification is required
 before claiming a proof-of lease. The ordinary publisher performs submission.
 
 The batch lane shares bounded formula tables between five- and six-input two-lit
-instances. One generator and two verification workers keep up to 32 eligible
-checked proofs in reserve; at most 256 eligible unverified attempts are staged.
+instances. One local generator stages candidates; only a separately run managed
+compiler in an exact bound workspace can turn them into checked stock. At most
+256 eligible unverified attempts are staged.
 Held work has priority. Attempts are keyed by exact statement digest and solver
 version, persisted in SQLite, and retried on infrastructure failures. A sharing-aware root-pair fallback counts the union of actual gate
 subexpressions instead of their formula costs. A bounded
 search refusal is not a mathematical impossibility result; it permits ordinary
-plugin and sibling-search fallback.
+local plugin fallback. Sibling indexing is local; sibling adaptation is not
+automatically checked.
 
 Read-only inspection (from the town checkout):
 ```sh
@@ -20,13 +22,13 @@ python3 -m missions.pnp.lbcert.generators.promise.batch --status
 ```
 
 The batch process is supervised by autosolve; it should not be launched as a
-second independent production service. A recent heartbeat identifies its
-ownership, and its singleton lock prevents duplicate work. No direct PRs or
-desk acquisitions are made by this lane.
+second independent production service. Its singleton lock prevents duplicate
+work. No direct PRs or desk acquisitions are made by this lane.
 
 2026-11-26 pilot: shared formula search generated 157 independent semantically
 valid six-input witnesses (advertised 4719 points, not credited points). Exact
-standalone verification and normal proof-of publication are separate stages.
+managed local verification and normal proof-of publication are separate stages.
+Historical pilot measurements do not authorize external compute.
 A subsequent sharing-aware pilot found 68 additional witnesses on its first
 200 targets. The desk's actual frozen lease price and eventual accepted score are distinct.
 
@@ -35,12 +37,13 @@ A subsequent sharing-aware pilot found 68 additional witnesses on its first
 The fallback annealer compiles a process-private C executable when a C compiler
 is available. It searches only topologically valid bounded circuits, evaluates
 their truth tables in one 64-bit word, and mutates/recombines a small population
-of candidates. The ordinary Python evaluator rechecks every returned witness,
-and the existing exact Lean compiler receipt is still mandatory. An unavailable
-compiler, timeout, or failure is an unknown result, never a lower bound.
+of candidates. The ordinary Python evaluator rechecks every returned witness.
+A separate exact managed Lean compiler receipt from a bound workspace is still
+mandatory. An unavailable compiler, timeout, or failure is an unknown result,
+never a lower bound.
 The batch attempt version includes both the Python wrapper and C source.
 
-A November 26 pilot on marceline-dev tested 40 known-solvable six-input
+Historical record only: a November 26 pilot on another host tested 40 known-solvable six-input
 two-lit instances with their supplied witnesses withheld: the initial
 compiled search recovered 23 within 0.5 seconds each, versus 4 using only
 the standalone Python heuristic. This is not a comparison with the entire
