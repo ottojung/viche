@@ -154,4 +154,51 @@ class Fairness(unittest.TestCase):
                 a.sibling_pass()
                 self.assertEqual(len(calls), 2)
 
+    def test_sibling_settle_keys_on_corpus_not_git_head(self):
+        # The relay searches a corpus snapshot of its own; a local mirror head change
+        # must not re-arm a settled no-match while the corpus is unchanged.
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, cands = root / "work", root / "work" / "cands"
+            gaps = root / "state" / "gaps"
+            gid = "L-meta-44"
+            (gaps / gid).mkdir(parents=True)
+            (gaps / gid / "state.json").write_text(json.dumps(
+                {"state": "LEASED", "statement": "s", "module": "M", "imports": []}))
+            cands.mkdir(parents=True)
+            (work / "sibcorpus.json").write_text(json.dumps({"corpus": "corpusA"}))
+            sib = work / "sibling.json"
+            calls = []
+            class NoMatch:
+                stdout = json.dumps({"siblings": 0, "tried": 0})
+                stderr = ""
+                returncode = 5
+            def fake_run(cmd, **kwargs):
+                calls.append(cmd)
+                return NoMatch()
+            fake_sibling = types.SimpleNamespace(index=lambda *args: ("head1", None))
+            with patch.dict(sys.modules, {"sibling": fake_sibling}), \
+                 patch.object(a, "STATE", str(root / "state")), \
+                 patch.object(a, "WORK", str(work)), \
+                 patch.object(a, "CANDS", str(cands)), \
+                 patch.object(a, "SIB_STATE", str(sib)), \
+                 patch.object(a.managed_process, "run", side_effect=fake_run), \
+                 patch.object(a, "write_status"):
+                a.sibling_pass()
+                self.assertEqual(len(calls), 1)
+                data = json.loads(sib.read_text())
+                self.assertEqual(data[gid].get("fingerprint"), "corpusA")
+                self.assertTrue(data[gid].get("settled"))
+                # Expire the time-based backoff: only the settled corpus marker may suppress a retry.
+                data[gid]["at"] = time.time() - 10000
+                sib.write_text(json.dumps(data))
+                fake_sibling.index = lambda *args: ("head2", None)
+                a.sibling_pass()
+                self.assertEqual(len(calls), 1)  # head moved; corpus did not -> no retry
+                # A real corpus change must re-arm exactly one compile.
+                (work / "sibcorpus.json").write_text(json.dumps({"corpus": "corpusB"}))
+                a.sibling_pass()
+                self.assertEqual(len(calls), 2)
+
 if __name__=="__main__":unittest.main()

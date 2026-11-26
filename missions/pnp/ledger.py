@@ -70,13 +70,16 @@ def read(hours=24):
 
 def report(hours=24):
     ev = read(hours)
+    # A step's stages commonly span the window boundary: a step seen two days ago is
+    # generated/leased today.  Shortening the window used to drop its earlier stage,
+    # leaving the transition table permanently empty.  Select steps by the window,
+    # but take each step's first stage from the full history.
+    recent_gids = {e["gid"] for e in ev}
     first = {}
-    timings = []
-    for e in ev:
-        if e["stage"] == "publish_timing":
-            timings.append(e)
-            continue
-        first.setdefault(e["gid"], {}).setdefault(e["stage"], e["t"])
+    for e in read(24 * 365 * 10):
+        if e["gid"] in recent_gids and e["stage"] != "publish_timing":
+            first.setdefault(e["gid"], {}).setdefault(e["stage"], e["t"])
+    timings = [e for e in ev if e["stage"] == "publish_timing"]
     lines = ["# Latency ledger, last %g h: %d events, %d steps" % (hours, len(ev), len(first)), ""]
     pairs = [(a, b) for i, a in enumerate(ORDER) for b in ORDER[i + 1:]]
     lines.append("| from -> to | steps | median s | p90 s |")

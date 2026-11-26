@@ -260,6 +260,14 @@ def sibling_pass():
         head, _idx = sibling.index(gitctl.MIRROR, WORK)
     except Exception:
         pass   # no corpus fingerprint: fall back to the time-based retry below
+    # The relay's corpus, not our git head, decides which siblings exist.  Observed 2026-11-26:
+    # corpus fixed at 459553f1... while the head moved 5x in 40 min.
+    corpus_file = os.path.join(WORK, 'sibcorpus.json')
+    try:
+        corpus = json.load(open(corpus_file))['corpus']
+    except (OSError, ValueError, KeyError):
+        corpus = None
+    fp = corpus or head
     now = time.time()
     changed = False
     for gid in os.listdir(gaps_dir):
@@ -271,10 +279,11 @@ def sibling_pass():
             continue
         prev = tried.get(gid)
         prev = prev if isinstance(prev, dict) else {}
-        settled = bool(prev.get('settled')) and bool(head) and prev.get('head') == head
+        prev_fp = prev.get('fingerprint') or prev.get('head')
+        settled = bool(prev.get('settled')) and bool(fp) and prev_fp == fp
         if settled or now - prev.get('at', 0) < SIB_RETRY:
             continue
-        tried[gid] = {'head': head, 'at': now, 'settled': False}
+        tried[gid] = {'fingerprint': fp, 'head': head, 'at': now, 'settled': False}
         changed = True
         sf = os.path.join(CANDS, gid + '.sib.stmt')
         open(sf, 'w').write(rec['statement'])
@@ -288,9 +297,18 @@ def sibling_pass():
             r = {}
         if p.returncode == 0:
             write_status(gid, 'ok sibling %s %s marceline compiled tried=%s' % (r.get('source'), r.get('variant'), r.get('tried')))
-        elif head and (p.returncode == 5 or r.get('siblings') == 0):
-            # Definitive no-match on this corpus: do not recompile it until a merge changes the index.
-            tried[gid] = {'head': head, 'at': now, 'settled': True}
+        else:
+            c = r.get('corpus')
+            if c and c != corpus:
+                corpus = c
+                fp = c
+                tmp = corpus_file + '.tmp'
+                json.dump({'corpus': c, 'at': now}, open(tmp, 'w'))
+                os.replace(tmp, corpus_file)
+                log('sibling corpus', c[:12])
+        if fp and (p.returncode == 5 or r.get('siblings') == 0):
+            # Definitive no-match on this corpus: do not recompile until the corpus itself changes.
+            tried[gid] = {'fingerprint': fp, 'head': head, 'at': now, 'settled': True}
         log('sibling', gid, r.get('status'), 'source', r.get('source'), 'tried', r.get('tried'), 'siblings', r.get('siblings'))
     if changed:
         tmp = SIB_STATE + '.tmp'
@@ -408,6 +426,15 @@ def sweep_pass():
         tried = json.load(open(SWEEP_STATE))
     except (OSError, ValueError):
         tried = {}
+    # The relay searches a corpus snapshot of its own, not our local mirror head; observed
+    # 2026-11-26: corpus 459553f1... constant while the head moved 4x in 15 min, re-sweeping
+    # the same 67 steps (each sibling compile 0-248 s of the remote's 2 Lean slots). Retry
+    # only when the corpus the relay actually searched changes.
+    corpus_f = os.path.join(WORK, 'sibcorpus.json')
+    try:
+        corpus = json.load(open(corpus_f))['corpus']
+    except (OSError, ValueError, KeyError):
+        corpus = head
     gaps = json.loads(get(DESK))['gaps']
     import live
     open_now = live.open_ids()
@@ -415,7 +442,8 @@ def sweep_pass():
         gaps = [g for g in gaps if g['id'] in open_now]
     todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
             and status(g['id']) is None and not lbparse.family(g['statement'])
-            and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx]
+            and tried.get(g['id']) not in (head, corpus)
+            and sibling.skeleton(g['statement']) in idx]
     todo.sort(key=lambda g: -int(re.sub(r'\D', '', g['id']) or 0))
     log('sweep', len(todo), 'open unclaimed steps with a merged sibling at', head[:12])
     for g in todo:
@@ -432,10 +460,17 @@ def sweep_pass():
             r = json.loads(p.stdout.strip().split('\n')[-1])
         except Exception:
             r = {}
+        c = r.get('corpus') or head
+        if c != corpus:
+            corpus = c
+            tmp = corpus_f + '.tmp'
+            json.dump({'corpus': c, 'at': time.time()}, open(tmp, 'w'))
+            os.replace(tmp, corpus_f)
+            log('sweep corpus', c[:12])
         if p.returncode == 0:
             write_status(gid, 'ok sibling %s %s marceline compiled tried=%s sweep' % (r.get('source'), r.get('variant'), r.get('tried')))
         if p.returncode in (0, 5):
-            tried[gid] = head
+            tried[gid] = corpus
             tmp = SWEEP_STATE + '.tmp'
             json.dump(tried, open(tmp, 'w'))
             os.replace(tmp, SWEEP_STATE)
