@@ -26,7 +26,22 @@ python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py STATEMENT.txt \
 marceline-request status                        # capabilities.lb_cert must be true
 ```
 Do not spend a research session on such a step: if its status is `toobig`, the open problem is a
-stronger engine (tool role), not the instance.
+stronger engine (tool role), not the instance. lb_cert has never succeeded above 11 inputs; rows
+with more are marked `toobig - precheck` at once.
+
+## Where time goes, and what is automatic (2026-11-26)
+
+- `python3 -m missions.pnp.ledger 24` prints median seconds between stages of every step
+  (seen, generated, checked, leased, pr_opened, verdict) and publication sub-stages. Measure
+  before proposing a latency change.
+- Publication opens the PR right after static validation; compilation runs in parallel and is
+  never awaited. Do not compile locally before submitting a finished candidate.
+- An exact compiler receipt (lbcert/ready.py) triggers proof-of acquisition at once
+  (allocator.proof_of_now), even if the step is held elsewhere; a research lease may be released
+  to make room. A generator that ends with a compiled candidate needs no further action.
+- billy-dev has 4 cores and runs near load 10. Long searches (SAT, exhaustive enumeration) there
+  slow publication for everyone: keep them short, cap them with a timeout, and prefer the relay
+  ops on marceline-dev where one exists.
 
 ## Use the mathematical memory
 
