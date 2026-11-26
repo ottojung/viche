@@ -117,6 +117,13 @@ def acquire(args, d, report=True):
         return 1
     gap, lease_data = answer["gap"], answer["lease"]
     lease = lease_data.get("id") if isinstance(lease_data, dict) else lease_data
+    raw_terms=lease_data.get("terms") if isinstance(lease_data,dict) else None
+    terms={}
+    if isinstance(raw_terms,dict):
+        if type(raw_terms.get("points")) is int and raw_terms["points"]>=0:terms["points"]=raw_terms["points"]
+        for k in ("level","kind"):
+            if isinstance(raw_terms.get(k),str):terms[k]=raw_terms[k][:40]
+        if type(raw_terms.get("race")) is bool:terms["race"]=raw_terms["race"]
     if not isinstance(lease, str) or not lease:
         print("desk returned a malformed lease", file=sys.stderr)
         return 2
@@ -145,15 +152,15 @@ def acquire(args, d, report=True):
                 imports=gap.get("imports") or [],
                 gap_title=gap.get("title"),
                 context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
-                acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
+                acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"), lease_terms=terms,
                 lease=lease, lease_obtained_at=time.time(),
                 lease_expires_at=time.time() +
                 config.LEASE_TTL_SECONDS)
             state.event(gid, "acquired", {"hard": bool(args.hard),
                                           "another": bool(args.another),
-                                          "reacquired": True})
+                                          "reacquired": True, "lease_terms":terms})
             from . import ledger
-            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True)
+            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True, lease_terms=terms)
             if report:
                 _printer({"gap": gid, "file": rec["path"],
                           "module": rec["module"], "lease": lease,
@@ -177,14 +184,14 @@ def acquire(args, d, report=True):
                        imports=gap.get("imports") or [],
                        gap_title=gap.get("title"),
                        context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
-                       acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"),
+                       acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"), lease_terms=terms,
                        lease=lease, lease_obtained_at=time.time(),
                        lease_expires_at=time.time() +
                        config.LEASE_TTL_SECONDS)
     state.event(gid, "acquired", {"hard": bool(args.hard),
-                                  "another": bool(args.another)})
+                                  "another": bool(args.another), "lease_terms":terms})
     from . import ledger
-    ledger.mark("leased", gid, proof_of=bool(proof_of))
+    ledger.mark("leased", gid, proof_of=bool(proof_of), lease_terms=terms)
     if report:
         _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
                   "lease": lease, "headline": config.HEADER})

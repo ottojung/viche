@@ -6,6 +6,7 @@ closed).  Live instructions are re-read on startup rather than trusting the
 stale 30-minute beat comment in tools/pnp.sh.
 """
 import json
+import fcntl
 import os
 import time
 import urllib.error
@@ -35,7 +36,8 @@ def retry_until(target=None):
     data=_retry_data()
     values=[data.get("until",0)]
     if target:
-        values.append(data.get("targets",{}).get(target,0))
+        targets=data.get("targets")
+        if isinstance(targets,dict):values.append(targets.get(target,0))
     return max((v for v in values if type(v) in (float,int)),default=0)
 
 
@@ -43,15 +45,22 @@ def record_retry(data,target=None):
     seconds=data.get("retry_after_s")
     if type(seconds) not in (int,float) or not 0 < seconds < 86400:return
     from . import state
-    now=time.time()
-    obj=_retry_data()
-    targets={k:v for k,v in obj.get("targets",{}).items() if type(v) in (int,float) and v>now}
-    if target:
-        targets[target]=max(targets.get(target,0),now+seconds)
-    else:
-        obj["until"]=max(retry_until(),now+seconds)
-    obj["targets"]=targets
-    state.atomic_write(retry_path(),json.dumps(obj))
+    os.makedirs(config.STATE_ROOT,exist_ok=True)
+    with open(os.path.join(config.STATE_ROOT,"desk-retry.lock"),"a+") as lk:
+        fcntl.flock(lk,fcntl.LOCK_EX)
+        now=time.time()
+        obj=_retry_data()
+        old_targets=obj.get("targets")
+        targets={k:v for k,v in old_targets.items() if type(v) in (int,float) and v>now} if isinstance(old_targets,dict) else {}
+        note=str(data.get("note") or data.get("error") or "").lower()
+        if any(x in note for x in ("rate limit","too many requests","too many steps","at capacity","holding limit")):target=None
+        if target:
+            targets[target]=max(targets.get(target,0),now+seconds)
+        else:
+            obj["until"]=max(retry_until(),now+seconds)
+        obj["targets"]=targets
+        state.atomic_write(retry_path(),json.dumps(obj))
+
 
 def _capacity_path():
     return os.path.join(config.STATE_ROOT, "desk-capacity.json")
@@ -102,9 +111,24 @@ def http_request(method, url, params=None):
         return e.code, e.read().decode("utf-8", "replace")
 
 
+def pace(interval,sleep=time.sleep):
+    """Serialize request starts across allocator, publisher and heartbeat processes."""
+    if interval<=0:return
+    os.makedirs(config.STATE_ROOT,exist_ok=True)
+    with open(os.path.join(config.STATE_ROOT,"desk-request.lock"),"a+") as f:
+        fcntl.flock(f,fcntl.LOCK_EX)
+        f.seek(0)
+        try:last=float(f.read())
+        except ValueError:last=0
+        now=time.monotonic()
+        if 0<=now-last<interval:sleep(interval-(now-last))
+        f.seek(0);f.truncate();f.write(str(time.monotonic()));f.flush()
+
+
 class Desk:
     def __init__(self, request=None, min_interval=None, sleep=None):
         self.request = request or http_request
+        self.shared_pace = request is None
         self.min_interval = (config.REQUEST_MIN_INTERVAL
                              if min_interval is None else min_interval)
         self.sleep = sleep or time.sleep
@@ -118,6 +142,7 @@ class Desk:
         url = config.DESK_BASE + path
         delay = 1.0
         for attempt in range(5):
+            if self.shared_pace:pace(self.min_interval,self.sleep)
             self.last = time.monotonic()
             try:
                 status, text = self.request(method, url, params)
@@ -127,7 +152,14 @@ class Desk:
                 self.sleep(delay)
                 delay *= 2
                 continue
-            if status == 429 or 500 <= status < 600:
+            if status == 429:
+                try:data=json.loads(text)
+                except ValueError:data={}
+                if not isinstance(data,dict):data={}
+                if type(data.get("retry_after_s")) not in (int,float):data["retry_after_s"]=60
+                record_retry(data)
+                raise DeskError("desk rate limited; honoring retry_after_s")
+            if 500 <= status < 600:
                 if attempt == 4:
                     raise DeskError("desk HTTP %d after retries" % status)
                 self.sleep(delay)
@@ -205,6 +237,10 @@ class Desk:
             # failure into "no gaps" (fail closed).
             if "gap" in data:
                 record_retry(data,proof_of)
+                from . import ledger
+                ledger.mark("offer_declined",proof_of or "ordinary",
+                            retry_after_s=data.get("retry_after_s"),note=str(data.get("note") or "")[:200],
+                            holding=data.get("holding"),capacity=data.get("capacity"))
                 return None
             raise DeskError("desk next is missing gap key")
         if lease is None:

@@ -40,6 +40,18 @@ class TestReady(unittest.TestCase):
             self.assertEqual(desk.retry_until("L-meta-124"),0)
             desk.record_retry({"retry_after_s":60})
             self.assertGreater(desk.retry_until("L-meta-124"),time.time()+50)
+    def test_rate_limit_is_global_even_for_target(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
+            desk.record_retry({"retry_after_s":60,"note":"step rate limit"},"L-meta-123")
+            self.assertGreater(desk.retry_until("L-meta-124"),time.time()+50)
+            d=desk.Desk(request=lambda *a:(429,json.dumps({"retry_after_s":90})),min_interval=0)
+            with self.assertRaises(desk.DeskError):d._call("GET","/next",{})
+            self.assertGreater(desk.retry_until(),time.time()+80)
+    def test_ledger_respects_dynamic_state_root(self):
+        from missions.pnp import ledger
+        with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
+            ledger.mark("fixture","L-meta-123")
+            self.assertTrue(Path(root,"ledger.jsonl").is_file())
     def test_capacity_retained_until_observed_update(self):
         with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
             Path(root,"desk-capacity.json").write_text(json.dumps({"capacity":3,"at":0}))

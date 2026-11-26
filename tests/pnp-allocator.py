@@ -71,6 +71,28 @@ class Tests(unittest.TestCase):
         self.assertEqual(allocator.fill(d,mem,NOW+30,{}),[])
         self.assertEqual(len(d.calls),5)
 
+    def test_declined_stock_tries_next_without_ordinary_fallback(self):
+        from missions.pnp.lbcert import ready
+        for i in range(1,5):
+            self.add("L-meta-"+str(i))
+        class StockDesk(Desk):
+            def _next_gap(self,hard=False,another=False,proof_of=None):
+                self.calls.append(proof_of)
+                if proof_of=="L-meta-98":return None
+                assert proof_of=="L-meta-99"
+                return {"gap":{"id":proof_of,"statement":"True","module":"PEqualNP.Outside.L_meta_99",
+                    "file":"lean/PEqualNP/Outside/L_meta_99.lean"},
+                    "lease":{"id":"fixture","terms":{"points":51,"kind":"prove","level":"solid","race":False}}}
+        d=StockDesk()
+        def offers(snapshot,mem,now):
+            attempts=mem.setdefault("proof_of_attempts",{})
+            return [x for x in ("L-meta-98","L-meta-99") if x not in attempts]
+        with patch.object(ready,"offers",side_effect=offers),patch.object(ready,"verified",return_value={"digest":"a"}),patch.object(allocator.fastlane,"submit_ready"):
+            self.assertEqual(allocator.fill(d,{},NOW,{}),["L-meta-99"])
+        self.assertEqual(d.calls,["L-meta-98","L-meta-99"])
+        self.assertEqual(state.load("L-meta-99")["lease_terms"]["points"],51)
+        self.assertEqual(len(cli.held_records()),5)
+
     def test_checked_candidate_does_not_preempt_full_roster(self):
         from missions.pnp.lbcert import ready
         for i in range(1,6):

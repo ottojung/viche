@@ -16,7 +16,8 @@ import time
 
 from . import config
 
-PATH = os.path.join(config.STATE_ROOT, "ledger.jsonl")
+def path():
+    return os.path.join(config.STATE_ROOT, "ledger.jsonl")
 ORDER = ("seen", "generated", "checked", "leased", "pr_opened", "verdict")
 
 
@@ -24,7 +25,7 @@ def mark(stage, gid, **fields):
     try:
         line = json.dumps(dict(t=round(time.time(), 3), stage=stage, gid=gid, **fields),
                           sort_keys=True, default=str)
-        with open(PATH, "a", encoding="utf-8") as f:
+        with open(path(), "a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass
@@ -56,7 +57,7 @@ def read(hours=24):
     since = time.time() - hours * 3600
     out = []
     try:
-        with open(PATH, encoding="utf-8") as f:
+        with open(path(), encoding="utf-8") as f:
             for line in f:
                 try:
                     e = json.loads(line)

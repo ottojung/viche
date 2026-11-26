@@ -22,12 +22,16 @@ def marker(gid):
     return directory()/(gid+".checked.json")
 
 
+def exact_receipt(result, data):
+    return (result.get("status")=="ok" and result.get("compiled") is True
+            and result.get("sha256")==hashlib.sha256(data).hexdigest()
+            and isinstance(result.get("checked_base"),str)
+            and re.fullmatch(r"[0-9a-f]{40}",result["checked_base"]) is not None)
+
+
 def record(gid, result, data):
+    if not exact_receipt(result,data):return False
     digest=hashlib.sha256(data).hexdigest()
-    if not (result.get("status")=="ok" and result.get("compiled") is True
-            and result.get("sha256")==digest
-            and re.fullmatch(r"[0-9a-f]{40}",result.get("checked_base") or "")):
-        return False
     path=directory()/(gid+".lean")
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
         return False
@@ -68,8 +72,19 @@ def offers(snapshot, mem, now):
         if current is None:return []
         rows=current["gaps"]
         open_now=set(rows)
+    # A recent public gaps cache identifies competing open PRs; an expired or
+    # unavailable cache is not negative evidence. No extra network request.
+    competing=set()
+    try:
+        cache=Path(config.STATE_ROOT)/"lbcert"/"gaps-cache.json"
+        meta=json.loads(Path(str(cache)+".meta").read_text())
+        if 0<=now-meta["at"]<120:
+            competing={q["id"] for q in json.loads(cache.read_text())["gaps"] if q.get("pr_open")}
+    except (OSError,ValueError,KeyError,TypeError):
+        pass
     for path in paths:
         gid=path.name[:-13]
+        if gid in competing:continue
         if now-attempts.get(gid,0)<120 or desk.retry_until(gid)>now:
             continue
         if open_now is not None and gid not in open_now:

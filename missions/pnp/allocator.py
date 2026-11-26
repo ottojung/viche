@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio, support
 
 POLL_SECONDS = 30
+STOCK_PROBES = 3
 STOCK_RESERVE = 1  # keep room for a verified, high-conversion proof
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
 
@@ -91,12 +92,14 @@ def fill(d, mem, now, snapshot):
     signals = {False: ordinary, True: hard_count}
     previous = {False: old_ordinary, True: old_hard}
     acquired = []
+    probes=0
     with cli.acquisition_lock():
         while len(cli.held_records()) < desk.lease_limit():
             held = len(cli.held_records())
             from .lbcert import ready
-            target=next(iter(ready.offers(snapshot,mem,now)),None)
+            target=next(iter(ready.offers(snapshot,mem,now)),None) if probes<STOCK_PROBES else None
             if target:
+                probes+=1
                 mem["proof_of_attempts"][target]=now
                 before={r["gap_id"] for r in cli.held_records()}
                 result=cli.acquire(SimpleNamespace(hard=False,another=bool(held),
@@ -109,8 +112,13 @@ def fill(d, mem, now, snapshot):
                         except Exception as exc:
                             print("proof-of publication deferred:",str(exc)[:200],flush=True)
                     continue
-                if result==2:
+                if result==2 or desk.retry_until()>time.time():
                     return acquired
+                # A single ineligible target must not burn the reserved slot.
+                if probes<STOCK_PROBES:
+                    continue
+            if desk.retry_until()>time.time():
+                break
             if held >= max(1, desk.lease_limit() - STOCK_RESERVE):
                 break
             for hard in (False, True):

@@ -417,9 +417,13 @@ def sweep_pass():
     open_now = live.open_ids()
     if open_now is not None:
         gaps = [g for g in gaps if g['id'] in open_now]
+    from missions.pnp.lbcert.generators.promise import batch
+    batch_active=batch.alive()
+    batch_fallback=batch.fallback_keys() if batch_active else set()
     todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
             and status(g['id']) is None and not lbparse.family(g['statement'])
-            and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx]
+            and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx
+            and not (batch_active and batch.claimed(g,batch_fallback))]
     todo.sort(key=lambda g: -int(re.sub(r'\D', '', g['id']) or 0))
     log('sweep', len(todo), 'open unclaimed steps with a merged sibling at', head[:12])
     for g in todo:
@@ -475,6 +479,17 @@ def sweep_loop():
         time.sleep(120)
 
 
+def promise_batch_loop():
+    """Independent shared-table lane; the guardian kills it with autosolve."""
+    while not os.path.exists(os.path.join(WORK, 'STOP')):
+        try:
+            p=managed_process.run([sys.executable,"-m","missions.pnp.lbcert.generators.promise.batch"],timeout=900)
+            if p.returncode:log("promise batch deferred",p.returncode)
+        except Exception as e:
+            log("promise batch error",type(e).__name__,str(e)[:180])
+        time.sleep(5)
+
+
 def main():
     lock = open(os.path.join(WORK, 'autosolve.lock'), 'w')
     try:
@@ -485,6 +500,7 @@ def main():
     import threading
     threading.Thread(target=sibling_loop, daemon=True).start()
     threading.Thread(target=sweep_loop, daemon=True).start()
+    threading.Thread(target=promise_batch_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
     plugin_pool = ThreadPoolExecutor(PLUGIN_WORKERS)
     prepare_pool = ThreadPoolExecutor(PREPARE_WORKERS)
@@ -590,10 +606,15 @@ def main():
                 import plugins
                 found = plugins.discover()
                 if found:
+                    from missions.pnp.lbcert.generators.promise import batch
+                    batch_active=batch.alive()
+                    batch_fallback=batch.fallback_keys() if batch_active else set()
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
                         if len(plugin_pending) >= PLUGIN_WORKERS:
                             break
                         if g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
+                            continue
+                        if batch_active and batch.claimed(g,batch_fallback):
                             continue
                         hit = plugins.family_of(g['statement'], found)
                         if hit and fresh(g['id'], hit[1]):
