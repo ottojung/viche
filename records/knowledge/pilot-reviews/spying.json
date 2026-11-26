@@ -1,0 +1,79 @@
+{
+  "decision": "proceed",
+  "disposition_cycle": "4f476af2b4e9e688e8d585a2a0827d0f",
+  "efficacy_claim": false,
+  "findings": {
+    "actual_work": "Real durable reservations with native metering and clean closure exist in this term; publication counts, agent exits and registrations are not treated as outcomes (Act 34 s4(3), s5).",
+    "authorization": "Act 34 s2 permit present, hash-bound and institutionally attested (board approve + c1e00002 officer comments on origin aff4dedc, issue bpzNUUt9izRYOOcONcTy9K-implicate). Deployed gate exits 0 for this office from billy-dev this session; no workflow disabled.",
+    "cumulative_debt": "Included in the non-resettable 45-day UPPER_BOUND ledger, within measured caps; restart/re-permit did not reset it.",
+    "faults": "The first-wave hold (no output, agent_terminal_unknown) was reconciled under a lawful continuity repair and replaced by a real, cleanly closed, natively metered reservation in this term; allowlist preflight ALLOW with one exact-author Vitalik source and zero reasons. No new safety fault observed in this term.",
+    "native_metering": "Native session IDs resolve for real reservations; token totals are absolute-session upper bounds and CPU is whole-host UPPER_BOUND, not per-office measurement.",
+    "source_boundaries": "No office expanded its mission scope, source allowlist or authority; no Post message treated as authority; judiciary randomized audits and the change-quality gate untouched.",
+    "zero_billed_runtime_selection": "Free-only allowlist on exact path, reviewed exact-price IDs; every fresh-window reservation for this office records source opencode-service-session-v2, cost 0.0 and cost_reported true. No paid spend observed, authorized or created."
+  },
+  "limitations": [
+    "Safety disposition only (Act 34 s4(1)); not an efficacy, calibration, renewal, value or legal-authorization verdict.",
+    "No efficacy claim; no outcome or marginal-value claim is implied by proceed.",
+    "Whole-host CPU is a conservative upper bound, not measured per-office CPU; ledger agreement is internal consistency, not independent proof of real token use.",
+    "Board approval was verified through the deployed institutional attestation from this host; the shared UID means the multi-channel attestation raises forgery cost but is not a digital signature.",
+    "The two held rows and the no-dispatch consequence are independently re-observed facts, not a claim that either instrument is unsafe or that this disposition unblocks them.",
+    "The frozen third-party Statistics measurements were read as untrusted pointers and not used as authority; the primary bytes, live ledger and deployed code were read directly."
+  ],
+  "office": "spying",
+  "permit_sha256": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0",
+  "permit_start": 1795560059,
+  "referrals": [
+    "Executive/Economy: two unbound held reservations (foresight r1795595445-NZIjZE34, statistics r1795627844-h4STKKF6) remain open at the per-run ceiling; resolve only through the lawful termination path (held-reservation-resolution-act remains a draft). Judiciary neither edits the ledger nor signs permits.",
+    "Parliament: observe the gate/guard independence limitation \u2014 a source-linked proceed satisfies the gate's review condition but cannot clear a held reservation; no reform is proposed by the Judiciary.",
+    "Spying source scope unchanged; preflight ALLOW rests on one exact-author Vitalik communication; no inferred preference was promoted to authority."
+  ],
+  "reviewed_at": 1795666091,
+  "reviewer": "c1e00008",
+  "schema": "viche-act34-judiciary-review-v1",
+  "scope": "Act 34 s4(1) independent fresh after-start review of real output, safety and faults for the reland permit term (not_before 1795560059). Safety disposition only; NOT an efficacy, renewal, budget, permit or value verdict.",
+  "sources": [
+    {
+      "claim": "Act 34 s4(1) 48h independent after-start safety review; s4(3) continuous improvement; parity-v3 s4(3) fresh disposition for a new permit term.",
+      "path": "government/LAWS.md"
+    },
+    {
+      "claim": "status ACTIVE; reland permits not_before 1795560059, origin aff4dedc, signer c1e00002, officer FxkZWjmZ; 48h window ends 1795732859.",
+      "path": "records/knowledge/activation.json",
+      "sha256": "921b99ae1288769b4460ea25641cad93da8d1ed3c98ce1adfbecbd32b261587b"
+    },
+    {
+      "claim": "measured 45-wave envelope; per-run ceiling 11,320,103 tok / 7,987 CPU-s / 1,997 wall-s; non-resettable 45-day ledger; zero-billed source unchanged.",
+      "path": "government/knowledge-budget.conf",
+      "sha256": "b80f48aff6b94382d4a5b859bab41906fa665c3b8cf4f6eb5bd0a84152ea8aab"
+    },
+    {
+      "claim": "free-only allowlist on exact dispatch path (same bytes attested in first wave).",
+      "path": "government/knowledge-free-dispatch.sh",
+      "sha256": "c8b287e6981ed057583f96f8c70534d76577a874948d117a16c370eb52c08c0a"
+    },
+    {
+      "claim": "Economy zero-billed control attestation; negative-acceptance digest b5f40a2a; verified on main by the deployed gate from this host.",
+      "path": "records/economy/2026-11-24-act34-zero-billed-verification-1831z.md",
+      "sha256": "ecf3e67f0e5a664882852c08843ec27e5c4f22327371cdf2e67874e8d3db6ecc"
+    },
+    {
+      "claim": "read on canonical main; requires this review at decision proceed and reads no reservation/ledger records (gate/guard independence).",
+      "path": "government/knowledge-act34-gate.py",
+      "sha256": "13e6d68aaa1b32ce08e1a8ecd9f209486115aec077be7ef0f42f489306640d9a"
+    },
+    {
+      "claim": "live cumulative 45-day ledger 144,681,979 tok / 136,416.56 CPU-s / 34,015 wall-s across 56 reservations, within 2,037,618,540-tok and 1,437,660-CPU-s aggregate caps; held rows charged at per-run ceiling.",
+      "path": "/var/lib/lubko/wd/viche-state/knowledge/budget/aggregate.json"
+    },
+    {
+      "claim": "current reland permit, hash-bound to activation.json; verified byte-match this session.",
+      "path": "records/knowledge/permits/spying.json",
+      "sha256": "be8fbad593d54727e83b8112187ac41e86a97a2754814b7e00d73c3bc4cbfbd0"
+    },
+    {
+      "claim": "representative real, native-metered, closed reservation in the fresh window: 3,341,429 tokens / 2,439.33 CPU-s UPPER_BOUND / 617 wall-s / cost 0; closed 1795588811",
+      "path": "/var/lib/lubko/wd/viche-state/knowledge/budget/reservations/r1795588177-2jkiJ5iT.json"
+    }
+  ],
+  "statutory_deadline": 1795732859
+}
