@@ -7,7 +7,7 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting
+from . import assignment, cli, competition, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
@@ -113,7 +113,7 @@ def fill(d, mem, now, snapshot):
                 if now < mem.get("posting_retry_at",0):
                     # When no solid work is offered, checked *uncontested*
                     # stock is the only permitted targeted fallback.
-                    target=next(iter(ready.offers(snapshot,mem,now,uncontested=True)),None) if snapshot.get("complete") else None
+                    target=competition.fallback_target(ready.offers(snapshot,mem,now,uncontested=True),mem,now) if snapshot.get("complete") else None
                     if not target:
                         break
                     mem["proof_of_attempts"][target]=now

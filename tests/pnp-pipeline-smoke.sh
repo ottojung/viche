@@ -39,5 +39,6 @@ python3 tests/pnp-rows.py
 
 python3 tests/pnp-metrics.py
 python3 tests/pnp-race-metrics.py
+python3 tests/pnp-competition.py
 
 python3 tests/pnp-remote-protocol.py

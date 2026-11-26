@@ -98,7 +98,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(uncontested)
             mem.setdefault("proof_of_attempts",{})
             return ["L-meta-99"]
-        with patch.object(ready,"offers",side_effect=offers),patch.object(ready,"verified",return_value={"digest":"a"}):
+        with patch.object(ready,"offers",side_effect=offers),patch.object(ready,"verified",return_value={"digest":"a"}),patch.object(allocator.competition,"observe",return_value={"L-meta-99":0}):
             self.assertEqual(allocator.fill(d,mem,NOW,{}),[])
             self.assertEqual(allocator.fill(d,mem,NOW+5,{}),[])
             self.assertEqual(allocator.fill(d,mem,NOW+5,{"complete":True}),["L-meta-99"])
