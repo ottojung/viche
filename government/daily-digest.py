@@ -40,6 +40,10 @@ import time
 WINDOW = 24 * 3600
 LINE_MAX = 300
 NEEDS_FOUNDER = re.compile(r"^\s*NEEDS-FOUNDER:\s*(.+)$", re.M)
+# An external scheduler floods Town Hall with operational records that can quote
+# the phrase "NEEDS-FOUNDER". They are not requests to the Founder and must not
+# crowd the real, once-posted asks out of the digest's four-item line.
+SCHEDULER_TURN = re.compile(r"^\s*\[scheduler-turn\b", re.I)
 
 town = pathlib.Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
 state = pathlib.Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
@@ -377,6 +381,42 @@ def line_inaction(now):
         gate, expired, defaulted, audited, ", ".join(quiet) or "n/a")
 
 
+def townhall_needs_messages(now):
+    """Town Hall messages within WINDOW, newest first, deduplicated by id.
+
+    The digest used to read only page 1. A high-rate external scheduler can push
+    a substantive NEEDS-FOUNDER line onto a later page while it is still well
+    inside WINDOW, hiding an open Founder decision from "Needs you". Scan every
+    page that still holds in-window messages instead. Messages are returned
+    newest first by `board show`, so stop at the last page (a short page) or as
+    soon as a page is entirely older than the window. A failed page read is an
+    Unavailable, never an empty result. Messages without an id (test doubles)
+    are not deduplicated.
+    """
+    messages = []
+    seen = set()
+    for page in range(1, 1000):
+        show = antonina_json("board", "show", "--id", townhall, "--page", str(page))
+        batch = show.get("messages")
+        if not isinstance(batch, list):
+            raise Unavailable("board show messages shape")
+        in_window = 0
+        for message in batch:
+            when = iso_epoch(message.get("createdAt"))
+            if when is None or when < now - WINDOW:
+                continue
+            in_window += 1
+            mid = message.get("id")
+            if mid is not None:
+                if mid in seen:
+                    continue
+                seen.add(mid)
+            messages.append(message)
+        if in_window == 0 or len(batch) < 50:
+            break
+    return messages
+
+
 def line_needs(now, scan_ok):
     needs = []
     try:
@@ -391,12 +431,11 @@ def line_needs(now, scan_ok):
     except (OSError, ValueError, KeyError):
         pass
     try:
-        show = antonina_json("board", "show", "--id", townhall, "--page", "1")
-        for message in show.get("messages") or []:
-            when = iso_epoch(message.get("createdAt"))
-            if when is None or when < now - WINDOW or message.get("author") == "Vitalik":
+        for message in townhall_needs_messages(now):
+            body = message.get("body") or ""
+            if message.get("author") == "Vitalik" or SCHEDULER_TURN.match(body):
                 continue
-            for match in NEEDS_FOUNDER.finditer(message.get("body") or ""):
+            for match in NEEDS_FOUNDER.finditer(body):
                 needs.append(match.group(1).strip()[:110])
     except Unavailable:
         needs.append("Town Hall unreadable, so requests may be missing")
