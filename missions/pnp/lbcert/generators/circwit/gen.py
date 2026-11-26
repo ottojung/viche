@@ -80,7 +80,7 @@ def beam_search(n, target, bound, width=1500, seed=0):
 
 
 def emit(n, bound, statement, gates, outwire):
-    num = re.search(r"L_meta_(\d+)$", __import__('sys').argv[1] if len(__import__('sys').argv) > 1 else "")
+    num = re.search(r"(\d+)$", __import__('sys').argv[1] if len(__import__('sys').argv) > 1 else "")
     num = num.group(1) if num else "0"
     mod = "PEqualNP.Outside.L_meta_" + num
     opname = {'and': 'and', 'or': 'or', 'not': 'not'}
