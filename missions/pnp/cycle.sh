@@ -11,6 +11,9 @@ cd "$town"
 mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}"
 nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
     >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
+# Observation must continue even while certificate generation is STOPped.
+nohup setsid /bin/sh "$town/missions/pnp/catalog.sh" </dev/null \
+    >>"${PNP_STATE_ROOT}/catalog.log" 2>&1 &
 # Supervise the standing staffing controller independently of model sessions.
 # It owns its lifetime lock, and each tick is bounded and crash-recoverable.
 if [ ! -d /run/service/viche-pnp-staffing ]; then
