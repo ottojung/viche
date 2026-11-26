@@ -55,7 +55,7 @@ PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound 
 PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
-GEN_TIMEOUT = 900      # successful runs take <= 546 s; a hung relay call must not hold a worker for 2000 s
+GEN_TIMEOUT = 600      # successful runs take <= 546 s; keep a hung relay below the 900 s integration suite bound
 os.makedirs(CANDS, exist_ok=True)
 
 

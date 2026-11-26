@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import time
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch, Mock
@@ -88,5 +89,69 @@ class Fairness(unittest.TestCase):
             self.assertEqual(len(pools[0].jobs),3)
             self.assertEqual(pools[1].jobs,[("gen_plugin","L-meta-100")])
             self.assertEqual(pools[2].jobs,[("check_prepared","L-meta-101")])
+
+    def test_generation_timeout_frees_worker_with_retryable_status(self):
+        from missions.pnp.lbcert import autosolve as a
+        from missions.pnp import state, support, ledger
+        import subprocess
+        g = dict(id="L-meta-43", statement="HasCircuitSize 3 (fun x : Fin 3 => True) 4",
+                 module="M", file="M.lean", imports=[])
+        def hang(*args, **kwargs):
+            raise subprocess.TimeoutExpired(args[0] if args else "lbremote", a.GEN_TIMEOUT)
+        with tempfile.TemporaryDirectory() as d, patch.object(a, "CANDS", d), \
+             patch.object(a, "WORK", d), \
+             patch.object(a.managed_process, "run", side_effect=hang), \
+             patch.object(state, "load", return_value=None), \
+             patch.object(support, "active", return_value=False), \
+             patch.object(ledger, "mark") as mark:
+            a.generate(g, [])
+            path = Path(d) / "L-meta-43.status"
+            self.assertTrue(path.read_text().startswith("deferred generation timeout"))
+            self.assertIn(str(a.GEN_TIMEOUT), path.read_text())
+            mark.assert_called_once()
+            old = time.time() - a.RETRY_DELAY - 1
+            os.utime(path, (old, old))
+            self.assertTrue(a.retryable("L-meta-43"))
+
+    def test_sibling_no_match_settles_until_corpus_changes(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, cands = root / "work", root / "work" / "cands"
+            gaps = root / "state" / "gaps"
+            gid = "L-meta-44"
+            (gaps / gid).mkdir(parents=True)
+            (gaps / gid / "state.json").write_text(json.dumps(
+                {"state": "LEASED", "statement": "s", "module": "M", "imports": []}))
+            cands.mkdir(parents=True)
+            sib = work / "sibling.json"
+            calls = []
+            class NoMatch:
+                stdout = json.dumps({"siblings": 0, "tried": 0})
+                stderr = ""
+                returncode = 5
+            def fake_run(cmd, **kwargs):
+                calls.append(cmd)
+                return NoMatch()
+            fake_sibling = types.SimpleNamespace(index=lambda *args: ("head1", None))
+            with patch.dict(sys.modules, {"sibling": fake_sibling}), \
+                 patch.object(a, "STATE", str(root / "state")), \
+                 patch.object(a, "WORK", str(work)), \
+                 patch.object(a, "CANDS", str(cands)), \
+                 patch.object(a, "SIB_STATE", str(sib)), \
+                 patch.object(a.managed_process, "run", side_effect=fake_run), \
+                 patch.object(a, "write_status"):
+                a.sibling_pass()
+                self.assertEqual(len(calls), 1)
+                data = json.loads(sib.read_text())
+                self.assertTrue(data[gid].get("settled"))
+                # Expire the time-based backoff: only the settled corpus marker may suppress a retry.
+                data[gid]["at"] = time.time() - 10000
+                sib.write_text(json.dumps(data))
+                a.sibling_pass()
+                self.assertEqual(len(calls), 1)
+                fake_sibling.index = lambda *args: ("head2", None)
+                a.sibling_pass()
+                self.assertEqual(len(calls), 2)
 
 if __name__=="__main__":unittest.main()
