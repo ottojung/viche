@@ -40,6 +40,50 @@ def current(slot):
                 and staff.current_matches(rec, slot.label == "general"))
 
 
+def obligation_slots(rec, running, limit):
+    """Allocate useful, unowned critical-path work, not arbitrary demo nodes."""
+    from ..research import knowledge, obligations
+    attempt = support.attempt(rec)
+    with closing(knowledge.db()) as c:
+        graph = obligations.ready(c)
+        nodes = {n["id"]: n for n in graph}
+        roots = [n for n in graph if n["status"] in ("ready", "blocked")
+                 and knowledge.belongs(c, n["id"], rec["gap_id"]+" / "+attempt)]
+        pending = set()
+        if c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pending_check'").fetchone():
+            pending = {r[0] for r in c.execute(
+                "SELECT DISTINCT node FROM pending_check WHERE state IN ('submitting','queued')")}
+    impact = {}
+    for root in roots:
+        # Follow exact dependencies even when they originated in another family.
+        stack = list(root["dependencies"])
+        seen = set()
+        while stack:
+            oid = stack.pop()
+            if oid in seen or oid not in nodes:
+                continue
+            seen.add(oid)
+            if nodes[oid]["status"] in ("checked", "refuted"):
+                continue
+            impact[oid] = impact.get(oid, 0)+1
+            stack.extend(nodes[oid]["dependencies"])
+        if " ".join(root["statement"].split()) == " ".join(rec["statement"].split()):
+            impact[root["id"]] = impact.get(root["id"], 0)+1
+    paths = {a.get("invocation_cwd") or a.get("cwd") for a in running}
+    ranked = []
+    for oid,n in nodes.items():
+        label = "ob-"+oid
+        slot = bound(rec,label,"Solve exact obligation "+oid+
+                     ". Inspect it, submit a proof body, collect the check, and share the result. Preserve exact blockers.",2,n["base"])
+        live = slot.path in paths
+        if n["status"]!="ready" or (not live and (oid not in impact or oid in pending)):
+            continue
+        if any(a["attempt"]==attempt and a["worker"]!=label for a in n["assignments"]):
+            continue
+        ranked.append((not live,-impact.get(oid,0),oid,slot))
+    return [x[3] for x in sorted(ranked)[:limit]]
+
+
 def desired(p, running, issues=None):
     issues = [] if issues is None else issues
     records=[]
@@ -63,18 +107,8 @@ def desired(p, running, issues=None):
             for label, task in continuity.FRONTS:
                 slots.append(bound(selected, label, task, 1))
             try:
-                from ..research import knowledge, obligations
-                if (Path(config.STATE_ROOT)/"research/knowledge.sqlite").exists():
-                    with closing(knowledge.db()) as c:
-                        nodes = [n for n in obligations.ready(c) if n["status"] == "ready"
-                                 and knowledge.belongs(c, n["id"], selected["gap_id"]+" / ")]
-                    # Keep currently running ready fronts before allocating new ones.
-                    paths = {a.get("cwd") for a in running}
-                    nodes.sort(key=lambda n: (bound(selected,"ob-"+n["id"],"",2).path not in paths,n["id"]))
-                    for n in nodes[:p["focus_obligations"]]:
-                        slots.append(bound(selected, "ob-"+n["id"],
-                            "Solve exact obligation "+n["id"]+
-                            ". Inspect it, submit a proof body, collect the check, and share the result. Preserve exact blockers.", 2,n["base"]))
+                if p["focus_obligations"] and (Path(config.STATE_ROOT)/"research/knowledge.sqlite").exists():
+                    slots.extend(obligation_slots(selected, running, p["focus_obligations"]))
             except Exception as exc:
                 issues.append("obligation planning: "+type(exc).__name__)
         for x in p["extras"]:

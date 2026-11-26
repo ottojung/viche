@@ -188,7 +188,13 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
                 latest = state.load(gap_id)
                 if latest["state"] in ("PR_OPEN", "REJECTED") and not latest.get("queued_lease") and latest.get("commit_sha") == current.get("commit_sha"):
                     before = latest["state"]
-                    if pr.get("merged") is True and verdict == "ACCEPTED":
+                    if pr.get("merged") is True and verdict in (None, "ACCEPTED"):
+                        # A merge of our own identity-validated PR is definitive:
+                        # the desk credits the step at merge. The checker does not
+                        # always post a parseable ACCEPTED comment (batch merges),
+                        # and requiring one stranded merged, credited contributions
+                        # in PR_OPEN forever (e.g. L-meta-10167). A checker success
+                        # without a merge is still handled below and stays nonterminal.
                         latest.update(state="ACCEPTED", external_verdict="ACCEPTED", queued_lease=None)
                     elif pr.get("state") == "closed" and not pr.get("merged"):
                         latest.update(state="STALE", failure_reason="PR closed without merge", queued_lease=None)

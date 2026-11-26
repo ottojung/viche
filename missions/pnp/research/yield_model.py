@@ -29,8 +29,9 @@ def observations():
                     attempt={"gap":g,"family":fam,"start":t,"end":None,"outcome":"censored","submitted":None,"pr":None}
                 elif attempt and e["kind"]=="published" and attempt["submitted"] is None:
                     attempt["submitted"]=t;attempt["pr"]=d.get("pr")
-                elif attempt and e["kind"]=="state" and d.get("to") in ("RELEASED","STALE","ACCEPTED"):
-                    attempt["end"]=t;attempt["outcome"]=d["to"].lower()
+                elif attempt and (e["kind"] in ("fastlane_release","portfolio_release","operator_release") or
+                                  e["kind"]=="state" and d.get("to") in ("RELEASED","STALE","ACCEPTED")):
+                    attempt["end"]=t;attempt["outcome"]=d.get("to","RELEASED").lower()
                     attempt["merge_observed"]=bool(d.get("sha"))
                     rows.append(attempt);attempt=None
             if attempt:
@@ -77,6 +78,35 @@ def estimate(rows,fam,now=None):
             "loss_hazard_per_hour":loss,"accept_given_submission":accept,
             "note":"Heuristic shrinkage; incomplete historical ledger, selection bias, constant hazards; not a calibrated prediction."}
 
+def generator_signal(rec):
+    """Concrete candidate availability is stronger than a broad family prior."""
+    from .. import config
+    from ..lbcert import lbparse
+    root=Path(config.STATE_ROOT)/"lbcert"
+    gid=rec["gap_id"]
+    p=root/"cands"/(gid+".status")
+    row={"generator_family":lbparse.family(rec["statement"]),"candidate_status":None}
+    try:
+        marker=p.read_text().split()
+        row["candidate_status"]=marker[0] if marker else None
+        row["candidate_exists"]=(root/"cands"/(gid+".lean")).is_file()
+        row["candidate_age_seconds"]=round(max(0,time.time()-p.stat().st_mtime),1)
+        for item in marker:
+            if item.startswith("secs="):row["generation_seconds"]=float(item[5:])
+    except (OSError,ValueError):pass
+    try:
+        from ..lbcert import ready
+        row["exact_checked_candidate"]=bool(ready.verified(gid))
+    except ImportError:
+        row["exact_checked_candidate"]=False
+    try:
+        f=root/"desk.json"
+        if time.time()-f.stat().st_mtime<=120:
+            row["competitor_open_prs"]=json.loads(f.read_text()).get(gid)
+    except (OSError,ValueError,TypeError):pass
+    return row
+
+
 def view():
     history=observations();out=[];front=frontier.load().get("gaps",{});now=time.time()
     for g in state.all_gaps():
@@ -86,7 +116,7 @@ def view():
         e=estimate(history,fam,now);s=e["submit_hazard_per_hour"];l=e["loss_hazard_per_hour"]
         # Competing acceptance is not separately identified by old events.
         # Expose competition, rather than inventing a quantitative adjustment.
-        e.update(gap=g,competition=front.get(g),
+        e.update(gap=g,competition=front.get(g),production=generator_signal(r),
                  probability_proxy_within_30min=round((1-math.exp(-(s+l)*0.5))*s/(s+l)*e["accept_given_submission"],4),
                  probability_proxy_within_60min=round((1-math.exp(-(s+l)))*s/(s+l)*e["accept_given_submission"],4),
                  age_minutes=round((time.time()-r["lease_obtained_at"])/60,1),
@@ -96,8 +126,9 @@ def view():
         try:
             with closing(knowledge.db()) as c:
                 from . import obligations
-                ns=[o for o in obligations.ready(c,family=fam) if r["gap_id"]+" / " in knowledge.get(c,o["id"])["provenance"]]
-                e["proof_graph"]={v:sum(o["status"]==v for o in ns) for v in ("checked","ready","blocked")}
+                ns=[o for o in obligations.ready(c,family=fam) if knowledge.belongs(c,o["id"],r["gap_id"]+" / ")]
+                e["proof_graph"]={v:sum(o["status"]==v for o in ns) for v in ("checked","ready","blocked","refuted")}
+                e["unresolved_obligations"]=sum(e["proof_graph"][v] for v in ("ready","blocked"))
                 e["techniques"]=[{"id":x["id"],"statement":x["statement"][:250]} for x in
                     knowledge.search(c,"",fam,("technique","lemma","certificate"),limit=6)]
         except (OSError,ValueError,TypeError,KeyError):pass
