@@ -8,6 +8,7 @@ python3 tests/pnp-pipeline.py
 python3 tests/pnp-generator-process.py
 python3 tests/pnp-generator-fairness.py
 python3 tests/pnp-production-ready.py
+python3 tests/pnp-rectcover.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
 python3 tests/pnp-retention.py
