@@ -1,8 +1,10 @@
 """Monotone witnesses for graph edge functions: OR of terms OR(A) AND OR(B), A x B complete in G.
-Exact minimum of sum(|A| + |B|) over biclique covers (branch and bound), then identical OR sets are
-built once.  Cost of the circuit = sum(|A| + |B|) - 1 - sharing savings.
+Minimum of sum(|A| + |B|) over biclique covers (branch and bound, node-capped), then identical OR
+sets are built once.  Cost of the circuit = sum(|A| + |B|) - 1 - sharing savings.
 """
 import itertools
+
+NODE_CAP = 200000
 
 
 def bicliques(n, edges):
@@ -34,6 +36,8 @@ def _by_edge(cands, E):
         for t in range(E):
             if (c[2] >> t) & 1:
                 by_edge[t].append(c)
+    for t in range(E):
+        by_edge[t].sort(key=lambda c: (c[3] / bin(c[2]).count('1'), c[3]))
     return by_edge
 
 
@@ -42,12 +46,14 @@ def best_cover(n, edges):
     E = len(edges)
     allm = (1 << E) - 1
     by_edge = _by_edge(cands, E)
-    for t in range(E):
-        by_edge[t].sort(key=lambda c: (c[3] / bin(c[2]).count('1'), c[3]))
     best = [10 ** 9, None]
     maxcov = max(bin(c[2]).count('1') for c in cands)
+    steps = [0]
 
     def rec(cov, cost, chosen):
+        steps[0] += 1
+        if steps[0] > NODE_CAP and best[1] is not None:
+            return
         if cov == allm:
             if cost < best[0]:
                 best[0], best[1] = cost, list(chosen)
@@ -66,16 +72,19 @@ def best_cover(n, edges):
 
 
 def all_covers(n, edges, slack=2, cap=2000):
-    """Covers with cost <= best + slack (for sharing-aware selection)."""
+    """Covers with cost <= best + slack (for sharing-aware selection), node-capped."""
     cands = bicliques(n, edges)
     E = len(edges)
     allm = (1 << E) - 1
     by_edge = _by_edge(cands, E)
-    bound = sum(c[3] for c in best_cover(n, edges)) + slack
+    b = best_cover(n, edges)
+    bound = sum(c[3] for c in b) + slack
     res = []
+    steps = [0]
 
     def rec(cov, cost, chosen):
-        if len(res) >= cap:
+        steps[0] += 1
+        if len(res) >= cap or steps[0] > NODE_CAP:
             return
         if cov == allm:
             res.append(list(chosen))
@@ -91,7 +100,7 @@ def all_covers(n, edges, slack=2, cap=2000):
             chosen.pop()
 
     rec(0, 0, [])
-    return res
+    return res + [b]
 
 
 def build(n, cover):

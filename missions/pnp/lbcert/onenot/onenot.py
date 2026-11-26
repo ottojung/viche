@@ -176,8 +176,12 @@ def evaluate(n, gates, r):
 
 def cegar(n, k, f, mono, seed_rows, rng, timeout=SAT_TIMEOUT):
     rows = sorted(set(seed_rows))
+    deadline = time.time() + timeout      # whole CEGAR loop, not one SAT call
     while True:
-        st, gates = circuit_sat(n, k, rows, f, mono, timeout)
+        left = deadline - time.time()
+        if left <= 1:
+            return None, rows, None
+        st, gates = circuit_sat(n, k, rows, f, mono, left)
         if st is None:
             return None, rows, None
         if not st:

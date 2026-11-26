@@ -15,6 +15,8 @@ class Fairness(unittest.TestCase):
             from missions.pnp import cli, fastlane
             from missions.pnp.lbcert import ready
             import plugins
+            import live
+            live.open_ids=lambda: None    # offline: no live desk frontier
             work=Path(d)/"lbcert";cands=work/"cands";cands.mkdir(parents=True,exist_ok=True)
             gaps=[dict(id="L-meta-"+str(i),statement="lower",module="M") for i in range(1,9)]
             gaps+= [dict(id="L-meta-100",statement="constructive",module="M"),

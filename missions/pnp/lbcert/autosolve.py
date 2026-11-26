@@ -299,6 +299,10 @@ def sweep_pass():
     except (OSError, ValueError):
         tried = {}
     gaps = json.loads(get(DESK))['gaps']
+    import live
+    open_now = live.open_ids()
+    if open_now is not None:
+        gaps = [g for g in gaps if g['id'] in open_now]
     todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
             and status(g['id']) is None and not lbparse.family(g['statement'])
             and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx]
@@ -401,6 +405,12 @@ def main():
             # `template` with @@VALUE@@ holes and no concrete `statement`.
             # They are not certifiable yet; skip them instead of letting a
             # KeyError abort the whole poll and disable certificate generation.
+            # Only steps open right now (desk/status): gaps.json also carries cut sub-steps,
+            # waiting twins and closed steps (~25% of it), where any work is wasted.
+            import live
+            open_now = live.open_ids()
+            if open_now is not None:
+                gaps = [g for g in gaps if g['id'] in open_now]
             concrete = [g for g in gaps if isinstance(g.get('statement'), str)]
             held = held_ids()
             pos, twins, desk = {}, {}, {}

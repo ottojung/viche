@@ -54,9 +54,17 @@ def offers(snapshot, mem, now):
     mem["proof_of_attempts"]=attempts={k:v for k,v in attempts.items()
                                        if now-v<600}
     out=[]
+    open_now=None
+    if not snapshot.get("complete"):
+        # The allocator's desk/status snapshot often times out (8 s curl); without it, use the
+        # cached live frontier: gaps.json also lists closed/unofferable steps (2026-11-26).
+        from . import live
+        open_now=live.open_ids()
     for path in directory().glob("*.checked.json"):
         gid=path.name[:-13]
         if now-attempts.get(gid,0)<120:
+            continue
+        if open_now is not None and gid not in open_now:
             continue
         rec=state.load(gid)
         if rec and (rec.get("pr_number") or rec["state"] not in ("RELEASED","STALE")):
