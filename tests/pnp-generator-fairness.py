@@ -30,7 +30,7 @@ class Fairness(unittest.TestCase):
                     return f
                 def shutdown(self,**kwargs):pass
             def stop(_): (work/"STOP").touch()
-            with patch.multiple(a, WORK=str(work), CANDS=str(cands), QUEUED=set(), 
+            with patch.multiple(a, WORK=str(work), CANDS=str(cands), QUEUED=set(),
                                ThreadPoolExecutor=Pool), \
                  patch.object(a,"ensure_engines",return_value=[]), \
                  patch.object(a.threading,"Thread"), \
