@@ -162,3 +162,25 @@ Benchmark implementation: `python3 -m missions.pnp.research.certificate_bench
   Canonical code is used once the complete feature set is integrated.
 - Offline regression tests: `python3 tests/pnp-research.py`. Use the normal
   delivery queue for integration. Do not add an onboarding approval gate.
+
+### Production efficiency
+
+- Publish complete, reasonably confident held-step candidates through the
+  normal signed publisher without waiting for a local build. Check the exact
+  published revision concurrently and patch the same PR on failure. An
+  unheld proof must use a documented desk acquisition path; proof-of requires
+  checked bytes. A successful generator is not a compiler receipt.
+- Use `pnp-research knowledge reuse`: counts checked dependency edges,
+  distinct consumed lemmas, cross-origin edges and exact candidate-digest
+  matches to published/accepted PRs. Assembly provenance begins at this
+  release; do not infer historical conversion or saved CPU time.
+- `pnp-research yield` includes actual candidate readiness, generation time
+  where observed, exact-check receipt status, fresh competitor counts and
+  unresolved/refuted obligations. Use these observations before qualitative
+  focus or release decisions; no fabricated success probabilities.
+- The relay expires requests after 30 minutes plus clock skew. Reconcile
+  regularly (independent of agent turns); a missing request after the
+  grace period with a fresh relay heartbeat becomes a transport failure.
+  Preserve proof bodies and retry explicitly, never treat expiration as
+  mathematical refutation. The short start packet contains current work
+  rather than repeating the full guide.

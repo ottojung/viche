@@ -429,7 +429,11 @@ def main():
             else:text=build(c,a.id)
             p=Path(a.output)
             with p.open("x") as f:f.write(text)
-            out={"path":str(p),"sha256":k.digest(text.encode()),"note":"Final candidate needs the normal submit/check pipeline; graph verification is not upstream acceptance."}
+            digest=k.digest(text.encode())
+            if a.candidate:
+                from . import reuse
+                reuse.record(c,r,a.id,b,digest)
+            out={"path":str(p),"sha256":digest,"note":"Submit a complete candidate through the normal publisher; graph verification is not upstream acceptance."}
     print(json.dumps(out,ensure_ascii=False,indent=2))
     if a.cmd=="collect":return 0 if out["status"]=="kernel_checked" else 75 if out["status"] in ("pending","submitting") else 1
     if a.cmd in ("solve","reuse") and not a.asynchronous:return 0 if out["status"]=="kernel_checked" else 1
