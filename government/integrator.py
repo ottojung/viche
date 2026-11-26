@@ -46,7 +46,7 @@ government/tally.sh BILL passes on the exact candidate; deliveries marked
 
 Environment: VICHE_TOWN_ROOT, VICHE_STATE_ROOT, VICHE_INTEGRATOR=off,
 VICHE_INTEGRATOR_NOW (tests), VICHE_INTEGRATOR_NO_REVIEWER=1 (never commission),
-VICHE_SUITE_TIMEOUT (seconds bounding suite-status.sh; default 900).
+VICHE_SUITE_TIMEOUT (seconds bounding suite-status.sh; default 1800).
 """
 import datetime
 import fcntl
@@ -75,7 +75,13 @@ FULL_SUITE_PRIORITY_AGE = 3600
 LANDED_VISIBLE = 3 * 86400
 # A hung suite must not hold the queue's single internal.lock forever. Bound the
 # verifier subprocess and fail the candidate closed on timeout; never waive Act 21.
-SUITE_TIMEOUT_SECONDS = int(os.environ.get("VICHE_SUITE_TIMEOUT", "900"))
+# The bound must still fit a legitimate suite under host load: on 2026-11-26 four
+# valid candidates failed closed at 900 s while the box ran at load 15-17 with
+# concurrent PnP research, and each needed a wasteful fresh-slug re-proposal.
+# Act 21 §1 may rerun a red suite, so allow two full passes. The outer
+# `timeout 7200` integrator wrapper remains the real backstop; this stays finite
+# and far below it, and VICHE_SUITE_TIMEOUT still overrides for operators/tests.
+SUITE_TIMEOUT_SECONDS = int(os.environ.get("VICHE_SUITE_TIMEOUT", "1800"))
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
 OFFICE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
