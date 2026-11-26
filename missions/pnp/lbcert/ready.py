@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import time
 
-from .. import config, state
+from .. import config, state, desk
 
 
 def directory():
@@ -70,7 +70,7 @@ def offers(snapshot, mem, now):
         open_now=set(rows)
     for path in paths:
         gid=path.name[:-13]
-        if now-attempts.get(gid,0)<120:
+        if now-attempts.get(gid,0)<120 or desk.retry_until(gid)>now:
             continue
         if open_now is not None and gid not in open_now:
             continue

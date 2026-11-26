@@ -19,27 +19,39 @@ class DeskError(Exception):
     pass
 
 
-CAPACITY_SECONDS = 3600
-
-
 def retry_path():
     return os.path.join(config.STATE_ROOT, "desk-retry.json")
 
 
-def retry_until():
+def _retry_data():
     try:
-        v=json.loads(open(retry_path()).read()).get("until",0)
-        return v if isinstance(v,(float,int)) else 0
+        obj=json.loads(open(retry_path()).read())
+        return obj if isinstance(obj,dict) else {}
     except (OSError,ValueError,TypeError):
-        return 0
+        return {}
 
 
-def record_retry(data):
+def retry_until(target=None):
+    data=_retry_data()
+    values=[data.get("until",0)]
+    if target:
+        values.append(data.get("targets",{}).get(target,0))
+    return max((v for v in values if type(v) in (float,int)),default=0)
+
+
+def record_retry(data,target=None):
     seconds=data.get("retry_after_s")
     if type(seconds) not in (int,float) or not 0 < seconds < 86400:return
     from . import state
-    state.atomic_write(retry_path(),json.dumps({"until":max(retry_until(),time.time()+seconds)}))
-
+    now=time.time()
+    obj=_retry_data()
+    targets={k:v for k,v in obj.get("targets",{}).items() if type(v) in (int,float) and v>now}
+    if target:
+        targets[target]=max(targets.get(target,0),now+seconds)
+    else:
+        obj["until"]=max(retry_until(),now+seconds)
+    obj["targets"]=targets
+    state.atomic_write(retry_path(),json.dumps(obj))
 
 def _capacity_path():
     return os.path.join(config.STATE_ROOT, "desk-capacity.json")
@@ -167,7 +179,7 @@ class Desk:
 
     def _next_gap(self, hard=False, another=False, proof_of=None):
         """Private wire operation; only the locked, recording broker calls it."""
-        if retry_until() > time.time():
+        if retry_until(proof_of) > time.time():
             return None
         params = {"handle": config.DESK_HANDLE,"model":"unknown"}
         if hard:
@@ -192,7 +204,7 @@ class Desk:
             # malformed shape stays a protocol error: never turn a parser
             # failure into "no gaps" (fail closed).
             if "gap" in data:
-                record_retry(data)
+                record_retry(data,proof_of)
                 return None
             raise DeskError("desk next is missing gap key")
         if lease is None:

@@ -33,6 +33,19 @@ class TestReady(unittest.TestCase):
             (root/"memory.stat").write_text(f"file {25*1024*M}\nshmem {2*1024*M}\nfile_dirty {1024*M}\ninactive_file 0\n")
             (root/"meminfo").write_text("MemAvailable: 30000000 kB\n")
             self.assertEqual(compile_admission.headroom(root,root/"meminfo"),23*1024)
+    def test_targeted_retry_does_not_block_unrelated_stock(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
+            desk.record_retry({"retry_after_s":1800},"L-meta-123")
+            self.assertGreater(desk.retry_until("L-meta-123"),time.time()+1700)
+            self.assertEqual(desk.retry_until("L-meta-124"),0)
+            desk.record_retry({"retry_after_s":60})
+            self.assertGreater(desk.retry_until("L-meta-124"),time.time()+50)
+    def test_capacity_retained_until_observed_update(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(config,"STATE_ROOT",root):
+            Path(root,"desk-capacity.json").write_text(json.dumps({"capacity":3,"at":0}))
+            self.assertEqual(desk.lease_limit(),3)
+            desk.record_capacity({"capacity":4,"holding":2})
+            self.assertEqual(desk.lease_limit(),4)
     def test_targeted_wire_parameters(self):
         d=desk.Desk()
         with patch.object(d,"_call",return_value=(200,{"gap":None})) as call:

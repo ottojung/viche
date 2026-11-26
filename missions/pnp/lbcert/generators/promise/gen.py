@@ -354,39 +354,50 @@ def formula_library(n, rows, allow, depth=3):
     return table,cost,levels
 
 
+def formula_pair(target,budget,table,cost,levels,full,allow):
+    if target in table and cost[target]<=budget:return table[target]
+    if allow and full^target in table and cost[full^target]+1<=budget:
+        return ("not",table[full^target])
+    for op in ("or","and"):
+        aim=target if op=="or" else full^target
+        flip=0 if op=="or" else full
+        # An OR operand must be a subset of the target. For AND the same
+        # statement applies after complementing all semantic tables.
+        choices=[[(x^flip,x) for x in lv if (x^flip)&~aim==0] for lv in levels]
+        for i,aa in enumerate(choices):
+            for j,bb in enumerate(choices):
+                if j<i or i+j+1>budget:continue
+                lookup=dict(bb)
+                for x,a in aa:
+                    need=aim^x
+                    if (1<<x.bit_count())<len(bb):
+                        sub=x
+                        while True:
+                            b=lookup.get(need|sub)
+                            if b is not None:return combine(op,table[a],table[b])
+                            if sub==0:break
+                            sub=(sub-1)&x
+                    else:
+                        for y,b in bb:
+                            if x|y==aim:return combine(op,table[a],table[b])
+    return None
+
+
 def small_formula(problem):
     n,rows,target=domain(problem);k=problem[3];allow=problem[-1]=="FanInTwo"
     if n>12 or len(rows)>48:return None
-    # 3-gate formulas combine to cover many 5-7 gate targets. Cache by
-    # promise shape, not by individual target mask.
-    table,cost,levels=formula_library(n,tuple(rows),allow,min(k,3))
+    # Deep formula tables are shared across an entire batch of masks.
+    # The measured 5-input two-lit family has only 3,692 entries through 5 gates.
+    depth=5 if n<=8 and len(rows)<=21 else 4 if n<=10 and len(rows)<=25 else 3
+    table,cost,levels=formula_library(n,tuple(rows),allow,min(k,depth))
     full=(1<<len(rows))-1
-    if target in table:return compile_expr(n,table[target])
-    if allow and full^target in table and cost[full^target]+1<=k:
-        return compile_expr(n,("not",table[full^target]))
-    def find(t,budget):
-        if t in table and cost[t]<=budget:return table[t]
-        for op in ("or","and"):
-            # OR only sees subsets, AND only supersets of the target.
-            if op=="or":fits=lambda v:v&~t==0
-            else:fits=lambda v:v&t==t
-            choices=[[x for x in lv if fits(x)] for lv in levels]
-            for i,a in enumerate(choices):
-                for j,b in enumerate(choices):
-                    if i>j or i+j+1>budget:continue
-                    for x in a:
-                        for y in b:
-                            if (x|y if op=="or" else x&y)==t:
-                                return combine(op,table[x],table[y])
-        return None
-    e=find(target,k)
-    if e is None and allow and k>0:
-        e=find(full^target,k-1)
+    e=formula_pair(target,k,table,cost,levels,full,allow)
+    if e is None and allow and k:
+        e=formula_pair(full^target,k-1,table,cost,levels,full,False)
         if e is not None:e=("not",e)
-    if e is not None:
-        sol=compile_expr(n,e)
-        if valid(problem,sol):return sol
-    return None
+    if e is None:return None
+    sol=compact(problem,*compile_expr(n,e))
+    return sol if sol and valid(problem,sol) else None
 
 
 def synth_sat(problem,seconds=4):

@@ -10,6 +10,7 @@ report: python3 -m missions.pnp.ledger [HOURS]
 import json
 import os
 import statistics
+import math
 import sys
 import time
 
@@ -85,7 +86,7 @@ def report(hours=24):
         d = sorted(s[b] - s[a] for s in first.values() if a in s and b in s and s[b] >= s[a])
         if d:
             lines.append("| %s -> %s | %d | %.0f | %.0f |" % (a, b, len(d), statistics.median(d),
-                                                         d[int(0.9 * (len(d) - 1))]))
+                                                         d[max(0,math.ceil(.9*len(d))-1)]))
     if timings:
         lines += ["", "Publication sub-stages (median s over %d):" % len(timings)]
         keys = sorted({k for e in timings for k in (e.get("laps") or {})})
