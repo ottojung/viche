@@ -50,7 +50,9 @@ DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 SOURCE = 'https://raw.githubusercontent.com/open-goat/pequalnp-proofs/main/lean/PEqualNP/Outside/L_meta_7281.lean'
 SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 20
-REMOTE_WORKERS = 6   # marceline-dev runs at most 6 lb-cert jobs and 3 compiles at once
+REMOTE_WORKERS = 3   # expensive lower-bound search
+PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound search
+PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 MAXSTATES = 6000       # the 512 KiB file limit caps certificates at ~5k states; larger searches only burn marceline
 os.makedirs(CANDS, exist_ok=True)
 
@@ -362,8 +364,11 @@ def main():
     threading.Thread(target=sibling_loop, daemon=True).start()
     threading.Thread(target=sweep_loop, daemon=True).start()
     pool = ThreadPoolExecutor(REMOTE_WORKERS)
+    plugin_pool = ThreadPoolExecutor(PLUGIN_WORKERS)
+    prepare_pool = ThreadPoolExecutor(PREPARE_WORKERS)
     queued = QUEUED
     outstanding = {}
+    plugin_pending = {}
     prepared = {}
     prepare_retry = {}
     while not os.path.exists(os.path.join(WORK, 'STOP')):
@@ -372,15 +377,17 @@ def main():
             # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
             log('source changed; exiting for clean restart')
             managed_process.stop_all()
-            pool.shutdown(wait=False, cancel_futures=True)
+            for executor in (pool, plugin_pool, prepare_pool):
+                executor.shutdown(wait=False, cancel_futures=True)
             os._exit(0)
         try:
-            for gid, future in list(outstanding.items()):
-                if future.done():
-                    try:future.result()
-                    except Exception as e:log('generator interrupted',gid,type(e).__name__,str(e)[:160])
-                    outstanding.pop(gid)
-                    queued.discard(gid)
+            for pending in (outstanding, plugin_pending):
+                for gid,future in list(pending.items()):
+                    if future.done():
+                        try:future.result()
+                        except Exception as e:log('generator interrupted',gid,type(e).__name__,str(e)[:160])
+                        pending.pop(gid)
+                        queued.discard(gid)
             for gid,future in list(prepared.items()):
                 if future.done():
                     try:future.result()
@@ -425,7 +432,7 @@ def main():
                 try:fastlane.submit_ready(gid)
                 except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
             from missions.pnp.lbcert import ready
-            if not prepared and len(outstanding)<REMOTE_WORKERS:
+            if len(prepared)<PREPARE_WORKERS:
                 choices=[g for g in concrete if g['id'] not in held and g['id'] not in queued
                          and g['id'] not in prepare_retry and not g.get('pr_open',0)
                          and (status(g['id']) or '').split(' ')[0] in ('ok','generated')
@@ -435,39 +442,41 @@ def main():
                     # Prefer recent, cheaply solved candidates; no old FIFO backlog.
                     g=max(choices,key=lambda x:os.stat(os.path.join(CANDS,x['id']+'.lean')).st_mtime)
                     queued.add(g['id'])
-                    prepared[g['id']]=pool.submit(check_prepared,g)
+                    prepared[g['id']]=prepare_pool.submit(check_prepared,g)
             for g in sorted((g for g in gaps if g['id'] in fam),
                             key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
                 if g.get('pr_open', 0) and g['id'] not in held:
                     continue
-                if len(outstanding)+len(prepared) >= REMOTE_WORKERS:
+                if len(outstanding) >= REMOTE_WORKERS:
                     break
                 if g['id'] not in queued and status(g['id']) is None:
                     queued.add(g['id'])
                     outstanding[g['id']] = pool.submit(generate, g, engines)
-            # Generator plugins share the same bounded queue and future lifecycle.
+            # Constructive plugins use an independent bounded pool; expensive
+            # lower-bound searches cannot consume their capacity.
             try:
                 import plugins
                 found = plugins.discover()
                 if found:
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, -int(re.sub(r'\D', '', g['id']) or 0))):
-                        if len(outstanding)+len(prepared) >= REMOTE_WORKERS:
+                        if len(plugin_pending) >= PLUGIN_WORKERS:
                             break
                         if g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
                             continue
                         hit = plugins.family_of(g['statement'], found)
                         if hit and fresh(g['id'], hit[1]):
                             queued.add(g['id'])
-                            outstanding[g['id']] = pool.submit(gen_plugin, g, hit[0], hit[1])
+                            plugin_pending[g['id']] = plugin_pool.submit(gen_plugin, g, hit[0], hit[1])
             except Exception as e:
                 log('plugin poll error', type(e).__name__, str(e)[:200])
         except Exception as e:
             log('poll error', type(e).__name__, str(e)[:200])
         time.sleep(POLL)
     managed_process.stop_all()
-    pool.shutdown(wait=False, cancel_futures=True)
+    for executor in (pool, plugin_pool, prepare_pool):
+        executor.shutdown(wait=False, cancel_futures=True)
     log('STOP file found; exiting')
     return 0
 
