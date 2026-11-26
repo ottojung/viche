@@ -75,24 +75,9 @@ SEEN = os.path.join(WORK, 'seen.json')
 
 
 def note_seen(ids):
-    """Ledger stage 'seen': the first poll in which a step is open.  The first run records the
-    current frontier silently, so only steps posted afterwards get a seen time."""
-    from missions.pnp import ledger
-    try:
-        seen = set(json.load(open(SEEN)))
-        first = False
-    except (OSError, ValueError):
-        seen, first = set(), True
-    new = set(ids) - seen
-    if not new:
-        return
-    if not first:
-        for gid in sorted(new):
-            ledger.mark('seen', gid)
-    tmp = SEEN + '.tmp'
-    json.dump(sorted(seen | new), open(tmp, 'w'))
-    os.replace(tmp, SEEN)
-
+    # Complete frontier observations own the first-sighting clock.
+    # This legacy hook must not label stale/open-cache IDs as new.
+    return None
 
 def lease_now(gid):
     """A step just got an exact compiler receipt: ask the desk for it (proof-of) now, not at the

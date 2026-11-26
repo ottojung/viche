@@ -7,6 +7,7 @@ closed).  open_ids() returns the live open set, cached for CACHE_SECONDS in
 PNP_STATE_ROOT/lbcert/live.json; None when the desk cannot be read (callers then keep their old
 behaviour, never "nothing is open").
 """
+import fcntl
 import json
 import os
 import time
@@ -76,7 +77,31 @@ GAPS_URL = 'https://data.pequalnp.com/data/desk/gaps.json'
 GAPS_CACHE = os.path.join(STATE, 'lbcert', 'gaps-cache.json')
 
 
-def gaps_bytes(timeout=40):
+def gaps_bytes(timeout=40, max_age=15):
+    """Share one catalog request across callers; never refresh age on failure."""
+    os.makedirs(os.path.dirname(GAPS_CACHE), exist_ok=True)
+    def cached(age):
+        try:
+            with open(GAPS_CACHE + '.meta') as f:
+                m = json.load(f)
+            if 0 <= time.time() - m['at'] <= age:
+                with open(GAPS_CACHE, 'rb') as f:
+                    return f.read()
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+    with open(GAPS_CACHE + '.lock', 'a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            body = cached(600)
+            if body is not None:
+                return body
+            raise OSError("catalog refresh already running and no usable cache")
+        body = cached(max_age)
+        return body if body is not None else _fetch_gaps(timeout)
+
+
+def _fetch_gaps(timeout):
     """gaps.json is 6.2 MB (850 kB gzipped) and was fetched whole every 20 s by autosolve, plus by
     the sweep and the radar.  Ask with gzip and If-None-Match against one shared on-disk copy:
     unchanged -> 304 and the cached bytes; a failure with a copy younger than 10 minutes -> the
@@ -95,7 +120,9 @@ def gaps_bytes(timeout=40):
         body = r.read()
         if r.headers.get('Content-Encoding') == 'gzip':
             body = gzip.decompress(body)
-        json.loads(body)                       # never cache a truncated or broken document
+        doc = json.loads(body)
+        if not isinstance(doc, dict) or not isinstance(doc.get('gaps'), list):
+            raise ValueError('unexpected catalog shape')
         tmp = '%s.%d.%d.tmp' % (GAPS_CACHE, os.getpid(), threading.get_ident())
         open(tmp, 'wb').write(body)
         os.replace(tmp, GAPS_CACHE)
@@ -105,7 +132,7 @@ def gaps_bytes(timeout=40):
         os.replace(tmp, meta)
         return body
     except urllib.error.HTTPError as e:
-        if e.code == 304:
+        if e.code == 304 and os.path.exists(GAPS_CACHE):
             m['at'] = time.time()
             tmp = '%s.%d.%d.tmp' % (meta, os.getpid(), threading.get_ident())
             json.dump(m, open(tmp, 'w'))
