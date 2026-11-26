@@ -861,7 +861,7 @@ reclaim_quarantined() {
         [ -n "$record" ] || continue
         # Read TSV columns with cut so empty fields remain empty; tab is IFS
         # whitespace and `read` would collapse adjacent delimiters.
-        ts=$(printf '%s\n' "$record" | cut -s -f1)
+        row_ts=$(printf '%s\n' "$record" | cut -s -f1)
         src=$(printf '%s\n' "$record" | cut -s -f2)
         dest=$(printf '%s\n' "$record" | cut -s -f3)
         size=$(printf '%s\n' "$record" | cut -s -f4)
@@ -872,7 +872,7 @@ reclaim_quarantined() {
                 printf 'ts\tsrc\tdest\tsize_kb\tquarantined_at\treason\n' > "$rejected"
             fi
             printf '%s\t%s\t%s\t%s\t%s\tempty-quarantine-path\n' \
-                "$ts" "$src" "$dest" "$size" "$qat" >> "$rejected"
+                "$row_ts" "$src" "$dest" "$size" "$qat" >> "$rejected"
             rotate "$rejected"
             continue
         }
@@ -884,44 +884,44 @@ reclaim_quarantined() {
         fi
         if ! quarantine_path_ok "$dest"; then
             log_append "$jstate/actions.log" "$ts action=reclaim refused=invalid-quarantine-path dest=$dest"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         fi
         if ! is_num "$qat"; then
             log_append "$jstate/actions.log" "$ts action=reclaim refused=invalid-quarantine-timestamp dest=$dest quarantined_at=$qat"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         fi
         qat=$(normalize_decimal "$qat") || {
             log_append "$jstate/actions.log" "$ts action=reclaim refused=invalid-quarantine-timestamp dest=$dest"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         }
         if decimal_greater "$qat" "$now"; then
             log_append "$jstate/actions.log" "$ts action=reclaim refused=future-quarantine-timestamp dest=$dest quarantined_at=$qat now=$now"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         fi
         age=$((now - qat))
         if [ "$age" -lt "$quarantine_grace" ]; then
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         fi
         if path_in_use "$dest"; then
             log_append "$jstate/actions.log" "$ts action=reclaim deferred=live dest=$dest qlog_candidate_du_kb=$size"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             continue
         fi
         candidate_kb=$(du_kb "$dest")
         is_num "$candidate_kb" || candidate_kb=0
         if [ "$dry_run" -eq 1 ]; then
             log_append "$jstate/actions.log" "$ts action=reclaim dry-run src=$src dest=$dest candidate_du_kb=$candidate_kb why=expired-quarantine recoverability=quarantine-copy liveness=clear owner=janitor-quarantine"
-            printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+            printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
         else
             before=$(available_kb 2>/dev/null || printf '')
             if [ -z "$before" ] || ! quarantine_path_ok "$dest" || path_in_use "$dest"; then
                 log_append "$jstate/actions.log" "$ts action=reclaim deferred=measurement-or-liveness dest=$dest"
-                printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+                printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
                 continue
             fi
             candidate_kb=$(du_kb "$dest")
@@ -938,7 +938,7 @@ reclaim_quarantined() {
                 fi
             else
                 log_append "$jstate/actions.log" "$ts action=reclaim failed src=$src dest=$dest rm_status=$rm_status candidate_du_kb=$candidate_kb path_remains=1"
-                printf '%s\t%s\t%s\t%s\t%s\n' "$ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
+                printf '%s\t%s\t%s\t%s\t%s\n' "$row_ts" "$src" "$dest" "$size" "$qat" >> "$tmp"
             fi
         fi
     done
