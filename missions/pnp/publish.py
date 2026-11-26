@@ -152,6 +152,13 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         worktree = rec.get("worktree")
         try:
             latest_base = git.ensure_mirror()
+            if (not correction and not rec.get("pr_number")
+                    and hasattr(git, "upstream_has_path")
+                    and git.upstream_has_path(latest_base, rec["path"])):
+                reason = "proof path already present on latest upstream base"
+                if state.stale_lease(gap_id, rec["lease"], reason):
+                    ledger.mark("settled_before_publish", gap_id, base=latest_base)
+                raise StopPublish(reason)
             base_sha = rec.get("base_sha") or latest_base
             old = (rec.get("build_evidence") or {}).get("base")
             if (not correction and not rec.get("base_sha")

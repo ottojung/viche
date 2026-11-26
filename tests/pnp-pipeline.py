@@ -94,6 +94,27 @@ class TestGitRunCwd(unittest.TestCase):
         self.assertEqual(captured["cwd"], "/example/worktree")
 
 
+class TestMirrorRefresh(unittest.TestCase):
+    def test_concurrent_refresh_shares_one_fetch(self):
+        import concurrent.futures
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as cache:
+            mirror=os.path.join(cache,"fork.git")
+            os.mkdir(mirror)
+            open(os.path.join(mirror,"HEAD"),"w").close()
+            calls=[]
+            def run(argv, **kw):
+                if "fetch" in argv:
+                    calls.append("fetch")
+                    time.sleep(.05)
+                return SimpleNamespace(stdout=SHA+"\n",returncode=0)
+            with mock.patch.object(config,"CACHE_DIR",cache), mock.patch.object(gitctl,"MIRROR",mirror), mock.patch.object(gitctl,"run",run), mock.patch.object(gitctl,"upstream_url",return_value="https://example.invalid/repo"):
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+                    result=list(ex.map(lambda _:gitctl.ensure_mirror(),range(4)))
+            self.assertEqual(result,[SHA]*4)
+            self.assertEqual(calls,["fetch"])
+
+
 class FakeDesk:
     def __init__(self, beat=200):
         self.beat_status = beat
@@ -281,6 +302,16 @@ class TestPublish(unittest.TestCase):
         self.assertEqual(h.created, 1)
         self.assertEqual(d.releases, [("lease-1", "submitted")])
         self.assertIn(("push", config.branch_for(GAP)), g.calls)
+
+    def test_already_merged_path_not_published(self):
+        new_state()
+        d,g,h=FakeDesk(),FakeGit(),FakeGH()
+        g.upstream_has_path=lambda base,path: True
+        with self.assertRaises(publish.StopPublish):
+            publish.publish(GAP,self.file,desk=d,git=g,gh=h)
+        self.assertEqual(state.load(GAP)["state"],"STALE")
+        self.assertEqual(h.created,0)
+        self.assertFalse(g.calls)
 
     def test_restart_after_push_does_not_duplicate(self):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",
