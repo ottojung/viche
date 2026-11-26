@@ -477,6 +477,29 @@ class TestGitHubValidation(unittest.TestCase):
                 github.repository_name(config.FORK_ID)
 
 
+    def test_batch_prs_require_pinned_repo_and_normalize(self):
+        import json
+        item = {"number": 12, "title": GAP, "state": "MERGED", "merged": True,
+                "url": "u", "author": {"login": "renamed", "databaseId": config.CONTRIBUTOR_ID},
+                "headRefOid": SHA, "headRefName": config.branch_for(GAP), "baseRefName": "main",
+                "headRepository": {"databaseId": config.FORK_ID},
+                "repository": {"databaseId": config.UPSTREAM_ID}, "comments": {"totalCount": 0}}
+        envelope = {"data": {"repository": {"databaseId": config.UPSTREAM_ID, "p12": item}}}
+        with mock.patch.object(github, "repository_name", return_value="renamed/repo"), \
+             mock.patch.object(github, "gh", return_value=json.dumps(envelope)) as call:
+            result = github.get_prs([12, 13, 12])
+            self.assertEqual(list(result), [12])
+            self.assertEqual(result[12]["state"], "closed")
+            self.assertEqual(result[12]["head_sha"], SHA)
+            self.assertEqual(result[12]["comment_count"], 0)
+            self.assertEqual(result[12]["author_id"], config.CONTRIBUTOR_ID)
+            self.assertIn("p13:pullRequest(number:13)", call.call_args.args[-1])
+        envelope["data"]["repository"]["databaseId"] = 999
+        with mock.patch.object(github, "repository_name", return_value="renamed/repo"), \
+             mock.patch.object(github, "gh", return_value=json.dumps(envelope)):
+            with self.assertRaises(github.GitHubError):
+                github.get_prs([12])
+
     def test_repository_rename_and_identity(self):
         pr = {"author": "renamed-contributor", "author_id": config.CONTRIBUTOR_ID, "head_repo": "renamed-contributor/proofs",
               "head_repo_id": config.FORK_ID, "base_repo": "renamed/project",
@@ -675,6 +698,32 @@ class TestReconcile(unittest.TestCase):
         reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=git)
         git.remote_branch_sha.assert_not_called()
         self.assertEqual(state.load(GAP)["state"], "ACCEPTED")
+
+    def test_batch_snapshot_avoids_empty_comments_and_individual_read(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        gh.get_pr = mock.Mock(side_effect=AssertionError("unexpected individual read"))
+        gh.pr_comments = mock.Mock(side_effect=AssertionError("unexpected empty comment read"))
+        pr = {**owned_pr_identity(), "url": "u", "number": 123, "head_sha": SHA,
+              "merged": True, "comment_count": 0}
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(),
+                                    pr_snapshot={123: pr})
+        self.assertEqual(r["state"], "ACCEPTED")
+        gh.get_pr.assert_not_called()
+        gh.pr_comments.assert_not_called()
+
+    def test_batch_snapshot_mismatched_head_falls_back(self):
+        new_state("PR_OPEN", commit_sha=SHA, pr_number=123)
+        gh = FakeGH()
+        pr = {**owned_pr_identity(), "url": "u", "number": 123, "head_sha": SHA,
+              "merged": True}
+        gh.get_pr = mock.Mock(return_value=pr)
+        gh.pr_comments = mock.Mock(return_value=[])
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(),
+                                    pr_snapshot={123: dict(pr, head_sha="b"*40, comment_count=0)})
+        self.assertEqual(r["state"], "ACCEPTED")
+        gh.get_pr.assert_called_once_with(123)
+        gh.pr_comments.assert_called_once_with(123)
 
     def test_pushed_to_accepted(self):
         new_state("PUSHED", commit_sha=SHA, base_sha="base1",

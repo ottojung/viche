@@ -145,6 +145,56 @@ def get_pr(number):
     return json.loads(gh("api", endpoint(config.UPSTREAM_ID, "pulls/" + str(number)), "--jq", expr))
 
 
+def get_prs(numbers):
+    """Bounded read-only batch; normalize to the existing REST record shape.
+
+    Repository and PR IDs are checked before using a response. The caller
+    still revalidates contributor/fork/base/head identity and authenticates
+    nonempty checker comments through the REST path.
+    """
+    ids = list(dict.fromkeys(numbers))
+    if not ids:
+        return {}
+    if len(ids) > 50 or any(type(n) is not int or n <= 0 for n in ids):
+        raise GitHubError("invalid PR batch")
+    owner, name = repository_name(config.UPSTREAM_ID).split("/")
+    fields = ("number title state merged url author {login ... on User {databaseId}} "
+              "headRefOid headRefName baseRefName headRepository {databaseId nameWithOwner} "
+              "repository {databaseId nameWithOwner} comments(first:1){totalCount}")
+    aliases = " ".join("p%d:pullRequest(number:%d){%s}" % (n, n, fields) for n in ids)
+    query = 'query {repository(owner:%s,name:%s){databaseId %s}}' % (
+        json.dumps(owner), json.dumps(name), aliases)
+    data = json.loads(gh("api", "graphql", "-f", "query=" + query))
+    if data.get("errors"):
+        raise GitHubError("GraphQL PR batch returned errors")
+    repo = (data.get("data") or {}).get("repository") or {}
+    if repo.get("databaseId") != config.UPSTREAM_ID:
+        raise GitHubError("batch repository identity mismatch")
+    result = {}
+    for n in ids:
+        row = repo.get("p%d" % n)
+        if not row or row.get("number") != n:
+            continue  # ordinary REST fallback for incomplete response
+        state = row.get("state")
+        if state not in ("OPEN", "CLOSED", "MERGED") or type(row.get("merged")) is not bool:
+            continue
+        if row["merged"] != (state == "MERGED"):
+            continue
+        author, head, base = (row.get(k) or {} for k in ("author", "headRepository", "repository"))
+        count = (row.get("comments") or {}).get("totalCount")
+        result[n] = {
+            "number": n, "state": "open" if state == "OPEN" else "closed",
+            "title": row.get("title"), "merged": row["merged"], "url": row.get("url"),
+            "author": author.get("login"), "author_id": author.get("databaseId"),
+            "head_sha": row.get("headRefOid"), "head_ref": row.get("headRefName"),
+            "base_ref": row.get("baseRefName"), "head_repo": head.get("nameWithOwner"),
+            "head_repo_id": head.get("databaseId"), "base_repo": base.get("nameWithOwner"),
+            "base_repo_id": base.get("databaseId"),
+            "comment_count": count if type(count) is int and count >= 0 else None,
+        }
+    return result
+
+
 def pr_files(number):
     return json.loads(gh("api", endpoint(config.UPSTREAM_ID, "pulls/" + str(number)) + "/files", "--jq",
                          "[.[].filename]"))

@@ -85,7 +85,7 @@ def recover_fault(gap_id, rec, desk, gh):
         os.close(fd)
 
 
-def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
+def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None, pr_snapshot=None):
     """Return a short summary; never raise for one bad gap."""
     desk = desk or desk_mod.Desk()
     gh = gh or github
@@ -162,7 +162,11 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
                 "signed publication recovery requires the preserved candidate"))
     if number:
         number = int(number)
-        pr = gh.get_pr(number)
+        pr = ((pr_snapshot or {}).get(number)
+              if rec["state"] in ("PR_OPEN", "REJECTED") else None)
+        # A stale or partial batch is never used to validate a changed revision.
+        if not pr or pr.get("head_sha") != rec.get("commit_sha"):
+            pr = gh.get_pr(number)
         # Revalidate the durable PR reference on every reconciliation. A gap
         # may have many competing submissions; neither title nor a matching
         # SHA alone identifies our contribution.
@@ -189,7 +193,8 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
         state.update(gap_id, pr_number=number, pr_url=pr.get("url"))
         current = state.load(gap_id)
         if current["state"] in ("PR_OPEN", "REJECTED") and not current.get("queued_lease") and pr.get("head_sha") == current.get("commit_sha"):
-            verdict = current_verdict(gh.pr_comments(number), current.get("commit_sha"), gh.repository_id)
+            comments = [] if pr.get("comment_count") == 0 else gh.pr_comments(number)
+            verdict = current_verdict(comments, current.get("commit_sha"), gh.repository_id)
             # A checker success is not a merged contribution; a competitor
             # can win before the merge. Never apply an old revision's verdict.
             with state.lock(gap_id):
@@ -261,7 +266,24 @@ def _reconcile_batch(desk, gh, git, budget):
     observed = frontier.load()
     desk = desk or desk_mod.Desk()
     deadline = time.monotonic() + budget
-    for gap_id in reconcile_order():
+    order = reconcile_order()
+    backend = gh or github
+    numbers = []
+    for gap_id in order:
+        rec = state.load(gap_id)
+        if rec and rec["state"] in ("PR_OPEN", "REJECTED") and type(rec.get("pr_number")) is int:
+            numbers.append(rec["pr_number"])
+        if len(numbers) == 50:
+            break
+    snapshot = {}
+    if numbers and hasattr(backend, "get_prs"):
+        try:
+            snapshot = backend.get_prs(numbers)
+        except Exception:
+            # Rate limits, GraphQL schema changes and partial responses retain
+            # the existing individual reads and fair retry order.
+            pass
+    for gap_id in order:
         if time.monotonic() >= deadline:
             break
         try:
@@ -269,7 +291,8 @@ def _reconcile_batch(desk, gh, git, budget):
             # timed-out check cannot starve later PRs on the next cycle.
             state.update(gap_id, last_reconcile=time.strftime(
                 "%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-            results.append(reconcile_gap(gap_id, desk=desk, gh=gh, git=git, observed=observed))
+            results.append(reconcile_gap(gap_id, desk=desk, gh=gh, git=git, observed=observed,
+                                         pr_snapshot=snapshot))
         except Exception as e:
             try:
                 if state.load(gap_id):
