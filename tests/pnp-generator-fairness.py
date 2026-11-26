@@ -3,12 +3,49 @@ import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch, Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 class Fairness(unittest.TestCase):
+    def test_transient_retry_only_after_backoff(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d, patch.object(a, "CANDS", d):
+            gid="L-meta-42"
+            self.assertTrue(a.retryable(gid))
+            path=Path(d)/(gid+".status")
+            for st in ("relay_error", "error", "deferred"):
+                path.write_text(st+" test")
+                self.assertFalse(a.retryable(gid))
+                t=time.time()-a.RETRY_DELAY-1
+                os.utime(path,(t,t))
+                self.assertTrue(a.retryable(gid))
+            for st in ("false", "unsupported", "toobig", "ok", "generated", "failed"):
+                path.write_text(st+" test")
+                os.utime(path,(t,t))
+                self.assertFalse(a.retryable(gid))
+
+    def test_unavailable_plugin_check_preserves_candidate(self):
+        from missions.pnp.lbcert import autosolve as a
+        from missions.pnp import state, support, validate, fastlane
+        import plugins, checkremote
+        g=dict(id="L-meta-42",statement="True",module="M",file="M.lean",imports=[])
+        def generate(name,gid,sf,out):
+            Path(out).write_text("candidate")
+            return 0,""
+        with tempfile.TemporaryDirectory() as d, patch.object(a,"CANDS",d), \
+             patch.object(plugins,"run",side_effect=generate), \
+             patch.object(validate,"validate"), patch.object(state,"load",return_value=None), \
+             patch.object(support,"active",return_value=False), \
+             patch.object(checkremote,"check",return_value=(2,{"status":"relay_error"})), \
+             patch.object(fastlane,"submit_ready"):
+            a.gen_plugin(g,"test","123")
+            self.assertEqual((Path(d)/"L-meta-42.lean").read_text(),"candidate")
+            self.assertTrue(a.status(g["id"]).startswith("generated plugin"))
+            self.assertFalse(a.fresh(g["id"],"123"))
+
     def test_independent_lanes(self):
         with tempfile.TemporaryDirectory() as d, patch.dict(os.environ,{"PNP_STATE_ROOT":d}):
             from missions.pnp.lbcert import autosolve as a

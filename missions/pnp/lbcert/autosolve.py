@@ -100,9 +100,25 @@ def write_status(gid, text):
 QUEUED = set()
 
 
+RETRY_DELAY = 1800
+
+
+def retryable(gid):
+    """An infrastructure failure is not evidence that a problem is unsolvable."""
+    st = status(gid)
+    if st is None:
+        return True
+    if not st or st.split()[0] not in ('relay_error', 'error', 'deferred'):
+        return False
+    try:
+        return time.time() - os.stat(os.path.join(CANDS, gid + '.status')).st_mtime >= RETRY_DELAY
+    except OSError:
+        return False
+
+
 def generate(g, engines):
     gid, mod = g['id'], g['module']
-    if status(gid) is not None:
+    if not retryable(gid):
         return
     sf = os.path.join(CANDS, gid + '.stmt')
     open(sf, 'w').write(g['statement'])
@@ -118,11 +134,15 @@ def generate(g, engines):
     except Exception:
         r = {'status': 'relay_error'}
     where = 'marceline'
+    if os.path.exists(os.path.join(WORK, 'STOP')):
+        return
     if p.returncode == 1 and lbparse.family(g['statement']) in ('mono', 'onenot'):
+        write_status(gid, 'deferred relay unavailable')
         log('generate deferred', gid, r.get('status'), '%.0fs' % (time.time() - t0))
         return
     if p.returncode == 1:   # relay or handler trouble: build here, slower but independent
         if not LOCAL_FALLBACK.acquire(blocking=False):
+            write_status(gid, 'deferred local fallback busy')
             log('local fallback deferred',gid)
             return
         try:
@@ -224,6 +244,8 @@ def gen_plugin(g, name, sha):
         return
     crc, res = checkremote.check(out + '.gen', g['module'])
     if crc == 2:
+        os.replace(out + '.gen', out)
+        write_status(gid, 'generated plugin %s %s check deferred' % (name, sha))
         log('plugin', name, gid, 'check deferred', res.get('status'))
         return
     if crc == 0:
@@ -451,7 +473,7 @@ def main():
                     continue
                 if len(outstanding) >= REMOTE_WORKERS:
                     break
-                if g['id'] not in queued and status(g['id']) is None:
+                if g['id'] not in queued and retryable(g['id']):
                     queued.add(g['id'])
                     outstanding[g['id']] = pool.submit(generate, g, engines)
             # Constructive plugins use an independent bounded pool; expensive
