@@ -91,6 +91,11 @@ def observe():
              "bindings":sorted(roster[0]) if roster else [],
              "uncertain":sorted(roster[1]) if roster else []}
     state.atomic_write(roster_path(),json.dumps(payload)+"\n")
+    try:
+        from . import promotion_observer
+        promotion_observer.observe()
+    except Exception as exc:
+        print("private competition observation deferred:",type(exc).__name__,flush=True)
     return {"complete":payload["complete"]}
 
 
@@ -313,6 +318,9 @@ def posting_tick(d=None, now=None):
             # No extra backoff after a successful release; shared desk pacing
             # and the server's retry_after_s still constrain every request.
             mem.pop("posting_retry_at",None)
+        from .lbcert import promotion
+        for event in promotion.promote_once():
+            print("private receipt",json.dumps(event),flush=True)
         acquired=fill(d,mem,now,snap)
         roster=observed_roster()
         selected=focus.choose([state.load(g) for g in state.all_gaps()],mem.get("focus"),roster[0] if roster else (),time.time())

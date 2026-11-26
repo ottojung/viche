@@ -5,6 +5,8 @@ the same bytes and public base allows the broker to say have=proof.
 """
 import hashlib
 import json
+import os
+import tempfile
 from pathlib import Path
 import re
 import time
@@ -29,15 +31,44 @@ def exact_receipt(result, data):
             and re.fullmatch(r"[0-9a-f]{40}",result["checked_base"]) is not None)
 
 
-def record(gid, result, data):
+def record(gid, result, data, *, private=False):
+    """Record exact checked bytes. Private promotion is no-clobber and preserves check time."""
+    marker(gid)  # validate path component before any writes
     if not exact_receipt(result,data):return False
     digest=hashlib.sha256(data).hexdigest()
     path=directory()/(gid+".lean")
-    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
+    checked_at=time.time()
+    if private:
+        checked_at=result.get("at")
+        if type(checked_at) not in (float,int) or not 0<checked_at<=time.time():
+            return False
+        if os.path.lexists(marker(gid)):
+            return False
+        directory().mkdir(parents=True,exist_ok=True)
+        if not os.path.lexists(path):
+            fd,tmp=tempfile.mkstemp(prefix=".private-proof-",dir=directory())
+            try:
+                with os.fdopen(fd,"wb") as f:
+                    f.write(data);f.flush();os.fsync(f.fileno())
+                try:os.link(tmp,path)
+                except FileExistsError:pass
+            finally:os.unlink(tmp)
+    if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
         return False
-    state.atomic_write(str(marker(gid)),json.dumps({
+    payload={
         "gap":gid,"digest":digest,"base":result["checked_base"],
-        "request":result.get("id"),"at":time.time()},sort_keys=True))
+        "request":result.get("id"),"at":checked_at}
+    if private:
+        payload["origin"]="private-prelease"
+        fd,tmp=tempfile.mkstemp(prefix=".private-receipt-",dir=directory())
+        try:
+            with os.fdopen(fd,"w") as f:
+                json.dump(payload,f,sort_keys=True);f.flush();os.fsync(f.fileno())
+            try:os.link(tmp,marker(gid))
+            except FileExistsError:return False
+        finally:os.unlink(tmp)
+    else:
+        state.atomic_write(str(marker(gid)),json.dumps(payload,sort_keys=True))
     from .. import ledger
     ledger.mark("checked",gid,base=result["checked_base"])
     return True

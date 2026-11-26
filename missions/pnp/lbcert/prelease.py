@@ -359,6 +359,7 @@ def check(gid, path):
                  "statement_sha256":sha(q["statement"].encode()),
                  "guarded_sha256":sha(guarded),"toolchain":config.LEAN_TOOLCHAIN,
                  "axiom_report":log.strip().splitlines()[-1].strip(),
+                 "compiler_log":log,"compiler_log_sha256":sha(log.encode()),
                  "authorization":cfg["authorization"],"at":time.time()}
         if not ready.exact_receipt(receipt,raw):
             raise ValueError("receipt identity mismatch")

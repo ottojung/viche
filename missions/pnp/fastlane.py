@@ -42,6 +42,10 @@ def _read(name, default):
 
 
 def cand_ready(gap, allow_generated=True):
+    from .lbcert import ready
+    receipt=ready.verified(gap)
+    if receipt and receipt.get("origin")=="private-prelease":
+        return str(ready.directory()/(gap+".lean"))
     try:
         with open(os.path.join(CANDS, gap + ".status"), encoding="utf-8") as f:
             marker = f.read().split()

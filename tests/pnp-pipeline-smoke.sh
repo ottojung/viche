@@ -15,6 +15,7 @@ python3 tests/pnp-promise.py
 python3 tests/pnp-promise-batch.py
 python3 tests/pnp-posting.py
 python3 tests/pnp-private-prelease.py
+python3 tests/pnp-private-promotion.py
 python3 tests/pnp-host-boundary.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
