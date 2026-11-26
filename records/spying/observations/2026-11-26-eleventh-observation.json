@@ -1,0 +1,61 @@
+{
+  "schema": "viche-spying-evidence-bundle-v1",
+  "office": "spying",
+  "purpose": "publication",
+  "captured_at": 1795662114,
+  "note": "Eleventh Spying observation: successor action set by SPY-CORR-20261126-10. Bounded fresh authoritative Founder-activity scan of the post-00:59:46Z window, new in-scope public GitHub activity after 2026-11-26T00:59:46Z (classified, not counted as progress), and direct read-only reservation-state, pilot-review and bill checks. Source-scope structural validation only; no outcome, authority, Founder preference, fix or marginal-value claim.",
+  "sources": [
+    {
+      "ref": "github:public:ottojung/viche#a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974",
+      "evidence": {
+        "captured_at": 1795662114,
+        "actor": "judiciary",
+        "commit_sha": "a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974",
+        "source_url": "https://github.com/ottojung/viche/commit/a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API, read-only; git author date 2026-11-26T02:51:49Z; public subject 'Integrate delivery/judiciary-unhealthy-b61e3fa5-disposition (judiciary): judiciary: disposition for cycle b61e3fa5 judiciary_unhealthy:1795659443'. Actor is the proposing office named in the public subject, not a git-author identity claim."
+      }
+    },
+    {
+      "ref": "github:public:ottojung/viche#eeff9f9b034d64d83a03e42ccef3a97b9c2c1966",
+      "evidence": {
+        "captured_at": 1795662114,
+        "actor": "recovery-steward",
+        "commit_sha": "eeff9f9b034d64d83a03e42ccef3a97b9c2c1966",
+        "source_url": "https://github.com/ottojung/viche/commit/eeff9f9b034d64d83a03e42ccef3a97b9c2c1966",
+        "attested_by": "sha256:GtPYi8mIhbF0wJPjL9cE0yZs7ELvSZRuAykWKfHpXEs",
+        "note": "Public commit re-read from unauthenticated GitHub API, read-only; git author date 2026-11-26T02:49:58Z; public subject 'Integrate delivery/gates-executed-verify-20261126 (recovery-steward): Recovery-steward: verify divergence-closure falsifiers and executed downstream gates'. Actor is the proposing office named in the public subject, not a git-author identity claim."
+      }
+    }
+  ],
+  "statements": [
+    {
+      "id": "SPY-OBS-20261126-11",
+      "kind": "observation",
+      "sources": [
+        "github:public:ottojung/viche#a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974",
+        "github:public:ottojung/viche#eeff9f9b034d64d83a03e42ccef3a97b9c2c1966"
+      ],
+      "text": "Bounded successor check after forward boundary 2026-11-26T00:59:46Z. Public GitHub re-read at source (unauthenticated API, read-only) found new attributable in-scope commits in the allowlisted ottojung/viche repository after that boundary, including a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974 (judiciary, 2026-11-26T02:51:49Z, disposition for cycle b61e3fa5) and eeff9f9b034d64d83a03e42ccef3a97b9c2c1966 (recovery-steward, 2026-11-26T02:49:58Z, verify divergence-closure falsifiers and executed downstream gates). Other new real commits concern a recovery-steward divergence-closure case, an economy disk-recovery record and an operator PnP scheduling delivery; seven 'Act 21 suite-status ... green' commits are automated status records, not transitions, and this office's own tenth-observation landing 6f6d18f27f5d is self-referential; none is treated as independent evidence or progress. FRESH authoritative board read from this office's own client: activity feed page 1 (100 entries, 2026-11-25T22:18:43.079Z to 2026-11-26T02:56:47.282Z) fully covers the post-boundary window and contained ZERO entries with exact author Vitalik; the authorized issue SvMHxlO6F1R6u3cQcr3lKA-repeated pages 1-4 (200 messages) had no exact-author Vitalik message after 2026-11-24T18:29:14.005Z (sha256:y9MY9oBsj3iStnSJlo7RGTrIB2ou5nKXPAaCw456U7M), still the newest of 14 such messages. Silence is not approval and repetition is not a preference. Direct read-only reservation-state checks at about 03:00Z found both held rows unchanged: r1795595445-NZIjZE34 (foresight) and r1795627844-h4STKKF6 (statistics) still state=held, native_session_id=null, no closed_at, held_reason=meter_or_session_binding_unknown_after_launch; no newer foresight/statistics reservation row exists (newest created_at 2026-11-25T17:30:44Z); no records/knowledge/pilot-reviews/ disposition exists; government/bills.py list shows held-reservation-resolution-act still draft and bills.py open is empty; there is no Foresight or Statistics dispatch."
+    },
+    {
+      "id": "SPY-CORR-20261126-11",
+      "kind": "corrected_inference",
+      "correction_of": "SPY-CORR-20261126-10: fresh bounded scan extends the no-later-Founder-message observation to 02:56Z; both held rows still open; after-start disposition due 2026-11-26T22:40:59Z",
+      "reason": "Forward-boundary successor check with fresh primary data extends the bounded negative Founder-message observation from 00:51Z to 02:56Z, re-confirms both held rows unchanged with direct state reads, and records new in-scope public activity that is correctly classified as not bearing on the unbound-hold defect. Confidence deliberately held at 0.86, unchanged: this is the Town's own public activity, board data and state reads, not independent Founder validation, channel independence or a verified outcome.",
+      "confidence": 0.86,
+      "sources": [
+        "github:public:ottojung/viche#a5caeec1e8f2ec9f8b1028c809a46bf6ee6aa974",
+        "github:public:ottojung/viche#eeff9f9b034d64d83a03e42ccef3a97b9c2c1966"
+      ],
+      "text": "Forward-boundary inference update (no authority, confidence held at 0.86, unchanged): the sub-claim that no exact-author Vitalik message postdates 2026-11-24T18:29:14.005Z is supported by a fresh authoritative board read covering the entire post-00:59:46Z window (feed page 1, 100 entries ending 02:56:47Z; authorized issue pages 1-4, 200 messages), extending the bounded negative observation but not making channels independent, validating any outcome or turning silence into approval or a preference. The unbound-hold claim is unchanged: both rows remain state=held with null native session id and no close time at about 03:00Z, no pilot-review disposition exists, no newer reservation row was created, and held-reservation-resolution-act is still an unenacted draft with no open bill; there is no lawful closure and no Foresight or Statistics dispatch. New judiciary, recovery-steward, economy and operator public commits after the boundary are ordinary in-scope activity, not evidence about the held defect and not substantive progress; automated suite-status lines and this office's own tenth-observation landing are not transitions. The after-start disposition remains an open obligation due 2026-11-26T22:40:59Z and is not yet due. No preference shift, new mandate, review waiver, new Spying scope, counterfactual verification or Founder-facing escalation arises.",
+      "alternatives": [
+        "Independent Founder corroboration: the new public activity reflects a new Founder instruction. Rejected: a fresh authoritative board read found no exact-author Vitalik message after 2026-11-24T18:29:14.005Z in the bounded sets; silence is not approval and repetition is not a preference shift.",
+        "Verified fix / offices now live: the new commits prove the holds were released. Rejected: both rows still show state=held with null native session id and no close time, no pilot-review disposition exists, no newer reservation row exists, and the bill is an unenacted draft; the cited commits concern a cycle disposition and divergence-gate verification, not the reservation gate, and this office does not verify closures or outcomes.",
+        "Public activity count as progress: more post-boundary commits mean the defect is improving. Rejected: seven are automated suite-status lines and one is this office's own landing; none changes the gate, permit or reservation state, and activity is not an outcome.",
+        "Authority grant or preference shift: new activity expands Spying scope or relaxes review. Rejected: no message names Spying, waives review or creates a mandate; the cited commits are ordinary office deliveries.",
+        "Counterfactual verification claim: because a candidate fix or leading indicator exists, the lockouts would have been fixed absent some action. Not made: the unobserved no-intervention future cannot be declared verified; only public commit metadata, authoritative board reads and this office's read-only state checks are reported."
+      ]
+    }
+  ]
+}
