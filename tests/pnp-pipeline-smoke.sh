@@ -2,6 +2,11 @@
 # Offline acceptance tests for the P vs NP publisher; no external side effects.
 set -eu
 cd "$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)"
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' 0
+trap 'exit 130' 1 2 3 15
+export PNP_STATE_ROOT="$scratch/pnp"
+mkdir -p "$PNP_STATE_ROOT"
 /bin/sh -n missions/pnp/git-auth.sh
 python3 tests/pnp-research.py
 python3 tests/pnp-pipeline.py

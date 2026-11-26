@@ -17,9 +17,17 @@ from unittest.mock import patch
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 TMP = tempfile.TemporaryDirectory(prefix="pnp-real-smoke-")
-os.environ["PNP_STATE_ROOT"] = str(pathlib.Path(TMP.name) / "state")
+TEST_ROOT = str(pathlib.Path(TMP.name) / "state")
 
 from missions.pnp import cli, config, github, state, gitctl, jobs, build_control  # noqa: E402
+
+def setUpModule():
+    # Called after all modules were imported, before this module's tests.
+    sys.path.insert(0, os.path.dirname(__file__))
+    import pnp_test_scope
+    scope = pnp_test_scope.enter(TEST_ROOT)
+    unittest.addModuleCleanup(scope.close)
+
 
 
 class FullPathSmoke(unittest.TestCase):
