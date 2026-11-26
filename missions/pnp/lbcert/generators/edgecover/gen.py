@@ -4,94 +4,150 @@
 Statement shapes (desk corpus):
   * edge-list: `C.eval (List.ofFn x) = true ↔ ∃ u v, (u.val,v.val) ∈ [(pairs)] ∧ ...`
   * explicit DNF: `C.eval (List.ofFn x) = (x a && x b) || ...`
-Method: greedily cover the graph by stars (one OR over the neighbours of a centre plus one
-AND with the centre), then OR the stars; emit merged L-meta-929-style witness proof
-(helper namespace, simp/decide for gate kinds and size, `decide +kernel` for evaluation).
+Method: solve a bounded vertex-cover decision problem and emit the corresponding star circuit.
+For explicit DNF, the evaluation certificate uses separate Boolean inputs rather than enumerating
+functions on Fin n. Search and kernel enumeration are capped; refusal is not a lower bound.
 Exit 3 when the cover exceeds the bound or the shape is not recognised.
 """
 import re
 import sys
 
-MATCH = (r"∃ C : PEqualNP\.CircuitLowerBounds\.Circuit, "
-         r"PEqualNP\.MetaComplexity\.Monotone2 C ∧ C\.size ≤ \d+ ∧ .*C\.eval \(List\.ofFn x\)")
+PREFIX = re.escape("∃ C : PEqualNP.CircuitLowerBounds.Circuit, PEqualNP.MetaComplexity.Monotone2 C ∧ C.size ≤ ")
+DNF = re.compile(PREFIX + r"(\d+) ∧ ∀ x : Fin (\d+) → Bool, C\.eval \(List\.ofFn x\) = (.+)")
+EDGE = re.compile(PREFIX + r"(\d+) ∧ \(∀ x : Fin (\d+) → Bool, \(C\.eval \(List\.ofFn x\) = true ↔ ∃ u v : Fin \2, \(u\.val, v\.val\) ∈ \(\[([0-9, ()]+)\] : List \(ℕ × ℕ\)\) ∧ x u = true ∧ x v = true\)\)")
 
 
 def parse(stmt):
-    n = int(re.search(r"∀ x : Fin (\d+) → Bool", stmt).group(1))
-    bound = int(re.search(r"C\.size ≤ (\d+)", stmt).group(1))
-    lm = re.search(r"\(\[([0-9, ()]+)\] : List \(ℕ × ℕ\)\)", stmt)
-    if lm:
-        edges = [(int(a), int(b)) for a, b in re.findall(r'\((\d+),\s*(\d+)\)', lm.group(1))]
+    stmt = " ".join(stmt.split())
+    m = EDGE.fullmatch(stmt)
+    rhs = None
+    if m:
+        bound, n = map(int,m.group(1,2))
+        pairs = m[3]
+        if not re.fullmatch(r"\(\d+, *\d+\)(?:, *\(\d+, *\d+\))*",pairs):
+            return None
+        edges = [tuple(map(int,t)) for t in re.findall(r"\((\d+), *(\d+)\)",pairs)]
+        # Until a scalable existential certificate is installed, keep
+        # finite enumeration strictly bounded.
+        if n > 10:
+            return None
     else:
-        expr = stmt.split("C.eval (List.ofFn x) = ", 1)[1].strip()
-        m = re.match(r"\(fun x : Fin \d+ → Bool => (.*)\) x$", expr)
-        if m:
-            expr = m.group(1)
-        edges = []
-        for t in re.split(r'\|\|', expr):
-            lits = [int(z) for z in re.findall(r'x\s*(\d+)', t)]
-            if len(lits) != 2:
+        m = DNF.fullmatch(stmt)
+        if not m:
+            return None
+        bound,n = map(int,m.group(1,2))
+        rhs = m[3]
+        fn = re.fullmatch(r"\(fun x : Fin "+str(n)+r" → Bool => (.*)\) x",rhs)
+        if fn:
+            rhs = fn[1]
+        # Parentheses around the entire disjunction are allowed; each
+        # disjunct must have exactly two positive input variables.
+        terms = rhs.split("||")
+        edges=[]
+        for t in terms:
+            mm=re.fullmatch(r"[ (]*x (\d+) && x (\d+)[ )]*",t.strip())
+            if not mm:
                 return None
-            edges.append(tuple(sorted(lits)))
-    if not edges or any(a >= n or b >= n for a, b in edges):
+            edges.append(tuple(map(int,mm.group(1,2))))
+        if n > 12:
+            return None
+    if not edges or any(a >= n or b >= n or a==b for a,b in edges):
         return None
-    return n, bound, sorted(set(tuple(sorted(e)) for e in edges))
+    return n,bound,sorted(set(tuple(sorted(e)) for e in edges)),rhs
+
+
+def matches(stmt):
+    return parse(stmt) is not None
 
 
 def star_cover(n, edges, bound):
-    remaining = set(edges)
-    stars = []
-    while remaining:
-        best, bestgain = None, 0
-        for u in range(n):
-            gain = sum(1 for a, b in remaining if a == u or b == u)
-            if gain > bestgain:
-                bestgain, best = gain, u
-        if best is None:
-            break
-        u = best
-        nb = sorted({b if a == u else a for a, b in remaining if a == u or b == u})
-        stars.append((u, nb))
-        remaining = {(a, b) for a, b in remaining if a != u and b != u}
-    gates, wires = [], []
-    for u, nb in stars:
-        w = nb[0]
+    from functools import lru_cache
+    budget=bound-len(edges)+1
+    if budget<1:
+        return None
+    @lru_cache(maxsize=20000)
+    def cover(es,k):
+        if not es:
+            return ()
+        if not k:
+            return None
+        degree={}
+        for a,b in es:
+            degree[a]=degree.get(a,0)+1
+            degree[b]=degree.get(b,0)+1
+        used=set()
+        matching=0
+        for a,b in es:
+            if a not in used and b not in used:
+                used.update((a,b));matching+=1
+        if matching>k:
+            return None
+        a,b=max(es,key=lambda e:degree[e[0]]+degree[e[1]])
+        for v in sorted((a,b),key=lambda v:-degree[v]):
+            tail=cover(tuple(e for e in es if v not in e),k-1)
+            if tail is not None:
+                return (v,)+tail
+        return None
+    chosen=cover(tuple(edges),budget)
+    if chosen is None:
+        return None
+    remaining=set(edges);stars=[]
+    for u in chosen:
+        nb=sorted({b if a==u else a for a,b in remaining if u in (a,b)})
+        if nb:
+            stars.append((u,nb))
+            remaining={e for e in remaining if u not in e}
+    assert not remaining
+    gates,wires=[],[]
+    for u,nb in stars:
+        w=nb[0]
         for v in nb[1:]:
-            gates.append(('or', w, v)); w = n + len(gates) - 1
-        gates.append(('and', u, w)); wires.append(n + len(gates) - 1)
-    w = wires[0]
+            gates.append(('or',w,v));w=n+len(gates)-1
+        gates.append(('and',u,w));wires.append(n+len(gates)-1)
+    w=wires[0]
     for v in wires[1:]:
-        gates.append(('or', w, v)); w = n + len(gates) - 1
-    return gates if len(gates) <= bound else None
+        gates.append(('or',w,v));w=n+len(gates)-1
+    assert len(gates)<=bound
+    return gates
 
 
-def emit(statement, gates, outwire):
-    num_m = re.search(r"(\d+)$", sys.argv[1]) if len(sys.argv) > 1 else None
-    num = num_m.group(1) if num_m else "0"
+def emit(gid, statement, n, gates, rhs):
+    num = re.fullmatch(r"L-meta-(\d+)",gid).group(1)
     mod = "PEqualNP.Outside.L_meta_" + num
-    gs = ", ".join("⟨GateOp.%s, [%d, %d]⟩" % (op, a, b) for op, a, b in gates)
-    return """import Mathlib
+    ns=mod+"_aux"
+    gs = ", ".join("⟨GateOp.%s, [%d, %d]⟩" % (op,a,b) for op,a,b in gates)
+    names=" ".join("b%d"%i for i in range(n))
+    bank=", ".join("b%d"%i for i in range(n))
+    args=", ".join("x %d"%i for i in range(n))
+    call=" ".join("(x %d)"%i for i in range(n))
+    helper=""
+    proof="  · decide +kernel"
+    if rhs is not None:
+        expr=re.sub(r"\bx (\d+)",lambda m:"b"+m[1],rhs)
+        helper=f"set_option maxRecDepth 100000 in\nset_option maxHeartbeats 20000000 in\nlemma eval_bool : ∀ {names} : Bool, c.eval [{bank}] = ({expr}) := by decide +kernel"
+        proof=f"  · intro x\n    have h : List.ofFn x = [{args}] := by simp [List.ofFn_succ]\n    rw [h]\n    exact eval_bool {call}"
+    return f"""import Mathlib
 import PEqualNP.Defs
 
-namespace %s_aux
-
+namespace {ns}
 open PEqualNP.CircuitLowerBounds
+def c : Circuit := ⟨[{gs}], {n+len(gates)-1}⟩
 
--- Witness circuit from a greedy star cover; proof shape follows merged L_meta_929 (Apache-2.0).
-def c : Circuit := ⟨[%s], %d⟩
+{helper}
 
-end %s_aux
-
-open %s_aux
-
+lemma wf : PEqualNP.MetaComplexity.Monotone2 c := by
+  intro g hg
+  simp only [c, List.mem_cons, List.not_mem_nil, or_false] at hg
+  rcases hg with {" | ".join(["rfl"]*len(gates))} <;> simp
+end {ns}
+open {ns}
 set_option maxRecDepth 100000 in
 set_option maxHeartbeats 20000000 in
-theorem %s : %s := by
-  refine ⟨c, ?_, ?_, ?_⟩
-  · simp [PEqualNP.MetaComplexity.Monotone2, c]
+theorem {mod} : {statement} := by
+  refine ⟨c, wf, ?_, ?_⟩
   · decide
-  · decide +kernel
-""" % (mod, gs, outwire, mod, mod, mod, statement)
+{proof}
+"""
 
 
 def main():
@@ -102,11 +158,11 @@ def main():
     parsed = parse(statement)
     if parsed is None:
         print("unrecognised edge-cover statement", file=sys.stderr); sys.exit(3)
-    n, bound, edges = parsed
+    n, bound, edges, rhs = parsed
     gates = star_cover(n, edges, bound)
     if gates is None:
         print("star cover exceeds bound %d" % bound, file=sys.stderr); sys.exit(3)
-    open(out, "w").write(emit(statement, gates, n + len(gates) - 1))
+    open(out, "w").write(emit(gid, statement, n, gates, rhs))
     sys.exit(0)
 
 
