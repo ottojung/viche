@@ -162,6 +162,16 @@ grep -q 'refused=invalid-quarantine-timestamp' "$state/janitor/actions.log"
 grep -q 'refused=future-quarantine-timestamp' "$state/janitor/actions.log"
 grep -q 'refused=invalid-quarantine-path' "$state/janitor/actions.log"
 grep -q 'refused=empty-quarantine-path' "$state/janitor/actions.log"
+
+# Regression: a reclaim begin/end pair from one run must carry the same run
+# timestamp. The read loop must not clobber the global run timestamp with the
+# last queue row's creation time (janitor audit-log timestamp defect, 2026-11-26).
+begin_ts=$(grep 'reclaim-quarantined begin' "$state/janitor/actions.log" | tail -n 1 | cut -d' ' -f1)
+end_ts=$(grep 'reclaim-quarantined end' "$state/janitor/actions.log" | tail -n 1 | cut -d' ' -f1)
+[ -n "$begin_ts" ] && [ "$begin_ts" = "$end_ts" ] || {
+    echo "janitor: reclaim begin/end timestamp mismatch: $begin_ts vs $end_ts" >&2
+    exit 1
+}
 grep -q '/blank-source' "$state/janitor/quarantine-rejected.tsv"
 
 # Successful reclaim retires the old queue row: a later object recreated with the
