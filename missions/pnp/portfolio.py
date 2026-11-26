@@ -27,7 +27,7 @@ def record(gap, attempt, allow_correction=False):
     rec = state.load(gap)
     eligible = support.active(rec) or (allow_correction and focus.correction(rec)
         and isinstance(rec.get("lease"), str) and isinstance(rec.get("statement"), str))
-    if not eligible or rec.get("queued_lease") or support.attempt(rec) != attempt:
+    if not eligible or rec.get("queued_lease") or rec.get("work_lane") == "posting" or support.attempt(rec) != attempt:
         raise ValueError("no matching live research lease")
     return rec
 
@@ -40,7 +40,7 @@ def view():
     roster = status.workers()
     for item in support.targets(all_held=True):
         rec = state.load(item["gap"])
-        if not support.active(rec) or support.attempt(rec) != item["attempt"]:
+        if not support.active(rec) or rec.get("work_lane") == "posting" or support.attempt(rec) != item["attempt"]:
             continue
         workers = [{"id": a["id"], "title": a.get("title"), "cwd": a["cwd"],
                     "role": "general" if support.assignment.general(Path(a["cwd"])) else "specialist",
@@ -224,6 +224,7 @@ def apply_release(d, mem, now):
         # Newly vacant capacity should be filled immediately.
         mem.pop("last_null_ordinary", None)
         mem.pop("last_null_hard", None)
+        mem.pop("posting_retry_at", None)
         finish(mem, obj, "applied")
         return [gap]
     finally:

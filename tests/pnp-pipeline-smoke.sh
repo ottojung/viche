@@ -13,6 +13,7 @@ python3 tests/pnp-rectcover.py
 python3 tests/pnp-edgecover.py
 python3 tests/pnp-promise.py
 python3 tests/pnp-promise-batch.py
+python3 tests/pnp-posting.py
 python3 tests/pnp-real-smoke.py
 python3 tests/pnp-watchdog-smoke.py
 python3 tests/pnp-retention.py
@@ -37,5 +38,7 @@ python3 tests/pnp-adapter.py
 python3 tests/pnp-rows.py
 
 python3 tests/pnp-metrics.py
+python3 tests/pnp-race-metrics.py
+python3 tests/pnp-competition.py
 
 python3 tests/pnp-remote-protocol.py

@@ -55,7 +55,7 @@ def verified(gid):
     return None
 
 
-def offers(snapshot, mem, now):
+def offers(snapshot, mem, now, uncontested=False):
     attempts=mem.setdefault("proof_of_attempts",{})
     mem["proof_of_attempts"]=attempts={k:v for k,v in attempts.items()
                                        if now-v<600}
@@ -75,6 +75,8 @@ def offers(snapshot, mem, now):
     competing=competition(now)
     for path in paths:
         gid=path.name[:-13]
+        if uncontested and competing.get(gid) != 0:
+            continue
         if now-attempts.get(gid,0)<120 or desk.retry_until(gid)>now:
             continue
         if open_now is not None and gid not in open_now:
