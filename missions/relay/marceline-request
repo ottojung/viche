@@ -1,7 +1,4 @@
 #!/bin/sh
-set -eu
-root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-if [ "${1-}" = worker ]; then
-  exec "$HOME/.local/bin/python3" "$root/worker-lock.py" "$root/relay.mjs"
-fi
-exec "$HOME/.local/bin/node" "$root/relay.mjs" "$@"
+# Retired transport. No argument or environment setting can enable it.
+echo '{"status":"remote_transport_disabled","reason":"out-of-host proof transport is prohibited; use the managed local compiler from an exact bound workspace. GitHub-hosted CI remains allowed."}'
+exit 9

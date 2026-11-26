@@ -1,7 +1,7 @@
 """Statement skeletons and the merged-corpus skeleton index (billy-dev side of sibling transfer).
 
 skeleton(s) = normalized statement, binder names x1.. -> x, every numeral -> '#' (identical to
-marceline-dev /home/lubko/pnp-infra/lbgen/sibling.py, which builds and compiles the candidates).
+the local generator, which builds candidates; exact checks use the managed local compiler).
 index(mirror) = {skeleton: [module, ...]} of the merged upstream Outside files at upstream/main.
 Incremental: skeletons are cached per blob sha, so a new commit costs only its new files.
 """

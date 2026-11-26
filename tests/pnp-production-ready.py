@@ -42,6 +42,10 @@ class TestReady(unittest.TestCase):
             Path(str(cache)+".meta").write_text(json.dumps({"at":time.time()}))
             snap={"complete":True,"gaps":rows}
             self.assertEqual(ready.offers(snap,{},time.time()),["L-meta-124","L-meta-123"])
+            self.assertEqual(ready.offers(snap,{},time.time(),uncontested=True),["L-meta-124"])
+            cache.with_name(cache.name+".meta").write_text(json.dumps({"at":time.time()-300}))
+            self.assertEqual(ready.offers(snap,{},time.time(),uncontested=True),[])
+            Path(str(cache)+".meta").write_text(json.dumps({"at":time.time()}))
             inv=ready.inventory(snap)
             self.assertEqual((inv["uncontested_checked"],inv["contested_checked"]),(1,1))
     def test_memory_with_active_cache_and_tmpfs(self):
@@ -77,6 +81,14 @@ class TestReady(unittest.TestCase):
             self.assertEqual(desk.lease_limit(),3)
             desk.record_capacity({"capacity":4,"holding":2})
             self.assertEqual(desk.lease_limit(),4)
+    def test_level_wire_parameters(self):
+        d=desk.Desk()
+        with patch.object(d,"_call",return_value=(200,{"gap":None})) as call:
+            self.assertIsNone(d._next_gap(another=True,level="solid"))
+            self.assertEqual(call.call_args.args[2]["level"],"solid")
+            self.assertEqual(call.call_args.args[2]["model"],"unknown")
+            with self.assertRaises(desk.DeskError):d._next_gap(level="invalid")
+
     def test_targeted_wire_parameters(self):
         d=desk.Desk()
         with patch.object(d,"_call",return_value=(200,{"gap":None})) as call:

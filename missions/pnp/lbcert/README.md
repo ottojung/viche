@@ -1,7 +1,7 @@
 # Certificate production — current workflow (2026-11-25)
 
 **Held step:** generate complete exact candidate → normal signed publisher immediately;
-the exact signed bytes are checked concurrently on Marceline. Correct the same PR if
+the exact signed bytes are checked by the managed local postcheck. Correct the same PR if
 the compiler or official checker reports a defect. No mandatory local build gate.
 A generator's `generated` status means complete source, not a compiler receipt.
 
@@ -33,8 +33,8 @@ software, not by reading: the candidate has to exist before the town holds the s
 ## How it works (no agent action needed)
 
 1. `autosolve.py` (kept alive by `allocator.sh`; log `PNP_STATE_ROOT/lbcert/autosolve.log`)
-   polls the public desk file every 45 s and builds a candidate for every open concrete step,
-   **on marceline-dev** through the relay op `lb-cert` (8 in parallel, ~20 s for 4k states).
+   polls the public desk file and builds candidates locally with bounded CPU work. No relay
+   generation or remote check is permitted.
    Results: `PNP_STATE_ROOT/lbcert/cands/<gap>.lean` and `<gap>.status`
    (`ok ENGINE where states=N`, `false` = a (K−1)-gate circuit exists, `toobig`, `unsupported`).
 2. `missions/pnp/fastlane.py` runs inside every allocator tick:
@@ -47,20 +47,17 @@ software, not by reading: the candidate has to exist before the town holds the s
 
 ## Doing it by hand
 
-On billy-dev, anywhere (the relay runs the generator on marceline-dev):
+The old `lbremote.py` entrypoint is retired and refuses locally. Local `lbassemble.py`
+performs bounded candidate generation without invoking Lean. This produces candidate
+source only; exact checks run solely from a bound workspace through the managed compiler:
 
-    python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py STATEMENT.txt \
-        PEqualNP.Outside.L_meta_8479 L_meta_8479.lean [--maxstates 60000] [--chunks 40]
-    # exit 0 written (sha256 verified), 3 bound false, 4 too big, 2 unsupported, 1 relay error
-
-STATEMENT.txt is the exact desk statement (`gap.statement`). Fallback without the relay (slow on
-billy-dev): `cd missions/pnp/lbcert && python3 lbassemble.py ENGINE.lean MODULE STATEMENT.txt OUT.lean`
-with `ENGINE.lean = PNP_STATE_ROOT/lbcert/engine7281.lean`.
+    PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake env lean FILE.lean
 
 ## Pieces
 
 * `lbparse.py` — classifies the statement in any pretty-printing style (elaborated binders,
-  `(3 : Fin (8 : ℕ))`, `.any` edge lists via a Lean `#eval` fallback on marceline-dev).
+  `(3 : Fin (8 : ℕ))`, `.any` edge lists; unusual syntax is normalized locally, with no
+  remote or out-of-host fallback).
 * `lbgen.py` — mirrors the public engine `lb_cert` of upstream `L_meta_7281` (Apache-2.0) move for
   move (`next`, `via`, `stepOK`): exhaustive search of fan-in-two AND/OR/NOT runs with `K−1` gates,
   up to variable permutations fixing `f`; emits the closed set of failing states with hints.
@@ -71,29 +68,25 @@ with `ENGINE.lean = PNP_STATE_ROOT/lbcert/engine7281.lean`.
   the original. `--chunks 40` halves peak memory (checker: 13–23 GB, 7–10 min).
 * `engine7281.lean` = upstream file cut before `def L_ : List ℕ :=`, sha-pinned in autosolve.py;
   `engine7281.pruned.lean` = `prune_engine.py` output (57 KB instead of 105 KB) for 4.5–5k states.
-* `lbremote.py` — client of the relay op `lb-cert` (handler: marceline-dev
-  `~/.local/share/viche/relay/lb-handler.py`, tools in `/home/lubko/pnp-infra/lbgen`).
-  `patch_relay.py` adds the op to `relay.mjs` (already applied on both hosts).
+* `lbremote.py` — retired fail-closed legacy client; local `lbassemble.py` performs
+  bounded candidate generation without invoking Lean.
 * `twin_publish.py HELD TWIN FILE` — PR for the negated twin of a held step through the
   publisher's own gitctl/github/validate helpers.
 
-## Sibling transfer (any step)
+## Local sibling indexing and adaptation
 
-`sibremote.py STATEMENT.txt MODULE OUT.lean --imports PEqualNP.Defs` asks marceline-dev (relay op
-`sibling`, handler `~/.local/share/viche/relay/sib-handler.py`, corpus = upstream main in
-`/home/lubko/pnp-verify-2171/up2`, refreshed every 2 min) to find merged theorems with the same statement
-skeleton (numerals and binder names abstracted), swap in this statement (v1) or also remap the differing
-numerals consistently (v2), and compile each with `lake env lean`; the first that compiles is returned.
-Corpus measurement: 37% of merged theorems have a same-skeleton sibling; 7 of 14 tried pairs compiled.
-autosolve runs it for every held step without a candidate every 5 minutes; a success is written as
-`cands/GAP.lean` with status `ok sibling SOURCE` and the fast lane submits it.
+`sibling.py` retains local corpus skeleton indexing for research and candidate
+adaptation. The `sibremote.py` entrypoint is retired and refuses locally.
+Adapted source is unverified until checked through the managed compiler in its
+exact bound workspace.
 
 ## Monotone-equals-general family
 
 Statements `∀ s, HasCircuitSize n f s → ∃ C, Monotone2 C ∧ C.size ≤ s ∧ ∀ x, C.eval … = f x` ("Table 2:
-for the monotone five-input f with table 0x…"). marceline-dev `monofam.py` computes the exact general
+for the monotone five-input f with table 0x…"). Local `monofam.py` computes the exact general
 complexity L (lb_cert at L, a circuit at L), searches an AND/OR circuit with exactly L gates, and emits
-the lb_cert lemma plus the explicit circuit; the lb-cert handler compiles it before returning it.
+the lb_cert lemma plus the explicit circuit; the exact bytes are compiled only through the managed
+compiler from a bound workspace. No remote handler or out-of-host compute is involved.
 No monotone circuit of size L = the statement is false (status `false`).
 
 ## One-NOT family ("At fan-in two, one NOT gate saves nothing on edges …")
@@ -108,7 +101,8 @@ pruning first and counts its states; the kernel does ~2k states/s, so instances 
 Typical easy instance: generation < 1 s, compile ~25 s, file ~62 KB, passes missions.pnp.validate
 (one `theorem`, helper `lemma`s, `import Mathlib`, no `noncomputable section`).
 Flow: autosolve (family `onenot`, only while `pr_open == 0`, ahead of every other family) ->
-relay `lb-cert` -> marceline lb-handler -> onenot.py -> candidate file -> normal lease-aware publisher.
+local `onenot.py` -> candidate file -> normal lease-aware publisher. No relay or remote handler
+is used at any step.
 Harder instances need the gate-elimination method of the merged L-meta-9266 / 14412 files.
 
 ## Track record and limits

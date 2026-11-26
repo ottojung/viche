@@ -31,7 +31,8 @@ class Fairness(unittest.TestCase):
     def test_unavailable_plugin_check_preserves_candidate(self):
         from missions.pnp.lbcert import autosolve as a
         from missions.pnp import state, support, validate, fastlane
-        import plugins, checkremote
+        import plugins
+        from missions.pnp.lbcert import checklocal
         g=dict(id="L-meta-42",statement="True",module="M",file="M.lean",imports=[])
         def generate(name,gid,sf,out):
             Path(out).write_text("candidate")
@@ -40,7 +41,7 @@ class Fairness(unittest.TestCase):
              patch.object(plugins,"run",side_effect=generate), \
              patch.object(validate,"validate"), patch.object(state,"load",return_value=None), \
              patch.object(support,"active",return_value=False), \
-             patch.object(checkremote,"check",return_value=(2,{"status":"relay_error"})), \
+             patch.object(checklocal,"check",return_value=(2,{"status":"bound_workspace_required"})), \
              patch.object(fastlane,"submit_ready"):
             a.gen_plugin(g,"test","123")
             self.assertEqual((Path(d)/"L-meta-42.lean").read_text(),"candidate")
@@ -85,8 +86,8 @@ class Fairness(unittest.TestCase):
                  patch.object(a.time,"sleep",side_effect=stop), \
                  patch.object(a.managed_process,"stop_all"):
                 self.assertEqual(a.main(),0)
-            self.assertEqual([p.limit for p in pools],[3,2,1])
-            self.assertEqual(len(pools[0].jobs),3)
+            self.assertEqual([p.limit for p in pools],[1,2,1])
+            self.assertEqual(len(pools[0].jobs),1)
             self.assertEqual(pools[1].jobs,[("gen_plugin","L-meta-100")])
             self.assertEqual(pools[2].jobs,[("check_prepared","L-meta-101")])
 
@@ -104,7 +105,7 @@ class Fairness(unittest.TestCase):
              patch.object(state, "load", return_value=None), \
              patch.object(support, "active", return_value=False), \
              patch.object(ledger, "mark") as mark:
-            a.generate(g, [])
+            a.generate(g, ["engine.lean"])
             path = Path(d) / "L-meta-43.status"
             self.assertTrue(path.read_text().startswith("deferred generation timeout"))
             self.assertIn(str(a.GEN_TIMEOUT), path.read_text())
@@ -113,7 +114,7 @@ class Fairness(unittest.TestCase):
             os.utime(path, (old, old))
             self.assertTrue(a.retryable("L-meta-43"))
 
-    def test_sibling_no_match_settles_until_corpus_changes(self):
+    def test_sibling_index_does_not_start_remote_adaptation(self):
         from missions.pnp.lbcert import autosolve as a
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -124,34 +125,18 @@ class Fairness(unittest.TestCase):
             (gaps / gid / "state.json").write_text(json.dumps(
                 {"state": "LEASED", "statement": "s", "module": "M", "imports": []}))
             cands.mkdir(parents=True)
-            sib = work / "sibling.json"
             calls = []
-            class NoMatch:
-                stdout = json.dumps({"siblings": 0, "tried": 0})
-                stderr = ""
-                returncode = 5
             def fake_run(cmd, **kwargs):
                 calls.append(cmd)
-                return NoMatch()
-            fake_sibling = types.SimpleNamespace(index=lambda *args: ("head1", None))
+                raise AssertionError("sibling indexing must not launch a transport")
+            fake_sibling = types.SimpleNamespace(index=lambda *args: ("head1", {}))
             with patch.dict(sys.modules, {"sibling": fake_sibling}), \
                  patch.object(a, "STATE", str(root / "state")), \
                  patch.object(a, "WORK", str(work)), \
                  patch.object(a, "CANDS", str(cands)), \
-                 patch.object(a, "SIB_STATE", str(sib)), \
                  patch.object(a.managed_process, "run", side_effect=fake_run), \
                  patch.object(a, "write_status"):
-                a.sibling_pass()
-                self.assertEqual(len(calls), 1)
-                data = json.loads(sib.read_text())
-                self.assertTrue(data[gid].get("settled"))
-                # Expire the time-based backoff: only the settled corpus marker may suppress a retry.
-                data[gid]["at"] = time.time() - 10000
-                sib.write_text(json.dumps(data))
-                a.sibling_pass()
-                self.assertEqual(len(calls), 1)
-                fake_sibling.index = lambda *args: ("head2", None)
-                a.sibling_pass()
-                self.assertEqual(len(calls), 2)
+                 a.sibling_pass()
+                 self.assertEqual(calls, [])
 
 if __name__=="__main__":unittest.main()
