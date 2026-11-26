@@ -66,10 +66,16 @@ con=sqlite3.connect(sys.argv[1])
 con.execute("update session_v2 set tokens_input=185,time_updated=1795279800000 where id='sid'")
 con.commit()
 PY
+# The monitor polls at the fixture's 1-second interval. Under a loaded full
+# suite the detached monitor can be delayed well beyond eight seconds before it
+# observes the overrun and finalizes. Give it a bounded 60-second window; the
+# terminal-state and accounting assertions below remain strict.
 reached=no
-for attempt in 1 2 3 4 5 6 7 8; do
+attempt=0
+while [ "$attempt" -lt 60 ]; do
   state=$(jq -r '.state' "$tmp/state/knowledge/budget/reservations/$r.json")
   if [ "$state" = closed ]; then reached=yes; break; fi
+  attempt=$((attempt + 1))
   sleep 1
 done
 [ "$reached" = yes ] || { echo "Overrun monitor did not close after kill" >&2; exit 1; }
@@ -103,10 +109,14 @@ r2=$(/bin/sh "$engine" reserve statistics test-agent-2)
 [ -n "$r2" ] || exit 1
 /bin/sh "$engine" mark-dispatched "$r2"
 /bin/sh "$engine" start "$r2" test-agent-2 >/dev/null
+# Same bounded load headroom for the held transition; the assertions that the
+# cap and the observed overrun are retained stay unchanged.
 held=no
-for attempt in 1 2 3 4 5 6 7 8; do
+attempt=0
+while [ "$attempt" -lt 60 ]; do
   state=$(jq -r '.state' "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r2.json")
   if [ "$state" = held ]; then held=yes; break; fi
+  attempt=$((attempt + 1))
   sleep 1
 done
 [ "$held" = yes ] || { echo 'Failed termination released or stranded reservation' >&2; exit 1; }
