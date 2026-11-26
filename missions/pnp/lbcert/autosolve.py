@@ -393,7 +393,10 @@ def fresh(gid, plugin_sha=None):
 
 
 SWEEP_STATE = os.path.join(WORK, 'sweep.json')
-SWEEP_MAX_TRIES = 4
+# 2026-11-26 census (961 sweep attempts): the only two `ok` sweeps succeeded at tried=1;
+# 360 tried=4 attempts all returned none. Extra tries on a no-match skeleton burn a scarce
+# relay compile slot for ~3 min each (one call ran 696 s before returning), so cap at 2.
+SWEEP_MAX_TRIES = 2
 
 
 def sweep_pass():
@@ -427,7 +430,7 @@ def sweep_pass():
         out = os.path.join(CANDS, gid + '.lean')
         p = managed_process.run([sys.executable, os.path.join(HERE, 'sibremote.py'), sf, g['module'], out,
                             '--imports', ','.join(g.get('imports') or ['PEqualNP.Defs']),
-                            '--max-tries', str(SWEEP_MAX_TRIES)], capture_output=True, text=True, timeout=3000)
+                            '--max-tries', str(SWEEP_MAX_TRIES)], capture_output=True, text=True, timeout=1200)
         try:
             r = json.loads(p.stdout.strip().split('\n')[-1])
         except Exception:
