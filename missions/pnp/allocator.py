@@ -91,7 +91,7 @@ def fill(d, mem, now, snapshot):
     previous = {False: old_ordinary, True: old_hard}
     acquired = []
     with cli.acquisition_lock():
-        while len(cli.held_records()) < config.MAX_LEASES:
+        while len(cli.held_records()) < desk.lease_limit():
             held = len(cli.held_records())
             from .lbcert import ready
             target=next(iter(ready.offers(snapshot,mem,now)),None)

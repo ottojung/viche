@@ -19,6 +19,45 @@ class DeskError(Exception):
     pass
 
 
+CAPACITY_SECONDS = 3600
+
+
+def _capacity_path():
+    return os.path.join(config.STATE_ROOT, "desk-capacity.json")
+
+
+def record_capacity(data):
+    """/next reports {"holding": h, "capacity": c} ("You hold as many steps as you have earned;
+    capacity grows as your proofs are checked").  Keep it so the allocator stops asking at cap."""
+    cap, hold = data.get("capacity"), data.get("holding")
+    if type(cap) is not int or cap < 1:
+        return
+    try:
+        from . import state
+        state.atomic_write(_capacity_path(), json.dumps(
+            {"capacity": cap, "holding": hold if type(hold) is int else None, "at": time.time()}))
+    except Exception:
+        pass
+
+
+def capacity():
+    """Last desk-reported lease capacity if under an hour old, else None (2026-11-26: 3)."""
+    try:
+        d = json.loads(open(_capacity_path()).read())
+        if time.time() - d["at"] < CAPACITY_SECONDS and type(d["capacity"]) is int:
+            return d["capacity"]
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
+def lease_limit():
+    """Slots we may actually fill: config.MAX_LEASES (join.txt's five) capped by the desk's
+    earned capacity.  At capacity the desk answers /next with an existing lease, so asking is waste."""
+    cap = capacity()
+    return min(config.MAX_LEASES, cap) if cap else config.MAX_LEASES
+
+
 def http_request(method, url, params=None):
     """Return (status, text).  Injected in unit tests."""
     if params:
@@ -121,6 +160,7 @@ class Desk:
         _, data = self._call("GET", "/next", params)
         if not isinstance(data, dict):
             raise DeskError("unexpected desk next shape")
+        record_capacity(data)
         gap = data.get("gap")
         lease = data.get("lease")
         if gap is None:

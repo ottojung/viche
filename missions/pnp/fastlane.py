@@ -140,7 +140,12 @@ def tick(d, mem, now, roster_known=True):
     research = [r for r in held if support.active(r, now) and not concrete(r) and not r.get("queued_lease")
                 and not r.get("candidate_digest") and not r.get("pr_number")]
     # An incomplete worker roster means we cannot see who is working; never cycle then.
-    if roster_known and len(held) >= config.MAX_LEASES and len(research) > RESEARCH_SLOTS:
+    # The desk's earned capacity (3 on 2026-11-26) may be below MAX_LEASES: cycle against it, keeping
+    # min(2, limit - 1) slots for fresh steps, else this rule never fires and research holds every slot.
+    from . import desk as desk_mod
+    limit = desk_mod.lease_limit()
+    slots = min(RESEARCH_SLOTS, max(1, limit - 2))
+    if roster_known and len(held) >= limit and len(research) > slots:
         old = sorted((r for r in research if not (chosen and focus.key(chosen) == focus.key(r))
                       and now - (r.get("lease_obtained_at") or now) >= RESEARCH_MIN_AGE),
                      key=lambda r: r.get("lease_obtained_at") or now)
@@ -149,6 +154,6 @@ def tick(d, mem, now, roster_known=True):
             if release(d, mem, r["gap_id"], "out_of_time",
                        "fast-lane slot cycling: research leases may hold at most %d of %d slots; this was the oldest "
                        "non-focus research lease (%d min) with no candidate." % (
-                           RESEARCH_SLOTS, config.MAX_LEASES, (now - r["lease_obtained_at"]) // 60)):
+                           slots, limit, (now - r["lease_obtained_at"]) // 60)):
                 out["released"].append(r["gap_id"])
     return out
