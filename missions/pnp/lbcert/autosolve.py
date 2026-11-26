@@ -267,7 +267,7 @@ def sibling_pass():
             rec = json.load(open(os.path.join(gaps_dir, gid, 'state.json')))
         except (OSError, ValueError):
             continue
-        if rec.get('state') not in ('LEASED', 'RESEARCHING') or rec.get('candidate_digest') or status(gid):
+        if rec.get('state') not in ('LEASED', 'RESEARCHING') or rec.get('work_lane') == 'posting' or rec.get('candidate_digest') or status(gid):
             continue
         prev = tried.get(gid)
         prev = prev if isinstance(prev, dict) else {}
@@ -406,7 +406,8 @@ def sweep_pass():
     Each step is tried once per upstream corpus commit."""
     import sibling
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
-    from missions.pnp import gitctl
+    from missions.pnp import gitctl, cli
+    posting_held={r['gap_id'] for r in cli.held_records() if r.get('work_lane')=='posting'}
     head, idx = sibling.index(gitctl.MIRROR, WORK)
     try:
         tried = json.load(open(SWEEP_STATE))
@@ -420,7 +421,7 @@ def sweep_pass():
     from missions.pnp.lbcert.generators.promise import batch
     batch_active=batch.alive()
     batch_fallback=batch.fallback_keys() if batch_active else set()
-    todo = [g for g in gaps if isinstance(g.get('statement'), str) and not g.get('pr_open')
+    todo = [g for g in gaps if g['id'] not in posting_held and isinstance(g.get('statement'), str) and not g.get('pr_open')
             and status(g['id']) is None and not lbparse.family(g['statement'])
             and tried.get(g['id']) != head and sibling.skeleton(g['statement']) in idx
             and not (batch_active and batch.claimed(g,batch_fallback))]
@@ -572,7 +573,9 @@ def main():
             # Within the family, fewest edges first: those are the instances the generator can
             # do (monotone size <= 11) and the ones competitors take within minutes.
             from missions.pnp import cli
-            held = {r['gap_id'] for r in cli.held_records()}
+            records=cli.held_records()
+            held = {r['gap_id'] for r in records}
+            posting_held={r['gap_id'] for r in records if r.get('work_lane')=='posting'}
             from missions.pnp import fastlane
             for gid in held:
                 try:fastlane.submit_ready(gid)
@@ -593,7 +596,7 @@ def main():
                             key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
-                if g.get('pr_open', 0) and g['id'] not in held:
+                if g['id'] in posting_held or (g.get('pr_open', 0) and g['id'] not in held):
                     continue
                 if len(outstanding) >= REMOTE_WORKERS:
                     break
@@ -612,7 +615,7 @@ def main():
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
                         if len(plugin_pending) >= PLUGIN_WORKERS:
                             break
-                        if g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
+                        if g['id'] in posting_held or g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
                             continue
                         if batch_active and batch.claimed(g,batch_fallback):
                             continue

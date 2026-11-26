@@ -104,7 +104,7 @@ def eligible(q,row,rec):
     if rec and (rec.get("pr_number") or rec.get("candidate_digest") or rec.get("queued_lease")):
         return False
     if support.active(rec):
-        return rec.get("statement")==q.get("statement")
+        return rec.get("work_lane")!="posting" and rec.get("statement")==q.get("statement")
     return not q.get("pr_open") and (row.get("held") or 0)<(row.get("parallel") or 1)
 
 
@@ -214,7 +214,7 @@ def main():
                     items=current(v)
                     attempts={tuple(r[k] for k in ("gap","statement","version")):r
                               for r in db.execute("SELECT * FROM attempt WHERE version=?",(v,))}
-                    stock=len(ready.offers({}, {},now))
+                    stock=len(ready.offers({}, {},now,uncontested=True))
                     state.atomic_write(str(heartbeat_path()),json.dumps({"at":now,"version":v,"stock":stock,"eligible":len(items)}))
                     next_refresh=time.monotonic()+45
                 except Exception as e:

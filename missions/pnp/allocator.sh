@@ -10,7 +10,17 @@ mkdir -p "$state"
 exec 9>"$state/allocator-loop.lock"
 flock -n 9 || exit 0
 mkdir -p "$state/lbcert" "$state/bulk"
+last_maintenance=0
 while [ -f missions/pnp/allocator.py ]; do
+    # Keep fresh allocation and generation separate from slow roster/network
+    # maintenance. Only this loop writes allocator memory and calls next.
+    python3 -m missions.pnp.allocator --posting || :
+    now=$(date +%s)
+    if [ "$((now - last_maintenance))" -lt 30 ]; then
+        sleep 5
+        continue
+    fi
+    last_maintenance=$now
     # Keep exactly one certificate pre-generator alive (it holds its own lock; see missions/pnp/lbcert).
     if [ ! -f "$state/lbcert/STOP" ] && flock -n "$state/lbcert/autosolve.lock" true; then
         nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 &
@@ -23,5 +33,5 @@ while [ -f missions/pnp/allocator.py ]; do
     # Each desk request has bounded I/O; never kill a claim between receipt
     # and durable recording just because a tick took longer than expected.
     python3 -m missions.pnp.allocator || :
-    sleep 30
+    sleep 5
 done

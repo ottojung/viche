@@ -111,7 +111,8 @@ def acquire(args, d, report=True):
         if not ready.verified(proof_of):
             return 2
     answer = d._next_gap(hard=args.hard, another=args.another,
-                         **({"proof_of":proof_of} if proof_of else {}))
+                         **({"proof_of":proof_of} if proof_of else {}),
+                         **({"level":args.level} if getattr(args,"level",None) else {}))
     if answer is None:
         print("no claimable gap right now; retry later", file=sys.stderr)
         return 1
@@ -124,6 +125,11 @@ def acquire(args, d, report=True):
         for k in ("level","kind"):
             if isinstance(raw_terms.get(k),str):terms[k]=raw_terms[k][:40]
         if type(raw_terms.get("race")) is bool:terms["race"]=raw_terms["race"]
+    level = getattr(args,"level",None)
+    lane = getattr(args,"work_lane",None)
+    if terms.get("level") in ("hard","open"):
+        lane = "research"
+    hard = bool(args.hard or level in ("hard","open") or terms.get("level") in ("hard","open"))
     if not isinstance(lease, str) or not lease:
         print("desk returned a malformed lease", file=sys.stderr)
         return 2
@@ -152,15 +158,16 @@ def acquire(args, d, report=True):
                 imports=gap.get("imports") or [],
                 gap_title=gap.get("title"),
                 context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
-                acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"), lease_terms=terms,
+                acquisition_hard=hard, acquisition_prs=gap.get("pr_open"), lease_terms=terms,
+                acquisition_level=level, work_lane=lane,
                 lease=lease, lease_obtained_at=time.time(),
                 lease_expires_at=time.time() +
                 config.LEASE_TTL_SECONDS)
-            state.event(gid, "acquired", {"hard": bool(args.hard),
+            state.event(gid, "acquired", {"hard": hard,
                                           "another": bool(args.another),
                                           "reacquired": True, "lease_terms":terms})
             from . import ledger
-            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True, lease_terms=terms)
+            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True, lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"))
             if report:
                 _printer({"gap": gid, "file": rec["path"],
                           "module": rec["module"], "lease": lease,
@@ -184,14 +191,15 @@ def acquire(args, d, report=True):
                        imports=gap.get("imports") or [],
                        gap_title=gap.get("title"),
                        context=gap.get("context"), dead=gap.get("dead"), desk_notes=desk_notes,
-                       acquisition_hard=bool(args.hard), acquisition_prs=gap.get("pr_open"), lease_terms=terms,
+                       acquisition_hard=hard, acquisition_prs=gap.get("pr_open"), lease_terms=terms,
+                       acquisition_level=level, work_lane=lane,
                        lease=lease, lease_obtained_at=time.time(),
                        lease_expires_at=time.time() +
                        config.LEASE_TTL_SECONDS)
-    state.event(gid, "acquired", {"hard": bool(args.hard),
+    state.event(gid, "acquired", {"hard": hard,
                                   "another": bool(args.another), "lease_terms":terms})
     from . import ledger
-    ledger.mark("leased", gid, proof_of=bool(proof_of), lease_terms=terms)
+    ledger.mark("leased", gid, proof_of=bool(proof_of), lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"))
     if report:
         _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
                   "lease": lease, "headline": config.HEADER})
