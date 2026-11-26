@@ -66,8 +66,15 @@ con=sqlite3.connect(sys.argv[1])
 con.execute("update session_v2 set tokens_input=185,time_updated=1795279800000 where id='sid'")
 con.commit()
 PY
+# The overrun monitor is a detached process that sleeps one interval before its
+# first check. On a loaded, niced host its python3/jq subprocess chain can be
+# scheduling-starved well beyond a fixed number of 1s polls (the same class of
+# flake fixed causally in tests/economy-cycle-smoke.sh). Use a wall-clock
+# deadline with generous slack; every terminal accounting assertion below is
+# unchanged.
+overrun_deadline=$(( $(date +%s) + 30 ))
 reached=no
-for attempt in 1 2 3 4 5 6 7 8; do
+while [ "$(date +%s)" -lt "$overrun_deadline" ]; do
   state=$(jq -r '.state' "$tmp/state/knowledge/budget/reservations/$r.json")
   if [ "$state" = closed ]; then reached=yes; break; fi
   sleep 1
@@ -103,8 +110,10 @@ r2=$(/bin/sh "$engine" reserve statistics test-agent-2)
 [ -n "$r2" ] || exit 1
 /bin/sh "$engine" mark-dispatched "$r2"
 /bin/sh "$engine" start "$r2" test-agent-2 >/dev/null
+# Same load-tolerant deadline for the failed-kill hold transition.
+hold_deadline=$(( $(date +%s) + 30 ))
 held=no
-for attempt in 1 2 3 4 5 6 7 8; do
+while [ "$(date +%s)" -lt "$hold_deadline" ]; do
   state=$(jq -r '.state' "$VICHE_STATE_ROOT/knowledge/budget/reservations/$r2.json")
   if [ "$state" = held ]; then held=yes; break; fi
   sleep 1
