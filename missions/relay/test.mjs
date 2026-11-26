@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted} from './relay.mjs';
+import {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted,fastProof,leanAdmitted} from './relay.mjs';
 const c={key:'a'.repeat(64),request:'b'.repeat(64),response:'c'.repeat(64)};
 const a=makeRequest('ping','confidential'),b=makeRequest('ping','another');
 const v={v:1,entries:[a]};
@@ -56,3 +56,20 @@ await assert.rejects(enqueue(c,{...a,payload:'different'}),/identity conflict/);
 await change(c,'request',v=>({...v,entries:v.entries.filter(x=>x.id!==a.id)}));
 assert.deepEqual((await get(c,'request')).value.entries,[b]);
 console.log('PASS: crypto, direction binding, tamper, schema, clock skew, concurrent CAS, deduplication, cleanup');
+
+const short={op:'lean-check',payload:{mode:'elaborate',wall_seconds:45,rss_mib:4096,source_b64:'YQ=='}};
+const long={op:'lean-check',payload:{...short.payload,wall_seconds:600}};
+const scratch={op:'lean-check',payload:{...short.payload,mode:'scratch'}};
+assert.equal(fastProof(short),true);
+assert.equal(fastProof(long),false);
+assert.equal(fastProof(scratch),false);
+assert.equal(fastProof({op:'lean-check',payload:{...short.payload,source_b64:'A'.repeat(10924)}}),false);
+const runningLong=[{op:'lean-check',rss:8192,fast:false,finished:false}];
+const runningShort=[{op:'lean-check',rss:4096,fast:true,finished:false}];
+assert.equal(leanAdmitted(short,runningLong),true);
+assert.equal(leanAdmitted(long,runningLong),false);
+assert.equal(leanAdmitted(short,runningShort),false);
+assert.equal(leanAdmitted(long,runningShort),true);
+assert.equal(leanAdmitted(short,[...runningLong,...runningShort]),false);
+assert.equal(leanAdmitted({...long,payload:{...long.payload,rss_mib:8192}},[{...runningShort[0],rss:12288}]),false);
+console.log('PASS: reserved short exact-check lane');

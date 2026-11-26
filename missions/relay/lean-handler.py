@@ -82,7 +82,9 @@ def main():
     signal.signal(signal.SIGINT, stop)
     from compile_admission import slot
     try:
-        with slot(req["rss_mib"], timeout=120, cancelled=lambda:cancelled):
+        fast = (req["mode"] == "elaborate" and req["wall_seconds"] <= 45
+                and req["rss_mib"] <= 4096 and len(req["source_b64"]) <= 10920)
+        with slot(req["rss_mib"], timeout=30 if fast else 120, cancelled=lambda:cancelled, fast=fast):
             out = runner.run(cache, req, source, lambda: cancelled)
     except TimeoutError:
         return protocol.make_result(req, "resource", 0, None, "shared compiler admission deferred")

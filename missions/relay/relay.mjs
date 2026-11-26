@@ -284,6 +284,21 @@ function lbAdmitted(req,active){
  const count=active.filter(a=>a.op==='lb-cert'&&!a.finished&&Boolean(a.check)===check).length;
  return count<(check?MAX_LB_CHECK:MAX_LB);
 }
+// Only small bounded complete proofs can occupy the dedicated short lane.
+function fastProof(req){
+ const p=req.payload;
+ return req.op==='lean-check'&&p?.mode==='elaborate'&&
+  Number.isSafeInteger(p.wall_seconds)&&p.wall_seconds>=1&&p.wall_seconds<=45&&
+  Number.isSafeInteger(p.rss_mib)&&p.rss_mib>=256&&p.rss_mib<=4096&&
+  typeof p.source_b64==='string'&&p.source_b64.length<=10920;
+}
+function leanAdmitted(req,active){
+ const running=active.filter(a=>a.op==='lean-check'&&!a.finished);
+ const wanted=req.payload.rss_mib;
+ return Number.isSafeInteger(wanted)&&wanted>=256&&wanted<=12288&&
+  running.length<MAX_LEAN&&running.reduce((n,a)=>n+a.rss,0)+wanted<=LEAN_BUDGET&&
+  !running.some(a=>Boolean(a.fast)===fastProof(req));
+}
 async function worker(c){
  const host=os.hostname();
  if(host!=='marceline-dev')throw Error('worker must run on marceline-dev');
@@ -300,8 +315,8 @@ async function worker(c){
     if(v.heartbeat&&now-v.heartbeat<10000&&entries.length===v.entries.length)return null;
     return {...v,heartbeat:now,entries,capabilities:capabilities()};
    });
-   const priority=req=>req.op==='ping'?0:req.op==='lean-check'&&req.payload.mode==='elaborate'?1:
-    req.op==='lb-cert'&&req.payload.check_file_gz_b64?2:req.op==='lb-cert'?3:req.op==='lean-check'?4:5;
+   const priority=req=>req.op==='ping'?0:fastProof(req)?1:req.op==='lean-check'&&req.payload.mode==='elaborate'?2:
+    req.op==='lb-cert'&&req.payload.check_file_gz_b64?3:req.op==='lb-cert'?4:req.op==='lean-check'?5:6;
    for(const req of [...rq].sort((a,b)=>priority(a)-priority(b)||a.created-b.created)){
     const old=response.entries.find(e=>e.id===req.id);
     if(terminal(old))continue;
@@ -314,11 +329,7 @@ async function worker(c){
      await putResponse(c,entry);
     }
     if(stopping)break;
-    if(req.op==='lean-check'){
-     const running=[...active.values()].filter(a=>a.op==='lean-check'&&!a.finished);
-     const wanted=req.payload.rss_mib;
-     if(running.length>=MAX_LEAN||running.reduce((n,a)=>n+a.rss,0)+wanted>LEAN_BUDGET)continue;
-    }
+    if(req.op==='lean-check'&&!leanAdmitted(req,[...active.values()]))continue;
     if(req.op==='lb-cert'&&!lbAdmitted(req,[...active.values()]))continue;
     if(req.op==='sibling'&&[...active.values()].filter(a=>a.op==='sibling'&&!a.finished).length>=4)continue;
     if(req.op==='ping'){
@@ -327,7 +338,7 @@ async function worker(c){
     }else{
      entry=event(entry,'running','isolated Lean handler dispatched');
      await putResponse(c,entry);
-     const job=req.op==='lb-cert'?launchLb(req):req.op==='sibling'?launchHandler(req,'sib-handler.py'):launchLean(req),a={...job,op:req.op,check:Boolean(req.payload.check_file_gz_b64),rss:req.payload.rss_mib||0,finished:false};
+     const job=req.op==='lb-cert'?launchLb(req):req.op==='sibling'?launchHandler(req,'sib-handler.py'):launchLean(req),a={...job,op:req.op,check:Boolean(req.payload.check_file_gz_b64),rss:req.payload.rss_mib||0,fast:fastProof(req),finished:false};
      active.set(req.id,a);
      job.promise.then(out=>{
       a.finished=true;
@@ -421,4 +432,4 @@ async function main(){
  throw Error('unknown command; use --help');
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().then(n=>{process.exitCode=n;}).catch(e=>{console.error(e.message);process.exitCode=1;});
-export {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted};
+export {seal,open,live,event,makeRequest,enqueue,get,change,payload,lbAdmitted,fastProof,leanAdmitted};

@@ -69,8 +69,9 @@ def start(rec, data):
             return False
         meta = {"id":rec["gap_id"], "file":rec["path"], "module":rec["module"],
                 "statement":rec["statement"], "imports":rec["imports"]}
+        fast = rec.get("work_lane") == "posting" and len(data) <= 8190
         job = protocol.make(meta, data, rec["base_sha"], config.LEAN_TOOLCHAIN,
-                            support.attempt(rec), wall=600, rss_mib=8192)
+                            support.attempt(rec), wall=45 if fast else 600, rss_mib=4096 if fast else 8192)
         if job["source_sha256"] != rec["candidate_digest"]:
             return False
         state.atomic_write(str(d/"job.json"), protocol.canonical(job).decode())

@@ -25,6 +25,24 @@ class TestReady(unittest.TestCase):
             self.assertEqual(ready.offers({"complete":True,"gaps":{gid:{}}},{},time.time()),[gid])
             p.write_bytes(b"changed")
             self.assertIsNone(ready.verified(gid))
+    def test_short_check_has_reserved_slot_and_shared_memory_bound(self):
+        with tempfile.TemporaryDirectory() as d, patch.object(compile_admission,"headroom",return_value=16384):
+            with compile_admission.slot(8192,timeout=0.1,directory=d):
+                with self.assertRaises(TimeoutError):
+                    with compile_admission.slot(8192,timeout=0.1,directory=d):
+                        self.fail("long work must not consume the fast slot")
+                with compile_admission.slot(4096,timeout=0.1,directory=d,fast=True):
+                    self.assertEqual((Path(d)/"slot1.lock").read_text(),"4096")
+                    with self.assertRaises(TimeoutError):
+                        with compile_admission.slot(4096,timeout=0.1,directory=d,fast=True):
+                            self.fail("two fast holders")
+            with patch.object(compile_admission,"headroom",return_value=6000):
+                with self.assertRaises(TimeoutError):
+                    with compile_admission.slot(4096,timeout=0.1,directory=d,fast=True):
+                        self.fail("insufficient shared memory")
+        with self.assertRaises(ValueError):
+            with compile_admission.slot(8192,fast=True):
+                self.fail("large request bypass")
     def test_memory_with_active_cache_and_tmpfs(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);M=1024*1024

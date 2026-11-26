@@ -38,13 +38,19 @@ def trylock(f):
 
 
 @contextlib.contextmanager
-def slot(rss_mib=8192, timeout=180, cancelled=lambda:False, directory=None):
+def slot(rss_mib=8192, timeout=180, cancelled=lambda:False, directory=None, fast=False):
     """Account for all relay compile lanes, including older slot holders.
+
+    Slot 1 is reserved for bounded fast exact checks; slot 0 handles normal
+    verification and research. Existing legacy holders are counted on all
+    slots, so deployment never increases the total admission limit.
 
     Conservative reservation: do not count on an existing job already having
     allocated its predicted memory. Cgroup headroom includes reclaimable
     clean file cache but is capped by host available memory.
     """
+    if fast and rss_mib > 4096:
+        raise ValueError("fast compiler reservation too large")
     if not 256 <= rss_mib <= 12288:
         raise ValueError("invalid compiler reservation")
     root = Path(directory or Path.home()/".local/state/sibling")
@@ -60,7 +66,7 @@ def slot(rss_mib=8192, timeout=180, cancelled=lambda:False, directory=None):
                     for i in range(LEGACY_SLOTS):
                         f = (root/("slot%d.lock"%i)).open("a+")
                         if trylock(f):
-                            free.append(f)
+                            free.append((i,f))
                         else:
                             f.seek(0)
                             try: amount=int(f.read().strip())
@@ -68,13 +74,16 @@ def slot(rss_mib=8192, timeout=180, cancelled=lambda:False, directory=None):
                             active.append(max(256,min(12288,amount)))
                             f.close()
                     available=headroom()
-                    if (free and len(active)<SLOTS and available is not None
+                    eligible = [(i,f) for i,f in free if i == (1 if fast else 0)]
+                    if (eligible and len(active)<SLOTS and available is not None
                             and available>=RESERVE+rss_mib+sum(active)):
-                        own=free.pop(0)
+                        chosen=eligible[0]
+                        free.remove(chosen)
+                        own=chosen[1]
                         own.seek(0);own.truncate()
                         own.write(str(rss_mib));own.flush()
                 finally:
-                    for f in free:f.close()
+                    for _,f in free:f.close()
         if own:
             break
         time.sleep(.5)

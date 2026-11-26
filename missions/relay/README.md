@@ -124,3 +124,14 @@ disable encryption to work around a failure.
 Cache aliases refresh independently every two minutes against public upstream.
 Only identical definition trees, Lean toolchain, package manifest and Lake configuration
 reuse a compiled seed; a changed dependency tree needs a new compiled seed.
+
+
+### Posting-time exact checks
+A bounded complete proof (45-second wall limit, at most 4096 MiB and at most
+8190 source bytes) can use the reserved short compiler lane. Normal research
+and long verification share the other lane. Both lanes remain subject to the
+same memory headroom and global two-compiler limit, including legacy holders.
+Posting-time publication starts the exact-base check in parallel; a delayed
+or unavailable check does not gate creation of the upstream PR. The existing
+official checker remains authoritative. This reservation deliberately trades
+some background throughput for predictable short-check admission.
