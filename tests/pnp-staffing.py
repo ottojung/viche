@@ -273,6 +273,27 @@ class Tests(unittest.TestCase):
             self.assertTrue(plan.obsolete({"cwd":path},slots))
             self.assertFalse(plan.obsolete({"cwd":ready_path},slots))
 
+    def test_obligation_dispatch_respects_ownership_and_critical_path(self):
+        from missions.pnp.research import knowledge as k, async_check
+        c=k.db(); self.addCleanup(c.close)
+        attempt=support.attempt(self.rec)
+        origin=self.rec["gap_id"]+" / "+attempt
+        def node(stmt):
+            return k.add(c,"obligation","test",stmt,k.canon({"imports":["Mathlib"]}),origin,base="a"*40)
+        first,second,third,demo=map(node,("1=1","2=2","3=3","4=4"))
+        root=k.add(c,"obligation","test","True",k.canon({"imports":["Mathlib"]}),origin,base="a"*40,deps=(first,second,third))
+        async_check.table(c)
+        with c:
+            c.execute("INSERT INTO assignment VALUES(?,?,?,?)",(first,attempt,"general",time.time()))
+            c.execute("INSERT INTO pending_check(id,node,state) VALUES(?,?,?)",("job",second,"queued"))
+        slots=plan.obligation_slots(self.rec,[],2)
+        self.assertEqual([s.label for s in slots],["ob-"+third])
+        backend.reserve_obligation(slots[0])
+        backend.reserve_obligation(slots[0])
+        with self.assertRaises(backend.Uncertain):
+            backend.reserve_obligation(plan.bound(self.rec,"ob-"+first,"task",2))
+        self.assertEqual(c.execute("SELECT worker FROM assignment WHERE node=? AND attempt=?",(first,attempt)).fetchone()[0],"general")
+
     def test_bad_policy_fails_closed(self):
         policy.root().mkdir(parents=True)
         (policy.root()/"policy.json").write_text('{"parallel":100000}')

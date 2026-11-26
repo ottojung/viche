@@ -350,7 +350,7 @@ def main():
     a.add_argument("--kind",action="append",choices=KINDS);a.add_argument("--limit",type=int,default=12);a.add_argument("--full",action="store_true")
     a=sub.add_parser("show");a.add_argument("id")
     a=sub.add_parser("link");a.add_argument("source");a.add_argument("target");a.add_argument("relation",choices=RELATIONS)
-    sub.add_parser("ingest");sub.add_parser("stats")
+    sub.add_parser("ingest");sub.add_parser("stats");sub.add_parser("reuse")
     args=p.parse_args()
     with closing(db()) as c:
         if args.cmd=="add":
@@ -362,6 +362,9 @@ def main():
         elif args.cmd=="show":out=get(c,args.id)
         elif args.cmd=="link":out=link(c,args.source,args.target,args.relation)
         elif args.cmd=="ingest":out=ingest(c)
+        elif args.cmd=="reuse":
+            from . import reuse
+            out=reuse.report(c)
         else:out={"objects":dict(c.execute("SELECT kind,count(*) FROM object GROUP BY kind")),
                   "families":dict(c.execute("SELECT family,count(*) FROM object GROUP BY family")),
                   "dependencies":c.execute("SELECT count(*) FROM edge").fetchone()[0],

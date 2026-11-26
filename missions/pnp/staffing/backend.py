@@ -121,6 +121,23 @@ def resource_ready():
     return p.returncode==0
 
 
+def reserve_obligation(slot):
+    """Atomically reserve before dispatch; never replace another worker's claim."""
+    if not slot.gap or not slot.label.startswith("ob-"):
+        return
+    from contextlib import closing
+    from ..research import knowledge
+    import time
+    oid=slot.label[3:]
+    with closing(knowledge.db()) as c,c:
+        c.execute("INSERT OR IGNORE INTO assignment VALUES(?,?,?,?)",
+                  (oid,slot.attempt,slot.label,time.time()))
+        owner=c.execute("SELECT worker FROM assignment WHERE node=? AND attempt=?",
+                        (oid,slot.attempt)).fetchone()[0]
+        if owner!=slot.label:
+            raise Uncertain("obligation belongs to "+owner)
+
+
 def run(slot,aid):
     role=playbook.role_for(slot.label,slot.label=="general") if slot.gap else slot.label
     if slot.gap:
@@ -137,22 +154,12 @@ def run(slot,aid):
         f.write(text);f.flush()
         if not plan.current(slot):
             raise Uncertain("assignment changed before run")
+        reserve_obligation(slot)
         row=object_row(wire("run","--id",aid,"--cwd",slot.path,"--prompt-file",f.name,
                            "--detach","--json",timeout=30))
     if row.get("id")!=aid or row.get("state")!="running":
         raise Uncertain("launch acknowledgement not confirmed")
     adoption.confirmed(did)
-    if slot.gap and slot.label.startswith("ob-"):
-        # Advisory assignment record; dispatch already happened.
-        try:
-            from contextlib import closing
-            from ..research import knowledge
-            import time
-            with closing(knowledge.db()) as c,c:
-                c.execute("INSERT OR REPLACE INTO assignment VALUES(?,?,?,?)",
-                          (slot.label[3:],slot.attempt,slot.label,time.time()))
-        except Exception:
-            pass
 
 
 def stop(aid):

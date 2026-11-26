@@ -11,7 +11,7 @@ P = "PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp."
 CLI = "pnp-research"
 ROLES = {
     "general": ("Own the exact leased theorem; explore promising routes, reuse knowledge and share concrete results.",
-        "Use the existing checked corpus before inventing a proof. For compatible graph constructions run pnp-research certificate --check --output Candidate.lean from the bound workspace. Collect the proof check and submit the exact checked candidate through the normal pipeline. Preserve your results when focus changes."),
+        "Use the existing checked corpus before inventing a proof. For compatible graph constructions run pnp-research certificate --output Candidate.lean from the bound workspace. If complete and reasonably confident, submit immediately through the normal pipeline; verification runs concurrently. Preserve your results when focus changes."),
     "integrator": ("Own the proof dependency graph and eventual exact submission, not another independent full-theorem search.",
         "Request exact missing types, assign through Executive, reuse checked bodies. When the root is complete, assemble --candidate and submit immediately."),
     "specialist": ("Solve the assigned distinct approach or exact obligation, not every part of the theorem.",
@@ -27,7 +27,7 @@ ROLES = {
     "flow": ("Eliminate measurable bottlenecks in actual proof production.",
         "Use adoption evidence, queue latency and outcomes; propose concrete corrections rather than reports or extra gates."),
     "portfolio": ("Choose the best focus using actual remaining mathematical work and expected yield.",
-        "Compare worker evidence, checked/ready/blocked obligations, compatible techniques and current competition. Use the existing portfolio switch if justified."),
+        "Compare actual generator readiness and runtime, exact checked/ready/blocked obligations, compatible techniques, and fresh competing PR counts. A ready candidate goes to the publisher; prefer focus on a small number of unresolved, complementary obligations. Use the existing portfolio switch if justified."),
     "lease-evaluation": ("Evaluate whether to continue or release a live lease.",
         "Use concrete remaining dependencies and competing opportunities, not age, temporary compile contention or raw family scores. Preserve reusable knowledge."),
     "transport": ("Keep remote compilation fast, reliable and cache-compatible.",
@@ -64,7 +64,7 @@ def guide(role):
              "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs  (exit 0 written, 5 no compiling sibling). "
              "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method.",
              "ONE-NOT STEPS (\"At fan-in two, one NOT gate saves nothing on edges ...\"): generated automatically the moment "
-             "they are posted (marceline-dev onenot.py, same lbremote.py command as above) and published by the bulk lane; "
+             "they are posted (marceline-dev onenot.py, same lbremote.py command as above); the allocator can target already checked proofs with the documented proof-of acquisition; "
              "an instance the generator refuses (status `unsupported`: monotone size >= 12) needs the gate-elimination "
              "method of the merged L-meta-14412 file. See missions/pnp/lbcert/README.md."]
     if role in BOUND:
@@ -84,7 +84,7 @@ def guide(role):
     elif role in {"knowledge","methods"}:
         lines += ["Use pnp-research knowledge find QUERY and knowledge show ID; knowledge add KIND --family FAMILY --statement TEXT --provenance SOURCE --file FILE. Link evidence with knowledge link SOURCE TARGET RELATION; --help lists valid relation names. Deliver actionable evidence via support advise."]
     elif role in {"flow","transport"}:
-        lines += ["Use pnp-research adoption; marceline-request status; inspect actual outcomes and timings, not merely reports."]
+        lines += ["Use pnp-research knowledge reuse; pnp-research adoption; marceline-request status; inspect actual outcomes and timings, not merely reports."]
     lines += ["Detailed examples on demand: pnp-research guide " + role + ". No separate onboarding gate."]
     return "\n".join(lines)
 
@@ -164,8 +164,8 @@ proof graph; only kernel receipts justify checked status.
         return text+"""
   pnp-research yield
   PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.portfolio inspect
-Compare family-level empirical baseline with the actual proof graph and current
-competition. A submitted PR is not a credited step. An unresolved obligation
+Compare family-level empirical baseline with actual generator readiness, unresolved
+obligations, and current competition. A submitted PR is not a credited step. An unresolved obligation
 is not proof that the whole theorem is false. Use only the existing allocator
 decision mechanism; record your concrete rationale.
 """
@@ -186,7 +186,7 @@ def packet(role, cwd=None):
     base=pinned_base(cwd)
     latest=base
     if not rec and role in METHOD:base=compatible_public_base(latest)
-    out={"role":role,"base":base,"instructions":guide(role)}
+    out={"role":role,"base":base,"instructions":"YOUR ROLE: "+role+". "+ROLES[role][0]+"\nCurrent task context:\n"+ROLES[role][1]+"\nFull instructions: pnp-research guide "+role}
     if latest!=base:out["latest_public_base"]=latest
     if role in BOUND:
         if not rec or not focus.eligible(rec):

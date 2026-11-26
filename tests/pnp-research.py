@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import tempfile
 import unittest
+from unittest import mock
 from unittest.mock import patch
 import itertools
 import json
@@ -227,6 +228,36 @@ class Research(unittest.TestCase):
         bad={**result,"base":"b"*40}
         self.assertEqual(async_check.proof_result(self.c,row,bad)["status"],"not_verified")
         self.assertEqual(o.checked_body(self.c,oid,self.base),"by trivial")
+    def test_expired_relay_request_not_marked_mathematically_false(self):
+        oid=self.obligation("True")
+        body=k.store_bytes(b"by trivial")
+        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,o.build(self.c,oid,"by trivial"))
+        async_check.table(self.c)
+        with self.c:self.c.execute("INSERT INTO pending_check VALUES(?,?,?,?,?,?,?,?,'queued',NULL)",
+              (job["job"],oid,self.base,body,job["source_sha256"],"{}", "a"*36,0))
+        with mock.patch.object(async_check.subprocess,"check_output",return_value=b'{"age_seconds":0,"entries":[]}'):
+            with mock.patch.object(async_check.Path,"home",return_value=Path(config.STATE_ROOT)):
+                r=async_check.reconcile(self.c)
+        self.assertEqual(r["expired"],[job["job"]])
+        self.assertEqual(async_check.snapshot(self.c,job["job"])["state"],"transport_failed")
+        self.assertEqual(self.c.execute("SELECT count(*) FROM proof WHERE node=?",(oid,)).fetchone()[0],0)
+
+    def test_reuse_receipt_matches_published_candidate(self):
+        from missions.pnp.research import reuse
+        a=self.obligation("True");self.fixture_receipt(a,"by trivial")
+        b=self.obligation("True ∧ True",[a]);self.fixture_receipt(b,"by trivial")
+        rec=state.create("L-meta-42",state="PR_OPEN",lease="fixture",statement="True ∧ True",
+                         candidate_digest="a"*64,pr_number=42)
+        reuse.record(self.c,rec,b,self.base,"a"*64)
+        r=reuse.report(self.c)
+        self.assertEqual(r["checked_dependency_edges"],1)
+        self.assertEqual(r["distinct_consumed_dependencies"],1)
+        self.assertEqual(r["assemblies_using_prior_origins"],1)
+        self.assertEqual(r["exact_digest_published"],1)
+        self.assertEqual(r["exact_digest_checker_accepted"],0)
+        state.update("L-meta-42",candidate_digest="b"*64)
+        self.assertEqual(reuse.report(self.c)["exact_digest_published"],0)
+
     def test_large_certificate(self):
         edges=[(p,13+l) for p in range(13) for l in range(13) if (p-l)%13 in (0,1,3,9)]
         meta=certificate.graph_meta({"n":26,"edges":edges,"bound":64})
