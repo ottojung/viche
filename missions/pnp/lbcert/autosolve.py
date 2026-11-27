@@ -77,6 +77,7 @@ PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound 
 PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
 MAXSTATES = 4800       # keep local candidate generation below the 512 KiB certificate bound
+RECOVERY_TIMEOUT = 60  # maximum wall time for a held-only recovery generator
 GEN_TIMEOUT = 300      # bounded local CPU work; generation never invokes Lean
 os.makedirs(CANDS, exist_ok=True)
 
@@ -161,7 +162,8 @@ def retryable(gid):
         return False
 
 
-def generate(g, engines):
+def generate(g, engines, timeout=None):
+    timeout = GEN_TIMEOUT if timeout is None else timeout
     gid, mod = g['id'], g['module']
     if not retryable(gid):
         return
@@ -185,13 +187,13 @@ def generate(g, engines):
         # claim compilation; exact checking is a separate managed-workspace lane.
         p = managed_process.run([sys.executable, 'lbassemble.py', engines[0], mod, sf, out + '.tmp',
                             '--maxstates', str(MAXSTATES), '--chunks', '40'],
-                           cwd=HERE, capture_output=True, text=True, timeout=GEN_TIMEOUT)
+                           cwd=HERE, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         # A hung local generator must not monopolize the bounded worker.
-        write_status(gid, 'deferred generation timeout %ss' % GEN_TIMEOUT)
+        write_status(gid, 'deferred generation timeout %ss' % timeout)
         from missions.pnp import ledger
-        ledger.mark('generated', gid, status='timeout', secs=GEN_TIMEOUT, where='billy-dev')
-        log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % GEN_TIMEOUT)
+        ledger.mark('generated', gid, status='timeout', secs=timeout, where='billy-dev')
+        log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % timeout)
         return
     where = 'billy-dev'
     if pause.paused_directory(WORK):
@@ -225,7 +227,7 @@ def sibling_pass():
         'adaptation disabled until exact bound managed check')
 
 
-def gen_plugin(g, name, sha):
+def gen_plugin(g, name, sha, timeout=None):
     """A town-written local plugin: generate and validate, then check only in bound workspaces."""
     import plugins
     from missions.pnp import state, support, validate, fastlane, ledger
@@ -237,10 +239,13 @@ def gen_plugin(g, name, sha):
     open(sf+'.sketch','w').write(sketch if isinstance(sketch,str) else '')
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
-    rc, why = plugins.run(name, gid, sf, out + '.gen')
+    rc, why = plugins.run(name, gid, sf, out + '.gen', **({'timeout':timeout} if timeout is not None else {}))
     if pause.paused_directory(WORK):
         return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
+    if rc == 124 and timeout is not None:
+        write_status(gid, 'deferred plugin %s %s bounded recovery timeout' % (name, sha))
+        return
     if rc != 0:
         write_status(gid, '%s plugin %s %s rc=%s %s' % ('unsupported' if rc == 3 else 'failed', name, sha, rc,
                                                      why.strip().replace('\n', ' ')[-160:]))
@@ -324,6 +329,8 @@ def fresh(gid, plugin_sha=None):
     st = status(gid)
     if st is None:
         return True
+    if st.startswith('deferred plugin '):
+        return retryable(gid)
     m = re.match(r'(unsupported|failed) plugin \S+ (\w+)', st)
     return bool(m and plugin_sha and m.group(2) != plugin_sha)
 
@@ -335,6 +342,28 @@ SWEEP_MAX_TRIES = 4
 def sweep_pass():
     """Retain the local corpus index; sibling adaptation is deliberately not auto-checked."""
     sibling_pass()
+
+
+def generation_mode(now=None):
+    """A stalled batch can research held work, never speculate on unheld gaps."""
+    now = time.time() if now is None else now
+    record = surge.load()
+    if not surge.active(now, record):
+        return "normal"
+    return "held-only" if surge.recovery(now, record) else "posting-only"
+
+
+def exact_held_research(concrete, records, now=None):
+    from missions.pnp import support
+    now = time.time() if now is None else now
+    bound = {r["gap_id"]: r for r in records if support.active(r, now)
+             and r.get("work_lane") == "research"
+             and not any(r.get(k) for k in ("queued_lease", "candidate_digest", "intent", "pr_number"))}
+    return [g for g in concrete if (r := bound.get(g["id"])) is not None
+            and g["statement"] == r.get("statement")
+            and g.get("module") == r.get("module")
+            and g.get("file") == r.get("path")
+            and g.get("imports") == r.get("imports")]
 
 
 def sibling_loop():
@@ -352,7 +381,8 @@ def sibling_loop():
 def sweep_loop():
     last_radar = 0
     while not pause.paused_directory(WORK):
-        if surge.active():
+        mode = generation_mode()
+        if mode == "posting-only":
             time.sleep(30)
             continue
         try:
@@ -360,7 +390,8 @@ def sweep_loop():
                 last_radar = time.time()
                 from missions.pnp import radar   # family radar + tool/method backlogs
                 radar.write(radar.build())
-            sweep_pass()
+            if mode == "normal":
+                sweep_pass()
         except Exception as e:
             log('sweep error', type(e).__name__, str(e)[:200])
         time.sleep(120)
@@ -469,10 +500,16 @@ def main():
             # The held posting lane owns batch-time CPU. Continue catalog and
             # cached-candidate publication, but start no new speculative
             # certificate builds or per-instance background searches.
-            if surge.active():
+            mode = generation_mode()
+            if mode == "posting-only":
                 time.sleep(POLL)
                 continue
-            if len(prepared)<PREPARE_WORKERS:
+            if mode == "held-only":
+                # In recovery only, offer a longer generator attempt for an
+                # exact currently held research assignment. No unheld check.
+                concrete = exact_held_research(concrete, records)
+                gaps = concrete
+            if mode == "normal" and len(prepared)<PREPARE_WORKERS:
                 choices=[g for g in concrete if g['id'] not in held and g['id'] not in queued
                          and g['id'] not in prepare_retry and not g.get('pr_open',0)
                          and (status(g['id']) or '').split(' ')[0] in ('ok','generated')
@@ -489,11 +526,11 @@ def main():
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
                 if g['id'] in posting_held or (g.get('pr_open', 0) and g['id'] not in held):
                     continue
-                if len(outstanding) >= LOCAL_GENERATORS:
+                if len(outstanding) >= LOCAL_GENERATORS or (mode == "held-only" and plugin_pending):
                     break
                 if g['id'] not in queued and retryable(g['id']):
                     queued.add(g['id'])
-                    outstanding[g['id']] = pool.submit(generate, g, engines)
+                    outstanding[g['id']] = pool.submit(generate, g, engines, RECOVERY_TIMEOUT) if mode == "held-only" else pool.submit(generate, g, engines)
             # Constructive plugins use an independent bounded pool; expensive
             # lower-bound searches cannot consume their capacity.
             try:
@@ -504,7 +541,7 @@ def main():
                     batch_active=batch.alive()
                     batch_fallback=batch.fallback_keys() if batch_active else set()
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
-                        if len(plugin_pending) >= PLUGIN_WORKERS:
+                        if len(plugin_pending) >= PLUGIN_WORKERS or (mode == "held-only" and (outstanding or plugin_pending)):
                             break
                         if g['id'] in posting_held or g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
                             continue
@@ -513,7 +550,7 @@ def main():
                         hit = plugins.family_of(g['statement'], found)
                         if hit and fresh(g['id'], hit[1]):
                             queued.add(g['id'])
-                            plugin_pending[g['id']] = plugin_pool.submit(gen_plugin, g, hit[0], hit[1])
+                            plugin_pending[g['id']] = plugin_pool.submit(gen_plugin, g, hit[0], hit[1], RECOVERY_TIMEOUT) if mode == "held-only" else plugin_pool.submit(gen_plugin, g, hit[0], hit[1])
             except Exception as e:
                 log('plugin poll error', type(e).__name__, str(e)[:200])
         except Exception as e:
