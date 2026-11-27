@@ -18,7 +18,7 @@ import sys
 import time
 import urllib.request
 
-from . import config, frontier, gitctl
+from . import config, frontier, gitctl, ledger
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lbcert'))
 import lbparse  # noqa: E402
 import plugins  # noqa: E402
@@ -73,6 +73,26 @@ def status(gid):
         return None
 
 
+def posting_evidence(events):
+    """Count actual attempts and retain the latest observed outcome per unit.
+
+    Candidate generation is not proof acceptance. Unknown means the bounded
+    posting attempt found no candidate, not that a unit is mathematically false.
+    """
+    latest = {}
+    counts = collections.defaultdict(collections.Counter)
+    for e in events:
+        if e.get("stage") != "posting_generated":
+            continue
+        gid, outcome, at = e.get("gid"), e.get("result"), e.get("t")
+        if not isinstance(gid, str) or outcome not in ("generated", "unsupported", "unknown") or not isinstance(at, (float, int)):
+            continue
+        counts[gid][outcome] += 1
+        if gid not in latest or at >= latest[gid][0]:
+            latest[gid] = (at, outcome)
+    return counts, {g: e[1] for g, e in latest.items()}
+
+
 def build():
     from .lbcert import live
     rows = json.loads(live.gaps_bytes(timeout=60))['gaps']
@@ -93,6 +113,7 @@ def build():
     lg=snap['gaps']
     levels=frontier.cached_offer_levels(snap,now)
     offers_known=levels is not None and levels==frontier.offer_levels(snap,rows)
+    attempts, latest = posting_evidence(ledger.read(HOURS))
     fams = {}
     for g in gaps:
         if lg is not None and g['id'] not in lg:
@@ -103,7 +124,7 @@ def build():
         f = fams.setdefault(key, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
                                  'statuses': collections.Counter(), 'coverage': None,
-                                 'points': 0, 'free_points': 0, 'offerable':0, 'uncovered_offerable':0, 'uncovered_points':0, 'refused_offerable':0, 'refused_points':0, '_skeletons':set(), '_coverage':collections.Counter()})
+                                 'points': 0, 'free_points': 0, 'offerable':0, 'uncovered_offerable':0, 'uncovered_points':0, 'refused_offerable':0, 'refused_points':0, 'posting_attempts':collections.Counter(), '_skeletons':set(), '_coverage':collections.Counter()})
         f['_skeletons'].add(sk)
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
@@ -121,7 +142,11 @@ def build():
         hit = None if fam else plugins.family_of(g['statement'], found)
         coverage = fam or (hit and 'plugin:' + hit[0]) or ''
         f['_coverage'][coverage]+=1
-        refused = st in ('unsupported', 'failed', 'toobig')
+        f['posting_attempts'].update(attempts.get(g['id'], {}))
+        # Prefer recent direct posting evidence over an older candidate status.
+        result = latest.get(g['id'])
+        refused = (result in ('unsupported', 'unknown') if result is not None
+                   else st in ('unsupported', 'failed', 'toobig'))
         weight = pts * (0.3 if s.get("level")=="open" else 1)
         if offered and not coverage:
             f["uncovered_offerable"] += 1
@@ -159,6 +184,7 @@ def build():
             f['score'] = 0      # twins of statements expected true: "none is expected" (desk sketch)
         f['authors'] = dict(f['authors'].most_common(5))
         f['statuses'] = dict(f['statuses'])
+        f['posting_attempts'] = dict(f['posting_attempts'])
     ranked = sorted(fams.values(), key=lambda f: -f['score'])
     return {'at': time.time(), 'corpus': head, 'offers_known':offers_known,'families': ranked}
 
@@ -199,6 +225,15 @@ def backlog_priorities(r):
         todo, hard = [], []
     historical = sorted(historical, key=lambda f: -f["merged_6h"])[:3]
     return todo, hard, historical
+
+
+def yield_leads(r):
+    # Evidence on open catalog rows even when the offerability snapshots disagree.
+    def failures(f):
+        p = f.get('posting_attempts', {})
+        return p.get('unsupported', 0) + p.get('unknown', 0)
+    return sorted((f for f in r['families'] if failures(f)),
+                  key=lambda f: (-failures(f), -f.get('merged_6h', 0)))[:5]
 
 
 def write(r):
@@ -249,6 +284,12 @@ def write(r):
             f['refused_offerable'], f['refused_points'], f['statuses'], ', '.join(f['newest_merged']) or '-'), '']
     if not hard:
         m += ['No verified offerable generator refusals; use the historical leads or exact held work.', '']
+    m += ['', '## Recent direct posting evidence (not credits or guaranteed current offers)', '']
+    for f in yield_leads(r):
+        a = f['posting_attempts']
+        m += ['- %s: %d generated candidates, %d unsupported, %d bounded unknown attempts in %dh; %d upstream merges in the matched family.' % (
+            f['label'], a.get('generated', 0), a.get('unsupported', 0), a.get('unknown', 0), HOURS, f['merged_6h'])]
+    m += ['','Use these counts to diagnose a failing method, not to infer truth or claim a lease.','']
     m += ['One-NOT family: monotone size >= 12 needs the gate-elimination proof of the merged L-meta-14412',
           '(library from L-meta-9266); the live-set template of L-meta-14150 takes > 1 h of kernel time there.']
     _put(os.path.join(SWARM, 'method', 'BACKLOG.md'), '\n'.join(m) + '\n')
