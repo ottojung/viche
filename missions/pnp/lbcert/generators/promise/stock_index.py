@@ -4,6 +4,7 @@ Read fixed-size slices, validate domain/arity/topology/budget, then replay
 with the independent generator evaluator. No index is built during claims.
 """
 import os
+import re
 import stat
 import struct
 from pathlib import Path
@@ -26,17 +27,56 @@ def path_for(problem):
     return root() / f"{kind}-{n}-{m}-{pred}.idx"
 
 
+def file_version(path):
+    """Cheap metadata identity; only regular, non-symlink files count."""
+    try:
+        st = path.lstat()
+    except OSError:
+        return None
+    if not stat.S_ISREG(st.st_mode):
+        return None
+    return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+def index_versions():
+    """Snapshot each supported index once per plugin discovery pass."""
+    result = {}
+    try:
+        entries = list(root().iterdir())
+    except OSError:
+        return result
+    for p in entries:
+        match = re.fullmatch(r"(two|matrix)-([1-9]|10)-([1-9]|10)-(FanInTwo|Monotone2)\.idx", p.name)
+        if not match:
+            continue
+        kind, a, b, pred = match.groups()
+        n, m = int(a), int(b)
+        if kind == "two":
+            if n != m or n * (n + 1) // 2 > 22:
+                continue
+        elif n + m > 10 or n * m > 22:
+            continue
+        version = file_version(p)
+        if version is not None:
+            result[p.name] = repr(version).encode()
+    return result
+
+
+def version_for(problem, versions):
+    """Only the relevant domain invalidates a failed plugin attempt."""
+    path = path_for(problem) if problem else None
+    return versions.get(path.name, b"missing") if path else b"unsupported"
+
+
 def batch_version():
-    """A replaced index invalidates old negative generation attempts."""
+    """Only two-lit stock affects the two-lit batch's generation version."""
     result = []
     for n in (5, 6):
         for pred in ("FanInTwo", "Monotone2"):
             p = path_for(("two", n, n, 0, 0, pred))
-            try:
-                st = p.stat()
-                result.append((n, pred, st.st_ino, st.st_size, st.st_mtime_ns))
-            except OSError:
-                continue
+            version = file_version(p)
+            if version is not None:
+                result.append((n, pred, version))
     return repr(result).encode()
 
 
