@@ -12,10 +12,13 @@ from missions.pnp import batch_scorecard, config, leaderboard, pause, readiness,
 
 class Batch(unittest.TestCase):
     def test_offers_trigger_and_quiet_hysteresis(self):
-        # Surge throttles only on an actual burst of new witness-hint arrivals;
-        # a large claimable frontier alone must never suppress staffing.
-        gaps = {"L-meta-0": {"title": "two-lit row"}}
-        seen = {"L-meta-0": 1000}
+        # Surge throttles only on a genuine burst of new witness-hint arrivals;
+        # a large claimable frontier alone must never suppress staffing. A
+        # sporadic trickle below BURST_MIN_GAPS is ordinary frontier churn and
+        # must not enter or sustain surge.
+        n = surge.BURST_MIN_GAPS
+        gaps = {f"L-meta-{i}": {"title": "two-lit row"} for i in range(n)}
+        seen = {g: 1000 for g in gaps}
         busy = surge.decide({}, {"observed":1000,"ordinary":100,"gaps":gaps}, seen, 1000)
         self.assertTrue(busy["active"])
         quiet = surge.decide(busy, {"observed":2199,"ordinary":0}, {}, 2199)
@@ -27,17 +30,21 @@ class Batch(unittest.TestCase):
         # not by itself keep surge permanently active and block staffing.
         self.assertFalse(surge.decide({}, {"observed":1000,"ordinary":1000}, {}, 1000)["active"])
 
-    def test_fifty_fresh_witnesses(self):
-        gaps = {f"L-meta-{i}":{"title":"two-lit row"} for i in range(50)}
+    def test_burst_threshold_fresh_witnesses(self):
+        # BURST_MIN_GAPS separates a real witness-hint burst from steady churn.
+        n = surge.BURST_MIN_GAPS
+        gaps = {f"L-meta-{i}":{"title":"two-lit row"} for i in range(n)}
         seen = {g:999 for g in gaps}
         doc = {"observed":1000,"ordinary":0,"gaps":gaps}
         self.assertTrue(surge.decide({},doc,seen,1000)["active"])
-        self.assertFalse(surge.decide({},doc,dict(list(seen.items())[:49]),1000)["active"])
+        # One arrival below the threshold is a trickle, not a posting burst.
+        self.assertFalse(surge.decide({},doc,dict(list(seen.items())[:n-1]),1000)["active"])
         self.assertFalse(surge.decide({},doc,seen,1061).get("active",False))
 
     def test_stale_observation_neither_refreshes_nor_holds_forever(self):
-        gaps = {"L-meta-0": {"title": "two-lit row"}}
-        seen = {"L-meta-0": 1000}
+        n = surge.BURST_MIN_GAPS
+        gaps = {f"L-meta-{i}": {"title": "two-lit row"} for i in range(n)}
+        seen = {g: 1000 for g in gaps}
         old = surge.decide({}, {"observed":1000,"ordinary":100,"gaps":gaps}, seen, 1000)
         self.assertEqual(surge.decide(old,{"observed":1000,"ordinary":0},{},1200),old)
         self.assertTrue(surge.active(2199,old))
