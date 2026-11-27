@@ -18,6 +18,7 @@ python3 tests/pnp-rectcover.py
 python3 tests/pnp-edgecover.py
 python3 tests/pnp-promise.py
 python3 tests/pnp-promise-batch.py
+python3 tests/pnp-stock-index.py
 python3 tests/pnp-posting.py
 python3 tests/pnp-private-prelease.py
 python3 tests/pnp-private-promotion.py

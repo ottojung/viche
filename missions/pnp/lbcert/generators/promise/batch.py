@@ -17,7 +17,7 @@ import sqlite3
 import tempfile
 import time
 
-from . import gen, dag, anneal
+from . import gen, dag, anneal, stock_index
 from ... import live, ready
 from .... import config, state, support, validate, ledger, jobs, freshness
 
@@ -40,7 +40,7 @@ def root():
 
 
 def version():
-    return hashlib.sha256(Path(__file__).read_bytes()+Path(gen.__file__).read_bytes()+Path(dag.__file__).read_bytes()+Path(anneal.__file__).read_bytes()+Path(anneal.__file__).with_suffix(".c").read_bytes()).hexdigest()[:20]
+    return hashlib.sha256(Path(__file__).read_bytes()+Path(gen.__file__).read_bytes()+Path(dag.__file__).read_bytes()+Path(anneal.__file__).read_bytes()+Path(anneal.__file__).with_suffix(".c").read_bytes()+Path(stock_index.__file__).read_bytes()+stock_index.batch_version()).hexdigest()[:20]
 
 
 def heartbeat_path():
@@ -120,7 +120,7 @@ def candidate(q,p):
     start=time.monotonic()
     n,rows,target=gen.domain(p)
     allow=p[-1]=="FanInTwo";full=(1<<len(rows))-1
-    sol=gen.sketch_witness(p,q.get("sketch"),.03)
+    sol=stock_index.lookup(p,gen) or gen.sketch_witness(p,q.get("sketch"),.03)
     if not sol:
         depth=7 if n==5 else 6
         table,cost,levels=gen.formula_library(n,tuple(rows),allow,depth)
