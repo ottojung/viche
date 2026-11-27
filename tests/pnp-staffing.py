@@ -332,6 +332,19 @@ class Tests(unittest.TestCase):
         self.assertEqual({s["label"] for s in out["slots"]},{"general","tool"})
         self.assertLessEqual(len(self.fake.runs),2)
 
+    def test_stalled_surge_keeps_general_on_every_live_lease(self):
+        state.create("L-meta-2",state="LEASED",lease="fixture2",statement="True",
+                     lease_expires_at=time.time()+3600)
+        with patch.object(controller.surge,"active",return_value=True), \
+             patch.object(controller.surge,"recovery",return_value=True), \
+             patch.object(staff,"roster",return_value=self.fake.history()):
+            out=controller.tick()
+        self.assertTrue(out["surge_recovery"])
+        gaps={s["gap"] for s in out["slots"] if s["label"]=="general"}
+        self.assertEqual(gaps,{"L-meta-1","L-meta-2"})
+        self.assertEqual({s["label"] for s in out["slots"]},{"general","tool"})
+        self.assertLessEqual(len(self.fake.runs),3)
+
     def test_stalled_surge_preserves_existing_extra_research(self):
         path=assignment.prepare(self.rec["gap_id"],checkout=False,worker="extra-1")["cwd"]
         self.fake.agents["existing-extra"]={"id":"existing-extra","cwd":path,
