@@ -15,7 +15,8 @@ The allocator fast lane (missions/pnp/fastlane.py) consumes these files: it subm
 candidates for held steps and settles held false twins. This process never touches leases.
 
 run: python3 -m missions.pnp.lbcert.autosolve   (allocator.sh keeps exactly one running)
-stop: touch PNP_STATE_ROOT/lbcert/STOP
+maintenance: python3 -m missions.pnp.pause maintenance --author AUTHOR --reason REASON
+emergency: touch PNP_STATE_ROOT/lbcert/STOP
 """
 import fcntl, hashlib, json, os, re, subprocess, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -25,6 +26,7 @@ sys.path.insert(0, HERE)
 import lbparse  # noqa: E402
 import process as managed_process
 import threading
+from missions.pnp import pause
 LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 
 # A running Python process does not reload a module whose source changes on
@@ -172,7 +174,7 @@ def generate(g, engines):
         log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % GEN_TIMEOUT)
         return
     where = 'billy-dev'
-    if os.path.exists(os.path.join(WORK, 'STOP')):
+    if pause.paused(STATE):
         return
     r = {'status': {0: 'ok', 2: 'unsupported', 3: 'false', 4: 'toobig'}.get(p.returncode, 'error'),
          'engine': os.path.basename(engines[0]) if engines else None}
@@ -216,7 +218,7 @@ def gen_plugin(g, name, sha):
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
     rc, why = plugins.run(name, gid, sf, out + '.gen')
-    if os.path.exists(os.path.join(WORK, 'STOP')):
+    if pause.paused(STATE):
         return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
     if rc != 0:
@@ -257,7 +259,7 @@ def gen_plugin(g, name, sha):
 
 
 def check_prepared(g):
-    if os.path.exists(os.path.join(WORK, 'STOP')):
+    if pause.paused(STATE):
         return
     from missions.pnp.lbcert import checklocal
     from missions.pnp import state, support, validate, fastlane
@@ -316,7 +318,7 @@ def sweep_pass():
 
 
 def sibling_loop():
-    while not os.path.exists(os.path.join(WORK, 'STOP')):
+    while not pause.paused(STATE):
         try:
             sibling_pass()
         except Exception as e:
@@ -326,7 +328,7 @@ def sibling_loop():
 
 def sweep_loop():
     last_radar = 0
-    while not os.path.exists(os.path.join(WORK, 'STOP')):
+    while not pause.paused(STATE):
         try:
             if time.time() - last_radar > 600:
                 last_radar = time.time()
@@ -340,7 +342,7 @@ def sweep_loop():
 
 def promise_batch_loop():
     """Independent shared-table lane; the guardian kills it with autosolve."""
-    while not os.path.exists(os.path.join(WORK, 'STOP')):
+    while not pause.paused(STATE):
         try:
             p=managed_process.run([sys.executable,"-m","missions.pnp.lbcert.generators.promise.batch"],timeout=900)
             if p.returncode:log("promise batch deferred",p.returncode)
@@ -355,7 +357,7 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         return 0
-    if os.path.exists(os.path.join(WORK, 'STOP')):
+    if pause.paused(STATE):
         log('STOP file found; exiting before starting workers')
         return 0
     engines = ensure_engines()
@@ -371,7 +373,7 @@ def main():
     plugin_pending = {}
     prepared = {}
     prepare_retry = {}
-    while not os.path.exists(os.path.join(WORK, 'STOP')):
+    while not pause.paused(STATE):
         if source_changed():
             # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
             # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
