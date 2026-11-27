@@ -78,3 +78,39 @@ def build(n, cover):
         cur = n + len(gates) - 1
     return gates
 
+
+
+def build_shared(n, cover):
+    """Share common OR subexpressions across every biclique side."""
+    from collections import Counter
+    from itertools import combinations
+    AND = {0: 0, 1: 0, 2: 0, 3: 1}
+    OR = {0: 0, 1: 1, 2: 1, 3: 1}
+    pending = {s: set(s) for s in sorted(set(tuple(sorted(x))
+               for a,b,*_ in cover for x in (a,b)))}
+    gates = []
+    while any(len(s)>1 for s in pending.values()):
+        counts = Counter(pair for s in pending.values()
+                         for pair in combinations(sorted(s),2))
+        a,b = max(counts,key=lambda p:(counts[p],-p[0],-p[1]))
+        wire = n + len(gates)
+        gates.append((a,b,OR))
+        for s in pending.values():
+            if a in s and b in s:
+                s.difference_update((a,b))
+                s.add(wire)
+    terms = []
+    for a,b,*_ in cover:
+        x = next(iter(pending[tuple(sorted(a))]))
+        y = next(iter(pending[tuple(sorted(b))]))
+        terms.append(n+len(gates))
+        gates.append((x,y,AND))
+    z = terms[0]
+    for w in terms[1:]:
+        gates.append((z,w,OR))
+        z = n+len(gates)-1
+    return gates
+
+
+def build_best(n, cover):
+    return min((build(n,cover),build_shared(n,cover)),key=len)

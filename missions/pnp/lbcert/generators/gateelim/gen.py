@@ -14,7 +14,7 @@ SOURCE="PEqualNP.Outside.L_meta_27460"
 RULES_SHA="9f016fc75ab68ccd04a39889704e934cd00c2925d0af445985fad94bb44d6f1a"
 SHAPE_SHA="cd6c0013f4462012f855b148da463743fdc18f123497a46eceffaecc8c7e14b2"
 N=8
-SEEDS_SHA="7511c41500559263c3834a3a14fc268d54a01c20fa4b1bcb1669d61847586678"
+SEEDS_SHA="498425bebf5d6333446cc3beec31ab9f733be3f581fb986749444ad2f587a9f3"
 
 def checked(name,digest):
     data=(HERE/name).read_bytes()
@@ -61,7 +61,7 @@ def feasible(edges):
     if entry:
         w=[(a,b,{int(k):v for k,v in tt.items()}) for a,b,tt in entry["witness"]]
         return w
-    w=cover.greedy(N,edges,cover.build,trials=2)
+    w=cover.greedy(N,edges,cover.build_best,trials=2)
     if not w or len(w)>14:return None
     f=bounds.normalize((1<<a)|(1<<b) for a,b in edges)
     return w if len(w)<=bounds.lower(f)[0]+1 else None
