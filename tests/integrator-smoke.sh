@@ -326,7 +326,40 @@ test "$(st long-b)" = landed
 test "$(st short-b)" = landed
 test "$(tail -2 "$state/delivery/landed.jsonl" | jq -r .branch | tr '\n' ' ')" = 'delivery/long-b delivery/short-b '
 
-# 13. Proposals from before Act 31 (no office column) are never picked up.
+# 13. An older redundant full proposal must not consume the one actual
+# verification slot. Both proposals have independent exact-head approvals;
+# only the new merged tree invokes a full suite.
+seat duplicate_a
+seat duplicate_b
+seat after_duplicate
+printf 'same\n' > "$tmp/duplicate_a/government/duplicate-tool"
+printf 'same\n' > "$tmp/duplicate_b/government/duplicate-tool"
+printf 'next\n' > "$tmp/after_duplicate/government/after-duplicate-tool"
+for v in duplicate_a duplicate_b after_duplicate; do
+    git -C "$tmp/$v" add -A
+    git -C "$tmp/$v" commit -qm "$v"
+done
+propose duplicate_a executive duplicate-a
+integrate
+/bin/sh "$town/government/review-delivery.sh" delivery/duplicate-a \
+  "$(git -C "$tmp/duplicate_a" rev-parse HEAD)" approve --office c1a00005 --reason 'fixture review' >/dev/null
+integrate
+test "$(st duplicate-a)" = landed
+propose duplicate_b executive duplicate-b
+propose after_duplicate executive after-duplicate
+integrate
+for v in duplicate-b after-duplicate; do
+    src=$(printf '%s' "$v" | tr - _)
+    /bin/sh "$town/government/review-delivery.sh" "delivery/$v" \
+      "$(git -C "$tmp/$src" rev-parse HEAD)" approve --office c1a00005 --reason 'fixture review' >/dev/null
+done
+before=$(wc -l < "$tmp/suite-runs")
+integrate
+test "$(st duplicate-b)" = no_delta
+test "$(st after-duplicate)" = landed
+test "$(wc -l < "$tmp/suite-runs")" -eq "$((before+1))"
+
+# 14. Proposals from before Act 31 (no office column) are never picked up.
 printf '2026-11-10T00:00:00Z\twork-x\trefs/heads/delivery/legacy\t%s\ttree\ttests/run-all.sh\n' "$head" \
   >> "$state/delivery/proposals.tsv"
 integrate
