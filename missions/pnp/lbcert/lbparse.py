@@ -4,7 +4,7 @@
 classify(stmt) -> dict(kind, n, lb, fun) or None
   kind 'forall': ∀ (t : ℕ), HasCircuitSize N F t → K ≤ t
   kind 'neg'   : ¬HasCircuitSize N F S            (lb = S + 1)
-truth_table(n, fun_text) -> int bitmask (Python translation; marceline-dev also has a Lean #eval fallback).
+truth_table(n, fun_text) -> int bitmask (Python translation; unusual syntax is normalized locally with no remote fallback).
 """
 import os, re, subprocess, tempfile
 
@@ -120,8 +120,8 @@ ONENOT_RE = re.compile(r'^∀ \(gates : List PEqualNP\.CircuitLowerBounds\.Gate\
 
 
 def family(stmt):
-    """'lb' (lower bound / its ¬ form), 'mono' (monotone-equals-general, built by monofam.py on
-    marceline-dev), 'onenot' ("one NOT gate saves nothing", built by onenot.py on marceline-dev)
+    """'lb' (lower bound / its ¬ form), 'mono' (monotone-equals-general, built by local
+    monofam.py), 'onenot' ("one NOT gate saves nothing", built by local onenot.py)
     or None."""
     if classify(stmt):
         return 'lb'

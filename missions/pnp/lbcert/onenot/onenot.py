@@ -17,9 +17,9 @@ Kernel budget: the C search (lsearch.c) with the kernel's own pruning counts sta
 manages ~2k states/s, so instances over STATE_CAP are refused (rc 3) instead of being compiled.
 Files pass missions.pnp.validate: helpers are `lemma`, one `theorem`, no `noncomputable section`.
 
-Deployed on marceline-dev at /home/lubko/pnp-infra/onenot (with lsearch built there and the
-template ref_14150.lean = upstream lean/PEqualNP/Outside/L_meta_14150.lean); the relay handler
-lb-handler.py routes one-NOT statements here and compiles the result before returning it.
+Runs locally (with lsearch built here and the template ref_14150.lean =
+upstream lean/PEqualNP/Outside/L_meta_14150.lean); the retired relay handler is no longer used
+and the exact candidate is compiled only by the managed local compiler.
 
 usage: onenot.py <gid> <statement-file> <out.lean>      exit 0 ok, 3 approach fails, 2 error
 """

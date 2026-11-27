@@ -18,6 +18,7 @@ def eligible(rec, now=None):
         return True
     return bool(rec and rec.get("state") in ("LEASED", "RESEARCHING")
                 and rec.get("lease") and not rec.get("queued_lease")
+                and rec.get("work_lane") != "posting"
                 and isinstance(rec.get("lease_expires_at"), (int, float))
                 and rec["lease_expires_at"] > (time.time() if now is None else now))
 

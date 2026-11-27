@@ -36,7 +36,9 @@ def launch(gap, fd):
                          pass_fds=(fd,), start_new_session=True)
 
 
-def submit(gap, source, expected_lease=None):
+def submit(gap, source, expected_lease=None, *, only_unclaimed=False):
+    if only_unclaimed and not expected_lease:
+        raise publish.StopPublish("exact lease required for automatic submission")
     rec = state.load(gap)
     if expected_lease and (not rec or rec.get("lease") != expected_lease):
         raise publish.StopPublish("assignment superseded")
@@ -52,6 +54,10 @@ def submit(gap, source, expected_lease=None):
             rec = state.load(gap)
             if not rec or (expected_lease and rec.get("lease") != expected_lease):
                 raise publish.StopPublish("assignment superseded")
+            if only_unclaimed and (rec["state"] not in ("LEASED","RESEARCHING")
+                    or rec.get("candidate_digest") or rec.get("queued_lease")
+                    or rec.get("pr_number") or rec.get("intent")):
+                raise publish.StopPublish("another publication owns this assignment")
             if rec["state"] not in ("LEASED", "RESEARCHING", "PR_OPEN") + READY:
                 raise publish.StopPublish("gap not publishable: " + rec["state"])
             meta = {"id": gap, "file": rec["path"], "module": rec["module"],

@@ -48,11 +48,18 @@ nohup flock -n "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/resea
     timeout 90 /bin/sh -c 'python3 -m missions.pnp.research.knowledge ingest && python3 -m missions.pnp.research.obligations reconcile' \
     </dev/null >"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/cache/research-maintenance.log" 2>&1 &
 python3 -m missions.pnp.frontier || :
-python3 missions/pnp/cli.py reconcile
+# Public leaderboard observation must not depend on the desk reconcile: the
+# mission-cycle hook runs under a 150s bound, and a rate-limited reconcile of
+# many PR_OPEN gaps can exceed it, aborting this hook under `set -eu` before
+# any public observation is refreshed (cycle.log "mission pnp hook failed").
+python3 missions/pnp/leaderboard.py update || echo "PnP public leaderboard unavailable; retry next cycle" >&2
+# Reconcile mutates local mission state, not a diagnostic; keep it bounded and
+# non-fatal so a slow desk cannot block the rest of the cycle or leave public
+# data stale. The detached agent/allocator/controller still own their work.
+timeout -k 2 45 python3 missions/pnp/cli.py reconcile || echo "PnP reconcile deferred; retry next cycle" >&2
 # A 20-minute desk lease TTL cannot be maintained by a 24-hour boot hook.
 # Start (once per host) a bounded detached loop that renews active leases
 # between boots; it starts no agents and is not a competing scheduler.
 if [ -f "$town/missions/pnp/heartbeat.sh" ]; then
     nohup /bin/sh "$town/missions/pnp/heartbeat.sh" </dev/null >/dev/null 2>&1 &
 fi
-python3 missions/pnp/leaderboard.py update || echo "PnP public leaderboard unavailable; retry next cycle" >&2

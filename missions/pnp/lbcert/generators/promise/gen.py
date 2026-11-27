@@ -652,10 +652,10 @@ def main():
     except OSError:
         sketch=""
     try:
-        from . import anneal
+        from . import anneal, stock_index
     except ImportError:
-        import anneal
-    solution=sketch_witness(p,sketch) or heuristic(p) or two_order(p) or small_formula(p) or anneal.search(p,sys.modules[__name__]) or synth_sat(p)
+        import anneal, stock_index
+    solution=stock_index.lookup(p,sys.modules[__name__]) or sketch_witness(p,sketch) or heuristic(p) or two_order(p) or small_formula(p) or anneal.search(p,sys.modules[__name__]) or synth_sat(p)
     if solution is None:
         print("bounded promise synthesis refused",file=sys.stderr);return 3
     if not valid(p,solution):raise ValueError("independent witness audit failed")

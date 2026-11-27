@@ -5,6 +5,7 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+import time
 
 from . import build_control as control, watchdog, state, assignment, evidence
 
@@ -23,18 +24,23 @@ def command(args):
 
 
 def run(args, cwd=None, heavy=True, publication=False,
-        output=None, inherited=()):
+        output=None, inherited=(), prelease=None):
     argv = command(args)
     # Avoid inheriting a researcher's custom path/options in publication.
     env = {k: v for k, v in os.environ.items()
-           if not ((publication or os.environ.get("PNP_EVIDENCE_BUILD") == "1") and (k.startswith("LEAN_") or k.startswith("LAKE_")
+           if not ((publication or prelease or os.environ.get("PNP_EVIDENCE_BUILD") == "1") and (k.startswith("LEAN_") or k.startswith("LAKE_")
                                     or k in ("PEQUALNP_IN_QUEUE", "PEQUALNP_REAL_LAKE")))}
     env.update(PNP_MANAGED_COMPILER="1", LEAN_NUM_THREADS="1", LAKE_ARTIFACT_CACHE="true",
                LAKE_RESTORE_ARTIFACTS="true",
                LAKE_CACHE_DIR=os.path.expanduser("~/.pequalnp/lake-cache"))
     # Admission is bounded; once admitted, a useful build has no wall-clock deadline.
     wait = 600 if publication else 15
+    deadline = time.monotonic()+prelease[1] if prelease else None
     with control.slot(timeout=wait, heavy=heavy, publication=publication) as fds:
+        if prelease:
+            from .lbcert import prelease as private_check
+            if private_check.enablement()!=prelease[0] or time.monotonic()>=deadline:
+                raise control.BuildDeferred("pre-lease authorization ended")
         initial = control.headroom()
         oom = control.oom_count()
         proc = subprocess.Popen(argv, cwd=cwd, env=env, stdout=output,
@@ -42,6 +48,8 @@ def run(args, cwd=None, heavy=True, publication=False,
                                 pass_fds=inherited + fds)
         try:
             while True:
+                if prelease and (private_check.enablement()!=prelease[0] or time.monotonic()>=deadline):
+                    raise control.BuildDeferred("pre-lease budget or authorization ended")
                 if control.obsolete():
                     raise control.BuildDeferred("compilation assignment ended")
                 reason = control.memory_reason(proc.pid, heavy=heavy)
@@ -71,10 +79,29 @@ def run(args, cwd=None, heavy=True, publication=False,
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--light", action="store_true")
+    p.add_argument("--prelease", action="store_true", help="scoped private checker only")
     p.add_argument("--gap")
     p.add_argument("--lease")
     p.add_argument("args", nargs=argparse.REMAINDER)
     ns = p.parse_args(argv)
+    args = ns.args[1:] if ns.args[:1] == ["--"] else ns.args
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, interrupted)
+    # The private verifier is not an assignment invocation. Refuse before
+    # even resolving a lease or recording ordinary worker tool-use evidence.
+    if ns.prelease:
+        if ns.light or ns.gap or ns.lease:
+            p.error("pre-lease jobs use the shared heavy queue, without lease context")
+        try:
+            from .lbcert import prelease as private_check
+            private = private_check.compiler_context(args, Path.cwd())
+            return run(args, heavy=True, prelease=private)
+        except (control.BuildDeferred, KeyboardInterrupt, OSError) as exc:
+            print("RESOURCE DEFERRED:", exc, file=sys.stderr, flush=True)
+            return 75
+        except ValueError as exc:
+            p.error(str(exc))
     local = assignment.workspace(Path.cwd())
     if local or ns.gap or ns.lease:
         try:
@@ -87,12 +114,8 @@ def main(argv=None):
         except (OSError, ValueError) as exc:
             print("RESOURCE DEFERRED:", exc, file=sys.stderr)
             return 75
-    args = ns.args[1:] if ns.args[:1] == ["--"] else ns.args
     from . import tools
     tools.record("compile-light" if ns.light else "compile-full")
-    def interrupted(signum, frame):
-        raise KeyboardInterrupt
-    signal.signal(signal.SIGTERM, interrupted)
     try:
         bound = assignment.binding(Path.cwd())
         rec = state.load(bound[0]) if bound else None

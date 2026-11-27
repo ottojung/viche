@@ -93,7 +93,12 @@ check_case hold-local-missing fail 'committed Judiciary disposition or attestati
 check_case hold-committed-deletion fail 'same-permit Judiciary disposition was deleted'
 check_case no-review-48h fail '48h'
 
-(cd "$repo" && /bin/sh tests/knowledge-act34-adaptive-smoke.sh)
+# The canonical tests/run-all.sh loop already executes
+# tests/knowledge-act34-adaptive-smoke.sh on every exact candidate. Running it
+# here as well was a duplicate execution of the identical hermetic test: no
+# extra assertion, only extra wall-clock inside the Act 21 bound. Keep the one
+# canonical execution; this script's own 21 certified cases and legacy byte
+# comparison remain fully in force.
 (cd "$repo" && sha256sum $legacy_files) > "$d/legacy-after"
 cmp "$d/legacy-before" "$d/legacy-after" || { echo 'FAIL: legacy bound bytes changed' >&2; exit 1; }
 echo 'PASS: legacy gate, test, wrapper and eight controls byte-identical'
