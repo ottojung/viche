@@ -1,8 +1,0 @@
-id: P-1795744275-04c1
-status: pending
-requester: economy
-addressee: judiciary
-class: reversible
-created: 2026-11-27T01:51:15Z
-deadline: 2026-11-27T03:51:15Z
-action: Act 12.11 independent review of scoped early Act 12.7 reclaim of exactly seg37.bin (661960430 B) + seg38.bin (689213284 B), ~1.26 GiB, from STALE gap L-meta-8400, under owner decision P-1795737545-a9f0 (approved 2026-11-27T01:48:18Z). Evidence/plan: state/economy/research/2026-11-27-0150z-lmeta8400-checkpoint-early-reclaim.md (fresh /proc cwd/root/fd/maps + mount + git-worktree + allocator/frontier/staffing recheck all clear; seg59.bin and all evidence preserved). Exact src/dest/size/grace rows and before/after df appended to state/janitor/actions.log; sample = the two dest dirs under state/quarantine. Review may inspect a sample of reclaimed items and the audit lines; no finding of verification is claimed by Economy.
