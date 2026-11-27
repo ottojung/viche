@@ -39,6 +39,41 @@ class Tests(unittest.TestCase):
                 self.assertEqual(b.main(),0)
                 self.assertEqual(json.loads(output.getvalue())["attempts"],{"staged":1})
             db.close()
+    def test_staged_cache_exact_only_and_never_a_checked_receipt(self):
+        from missions.pnp import posting
+        from missions.pnp.lbcert import plugins
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d):
+            b.root().mkdir()
+            db=b.database(b.root()/"promise-batch.sqlite")
+            rec={"gap_id":GID,"path":Q["file"],"module":MODULE,"statement":STATEMENT,
+                 "imports":Q["imports"]}
+            src,gates,_=b.candidate(Q,b.gen.parse(STATEMENT))
+            k=b.key(Q,b.version())
+            b.put(db,k,"staged",src,gates)
+            self.assertEqual(b.staged_candidate(rec),src.encode())
+            self.assertIsNone(b.staged_candidate({**rec,"statement":STATEMENT+" "}))
+            self.assertIsNone(b.staged_candidate({**rec,"module":MODULE+"wrong"}))
+            with patch.object(plugins,"run",side_effect=AssertionError("cache miss")):
+                status,out=posting.generate(rec,Path(d))
+                self.assertEqual(status,"generated")
+                self.assertEqual(out.read_bytes(),src.encode())
+            self.assertIsNone(ready.verified(GID))
+            b.put(db,k,"invalid",src,gates)
+            self.assertIsNone(b.staged_candidate(rec))
+            b.put(db,k,"staged","bad source",gates)
+            self.assertIsNone(b.staged_candidate(rec))
+            db.close()
+
+    def test_maintenance_blocks_verification(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d):
+            b.root().mkdir()
+            now=time.time()
+            (b.root()/"MAINTENANCE.json").write_text(json.dumps(
+                {"at":now,"expires":now+60,"reason":"test","author":"operator"}))
+            with patch.object(b.checklocal,"check") as check:
+                self.assertEqual(b.verify(Q,"fixture"),("transient","generator paused"))
+                check.assert_not_called()
+
     def test_current_competition_and_exact_lease(self):
         row={"held":1,"parallel":1}
         self.assertFalse(b.eligible(Q,row,None))

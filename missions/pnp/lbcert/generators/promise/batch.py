@@ -19,7 +19,7 @@ import time
 
 from . import gen, dag, anneal
 from ... import checklocal, live, ready
-from .... import config, state, support, validate, ledger, fastlane, freshness
+from .... import config, state, support, validate, ledger, fastlane, freshness, pause, surge
 
 STOCK_TARGET = 32
 VERIFY_WORKERS = 2
@@ -100,6 +100,33 @@ def put(db,k,status,source=None,gates=None,detail=None,retry=0,failures=0):
           (*k,status,source,gates,time.time(),retry,failures,detail))
 
 
+def staged_candidate(rec):
+    """Unverified candidate bytes for an already-held exact posting attempt.
+
+    Never creates a checked receipt, claims a lease or bypasses jobs.submit.
+    Revalidate the exact current desk metadata even for known cache keys.
+    """
+    try:
+        gid=rec["gap_id"]
+        if not config.GAP_ID_RE.fullmatch(gid):
+            return None
+        digest=hashlib.sha256(rec["statement"].encode()).hexdigest()
+        with closing(sqlite3.connect(f"file:{root()}/promise-batch.sqlite?mode=ro",
+                                     uri=True,timeout=.05)) as db:
+            row=db.execute("SELECT source FROM attempt WHERE gap=? AND statement=? "
+                           "AND version=? AND status IN ('staged','checked') "
+                           "AND source IS NOT NULL AND length(source)<=?",
+                           (gid,digest,version(),config.MAX_FILE_BYTES)).fetchone()
+        if not row or not isinstance(row[0],str):
+            return None
+        data=row[0].encode()
+        validate.validate({"id":gid,"file":rec["path"],"module":rec["module"],
+                           "statement":rec["statement"],"imports":rec["imports"]},data)
+        return data
+    except (OSError,ValueError,KeyError,TypeError,sqlite3.Error,validate.InvalidCandidate):
+        return None
+
+
 def eligible(q,row,rec):
     if rec and (rec.get("pr_number") or rec.get("candidate_digest") or rec.get("queued_lease")):
         return False
@@ -141,14 +168,14 @@ def candidate(q,p):
 
 
 def verify(q,source):
-    if (root()/"STOP").exists():
+    if pause.paused_directory(root()):
         return "transient","generator paused"
     gid=q["id"];data=source.encode()
     validate.validate(q,data)
     with tempfile.TemporaryDirectory(prefix="promise-check-",dir=root()) as d:
         p=Path(d)/"candidate.lean";p.write_bytes(data)
         rc,r=checklocal.check(str(p),q["module"],timeout=120)
-    if (root()/"STOP").exists():return "transient","generator paused"
+    if pause.paused_directory(root()):return "transient","generator paused"
     if rc!=0:return ("transient" if rc==2 else "invalid"),str(r.get("status"))+": "+str(r.get("log") or "")[-300:]
     receipt=dict(r,compiled=True)
     if not ready.exact_receipt(receipt,data):return "transient","receipt mismatch"
@@ -214,7 +241,7 @@ def main():
     with ThreadPoolExecutor(max_workers=1) as generation, ThreadPoolExecutor(max_workers=VERIFY_WORKERS) as verification:
         while True:
             now=time.time()
-            scheduling=time.monotonic()<deadline and version()==v and not (root()/"STOP").exists()
+            scheduling=time.monotonic()<deadline and version()==v and not pause.paused_directory(root())
             if not scheduling and not running:break
             if scheduling and time.monotonic()>=next_refresh:
                 try:
@@ -231,11 +258,14 @@ def main():
                 keys={x[2] for x in running.values()}
                 gen_busy=any(x[0]=="generate" for x in running.values())
                 ver_busy=sum(x[0]=="verify" for x in running.values())
+                from .... import assignment
+                bound=assignment.binding(Path.cwd())
+                verify_enabled=bool(bound) and not surge.active(now)
                 staged=sum(1 for _,q,p,row,k in items if (r:=attempts.get(k)) and r["status"]=="staged")
                 for pr,q,p,row,k in items:
                     if k in keys:continue
                     r=attempts.get(k)
-                    if r and r["status"] in ("staged","checked") and r["source"] and r["retry"]<=now and ver_busy<VERIFY_WORKERS and (stock+ver_busy<STOCK_TARGET or not pr[0] or not pr[1]):
+                    if verify_enabled and bound[0]==q["id"] and r and r["status"] in ("staged","checked") and r["source"] and r["retry"]<=now and ver_busy<VERIFY_WORKERS and (stock+ver_busy<STOCK_TARGET or not pr[0] or not pr[1]):
                         if ready.verified(q["id"]):continue
                         running[verification.submit(verify,q,r["source"])]=("verify",q,k,r)
                         keys.add(k);ver_busy+=1
