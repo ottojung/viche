@@ -112,6 +112,15 @@ def launch(gid):
 
 def generate(rec, work):
     """Use the same audited family generators, but a short foreground budget."""
+    # Reuse source-only batch stock under this exact lease; only the signed
+    # publisher and its concurrent checker can advance publication state.
+    from .lbcert.generators.promise import batch
+    data=batch.staged_candidate(rec)
+    if data is not None:
+        out=work/"candidate.lean"
+        out.write_bytes(data)
+        ledger.mark("posting_cache_hit",rec["gap_id"],engine="promise-batch")
+        return "generated",out
     family = plugins.family_of(rec["statement"])
     if not family:
         return "unsupported", None
