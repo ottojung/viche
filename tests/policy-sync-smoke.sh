@@ -2,6 +2,7 @@
 # A stale seat receives current instructions without losing unrelated work.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
+export VICHE_COMMIT_FIXTURE=1
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 town=$scratch/town

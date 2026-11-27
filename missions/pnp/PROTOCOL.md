@@ -97,6 +97,21 @@ Use Git GPG signing subkey EXACTLY:
 No unsigned, unverified, alternate-key, alternate-name, or alternate-email commit
 may be pushed. Before push verify git verify-commit, %G? good signature, %GF exact
 signing subkey fingerprint, and inspect author/committer directly.
+Author/committer/signing identity is supplied per invocation; shared Git
+configuration is never written.
+
+Commit attribution (Founder directive 2026-11-27):
+ - Otto Jung is author, committer and signer of every publisher commit.
+ - An actual contributor is credited only through an explicitly declared,
+   validated Co-authored-by identity. Candidate bytes, worker prompts, desk
+   metadata and board labels are unauthenticated and never become co-authors.
+ - A managed research submit defaults to the actual Antonina agent ID
+   (ANTONINA_AGENT_ID) as co-author when no explicit office role is given.
+ - A deterministic generator credits its fixed producer identity, never a
+   guessed researcher and never the publisher fallback when a researcher is known.
+ - Corrections preserve every co-author already present in the original commit.
+ - Fast commit-tree, bulk/twin and correction routes carry the same validation,
+   signing, identity and trailer checks as the normal signed route.
 Resolve the pinned fork ID to its current GitHub routing name. Before mutation, verify the authenticated contributor ID and allowed remote/branch.
 Push the one signed commit as a new uniquely named branch. Verify GitHub API
 commit.verification.verified == true for the exact pushed SHA. If false, STOP

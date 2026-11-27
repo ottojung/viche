@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from . import config, publish, state, validate
+from . import attribution, config, publish, state, support, validate
 
 READY = ("CANDIDATE_READY", "LOCAL_CHECKED", "SIGNED", "PUSHED", "REJECTED")
 
@@ -36,7 +36,13 @@ def launch(gap, fd):
                          pass_fds=(fd,), start_new_session=True)
 
 
-def submit(gap, source, expected_lease=None):
+def submit(gap, source, expected_lease=None, contributors=None,
+           contributor_source=None):
+    """Queue a candidate for publication.
+
+    Contributors are optional and must be declared explicitly by trusted
+    producer code with a source; they are never read from the candidate file.
+    """
     rec = state.load(gap)
     if expected_lease and (not rec or rec.get("lease") != expected_lease):
         raise publish.StopPublish("assignment superseded")
@@ -68,6 +74,46 @@ def submit(gap, source, expected_lease=None):
             if (rec["state"] == "REJECTED" and digest == rec.get("candidate_digest")
                     and not rec.get("queued_lease")):
                 raise publish.StopPublish("correction must change the proof")
+
+            # Validate attribution before any candidate/state mutation. A bad
+            # identity must not leave a queued candidate with stale attribution.
+            prior_digest = rec.get("candidate_digest")
+            same_attempt = (prior_digest == digest and
+                            rec.get("queued_lease") == rec.get("lease"))
+            declared = None
+            source = None
+            if contributors is not None:
+                declared = list(contributors)
+                source = contributor_source or "jobs.submit"
+            elif os.environ.get("ANTONINA_AGENT_ID"):
+                agent = os.environ["ANTONINA_AGENT_ID"]
+                declared = ["Antonina Agent %s <%s@antonina.local>" %
+                            (agent, agent)]
+                source = "env:ANTONINA_AGENT_ID"
+            if declared is not None:
+                try:
+                    idents = attribution.validated(declared)
+                except attribution.AttributionError as exc:
+                    raise publish.StopPublish(
+                        "invalid co-author declaration: %s" % exc)
+            else:
+                idents = None
+
+            # Reset attribution for a genuinely new candidate; preserve it only
+            # when the exact digest and lease attempt match the queued one.
+            if rec["state"] not in ("SIGNED", "PUSHED", "PR_OPEN", "ACCEPTED"):
+                if idents is not None:
+                    rec["coauthors"] = idents
+                    rec["coauthor_source"] = source
+                elif not same_attempt:
+                    rec["coauthors"] = []
+                    rec["coauthor_source"] = None
+                state.event(gap, "coauthors_declared",
+                            {"coauthors": rec.get("coauthors") or [],
+                             "source": rec.get("coauthor_source"),
+                             "digest": digest,
+                             "attempt": support.attempt(rec)})
+
             state.atomic_write(candidate_path(gap), data.decode("utf-8"))
             if before in ("LEASED", "RESEARCHING", "CANDIDATE_READY"):
                 rec.update(state="CANDIDATE_READY", candidate_digest=digest,

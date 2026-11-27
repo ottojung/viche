@@ -68,7 +68,14 @@ def publish(g, data, base):
     wt = git.fresh_worktree(g["id"], base, branch)
     git.prepare_unpublished(wt, branch, base, None)
     git.pin_candidate(wt, g["file"], data)
-    sha = git.signed_commit(wt, base, g["id"])
+    # Bulk candidates have no authenticated human/researcher identity at commit
+    # time. gitctl attributes the real producer (the publisher) and never
+    # guesses one from the candidate status text.
+    # Bulk publication is itself the actual producer; credit that fixed program
+    # explicitly instead of the publisher fallback or a guessed researcher.
+    sha = git.signed_commit(wt, base, g["id"],
+                             contributors=["Viche PnP Bulk Publisher "
+                                           "<pnp-bulk@viche.local>"])
     if git.push_branch(branch) != sha:
         raise RuntimeError("pushed sha differs")
     for _ in range(20):

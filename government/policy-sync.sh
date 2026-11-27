@@ -2,8 +2,18 @@
 # Keep an appointee's instruction file consistent with canonical Viche policy.
 # Never touch unrelated work or silently overwrite the agent's own edits.
 set -eu
-[ "$#" -eq 1 ] || { echo 'Usage: policy-sync.sh WORKTREE' >&2; exit 2; }
-cwd=$1
+usage() { echo 'Usage: policy-sync.sh WORKTREE [--contributor "Name <email>"]' >&2; exit 2; }
+contributor=
+cwd=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --contributor) [ "$#" -ge 2 ] || usage; contributor=$2; shift 2 ;;
+        -*) usage ;;
+        *) [ -z "$cwd" ] || usage; cwd=$1; shift ;;
+    esac
+done
+[ -n "$cwd" ] || usage
+verifier_dir=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 town=${VICHE_TOWN_ROOT:-/var/lib/lubko/wd/viche}
 state=${VICHE_STATE_ROOT:-/var/lib/lubko/wd/viche-state}
 case "$cwd" in /*) : ;; *) echo 'Worktree must have an absolute path' >&2; exit 2 ;; esac
@@ -29,7 +39,10 @@ trap 'rm -f "$tmp"' EXIT HUP INT TERM
 cat "$town/AGENTS.md" > "$tmp"
 chmod 0644 "$tmp"
 mv -f "$tmp" "$cwd/AGENTS.md"
-if ! git -C "$cwd" commit --only -m "Sync current Viche operating instructions" -- AGENTS.md; then
+set -- commit --repo "$cwd" --subject 'Sync current Viche operating instructions'
+[ -z "$contributor" ] || set -- "$@" --contributor "$contributor"
+set -- "$@" -- --only -- AGENTS.md
+if ! python3 "$verifier_dir/commit-identity.py" "$@"; then
     git -C "$cwd" restore --source=HEAD --staged --worktree -- AGENTS.md
     echo "Policy update could not be committed in $cwd" >&2
     exit 1

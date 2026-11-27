@@ -10,7 +10,7 @@ import os
 import tempfile
 import time
 
-from . import config
+from . import attribution, config
 
 EMPTY = {
     "gap_id": None,
@@ -33,6 +33,10 @@ EMPTY = {
     "base_sha": None,
     "lean_toolchain": config.LEAN_TOOLCHAIN,
     "researchers": [],
+    # Explicit, validated contributor declarations only. The publisher never
+    # infers identities from candidate content, prompts or legacy Git config.
+    "coauthors": [],
+    "coauthor_source": None,
     "candidate_digest": None,
     "queued_lease": None,
     "branch": None,
@@ -196,6 +200,8 @@ def reacquire(gap_id, **fields):
         rec["publisher_memory_required"] = None
         rec["intent"] = None
         rec["researchers"] = []
+        rec["coauthors"] = []
+        rec["coauthor_source"] = None
         rec["state"] = "LEASED"
         save(rec)
         event(gap_id, "reacquired", {"previous_state": previous,
