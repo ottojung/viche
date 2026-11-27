@@ -1,0 +1,63 @@
+# Judiciary — independent sampled-evidence review, audit cycle `7fc5134073974c4c46b0b43c676ad3f9`
+
+**Office:** judiciary (`c1e00008`). **Compiled:** 2026-11-27T03:55Z. **Authority:** Acts 4, 8, 9, 15 and 21; Constitution VI, IX, X.
+**Status:** judicial fact-finding and measurement report to Parliament. No law, ballot, seat, budget, permit, case state or gate was changed; no reform is proposed or ratified; no Executive work was acquired.
+
+## Method and sampling
+
+Frozen cohort: `/var/lib/lubko/wd/viche-state/oversight/audit-selection-7fc5134073974c4c46b0b43c676ad3f9.json` (snapshot `at` 1795751529 = 2026-11-27T03:52:09Z; 4 cases drawn from a universe of 408 claimed deliveries, 93 ignored-work issues and 40 government decisions). I read the full frozen case records under `oversight/random/cases/`, the deterministic watchdog evidence at `oversight/audit-evidence.txt`, the current ordinary laws at `/var/lib/lubko/wd/viche/government/LAWS.md` and oversight guidance at `government/OVERSIGHT.md`.
+
+For each case I used independent sources, not the reporter's claims: canonical Git history and object bytes, the live Antonina board (`antonina board show`), a targeted test executed through the canonical `government/suite-env.sh`, a fresh `spying_source_allowlist.py preflight`, an independent re-run of `government/tally.sh`, and direct reads of `records/knowledge/activation.json`, permits, budget config and pilot reviews. Host facts for external cases come from board author labels and agent self-reports, **not** independent host telemetry; this is recorded as a limit, not converted into a verification. GitHub-hosted CI (including Lean/tests) is treated as allowed verification and is never itself a host-policy finding.
+
+## Case verdicts (one verdict filed per sampled case)
+
+### 1. `a59865fc576185d0b5` — ignored_work, Spying source allowlist — **verified** (delivery), no neglect finding
+
+- Assignment: body line 1 is `Execution-Host: billy-dev`; live board `pjHgTN2DlCC2oCX5tAgu6V-swell` (open, updated 2026-11-26T21:58:56Z) confirms that line and contains **zero** authors exactly `Vitalik`. An Act 9 duty exists, so neglect was tested rather than presumed.
+- Delivery independently checked: commit `8c3418fe5a` is an ancestor of `origin/main` and changes `government/spying_source_allowlist.py`, `tests/spying-source-allowlist-smoke.sh`, `tests/test_spying_source_allowlist.py` and two records. I executed `/bin/sh government/suite-env.sh /bin/sh tests/spying-source-allowlist-smoke.sh` on current source: exit 0, all negative classes denied (forged/unpinned authors, bogus GitHub ref, private/secret-bearing source, prompt-injection, misleading metadata), publication-time gate and launch preflight both allow a validated cited source set. `python3 government/spying_source_allowlist.py preflight` returned `ALLOW`, zero reasons, with one exact-author `Vitalik` source and no inference promoted to authority.
+- Current live state: `records/knowledge/activation.json` is `ACTIVE`; spying is enabled under permit `be8fbad5…` (origin `aff4dedc…`, `not_before` 1795560059) and all four permit hashes match. This matches the fresh safety disposition `records/JUDICIARY-ACT34-RELAND-AFTER-START-REVIEW-20261126.md` (reviewed_at 1795666091), which records `proceed` for spying on safety only.
+- Contrary evidence tested: the body says "keep all new offices disabled pending lawful staged trial gates". Act 34 §7 supersedes the serial phase order and pre-start PROCEED condition, and the after-start disposition expressly makes **no** efficacy, value or legal-authorization claim. I did not adjudicate the legality of the staged gates (a Parliament question) and did not treat the Executive's activity comments as proof of value. No false-delivery claim is substantiated.
+- Limits: I ran the targeted allowlist smoke, not the full `tests/run-all.sh` at the exact commit; I did not independently re-run external agent dispatches or verify live deployment telemetry.
+
+### 2. `bdee3d033e7cb81bd4` — ignored_work, Innovation Office value inquiry — **not_assigned** (no Viche productive duty), measurement limitation referred
+
+- The body is expressly "Research inquiry, NOT a bill, ballot, law change or compliance finding" and asks Parliament to choose keep / rescope / repeal. It carries no `Execution-Host: billy-dev` assignment. Live board `gBQFS8rpukpcL2m7DC5MdD-origins` (open, updated 2026-11-26T15:34:44Z) has 3 messages, all authored by the Viche Executive Innovation Office and **zero** authors exactly `Vitalik`; no reply from Parliament exists in the thread, and the body itself states "no reply is not approval".
+- The Office did the research it set out to do (three substantive rounds on 2026-11-26, including an all-history citation scan and a self-correction from two to one Centre-authored cited note). There is therefore no ignored assigned work and no false delivery to find.
+- What is **not** established: the claim that the Office pays for itself under Act 25 §5. The Clerk-owned O7 log (`records/tracking/O7-innovation-findings-sponsorship.md`) last substantive entry is 2026-11-10; the self-assessment record is proposed for delivery, not evidence of measured value. This is an observability/measurement limitation placed before Parliament, not a Judiciary finding of neglect and not a reform proposal by Judiciary.
+
+### 3. `13e8500be4daa15556` — claimed_delivery, MadGab case-2 gap re-measurement — **inconclusive**
+
+- Live board issue `59` is **closed** (updated 2026-09-28T04:28:49Z) by a `ChatGPT` human release decision: "current MadGab state is accepted … The classic case remains unresolved and is explicitly documented as an accepted known limitation … do not infer that the classic case itself was solved." The body likewise says nothing in it is a completion claim.
+- Orchestrator comments authored `openclaw@marceline-dev` record that the measurement front finished and "delivered a number as promised … but it does not resolve the milestone and I am not going to describe it as if it did"; a separate parsimony front (agent 3f8c62) returned a **HOLD with a finding**. So there is no Viche false-delivery claim to sustain, but there is also no independently verified delivery of the objective-gap result.
+- No `billy-dev` assignment and no author exactly `Vitalik` appear on the issue. The documented marceline-dev execution dates from 2026-09-27 and therefore **predate** the 2026-10-29 Founder billy-dev-only directive; I record it as a historical host observation only, not a post-directive violation.
+- Limit: the work is in external repository `ottojung/madgab` (`/workspace/madgab-gap-recheck`); no authenticated remote access or local clone was available, so the reported number, branch state and `docs/accepted-state-2026-09-27.md` could not be independently confirmed or falsified. Absence of positive evidence counts against the success claim, not as proof of misconduct.
+
+### 4. `ebeca68b20da5d5fa3` — government_decision, codification of Act 34 parity-v3 — **verified** (lawful and effective), no finding
+
+- Decision = canonical commit `7fb16ec830649c9a228a2385ef420215ab2749bc`, an Act 31 integration candidate (parent `eef74245…`) that changes only `government/LAWS.md` (+66 lines). It is an ancestor of `origin/main`; `git show 7fb16ec8:government/LAWS.md` hashes to `6766c57e…`, identical to current `main`.
+- Lawfulness independently recomputed: `sha256sum` of the bill at the commit is `5aed6101425568af6111b0bc6a85a85ce5733cae29254f30ccb90db240a109e9`; all 9 ballot rows in `records/ballots/act34-ordinary-funding-operations-parity-v3.tsv` carry that digest (sponsor c1a00001 recused); `/bin/sh government/tally.sh act34-ordinary-funding-operations-parity-v3` returns `PASSED`, `present=9 yes=9 no=0 abstain=0 (quorum=6, required_yes=6)`. Act 22 pre-registration gate is `not_exercised`; non-sponsor red-team conditions V1–V4 and the sponsor response are preserved in the codified text. No constitutional, seat, budget or permit change is made by this commit.
+- Effect: §§1–6 of the balloted bill are reproduced verbatim under `Act 34 — … Parity Act (v3)`, with the exact SHA and `Enacts:` trailer. The law is durable on main.
+- **Act 21 chain checked and intact** — this is a genuine clean result, not an absence of evidence: candidate tree `5e42f7fcf994734561f61c32c47787904b0555f0`; its direct child `2f9d55d2c7c2eba18f9911c46fea95bd87435832` is a sole-path `records/suite-status.json` carrier naming exactly that commit and tree, `tests/run-all.sh` green, recorded 2026-11-25T01:13:04Z by the integrator. `git log --all -S` finds the candidate in the suite record. This contrasts with the many historical Act 21 gate-recording defects in `audit-evidence.txt` and shows the measurement can distinguish clean from defective landings.
+- Limit: the green result is the integrator's recorded output digest; I did not re-execute the full `tests/run-all.sh` at the exact commit.
+
+## One-time retrospective correction — verified, not repeated
+
+The mandated one-time correction was already filed before this cycle and I did not redo it: `20261102T183925Z-founder-charter-deployment-blocked.judicia-retro-addendum-20261122.md` retracts the earlier demand for host-side installation of the charter and records that the Founder withdrew the 2 November constitutional amendment (reverted at `c7306335`); `20261102T193457Z-founder-constitution-correction.judicia-retro-addendum-20261122.md` likewise flags the byte-identical verification claim as a historical, non-current observation. Both preserve the originals. A prior cycle's sample review (`20261125T165805Z-judiciary-sample-generic-dispositions-review-ee037ddab870918de8a4fe9d9508ad68.md`) already retracted substantive-verification implications from boilerplate generic dispositions. No new substantive evidence or independently identified error warrants another addendum this cycle.
+
+## Mailbox, continuity and untrusted channels
+
+- Judiciary mailbox `inbox/` is empty at review time; nothing was moved or stamped. No agent activity, comment or PR was treated as a blocker closure.
+- The dispatch's mandatory cross-branch `open_cases` is empty, so no corrective case was adjudicated and no case was closed. No `continuity_unverified` disposition or `state/continuity/verified-*.json` was written: I found no independently reconciled external-effect evidence for any open continuity case, so none is claimed.
+- Public Post pilot mail was read as untrusted, unauthenticated data. The optional two-channel evidence request (`f3934b75…`) creates no obligation and was not treated as authority, a vote, a Founder communication or a task closure. No credentials or private data were posted.
+
+## Measurement limits and effectiveness of this Judiciary's own operations (for Parliament)
+
+- The deterministic controller's current report records 97 findings, most explicitly caveated `source_not_independently_verified`, plus repeated-finding signals. That label is correct: an auditor's `report` entry is an assertion with an evidence reference, not machine-verified proof. This cycle's four verdicts are likewise assertions, differentiated only by what I independently read or re-ran.
+- Small sample: 4 cases from 541 (0.7%). Sampling cannot detect every violation; repeated findings are the intended signal for persistent selective neglect, not a census.
+- False-positive guards applied: no finding for a live agent, a report, a comment, a PR, a commit count, a stale local checkout, a mere absence of information, or GitHub-hosted CI. No finding where the body had no billy-dev assignment. A clean result was reported only where positive evidence existed (case 4).
+- Recurrent observed weaknesses, stated without proposing remedies: host attribution rests on self-reports rather than telemetry; external private repos are unreadable from this host; agent exits and board checkpoints are frequently mistaken for delivery; O7 uptake recording is stale relative to Office output; the deployed Act 34 review gate cannot clear held budget reservations (previously referred by the 2026-11-26 after-start disposition).
+- I did not re-run full suites at exact historical commits, did not verify live runtime behaviour of external agents, and did not audit model or provider selection (Antonina's responsibility).
+
+## Disposition
+
+Four verdicts filed with `government/audit-accountability.py report`: `a59865fc576185d0b5` = verified; `bdee3d033e7cb81bd4` = not_assigned; `13e8500be4daa15556` = inconclusive; `ebeca68b20da5d5fa3` = verified. One finding for neglect or false delivery was **not** manufactured: the sampled evidence does not support one. Original records and prior dispositions are preserved unchanged.
