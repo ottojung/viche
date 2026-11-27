@@ -40,6 +40,10 @@ def fingerprint(gen):
     if parent.name=="onenot_candidates":
         helper=parent.parent.parent/"onenot"
         files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c"))
+    if parent.name=="gateelim_residual":
+        files.extend(p for p in sorted((parent.parent/"gateelim").rglob("*"))
+                     if p.is_file() and p.suffix in (".py",".json",".lean"))
+        files.append(parent.parent/"pm3lower/template.lean")
     if files==[Path(gen)]:
         return hashlib.sha256(Path(gen).read_bytes()).hexdigest()[:12]
     for path in files:
