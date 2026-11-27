@@ -71,7 +71,7 @@ def parse(statement):
 
 
 @lru_cache(maxsize=512)
-def lookup(p):
+def direct_lookup(p):
     if not p:return None
     key,mp=canon(p[4]&((1<<64)-1))
     entry=library().get(key)
@@ -83,6 +83,25 @@ def lookup(p):
         sol=([(op,[wire(w) for w in args]) for op,args in gates],wire(out))
         return sol if promise.valid(p,sol) else None
     except (AssertionError,IndexError,TypeError,KeyError,ValueError):return None
+
+def transpose(mask):
+    return sum(((mask>>(8*i+j))&1)<<(8*j+i)
+               for i in range(8) for j in range(8))
+
+
+@lru_cache(maxsize=512)
+def lookup(p):
+    if not p:return None
+    sol=direct_lookup(p)
+    if sol is not None:return sol
+    # Swapping the left and right one-hot blocks preserves circuit size.
+    q=p[:4]+(transpose(p[4]),)+p[5:]
+    sol=direct_lookup(q)
+    if sol is None:return None
+    gates,out=sol
+    def swap(w):return (w+8)%16 if w<16 else w
+    result=([(op,[swap(w) for w in args]) for op,args in gates],swap(out))
+    return result if promise.valid(p,result) else None
 
 
 def matches(statement):
