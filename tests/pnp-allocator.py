@@ -111,6 +111,26 @@ class Tests(unittest.TestCase):
         self.assertEqual(d.calls,[(True,False,"open")])
         self.launch.assert_not_called()
 
+    def test_quiet_uses_actual_hard_offers_not_nominal_open_rows(self):
+        d=Desk([(True,"L-meta-1")])
+        snap=self.quiet_snapshot(offerable_levels={"hard":12})
+        self.assertEqual(allocator.fill(d,{},NOW,snap),["L-meta-1"])
+        self.assertEqual(d.calls,[(True,False,"hard")])
+        self.assertEqual(state.load("L-meta-1")["work_lane"],"research")
+        self.launch.assert_not_called()
+
+    def test_hard_probe_does_not_require_nominal_high_open_row(self):
+        d=Desk([(True,"L-meta-1")])
+        snap=self.quiet_snapshot(offerable_levels={"hard":12},gaps={})
+        self.assertEqual(allocator.fill(d,{},NOW,snap),["L-meta-1"])
+        self.assertEqual(d.calls,[(True,False,"hard")])
+
+    def test_quiet_prefers_open_when_offerability_confirms_open(self):
+        d=Desk([(True,"L-meta-1")])
+        snap=self.quiet_snapshot(offerable_levels={"hard":11,"open":1})
+        self.assertEqual(allocator.fill(d,{},NOW,snap),["L-meta-1"])
+        self.assertEqual(d.calls,[(True,False,"open")])
+
     def test_quiet_probe_null_respects_cadence(self):
         d=Desk()
         mem={}

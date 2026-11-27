@@ -191,7 +191,7 @@ def set_lane(rec, lane):
 
 def maintain(d, mem, now, snapshot, records):
     """Migrate idle legacy holds and finish posting attempts without agent churn."""
-    from . import fastlane, surge
+    from . import fastlane, frontier, surge
     batch = surge.active(now)
     active = [r for r in records if support.active(r,now) and not r.get("queued_lease") and not r.get("candidate_digest") and not r.get("intent")]
     if paused():
@@ -202,7 +202,9 @@ def maintain(d, mem, now, snapshot, records):
     # At most one speculative research lease. Only high advertised/frozen
     # value qualifies; unknown price is not a license to discard active work.
     research = [r for r in active if r.get("work_lane") != "posting" and
-                (points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS)]
+                (points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS
+                 or (r.get("acquisition_level")=="hard"
+                     and (frontier.quiet(snapshot,now) or not snapshot.get("complete"))))]
     research.sort(key=lambda r:(-(points(r,snapshot) or 0),r.get("lease_obtained_at") or now))
     keep = research[0]["gap_id"] if research and not batch else None
     released = []

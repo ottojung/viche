@@ -33,6 +33,29 @@ class Batch(unittest.TestCase):
         self.assertFalse(surge.active(2201,old))
 
 
+class Offerability(unittest.TestCase):
+    def test_actual_catalog_count_not_nominal_capacity(self):
+        from missions.pnp import frontier
+        snap={"complete":True,"offerable":2,"gaps":{
+            "L-meta-1":{"level":"open","held":0,"parallel":1},
+            "L-meta-2":{"level":"hard","held":3,"parallel":3},
+            "L-meta-3":{"level":"hard","held":0,"parallel":1}}}
+        rows=[{"id":"L-meta-1","offerable_now":False},
+              {"id":"L-meta-2","offerable_now":True},{"id":"L-meta-3","offerable_now":True}]
+        self.assertEqual(frontier.offer_levels(snap,rows),{"hard":2})
+        self.assertIsNone(frontier.offer_levels(snap,rows[:2]))
+        self.assertIsNone(frontier.offer_levels(snap,rows+[rows[1]]))
+
+    def test_stale_catalog_cannot_narrow_probe(self):
+        from missions.pnp import frontier
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d):
+            root=Path(d)/"lbcert";root.mkdir()
+            p=root/"gaps-cache.json"
+            p.write_text('{"gaps":[]}')
+            (root/"gaps-cache.json.meta").write_text('{"at":100}')
+            self.assertIsNone(frontier.cached_offer_levels({"observed":200},200))
+
+
 class Pause(unittest.TestCase):
     def test_expiry_and_emergency_override(self):
         with tempfile.TemporaryDirectory() as tmp:

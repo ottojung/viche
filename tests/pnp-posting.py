@@ -100,6 +100,15 @@ class Tests(unittest.TestCase):
             self.assertEqual(posting.maintain(None,{},time.time(),{},[state.load(GID)]),[GID])
             self.assertEqual(release.call_args.kwargs["expected_lease"],r["lease"])
 
+    def test_quiet_hard_research_not_discarded_for_low_price(self):
+        now=time.time()
+        r=self.rec(work_lane="research",acquisition_hard=True,acquisition_level="hard",
+                   lease_obtained_at=now-1201,lease_terms={"level":"hard","points":105})
+        with patch.object(surge,"active",return_value=False),patch.object(fastlane,"release") as release,patch.object(posting,"launch") as launch:
+            self.assertEqual(posting.maintain(None,{},now,{"complete":True,"observed":now,"ordinary":0},[r]),[])
+            self.assertEqual(state.load(GID)["work_lane"],"research")
+            release.assert_not_called();launch.assert_not_called()
+
     def test_surge_preserves_young_hard_and_cached_candidates(self):
         r=self.rec(work_lane="research",acquisition_hard=True,
                    lease_terms={"level":"hard","points":600})

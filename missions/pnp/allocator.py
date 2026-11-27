@@ -194,9 +194,7 @@ def fill(d, mem, now, snapshot):
     if posting.paused():
         return acquired
     ordinary=snapshot.get("ordinary")
-    observed=snapshot.get("observed")
-    quiet_empty=(snapshot.get("complete") is True and type(observed) in (int,float)
-                 and 0<=now-observed<=60 and type(ordinary) is int and ordinary==0)
+    quiet_empty=frontier.quiet(snapshot,now)
     offerable=snapshot.get("offerable")
     quiet_open=quiet_empty and type(offerable) is int and offerable>0
     previous=mem.get("posting_ordinary")
@@ -237,10 +235,14 @@ def fill(d, mem, now, snapshot):
                        for g in seen))
             if not batch and reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
                 break
-            open_probe=(not batch and not research and high and desk.lease_limit()>1 and (len(held)==desk.lease_limit()-1 or quiet_open)
+            levels=snapshot.get("offerable_levels")
+            hard_fallback=(quiet_open and isinstance(levels,dict)
+                           and not levels.get("open") and type(levels.get("hard")) is int and levels["hard"]>0)
+            open_probe=(not batch and not research and (high or hard_fallback)
+                        and desk.lease_limit()>1 and (len(held)==desk.lease_limit()-1 or quiet_open)
                         and now-mem.get("last_open_probe",0)>=300)
             if open_probe:
-                level,lane="open","research"
+                level,lane=("hard" if hard_fallback else "open"),"research"
                 mem["last_open_probe"]=now
             else:
                 level,lane="solid","posting"
@@ -250,7 +252,7 @@ def fill(d, mem, now, snapshot):
                         if result:acquired.append(result)
                     break
             before={r["gap_id"] for r in held}
-            result=cli.acquire(SimpleNamespace(hard=level=="open",another=bool(held),
+            result=cli.acquire(SimpleNamespace(hard=level in ("open","hard"),another=bool(held),
                                 level=level,work_lane=lane),d,report=False)
             new={r["gap_id"] for r in cli.held_records()}-before
             if result==0 and new:
