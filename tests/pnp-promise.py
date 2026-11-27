@@ -11,6 +11,29 @@ class Promise(unittest.TestCase):
         p=("two",3,3,4,1<<1,"FanInTwo")
         self.assertTrue(g.valid(p,([("and",[0,1])],3)))
         self.assertFalse(g.valid(p,([("or",[0,1])],3)))
+    def test_parenthesized_matrix_statement(self):
+        statement = "PEqualNP.Represents.RepSizeAtMost (fun u v : Fin 8 => (4081470838034108865 : ℕ).testBit (8 * u.val + v.val)) 28"
+        self.assertEqual(g.parse(statement),g.parse("(("+statement+"))"))
+        self.assertIsNone(g.parse("("+statement+") ∧ True"))
+    def test_mixed_rectangle_fallback(self):
+        from unittest.mock import patch
+        p=("matrix",8,8,31,5582313321192137625,"Monotone2")
+        # Fixed iteration bound, independent of CI host performance.
+        with patch.object(g.time,"monotonic",return_value=0):
+            s=g.matrix_mixed(p)
+        self.assertIsNotNone(s)
+        self.assertTrue(g.valid(p,s))
+        self.assertLessEqual(len(s[0]),31)
+        self.assertIsNone(g.matrix_mixed(("matrix",8,8,0,p[4],"Monotone2")))
+        self.assertIsNone(g.matrix_mixed(("two",5,5,8,23,"Monotone2")))
+    def test_mixed_rectangle_exact_semantics(self):
+        from unittest.mock import patch
+        with patch.object(g.time,"monotonic",return_value=0):
+            for mask in range(1,15):
+                p=("matrix",2,2,8,mask,"Monotone2")
+                sol=g.matrix_mixed(p)
+                self.assertIsNotNone(sol)
+                self.assertTrue(g.valid(p,sol))
     def test_generated_witnesses_audited(self):
         for kind,n,m in (("matrix",2,3),("two",3,3)):
             for mask in (0,1,3,7,19,63):
