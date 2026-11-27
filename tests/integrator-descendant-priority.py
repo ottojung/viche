@@ -34,7 +34,8 @@ def prop(head, when, branch="b", suite=FULL):
 olds = ["a" * 40, "b" * 40, "c" * 40, "d" * 40]
 contained = set(olds[:3])          # third is the newest coherent combination
 ready = [prop(h, AGED + i, "d%d" % i) for i, h in enumerate(olds)]
-key = lambda item: integrator.ready_priority_key(item[0], item[3], contained, NOW)
+inherited = {h: AGED for h in olds}
+key = lambda item: integrator.ready_priority_key(item[0], item[3], contained, NOW, inherited)
 ordered = sorted(ready, key=key)
 # The descendant tip is not contained and sorts first; the contained ancestors
 # follow it even though they were proposed earlier.
@@ -42,14 +43,14 @@ assert ordered[0][3] == FULL and ordered[0][0]["head"] == "d" * 40, ordered[0]
 assert all(k[0]["head"] in contained for k in ordered[1:]), ordered
 
 # 2. Records still precede young full candidates and are not reordered.
-assert key(prop("a" * 40, NOW - 60, suite=RECORDS)) < key(prop("a" * 40, NOW - 60))
+assert key(prop("e" * 40, NOW - 60, suite=RECORDS)) < key(prop("e" * 40, NOW - 60))
 # Aged full candidates still precede records.
 assert key(prop("a" * 40, AGED)) < key(prop("a" * 40, AGED, suite=RECORDS))
 
 # 3. A contained head never becomes terminal here; removing the descendant
 # from `ready` restores its original priority (no starvation).
-assert integrator.ready_priority_key(prop("a" * 40, AGED)[0], FULL, contained, NOW)[1] == 1
-assert integrator.ready_priority_key(prop("a" * 40, AGED)[0], FULL, set(), NOW)[1] == 0
+assert integrator.ready_priority_key(prop("a" * 40, AGED)[0], FULL, contained, NOW)[2] == 1
+assert integrator.ready_priority_key(prop("a" * 40, AGED)[0], FULL, set(), NOW)[2] == 0
 
 # 4. contained_heads uses real git ancestry and is defensive on failure.
 integrator.contained_heads(ready)  # pure path does not mutate its input
@@ -80,6 +81,27 @@ with tempfile.TemporaryDirectory() as td:
         assert got == {a, b}, got
         # A descendant that is not approved/ready cannot mark ancestors contained.
         assert integrator.contained_heads([prop(a, AGED, "ancestor")]) == set()
+        # The approved young tip inherits the old ancestor's aged tier.
+        chain = [prop(a, AGED, "ancestor"), prop(b, NOW-120, "middle"),
+                 prop(c, NOW-60, "tip")]
+        covered, ages = integrator.ancestry_priority(chain)
+        assert covered == {a,b}
+        assert ages == {a:AGED,b:AGED,c:AGED}
+        def priority(item):
+            return integrator.ready_priority_key(item[0],item[3],covered,NOW,ages)
+        assert sorted(chain,key=priority)[0][0]["head"] == c
+        assert priority(chain[2]) < priority(prop("e"*40,NOW-180,suite=RECORDS))
+        # An unrelated earlier full proposal still wins by age.
+        older = prop("f"*40,AGED-10,"unrelated")
+        assert priority(older) < priority(chain[2])
+        # If the tip fails and leaves ready, no ancestor is made terminal.
+        covered, ages = integrator.ancestry_priority(chain[:2])
+        assert covered == {a} and ages[b] == AGED
+        assert sorted(chain[:2],key=priority)[0][0]["head"] == b
+        # Additive records do not create full-suite age inheritance.
+        covered, ages = integrator.ancestry_priority([
+            prop(a,AGED,suite=RECORDS),prop(c,NOW-60)])
+        assert covered == set() and ages == {c:NOW-60}
     finally:
         integrator.TOWN = old_town
 
