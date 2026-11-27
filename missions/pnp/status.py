@@ -20,6 +20,33 @@ STATE = Path(os.environ.get("VICHE_STATE_ROOT",
                             "/var/lib/lubko/wd/viche-state"))
 
 
+def actionable_publication_alerts(rows, now=None):
+    """Publication failures that still warrant Executive attention.
+
+    A FAULT with no signed commit cannot be recovered into a PR (reconcile's
+    recover_fault requires a commit_sha). Once its lease has also expired there
+    is no live assignment to retry, so it is a permanently settled failure kept
+    in mission state for audit -- not an actionable alert. Excluding only that
+    case stops a dead record from waking every Executive pass while keeping
+    live faults, recoverable faults, rejections and failed PRs visible.
+    """
+    now = time.time() if now is None else now
+    out = []
+    for r in rows:
+        if r["state"] == "PR_OPEN":
+            if r.get("failure_reason"):
+                out.append(r["gap"])
+            continue
+        if r["state"] not in ("FAULT", "REJECTED"):
+            continue
+        if r["state"] == "FAULT" and not r.get("commit_sha"):
+            exp = r.get("lease_expires_at")
+            if type(exp) in (int, float) and exp <= now:
+                continue
+        out.append(r["gap"])
+    return sorted(out)
+
+
 def workers():
     """Unknown must never be reported as zero; the Executive must investigate."""
     try:
@@ -62,6 +89,7 @@ def snapshot():
                      "local_check_status": item.get("local_check_status"),
                      "correction_queued": bool(item.get("queued_lease")),
                      "external_verdict": item.get("external_verdict"),
+                     "commit_sha": item.get("commit_sha"),
                      "failure_reason": item.get("failure_reason")})
     lb = leaderboard.load()
     stale = True
@@ -181,8 +209,7 @@ def snapshot():
     staffing_alerts=list(controller_health.get("alerts",[]))
     if controller_health.get("state") in ("unknown","stale"):
         staffing_alerts.append("controller "+controller_health["state"])
-    publication_alerts=sorted(r["gap"] for r in rows if r["state"] in ("FAULT","REJECTED")
-                              or (r["state"]=="PR_OPEN" and r.get("failure_reason")))
+    publication_alerts=actionable_publication_alerts(rows)
     executive_signal={"staffing_alerts":sorted(set(staffing_alerts)),
                       "publication_alerts":publication_alerts,
                       "leaderboard":[score.get("rank"),score.get("our_points")],
