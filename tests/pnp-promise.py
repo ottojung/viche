@@ -11,6 +11,18 @@ class Promise(unittest.TestCase):
         p=("two",3,3,4,1<<1,"FanInTwo")
         self.assertTrue(g.valid(p,([("and",[0,1])],3)))
         self.assertFalse(g.valid(p,([("or",[0,1])],3)))
+    def test_row_list_decimal_hex_and_exact_shape(self):
+        prefix="∃ C : PEqualNP.CircuitLowerBounds.Circuit, PEqualNP.MetaComplexity.FanInTwo C ∧ C.size ≤ 6 ∧ PEqualNP.Represents.Represents "
+        def statement(rows):
+            return prefix+"(fun (u : Fin 4) (v : Fin 4) => ((["+rows+"] : List ℕ).getD u.val 0).testBit v.val) C"
+        self.assertEqual(g.parse(statement("11, 6, 1, 0")),("matrix",4,4,6,363,"FanInTwo"))
+        self.assertEqual(g.parse(statement("0xb, 0x6, 0x1, 0x0")),g.parse(statement("11, 6, 1, 0")))
+        self.assertEqual(g.parse(statement("27, 6, 1, 0")),g.parse(statement("11, 6, 1, 0")))
+        self.assertIsNone(g.parse(statement("11, 6, 1")))
+        self.assertIsNone(g.parse(statement("11, 6, 1, 0") + " ∧ True"))
+        self.assertIsNone(g.parse("¬ ("+statement("11, 6, 1, 0")+")"))
+        self.assertIsNone(g.parse(statement("11, 6, 1, 0").replace("getD u.val 0","getD v.val 0")))
+
     def test_parenthesized_matrix_statement(self):
         statement = "PEqualNP.Represents.RepSizeAtMost (fun u v : Fin 8 => (4081470838034108865 : ℕ).testBit (8 * u.val + v.val)) 28"
         self.assertEqual(g.parse(statement),g.parse("(("+statement+"))"))

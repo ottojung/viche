@@ -24,12 +24,33 @@ MONO = re.compile(re.escape(REP+"RepSizeAtMost ") + MATRIX + r" (\d+)")
 GENERAL = re.compile(PREFIX + PRED + re.escape(REP+"Represents ") + MATRIX + r" C")
 TWO = re.compile(PREFIX + PRED + r"∀ i j : Fin (\d+), C.eval \(List.ofFn fun k : Fin \3 => decide \(k = i ∨ k = j\)\) = \((\d+) : ℕ\)\.testBit \(\3 \* min i.val j.val \+ max i.val j.val\)")
 
+ROW_MATRIX = re.compile(PREFIX + PRED + re.escape(REP+"Represents ") +
+    r"\(fun (?:u v : Fin (\d+)|\(u : Fin (\d+)\) \(v : Fin (\d+)\)) => "
+    r"\(\(\[([0-9a-fA-FxX, ]+)\] : List ℕ\)\.getD u\.val 0\)\.testBit v\.val\) C")
+
+
+def row_matrix(s):
+    m=ROW_MATRIX.fullmatch(s)
+    if not m:return None
+    pred,k,a,b,c,raw=m.groups()
+    nr,nc=(int(a),int(a)) if a else (int(b),int(c))
+    k=int(k)
+    if not (1<=nr<=10 and 1<=nc<=10 and 0<=k<=64):return None
+    if not re.fullmatch(r"(?:[0-9]+|0[xX][0-9a-fA-F]+)(?:, *(?:[0-9]+|0[xX][0-9a-fA-F]+))*",raw):
+        return None
+    rows=[int(x,16 if x.lower().startswith("0x") else 10) for x in map(str.strip,raw.split(","))]
+    if len(rows)!=nr:return None
+    mask=sum((r&((1<<nc)-1))<<(i*nc) for i,r in enumerate(rows))
+    return ("matrix",nr,nc,k,mask,pred)
+
 
 def parse(s):
     s = " ".join(s.split())
     # Accept parentheses around the whole supported proposition, not a prefix.
     while s.startswith("(") and s.endswith(")"):
         s = s[1:-1].strip()
+    row=row_matrix(s)
+    if row is not None:return row
     m = MONO.fullmatch(s)
     pred = "Monotone2"
     if m:

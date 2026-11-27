@@ -8,6 +8,10 @@ from . import config, freshness, ledger, state
 
 QUIET_SECONDS = 1200
 OBSERVATION_MAX_AGE = 60
+RECOVERY_WINDOW = 900
+RECOVERY_MIN_SPAN = 600
+RECOVERY_MIN_GAPS = 40
+LEDGER_TAIL_BYTES = 256 * 1024
 WITNESS_HINTS = ("two-lit", "two lit", "one-a-side", "one a side",
                  "fan-in-two", "fan in two", "table a", "representation")
 
@@ -51,9 +55,67 @@ def decide(previous, snapshot, seen, now):
             "ordinary": ordinary, "new_witnesses": witnesses}
 
 
+def yield_evidence(events, now):
+    """Separate raw supply from productive posting; no inference from missing data."""
+    recent = [e for e in events if type(e.get("t")) in (int, float)
+              and 0 <= now-e["t"] <= RECOVERY_WINDOW]
+    successes = sum(e.get("stage") == "pr_opened" or
+                    (e.get("stage") == "posting_generated" and e.get("result") == "generated")
+                    for e in recent)
+    failures = [e for e in recent if e.get("stage") == "posting_generated"
+                and e.get("result") in ("unsupported", "unknown")
+                and isinstance(e.get("gid"), str)]
+    distinct = len({e["gid"] for e in failures})
+    span = now-min((e["t"] for e in failures), default=now)
+    return {"failed_gaps": distinct, "successes": successes,
+            "span": int(span), "stalled": distinct >= RECOVERY_MIN_GAPS
+            and span >= RECOVERY_MIN_SPAN and successes == 0}
+
+
+def recent_yield(now):
+    # The broker is latency-sensitive; read at most a bounded tail. A truncated
+    # window is unknown, rather than evidence of zero successes.
+    try:
+        with open(ledger.path(), "rb") as f:
+            f.seek(0, 2)
+            start = max(0, f.tell()-LEDGER_TAIL_BYTES)
+            f.seek(start)
+            if start:
+                f.readline()
+            raw = f.read(LEDGER_TAIL_BYTES).splitlines()
+        events = []
+        for line in raw:
+            try:
+                e = json.loads(line)
+                if isinstance(e, dict):events.append(e)
+            except (ValueError, UnicodeError):
+                return None
+        if start and (not events or type(events[0].get("t")) not in (int, float)
+                      or events[0]["t"] > now-RECOVERY_WINDOW):
+            return None
+        return yield_evidence(events, now)
+    except OSError:
+        return None
+
+
+def recovery(now=None, record=None):
+    now = time.time() if now is None else now
+    record = load() if record is None else record
+    return bool(active(now, record) and record.get("recovery") is True
+                and type(record.get("observed")) in (int, float)
+                and 0 <= now-record["observed"] <= OBSERVATION_MAX_AGE)
+
+
 def update(snapshot, seen, now):
     old = load()
     new = decide(old, snapshot, seen, now)
+    observed = snapshot.get("observed")
+    if (type(observed) in (int,float) and 0 <= now-observed <= OBSERVATION_MAX_AGE
+            and new.get("observed") == observed and active(now, new)):
+        evidence = recent_yield(now)
+        new = {**new, "yield": evidence,
+               "recovery": bool(evidence and evidence["stalled"]
+                                and new.get("new_witnesses", 0) < 50)}
     if new != old:
         path().parent.mkdir(parents=True, exist_ok=True)
         state.atomic_write(str(path()), json.dumps(new, sort_keys=True)+"\n")
@@ -61,6 +123,9 @@ def update(snapshot, seen, now):
             ledger.mark("surge_enter" if new.get("active") else "surge_exit",
                         "desk", ordinary=new.get("ordinary"),
                         new_witnesses=new.get("new_witnesses"))
+        if bool(new.get("recovery")) != bool(old.get("recovery")):
+            ledger.mark("surge_recovery_enter" if new.get("recovery") else "surge_recovery_exit",
+                        "desk", evidence=new.get("yield"))
     return active(now, new)
 
 
