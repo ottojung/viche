@@ -8,7 +8,14 @@ export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-
 cd "$town"
 mkdir -p "$state"
 exec 9>"$state/allocator-loop.lock"
-flock -n 9 || exit 0
+if [ "${1:-}" = supervised ]; then
+    # Under s6 supervision, wait for the lock instead of exiting. The loser
+    # of a race with an already-running allocator waits to own the single
+    # slot; s6 then runs exactly one allocator without a crash loop.
+    flock 9
+else
+    flock -n 9 || exit 0
+fi
 mkdir -p "$state/lbcert" "$state/bulk"
 mkdir -p "$state/cache"
 last_maintenance=0
@@ -16,7 +23,20 @@ last_observation=0
 last_readiness=0
 last_scorecard=0
 last_readiness_mode=unknown
+# A shell can keep executing a deleted script inode after a Git deployment.
+# Compare the active script revision at a safe loop boundary, not while a
+# claim or release is in flight. All detached children close the owner FD.
+script="$town/missions/pnp/allocator.sh"
+revision=$(cksum < "$script")
 while [ -f missions/pnp/allocator.py ]; do
+    if [ "$(cksum < "$script")" != "$revision" ]; then
+        echo "allocator source changed; reload at idle boundary"
+        if [ "${1:-}" = supervised ]; then
+            exit 0
+        fi
+        exec 9>&-
+        exec /bin/sh "$script" "$@"
+    fi
     # Keep fresh allocation and generation separate from slow roster/network
     # maintenance. Only this loop writes allocator memory and calls next.
     now=$(date +%s)
