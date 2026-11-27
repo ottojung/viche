@@ -1,0 +1,1 @@
+C7 raw-pair refutations. Helpers adapted from public merged L-lib-787 (Apache-2.0). Only the exact negative statement shape with raw OR partner 2..5 is matched. The two inputs differ solely at 0; the unique reading gate stays true; the circuit output cannot distinguish them. Source candidates are not kernel receipts; exact managed proof checking is mandatory.
