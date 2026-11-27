@@ -1,0 +1,12 @@
+#!/bin/sh
+# Supervised owner of the single persistent PnP desk allocator.
+# allocator.sh takes its own flock (allocator-loop.lock), so s6 supervision
+# and any accidental manual start can never run two allocators: the loser
+# exits immediately. The allocator keeps the whole live lease pool, focus,
+# heartbeat posting and candidate generation independent of Executive turns.
+. /home/lubko/.profile
+set -eu
+export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
+export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
+export PNP_STATE_ROOT=/var/lib/lubko/wd/viche-state/pnp
+exec /bin/sh "$VICHE_TOWN_ROOT/missions/pnp/allocator.sh" supervised

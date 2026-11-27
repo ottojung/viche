@@ -8,7 +8,14 @@ export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-
 cd "$town"
 mkdir -p "$state"
 exec 9>"$state/allocator-loop.lock"
-flock -n 9 || exit 0
+if [ "${1:-}" = supervised ]; then
+    # Under s6 supervision, wait for the lock instead of exiting. The loser
+    # of a race with an already-running allocator waits to own the single
+    # slot; s6 then runs exactly one allocator without a crash loop.
+    flock 9
+else
+    flock -n 9 || exit 0
+fi
 mkdir -p "$state/lbcert" "$state/bulk"
 mkdir -p "$state/cache"
 last_maintenance=0
