@@ -134,4 +134,19 @@ class Tests(unittest.TestCase):
             with patch.object(b.live,"snapshot",return_value=open_step),patch.object(b.ready,"competition",return_value={GID:0}),patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})) as check:
                 self.assertEqual(b.verify(Q,source)[0],"transient")
                 check.assert_called_once()
+
+    def test_leased_step_exempt_from_held_parallel_guard(self):
+        """The desk counts our own lease in held; a leased step on the exact
+        statement must still reach the checker in the common parallel=1 case,
+        mirroring eligible() (test_current_competition_and_exact_lease)."""
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
+            b.root().mkdir()
+            source,_,_=b.candidate(Q,b.gen.parse(STATEMENT))
+            from missions.pnp import state
+            rec={"gap_id":GID,"state":"LEASED","statement":STATEMENT,
+                 "lease":"fixture","lease_expires_at":time.time()+1000}
+            full={"at":time.time(),"gaps":{GID:{"held":1,"parallel":1}}}
+            with patch.object(b.state,"load",return_value=rec),patch.object(b.live,"snapshot",return_value=full),patch.object(b.ready,"competition",return_value={GID:0}),patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})) as check:
+                self.assertEqual(b.verify(Q,source)[0],"transient")
+                check.assert_called_once()
 if __name__=="__main__":unittest.main()

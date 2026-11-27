@@ -179,8 +179,17 @@ def verify(q,source):
     snap = live.snapshot(max_age=45)
     if snap and time.time()-snap["at"] < 120:
         row = snap["gaps"].get(gid)
-        if row is None or (row.get("held") or 0) >= (row.get("parallel") or 1):
-            return "obsolete", "step closed or parallel slots full before verification"
+        if row is None:
+            return "obsolete", "step closed before verification"
+        # The desk counts our own lease in ``held``. A leased/bound step on the
+        # exact statement must be exempt from the held>=parallel capacity rule,
+        # exactly as eligible() exempts it (test_current_competition_and_exact_lease);
+        # otherwise parallel=1 suppresses verification of the batch's own gap.
+        lease_rec=state.load(gid)
+        leased=bool(support.active(lease_rec) and
+                    lease_rec.get("statement")==q.get("statement"))
+        if not leased and (row.get("held") or 0) >= (row.get("parallel") or 1):
+            return "obsolete", "parallel slots full before verification"
         if ready.competition(time.time()).get(gid, 0) > 0:
             return "obsolete", "rival PR open before verification"
     with tempfile.TemporaryDirectory(prefix="promise-check-",dir=root()) as d:
