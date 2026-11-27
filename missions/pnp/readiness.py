@@ -4,6 +4,7 @@ import math
 import os
 from pathlib import Path
 import socket
+import subprocess
 import tempfile
 import time
 
@@ -12,6 +13,7 @@ from .lbcert import plugins, plugtest
 
 MAX_BEAT_AGE = 300
 MAX_FRONTIER_AGE = 60
+MANDATE = "IL6wUXaBGXiOmp4aAI8B4c-possesses"
 
 
 def lease_errors(records, now):
@@ -78,6 +80,25 @@ def check(now=None):
     return {"at": time.time(), "ready": not errors, "checks": checks, "errors": errors}
 
 
+def report_board(result):
+    # The standing mission explicitly calls for regular truthful board updates.
+    # Report only sanitized diagnostic names; no credentials or lease IDs.
+    label = "READY" if result["ready"] else "NOT READY"
+    probe = result["checks"].get("promise", {})
+    failures = ", ".join(sorted(result["errors"])) or "none"
+    body = (f"PnP batch readiness: {label}; failures: {failures}; "
+            f"promise generator: {probe.get('seconds', 'unverified')} s "
+            "(candidate/static validation only, not upstream credit). "
+            "Local details: pnp/cache/readiness.json. Standing mission remains open.")
+    try:
+        p = subprocess.run(["antonina", "board", "comment", "--id", MANDATE,
+                            "--author", "Viche PnP readiness", "--body", body],
+                           capture_output=True, timeout=15)
+        return p.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def main():
     # A probe is not permission to perform research on another host.
     if socket.gethostname().split(".")[0] != "billy-dev":
@@ -87,6 +108,9 @@ def main():
     path = Path(config.STATE_ROOT)/"cache"/"readiness.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     state.atomic_write(str(path), json.dumps(result, sort_keys=True)+"\n")
+    if "--report" in __import__("sys").argv[1:]:
+        result["board_reported"] = report_board(result)
+        state.atomic_write(str(path), json.dumps(result, sort_keys=True)+"\n")
     print(("READY" if result["ready"] else "NOT READY")+" "+json.dumps(result, sort_keys=True))
     return 0 if result["ready"] else 1
 
