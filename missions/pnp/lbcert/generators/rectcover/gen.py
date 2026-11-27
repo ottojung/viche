@@ -1,247 +1,138 @@
 #!/usr/bin/env python3
-"""Bounded rectangle-cover witness search, followed by independent Lean verification.
+"""Rectangle-cover generator for matrix colouring statements.
 
-Enumerate maximal rectangles by row intersections (capped on dense matrices),
-retain row/column covers, use fast bitset greedy search, then one bounded SAT
-query at the requested bound. Refusal is never a lower-bound proof.
+Learn from merged PEqualNP.Outside.L_meta_10011 / 10013 / 10015 (Apache-2.0):
+a witness is a list of all-zero (or all-one) rectangles given as Finsets, and
+both soundness and completeness are checked by kernel decide. The search below
+builds maximal bicliques of the target-colour bipartite graph and runs a
+greedy set cover; instances whose cover exceeds the stated bound are refused.
 """
 import random
 import re
 import sys
-import threading
 
-MAX_INTERSECTIONS = 12000
-MAX_CANDIDATES = 6000
-PATTERN = re.compile(
-    r"∃ L : List \(Finset \(Fin (\d+)\) × Finset \(Fin (\d+)\)\), L.length ≤ (\d+) ∧ "
-    r"\(∀ r ∈ L, ∀ i ∈ r\.1, ∀ j ∈ r\.2, \(\(\[([0-9, ]*)\] : List ℕ\)\.getD i\.val 0\)\.testBit j\.val = (true|false)\) ∧ "
-    r"∀ \(i : Fin \1\) \(j : Fin \2\), \(\(\[\4\] : List ℕ\)\.getD i\.val 0\)\.testBit j\.val = \5 → ∃ r ∈ L, i ∈ r\.1 ∧ j ∈ r\.2"
-)
+MATCH = r"∃ L : List \(Finset \(Fin \d+\) × Finset \(Fin \d+\)\), L.length ≤ \d+"
 
 
 def parse(text):
-    m = PATTERN.fullmatch(" ".join(text.split()))
+    m = re.search(r"Finset \(Fin (\d+)\) × Finset \(Fin (\d+)\)", text)
     if not m:
         return None
-    nr, nc, bound = map(int, m.group(1, 2, 3))
-    rows = [int(x) for x in m[4].split(",") if x.strip()]
-    if not (0 < nr <= 64 and 0 < nc <= 64 and len(rows) == nr):
+    nr, nc = int(m.group(1)), int(m.group(2))
+    bound = int(re.search(r"L\.length ≤ (\d+)", text).group(1))
+    lists = [list(map(int, re.findall(r"\d+", m.group(1))))
+             for m in re.finditer(r"\(\[([0-9, ]+)\] : List ℕ\)", text)]
+    rows = max(lists, key=len)
+    if len(rows) != nr:
         return None
-    return nr, nc, bound, rows, m[5] == "false"
+    want_false = "testBit j.val = false" in text
+    return nr, nc, bound, rows, want_false
 
 
-def matches(text):
-    return parse(text) is not None
+def cover_rectangles(rows, nc, want_false, seed=0, tries=3):
+    n = len(rows)
+    Zi = [frozenset(j for j in range(nc)
+                    if bool((rows[i] >> j) & 1) != want_false)
+          for i in range(n)]
+    concepts = set()
 
-
-def bits(mask):
-    while mask:
-        bit = mask & -mask
-        yield bit.bit_length() - 1
-        mask ^= bit
-
-
-def rectangle_mask(r, c, nc):
-    return sum(c << (i * nc) for i in bits(r))
-
-
-def matrix(rows, nc, want_false):
-    full = (1 << nc) - 1
-    return [(x ^ full if want_false else x) & full for x in rows]
-
-
-def candidates(rows, nc):
-    """Every generated rectangle is a maximal all-target submatrix."""
-    nr = len(rows)
-    full = (1 << nc) - 1
-    def close(c):
-        r = sum(1 << i for i, x in enumerate(rows) if c & x == c)
-        if not r or not c:
+    def close(R, C):
+        if not R or not C:
             return None
-        for i in bits(r):
-            c &= rows[i]
-        return r, c
-    mandatory = {close(c) for c in rows if c}
-    mandatory.update(close(1 << j) for j in range(nc))
-    mandatory.discard(None)
-    # Distinct intersections, not all subsets; capped deterministically.
-    inter = {full}
-    for c in rows:
-        inter |= {x & c for x in inter}
-        inter.discard(0)
-        if len(inter) > MAX_INTERSECTIONS:
-            inter = set(sorted(inter, key=lambda x: (-x.bit_count(), x))[:MAX_INTERSECTIONS])
-    boxes = {close(c) for c in inter}
-    boxes.discard(None)
-    extras = sorted(boxes - mandatory, key=lambda p: (-p[0].bit_count()*p[1].bit_count(), p))
-    return sorted(mandatory | set(extras[:max(0, MAX_CANDIDATES-len(mandatory))]))
+        R2 = frozenset(i for i in range(n) if C <= Zi[i])
+        C2 = frozenset(c for c in range(nc) if all(c in Zi[i] for i in R2))
+        return (R2, C2) if R2 and C2 else None
 
-
-def prune(chosen, masks, target):
-    for i in reversed(range(len(chosen))):
-        other = 0
-        for j, c in enumerate(chosen):
-            if j != i:
-                other |= masks[c]
-        if other == target:
-            chosen.pop(i)
-    return chosen
-
-
-def greedy(masks, target, seed=0, tries=12):
+    for j in range(nc):
+        concepts.add(close(frozenset(i for i in range(n) if j in Zi[i]),
+                           frozenset({j})))
+    for i in range(n):
+        concepts.add(close(frozenset({i}), Zi[i]))
+    for j in range(nc):
+        for k in range(j + 1, nc):
+            R = frozenset(i for i in range(n) if j in Zi[i] and k in Zi[i])
+            c = close(R, frozenset({j, k}))
+            if c:
+                concepts.add(c)
     rng = random.Random(seed)
+    for _ in range(15000 // tries):
+        S = rng.sample(range(n), rng.randint(2, 9))
+        C = set(Zi[S[0]])
+        for i in S[1:]:
+            C &= Zi[i]
+        if C:
+            c = close(frozenset(S), frozenset(C))
+            if c:
+                concepts.add(c)
+    cands = sorted(concepts, key=lambda p: len(p[0]) * len(p[1]), reverse=True)
+    Z = {(i, j) for i in range(n) for j in Zi[i]}
     best = None
     for t in range(tries):
-        left = target
-        out = []
-        order = list(range(len(masks)))
-        if t:
-            rng.shuffle(order)
-        while left:
-            if best is not None and len(out) >= len(best):
+        remaining = set(Z)
+        cover = []
+        while remaining:
+            pick, gain = None, 0
+            for R, C in cands:
+                g = sum(1 for i in R for j in C if (i, j) in remaining)
+                if g > gain:
+                    gain, pick = g, (R, C)
+            if pick is None:
                 break
-            index = max(order, key=lambda i: (masks[i] & left).bit_count())
-            gain = masks[index] & left
-            if not gain:
-                break
-            left ^= gain
-            out.append(index)
-        if not left:
-            out = prune(out, masks, target)
-            if best is None or len(out) < len(best):
-                best = out
+            remaining -= {(i, j) for i in pick[0] for j in pick[1]}
+            cover.append(pick)
+        if not remaining and (best is None or len(cover) < len(best)):
+            best = cover
+        if best is not None and len(best) <= 12:
+            break
     return best
 
 
-def bounded_sat(masks, target, bound, seconds=30):
-    """One decision problem at the desk bound, never an unbounded optimum loop."""
-    try:
-        from pysat.solvers import Minisat22
-        from pysat.card import CardEnc, EncType
-    except ImportError:
-        return None
-    if bound < 0 or not masks or len(masks)*max(1,bound) > 220000:
-        return None
-    cells = list(bits(target))
-    by_cell = {i: [] for i in cells}
-    for ci, m in enumerate(masks, 1):
-        for i in bits(m):
-            by_cell[i].append(ci)
-    if any(not x for x in by_cell.values()):
-        return None
-    clauses = list(by_cell.values())
-    if bound < len(masks):
-        clauses += CardEnc.atmost(lits=list(range(1, len(masks)+1)), bound=bound,
-                                  encoding=EncType.seqcounter, top_id=len(masks)).clauses
-    with Minisat22(bootstrap_with=clauses) as solver:
-        solver.conf_budget(200000)
-        timer = threading.Timer(seconds, solver.interrupt)
-        timer.start()
-        try:
-            ok = solver.solve_limited(expect_interrupt=True)
-            if ok is True:
-                model = solver.get_model()
-                return [v-1 for v in model if 1 <= v <= len(masks)]
-        finally:
-            timer.cancel()
-            timer.join()
-    return None
-
-
-def audit(boxes, rows, nc, bound):
-    if len(boxes) > bound:
-        return False
-    target = sum(x << (i*nc) for i,x in enumerate(rows))
-    union = 0
-    for r, c in boxes:
-        if not (0 < r < (1 << len(rows)) and 0 < c < (1 << nc)):
-            return False
-        m = rectangle_mask(r, c, nc)
-        if m & ~target:
-            return False
-        union |= m
-    return union == target
-
-
-def cover_rectangles(rows, nc, want_false, bound, seed=0, seconds=30):
-    zi = matrix(rows, nc, want_false)
-    target = sum(x << (i*nc) for i,x in enumerate(zi))
-    if not target:
-        return []
-    if bound <= 0:
-        return None
-    boxes = candidates(zi, nc)
-    masks = [rectangle_mask(r,c,nc) for r,c in boxes]
-    # The singleton row and column covers give an unconditional upper bound.
-    # Prefer the smallest of those and the maximal-rectangle greedy cover.
-    row_cover = [(1 << i, c) for i, c in enumerate(zi) if c]
-    col_cover = [(sum(1 << i for i, c in enumerate(zi) if c & (1 << j)), 1 << j)
-                 for j in range(nc) if any(c & (1 << j) for c in zi)]
-    baseline = min(row_cover, col_cover, key=len)
-    if len(baseline) <= bound:
-        return baseline if audit(baseline, zi, nc, bound) else None
-    best = greedy(masks, target, seed)
-    if best is None or len(best) > bound:
-        best = bounded_sat(masks, target, bound, seconds)
-    if best is None:
-        return None
-    chosen = [boxes[i] for i in best]
-    return chosen if audit(chosen, zi, nc, bound) else None
-
-
-def emit(gid, statement, nr, nc, rows, want_false, cover):
-    num = re.fullmatch(r"L-meta-(\d+)", gid).group(1)
+def emit(gid_mod, statement, nr, nc, cover):
+    num = gid_mod.rsplit("_", 1)[-1]
     aux = "PEqualNP.Outside.L_meta_" + num + "_aux"
-    color = "false" if want_false else "true"
-    # Mask verifier follows the independently merged L-meta-10011 proof pattern.
-    return f"""import PEqualNP.Defs
+    boxes = ", ".join(
+        "({" + ",".join(str(i) for i in sorted(R)) + "},{" +
+        ",".join(str(j) for j in sorted(C)) + "})" for R, C in cover)
+    code = """import Mathlib
+import PEqualNP.Defs
 
-namespace {aux}
+-- Rectangle witness computed by the rectcover generator; method learned from
+-- merged PEqualNP.Outside.L_meta_10011 / L_meta_10013 / L_meta_10015.
 
-def boxes : List (ℕ × ℕ) := {str(cover)}
-def rows : List ℕ := {rows}
-def members {{n : ℕ}} (mask : ℕ) : Finset (Fin n) := Finset.univ.filter fun i => mask.testBit i.val
+namespace %s
+
+def cover : List (Finset (Fin %d) × Finset (Fin %d)) := [%s]
+
+end %s
 
 set_option maxRecDepth 100000 in
 set_option maxHeartbeats 20000000 in
-lemma sound : ∀ p ∈ boxes, ∀ i : Fin {nr}, ∀ j : Fin {nc}, p.1.testBit i.val = true → p.2.testBit j.val = true → (rows.getD i.val 0).testBit j.val = {color} := by decide +kernel
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 20000000 in
-lemma complete : ∀ i : Fin {nr}, ∀ j : Fin {nc}, (rows.getD i.val 0).testBit j.val = {color} → ∃ p ∈ boxes, p.1.testBit i.val = true ∧ p.2.testBit j.val = true := by decide +kernel
-
-end {aux}
-
-open {aux}
-
-theorem PEqualNP.Outside.L_meta_{num} : {statement} := by
-  refine ⟨boxes.map (fun p => (members p.1, members p.2)), by decide, ?_, ?_⟩
-  · intro r hr i hi j hj
-    obtain ⟨p, hp, rfl⟩ := List.mem_map.mp hr
-    exact sound p hp i j (by simpa [members] using hi) (by simpa [members] using hj)
-  · intro i j h
-    obtain ⟨p, hp, hi, hj⟩ := complete i j h
-    exact ⟨_, List.mem_map.mpr ⟨p, hp, rfl⟩, by simpa [members] using hi, by simpa [members] using hj⟩
-"""
+theorem PEqualNP.Outside.L_meta_%s : %s := by
+  refine ⟨%s.cover, by decide, ?_, ?_⟩
+  · decide +kernel
+  · decide +kernel
+""" % (aux, nr, nc, boxes, aux, num, statement, aux)
+    return code
 
 
 def main():
     if len(sys.argv) != 4:
-        return 2
-    gid, sf, out = sys.argv[1:4]
-    statement = open(sf).read().strip()
+        sys.exit(2)
+    gid, stmt_file, out = sys.argv[1:4]
+    statement = open(stmt_file).read().strip()
     parsed = parse(statement)
-    if not parsed:
+    if parsed is None:
         print("unrecognised rectangle statement", file=sys.stderr)
-        return 3
+        sys.exit(3)
     nr, nc, bound, rows, want_false = parsed
-    cover = cover_rectangles(rows, nc, want_false, bound, seed=sum(map(ord,gid)))
-    if cover is None:
-        print("no verified rectangle cover within bound and search budget", file=sys.stderr)
-        return 3
-    open(out, "w").write(emit(gid, statement, nr, nc, rows, want_false, cover))
-    return 0
+    cover = cover_rectangles(rows, nc, want_false, seed=sum(ord(c) for c in gid))
+    if cover is None or len(cover) > bound:
+        print("cover %s exceeds bound %d" %
+              (len(cover) if cover is not None else "not found", bound), file=sys.stderr)
+        sys.exit(3)
+    open(out, "w").write(emit(gid, statement, nr, nc, cover))
+    sys.exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

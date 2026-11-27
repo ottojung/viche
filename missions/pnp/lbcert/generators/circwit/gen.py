@@ -40,8 +40,13 @@ def evaluate(gates, n):
     full = (1 << (1 << n)) - 1
     w = input_masks(n)
     for op, a, b in gates:
-        va, vb = w[a], w[b]
-        w.append(va & vb if op == 'and' else va | vb if op == 'or' else full ^ va)
+        va = w[a]
+        if op == 'and':
+            w.append(va & w[b])
+        elif op == 'or':
+            w.append(va | w[b])
+        else:
+            w.append(full ^ va)
     return w[n + len(gates) - 1], w
 
 
@@ -80,7 +85,7 @@ def beam_search(n, target, bound, width=1500, seed=0):
 
 
 def emit(n, bound, statement, gates, outwire):
-    num = re.search(r"(\d+)$", __import__('sys').argv[1] if len(__import__('sys').argv) > 1 else "")
+    num = re.search(r"L_meta_(\d+)$", __import__('sys').argv[1] if len(__import__('sys').argv) > 1 else "")
     num = num.group(1) if num else "0"
     mod = "PEqualNP.Outside.L_meta_" + num
     opname = {'and': 'and', 'or': 'or', 'not': 'not'}
@@ -92,11 +97,9 @@ def emit(n, bound, statement, gates, outwire):
     notwire = gates[notpos][1]
     alts = " | ".join("h%d" % j for j in range(len(gates)))
     rcases = "rcases hg with " + alts + " <;> subst g <;> simp"
-    # The circuit's output is an arbitrary wire index, not necessarily the
-    # last gate's wire. beam_search can find the target on an earlier wire
-    # (e.g. a bare input projection), where emitting the last wire yields a
-    # false theorem that fails to compile. Emit outwire, the wire actually
-    # verified to hold the target truth table.
+    # Emit the wire actually verified to hold the target truth table. beam_search
+    # may find the target on an earlier wire (even a bare input projection); the
+    # last gate's wire need not be the output, and using it yields a false theorem.
     code = """import Mathlib
 import PEqualNP.Defs
 
