@@ -138,6 +138,28 @@ class Tests(unittest.TestCase):
         src.symlink_to(outside)
         self.assertNotEqual(self.admit()["status"],"promoted")
         self.assertNotPromoted()
+    def test_idle_promotion_avoids_ledger_scan(self):
+        self.enable()
+        with patch.object(m.ledger,"read",side_effect=AssertionError("idle ledger scan")):
+            for counts in ({},{GID:1}):
+                with patch.object(m,"observations",return_value=counts):
+                    self.assertEqual(m.promote_once(),[])
+            with patch.object(m.cli,"held_records",return_value=[{}]*4):
+                self.assertEqual(m.promote_once(),[])
+            with patch.object(m,"pending",return_value=[]):
+                self.assertEqual(m.promote_once(),[])
+        self.assertNotPromoted()
+    def test_eligible_promotion_preserves_attempt_cooldown(self):
+        self.enable()
+        recent={"stage":"private_promotion","gid":GID,"digest":DIGEST,
+                "authorization":FLAG["authorization"],"t":time.time()}
+        with patch.object(m.ledger,"read",return_value=[recent]), patch.object(m,"admit") as admit:
+            self.assertEqual(m.promote_once(),[])
+            admit.assert_not_called()
+        with patch.object(m.ledger,"read",return_value=[]), patch.object(m,"admit",return_value={"status":"promoted"}) as admit:
+            self.assertEqual(m.promote_once(),[{"status":"promoted"}])
+            admit.assert_called_once_with(GID,DIGEST,(CFG,FLAG))
+
     def test_observer_disabled_no_network(self):
         with patch.object(promotion_observer.competition,"observe") as net:
             promotion_observer.observe();net.assert_not_called()
