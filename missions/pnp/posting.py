@@ -211,6 +211,8 @@ def maintain(d, mem, now, snapshot, records):
             if not old.get("work_lane") and age < LEGACY_GRACE:
                 continue
             if batch:
+                if fastlane.cand_ready(gid):
+                    continue  # cached complete source belongs to the fast lane
                 # Never release a candidate or an immature hard lease.
                 # The existing fenced release revalidates the lease and intent.
                 if fastlane.release(d,mem,gid,"out_of_time",
