@@ -34,15 +34,33 @@ LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 # throwing KeyError on value/template desk gaps for hours while generating no
 # candidates. Detect a source change at each poll and exit cleanly; allocator.sh
 # relaunches us with the current code within one tick (it holds our flock).
-START_HASH = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
+SOURCE_FILES = (
+    Path(HERE) / "autosolve.py",
+    Path(HERE) / "plugins.py",
+    Path(HERE) / "generators" / "promise" / "stock_index.py",
+    Path(HERE) / "ready.py",
+    Path(HERE) / "live.py",
+    Path(HERE).parent / "fastlane.py",
+    Path(HERE).parent / "jobs.py",
+)
+
+
+def source_digest():
+    h = hashlib.sha256()
+    for path in SOURCE_FILES:
+        h.update(str(path).encode() + b"\0")
+        try:
+            h.update(path.read_bytes())
+        except OSError:
+            h.update(b"\0missing")
+    return h.hexdigest()
+
+
+START_HASH = source_digest()
 
 
 def source_changed():
-    try:
-        now = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
-    except OSError:
-        return False
-    return now != START_HASH
+    return source_digest() != START_HASH
 
 STATE = os.environ.get('PNP_STATE_ROOT', '/var/lib/lubko/wd/viche-state/pnp')
 WORK = os.path.join(STATE, 'lbcert')
@@ -288,7 +306,7 @@ def held_ids():
 
 
 def fresh(gid, plugin_sha=None):
-    """No status yet, or a plugin refused/failed it with an older version of its gen.py."""
+    """No status yet, or a plugin refused/failed it with an older generation version."""
     st = status(gid)
     if st is None:
         return True
