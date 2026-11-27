@@ -111,8 +111,10 @@ case "$mode" in
         if { printf '%s\n%s\n%s\n' "$orders" "$recovery" "$proceed"
              printf '%s\n' "$report" | jq -cS 'del(.at,.backup,.probes_run,.previous_order)' 2>/dev/null || printf '%s\n' "$report"
              # Resources: only the status of each, so a percentage drifting by 0.1 does not wake the agent.
+             # Exclude the CPU-derived load status and capacity.dispatch_signal: they drift with live
+             # load and caused ~66 economy wakeups/day with no stable input changing (Act 29 s.7/P-1795821311-4d7b).
              if [ -s "$econ/resources.json" ]; then
-               jq -cS '{overall, s: (.resources | map_values(.status)), needs: .needs_founder, capacity: .capacity.dispatch_signal}' "$econ/resources.json" 2>/dev/null || :
+               jq -cS '{overall, s: (.resources | map_values(.status) | del(.load)), needs: .needs_founder}' "$econ/resources.json" 2>/dev/null || :
              fi
              printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
              } | /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
