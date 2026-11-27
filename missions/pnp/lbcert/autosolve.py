@@ -20,6 +20,7 @@ emergency: touch PNP_STATE_ROOT/lbcert/STOP
 """
 import fcntl, hashlib, json, os, re, subprocess, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -29,21 +30,40 @@ import threading
 from missions.pnp import pause, surge
 LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 
-# A running Python process does not reload a module whose source changes on
-# disk. Without this guard, a fix delivered while autosolve is alive stays
-# dormant until some unrelated restart, which previously left the poll loop
-# throwing KeyError on value/template desk gaps for hours while generating no
-# candidates. Detect a source change at each poll and exit cleanly; allocator.sh
-# relaunches us with the current code within one tick (it holds our flock).
-START_HASH = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
+# Python retains imported helpers in memory even when their files are deployed.
+# Include runtime sources and generator data; ignore docs, tests and bytecode.
+# A clean restart is required for the registry and imported helpers to agree.
+def runtime_hash(root=None):
+    root=Path(root) if root is not None else Path(HERE).parent
+    h=hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        if path.suffix in (".py",".c",".sh",".json") and path.is_file():
+            h.update(str(path.relative_to(root)).encode()+b"\0")
+            h.update(hashlib.sha256(path.read_bytes()).digest())
+    return h.hexdigest()
+
+
+START_HASH = runtime_hash()
 
 
 def source_changed():
     try:
-        now = hashlib.sha256(open(HERE + '/autosolve.py', 'rb').read()).hexdigest()
+        return runtime_hash()!=START_HASH
     except OSError:
         return False
-    return now != START_HASH
+
+
+def drain_workers(executors):
+    """Stop generator subprocess trees, then finish durable publisher/broker calls.
+
+    Never drop the singleton lock while executor threads could still make a
+    desk or publication mutation. Detached canonical publisher jobs are fenced
+    separately and are not killed by this generator guardian.
+    """
+    managed_process.stop_all()
+    for executor in executors:
+        executor.shutdown(wait=True,cancel_futures=True)
+
 
 STATE = os.environ.get('PNP_STATE_ROOT', '/var/lib/lubko/wd/viche-state/pnp')
 WORK = os.path.join(STATE, 'lbcert')
@@ -381,13 +401,9 @@ def main():
     prepare_retry = {}
     while not pause.paused_directory(WORK):
         if source_changed():
-            # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
-            # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
-            log('source changed; exiting for clean restart')
-            managed_process.stop_all()
-            for executor in (pool, plugin_pool, prepare_pool):
-                executor.shutdown(wait=False, cancel_futures=True)
-            os._exit(0)
+            log('runtime changed; draining workers for clean restart')
+            drain_workers((pool,plugin_pool,prepare_pool))
+            return 0
         try:
             for pending in (outstanding, plugin_pending):
                 for gid,future in list(pending.items()):
@@ -503,9 +519,7 @@ def main():
         except Exception as e:
             log('poll error', type(e).__name__, str(e)[:200])
         time.sleep(POLL)
-    managed_process.stop_all()
-    for executor in (pool, plugin_pool, prepare_pool):
-        executor.shutdown(wait=False, cancel_futures=True)
+    drain_workers((pool,plugin_pool,prepare_pool))
     log('STOP file found; exiting')
     return 0
 

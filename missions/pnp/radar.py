@@ -18,7 +18,7 @@ import sys
 import time
 import urllib.request
 
-from . import config, gitctl
+from . import config, frontier, gitctl
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lbcert'))
 import lbparse  # noqa: E402
 import plugins  # noqa: E402
@@ -75,8 +75,8 @@ def status(gid):
 
 def build():
     from .lbcert import live
-    gaps = [g for g in json.loads(live.gaps_bytes(timeout=60))['gaps']   # shared conditional fetch
-            if isinstance(g.get('statement'), str)]
+    rows = json.loads(live.gaps_bytes(timeout=60))['gaps']
+    gaps = [g for g in rows if isinstance(g.get('statement'), str)]
     head, idx = sibling.index(gitctl.MIRROR, os.path.join(config.STATE_ROOT, 'lbcert'))
     mod_sk = {m: normalize_skeleton(sk) for sk, ms in idx.items() for m in ms}
     sk_mods = collections.defaultdict(set)
@@ -86,8 +86,13 @@ def build():
     # gaps.json also lists closed steps and cut-of-cut sub-steps nobody can take (2359 vs 1820 open on
     # 2026-11-26); the live desk status says which are open, their points and how many hold them.
     from .lbcert import live
-    snap = live.snapshot(max_age=300)
-    lg = snap['gaps'] if snap else None
+    now=time.time()
+    snap=frontier.load(now)
+    if not snap.get('complete') or not 0<=now-snap.get('observed',0)<=90:
+        raise RuntimeError('fresh complete frontier unavailable; preserve prior radar')
+    lg=snap['gaps']
+    levels=frontier.cached_offer_levels(snap,now)
+    offers_known=levels is not None and levels==frontier.offer_levels(snap,rows)
     fams = {}
     for g in gaps:
         if lg is not None and g['id'] not in lg:
@@ -98,18 +103,22 @@ def build():
         f = fams.setdefault(key, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
                                  'statuses': collections.Counter(), 'coverage': None,
-                                 'points': 0, 'free_points': 0, '_skeletons':set(), '_coverage':collections.Counter()})
+                                 'points': 0, 'free_points': 0, 'offerable':0, '_skeletons':set(), '_coverage':collections.Counter()})
         f['_skeletons'].add(sk)
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
         s = (lg or {}).get(g['id']) or {}
         pts = s.get('points') or 0
         f['points'] += pts
-        if not g.get('pr_open') and (s.get('held') or 0) < (s.get('parallel') or 1):
-            # level 'open' = truth unknown to the desk (beat its best by one): discount, not ignore
-            f['free_points'] += pts * (0.3 if s.get('level') == 'open' else 1)
-        if len(f['examples']) < 3:
-            f['examples'].append({'id': g['id'], 'statement': g['statement'][:1500], 'sketch': (g.get('sketch') or '')[:400]})
+        offered=offers_known and g.get("offerable_now") is True and not g.get("pr_open")
+        if offered:
+            f["offerable"]+=1
+            f["free_points"] += pts * (0.3 if s.get("level")=="open" else 1)
+        example={"id":g["id"],"statement":g["statement"][:1500],
+                 "sketch":(g.get("sketch") or "")[:400],"offered":bool(offered)}
+        f["examples"].append(example)
+        f["examples"].sort(key=lambda x:(not x["offered"],-int(re.sub(r"\D","",x["id"]) or 0)))
+        del f["examples"][3:]
         st = status(g['id'])
         if st:
             f['statuses'][st] += 1
@@ -141,7 +150,7 @@ def build():
         f['authors'] = dict(f['authors'].most_common(5))
         f['statuses'] = dict(f['statuses'])
     ranked = sorted(fams.values(), key=lambda f: -f['score'])
-    return {'at': time.time(), 'corpus': head, 'families': ranked}
+    return {'at': time.time(), 'corpus': head, 'offers_known':offers_known,'families': ranked}
 
 
 CONTRACT = """## How to deliver a generator (plugin contract)
@@ -167,7 +176,7 @@ def write(r):
     json.dump(r, open(tmp, 'w'), indent=1)
     os.replace(tmp, os.path.join(OUT, 'radar.json'))
     lines = ['# PnP family radar (%s, corpus %s)' % (time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime(r['at'])), r['corpus'][:12]),
-             '', 'score = takeable desk points / 100 (open, no PR, a free parallel slot) + 0.5 x merges in the last %d h.'
+             '', 'score = actual offerable desk points / 100 (no rival PR; verified catalog/status agreement) + 0.5 x merges in the last %d h.'
              ' coverage: built-in family, plugin, or none.' % HOURS,
              '', '| score | free pts | unclaimed | open | merged %dh | top authors | coverage | our statuses | family |' % HOURS,
              '|---|---|---|---|---|---|---|---|---|']
@@ -177,17 +186,19 @@ def write(r):
             ', '.join('%s %d' % kv for kv in f['authors'].items()) or '-', f['coverage'] or '**none**',
             ', '.join('%s %d' % kv for kv in f['statuses'].items()) or '-', f['label'].replace('|', '/')))
     open(os.path.join(OUT, 'radar.md'), 'w').write('\n'.join(lines) + '\n')
-    todo = [f for f in r['families'] if not f['coverage'] and f['score'] >= 2][:5]
+    todo = [f for f in r['families'] if (not f['coverage'] or f.get('coverage_counts',{}).get('',0))
+            and f['score'] >= 2][:5]
     hard = [f for f in r['families'] if f['coverage'] and
             sum(v for k, v in f['statuses'].items() if k in ('unsupported', 'failed', 'toobig')) >= 3][:3]
     b = ['# Generator backlog (written by missions/pnp/radar.py; refreshed every 10 minutes)', '',
+         'Actual offers are cross-checked against the public catalog/status; unknown offerability is not zero work.',
          'Credits go to the first accepted PR. Competitors win batches with per-family generators that open a PR',
          'seconds after a step is posted. Build the generator for the top family below that nobody in the town',
          'is already building (claim it by creating its generators/NAME directory in your delivery).', '']
     for i, f in enumerate(todo, 1):
         b += ['## %d. %s' % (i, f['label']),
-              '', 'takeable points %d, unclaimed %d, open %d, merged in %d h: %d (%s)' % (
-                  f.get('free_points', 0), f['unclaimed'], f['open'], HOURS, f['merged_6h'],
+              '', 'offerable points %d, offerable rows %d, no-PR rows %d, open %d, merged in %d h: %d (%s)' % (
+                  f.get('free_points', 0),f.get('offerable',0), f['unclaimed'], f['open'], HOURS, f['merged_6h'],
                   ', '.join(f['authors']) or '-'),
               'newest merged proofs to study: %s' % (', '.join(f['newest_merged']) or 'none yet: derive the method'), '']
         for e in f['examples'][:2]:
@@ -199,7 +210,7 @@ def write(r):
     _put(os.path.join(SWARM, 'tool', 'BACKLOG.md'), '\n'.join(b))
     m = ['# Method backlog (missions/pnp/radar.py)', '',
          'Families where the town has a generator but it refuses many instances: a stronger argument',
-         'turns refusals into credits. Write the argument as a checked lemma plus what the generator must compute.', '']
+         'turns refusals into credits. Preserve exact lemma source and independent semantic tests; kernel checks require a bound lease.', '']
     for f in hard:
         m += ['## %s' % f['label'], 'statuses: %s; unclaimed %d; newest merged: %s' % (
             f['statuses'], f['unclaimed'], ', '.join(f['newest_merged']) or '-'), '']

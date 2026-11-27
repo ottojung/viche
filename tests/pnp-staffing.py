@@ -96,6 +96,16 @@ class Tests(unittest.TestCase):
         r["next_at"]=0
         store.put(s.key,r)
 
+    def test_family_signature_uses_material_backlog_not_scores(self):
+        p=Path(config.STATE_ROOT)/"swarm"/"independent"/"tool"/"BACKLOG.md"
+        p.parent.mkdir(parents=True)
+        p.write_text("## 1. Matrix family\nofferable points 100\n- L-meta-1: exact proposition\n")
+        a=plan.family_signature("tool")
+        p.write_text("## 1. Matrix family\nofferable points 99\n- L-meta-1: exact proposition\n")
+        self.assertEqual(a,plan.family_signature("tool"))
+        p.write_text("## 1. Matrix family\nofferable points 99\n- L-meta-2: exact proposition\n")
+        self.assertNotEqual(a,plan.family_signature("tool"))
+
     def test_ack_is_not_coverage_and_restarts_same_workspace(self):
         aid=self.launch()
         self.fake.finish(aid)
