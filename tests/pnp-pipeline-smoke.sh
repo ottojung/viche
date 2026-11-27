@@ -23,8 +23,10 @@ python3 tests/pnp-support.py
 
 python3 tests/pnp-allocator.py
 
-/bin/sh tests/pnp-runtime-isolation-smoke.sh
-
+# tests/pnp-runtime-isolation-smoke.sh is also a tests/*-smoke.sh script and
+# therefore runs in the canonical tests/run-all.sh loop. Invoking it here ran
+# the same hermetic isolation test twice per exact candidate; the single loop
+# execution is retained with all of its assertions.
 python3 tests/pnp-continuity.py
 python3 tests/pnp-staffing.py
 python3 tests/pnp-sparse-workspace.py
