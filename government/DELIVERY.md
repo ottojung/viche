@@ -76,3 +76,7 @@ landing. Concurrent ballot append conflicts may be resolved mechanically
 only for the proposing seat's own exact-digest row, preserving every prior
 row byte-for-byte and rejecting any different vote for the same seat. The
 ordinary exact merged-candidate suite, required review and tally remain in force.
+
+## Commit attribution
+
+The Founder requires Otto Jung as Git author, committer and signer, and the actual contributor in a `Co-authored-by: Name <email>` trailer. The integrator preserves explicit source co-authors, falls back to the declared proposing office for legacy deliveries, and credits Viche Integrator for the separate suite-status commit. Do not set shared repository author configuration to an office identity.

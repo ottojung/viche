@@ -136,10 +136,35 @@ class GitError(Exception):
     pass
 
 
-# Commits the integrator makes say who made them; signing follows the host's
-# Git configuration, as for every other office.
-IDENT = dict(os.environ, GIT_AUTHOR_NAME="Viche Integrator", GIT_AUTHOR_EMAIL="integrator@viche.local",
-             GIT_COMMITTER_NAME="Viche Integrator", GIT_COMMITTER_EMAIL="integrator@viche.local")
+# The shared signing identity is Otto Jung. Contributor credit is separate.
+IDENT = dict(os.environ, GIT_AUTHOR_NAME="Otto Jung", GIT_AUTHOR_EMAIL="otto.jung@vauplace.com",
+             GIT_COMMITTER_NAME="Otto Jung", GIT_COMMITTER_EMAIL="otto.jung@vauplace.com")
+
+OFFICE_NAMES = {
+    "economy": "Ministry of Economy", "statistics": "Statistics Bureau",
+    "foresight": "Foresight Institute", "strategy": "Ministry of Strategic Development",
+    "spying": "Ministry of Spying", "innovation-centre": "Legislative Innovation Centre",
+    "innovation-office": "Executive Innovation Office",
+}
+
+
+def contributor_trailers(office, base, head):
+    # Read explicit co-authors, never infer from legacy shared Git identities.
+    # If absent, the recorded proposing office is the best durable attribution.
+    messages = git("log", "--format=%B%x00", base + ".." + head)
+    authors = {}
+    for message in messages.split("\0"):
+        for line in message.splitlines():
+            match = re.fullmatch(r"Co-authored-by: ([^<>]+) <([^<>\s]+@[^<>\s]+)>",
+                                 line, re.IGNORECASE)
+            if match:
+                name, email = match.groups()
+                if email.lower() != IDENT["GIT_AUTHOR_EMAIL"].lower():
+                    authors.setdefault(email.lower(), name.strip() + " <" + email + ">")
+    if not authors:
+        name = OFFICE_NAMES.get(office, office.replace("-", " ").title())
+        authors[office + "@viche.local"] = "Viche " + name + " <" + office + "@viche.local>"
+    return ["Co-authored-by: " + a for a in authors.values()]
 
 
 def log(message):
@@ -609,6 +634,7 @@ def land(p, entry, review):
             body.insert(-1, "Review-Reason: " + " ".join(str(review.get("reason", "")).split())[:300])
         if bill:
             body.insert(-1, "Enacts: " + bill)
+        body += [""] + contributor_trailers(p["office"], base, p["head"])
         msgfile = ROOT / "message.txt"
         atomic_write(msgfile, "\n".join(body) + "\n")
         git("commit", "-q", "--no-verify", "-F", str(msgfile), cwd=wt, env=IDENT)
@@ -644,7 +670,7 @@ def land(p, entry, review):
         shutil.copyfile(str(status_file), str(receipt))
         git("add", "records/suite-status.json", cwd=wt)
         git("commit", "-q", "--no-verify", "-m", "Act 21 suite-status for %s (%s green)" % (candidate[:12], suite),
-            cwd=wt, env=IDENT)
+            "-m", "Co-authored-by: Viche Integrator <integrator@viche.local>", cwd=wt, env=IDENT)
         carrier = git("rev-parse", "HEAD", cwd=wt)
         carrier_paths = git("diff", "--name-only", candidate, carrier).splitlines()
         assertions = [
