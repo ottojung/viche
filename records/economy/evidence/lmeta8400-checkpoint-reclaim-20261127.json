@@ -1,0 +1,68 @@
+{
+  "office": "economy",
+  "at": "2026-11-27T01:51:49Z",
+  "purpose": "Durable execution detail for the owner-authorized early Act 12.7 reclamation of two superseded L-meta-8400 checkpoints.",
+  "owner_decision": "P-1795737545-a9f0",
+  "owner_decision_answered": "2026-11-27T01:48:18Z",
+  "judiciary_review_request": "P-1795744275-04c1",
+  "evidence_record": "records/economy/2026-11-27-lmeta8400-checkpoint-early-reclaim.md",
+  "scope": "EXACTLY seg37.bin and seg38.bin under the L-meta-8400 gap; no other path; no grace change for other items",
+  "preserved": {
+    "seg59.bin_bytes": 1013814778,
+    "all_other_paths": true
+  },
+  "rows": [
+    {
+      "seg": "seg37.bin",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-8400/attempts/2aaa37038eefa1e6e241d0b6/workers/general/path/research/seg37.bin",
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/lmeta8400-seg37-20261127015136Z",
+      "logical_bytes": 661960430,
+      "candidate_du_kb": 646464,
+      "measured_device_delta_kb": 646464,
+      "device_avail_before_kb": 32910544,
+      "device_avail_after_kb": 33557008,
+      "rm_status": 0,
+      "executed": true
+    },
+    {
+      "seg": "seg38.bin",
+      "src": "/var/lib/lubko/wd/viche-state/pnp/gaps/L-meta-8400/attempts/2aaa37038eefa1e6e241d0b6/workers/general/path/research/seg38.bin",
+      "dest": "/var/lib/lubko/wd/viche-state/quarantine/lmeta8400-seg38-20261127015136Z",
+      "logical_bytes": 689213284,
+      "candidate_du_kb": 673072,
+      "measured_device_delta_kb": 673072,
+      "device_avail_before_kb": 33557008,
+      "device_avail_after_kb": 34230080,
+      "rm_status": 0,
+      "executed": true
+    }
+  ],
+  "totals": {
+    "logical_bytes": 1351173714,
+    "measured_device_delta_kb": 1319536,
+    "measured_device_delta_gib_approx": 1.26
+  },
+  "df": {
+    "device": "/dev/mapper/cryptroot",
+    "screen_avail_kb": 32913796,
+    "before_real_avail_kb": 32909040,
+    "after_real_avail_kb": 34230096,
+    "before_real_used_kb": 199136836,
+    "after_real_used_kb": 197815780,
+    "used_pct": 86
+  },
+  "method": "Janitor reclaim-quarantined via isolated scratch state (grace=0, reclaim_enabled=1, quarantine_dir=live); dry run 2 selected/0 deferred; real run 2 executed/0 failed; exact executed lines appended to live state/janitor/actions.log; live Janitor retired the two now-absent qlog rows via skip=already-absent.",
+  "fresh_liveness": {
+    "proc_refs": 0,
+    "proc_scan_errors": 0,
+    "mount_refs": 0,
+    "git_worktree_path_refs": 0,
+    "active_allocator_frontier_staffing_refs": 0,
+    "live_janitor_lock": false
+  },
+  "limits": [
+    "Recoverability by re-computation from seg59; no hash equivalence established.",
+    "Judiciary disposition on P-1795744275-04c1 awaited; no independent verification claimed.",
+    "Disk remains short by percentage; standing NEEDS-FOUNDER line unchanged, not reposted."
+  ]
+}
