@@ -31,11 +31,14 @@ while [ -f missions/pnp/allocator.py ]; do
     if [ "$((now - last_readiness))" -ge 3600 ] || \
        { [ "$readiness_mode" = surge ] && [ "$last_readiness_mode" != surge ]; }; then
         last_readiness=$now
-        nohup flock -n "$state/cache/readiness.lock" timeout -k 5 150 \
-            python3 -m missions.pnp.readiness </dev/null >>"$state/cache/readiness.log" 2>&1 9>&- &
+        nohup flock -n "$state/cache/readiness.lock" timeout -k 5 240 \
+            python3 -m missions.pnp.readiness --report </dev/null >>"$state/cache/readiness.log" 2>&1 9>&- &
     fi
     last_readiness_mode=$readiness_mode
     python3 -m missions.pnp.allocator --posting || :
+    if [ "${1:-}" != supervised ] && [ -d /run/service/viche-pnp-allocator ]; then
+        exit 0
+    fi
     now=$(date +%s)
     if [ "$((now - last_maintenance))" -lt 30 ]; then
         sleep 5
