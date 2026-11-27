@@ -104,20 +104,33 @@ class HostBoundary(unittest.TestCase):
         from missions.pnp import assignment, state, support, focus, host_boundary
         with tempfile.TemporaryDirectory() as td:
             work = Path(td); (work/"lean").mkdir(); (work/"lean"/"lean-toolchain").write_text("toolchain\n")
-            rec = {"gap_id":"L-meta-314","lease":"lease","base_sha":"a"*40,"state":"RESEARCHING"}
+            rec = {"gap_id":"L-meta-314","lease":"lease","base_sha":"a"*40,"state":"RESEARCHING",
+                   "module":"PEqualNP.Outside.L_meta_314","path":"lean/PEqualNP/Outside/L_meta_314.lean",
+                   "statement":"True","imports":["PEqualNP.Defs"]}
             def run(argv, **kwargs):
                 self.assertTrue(host_boundary.is_managed_compile(argv))
                 self.assertEqual(kwargs["env"]["PYTHONPATH"], host_boundary.PYTHONPATH)
                 self.assertEqual(Path(kwargs["cwd"]).resolve(), (work/"lean").resolve())
-                return SimpleNamespace(returncode=0, stdout="checked", stderr="")
+                guarded=(work/"lean"/argv[-1]).read_text()
+                self.assertIn("Lean.collectAxioms",guarded)
+                return SimpleNamespace(returncode=0, stdout="'PEqualNP.Outside.L_meta_314' does not depend on any axioms", stderr="")
             with patch.object(assignment, "binding", return_value=(rec["gap_id"],"lease")), \
                  patch.object(assignment, "workspace", return_value=(rec["gap_id"],work,Path(td)/"binding.json")), \
                  patch.object(state, "load", return_value=rec), patch.object(support, "active", return_value=True), \
                  patch.object(focus, "eligible", return_value=True), \
                  patch("subprocess.check_output", return_value="a"*40), \
                  patch("subprocess.run", side_effect=run) as spawned:
-                candidate=work/"candidate.lean"; candidate.write_text("theorem M : True := by trivial\n")
-                code,result=checklocal.check(str(candidate),"M")
+                candidate=work/"candidate.lean"; candidate.write_text("import PEqualNP.Defs\ntheorem PEqualNP.Outside.L_meta_314 : True := by trivial\n")
+                code,result=checklocal.check(str(candidate),rec["module"])
+                self.assertEqual(code,0)
+                spawned.reset_mock()
+                spawned.side_effect=None
+                spawned.return_value=SimpleNamespace(returncode=0,stdout="'PEqualNP.Outside.L_meta_314' depends on axioms: [sorryAx]",stderr="")
+                bad,receipt=checklocal.check(str(candidate),rec["module"])
+                self.assertNotEqual(bad,0)
+                self.assertFalse(receipt["compiled"])
+                candidate.write_text("import PEqualNP.Defs\ntheorem PEqualNP.Outside.L_meta_314 : True := by admit\n")
+                self.assertNotEqual(checklocal.check(str(candidate),rec["module"])[0],0)
             self.assertEqual(code,0)
             self.assertTrue(result["compiled"])
             self.assertEqual(result["checked_base"],"a"*40)
