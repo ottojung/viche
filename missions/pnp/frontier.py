@@ -51,11 +51,17 @@ def normalize(raw, now):
             "held": count(raw.get("held_now")), "gaps": rows}
 
 
-def quiet(snapshot, now):
+def ordinary_count(snapshot, now):
     at=snapshot.get("observed")
-    return (snapshot.get("complete") is True and type(at) in (int,float)
-            and 0<=now-at<=60 and type(snapshot.get("ordinary")) is int
-            and snapshot["ordinary"]==0)
+    value=count(snapshot.get("ordinary"))
+    if (snapshot.get("complete") is True and type(at) in (int,float)
+            and 0<=now-at<=60):
+        return value
+    return None
+
+
+def quiet(snapshot, now):
+    return ordinary_count(snapshot,now)==0
 
 
 def offer_levels(snapshot, rows):

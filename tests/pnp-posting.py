@@ -109,6 +109,21 @@ class Tests(unittest.TestCase):
             self.assertEqual(state.load(GID)["work_lane"],"research")
             release.assert_not_called();launch.assert_not_called()
 
+    def test_stale_complete_observation_cannot_discard_hard_research(self):
+        now=time.time()
+        r=self.rec(work_lane="research",acquisition_hard=True,acquisition_level="hard",
+                   lease_obtained_at=now-1201,lease_terms={"level":"hard","points":105})
+        with patch.object(surge,"active",return_value=False),patch.object(fastlane,"release") as release,patch.object(posting,"launch") as launch:
+            for obs in ({"complete":True,"observed":now-61,"ordinary":0},
+                        {"complete":True,"observed":now-61,"ordinary":50},
+                        {"complete":True,"observed":now,"ordinary":None}):
+                self.assertEqual(posting.maintain(None,{},now,obs,[r]),[])
+                self.assertEqual(state.load(GID)["work_lane"],"research")
+            release.assert_not_called();launch.assert_not_called()
+            posting.maintain(None,{},now,{"complete":True,"observed":now,"ordinary":1},[r])
+            self.assertEqual(state.load(GID)["work_lane"],"posting")
+            launch.assert_called_once_with(GID)
+
     def test_surge_preserves_young_hard_and_cached_candidates(self):
         r=self.rec(work_lane="research",acquisition_hard=True,
                    lease_terms={"level":"hard","points":600})

@@ -203,8 +203,8 @@ def maintain(d, mem, now, snapshot, records):
     # value qualifies; unknown price is not a license to discard active work.
     research = [r for r in active if r.get("work_lane") != "posting" and
                 (points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS
-                 or (r.get("acquisition_level")=="hard"
-                     and (frontier.quiet(snapshot,now) or not snapshot.get("complete"))))]
+                 or (((r.get("lease_terms") or {}).get("level") or r.get("acquisition_level"))=="hard"
+                     and frontier.ordinary_count(snapshot,now) in (None,0)))]
     research.sort(key=lambda r:(-(points(r,snapshot) or 0),r.get("lease_obtained_at") or now))
     keep = research[0]["gap_id"] if research and not batch else None
     released = []
