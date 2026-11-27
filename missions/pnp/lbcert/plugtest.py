@@ -1,4 +1,4 @@
-"""Test a generator plugin end to end: generate, validate (town rules), compile on marceline-dev.
+"""Test local plugin generation and static validation; no remote check is performed.
 
 python3 -m missions.pnp.lbcert.plugtest NAME --holdout 3     newest merged statements it matches
 python3 -m missions.pnp.lbcert.plugtest NAME --open 3        newest open desk steps it matches
@@ -16,7 +16,7 @@ import time
 import urllib.request
 
 from missions.pnp import gitctl, validate
-from missions.pnp.lbcert import plugins, checkremote
+from missions.pnp.lbcert import plugins
 
 DESK = 'https://data.pequalnp.com/data/desk/gaps.json'
 
@@ -76,11 +76,8 @@ def one(name, g):
         except validate.InvalidCandidate as e:
             res.update(result='invalid', log=str(e))
             return res
-        t1 = time.time()
-        crc, cres = checkremote.check(out, g['module'])
-        res.update(compile_secs=round(time.time() - t1), result={0: 'PASS', 1: 'compile_error'}.get(crc, 'relay_error'))
-        if crc:
-            res['log'] = (cres.get('log') or cres.get('detail') or '')[-600:]
+        res.update(result='candidate_only', kernel_checked=False,
+                   note='exact checks require managed compiler in an exact bound workspace')
     return res
 
 
@@ -110,9 +107,9 @@ def main():
     results = [one(a.name, g) for g in cases]
     for r in results:
         print(json.dumps(r))
-    ok = all(r['result'] in ('PASS', 'refused') for r in results)
+    ok = all(r['result'] in ('candidate_only', 'refused') for r in results)
     print(json.dumps({'plugin': a.name, 'cases': len(results),
-                      'pass': sum(r['result'] == 'PASS' for r in results),
+                      'candidate_only': sum(r['result'] == 'candidate_only' for r in results),
                       'refused': sum(r['result'] == 'refused' for r in results), 'ok': ok}))
     return 0 if ok else 1
 

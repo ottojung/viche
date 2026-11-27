@@ -30,8 +30,8 @@ ROLES = {
         "Compare actual generator readiness and runtime, exact checked/ready/blocked obligations, compatible techniques, and fresh competing PR counts. A ready candidate goes to the publisher; prefer focus on a small number of unresolved, complementary obligations. Use the existing portfolio switch if justified."),
     "lease-evaluation": ("Evaluate whether to continue or release a live lease.",
         "Use concrete remaining dependencies and competing opportunities, including the eligible checked proof stock and its advertised points. Compare likely remaining slot time against immediate checked work. Age alone, temporary compile contention or raw family scores do not justify release. Preserve reusable knowledge."),
-    "transport": ("Keep remote compilation fast, reliable and cache-compatible.",
-        "Inspect relay status and real check times; improve throughput without duplicating caches."),
+    "transport": ("Improve local managed proof generation and verification throughput.",
+        "Measure bounded billy-dev CPU/memory use and managed compiler queue outcomes; do not use out-of-host compute."),
     "adapter": ("Automate application of checked proof families to new statements.",
         "Prefer exact source transformations, validate final statements, and test independent holdouts."),
     "benchmark": ("Measure mathematical throughput, verified outputs and resource use.",
@@ -52,31 +52,26 @@ def guide(role):
              "FIRST: run ~/.local/bin/pnp-research start --role " + role +
              " (a small current work packet, not a documentation reading task).",
              guidance,
-             "CONCRETE CIRCUIT-SIZE STEPS (statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S`, or a `¬ (...)` twin): "
-             "do not hand-prove them. The lb_cert generator pre-builds candidates on marceline-dev for every open step into "
-             "PNP_STATE_ROOT/lbcert/cands/GAP.lean (status in GAP.status) and the allocator fast lane submits them within one tick. "
-             "Build one yourself on marceline-dev (32 cores, ~20 s): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/lbremote.py "
-             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean  (exit 0 written, 3 bound false, 4 too big). See missions/pnp/lbcert/README.md.",
-             "SIBLING PROOFS: 37% of merged theorems share their statement shape (numerals aside) with another merged one, and "
-             "a sibling's proof with the statement swapped compiles about half the time. The town retries this automatically "
-             "every 5 minutes while a step is held (PNP_STATE_ROOT/lbcert/cands/GAP.status says `ok sibling SOURCE`). "
-             "Run it yourself (compiled on marceline-dev): python3 /var/lib/lubko/wd/viche/missions/pnp/lbcert/sibremote.py "
-             "STATEMENT.txt PEqualNP.Outside.L_meta_N OUT.lean --imports PEqualNP.Defs  (exit 0 written, 5 no compiling sibling). "
-             "Before writing a long proof, read the newest merged sibling of the same family: it usually shows the method.",
-             "ONE-NOT STEPS (\"At fan-in two, one NOT gate saves nothing on edges ...\"): generated automatically the moment "
-             "they are posted (marceline-dev onenot.py, same lbremote.py command as above); the allocator can target already checked proofs with the documented proof-of acquisition; "
+              "CONCRETE CIRCUIT-SIZE STEPS (statement `∀ t, HasCircuitSize n f t → K ≤ t`, `¬HasCircuitSize n f S`, or a `¬ (...)` twin): "
+              "use local bounded candidate generation; PNP_STATE_ROOT/lbcert/cands/GAP.lean is source only, not a compiler receipt. "
+              "No relay client, hidden fallback or remote proof transport is permitted. Exact Lean checks run only through the "
+              "managed compiler from the exact bound workspace: PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake env lean FILE.",
+              "SIBLING PROOFS: use the local merged-corpus skeleton index and adapt source as candidate data only. "
+              "Sibling indexing/adaptation never asserts compilation; validate and use the managed compiler from the exact bound workspace.",
+              "ONE-NOT STEPS (\"At fan-in two, one NOT gate saves nothing on edges ...\"): local candidate generation remains available; "
+              "the allocator can target only candidates with a genuine exact checked receipt; "
              "an instance the generator refuses (status `unsupported`: monotone size >= 12) needs the gate-elimination "
              "method of the merged L-meta-14412 file. See missions/pnp/lbcert/README.md."]
     if role in BOUND:
         lines += [
-          "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --async, collect with obligations collect ID. BODY is a Lean term beginning with by.",
-          "Run pnp-remote-check --availability once per checkout. Use --scratch --async FILE.lean for experimental Lean or --async FILE.lean for complete candidates; pnp-remote-check --wait ID retrieves the result. NEVER launch raw `lake`, `lake env lean`, `lean` or `checklemma` yourself: a single unmanaged lean/lake process in a pnp worktree makes build_control.legacy_compilers() defer EVERY managed compile (exit 75), blocking kernel receipts for the whole swarm. When remote is unavailable use ONLY the managed compiler: PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake ... (or --light for narrow scratch). Do not build the same file twice.",
+          "In your workspace, pnp-research obligations ready --current shows open dependencies; obligations show ID gives the exact type. Request with obligations request --statement TYPE --requires ID; solve with obligations solve ID BODY --local from the exact bound workspace. BODY is a Lean term beginning with by. Async solve/collect transport is disabled; existing pending rows are preserved without polling.",
+          "Out-of-host proof checks and every async relay lane are disabled. NEVER launch raw `lake`, `lake env lean`, `lean` or `checklemma` yourself: a single unmanaged lean/lake process in a pnp worktree makes build_control.legacy_compilers() defer EVERY managed compile (exit 75), blocking kernel receipts for the whole swarm. Use ONLY PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.compile -- lake env lean FILE from the exact bound workspace (or --light for narrow scratch). Do not build the same file twice.",
           "Use pnp-research knowledge find QUERY; knowledge show ID retrieves artifacts. Share findings through the existing support channel. Complete exact proof: use the normal submit command immediately.",
           "Research checkouts omit the upstream Outside proof corpus, not your new files. Search the pinned full corpus with git grep PATTERN HEAD -- lean/PEqualNP/Outside; read exact source with git show HEAD:lean/PEqualNP/Outside/NAME.lean. Use git sparse-checkout add /lean/PEqualNP/Outside/NAME.lean only if a physical file is needed. Never materialize the entire corpus routinely."
         ]
     elif role in METHOD:
         lines += [
-          "Use pnp-research obligations request --base SHA --family FAMILY --provenance SOURCE --statement TYPE; obligations solve ID BODY --method --async; obligations collect ID. The work packet supplies an exact public base. No desk lease is needed.",
+          "Use pnp-research obligations request --base SHA --family FAMILY --provenance SOURCE --statement TYPE to preserve method research. Independent unbound Lean checks are disabled; do not create async checks or use a relay. A check requires an exact active bound workspace.",
           "Run pnp-research knowledge find QUERY; store exact reusable objects with knowledge add. Use pnp-research certificate GRAPH.json --base SHA --check to generate and asynchronously verify a graph certificate in one command; --output FILE also writes the standalone Lean source."
         ]
     elif role in DECISIONS:
@@ -84,7 +79,7 @@ def guide(role):
     elif role in {"knowledge","methods"}:
         lines += ["Use pnp-research knowledge find QUERY and knowledge show ID; knowledge add KIND --family FAMILY --statement TEXT --provenance SOURCE --file FILE. Link evidence with knowledge link SOURCE TARGET RELATION; --help lists valid relation names. Deliver actionable evidence via support advise."]
     elif role in {"flow","transport"}:
-        lines += ["Use pnp-research knowledge reuse; pnp-research adoption; marceline-request status; inspect actual outcomes and timings, not merely reports."]
+        lines += ["Use pnp-research knowledge reuse; pnp-research adoption; inspect local managed compile outcomes and timings, not merely reports. GitHub-hosted CI may independently build and verify; it is not an agent compute host."]
     lines += ["Detailed examples on demand: pnp-research guide " + role + ". No separate onboarding gate."]
     return "\n".join(lines)
 
@@ -101,16 +96,8 @@ def pinned_base(cwd):
     except (OSError,subprocess.SubprocessError):return None
 
 def compatible_public_base(latest):
-    from .. import gitctl
-    try:
-        raw=subprocess.check_output([str(Path.home()/".local/bin/marceline-request"),"status"],text=True,timeout=10)
-        status=json.loads(raw)
-        if status.get("age_seconds") is None or status["age_seconds"]>180:return latest
-        cached=set((status.get("capabilities") or {}).get("lean_bases",[]))
-        recent=subprocess.check_output(["git","--git-dir="+gitctl.MIRROR,"rev-list","--first-parent","--max-count=220","refs/remotes/upstream/main"],
-                                       text=True,timeout=5).splitlines()
-        return next((b for b in recent if b in cached),latest)
-    except (OSError,ValueError,subprocess.SubprocessError):return latest
+    # Never negotiate a base with an out-of-host compiler or relay.
+    return latest
 
 def details(role):
     text=guide(role)
@@ -124,10 +111,8 @@ EXACT WORKFLOW (run from the bound workspace):
   pnp-research obligations show NODE_ID
   pnp-research obligations request --statement '∀ n : Nat, n + 0 = n' --import Mathlib
   # write a file proof.body containing: by intro n; exact Nat.add_zero n
-  pnp-research obligations solve NODE_ID proof.body --async
-  # output contains CHECK_ID; keep working, then:
-  pnp-research obligations collect CHECK_ID --poll
-  # exit 75 means pending, not failure; later collect CHECK_ID (blocking).
+  pnp-research obligations solve NODE_ID proof.body --local
+  # Lean compilation is managed locally from this exact bound workspace.
   pnp-research obligations assemble ROOT_ID --candidate --output Candidate.lean
   # submit through the ordinary exact-lease command; no extra approval gate.
 For a different exact base: obligations fork NODE_ID; use obligations body OLD_ID
@@ -144,8 +129,7 @@ INDEPENDENT METHOD WORKFLOW:
     --provenance 'exact general Boolean identity' --import Mathlib \
     --statement '∀ a b : Bool, a && b = b && a'
   # proof.body: by intro a b; exact Bool.and_comm a b
-  pnp-research obligations solve NODE_ID proof.body --method --async
-  pnp-research obligations collect CHECK_ID
+  # Unbound independent method checks are disabled; preserve source only.
   pnp-research certificate GRAPH.json --base BASE --check --output Candidate.lean
 Keep reusable lemmas and counterexamples in the graph, not only in your transcript.
 """
@@ -200,7 +184,7 @@ def packet(role, cwd=None):
             out["assignment_current"]=True
             out["correction"]=True
             out["instructions"]="YOUR ROLE: "+role+". Repair the exact published proof.\nFIRST: inspect guard and checker diagnostics.\nUse the existing correction workspace, the remote scratch compiler when available, and checked reusable evidence. Do not request lease-only obligations for a published correction. Submit the corrected exact proof through the normal publisher immediately.\nNo onboarding gate."
-            out["next_commands"]=[P+"cli guard","pnp-remote-check --availability","pnp-research knowledge find QUERY"]
+            out["next_commands"]=[P+"cli guard","pnp-research knowledge find QUERY"]
             return out
     if rec:
         out["gap"]=rec["gap_id"]
@@ -221,12 +205,10 @@ def packet(role, cwd=None):
         out["next_commands"]=[
             "pnp-research obligations ready --current",
             "pnp-research knowledge find --family "+out["family"],
-            "pnp-remote-check --availability",
         ]
     elif role in METHOD:
         out["next_commands"]=["pnp-research knowledge find --kind technique",
-            "pnp-research obligations ready --base "+base if base else "pnp-research obligations ready",
-            "marceline-request status "+base if base else "marceline-request status"]
+            "pnp-research obligations ready --base "+base if base else "pnp-research obligations ready"]
         if role=="tool":
             out["next_commands"].insert(0,"pnp-research certificate GRAPH.json --base "+(base or "BASE")+" --check")
             out["source_locations"]=[str(Path(__file__).resolve().parent/f) for f in ("certificate.py","star.py","certificate_bench.py","dnf_reflection.py","README.md")]

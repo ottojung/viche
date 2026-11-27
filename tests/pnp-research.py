@@ -92,14 +92,20 @@ class Research(unittest.TestCase):
     def test_sync_receipt(self):
         from types import SimpleNamespace
         a=self.obligation("True")
-        def method(base,oid,source):
-            return SimpleNamespace(returncode=0,stderr=""),{"status":"elaborated","exit_code":0,
-                "base":base,"source_sha256":k.digest(source.encode()),
-                "diagnostic":f"'{o.symbol(oid)}' does not depend on any axioms"}
+        work=Path(tempfile.mkdtemp());self.addCleanup(__import__("shutil").rmtree,work)
+        (work/"lean").mkdir();(work/"lean"/"lean-toolchain").write_text("fixture\n")
+        rec={"gap_id":"L-meta-999","lease":"fixture","statement":"True","state":"RESEARCHING"}
+        def compile_local(argv,**kwargs):
+            self.assertEqual(argv[:3],["python3","-m","missions.pnp.compile"])
+            self.assertEqual(kwargs["env"]["PYTHONPATH"],"/var/lib/lubko/wd/viche")
+            source=Path(kwargs["cwd"],argv[-1]).read_text()
+            self.assertIn("#print axioms "+o.symbol(a),source)
+            return SimpleNamespace(returncode=0,stdout=f"'{o.symbol(a)}' does not depend on any axioms",stderr="")
         with tempfile.NamedTemporaryFile(mode="w") as f:
             f.write("by trivial");f.flush()
-            with patch.object(o,"method_check",side_effect=method):
-                result=o.solve(self.c,a,f.name,method=True)
+            with patch.object(o,"binding",return_value=(rec,work,self.base)), \
+                 patch("subprocess.run",side_effect=compile_local):
+                result=o.solve(self.c,a,f.name,local=True)
         self.assertEqual(result["status"],"kernel_checked")
         self.assertEqual(o.checked_body(self.c,a,self.base),"by trivial")
     def test_candidate(self):
@@ -210,37 +216,23 @@ class Research(unittest.TestCase):
         self.assertIn("ob-"+oid,[x[0] for x in continuity.focus_plans(rec,[])])
         self.assertEqual(set(continuity.required_support([])),{"method","tool"})
         self.assertEqual(support.roles({"cwd":str(Path(config.STATE_ROOT)/"swarm/independent/method"),"title":"independent worker"}),["method"])
-    def test_async_receipt_identity(self):
+    def test_async_transport_disabled_preserves_pending_record(self):
         oid=self.obligation("True")
-        body=k.store_bytes(b"by trivial")
-        source=o.build(self.c,oid,"by trivial")
-        k.store_bytes(source.encode())
-        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,source)
-        ident={x:job[x] for x in ("job","base","toolchain","attempt","source_sha256")}
-        ident["origin"]={"gap":None,"attempt":"method-research"}
         async_check.table(self.c)
-        with self.c:self.c.execute("INSERT INTO pending_check VALUES(?,?,?,?,?,?,NULL,0,'queued',NULL)",
-             (job["job"],oid,self.base,body,job["source_sha256"],k.canon(ident)))
-        row=async_check.snapshot(self.c,job["job"])
-        result={**job,"status":"elaborated","exit_code":0,
-                "diagnostic":"'"+o.symbol(oid)+"' does not depend on any axioms"}
-        self.assertEqual(async_check.proof_result(self.c,row,result)["status"],"kernel_checked")
-        bad={**result,"base":"b"*40}
-        self.assertEqual(async_check.proof_result(self.c,row,bad)["status"],"not_verified")
-        self.assertEqual(o.checked_body(self.c,oid,self.base),"by trivial")
-    def test_expired_relay_request_not_marked_mathematically_false(self):
-        oid=self.obligation("True")
-        body=k.store_bytes(b"by trivial")
-        job=async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,o.build(self.c,oid,"by trivial"))
-        async_check.table(self.c)
-        with self.c:self.c.execute("INSERT INTO pending_check VALUES(?,?,?,?,?,?,?,?,'queued',NULL)",
-              (job["job"],oid,self.base,body,job["source_sha256"],"{}", "a"*36,0))
-        with mock.patch.object(async_check.subprocess,"check_output",return_value=b'{"age_seconds":0,"entries":[]}'):
-            with mock.patch.object(async_check.Path,"home",return_value=Path(config.STATE_ROOT)):
-                r=async_check.reconcile(self.c)
-        self.assertEqual(r["expired"],[job["job"]])
-        self.assertEqual(async_check.snapshot(self.c,job["job"])["state"],"transport_failed")
-        self.assertEqual(self.c.execute("SELECT count(*) FROM proof WHERE node=?",(oid,)).fetchone()[0],0)
+        with self.assertRaisesRegex(ValueError,"transport disabled"):
+            async_check.identity(self.base,"toolchain","a"*24+"-"+"b"*16,"by trivial")
+        with self.c:self.c.execute("INSERT INTO pending_check VALUES(?,?,?,?,?,?,?,?,?,?)",
+              ("legacy-check",oid,self.base,"body","d"*64,"{}","legacy-request",0,"queued",None))
+        with mock.patch("subprocess.run",side_effect=AssertionError("no transport subprocess")), \
+             mock.patch("subprocess.check_output",side_effect=AssertionError("no transport subprocess")):
+            with self.assertRaisesRegex(ValueError,"transport disabled"):
+                async_check.submit(self.c,oid,"body")
+            r=async_check.reconcile(self.c)
+            result=async_check.collect(self.c,"legacy-check")
+        self.assertEqual(r["pending"],1)
+        self.assertEqual(result["status"],"transport_disabled")
+        row=async_check.snapshot(self.c,"legacy-check")
+        self.assertEqual((row["state"],row["request"]),("queued","legacy-request"))
 
     def test_reuse_receipt_matches_published_candidate(self):
         from missions.pnp.research import reuse
