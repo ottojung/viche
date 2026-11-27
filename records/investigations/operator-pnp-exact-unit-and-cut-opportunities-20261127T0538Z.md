@@ -64,7 +64,12 @@ Ten of twelve most recently merged upstream PRs examined around 05:36 UTC
 were R_meta reduction files, all by the same contributor, suku1515. These
 include #38096, #38095, #38093, #38092, #38091, #38088, #38089, #38072,
 #38085 and #38083. The two remaining direct proof PRs were #38084 and #38081.
-This selected sample is not an unbiased population estimate, and merged
+An expanded sample of 40 most recently updated merged PRs around 05:40 UTC
+contained 35 reduction files and five direct proofs. In the additional 16
+PRs whose authors were inspected, all 13 reductions were by the same
+contributor. The dominance of reductions is thus a real local activity
+signal, but it may reflect one contributor's batch rather than the whole
+contest. This selected sample is not an unbiased population estimate, and merged
 reductions are not necessarily credited: surplus cuts earn zero.
 
 The official rules allow a cut only on an appropriate lease. A valid cut
