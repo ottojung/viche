@@ -64,7 +64,9 @@ def tick():
                     finish(s,f)
         # Retire exact obsolete agents independently, never arbitrary processes.
         retired=[]
-        if not p["paused"]:
+        # Recovery caps new starts, not existing work. Do not treat a
+        # temporarily truncated plan as a permanent removal of positions.
+        if not p["paused"] and not recovery:
             for a in running:
                 try:
                     if plan.obsolete(a,slots):
