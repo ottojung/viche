@@ -725,39 +725,43 @@ def is_ancestor_head(head, other):
         return False
 
 
+def ancestry_priority(ready):
+    """Compute queue priority from approved full-suite heads only.
+
+    A descendant inherits the oldest proposal time of any approved ancestor.
+    Ancestry is only an ordering hint: a descendant may revert content, so
+    the normal exact merge, review and suite gates remain mandatory.
+    """
+    oldest = {}
+    for p, _, _, suite in ready:
+        if suite != "tests/records-smoke.sh":
+            h = p["head"]
+            oldest[h] = min(oldest.get(h, p["at"]), p["at"])
+    inherited = dict(oldest)
+    contained = set()
+    for head in oldest:
+        for other in oldest:
+            if is_ancestor_head(head, other):
+                contained.add(head)
+                inherited[other] = min(inherited[other], oldest[head])
+    return contained, inherited
+
+
 def contained_heads(ready):
-    """Approved heads whose exact change is already contained in another
-    approved, still-ready head. Landing the descendant first lets the single
-    full-suite gate cover the whole chain; the ancestor then classifies as
-    no_delta on a later pass and consumes no second suite.
+    return ancestry_priority(ready)[0]
 
-    This is pure prioritization: it never marks a proposal terminal, never
-    skips review or a suite, and only reorders attempts inside one pass. The
-    descendant must itself be approved and ready; its own exact candidate is
-    still built and verified by the normal Act 21/28 gate.
+
+def ready_priority_key(p, suite, contained, at, inherited=None):
+    """Oldest effective age first, with the coherent descendant winning ties.
+
+    Approved descendants inherit an aged ancestor's priority across the
+    one-hour tier boundary. No proposal is marked terminal by this ordering.
     """
-    heads = list({p["head"] for p, _, _, _ in ready})
-    return {h for h in heads if any(is_ancestor_head(h, o) for o in heads)}
-
-
-def ready_priority_key(p, suite, contained, at):
-    """Act 31 attempt order: aged full candidates, then records, then young
-    full candidates (unchanged). Within a full-suite tier, a head already
-    contained in an approved descendant is attempted *after* that descendant.
-
-    This is a tiebreaker, not a new terminal state: if the descendant later
-    fails or is refused it leaves `ready`, the ancestor is no longer marked
-    contained, and it is attempted normally on the next pass. When the
-    descendant lands, the ancestor's merge yields no tree delta and the
-    existing no_delta check absorbs it -- so one full suite covers the chain.
-    No review, suite or gate is waived; only ordering inside a pass changes.
-    """
-    subsumed = 1 if (suite != "tests/records-smoke.sh" and p["head"] in contained) else 0
-    if suite != "tests/records-smoke.sh" and at - p["at"] >= FULL_SUITE_PRIORITY_AGE:
-        return (0, subsumed, p["at"], p["branch"])
     if suite == "tests/records-smoke.sh":
-        return (1, 0, p["at"], p["branch"])
-    return (2, subsumed, p["at"], p["branch"])
+        return (1, p["at"], 0, p["at"], p["branch"])
+    effective = (inherited or {}).get(p["head"], p["at"])
+    tier = 0 if at - effective >= FULL_SUITE_PRIORITY_AGE else 2
+    return (tier, effective, int(p["head"] in contained), p["at"], p["branch"])
 
 
 def run_locked():
@@ -834,11 +838,11 @@ def run_locked():
     # change (a rebased/squashed descendant). Let the descendant take the
     # single full-suite slot of this pass; the ancestor is absorbed as no_delta
     # afterwards. This only reorders attempts and never skips review or a suite.
-    contained = contained_heads(ready)
+    contained, inherited = ancestry_priority(ready)
 
     def priority(item):
         p, _, _, suite = item
-        return ready_priority_key(p, suite, contained, now())
+        return ready_priority_key(p, suite, contained, now(), inherited)
 
     def persist():
         publish(state)
