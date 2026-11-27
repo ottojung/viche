@@ -4,9 +4,9 @@ import json
 import os
 import time
 
-from . import config, ledger, state
+from . import freshness, ledger, state
 
-MAX_GAP = 120
+MAX_GAP = freshness.OBSERVATION_MAX_GAP
 
 
 def record(snapshot, now=None):
@@ -16,9 +16,9 @@ def record(snapshot, now=None):
         gaps = snapshot["gaps"]
         if not snapshot.get("complete") or not isinstance(gaps, dict) or not 0 <= now - at <= 45:
             return
-        root = os.path.join(config.STATE_ROOT, "lbcert")
+        path = freshness.observation_path()
+        root = os.path.dirname(path)
         os.makedirs(root, exist_ok=True)
-        path = os.path.join(root, "seen-observation.json")
         with open(path + ".lock", "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             try:
@@ -26,8 +26,11 @@ def record(snapshot, now=None):
                     previous = json.load(f)
                 old = set(previous["ids"])
                 last = float(previous["at"])
+                prior = previous.get("recent", {})
+                if not isinstance(prior, dict):
+                    prior = {}
             except (OSError, ValueError, KeyError, TypeError):
-                old, last = set(), 0
+                old, last, prior = set(), 0, {}
                 # Carry historical first sightings across migration, but never
                 # consider the first new observation itself a fresh release.
                 try:
@@ -38,9 +41,18 @@ def record(snapshot, now=None):
             if at <= last:
                 return
             new = set(gaps) - old
-            # A bootstrap or observation outage is not evidence of a fresh release.
-            state.atomic_write(path, json.dumps({"ids": sorted(old | set(gaps)), "at": at}) + "\n")
-            if last and at - last <= MAX_GAP:
+            # First sightings and their recent index commit in one atomic write.
+            # A bootstrap, clock jump, or observation outage is not freshness.
+            continuous = bool(last and at - last <= MAX_GAP)
+            recent = {}
+            if continuous:
+                recent = {g: t for g, t in prior.items()
+                          if g in old and type(t) in (int, float)
+                          and t <= last and 0 <= at - t <= freshness.WINDOW}
+                recent.update({g: at for g in new})
+            state.atomic_write(path, json.dumps({"ids": sorted(old | set(gaps)),
+                                                "at": at, "recent": recent}) + "\n")
+            if continuous:
                 for gid in sorted(new):
                     ledger.mark("seen", gid)
     except (OSError, ValueError, KeyError, TypeError):
