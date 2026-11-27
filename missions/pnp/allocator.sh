@@ -16,7 +16,20 @@ last_observation=0
 last_readiness=0
 last_scorecard=0
 last_readiness_mode=unknown
+# A shell can keep executing a deleted script inode after a Git deployment.
+# Compare the active script revision at a safe loop boundary, not while a
+# claim or release is in flight. All detached children close the owner FD.
+script="$town/missions/pnp/allocator.sh"
+revision=$(cksum < "$script")
 while [ -f missions/pnp/allocator.py ]; do
+    if [ "$(cksum < "$script")" != "$revision" ]; then
+        echo "allocator source changed; reload at idle boundary"
+        if [ "${1:-}" = supervised ]; then
+            exit 0
+        fi
+        exec 9>&-
+        exec /bin/sh "$script" "$@"
+    fi
     # Keep fresh allocation and generation separate from slow roster/network
     # maintenance. Only this loop writes allocator memory and calls next.
     now=$(date +%s)
