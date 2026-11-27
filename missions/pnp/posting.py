@@ -24,7 +24,8 @@ LEGACY_GRACE = 1200
 
 def paused():
     """Honor the executive stop until the host-boundary repair is deployed."""
-    return (Path(config.STATE_ROOT)/"lbcert"/"STOP").exists()
+    from . import pause
+    return pause.paused()
 
 
 def current(rec, attempt=None):
