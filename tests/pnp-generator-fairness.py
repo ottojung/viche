@@ -28,6 +28,30 @@ class Fairness(unittest.TestCase):
                 os.utime(path,(t,t))
                 self.assertFalse(a.retryable(gid))
 
+    def test_fresh_arrivals_outrank_newer_numeric_ids(self):
+        from missions.pnp.lbcert import autosolve as a
+        gaps=[{"id":"L-meta-999","offerable_now":True},
+              {"id":"L-meta-20","offerable_now":True},
+              {"id":"L-meta-10","offerable_now":False}]
+        recent={"L-meta-20":100}
+        order=sorted(gaps,key=lambda g:(*a.generation_rank(g,{"L-meta-10"},recent),-int(g["id"].split("-")[-1])))
+        self.assertEqual([g["id"] for g in order],["L-meta-10","L-meta-20","L-meta-999"])
+
+    def test_plugin_deferral_retries_only_after_backoff_or_version_change(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d, patch.object(a,"CANDS",d):
+            gid="L-meta-42"
+            path=Path(d)/(gid+".status")
+            path.write_text("deferred plugin promise abc rc=124 timeout")
+            self.assertFalse(a.fresh(gid,"abc"))
+            self.assertTrue(a.fresh(gid,"def"))
+            old=time.time()-a.RETRY_DELAY-1
+            os.utime(path,(old,old))
+            self.assertTrue(a.fresh(gid,"abc"))
+            path.write_text("unsupported plugin promise abc rc=3")
+            os.utime(path,(old,old))
+            self.assertFalse(a.fresh(gid,"abc"))
+
     def test_unavailable_plugin_check_preserves_candidate(self):
         from missions.pnp.lbcert import autosolve as a
         from missions.pnp import state, support, validate, fastlane
