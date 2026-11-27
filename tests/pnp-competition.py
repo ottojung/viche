@@ -19,6 +19,11 @@ class Tests(unittest.TestCase):
             "a1":{"issueCount":1,"nodes":[rival]},
             "a2":{"issueCount":101,"nodes":[rival]}}))
         self.assertEqual(result,{"L-meta-1":1,"L-meta-2":0})
+    def test_decorated_title_and_id_boundary(self):
+        def pr(n,title):return {"number":n,"title":title,"state":"OPEN"}
+        rows=[pr(1,"Prove L-meta-1 (edge_detect_prove)"),
+              pr(2,"L-meta-10"),pr(3,"L-meta-1-2"),pr(4,"L-meta-1")]
+        self.assertEqual(c.observe(["L-meta-1"],self.req({"a0":{"issueCount":4,"nodes":rows}})),{"L-meta-1":2})
     def test_wrong_identity(self):
         self.assertEqual(c.observe(["L-meta-1"],lambda *a:{"id":1,"full_name":"test/repo"}),{})
     def test_unknown_never_acquire_and_paced(self):

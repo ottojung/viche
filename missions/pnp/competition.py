@@ -5,6 +5,7 @@ evidence. A GitHub search can also lag; never treat incomplete results as clear.
 No GitHub writes, and no direct probe on the posting-time fresh lease path.
 """
 import json
+import re
 import subprocess
 from . import config, github
 
@@ -14,6 +15,12 @@ MAX_BATCH = 5
 def _gh(*args):
     p = subprocess.run([config.GH_CLI,*args],capture_output=True,text=True,timeout=8,check=True)
     return json.loads(p.stdout)
+
+
+def matches_title(title, gid):
+    """Whole ID, including decorated proof titles; never a longer unit ID."""
+    return isinstance(title,str) and bool(re.search(
+        r"(?<![A-Za-z0-9_-])"+re.escape(gid)+r"(?![A-Za-z0-9_-])",title))
 
 
 def observe(gids, request=None):
@@ -42,7 +49,7 @@ def observe(gids, request=None):
                 continue
             if any(not isinstance(r,dict) or type(r.get("number")) is not int or not isinstance(r.get("title"),str) or r.get("state")!="OPEN" for r in n):
                 continue
-            out[g] = sum(r["title"]==g for r in n)
+            out[g] = sum(matches_title(r["title"],g) for r in n)
         return out
     except (OSError,subprocess.SubprocessError,ValueError,TypeError,AttributeError,KeyError):
         return {}
