@@ -18,6 +18,7 @@ Test before delivering:  python3 -m missions.pnp.lbcert.plugtest NAME --holdout 
 import hashlib
 import importlib.util
 import os
+from pathlib import Path
 import re
 import subprocess
 import sys
@@ -31,6 +32,20 @@ import process as managed_process
 _cache = {}
 
 
+def fingerprint(gen):
+    # A change to a local helper is a real new generator version as well.
+    h=hashlib.sha256()
+    parent=Path(gen).parent
+    files=[p for p in sorted(parent.rglob("*.py")) if p.is_file()]
+    if files==[Path(gen)]:
+        return hashlib.sha256(Path(gen).read_bytes()).hexdigest()[:12]
+    for path in files:
+        if path.is_file():
+            h.update(str(path.relative_to(parent)).encode()+b"\0")
+            h.update(path.read_bytes()+b"\0")
+    return h.hexdigest()[:12]
+
+
 def discover():
     out = {}
     if not os.path.isdir(ROOT):
@@ -39,7 +54,10 @@ def discover():
         gen = os.path.join(ROOT, name, 'gen.py')
         if not re.fullmatch(r'[a-z0-9_-]+', name) or not os.path.isfile(gen):
             continue
-        sha = hashlib.sha256(open(gen, 'rb').read()).hexdigest()[:12]
+        try:
+            sha = fingerprint(gen)
+        except OSError:
+            continue
         key = (name, sha)
         if key not in _cache:
             try:
@@ -61,7 +79,7 @@ def discover():
 
 
 def family_of(statement, found=None):
-    for name, (gen, sha, fn) in (found or discover()).items():
+    for name, (gen, sha, fn) in (discover() if found is None else found).items():
         try:
             if fn(statement):
                 return name, sha
