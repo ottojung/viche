@@ -22,11 +22,18 @@ OWNER = config.DESK_HANDLE
 PATH_RE = re.compile(r"data/contributors\.[0-9a-f]{8,64}\.json\Z")
 
 
-def fetch_json(url):
+# The export includes every credited lemma, so its size grows with the race.
+# Retain a hard bound before JSON parsing and while curl receives the body.
+HEAD_LIMIT = 1024 * 1024
+CONTRIBUTORS_LIMIT = 32 * 1024 * 1024
+
+
+def fetch_json(url, max_bytes=CONTRIBUTORS_LIMIT):
     p = subprocess.run(["curl", "--fail", "--silent", "--show-error",
-                        "--location", "--max-time", "15", url],
+                        "--location", "--max-time", "15",
+                        "--max-filesize", str(max_bytes), url],
                        capture_output=True, timeout=20, check=True)
-    if len(p.stdout) > 4_000_000:
+    if len(p.stdout) > max_bytes:
         raise ValueError("oversized leaderboard export")
     return json.loads(p.stdout)
 
@@ -149,7 +156,7 @@ def save(snapshot):
 
 
 def update():
-    head = fetch_json(BASE + "head.json")
+    head = fetch_json(BASE + "head.json", HEAD_LIMIT)
     rel = head.get("files", {}).get("contributors", "")
     if not isinstance(rel, str) or not PATH_RE.fullmatch(rel):
         raise ValueError("unexpected contributor file in live export")

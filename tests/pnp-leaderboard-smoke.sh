@@ -47,6 +47,16 @@ for bad in (
     except ValueError: pass
     else: raise AssertionError("invalid leaderboard entry accepted")
 
+# Large valid public exports are supported, but curl itself enforces the bound.
+body=b'{"payload":"'+b'x'*4_100_000+b'"}'
+with patch.object(leaderboard.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=body)) as run:
+    assert len(leaderboard.fetch_json("https://example.invalid/data")["payload"])==4_100_000
+    args=run.call_args.args[0]
+    assert args[args.index("--max-filesize")+1]==str(leaderboard.CONTRIBUTORS_LIMIT)
+    try: leaderboard.fetch_json("https://example.invalid/head",leaderboard.HEAD_LIMIT)
+    except ValueError: pass
+    else: raise AssertionError("oversized head accepted")
+
 with tempfile.TemporaryDirectory() as tmp:
     os.environ["VICHE_STATE_ROOT"] = tmp
     os.environ["PNP_STATE_ROOT"] = str(Path(tmp, "pnp"))
