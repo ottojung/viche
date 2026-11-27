@@ -41,6 +41,17 @@ class Tests(unittest.TestCase):
         self.assertEqual(hard,[refused])
         self.assertEqual(history,[old])
         self.assertEqual(radar.backlog_priorities({"families":rows,"offers_known":False}),([],[],[old]))
+    def test_posting_evidence_uses_latest_and_counts_attempts(self):
+        ev=[{"stage":"posting_generated","gid":"L-meta-1","result":"unsupported","t":1},
+            {"stage":"posting_generated","gid":"L-meta-1","result":"generated","t":3},
+            {"stage":"posting_generated","gid":"L-meta-1","result":"unknown","t":2},
+            {"stage":"verdict","gid":"L-meta-1","result":"accepted","t":4}]
+        counts, latest = radar.posting_evidence(ev)
+        self.assertEqual(counts["L-meta-1"], {"unsupported":1,"unknown":1,"generated":1})
+        self.assertEqual(latest, {"L-meta-1":"generated"})
+        old={"label":"old","merged_6h":100,"posting_attempts":{}}
+        failed={"label":"failing","merged_6h":0,"posting_attempts":{"unknown":7}}
+        self.assertEqual(radar.yield_leads({"families":[old,failed],"offers_known":False}),[failed])
     def test_stale_observation_is_not_ranked(self):
         with patch.object(live,"gaps_bytes",return_value=b'{"gaps":[]}'),patch.object(frontier,"load",return_value={}), \
              patch.object(radar.sibling,"index",return_value=("head",{})),patch.object(radar.plugins,"discover",return_value={}):
