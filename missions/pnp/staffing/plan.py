@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 import hashlib
+import json
 from contextlib import closing
 import sqlite3
 
@@ -84,6 +85,23 @@ def obligation_slots(rec, running, limit):
     return [x[3] for x in sorted(ranked)[:limit]]
 
 
+def family_signature(role):
+    """Wake on changed task/guide or changed examples, not volatile scores."""
+    from ..research import playbook
+    backlog=continuity.support_path(role)/"BACKLOG.md"
+    try:
+        if backlog.stat().st_size>128*1024:lines=[]
+        else:lines=backlog.read_text().splitlines()
+    except OSError:lines=[]
+    evidence=sorted(set(line.strip() for line in lines
+        if line.startswith(("## ","- L-","newest merged proofs to study:","  desk sketch:"))))
+    # Method backlog embeds source modules after the changing counts.
+    evidence+=sorted(set(line.split("newest merged:",1)[1].strip() for line in lines
+                         if "newest merged:" in line))
+    return hashlib.sha256(json.dumps([role,continuity.SUPPORT[role],
+              playbook.guide(role),evidence],sort_keys=True).encode()).hexdigest()
+
+
 def desired(p, running, issues=None):
     issues = [] if issues is None else issues
     records=[]
@@ -127,7 +145,7 @@ def desired(p, running, issues=None):
             # goal text changes. The controller then dispatches a fresh pass to
             # the new actionable goals instead of reporting "evidence already
             # investigated" for the old prompt until support_refresh elapses.
-            sig = hashlib.sha256((role+"|"+continuity.SUPPORT[role]).encode()).hexdigest()
+            sig = family_signature(role)
         path = continuity.support_path(role)
         slots.append(Slot(str(path),role,continuity.SUPPORT[role],signature=sig,priority=3))
     return slots
