@@ -8,8 +8,8 @@ from functools import lru_cache
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-BASE_SHA="61b1b5b087d946295c7e8faf526877dc978afde91126203befb5724c5d5211df"
-SEED_SHA="34a31e6d03378840c0a4e24ed4d065355a5dff0b3a19aa4833a40698bb6a9574"
+BASE_SHA="60beb948a082e04920b31f40add5cebcfee5f91841968a5e383bd9718d775ec5"
+SEED_SHA="0d848773f58a3585cdf7ee7f594cffbd53a6d83c09a92da6ed92c9e83d201657"
 LIB_SHA="048bc115db296b128cd4c7630049e996ce0e20710f9aa37e09aa69080c6510b5"
 
 def read(path,digest):

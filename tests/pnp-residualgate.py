@@ -13,7 +13,7 @@ def statement(key):
 
 class Residual(unittest.TestCase):
     def test_seeded_sources_exact_and_bounded(self):
-        self.assertEqual(len(gen.seeds()),16)
+        self.assertEqual(len(gen.seeds()),19)
         for key,row in gen.seeds().items():
             s=statement(key)
             gid="L-meta-999999"
@@ -28,9 +28,30 @@ class Residual(unittest.TestCase):
             self.assertFalse(gen.matches("¬ ("+s+")"))
             self.assertFalse(gen.matches(s.replace("Fin 8","Fin 9",1)))
             self.assertIsNone(gen.generate("L-pcx-1",s))
+    def test_index_mapping_exact_and_permuted(self):
+        from missions.pnp.lbcert.generators.gateelim_residual.refined import Refinement
+        import random
+        data=json.loads(gen.read(gen.HERE/"bases.json",gen.BASE_SHA))
+        b=gen.shape().bounds
+        ref=Refinement(b,data);rng=random.Random(42)
+        for key,row in data.items():
+            f=tuple(map(int,key.split(";")))
+            n=b.active(f).bit_count()
+            for _ in range(12):
+                perm=rng.sample(range(8),n)
+                def remap(m,p):return sum(1<<v for i,v in enumerate(p) if m>>i&1)
+                target=b.normalize(remap(m,perm) for m in f)
+                result=ref.find(target)
+                self.assertIsNotNone(result)
+                matched,order=result
+                self.assertGreaterEqual(matched["bound"],row["bound"])
+                for a,z in matched["pairs"]:
+                    self.assertTrue(gen.shape().truth(target,remap(a,order)))
+                    self.assertFalse(gen.shape().truth(target,remap(z,order)))
+        self.assertIsNone(ref.find((3,5,9,17,33)))
     def test_library_samples(self):
         data=json.loads(gen.read(gen.HERE/"bases.json",gen.BASE_SHA))
-        self.assertEqual(len(data),6)
+        self.assertEqual(len(data),31)
         for key,row in data.items():
             f=tuple(map(int,key.split(";")))
             truth=lambda x:any(x&t==t for t in f)
