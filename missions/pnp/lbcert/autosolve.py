@@ -26,7 +26,7 @@ sys.path.insert(0, HERE)
 import lbparse  # noqa: E402
 import process as managed_process
 import threading
-from missions.pnp import pause
+from missions.pnp import pause, surge
 LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 
 # A running Python process does not reload a module whose source changes on
@@ -319,6 +319,9 @@ def sweep_pass():
 
 def sibling_loop():
     while not pause.paused(STATE):
+        if surge.active():
+            time.sleep(30)
+            continue
         try:
             sibling_pass()
         except Exception as e:
@@ -329,6 +332,9 @@ def sibling_loop():
 def sweep_loop():
     last_radar = 0
     while not pause.paused(STATE):
+        if surge.active():
+            time.sleep(30)
+            continue
         try:
             if time.time() - last_radar > 600:
                 last_radar = time.time()
@@ -444,6 +450,12 @@ def main():
                 try:fastlane.submit_ready(gid)
                 except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
             from missions.pnp.lbcert import ready
+            # The held posting lane owns batch-time CPU. Continue catalog and
+            # cached-candidate publication, but start no new speculative
+            # certificate builds or per-instance background searches.
+            if surge.active():
+                time.sleep(POLL)
+                continue
             if len(prepared)<PREPARE_WORKERS:
                 choices=[g for g in concrete if g['id'] not in held and g['id'] not in queued
                          and g['id'] not in prepare_retry and not g.get('pr_open',0)
