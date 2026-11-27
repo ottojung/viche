@@ -108,7 +108,8 @@ def acquire(args, d, report=True):
     proof_of=getattr(args,"proof_of",None)
     if proof_of:
         from missions.pnp.lbcert import ready
-        if not ready.verified(proof_of):
+        from . import posting
+        if posting.paused() or not ready.verified(proof_of):
             return 2
     answer = d._next_gap(hard=args.hard, another=args.another,
                          **({"proof_of":proof_of} if proof_of else {}),

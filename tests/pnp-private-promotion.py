@@ -85,6 +85,15 @@ class Tests(unittest.TestCase):
         self.assertEqual(Path(fastlane.cand_ready(GID)).read_bytes(),RAW)
         self.assertEqual(self.path.with_suffix(".lean").read_bytes(),RAW)
         self.assertEqual(m.pending((CFG,FLAG)),[])
+    def test_legacy_receipt_does_not_block_new_local_receipt(self):
+        ready.directory().mkdir(parents=True)
+        src=ready.directory()/(GID+".lean");src.write_bytes(RAW)
+        legacy=ready.directory()/(GID+".checked.json");legacy.write_text("historical evidence")
+        self.assertIsNone(ready.verified(GID))
+        self.assertEqual(self.admit()["status"],"promoted")
+        self.assertEqual(legacy.read_text(),"historical evidence")
+        self.assertEqual(ready.verified(GID)["origin"],"private-prelease")
+
     def test_different_existing_source_untouched(self):
         ready.directory().mkdir(parents=True)
         src=ready.directory()/(GID+".lean");src.write_bytes(b"other")

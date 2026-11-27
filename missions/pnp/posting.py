@@ -159,7 +159,7 @@ def run(gid, attempt):
                 return
             # No extra compilation before the PR; existing publisher checks
             # exact bytes concurrently and never bypasses official verification.
-            jobs.submit(gid,str(path),expected_lease=rec["lease"])
+            jobs.submit(gid,str(path),expected_lease=rec["lease"],only_unclaimed=True)
             status(gid,attempt,"submitted" if not current(state.load(gid),attempt)
                    else "interrupted",seconds=seconds)
     except Exception as exc:

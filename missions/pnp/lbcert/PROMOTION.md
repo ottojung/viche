@@ -27,7 +27,9 @@ immediately before recording.
 For a private proof stored only in the batch database, the existing
 `ready.record` path has an optional private mode that first atomically links
 the exact source into the existing candidate store, without overwriting any
-source or marker. An interrupted admission can leave the source without a
+source or marker. New local markers use `GAP.local-checked.json` so that
+legacy `GAP.checked.json` evidence is preserved byte-for-byte and cannot
+qualify as newly verified stock. An interrupted admission can leave the source without a
 checked marker, which never qualifies as an exact receipt. The marker preserves
 the check time, not the promotion time. The existing fast lane understands
 such a marker without requiring a generator-specific .status file.

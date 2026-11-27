@@ -45,12 +45,15 @@ class Tests(unittest.TestCase):
             self.assertEqual(allocator.fill(None,{},time.time(),{}),[])
             self.assertEqual(allocator.proof_of_now(GID),"paused")
             self.assertEqual(posting.maintain(None,{},time.time(),{},[r]),[])
+            self.assertIsNone(fastlane.submit_ready(GID))
+            self.assertEqual(fastlane.tick(None,{},time.time()),{"submitted":[],"twin_published":[],"released":[]})
             gen.assert_not_called();send.assert_not_called()
         self.assertEqual(state.load(GID)["work_lane"],"research")
 
     def test_actual_promise_generation_and_exact_submission(self):
         r=self.rec()
-        def submit(gid,path,expected_lease):
+        def submit(gid,path,expected_lease,only_unclaimed):
+            self.assertTrue(only_unclaimed)
             self.assertEqual((gid,expected_lease),(GID,r["lease"]))
             self.assertIn(STATEMENT,Path(path).read_text())
             state.update(gid,queued_lease=expected_lease,candidate_digest="fixture")

@@ -19,9 +19,9 @@ class TestReady(unittest.TestCase):
             gid="L-meta-123"
             root=ready.directory();root.mkdir(parents=True)
             p=root/(gid+".lean");p.write_bytes(b"candidate")
-            r={"status":"ok","compiled":True,"sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"checked_base":"a"*40}
-            self.assertFalse(ready.record(gid,{**r,"compiled":False},p.read_bytes()))
-            self.assertTrue(ready.record(gid,r,p.read_bytes()))
+            r={"status":"ok","compiled":True,"sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"checked_base":"a"*40,"at":time.time()}
+            self.assertFalse(ready.record(gid,{**r,"compiled":False},p.read_bytes(),private=True))
+            self.assertTrue(ready.record(gid,r,p.read_bytes(),private=True))
             self.assertEqual(ready.offers({"complete":True,"gaps":{gid:{}}},{},time.time()),[gid])
             inv=ready.inventory({"complete":True,"gaps":{gid:{"points":37,"held":0,"parallel":2}}})
             self.assertEqual((inv["eligible_checked"],inv["advertised_points_known"]),(1,37))
@@ -35,7 +35,7 @@ class TestReady(unittest.TestCase):
             for gid,points in (("L-meta-123",100),("L-meta-124",20)):
                 data=gid.encode()
                 (root/(gid+".lean")).write_bytes(data)
-                self.assertTrue(ready.record(gid,{"status":"ok","compiled":True,"sha256":hashlib.sha256(data).hexdigest(),"checked_base":"a"*40},data))
+                self.assertTrue(ready.record(gid,{"status":"ok","compiled":True,"sha256":hashlib.sha256(data).hexdigest(),"checked_base":"a"*40,"at":time.time()},data,private=True))
                 rows[gid]={"points":points,"held":0,"parallel":2}
             cache=root.parent/"gaps-cache.json"
             cache.write_text(json.dumps({"gaps":[{"id":"L-meta-123","pr_open":2},{"id":"L-meta-124","pr_open":0}]}))
@@ -48,6 +48,25 @@ class TestReady(unittest.TestCase):
             Path(str(cache)+".meta").write_text(json.dumps({"at":time.time()}))
             inv=ready.inventory(snap)
             self.assertEqual((inv["uncontested_checked"],inv["contested_checked"]),(1,1))
+    def test_legacy_receipt_is_preserved_and_not_eligible(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
+            gid="L-meta-123";data=b"candidate"
+            root=ready.directory();root.mkdir(parents=True)
+            (root/(gid+".lean")).write_bytes(data)
+            legacy=root/(gid+".checked.json")
+            raw=json.dumps({"gap":gid,"base":"a"*40,"digest":hashlib.sha256(data).hexdigest(),"at":time.time()})
+            legacy.write_text(raw)
+            self.assertIsNone(ready.verified(gid))
+            self.assertEqual(ready.offers({"complete":True,"gaps":{gid:{}}},{},time.time()),[])
+            result={"status":"ok","compiled":True,"sha256":hashlib.sha256(data).hexdigest(),"checked_base":"a"*40,"at":time.time()}
+            self.assertFalse(ready.record(gid,result,data))
+            self.assertTrue(ready.record(gid,result,data,private=True))
+            self.assertEqual(legacy.read_text(),raw)
+            self.assertEqual(ready.verified(gid)["origin"],"private-prelease")
+            self.assertFalse(ready.record(gid,result,data,private=True))
+            ready.marker(gid).write_text("[]")
+            self.assertIsNone(ready.verified(gid))
+
     def test_memory_with_active_cache_and_tmpfs(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);M=1024*1024

@@ -54,6 +54,8 @@ def submit(gap, source, expected_lease=None, *, only_unclaimed=False):
             rec = state.load(gap)
             if not rec or (expected_lease and rec.get("lease") != expected_lease):
                 raise publish.StopPublish("assignment superseded")
+            if only_unclaimed and os.path.exists(os.path.join(config.STATE_ROOT,"lbcert","STOP")):
+                raise publish.StopPublish("automatic publication paused")
             if only_unclaimed and (rec["state"] not in ("LEASED","RESEARCHING")
                     or rec.get("candidate_digest") or rec.get("queued_lease")
                     or rec.get("pr_number") or rec.get("intent")):

@@ -111,7 +111,7 @@ class Tests(unittest.TestCase):
     def test_read_only_staged_intake(self):
         self.enable();now=time.time()
         lb=self.prod/"lbcert";lb.mkdir()
-        (lb/"gaps-cache.json").write_text(json.dumps({"gaps":[{**Q,"pr_open":0}]}))
+        (lb/"gaps-cache.json").write_text(json.dumps({"gaps":[{**Q,"pr_open":0,"offerable_now":True,"held_now":False}]}))
         (lb/"gaps-cache.json.meta").write_text(json.dumps({"at":now}))
         db=lb/"promise-batch.sqlite"
         with contextlib.closing(sqlite3.connect(db)) as c:
@@ -123,6 +123,11 @@ class Tests(unittest.TestCase):
         with patch.object(p.frontier,"load",return_value=snap),patch.object(p.freshness,"recent",return_value={GID:now}),patch.object(p.state,"load",return_value=None),patch.object(p.ready,"verified",return_value=None):
             result=p.staged_candidates(CFG,now)
             self.assertEqual([(gid,raw) for _,gid,raw in result],[(GID,RAW)])
+            for overrides in ({"offerable_now":False},{"held_now":True},{"offerable_now":None},{"pr_open":False}):
+                original=(lb/"gaps-cache.json").read_text()
+                (lb/"gaps-cache.json").write_text(json.dumps({"gaps":[{**Q,"pr_open":0,"offerable_now":True,"held_now":False,**overrides}]}))
+                self.assertEqual(p.staged_candidates(CFG,now),[])
+                (lb/"gaps-cache.json").write_text(original)
             snap["gaps"][GID]["held"]=1
             self.assertEqual(p.staged_candidates(CFG,now),[])
         self.assertEqual({str(f.relative_to(self.prod)):f.read_bytes() for f in self.prod.rglob("*") if f.is_file()},initial)

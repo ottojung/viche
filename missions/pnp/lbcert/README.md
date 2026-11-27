@@ -8,8 +8,9 @@ A generator's `generated` status means complete source, not a compiler receipt.
 **Unheld step:** the desk documents `next --proof-of <step>` for an already checked
 proof (even if another contributor holds the step). Prepare the candidate and check
 the exact bytes; the allocator claims it through that documented route and immediately
-submits via the normal publisher. The `GAP.checked.json` receipt binds digest and public
-base. Never pretend an unchecked candidate was checked. Do not create unheld PRs
+submits via the normal publisher. The `GAP.local-checked.json` receipt binds digest and public
+base, after authorized private promotion. Historical `GAP.checked.json` markers
+remain evidence of the retired path, not current local proof stock. Never pretend an unchecked candidate was checked. Do not create unheld PRs
 merely because competitors omit lease text. No separate bulk publisher is required.
 
 The autosolver bounds outstanding work to six tasks total, prioritizes held steps,

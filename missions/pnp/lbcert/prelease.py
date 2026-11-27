@@ -392,7 +392,8 @@ def staged_candidates(cfg, now=None):
         gid=q.get("id"); row=rows.get(gid,{})
         if not isinstance(gid,str) or not config.GAP_ID_RE.fullmatch(gid):
             continue
-        if (not row or q.get("pr_open")!=0
+        if (not row or type(q.get("pr_open")) is not int or q["pr_open"]!=0
+                or q.get("offerable_now") is not True or q.get("held_now") is not False
                 or type(row.get("held")) is not int or type(row.get("parallel")) is not int
                 or row["held"]>=row["parallel"] or row["held"]!=0):
             continue
