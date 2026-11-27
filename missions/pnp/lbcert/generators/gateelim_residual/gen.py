@@ -9,7 +9,7 @@ from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
 BASE_SHA="61b1b5b087d946295c7e8faf526877dc978afde91126203befb5724c5d5211df"
-SEED_SHA="9d181b9ef383c39124a79eeb4c36ac21f085ea5f116a4483fef293cd73b09a1f"
+SEED_SHA="34a31e6d03378840c0a4e24ed4d065355a5dff0b3a19aa4833a40698bb6a9574"
 LIB_SHA="048bc115db296b128cd4c7630049e996ce0e20710f9aa37e09aa69080c6510b5"
 
 def read(path,digest):

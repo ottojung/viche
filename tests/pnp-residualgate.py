@@ -13,7 +13,7 @@ def statement(key):
 
 class Residual(unittest.TestCase):
     def test_seeded_sources_exact_and_bounded(self):
-        self.assertEqual(len(gen.seeds()),8)
+        self.assertEqual(len(gen.seeds()),16)
         for key,row in gen.seeds().items():
             s=statement(key)
             gid="L-meta-999999"
