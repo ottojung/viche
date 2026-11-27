@@ -132,7 +132,34 @@ try:
     while alive(pid) and time.monotonic() < deadline:
         time.sleep(0.05)
     assert not alive(pid), "successful verifier leaked child (pid %d)" % pid
+
+    # Fixture lifecycle: the verifier gets a private TMPDIR and every mktemp
+    # fixture under it is removed both on completion and after a SIGKILL
+    # timeout, when the smoke test's own EXIT trap cannot possibly run.
+    fixture_path = worktree / "fixture.path"
+    os.environ["RS_TEST_FIXTURE_PATH"] = str(fixture_path)
+    script.write_text(
+        "#!/bin/sh\n"
+        "d=$(mktemp -d \"$TMPDIR/fixture.XXXXXX\")\n"
+        "printf '%s\\n' \"$d\" > \"$RS_TEST_FIXTURE_PATH\"\n"
+        "echo green\n")
+    result5 = mod.verify_suite(worktree, "candidate202", "tests/records-smoke.sh", logs, {})
+    assert result5 is not None and result5.returncode == 0
+    fixture = pathlib.Path(fixture_path.read_text().strip())
+    assert fixture.parent != pathlib.Path("/tmp"), "verifier TMPDIR was not isolated"
+    assert not fixture.exists(), "completed suite left a TMPDIR fixture: %s" % fixture
+
+    fixture_path.unlink(missing_ok=True)
+    script.write_text(
+        "#!/bin/sh\n"
+        "d=$(mktemp -d \"$TMPDIR/fixture.XXXXXX\")\n"
+        "printf '%s\\n' \"$d\" > \"$RS_TEST_FIXTURE_PATH\"\n"
+        "sleep 30\n")
+    result6 = mod.verify_suite(worktree, "candidate303", "tests/run-all.sh", logs, {})
+    assert result6 is None
+    fixture = pathlib.Path(fixture_path.read_text().strip())
+    assert not fixture.exists(), "timed-out suite left a TMPDIR fixture: %s" % fixture
 finally:
     reap_child()
 
-print("integrator suite timeout: hung verifier bounded, failed closed, no orphan; green suite unaffected")
+print("integrator suite timeout: hung verifier bounded, failed closed, no orphan; fixtures reaped on completion and timeout; green suite unaffected")

@@ -542,6 +542,12 @@ def verify_suite(wt, candidate, suite, logs, entry):
     Returns the CompletedProcess on completion, or None after recording a
     timeout failure in ``entry``.
     """
+    # An Act 21 timeout group-kill uses SIGKILL, so a smoke test's EXIT trap
+    # cannot remove its own mktemp fixture. Give the whole verifier tree a
+    # private TMPDIR (suite-status.sh and the smoke tests all use mktemp, which
+    # honours it) and delete that single root on every exit path. This stops
+    # the orphaned /tmp/tmp.* fixtures without changing the fail-closed gate.
+    fixture_root = pathlib.Path(tempfile.mkdtemp(prefix="viche-suite-fixtures-"))
     cmd = ["/bin/sh", str(wt / "government" / "suite-status.sh"),
            "--commit", candidate, "--suite", suite]
     proc = subprocess.Popen(
@@ -549,12 +555,17 @@ def verify_suite(wt, candidate, suite, logs, entry):
         cwd=str(wt),
         env=dict(os.environ, VICHE_TOWN_ROOT=str(wt),
                  SUITE_STATUS_VERIFIER="integrator",
-                 SUITE_STATUS_LOG_DIR=str(logs)),
+                 SUITE_STATUS_LOG_DIR=str(logs),
+                 TMPDIR=str(fixture_root)),
         start_new_session=True)
+    timed_out = False
     try:
         stdout, stderr = proc.communicate(timeout=SUITE_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
+        # Kill the whole session first so the bounded drains below return
+        # promptly; deferring this until finally would double the wait bound.
         _kill_verifier_group(proc)
+        timed_out = True
         try:
             proc.communicate(timeout=10)
         except subprocess.TimeoutExpired:
@@ -566,6 +577,11 @@ def verify_suite(wt, candidate, suite, logs, entry):
                 proc.communicate(timeout=10)
             except subprocess.TimeoutExpired:
                 pass
+    finally:
+        # Every fixture the verifier created must go even when SIGKILL
+        # defeated the smoke test's own EXIT trap.
+        shutil.rmtree(str(fixture_root), ignore_errors=True)
+    if timed_out:
         entry.update({"status": "red",
                       "reason": "%s exceeded the %ss verification bound; failed closed (no push, Act 21 gate intact)" % (
                           suite, SUITE_TIMEOUT_SECONDS),
