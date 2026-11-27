@@ -37,7 +37,7 @@ def runtime_hash(root=None):
     root=Path(root) if root is not None else Path(HERE).parent
     h=hashlib.sha256()
     for path in sorted(root.rglob("*")):
-        if path.suffix in (".py",".c",".sh",".json") and path.is_file():
+        if path.suffix in (".py",".c",".sh",".json",".lean") and path.is_file():
             h.update(str(path.relative_to(root)).encode()+b"\0")
             h.update(hashlib.sha256(path.read_bytes()).digest())
     return h.hexdigest()
