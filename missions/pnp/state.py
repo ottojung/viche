@@ -232,32 +232,6 @@ def update(gap_id, **fields):
     return rec
 
 
-def declare_coauthors(gap_id, values, source):
-    """Durably record an explicitly declared contributor, with its source.
-
-    Only trusted producer code may call this (jobs.submit / bulk); candidate
-    bytes and worker prompts never reach it.  A signed proof is immutable.
-    """
-    if not isinstance(source, str) or not source.strip() or len(source) > 200:
-        raise ValueError("co-author declaration requires a bounded source")
-    try:
-        idents = attribution.validated(values or ())
-    except attribution.AttributionError as exc:
-        raise ValueError(str(exc))
-    with lock(gap_id):
-        rec = load(gap_id)
-        if rec is None:
-            raise KeyError(gap_id)
-        if rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN", "ACCEPTED"):
-            raise ValueError("signed proof attribution is immutable")
-        rec["coauthors"] = idents
-        rec["coauthor_source"] = source.strip()
-        save(rec)
-        event(gap_id, "coauthors_declared",
-              {"coauthors": idents, "source": source.strip()})
-    return rec
-
-
 def intent(gap_id, what, payload):
     """Write-ahead intent before an external effect."""
     return update(gap_id, intent={"what": what, "at": _now(),

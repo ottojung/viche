@@ -114,24 +114,44 @@ def verify(repo, sha, idents):
         raise RuntimeError("git verify-commit failed")
 
 
-def commit(repo, subject, contributors, extra, fixture=False):
-    idents = expected(contributors)
-    message = build(subject, contributors)
+DENIED_EXTRA = {"-m", "--message", "-c", "--no-verify", "--no-gpg-sign",
+                "--gpg-sign", "-S", "--signoff"}
+
+
+def commit(repo, subject, contributors, extra, fixture=False, no_verify=False,
+           existing_message=None):
+    extra = list(extra or [])
+    # Never let caller-supplied extras replace the pinned identity/signing
+    # settings or discard trailers from an amended commit.
+    for token in extra:
+        if token in DENIED_EXTRA or token.startswith("-c") or \
+                token.startswith("--gpg-sign"):
+            raise AttributionError("unsafe commit extra: %s" % token)
+    if "--amend" in extra:
+        if existing_message is None:
+            existing_message = git(repo, ["log", "-1", "--format=%B"],
+                                 check=False).stdout
+    idents = expected(contributors, parse(existing_message) if existing_message else ())
+    message = build(subject, contributors, existing_message)
     env = dict(os.environ,
                GIT_AUTHOR_NAME=AUTHOR_NAME, GIT_AUTHOR_EMAIL=AUTHOR_EMAIL,
                GIT_COMMITTER_NAME=AUTHOR_NAME, GIT_COMMITTER_EMAIL=AUTHOR_EMAIL)
-    args = ["-c", "user.signingkey=" + SIGNING_KEY, "-c", "commit.gpgsign=true"]
-    commit_args = ["commit"]
-    if not fixture:
-        commit_args.append("-S")
-    else:
-        print("commit-identity: fixture mode, signing verification skipped",
+    if fixture:
+        args = ["-c", "commit.gpgsign=false"]
+        commit_args = ["commit", "--no-gpg-sign"]
+        print("commit-identity: fixture mode, signing disabled and unverified",
               file=sys.stderr)
+    else:
+        args = ["-c", "user.signingkey=" + SIGNING_KEY,
+                "-c", "commit.gpgsign=true"]
+        commit_args = ["commit", "-S"]
+    if no_verify:
+        commit_args.append("--no-verify")
     fd, path = tempfile.mkstemp(prefix="viche-commit-message-")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(message)
-        git(repo, args + commit_args + ["-F", path] + list(extra), env=env)
+        git(repo, args + commit_args + ["-F", path] + extra, env=env)
     finally:
         os.unlink(path)
     sha = git(repo, ["rev-parse", "HEAD"]).stdout.strip()
@@ -158,6 +178,7 @@ def main(argv=None):
         if name == "verify":
             p.add_argument("--commit", dest="sha", required=True)
         if name == "commit":
+            p.add_argument("--no-verify", action="store_true")
             p.add_argument("extra", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     try:
@@ -172,7 +193,8 @@ def main(argv=None):
             if extra and extra[0] == "--":
                 extra = extra[1:]
             fixture = os.environ.get("VICHE_COMMIT_FIXTURE") == "1"
-            commit(args.repo, args.subject, args.contributor, extra, fixture)
+            commit(args.repo, args.subject, args.contributor, extra, fixture,
+                   no_verify=args.no_verify)
         else:
             verify(args.repo, args.sha, expected(args.contributor))
     except (AttributionError, RuntimeError, OSError) as exc:

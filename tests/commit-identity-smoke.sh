@@ -57,7 +57,7 @@ git -C "$town" add f
 VICHE_COMMIT_FIXTURE=1 python3 "$repo/government/commit-identity.py" commit \
     --repo "$town" --subject "hook skip" \
     --contributor "Viche Clerk <clerk@viche.local>" \
-    -- --no-verify >/dev/null
+    --no-verify >/dev/null
 test ! -f "$tmp/hook-ran"
 
 echo 'Office/seat commit identity smoke passed'
