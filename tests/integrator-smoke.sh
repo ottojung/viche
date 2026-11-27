@@ -346,6 +346,7 @@ integrate
 integrate
 test "$(st duplicate-a)" = landed
 propose duplicate_b executive duplicate-b
+sleep 1  # distinct proposal times, independent of branch-name tie breaking
 propose after_duplicate executive after-duplicate
 integrate
 for v in duplicate-b after-duplicate; do
