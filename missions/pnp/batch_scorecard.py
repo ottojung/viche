@@ -85,6 +85,18 @@ def cohort_credit(events, data, score):
             "official_ambiguous_units": ambiguous}
 
 
+def first_query_batch(prs, first, attempted):
+    """Fair bounded search even when an early PR remains unindexable."""
+    pending = [(g,p) for g,p in prs.items()
+               if config.GAP_ID_RE.fullmatch(g) and type(p) is int and str(p) not in first]
+    def order(pair):
+        at=attempted.get(str(pair[1]),0)
+        if not isinstance(at,(int,float)) or not 0<=at<float("inf"):
+            at=0
+        return at,pair[1],pair[0]
+    return dict(sorted(pending,key=order)[:5])
+
+
 def observe_first(prs, request=None):
     """Indexed GitHub evidence, including closed rivals; unknown stays unknown."""
     req = request or competition._gh
@@ -160,12 +172,16 @@ def main():
     except (OSError,ValueError):
         old={}
     first=old.get("first_evidence",{})
+    attempted=old.get("first_attempted",{})
+    if not isinstance(attempted,dict):attempted={}
     data=summarize(events,window,first)
     if "--refresh" in sys.argv[1:]:
         # Wait for search indexing, query at most five unresolved PRs per pass.
         if time.time()-window[1]>=1800:
-            pending={g:p for g,p in data["prs"].items() if str(p) not in first}
-            first.update(observe_first(pending))
+            pending=first_query_batch(data["prs"],first,attempted)
+            if pending:
+                first.update(observe_first(pending))
+                attempted.update({str(p):time.time() for p in pending.values()})
         data=summarize(events,window,first)
         try:
             leaderboard.update()
@@ -173,7 +189,7 @@ def main():
             pass
     score=leaderboard.load()
     data.update(cohort_credit(events,data,score))
-    data.update(first_evidence=first, observed_at=time.time(),
+    data.update(first_evidence=first, first_attempted=attempted, observed_at=time.time(),
                 official_points_total=score.get("our_points") if score.get("available") else None,
                 official_score_checked_at=score.get("source_checked_at"),
                 note="First status uses complete indexed exact-title search; unknown is explicit. "

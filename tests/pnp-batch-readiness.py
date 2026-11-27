@@ -116,6 +116,19 @@ class Scorecard(unittest.TestCase):
         self.assertIsNone(batch_scorecard.cohort_credit(events,data,{"available":True})["official_cohort_points"])
         self.assertEqual(batch_scorecard.cohort_credit(events,data,{"available":True,"our_credit_details":{}})["official_cohort_points"],0)
 
+    def test_unindexed_first_five_do_not_starve_other_races(self):
+        prs={f"L-meta-{i}":i for i in range(1,13)}
+        first={}
+        attempted={}
+        for now,expected in ((100,list(range(1,6))),(101,list(range(6,11))),
+                             (102,[11,12,1,2,3])):
+            batch=batch_scorecard.first_query_batch(prs,first,attempted)
+            self.assertEqual(list(batch.values()),expected)
+            attempted.update({str(p):now for p in batch.values()})
+        first["4"]=True
+        self.assertNotIn(4,batch_scorecard.first_query_batch(prs,first,attempted).values())
+        self.assertEqual(len(batch_scorecard.first_query_batch(prs,first,attempted)),5)
+
     def test_first_query_includes_closed_rivals_and_refuses_partial_index(self):
         def req(*args):
             if args[1].startswith("repositories/"):
