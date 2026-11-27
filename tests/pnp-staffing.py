@@ -323,6 +323,15 @@ class Tests(unittest.TestCase):
         cold=next(x for x in out["slots"] if x["gap"]==other["gap_id"] and x["label"]=="general")
         self.assertEqual(cold["phase"],"unknown")
 
+    def test_stalled_surge_only_general_and_tool(self):
+        with patch.object(controller.surge,"active",return_value=True), \
+             patch.object(controller.surge,"recovery",return_value=True), \
+             patch.object(staff,"roster",return_value=self.fake.history()):
+            out=controller.tick()
+        self.assertTrue(out["surge_recovery"])
+        self.assertEqual({s["label"] for s in out["slots"]},{"general","tool"})
+        self.assertLessEqual(len(self.fake.runs),2)
+
     def test_partial_running_snapshot_never_starts(self):
         with patch.object(backend,"running",side_effect=backend.Uncertain("partial")):
             with self.assertRaises(backend.Uncertain):controller.tick()

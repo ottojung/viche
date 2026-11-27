@@ -146,6 +146,25 @@ class Tests(unittest.TestCase):
             self.assertEqual(posting.maintain(None,{},time.time(),{},[r]),[GID])
             self.assertEqual(release.call_args.kwargs["expected_lease"],r["lease"])
 
+    def test_stalled_surge_keeps_only_one_failed_assignment(self):
+        r=self.rec()
+        posting.status(GID,support.attempt(r),"unsupported")
+        with patch.object(surge,"active",return_value=True), \
+             patch.object(surge,"recovery",return_value=True), \
+             patch.object(ready,"competition",return_value={}), \
+             patch.object(fastlane,"release") as release:
+            self.assertEqual(posting.maintain(None,{},time.time(),{},[state.load(GID)]),[])
+            self.assertEqual(state.load(GID)["work_lane"],"research")
+            other="L-meta-24807"
+            rr=dict(r)
+            rr.pop("gap_id",None)
+            rr.update(lease="test-other",work_lane="posting",posting={"result":"unknown"})
+            state.create(other,**rr)
+            release.return_value=True
+            self.assertEqual(posting.maintain(None,{},time.time(),{},[state.load(GID),state.load(other)]),[other])
+            self.assertEqual(state.load(GID)["work_lane"],"research")
+            self.assertEqual(release.call_count,1)
+
     def test_posting_not_model_focus(self):
         r=self.rec()
         self.assertFalse(focus.eligible(r))

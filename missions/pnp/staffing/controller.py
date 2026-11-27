@@ -17,13 +17,19 @@ def tick():
     batch=surge.active(now)
     # Ephemeral policy only: no new starts or destructive retirements while
     # the posting lane competes. The operator's persisted pause is untouched.
-    if batch:
+    recovery=batch and surge.recovery(now)
+    if batch and not recovery:
         p={**p,"paused":True}
     # The lock also fences legacy helpers during the migration.
     with staff.staffing_lock():
         running=backend.running()
         issues=[]
         slots=plan.desired(p,running,issues)
+        if recovery:
+            # No obligation/focus fan-out. Keep the posting pool dominant.
+            general=sorted((s for s in slots if s.label=="general"),key=lambda s:s.path)
+            tools=[s for s in slots if s.label=="tool" and not s.gap]
+            slots=general[:1]+tools[:1]
         # Known positions do not wait for the historical registry scan.
         # Cold/ambiguous identities need complete history before creating.
         warm=[];cold=[]
@@ -76,7 +82,7 @@ def tick():
                       and t-r["uncovered_since"]>=p["alert_after"])
         if issues:
             alerts.append("planning degraded")
-        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,"alerts":alerts,"surge":batch,
+        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,"alerts":alerts,"surge":batch,"surge_recovery":recovery,
              "duration":round(t-now,3),"slots":rows,"retired":retired,
              "desired":len(rows),"running":sum(r["phase"]=="running" for r in rows),
              "unknown":sum(r["phase"]=="unknown" for r in rows)}

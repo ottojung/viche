@@ -36,7 +36,7 @@ def fingerprint(gen):
     # A change to a local helper is a real new generator version as well.
     h=hashlib.sha256()
     parent=Path(gen).parent
-    files=[p for p in sorted(parent.rglob("*.py")) if p.is_file()]
+    files=[p for p in sorted(parent.rglob("*")) if p.is_file() and p.suffix in (".py",".json",".c",".lean")]
     if files==[Path(gen)]:
         return hashlib.sha256(Path(gen).read_bytes()).hexdigest()[:12]
     for path in files:

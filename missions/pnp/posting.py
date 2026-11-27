@@ -193,6 +193,7 @@ def maintain(d, mem, now, snapshot, records):
     """Migrate idle legacy holds and finish posting attempts without agent churn."""
     from . import fastlane, frontier, surge
     batch = surge.active(now)
+    recovery = batch and surge.recovery(now)
     active = [r for r in records if support.active(r,now) and not r.get("queued_lease") and not r.get("candidate_digest") and not r.get("intent")]
     if paused():
         for rec in active:
@@ -202,11 +203,24 @@ def maintain(d, mem, now, snapshot, records):
     # At most one speculative research lease. Only high advertised/frozen
     # value qualifies; unknown price is not a license to discard active work.
     research = [r for r in active if r.get("work_lane") != "posting" and
-                (points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS
+                (recovery or points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS
                  or (((r.get("lease_terms") or {}).get("level") or r.get("acquisition_level"))=="hard"
                      and frontier.ordinary_count(snapshot,now) in (None,0)))]
     research.sort(key=lambda r:(-(points(r,snapshot) or 0),r.get("lease_obtained_at") or now))
-    keep = research[0]["gap_id"] if research and not batch else None
+    keep = research[0]["gap_id"] if research and (not batch or recovery) else None
+    # One already-held, uncontested, unsuccessful posting assignment may
+    # become a learning front. No extra desk claims, no second research slot.
+    if recovery and keep is None:
+        counts = ready.competition(now)
+        candidates = [r for r in active if r.get("work_lane") == "posting"
+                      and (r.get("posting") or {}).get("result") in ("unsupported", "unknown")
+                      and not rival(r, counts)
+                      and type(points(r, snapshot)) is int and points(r, snapshot) > 0]
+        candidates.sort(key=lambda r: (-(points(r,snapshot) or 0),
+                                     r.get("lease_obtained_at") or now, r["gap_id"]))
+        if candidates and set_lane(candidates[0], "research"):
+            keep = candidates[0]["gap_id"]
+
     released = []
     for old in active:
         gid = old["gap_id"]

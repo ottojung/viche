@@ -33,6 +33,22 @@ class Batch(unittest.TestCase):
         self.assertFalse(surge.active(2201,old))
 
 
+    def test_stalled_batch_requires_distinct_failures_span_and_no_success(self):
+        events=[{"t":1000+i*12,"stage":"posting_generated","gid":f"L-meta-{i}",
+                 "result":"unsupported"} for i in range(45)]
+        self.assertTrue(surge.yield_evidence(events,1750)["stalled"])
+        self.assertFalse(surge.yield_evidence(events[:39],1750)["stalled"])
+        self.assertFalse(surge.yield_evidence([{**e,"gid":"same"} for e in events],1750)["stalled"])
+        self.assertFalse(surge.yield_evidence(events,1600-1)["stalled"])
+        self.assertFalse(surge.yield_evidence(events+[{"t":1700,"stage":"pr_opened"}],1750)["stalled"])
+        self.assertFalse(surge.yield_evidence(events+[{"t":1700,"stage":"posting_generated","result":"generated"}],1750)["stalled"])
+
+    def test_recovery_revoked_when_observation_stale(self):
+        row={"active":True,"recovery":True,"observed":1000}
+        self.assertTrue(surge.recovery(1060,row))
+        self.assertFalse(surge.recovery(1061,row))
+
+
 class Offerability(unittest.TestCase):
     def test_actual_catalog_count_not_nominal_capacity(self):
         from missions.pnp import frontier
