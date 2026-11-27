@@ -70,7 +70,7 @@ on_main() { git -C "$remote" cat-file -e "main:$1" 2>/dev/null; }
 # 1. Additive records (a new file) land without review, as candidate + carrier.
 seat a
 printf 'plenary outcome\n' > "$tmp/a/records/outcome.md"
-git -C "$tmp/a" add -A; git -C "$tmp/a" commit -qm 'c1a00002: plenary outcome'
+git -C "$tmp/a" add -A; git -C "$tmp/a" commit -qm 'c1a00002: plenary outcome' -m 'Co-authored-by: Fixture Researcher <researcher@example.invalid>'
 base=$(git -C "$remote" rev-parse main)
 propose a c1a00002 outcome
 integrate
@@ -82,6 +82,11 @@ test "$(git -C "$remote" rev-parse main^^)" = "$base"                      # sin
 test "$(git -C "$remote" diff --name-only "$candidate" "$carrier")" = records/suite-status.json
 git -C "$remote" show -s --format=%B "$candidate" | grep -q '^Reviewed-By: none (additive records'
 git -C "$remote" show -s --format=%B "$candidate" | grep -q '^Proposed-By: c1a00002$'
+test "$(git -C "$remote" show -s --format=%an "$candidate")" = "Otto Jung"
+test "$(git -C "$remote" show -s --format=%cn "$candidate")" = "Otto Jung"
+git -C "$remote" show -s --format=%B "$candidate" | grep -q '^Co-authored-by: Fixture Researcher <researcher@example.invalid>$'
+git -C "$remote" show -s --format=%B "$carrier" | grep -q '^Co-authored-by: Viche Integrator <integrator@viche.local>$'
+
 git -C "$remote" show "main:records/suite-status.json" | jq -e --arg c "$candidate" \
   '.commit == $c and .result == "green" and .verifier == "integrator"' >/dev/null
 jq -e '[.assertions[] | select(.expected != .actual)] | length == 0' "$state/delivery/integration-$candidate.json" >/dev/null
@@ -97,6 +102,8 @@ git -C "$tmp/b" add -A; git -C "$tmp/b" commit -qm 'append a ledger row'
 propose b judiciary ledger
 integrate
 test "$(st ledger)" = landed
+git -C "$remote" show -s --format=%B main^ | grep -q '^Co-authored-by: Viche Judiciary <judiciary@viche.local>$'
+
 test "$(git -C "$remote" show main:records/ledger.tsv | wc -l)" -eq 2
 
 # 3. Code needs an independent review; the integrator commissions it, ignores
