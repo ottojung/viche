@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp import batch_scorecard, config, pause, readiness, surge
+from missions.pnp import batch_scorecard, config, leaderboard, pause, readiness, surge
 
 
 class Batch(unittest.TestCase):
@@ -95,6 +95,26 @@ class Scorecard(unittest.TestCase):
         self.assertEqual(w,(700,2300))
         self.assertEqual((r["seen"],r["leased"],len(r["prs"]),r["accepted"]),(1,1,2,1))
         self.assertEqual((r["first"],r["first_unknown"],r["median_lease_to_pr_s"]),(1,1,20))
+
+    def test_credit_is_from_complete_official_export_and_never_local_verdict(self):
+        row = {"github":"ottojung", "steps":2, "points":40, "lemmas":[
+            {"id":"L-meta-1","points":10,"at":"1970-01-01T00:20:00Z","points_estimated":True},
+            {"id":"L-meta-2","points":30,"at":"1970-01-01T00:30:00Z"}]}
+        credits=leaderboard.credit_details([row])
+        self.assertIsNotNone(credits)
+        self.assertIsNone(leaderboard.credit_details([{**row,"points":41}]))
+        self.assertIsNone(leaderboard.credit_details([{**row,"lemmas":row["lemmas"][:1]}]))
+        self.assertIsNone(leaderboard.credit_details([{**row,"lemmas":[row["lemmas"][0]]*2}]))
+        events=[{"stage":"pr_opened","gid":"L-meta-1","pr":1,"t":1100},
+                {"stage":"pr_opened","gid":"L-meta-2","pr":2,"t":1101},
+                {"stage":"pr_opened","gid":"L-meta-2","pr":3,"t":1500},
+                {"stage":"verdict","gid":"L-meta-3","verdict":"ACCEPTED","t":1300}]
+        data={"start":1000,"end":1400,"prs":{"L-meta-1":1,"L-meta-2":2,"L-meta-3":4}}
+        out=batch_scorecard.cohort_credit(events,data,{"available":True,"our_credit_details":credits})
+        self.assertEqual(out,{"official_credited_units":1,"official_cohort_points":10,
+                              "official_estimated_points":10,"official_ambiguous_units":1})
+        self.assertIsNone(batch_scorecard.cohort_credit(events,data,{"available":True})["official_cohort_points"])
+        self.assertEqual(batch_scorecard.cohort_credit(events,data,{"available":True,"our_credit_details":{}})["official_cohort_points"],0)
 
     def test_first_query_includes_closed_rivals_and_refuses_partial_index(self):
         def req(*args):

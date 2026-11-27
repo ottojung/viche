@@ -48,6 +48,43 @@ def summarize(events, window, first):
             "median_lease_to_pr_s":statistics.median(delays) if delays else None}
 
 
+def cohort_credit(events, data, score):
+    """Credit for cohort units, only from the official contributor export.
+
+    Local verdicts and PR creation never award points. Earlier credits and
+    credits after a later, different PR for the same unit are not attributed.
+    The export identifies units, not GitHub PR numbers.
+    """
+    credits = score.get("our_credit_details") if score.get("available") else None
+    if not isinstance(credits, dict):
+        return {"official_credited_units": None, "official_cohort_points": None,
+                "official_estimated_points": None, "official_ambiguous_units": None}
+    opened = {}
+    later = {}
+    for e in events:
+        gid = e.get("gid")
+        if e.get("stage") != "pr_opened" or gid not in data["prs"]:
+            continue
+        t, pr = e["t"], e.get("pr")
+        if data["start"] <= t <= data["end"] and pr == data["prs"][gid]:
+            opened[gid] = min(opened.get(gid, t), t)
+        elif t > data["end"] and pr != data["prs"][gid]:
+            later[gid] = min(later.get(gid, t), t)
+    matched, ambiguous = [], 0
+    for gid, t in opened.items():
+        c = credits.get(gid)
+        if not isinstance(c, dict) or c["at"] < t:
+            continue
+        if gid in later and later[gid] <= c["at"]:
+            ambiguous += 1
+        else:
+            matched.append(c)
+    return {"official_credited_units": len(matched),
+            "official_cohort_points": sum(c["points"] for c in matched),
+            "official_estimated_points": sum(c["points"] for c in matched if c["estimated"]),
+            "official_ambiguous_units": ambiguous}
+
+
 def observe_first(prs, request=None):
     """Indexed GitHub evidence, including closed rivals; unknown stays unknown."""
     req = request or competition._gh
@@ -94,9 +131,12 @@ def board_report(data):
             f"{data['first']} indexed first / {data['later']} later / "
             f"{data['first_unknown']} unknown; {data['accepted']} accepted verdicts. "
             f"Median lease-to-PR: {data['median_lease_to_pr_s']} s. "
+            f"Official cohort-unit credit: {data['official_credited_units']} units, "
+            f"{data['official_cohort_points']} points (estimated subset "
+            f"{data['official_estimated_points']}; ambiguous units {data['official_ambiguous_units']}). "
             f"Official all-time points: {data['official_points_total']} "
             f"(source checked {data['official_score_checked_at']}). "
-            "This is a cohort report, not an assertion of batch-attributed credit.")
+            "Credit is matched by official unit ID, not by GitHub PR number.")
     try:
         p=subprocess.run(["antonina","board","comment","--id",MANDATE,
                           "--author","Viche PnP scorecard","--body",text],
@@ -132,15 +172,17 @@ def main():
         except Exception:
             pass
     score=leaderboard.load()
+    data.update(cohort_credit(events,data,score))
     data.update(first_evidence=first, observed_at=time.time(),
                 official_points_total=score.get("our_points") if score.get("available") else None,
                 official_score_checked_at=score.get("source_checked_at"),
                 note="First status uses complete indexed exact-title search; unknown is explicit. "
-                     "Official points are the all-time total, not an attribution to this batch.")
+                     "Cohort credit joins official unit IDs and timestamps; exact PR attribution is unavailable.")
     data["board_report_at"]=old.get("board_report_at")
     # First report after every observed window; later reports at most hourly
     # when accepted, race or points evidence actually changes.
-    fields=("accepted","first","later","first_unknown","official_points_total")
+    fields=("accepted","first","later","first_unknown","official_points_total",
+            "official_credited_units","official_cohort_points","official_estimated_points","official_ambiguous_units")
     changed=any(data.get(k)!=old.get("board_report_values",{}).get(k) for k in fields)
     data["board_report_values"]=old.get("board_report_values",{})
     state.atomic_write(str(path),json.dumps(data,sort_keys=True)+"\n")
