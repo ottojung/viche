@@ -172,6 +172,17 @@ def verify(q,source):
         return "transient","generator paused"
     gid=q["id"];data=source.encode()
     validate.validate(q,data)
+    # Evidence 2026-11-27: 33 exact receipts were produced for steps closed or
+    # contested during the check. Recheck the cheap shared desk snapshot and
+    # cached PR counts immediately before spending a compile slot; unknown stays
+    # unknown.
+    snap = live.snapshot(max_age=45)
+    if snap and time.time()-snap["at"] < 120:
+        row = snap["gaps"].get(gid)
+        if row is None or (row.get("held") or 0) >= (row.get("parallel") or 1):
+            return "obsolete", "step closed or parallel slots full before verification"
+        if ready.competition(time.time()).get(gid, 0) > 0:
+            return "obsolete", "rival PR open before verification"
     with tempfile.TemporaryDirectory(prefix="promise-check-",dir=root()) as d:
         p=Path(d)/"candidate.lean";p.write_bytes(data)
         rc,r=checklocal.check(str(p),q["module"],timeout=120)

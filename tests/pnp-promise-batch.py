@@ -88,12 +88,14 @@ class Tests(unittest.TestCase):
         self.assertTrue(source);self.assertLessEqual(gates,9)
         with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
             b.root().mkdir()
-            with patch.object(b.checklocal,"check",return_value=(0,{"status":"ok","sha256":"bad","checked_base":"a"*40})):
+            # The obsolete guard reads the live desk snapshot via a module-level
+            # cache path; isolate it so this test exercises only receipt admission.
+            with patch.object(b.live,"snapshot",return_value=None),patch.object(b.checklocal,"check",return_value=(0,{"status":"ok","sha256":"bad","checked_base":"a"*40})):
                 self.assertEqual(b.verify(Q,source)[0],"transient")
                 self.assertIsNone(ready.verified(GID))
                 self.assertFalse((ready.directory()/(GID+".lean")).exists())
             receipt={"status":"ok","sha256":hashlib.sha256(source.encode()).hexdigest(),"checked_base":"a"*40,"id":"fixture"}
-            with patch.object(b.checklocal,"check",return_value=(0,receipt)),patch.object(allocator,"proof_of_now",return_value="acquired") as claim:
+            with patch.object(b.live,"snapshot",return_value=None),patch.object(b.checklocal,"check",return_value=(0,receipt)),patch.object(allocator,"proof_of_now",return_value="acquired") as claim:
                 self.assertEqual(b.verify(Q,source)[0],"checked")
                 claim.assert_called_once_with(GID)
                 self.assertEqual(ready.verified(GID)["digest"],receipt["sha256"])
@@ -108,7 +110,28 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d),patch.object(config,"GAPS_DIR",d+"/gaps"):
             b.root().mkdir()
             source,_,_=b.candidate(Q,b.gen.parse(STATEMENT))
-            with patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})):
+            with patch.object(b.live,"snapshot",return_value=None),patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})):
                 self.assertEqual(b.verify(Q,source)[0],"transient")
                 self.assertIsNone(ready.verified(GID))
+    def test_obsolete_guard_skips_compile_for_closed_or_contested_step(self):
+        """A fresh desk snapshot showing a closed step or rival PR must skip
+        the scarce compile slot entirely, before any checklocal work."""
+        with tempfile.TemporaryDirectory() as d,patch.object(config,"STATE_ROOT",d):
+            b.root().mkdir()
+            source,_,_=b.candidate(Q,b.gen.parse(STATEMENT))
+            closed={"at":time.time(),"gaps":{}}
+            with patch.object(b.live,"snapshot",return_value=closed),patch.object(b.checklocal,"check") as check:
+                status,reason=b.verify(Q,source)
+                self.assertEqual(status,"obsolete")
+                self.assertIn("closed",reason)
+                check.assert_not_called()
+            open_step={"at":time.time(),"gaps":{GID:{"held":0,"parallel":1}}}
+            with patch.object(b.live,"snapshot",return_value=open_step),patch.object(b.ready,"competition",return_value={GID:1}),patch.object(b.checklocal,"check") as check:
+                status,reason=b.verify(Q,source)
+                self.assertEqual(status,"obsolete")
+                self.assertIn("rival",reason)
+                check.assert_not_called()
+            with patch.object(b.live,"snapshot",return_value=open_step),patch.object(b.ready,"competition",return_value={GID:0}),patch.object(b.checklocal,"check",return_value=(2,{"status":"busy"})) as check:
+                self.assertEqual(b.verify(Q,source)[0],"transient")
+                check.assert_called_once()
 if __name__=="__main__":unittest.main()
