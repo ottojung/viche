@@ -181,7 +181,8 @@ def set_lane(rec, lane):
 
 def maintain(d, mem, now, snapshot, records):
     """Migrate idle legacy holds and finish posting attempts without agent churn."""
-    from . import fastlane
+    from . import fastlane, surge
+    batch = surge.active(now)
     active = [r for r in records if support.active(r,now) and not r.get("queued_lease") and not r.get("candidate_digest") and not r.get("intent")]
     if paused():
         for rec in active:
@@ -193,7 +194,7 @@ def maintain(d, mem, now, snapshot, records):
     research = [r for r in active if r.get("work_lane") != "posting" and
                 (points(r,snapshot) is None or points(r,snapshot) >= MIN_RESEARCH_POINTS)]
     research.sort(key=lambda r:(-(points(r,snapshot) or 0),r.get("lease_obtained_at") or now))
-    keep = research[0]["gap_id"] if research else None
+    keep = research[0]["gap_id"] if research and not batch else None
     released = []
     for old in active:
         gid = old["gap_id"]
@@ -209,6 +210,14 @@ def maintain(d, mem, now, snapshot, records):
             # but start their bounded generator concurrently after the grace.
             if not old.get("work_lane") and age < LEGACY_GRACE:
                 continue
+            if batch:
+                # Never release a candidate or an immature hard lease.
+                # The existing fenced release revalidates the lease and intent.
+                if fastlane.release(d,mem,gid,"out_of_time",
+                        "active witness batch; research hold has no candidate",
+                        expected_lease=old["lease"]):
+                    released.append(gid)
+                continue
             if not set_lane(old,"posting"):
                 continue
         rec = state.load(gid)
@@ -217,7 +226,7 @@ def maintain(d, mem, now, snapshot, records):
         outcome = (rec.get("posting") or {}).get("result")
         if outcome in ("unsupported","unknown","contested"):
             value = points(rec,snapshot)
-            if outcome != "contested" and value is not None and value >= MIN_RESEARCH_POINTS and keep is None:
+            if not batch and outcome != "contested" and value is not None and value >= MIN_RESEARCH_POINTS and keep is None:
                 if set_lane(rec,"research"):
                     keep=gid
                 continue
