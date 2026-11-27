@@ -628,12 +628,40 @@ launch_monitor() {
     "$(res_read "$_lm_id" | jq -c --argjson p "$_lm_pid" '.monitor_pid=$p')"
 }
 
+monitor_wait() {
+  _mw_interval=$1
+  if [ -n "${VICHE_SUITE_ROOT_PID:-}" ]; then
+    case "$VICHE_SUITE_ROOT_PID" in
+      ''|*[!0-9]*) return 1 ;;
+    esac
+    # Test monitors use setsid and therefore escape the verifier process-group
+    # cleanup. Poll the suite owner at one-second granularity so a killed suite
+    # cannot leave a detached monitor mutating its fixture for a full production
+    # polling interval. Production monitors have no suite owner and keep their
+    # ordinary configured sleep.
+    _mw_left=$_mw_interval
+    while [ "$_mw_left" -gt 0 ]; do
+      kill -0 "$VICHE_SUITE_ROOT_PID" 2>/dev/null || return 1
+      if [ "$_mw_left" -gt 1 ]; then
+        sleep 1
+        _mw_left=$((_mw_left - 1))
+      else
+        sleep "$_mw_left"
+        _mw_left=0
+      fi
+    done
+    kill -0 "$VICHE_SUITE_ROOT_PID" 2>/dev/null
+  else
+    sleep "$_mw_interval"
+  fi
+}
+
 monitor() {
   _mo_id=$1
   _mo_cur=$(res_read "$_mo_id")
   _mo_interval=$(printf '%s\n' "$_mo_cur" | jq -r '.monitor_interval_seconds // 20')
   while :; do
-    sleep "$_mo_interval"
+    monitor_wait "$_mo_interval" || exit 0
     _mo_cur=$(res_read "$_mo_id") || exit 0
     [ "$(printf '%s\n' "$_mo_cur" | jq -r '.state')" = active ] || exit 0
     _mo_now=$(date +%s)
