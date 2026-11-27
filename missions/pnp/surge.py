@@ -11,6 +11,11 @@ OBSERVATION_MAX_AGE = 60
 RECOVERY_WINDOW = 900
 RECOVERY_MIN_SPAN = 600
 RECOVERY_MIN_GAPS = 40
+# A handful of newly seen witness-hint gaps is ordinary frontier churn, not a
+# posting burst. Without a real threshold, once surge is active the steady
+# trickle of arrivals refreshes last_busy every cycle and surge never clears,
+# permanently suppressing research staffing and obsolete-worker retirement.
+BURST_MIN_GAPS = 25
 LEDGER_TAIL_BYTES = 256 * 1024
 WITNESS_HINTS = ("two-lit", "two lit", "one-a-side", "one a side",
                  "fan-in-two", "fan in two", "table a", "representation")
@@ -42,14 +47,17 @@ def decide(previous, snapshot, seen, now):
     witnesses = len(arrivals)
     # A large claimable frontier alone is not a posting burst: surge must not
     # permanently suppress staffing whenever ordinary gaps are plentiful.
-    # Only an actual burst of new witness-hint arrivals throttles new starts.
-    busy = type(ordinary) is int and ordinary >= 100 and bool(arrivals)
+    # Only a genuine burst of new witness-hint arrivals throttles new starts.
+    # A sporadic trickle must never refresh the quiet timer, otherwise a
+    # single burst keeps surge active indefinitely and permanently disables
+    # the controller's staffing and retirement of terminal assignments.
+    busy = type(ordinary) is int and ordinary >= 100 and witnesses >= BURST_MIN_GAPS
     last_busy = previous.get("last_busy")
     if busy:
         last_busy = observed
-    elif arrivals and (witnesses >= 50 or previous.get("active")):
-        # Keep the batch alive through sporadic new arrivals, but never
-        # refresh its timer merely because an old arrival remains in-window.
+    elif witnesses >= BURST_MIN_GAPS:
+        # Keep the batch alive through a genuine burst, but never refresh its
+        # timer merely because an old arrival remains in-window.
         last_busy = max(last_busy or 0, min(observed, max(arrivals)))
     active = bool(busy or (type(last_busy) in (int, float)
                             and 0 <= observed-last_busy < QUIET_SECONDS))

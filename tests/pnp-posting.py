@@ -223,4 +223,35 @@ class Tests(unittest.TestCase):
         self.assertEqual(state.load(GID)["posting"]["result"],"unknown")
 
 
+class SurgeDecideTests(unittest.TestCase):
+    """Hermetic burst-detection tests: no desk, ledger or state mutation."""
+
+    @staticmethod
+    def _snapshot(now, count):
+        rows={f"g{i}":{"title":"a fan-in-two representation"} for i in range(count)}
+        seen={f"g{i}":now-10 for i in range(count)}
+        return {"observed":now,"ordinary":1000,"gaps":rows},seen
+
+    def test_sporadic_arrivals_do_not_sustain_surge(self):
+        now=time.time()
+        snap,seen=self._snapshot(now,3)
+        previous={"active":True,"last_busy":now-1000,"observed":now-5,"ordinary":1000}
+        out=surge.decide(previous,snap,seen,now)
+        self.assertEqual(out["last_busy"],previous["last_busy"])
+        self.assertTrue(out["active"])  # still inside the old quiet window
+        later=now+300  # 1300s since the last genuine burst
+        snap2,seen2=self._snapshot(later,3)
+        out2=surge.decide(out,snap2,seen2,later)
+        self.assertFalse(out2["active"])
+
+    def test_genuine_burst_activates_and_refreshes(self):
+        now=time.time()
+        count=surge.BURST_MIN_GAPS+5
+        snap,seen=self._snapshot(now,count)
+        out=surge.decide({},snap,seen,now)
+        self.assertTrue(out["active"])
+        self.assertEqual(out["last_busy"],now)
+        self.assertEqual(out["new_witnesses"],count)
+
+
 if __name__=="__main__":unittest.main()
