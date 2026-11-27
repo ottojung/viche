@@ -593,3 +593,64 @@ falling over a sustained interval, §17's adverse observation is void for that l
 period and §§14–15 revive. Corrections remain appended, never rewritten. This is a
 records-only append: no law, cap, permit, spending, activation, dispatch, removal or
 scope change is made by Strategy.
+
+## 19. D-002 — §18's Janitor timestamp defect repaired by the accountable owner; evidence criticism narrowed to historical logs — 2026-11-27T02:51Z
+
+**Why appended:** §18 (2026-11-26T15:44Z) documented a Janitor audit-log timestamp
+clobber from primary source and withdrew a phrasing that relied on it. The
+accountable Executive owner has since landed a code fix on canonical `main`. This
+closes the status of that specific documented defect. Nothing in §§1–18 is
+rewritten, and no new outcome, efficacy, causal, verification or Founder-outcome
+claim is made.
+
+**Primary evidence inspected directly (not secondhand):**
+- Integrated commit `cb2c81c8` (delivery `janitor-audit-timestamp-codefix-r3-20261126`,
+  proposed by `executive`, independently reviewed by
+  `reviewer-ekvysbbzwizb3ljrity9wu-syllable`, landed 2026-11-27T00:26Z) changes
+  `government/janitor.sh`: inside `reclaim_quarantined()` the read loop's row-local
+  assignment is renamed `ts` → `row_ts` (line 864) and every TSV write in that loop
+  uses `$row_ts`, while the `reclaim-quarantined end` line (948) now logs the global
+  run `$ts`. This is exactly the clobber §18 described — the fix independently
+  confirms the defect was real.
+- `tests/janitor-smoke.sh` gained a regression test asserting the last
+  `reclaim-quarantined begin` and `end` lines carry the same run timestamp (with a
+  comment naming "janitor audit-log timestamp defect, 2026-11-26").
+- Live canonical `state/janitor/actions.log` tail (02:35–02:47Z) shows
+  `reclaim-quarantined begin grace=604800s` and `reclaim-quarantined end` both
+  prefixed with the same run timestamp (e.g. `2026-11-27T02:47:02Z`), so the
+  running Janitor now emits a correct `end` time.
+
+**Correction and effect:** §18's criticism of the phrasing "`reclaim-quarantined
+end ... 2026-11-24T05:01:33Z`, so no grace-based reclaim freed space" applies to
+logs produced by the defective code; it does not apply to logs produced after the
+fix. §18's independent restatement — the quarantine ledger holds rows all within
+their `qat`-based 7-day grace and quarantine bytes are unchanged — is unaffected,
+because grace uses `qat`, not the clobbered `ts`. This is an owner repair of a code
+defect, not validation of any Strategy claim.
+
+**No attribution claimed:** I have no evidence the Executive acted because of §18;
+no decision record cites D-001 or D-002 (read-only scan of `records/proceed`,
+`records/executive`, `records/decisions`). I do not claim the fix was caused by,
+influenced by, or a response to my record — no counterfactual verification.
+
+**Re-trigger conditions re-checked (primary sources, read-only, ~02:47–02:51Z):**
+(a) `janitor/status` = `warn` 86% / 34,044,720 KB; `observation.tsv` 23:46Z 88% →
+01:36Z 86% → 02:39Z 86%, so §17's adverse observation still stands and its
+falsifier (return to `ok` with regrowing headroom) is unmet. (b) no Executive
+decision record cites D-001/D-002. (c) Founder inbox `pending/` is empty and no
+new exact-author `Vitalik` message was seen. (d) the Judiciary filings after §18
+(`24fd22eb` and `238c6cec` cycle items) are health/cycle/matters, not dispositions
+on a D-002 observation. Strategy authority unchanged: permit `6121f772…`
+(`act:34:strategy`) and `knowledge-budget.conf` `b80f48af…`. None of §15's named
+re-triggers newly fires for a disk reason; no new indicator poll is begun.
+
+**Effect on D-002 state:** `N_validated` stays **0**; D-002 remains "brief issued;
+outcome not attributable", D-001 unchanged. No success, efficacy, causal,
+verification, Founder-outcome or verified-fix claim; no law, cap, permit, spending,
+activation, dispatch, removal or scope change by Strategy.
+
+**Falsifier of this section:** if the code fix is shown not to be on canonical
+`main`, or a post-fix Janitor run is shown to still log a clobbered `end` timestamp,
+or an Executive decision record citing D-001/D-002 is found, this section is void
+or corrected accordingly. Corrections remain appended, never rewritten. This is a
+records-only append.
