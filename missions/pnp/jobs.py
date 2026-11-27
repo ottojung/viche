@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from . import config, publish, state, validate
+from . import attribution, config, publish, state, validate
 
 READY = ("CANDIDATE_READY", "LOCAL_CHECKED", "SIGNED", "PUSHED", "REJECTED")
 
@@ -36,7 +36,13 @@ def launch(gap, fd):
                          pass_fds=(fd,), start_new_session=True)
 
 
-def submit(gap, source, expected_lease=None):
+def submit(gap, source, expected_lease=None, contributors=None,
+           contributor_source=None):
+    """Queue a candidate for publication.
+
+    Contributors are optional and must be declared explicitly by trusted
+    producer code with a source; they are never read from the candidate file.
+    """
     rec = state.load(gap)
     if expected_lease and (not rec or rec.get("lease") != expected_lease):
         raise publish.StopPublish("assignment superseded")
@@ -72,6 +78,31 @@ def submit(gap, source, expected_lease=None):
             if before in ("LEASED", "RESEARCHING", "CANDIDATE_READY"):
                 rec.update(state="CANDIDATE_READY", candidate_digest=digest,
                            failure_reason=None)
+            # Bind an explicit contributor declaration to this exact candidate
+            # digest and lease attempt, inside the claim/state lock. A failed or
+            # racing submit that never reached this point cannot alter attribution
+            # for another candidate. Candidate bytes and prompts are never read.
+            if contributors is not None or os.environ.get("ANTONINA_AGENT_ID"):
+                if contributors is not None:
+                    declared = list(contributors)
+                    source = contributor_source or "jobs.submit"
+                else:
+                    agent = os.environ["ANTONINA_AGENT_ID"]
+                    declared = ["Antonina Agent %s <%s@antonina.local>" %
+                                (agent, agent)]
+                    source = "env:ANTONINA_AGENT_ID"
+                if rec["state"] not in ("SIGNED", "PUSHED", "PR_OPEN",
+                                        "ACCEPTED"):
+                    try:
+                        idents = attribution.validated(declared)
+                    except attribution.AttributionError as exc:
+                        raise publish.StopPublish(
+                            "invalid co-author declaration: %s" % exc)
+                    rec["coauthors"] = idents
+                    rec["coauthor_source"] = source
+                    state.event(gap, "coauthors_declared",
+                                {"coauthors": idents, "source": source,
+                                 "digest": digest, "lease": rec.get("lease")})
             rec.update(queued_lease=rec["lease"], publisher_retry_at=None,
                        publisher_failures=0, publisher_memory_required=None)
             state.save(rec)

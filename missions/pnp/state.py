@@ -10,7 +10,7 @@ import os
 import tempfile
 import time
 
-from . import config
+from . import attribution, config
 
 EMPTY = {
     "gap_id": None,
@@ -33,6 +33,10 @@ EMPTY = {
     "base_sha": None,
     "lean_toolchain": config.LEAN_TOOLCHAIN,
     "researchers": [],
+    # Explicit, validated contributor declarations only. The publisher never
+    # infers identities from candidate content, prompts or legacy Git config.
+    "coauthors": [],
+    "coauthor_source": None,
     "candidate_digest": None,
     "queued_lease": None,
     "branch": None,
@@ -196,6 +200,8 @@ def reacquire(gap_id, **fields):
         rec["publisher_memory_required"] = None
         rec["intent"] = None
         rec["researchers"] = []
+        rec["coauthors"] = []
+        rec["coauthor_source"] = None
         rec["state"] = "LEASED"
         save(rec)
         event(gap_id, "reacquired", {"previous_state": previous,
@@ -223,6 +229,32 @@ def update(gap_id, **fields):
         rec.update(fields)
         save(rec)
         event(gap_id, "update", {"fields": fields})
+    return rec
+
+
+def declare_coauthors(gap_id, values, source):
+    """Durably record an explicitly declared contributor, with its source.
+
+    Only trusted producer code may call this (jobs.submit / bulk); candidate
+    bytes and worker prompts never reach it.  A signed proof is immutable.
+    """
+    if not isinstance(source, str) or not source.strip() or len(source) > 200:
+        raise ValueError("co-author declaration requires a bounded source")
+    try:
+        idents = attribution.validated(values or ())
+    except attribution.AttributionError as exc:
+        raise ValueError(str(exc))
+    with lock(gap_id):
+        rec = load(gap_id)
+        if rec is None:
+            raise KeyError(gap_id)
+        if rec["state"] in ("SIGNED", "PUSHED", "PR_OPEN", "ACCEPTED"):
+            raise ValueError("signed proof attribution is immutable")
+        rec["coauthors"] = idents
+        rec["coauthor_source"] = source.strip()
+        save(rec)
+        event(gap_id, "coauthors_declared",
+              {"coauthors": idents, "source": source.strip()})
     return rec
 
 

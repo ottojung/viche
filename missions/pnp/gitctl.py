@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import tempfile
 
-from . import config, github, build_control, compile as compiler
+from . import attribution, config, github, build_control, compile as compiler
 
 MIRROR = os.path.join(config.CACHE_DIR, "fork.git")
 
@@ -33,7 +33,7 @@ def check_commit_fields(fmt):
         raise GitError("wrong committer: %r" % fmt[4:6])
 
 
-def run(argv, cwd=None, check=True):
+def run(argv, cwd=None, check=True, env=None):
     if cwd is None:
         # A publisher or reconciler may inherit the cwd of a worktree that was
         # removed after publication. Git resolves its repository from the
@@ -42,7 +42,7 @@ def run(argv, cwd=None, check=True):
         # git subprocess from a durable directory unless a caller pins one.
         cwd = config.CACHE_DIR
         os.makedirs(cwd, exist_ok=True)
-    p = subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE,
+    p = subprocess.run(argv, cwd=cwd, env=env, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE, text=True, timeout=90)
     if check and p.returncode != 0:
         raise GitError("%s failed (%d): %s" %
@@ -199,16 +199,24 @@ def reusable_checked_tree(worktree, base_sha, path, data):
         return False
 
 
-def signed_commit(worktree, base_sha, message, signer=None, correction=False):
-    """Create and cryptographically verify exactly one signed commit."""
+def signed_commit(worktree, base_sha, message, signer=None, correction=False,
+                  contributors=None, existing_message=None):
+    """Create and verify exactly one signed, truthfully attributed commit.
+
+    Identity is supplied per invocation (environment plus `git -c`): writing
+    user.name/email with `git config` in a linked worktree mutates the shared
+    repository config and races other offices.  Existing co-author trailers are
+    preserved on corrections; new ones are accepted only from an explicit,
+    validated declaration.  Hooks run unless the caller passes --no-verify.
+    """
     if signer is not None:
         return signer(worktree, base_sha, message)
-    run(["git", "-C", worktree, "config", "user.name", config.AUTHOR_NAME])
-    run(["git", "-C", worktree, "config", "user.email", config.AUTHOR_EMAIL])
-    run(["git", "-C", worktree, "config", "user.signingkey",
-         config.SIGNING_KEY])
-    run(["git", "-C", worktree, "config", "commit.gpgsign", "true"])
-    run(["git", "-C", worktree, "commit", "-m", message])
+    prior = attribution.parse(existing_message) if existing_message else ()
+    idents = attribution.expected(contributors, prior)
+    final = attribution.build(message, contributors, existing_message)
+    env = attribution.identity_env()
+    run(["git", "-C", worktree] + attribution.signing_args() +
+        ["commit", "-m", final], env=env)
     sha = run(["git", "-C", worktree, "rev-parse", "HEAD"]).stdout.strip()
     count = run(["git", "-C", worktree, "rev-list", "--count",
                  base_sha + "..HEAD"]).stdout.strip()
@@ -219,13 +227,23 @@ def signed_commit(worktree, base_sha, message, signer=None, correction=False):
     fmt = run(["git", "-C", worktree, "log", "-1", "--format=" +
                "%G?%n%GF%n%an%n%ae%n%cn%n%ce"]).stdout.splitlines()
     check_commit_fields(fmt)
+    body = run(["git", "-C", worktree, "log", "-1", "--format=%B"]).stdout
+    attribution.verify(body, idents)
     v = run(["git", "-C", worktree, "verify-commit", sha], check=False)
     if v.returncode != 0:
         raise GitError("git verify-commit failed")
     return sha
 
 
-def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
+def coauthors_of(sha, worktree=None):
+    """Explicit trailers already in a commit, preserved on correction."""
+    cmd = ["git"] + (["-C", worktree] if worktree else ["--git-dir=" + MIRROR])
+    body = run(cmd + ["log", "-1", "--format=%B", sha]).stdout
+    return attribution.parse(body)
+
+
+def fast_signed_commit(base_sha, branch, path, candidate_bytes, message,
+                       contributors=None):
     """The same single signed commit as fresh_worktree + pin_candidate + signed_commit, built with
     plumbing in the bare mirror (temporary index, no checkout of the whole repository): about 1 s
     instead of 15-20 s on billy-dev.  Only for a new proof file on a pinned base; corrections keep
@@ -238,6 +256,8 @@ def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
         raise GitError("base is not a full SHA")
     if not path.startswith("lean/") or ".." in path.split("/"):
         raise GitError("candidate path is outside lean/")
+    final = attribution.build(message, contributors)
+    idents = attribution.expected(contributors)
     gd = "--git-dir=" + MIRROR
     if run(["git", gd, "cat-file", "-e", base_sha + ":" + path], check=False).returncode == 0:
         raise GitError("candidate path already exists at base")
@@ -249,9 +269,7 @@ def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
     fd, index = tempfile.mkstemp(prefix="pnp-index-", dir=config.CACHE_DIR)
     os.close(fd)
     os.unlink(index)
-    env = dict(os.environ, GIT_INDEX_FILE=index,
-               GIT_AUTHOR_NAME=config.AUTHOR_NAME, GIT_AUTHOR_EMAIL=config.AUTHOR_EMAIL,
-               GIT_COMMITTER_NAME=config.AUTHOR_NAME, GIT_COMMITTER_EMAIL=config.AUTHOR_EMAIL)
+    env = dict(attribution.identity_env(), GIT_INDEX_FILE=index)
 
     def g(*argv, **kw):
         q = subprocess.run(["git", gd] + list(argv), env=env, cwd=config.CACHE_DIR, text=True,
@@ -264,7 +282,7 @@ def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
         g("update-index", "--add", "--cacheinfo", "100644,%s,%s" % (blob, path))
         tree = g("write-tree")
         sha = g("-c", "user.signingkey=" + config.SIGNING_KEY, "commit-tree", tree, "-p", base_sha,
-                "-S" + config.SIGNING_KEY, "-m", message)
+                "-S" + config.SIGNING_KEY, "-m", final)
     finally:
         try:
             os.unlink(index)
@@ -275,6 +293,8 @@ def fast_signed_commit(base_sha, branch, path, candidate_bytes, message):
         raise GitError("commit is not exactly one added proof file: %r" % changed)
     fmt = run(["git", gd, "log", "-1", "--format=%G?%n%GF%n%an%n%ae%n%cn%n%ce", sha]).stdout.splitlines()
     check_commit_fields(fmt)
+    body = run(["git", gd, "log", "-1", "--format=%B", sha]).stdout
+    attribution.verify(body, idents)
     if run(["git", gd, "verify-commit", sha], check=False).returncode != 0:
         raise GitError("git verify-commit failed")
     run(["git", gd, "update-ref", "refs/heads/" + branch, sha])

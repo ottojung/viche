@@ -143,9 +143,13 @@ class FakeGit:
     def build(self, wt, module, statement, runner=None):
         return self.build_ok, "ok" if self.build_ok else "boom"
 
-    def signed_commit(self, wt, base, message, signer=None):
-        self.calls.append(("commit", message))
+    def signed_commit(self, wt, base, message, signer=None, correction=False,
+                      contributors=None, existing_message=None):
+        self.calls.append(("commit", message, contributors))
         return SHA
+
+    def coauthors_of(self, sha, worktree=None):
+        return []
 
     def remote_branch_sha(self, branch):
         return self.remote
@@ -380,7 +384,8 @@ class TestPublish(unittest.TestCase):
         class CorrectionGit(FakeGit):
             def pin_candidate(self, wt, path, data, correction=False):
                 self.calls.append(("pin", correction))
-            def signed_commit(self, wt, base, message, signer=None, correction=False):
+            def signed_commit(self, wt, base, message, signer=None, correction=False,
+                              contributors=None, existing_message=None):
                 self.calls.append(("commit", correction))
                 return new_sha
             def new_commits(self, wt, base):

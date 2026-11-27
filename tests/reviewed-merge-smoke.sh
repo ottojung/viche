@@ -3,6 +3,7 @@
 # reviewer gate and signed/fast-forward Git delivery over local bare origin.
 set -eu
 repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd -P)
+export VICHE_COMMIT_FIXTURE=1
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 town=$tmp/town

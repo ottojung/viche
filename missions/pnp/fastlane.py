@@ -75,6 +75,9 @@ def submit_ready(gap):
     path = cand_ready(gap)
     if not path:
         return None
+    # A generator/twin candidate is data, not an authenticated contributor
+    # identity; the publisher credits its actual producer, never a guessed
+    # researcher. Explicit declarations must come from trusted producer code.
     result = jobs.submit(gap, path, expected_lease=rec["lease"])
     state.event(gap, "generator_ready_submit", {"status": str(result)[:300]})
     return result

@@ -8,7 +8,7 @@ restart after SIGNED, PUSHED or PR_OPEN never duplicates a branch or PR.
 import os
 import time
 
-from . import config, desk as desk_mod, gitctl, github, state, validate, evidence
+from . import attribution, config, desk as desk_mod, gitctl, github, state, validate, evidence
 
 
 class StopPublish(Exception):
@@ -107,6 +107,10 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         raise StopPublish("state %s is not publishable" % rec["state"])
     correction = rec["state"] == "REJECTED" or bool(rec.get("correction_from_sha"))
     resume = rec["state"] in ("SIGNED", "PUSHED")
+    # Only explicitly declared, validated contributors are credited. Candidate
+    # bytes, worker prompts and desk metadata are unauthenticated inputs and
+    # never become co-authors. Existing trailers are carried into corrections.
+    coauthors = list(rec.get("coauthors") or ())
 
     # Re-read live instructions at startup; a stale pnp.sh comment is not law.
     try:
@@ -177,6 +181,14 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
             else:
                 worktree = git.fresh_worktree(gap_id, base_sha, branch)
                 state.update(gap_id, worktree=worktree)
+            if correction:
+                # Preserve trailers from the original signed commit; never
+                # replace them with a guessed researcher identity.
+                try:
+                    coauthors = attribution.validated(
+                        coauthors, git.coauthors_of(previous, worktree=worktree))
+                except Exception as e:
+                    _stop(gap_id, "cannot preserve correction co-authors: %s" % e)
             if not fast and hasattr(git, "prepare_unpublished"):
                 git.prepare_unpublished(worktree, branch, base_sha,
                                         previous if correction else None)
@@ -214,12 +226,14 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         try:
             if correction:
                 sha = git.signed_commit(worktree, base_sha, gap_id,
-                                        signer=signer, correction=True)
+                                        signer=signer, correction=True,
+                                        contributors=coauthors)
             elif worktree is None:
-                sha = git.fast_signed_commit(base_sha, branch, rec["path"], data, gap_id)
+                sha = git.fast_signed_commit(base_sha, branch, rec["path"], data,
+                                             gap_id, contributors=coauthors)
             else:
                 sha = git.signed_commit(worktree, base_sha, gap_id,
-                                        signer=signer)
+                                        signer=signer, contributors=coauthors)
         except Exception as e:
             _stop(gap_id, "signed commit failed: %s" % e)
         state.clear_intent(gap_id)
@@ -229,7 +243,8 @@ def publish(gap_id, candidate_path, desk=None, git=None, gh=None,
         expected_commits = (git.new_commits(worktree, base_sha) if correction
                             and hasattr(git, "new_commits") else [sha])
         state.transition(gap_id, "SIGNED", commit_sha=sha,
-                         expected_commits=expected_commits)
+                         expected_commits=expected_commits,
+                         coauthors=coauthors)
     else:
         sha = rec.get("commit_sha")
         base_sha = rec.get("base_sha")
