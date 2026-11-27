@@ -13,6 +13,8 @@ mkdir -p "$state/lbcert" "$state/bulk"
 mkdir -p "$state/cache"
 last_maintenance=0
 last_observation=0
+last_readiness=0
+last_readiness_mode=unknown
 while [ -f missions/pnp/allocator.py ]; do
     # Keep fresh allocation and generation separate from slow roster/network
     # maintenance. Only this loop writes allocator memory and calls next.
@@ -23,6 +25,16 @@ while [ -f missions/pnp/allocator.py ]; do
             python3 -m missions.pnp.allocator --observe \
             </dev/null >>"$state/cache/allocator-observe.log" 2>&1 9>&- &
     fi
+    # The probe is observational and never blocks the posting lane.
+    # Run hourly and at the first observation of a surge; no overlap.
+    readiness_mode=$(python3 -m missions.pnp.surge --mode 2>/dev/null || echo unknown)
+    if [ "$((now - last_readiness))" -ge 3600 ] || \
+       { [ "$readiness_mode" = surge ] && [ "$last_readiness_mode" != surge ]; }; then
+        last_readiness=$now
+        nohup flock -n "$state/cache/readiness.lock" timeout -k 5 150 \
+            python3 -m missions.pnp.readiness </dev/null >>"$state/cache/readiness.log" 2>&1 9>&- &
+    fi
+    last_readiness_mode=$readiness_mode
     python3 -m missions.pnp.allocator --posting || :
     now=$(date +%s)
     if [ "$((now - last_maintenance))" -lt 30 ]; then
