@@ -63,6 +63,8 @@ def refresh():
         doc = json.loads(result.stdout)
     snapshot = normalize(doc, time.time())
     state.atomic_write(cache_path(), json.dumps(snapshot) + "\n")
+    from . import observation
+    observation.record(snapshot)
     return snapshot
 
 
