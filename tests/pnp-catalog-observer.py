@@ -69,6 +69,19 @@ class Observer(unittest.TestCase):
             self.assertEqual(freshness.recent(110),{"new":110})
             mark.assert_called_once_with("seen","new")
 
+    def test_malformed_history_cannot_create_fresh_arrivals(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(config,"STATE_ROOT",tmp), \
+             patch.object(observation.ledger,"mark") as mark:
+            p=Path(freshness.observation_path())
+            p.parent.mkdir()
+            p.write_text(json.dumps({"ids":"old","at":100,"recent":{"injected":100}}))
+            self.assertEqual(freshness.recent(105),{})
+            observation.record({"observed":110,"complete":True,"gaps":{"old":{},"new":{}}},now=110)
+            self.assertEqual(freshness.recent(110),{})
+            mark.assert_not_called()
+            p.write_text(json.dumps({"ids":["old"],"at":110,"recent":{"injected":110}}))
+            self.assertEqual(freshness.recent(110),{})
+
     def test_shared_fresh_cache(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(live, "GAPS_CACHE", os.path.join(tmp, "catalog.json")), patch.object(live.time, "time", return_value=100), patch.object(live, "_fetch_gaps") as fetch:
             with open(live.GAPS_CACHE, "wb") as f:
