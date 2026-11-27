@@ -553,7 +553,21 @@ def verify_suite(wt, candidate, suite, logs, entry):
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout=stdout, stderr=stderr)
 
 
-def land(p, entry, review):
+class SuiteBudget:
+    """One actual full-suite verification per pass, not one merge attempt."""
+    def __init__(self):
+        self.used = False
+
+    def reserve(self, suite):
+        if suite == "tests/records-smoke.sh":
+            return True
+        if self.used:
+            return False
+        self.used = True
+        return True
+
+
+def land(p, entry, review, budget=None):
     git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main")
     base = git("rev-parse", "refs/remotes/origin/main")
     info = classify(base, p["head"])
@@ -624,6 +638,9 @@ def land(p, entry, review):
                 entry.update({"status": "refused", "reason": "tally.sh %s does not pass: %s" % (bill, tally.stdout.strip()[-200:])})
                 return False
         suite = suite_for(info["paths"])
+        if budget is not None and not budget.reserve(suite):
+            entry.update({"status": "approved", "reason": "full suite budget used; retry next pass"})
+            return False
         logs = DELIVERY / "logs"
         logs.mkdir(parents=True, exist_ok=True)
         check = verify_suite(wt, candidate, suite, logs, entry)
@@ -849,16 +866,17 @@ def run_locked():
         atomic_write(ROOT / "state.json", json.dumps(state, sort_keys=True, indent=1) + "\n")
 
     persist()
-    full_attempted = False
+    budget = SuiteBudget()
     for p, entry, review, suite in sorted(ready, key=priority):
         if entry.get("status") in TERMINAL:
             continue
-        if suite != "tests/records-smoke.sh":
-            if full_attempted:
-                continue
-            full_attempted = True
+        if suite != "tests/records-smoke.sh" and budget.used:
+            continue
         try:
-            land(p, entry, review)
+            # A no-delta, conflict or preflight-blocked proposal does not use
+            # the expensive verification slot. land() reserves it only when
+            # the exact merged candidate is about to run its actual suite.
+            land(p, entry, review, budget=budget)
         except (GitError, OSError, subprocess.SubprocessError) as error:
             entry.update({"status": "approved", "reason": "landing error, retried next cycle: %s" % error})
             log("landing %s failed: %s" % (p["branch"], error))
