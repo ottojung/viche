@@ -55,7 +55,7 @@ while [ -f missions/pnp/allocator.py ]; do
     last_maintenance=$now
     # Keep exactly one certificate pre-generator alive (it holds its own lock; see missions/pnp/lbcert).
     if python3 -m missions.pnp.pause allowed && flock -n "$state/lbcert/autosolve.lock" true; then
-        nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 9>&- &
+        nohup nice -n 19 python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 9>&- &
     fi
     # Keep receipt collection independent of agent turns and expensive desk I/O.
     mkdir -p "$state/cache"
