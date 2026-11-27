@@ -14,6 +14,7 @@ mkdir -p "$state/cache"
 last_maintenance=0
 last_observation=0
 last_readiness=0
+last_scorecard=0
 last_readiness_mode=unknown
 while [ -f missions/pnp/allocator.py ]; do
     # Keep fresh allocation and generation separate from slow roster/network
@@ -33,6 +34,13 @@ while [ -f missions/pnp/allocator.py ]; do
         last_readiness=$now
         nohup flock -n "$state/cache/readiness.lock" timeout -k 5 240 \
             python3 -m missions.pnp.readiness --report </dev/null >>"$state/cache/readiness.log" 2>&1 9>&- &
+    fi
+    if [ "$readiness_mode" != surge ] && { [ "$last_readiness_mode" = surge ] ||
+        [ "$((now - last_scorecard))" -ge 300 ]; }; then
+        last_scorecard=$now
+        nohup flock -n "$state/cache/batch-scorecard.lock" timeout -k 5 90 \
+            python3 -m missions.pnp.batch_scorecard --refresh --report \
+            </dev/null >>"$state/cache/batch-scorecard.log" 2>&1 9>&- &
     fi
     last_readiness_mode=$readiness_mode
     python3 -m missions.pnp.allocator --posting || :
