@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from missions.pnp import config, pause, readiness, surge
+from missions.pnp import batch_scorecard, config, pause, readiness, surge
 
 
 class Batch(unittest.TestCase):
@@ -76,6 +76,36 @@ class Readiness(unittest.TestCase):
             result=readiness.check(1000)
         self.assertFalse(result["ready"])
         self.assertEqual(set(result["errors"]),{"capacity","promise"})
+
+
+class Scorecard(unittest.TestCase):
+    def test_cohort_and_unknown_first(self):
+        events=[
+            {"t":900,"stage":"seen","gid":"L-meta-1"},
+            {"t":1000,"stage":"surge_enter","gid":"desk"},
+            {"t":1010,"stage":"leased","gid":"L-meta-1"},
+            {"t":1030,"stage":"pr_opened","gid":"L-meta-1","pr":7},
+            {"t":1040,"stage":"pr_opened","gid":"L-meta-2","pr":8},
+            {"t":2300,"stage":"surge_exit","gid":"desk"},
+            {"t":2400,"stage":"verdict","gid":"L-meta-1","verdict":"ACCEPTED"},
+            {"t":2500,"stage":"pr_opened","gid":"L-meta-3","pr":9},
+        ]
+        w=batch_scorecard.last_closed_window(events)
+        r=batch_scorecard.summarize(events,w,{"7":True})
+        self.assertEqual(w,(700,2300))
+        self.assertEqual((r["seen"],r["leased"],len(r["prs"]),r["accepted"]),(1,1,2,1))
+        self.assertEqual((r["first"],r["first_unknown"],r["median_lease_to_pr_s"]),(1,1,20))
+
+    def test_first_query_includes_closed_rivals_and_refuses_partial_index(self):
+        def req(*args):
+            if args[1].startswith("repositories/"):
+                return {"id":config.UPSTREAM_ID,"full_name":"owner/repo"}
+            return {"data":{"a0":{"issueCount":2,"nodes":[
+                {"number":4,"title":"L-meta-1","createdAt":"2026-11-26T00:00:00Z"},
+                {"number":7,"title":"L-meta-1","createdAt":"2026-11-26T00:01:00Z"}]},
+                "a1":{"issueCount":2,"nodes":[
+                {"number":8,"title":"L-meta-2","createdAt":"2026-11-26T00:01:00Z"}]}}}
+        self.assertEqual(batch_scorecard.observe_first({"L-meta-1":7,"L-meta-2":8},req),{"7":False})
 
 
 if __name__ == "__main__":
