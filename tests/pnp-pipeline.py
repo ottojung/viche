@@ -14,10 +14,19 @@ from unittest import mock
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
-TMP = tempfile.mkdtemp(prefix="pnp-tests-")
-os.environ["PNP_STATE_ROOT"] = os.path.join(TMP, "state")
+TMP_DIR = tempfile.TemporaryDirectory(prefix="pnp-tests-")
+TMP = TMP_DIR.name
+TEST_ROOT = os.path.join(TMP, "state")
 
 from missions.pnp import config, desk, gitctl, github, publish, reconcile, state, validate  # noqa: E402
+
+def setUpModule():
+    # Called after all modules were imported, before this module's tests.
+    sys.path.insert(0, os.path.dirname(__file__))
+    import pnp_test_scope
+    scope = pnp_test_scope.enter(TEST_ROOT)
+    unittest.addModuleCleanup(scope.close)
+
 
 GAP = "L-meta-582"
 PATH = "lean/PEqualNP/Outside/L_meta_582.lean"
@@ -181,6 +190,7 @@ class FakeGH:
 
 def fresh(gap=GAP):
     """Isolate each test's state directory."""
+    assert config.STATE_ROOT == TEST_ROOT, "PnP fixture escaped test scope"
     state_path = state.state_path(gap)
     if os.path.exists(state_path):
         os.unlink(state_path)

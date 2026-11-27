@@ -26,8 +26,8 @@ class Desk:
     def docs(self):
         return "fixture"
 
-    def _next_gap(self, hard=False, another=False):
-        self.calls.append((hard, another))
+    def _next_gap(self, hard=False, another=False, level=None):
+        self.calls.append((hard, another, level))
         if not self.offers:
             return None
         expected, result = self.offers.pop(0)
@@ -54,6 +54,9 @@ class Tests(unittest.TestCase):
         mirror = patch.object(staff.gitctl, "ensure_mirror", return_value="a" * 40)
         mirror.start()
         self.addCleanup(mirror.stop)
+        launch=patch.object(allocator.posting,"launch",return_value=True)
+        self.launch=launch.start()
+        self.addCleanup(launch.stop)
 
     def add(self, gap="L-meta-1", **extra):
         fields = dict(state="LEASED", lease="lease-"+gap, lease_obtained_at=NOW-1800,
@@ -61,60 +64,126 @@ class Tests(unittest.TestCase):
         fields.update(extra)
         return state.create(gap, **fields)
 
-    def test_prefer_ordinary_fill_hard_cap(self):
-        d = Desk([(False,"L-meta-1"),(False,None)]+[(True,"L-meta-"+str(i)) for i in range(2,6)])
-        mem = {}
-        self.assertEqual(len(allocator.fill(d,mem,NOW,{"ordinary":1,"offerable":3})),4)
-        self.assertEqual(len(cli.held_records()),4)
-        self.assertEqual(d.calls[:3],[(False,False),(False,True),(True,True)])
-        self.assertEqual(len(d.calls),5)
+    def test_observation_cache_is_read_only_and_expires(self):
+        with patch.object(allocator.frontier,"refresh") as refresh,patch.object(allocator,"bound_roster",return_value=({("L-meta-1","lease-1")},{"L-meta-2"})):
+            self.assertTrue(allocator.observe()["complete"])
+        refresh.assert_called_once()
+        self.assertEqual(allocator.observed_roster(),({("L-meta-1","lease-1")},{"L-meta-2"}))
+        self.assertIsNone(allocator.observed_roster(time.time()+60))
+        with patch.object(allocator.frontier,"refresh"),patch.object(allocator,"bound_roster",return_value=None):
+            self.assertFalse(allocator.observe()["complete"])
+        self.assertIsNone(allocator.observed_roster())
+
+    def test_cached_tick_does_not_fetch_slow_observations(self):
+        with patch.object(allocator,"bound_roster",side_effect=AssertionError("network roster")),patch.object(allocator.frontier,"refresh",side_effect=AssertionError("network frontier")):
+            self.assertEqual(allocator.tick(Desk(),now=NOW,cached=True)["held"],0)
+
+    def test_fresh_solid_fill_and_cap(self):
+        d=Desk([(False,"L-meta-"+str(i)) for i in range(1,6)])
+        mem={}
+        self.assertEqual(len(allocator.fill(d,mem,NOW,{"ordinary":1,"offerable":3})),5)
+        self.assertEqual(len(cli.held_records()),5)
+        self.assertEqual(d.calls,[(False,False,"solid")]+[(False,True,"solid")]*4)
+        self.assertEqual(self.launch.call_count,5)
+        self.assertTrue(all(r["work_lane"]=="posting" for r in cli.held_records()))
         self.assertEqual(allocator.fill(d,mem,NOW+30,{}),[])
         self.assertEqual(len(d.calls),5)
 
-    def test_declined_stock_tries_next_without_ordinary_fallback(self):
+    def test_single_open_research_lease_when_high_value_available(self):
+        d=Desk([(False,"L-meta-"+str(i)) for i in range(2,6)]+[(True,"L-meta-1")])
+        snap={"gaps":{"L-meta-1":{"points":900,"level":"open","held":0,"parallel":1}}}
+        self.assertEqual(len(allocator.fill(d,{},NOW,snap)),5)
+        self.assertEqual(d.calls[-1],(True,True,"open"))
+        self.assertEqual(d.calls[:-1],[(False,False,"solid")]+[(False,True,"solid")]*3)
+        self.assertEqual(state.load("L-meta-1")["work_lane"],"research")
+        self.assertEqual(self.launch.call_count,4)
+
+    def test_stock_fallback_requires_fresh_uncontested_offer(self):
         from missions.pnp.lbcert import ready
-        for i in range(1,5):
-            self.add("L-meta-"+str(i))
         class StockDesk(Desk):
-            def _next_gap(self,hard=False,another=False,proof_of=None):
-                self.calls.append(proof_of)
-                if proof_of=="L-meta-98":return None
-                assert proof_of=="L-meta-99"
+            def _next_gap(self,hard=False,another=False,proof_of=None,level=None):
+                self.calls.append((level,proof_of))
+                if proof_of is None:return None
                 return {"gap":{"id":proof_of,"statement":"True","module":"PEqualNP.Outside.L_meta_99",
                     "file":"lean/PEqualNP/Outside/L_meta_99.lean"},
                     "lease":{"id":"fixture","terms":{"points":51,"kind":"prove","level":"solid","race":False}}}
-        d=StockDesk()
-        def offers(snapshot,mem,now):
-            attempts=mem.setdefault("proof_of_attempts",{})
-            return [x for x in ("L-meta-98","L-meta-99") if x not in attempts]
-        with patch.object(ready,"offers",side_effect=offers),patch.object(ready,"verified",return_value={"digest":"a"}),patch.object(allocator.fastlane,"submit_ready"):
-            self.assertEqual(allocator.fill(d,{},NOW,{}),["L-meta-99"])
-        self.assertEqual(d.calls,["L-meta-98","L-meta-99"])
+        d=StockDesk(); mem={}
+        def offers(snapshot,mem,now,uncontested=False):
+            self.assertTrue(uncontested)
+            mem.setdefault("proof_of_attempts",{})
+            return ["L-meta-99"]
+        with patch.object(ready,"offers",side_effect=offers),patch.object(ready,"verified",return_value={"digest":"a"}),patch.object(allocator.competition,"observe",return_value={"L-meta-99":0}):
+            self.assertEqual(allocator.fill(d,mem,NOW,{}),[])
+            self.assertEqual(allocator.fill(d,mem,NOW+5,{}),[])
+            self.assertEqual(allocator.fill(d,mem,NOW+5,{"complete":True}),["L-meta-99"])
+        self.assertEqual(d.calls,[("solid",None),(None,"L-meta-99")])
         self.assertEqual(state.load("L-meta-99")["lease_terms"]["points"],51)
-        self.assertEqual(len(cli.held_records()),5)
 
-    def test_checked_candidate_does_not_preempt_full_roster(self):
+    def test_checked_candidate_does_not_preempt_fresh_slots(self):
         from missions.pnp.lbcert import ready
-        for i in range(1,6):
-            self.add("L-meta-"+str(i))
         d=Desk()
         with patch.object(ready,"verified",return_value={"digest":"a"}):
-            self.assertIn("no free slot",allocator.proof_of_now("L-meta-99",d,NOW))
+            self.assertIn("retained",allocator.proof_of_now("L-meta-99",d,NOW))
         self.assertEqual(d.releases,[])
         self.assertEqual(d.calls,[])
 
+    def test_fresh_receipt_immediately_uses_have_proof(self):
+        from missions.pnp.lbcert import ready
+        class TargetDesk(Desk):
+            def _next_gap(self,hard=False,another=False,proof_of=None,level=None):
+                self.calls.append((level,proof_of))
+                self.assert_target=proof_of
+                return {"gap":{"id":proof_of,"statement":"True","module":"PEqualNP.Outside.L_meta_99",
+                         "file":"lean/PEqualNP/Outside/L_meta_99.lean"},
+                        "lease":{"id":"fixture","terms":{"points":351,"level":"hard","race":False}}}
+        d=TargetDesk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}),patch.object(allocator.frontier,"load",return_value={}),patch.object(allocator.fastlane,"submit_ready",return_value={"status":"queued"}) as send:
+            self.assertEqual(allocator.proof_of_now("L-meta-99",d,NOW),"acquired")
+            send.assert_called_once_with("L-meta-99")
+        self.assertEqual(d.calls,[(None,"L-meta-99")])
+        self.assertEqual(state.load("L-meta-99")["work_lane"],"posting")
+
+    def test_fresh_ordinary_reserves_one_slot(self):
+        d=Desk([(False,"L-meta-"+str(i)) for i in range(1,6)])
+        with patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}):
+            self.assertEqual(len(allocator.fill(d,{},NOW,{})),4)
+        self.assertEqual(len(d.calls),4)
+
+    def test_no_fast_target_for_known_rival_or_old_receipt(self):
+        from missions.pnp.lbcert import ready
+        d=Desk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={"L-meta-99":1}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}):
+            self.assertIn("contested",allocator.proof_of_now("L-meta-99",d,NOW))
+        self.assertEqual(d.calls,[])
+        self.assertFalse(allocator.freshness.fresh("L-meta-99",{"at":NOW-121},{"L-meta-99":NOW-200},NOW))
+        self.assertTrue(allocator.freshness.available("L-meta-99",{"complete":True,"observed":NOW-30,"gaps":{}},NOW-10))
+        self.assertFalse(allocator.freshness.available("L-meta-99",{"complete":True,"observed":NOW-5,"gaps":{}},NOW-10))
+
+    def test_fresh_event_honors_server_backoff_before_release(self):
+        from missions.pnp.lbcert import ready
+        d=Desk()
+        with patch.object(ready,"verified",return_value={"at":NOW-1}),patch.object(ready,"competition",return_value={}),patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-10}),patch.object(allocator.frontier,"load",return_value={}),patch.object(desk,"retry_until",return_value=time.time()+60):
+            self.assertEqual(allocator.proof_of_now("L-meta-99",d,NOW),"desk backoff")
+        self.assertEqual(d.calls,[])
+        self.assertEqual(d.releases,[])
+
     def test_null_backoff_and_new_ordinary_signal(self):
-        d = Desk()
-        mem = {}
+        d=Desk();mem={}
         allocator.fill(d,mem,NOW,{"ordinary":0})
-        self.assertEqual(d.calls,[(False,False),(True,False)])
+        self.assertEqual(d.calls,[(False,False,"solid")])
         allocator.fill(d,mem,NOW+30,{"ordinary":0})
-        self.assertEqual(len(d.calls),2)
+        self.assertEqual(len(d.calls),1)
         allocator.fill(d,mem,NOW+60,{"ordinary":1})
-        self.assertEqual(d.calls[-1],(False,False))
+        self.assertEqual(d.calls[-1],(False,False,"solid"))
+        self.assertEqual(len(d.calls),2)
+        allocator.fill(d,mem,NOW+181,{})
         self.assertEqual(len(d.calls),3)
-        allocator.fill(d,mem,NOW+121,{})
-        self.assertEqual(d.calls[-1],(True,False))
+
+    def test_server_backoff_overrides_positive_frontier(self):
+        d=Desk()
+        with patch.object(desk,"retry_until",return_value=time.time()+60):
+            self.assertEqual(allocator.fill(d,{},NOW,{"ordinary":200}),[])
+        self.assertEqual(d.calls,[])
 
     def test_publication_does_not_occupy_slots(self):
         self.add(state="PR_OPEN",pr_number=42)
@@ -176,15 +245,13 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             assignment.prepare(rec["gap_id"],checkout=False,worker="../other")
 
-    def test_new_positive_frontier_revision_wakes_acquisition(self):
-        d=Desk()
-        mem={}
-        allocator.fill(d,mem,NOW,{"ordinary":1,"offerable":1,"source_updated_at":"a"})
-        allocator.fill(d,mem,NOW+30,{"ordinary":1,"offerable":1,"source_updated_at":"a"})
+    def test_revision_churn_does_not_override_null_backoff(self):
+        d=Desk();mem={}
+        allocator.fill(d,mem,NOW,{"ordinary":1,"source_updated_at":"a"})
+        allocator.fill(d,mem,NOW+30,{"ordinary":1,"source_updated_at":"b"})
+        self.assertEqual(d.calls,[(False,False,"solid")])
+        allocator.fill(d,mem,NOW+121,{"ordinary":1,"source_updated_at":"c"})
         self.assertEqual(len(d.calls),2)
-        allocator.fill(d,mem,NOW+60,{"ordinary":1,"offerable":1,"source_updated_at":"b"})
-        self.assertEqual(d.calls[-1],(False,False))
-        self.assertEqual(len(d.calls),3)
 
     def test_raw_next_is_not_a_diagnostic(self):
         d = desk.Desk()

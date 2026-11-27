@@ -56,7 +56,8 @@ source only; exact checks run solely from a bound workspace through the managed 
 ## Pieces
 
 * `lbparse.py` — classifies the statement in any pretty-printing style (elaborated binders,
-  `(3 : Fin (8 : ℕ))`, `.any` edge lists via a Lean `#eval` fallback on marceline-dev).
+  `(3 : Fin (8 : ℕ))`, `.any` edge lists; unusual syntax is normalized locally, with no
+  remote or out-of-host fallback).
 * `lbgen.py` — mirrors the public engine `lb_cert` of upstream `L_meta_7281` (Apache-2.0) move for
   move (`next`, `via`, `stepOK`): exhaustive search of fan-in-two AND/OR/NOT runs with `K−1` gates,
   up to variable permutations fixing `f`; emits the closed set of failing states with hints.
@@ -82,9 +83,10 @@ exact bound workspace.
 ## Monotone-equals-general family
 
 Statements `∀ s, HasCircuitSize n f s → ∃ C, Monotone2 C ∧ C.size ≤ s ∧ ∀ x, C.eval … = f x` ("Table 2:
-for the monotone five-input f with table 0x…"). marceline-dev `monofam.py` computes the exact general
+for the monotone five-input f with table 0x…"). Local `monofam.py` computes the exact general
 complexity L (lb_cert at L, a circuit at L), searches an AND/OR circuit with exactly L gates, and emits
-the lb_cert lemma plus the explicit circuit; the lb-cert handler compiles it before returning it.
+the lb_cert lemma plus the explicit circuit; the exact bytes are compiled only through the managed
+compiler from a bound workspace. No remote handler or out-of-host compute is involved.
 No monotone circuit of size L = the statement is false (status `false`).
 
 ## One-NOT family ("At fan-in two, one NOT gate saves nothing on edges …")
@@ -99,7 +101,8 @@ pruning first and counts its states; the kernel does ~2k states/s, so instances 
 Typical easy instance: generation < 1 s, compile ~25 s, file ~62 KB, passes missions.pnp.validate
 (one `theorem`, helper `lemma`s, `import Mathlib`, no `noncomputable section`).
 Flow: autosolve (family `onenot`, only while `pr_open == 0`, ahead of every other family) ->
-relay `lb-cert` -> marceline lb-handler -> onenot.py -> candidate file -> normal lease-aware publisher.
+local `onenot.py` -> candidate file -> normal lease-aware publisher. No relay or remote handler
+is used at any step.
 Harder instances need the gate-elimination method of the merged L-meta-9266 / 14412 files.
 
 ## Track record and limits

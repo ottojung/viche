@@ -75,24 +75,9 @@ SEEN = os.path.join(WORK, 'seen.json')
 
 
 def note_seen(ids):
-    """Ledger stage 'seen': the first poll in which a step is open.  The first run records the
-    current frontier silently, so only steps posted afterwards get a seen time."""
-    from missions.pnp import ledger
-    try:
-        seen = set(json.load(open(SEEN)))
-        first = False
-    except (OSError, ValueError):
-        seen, first = set(), True
-    new = set(ids) - seen
-    if not new:
-        return
-    if not first:
-        for gid in sorted(new):
-            ledger.mark('seen', gid)
-    tmp = SEEN + '.tmp'
-    json.dump(sorted(seen | new), open(tmp, 'w'))
-    os.replace(tmp, SEEN)
-
+    # Complete frontier observations own the first-sighting clock.
+    # This legacy hook must not label stale/open-cache IDs as new.
+    return None
 
 def lease_now(gid):
     """A step just got an exact compiler receipt: ask the desk for it (proof-of) now, not at the
@@ -220,7 +205,7 @@ def sibling_pass():
 
 def gen_plugin(g, name, sha):
     """A town-written local plugin: generate and validate, then check only in bound workspaces."""
-    import plugins, checkremote
+    import plugins
     from missions.pnp import state, support, validate, fastlane, ledger
     from missions.pnp.lbcert import ready
     gid = g['id']
@@ -231,13 +216,15 @@ def gen_plugin(g, name, sha):
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
     rc, why = plugins.run(name, gid, sf, out + '.gen')
+    if os.path.exists(os.path.join(WORK, 'STOP')):
+        return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
     if rc != 0:
         write_status(gid, '%s plugin %s %s rc=%s %s' % ('unsupported' if rc == 3 else 'failed', name, sha, rc,
                                                      why.strip().replace('\n', ' ')[-160:]))
         log('plugin', name, gid, 'rc', rc, '%.0fs' % (time.time() - t0))
         return
-    # Statically validate exact output before any publication or remote check.
+    # Statically validate exact output before any publication or managed local check.
     meta={k:g[k] for k in ('id','file','module','statement','imports')}
     try:
         data=open(out+'.gen','rb').read()
@@ -270,6 +257,8 @@ def gen_plugin(g, name, sha):
 
 
 def check_prepared(g):
+    if os.path.exists(os.path.join(WORK, 'STOP')):
+        return
     from missions.pnp.lbcert import checklocal
     from missions.pnp import state, support, validate, fastlane
     from missions.pnp.lbcert import ready
@@ -445,9 +434,11 @@ def main():
             # Within the family, fewest edges first: those are the instances the generator can
             # do (monotone size <= 11) and the ones competitors take within minutes.
             from missions.pnp import cli
-            held = {r['gap_id'] for r in cli.held_records()}
+            records=cli.held_records()
+            held = {r['gap_id'] for r in records}
+            posting_held={r['gap_id'] for r in records if r.get('work_lane')=='posting'}
             from missions.pnp import fastlane
-            for gid in held:
+            for gid in held-posting_held:
                 try:fastlane.submit_ready(gid)
                 except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
             from missions.pnp.lbcert import ready
@@ -466,7 +457,7 @@ def main():
                             key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
-                if g.get('pr_open', 0) and g['id'] not in held:
+                if g['id'] in posting_held or (g.get('pr_open', 0) and g['id'] not in held):
                     continue
                 if len(outstanding) >= LOCAL_GENERATORS:
                     break
@@ -485,7 +476,7 @@ def main():
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
                         if len(plugin_pending) >= PLUGIN_WORKERS:
                             break
-                        if g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
+                        if g['id'] in posting_held or g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
                             continue
                         if batch_active and batch.claimed(g,batch_fallback):
                             continue
