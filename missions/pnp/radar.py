@@ -103,7 +103,7 @@ def build():
         f = fams.setdefault(key, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
                                  'statuses': collections.Counter(), 'coverage': None,
-                                 'points': 0, 'free_points': 0, 'offerable':0, '_skeletons':set(), '_coverage':collections.Counter()})
+                                 'points': 0, 'free_points': 0, 'offerable':0, 'uncovered_offerable':0, 'uncovered_points':0, 'refused_offerable':0, 'refused_points':0, '_skeletons':set(), '_coverage':collections.Counter()})
         f['_skeletons'].add(sk)
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
@@ -114,17 +114,27 @@ def build():
         if offered:
             f["offerable"]+=1
             f["free_points"] += pts * (0.3 if s.get("level")=="open" else 1)
-        example={"id":g["id"],"statement":g["statement"][:1500],
-                 "sketch":(g.get("sketch") or "")[:400],"offered":bool(offered)}
-        f["examples"].append(example)
-        f["examples"].sort(key=lambda x:(not x["offered"],-int(re.sub(r"\D","",x["id"]) or 0)))
-        del f["examples"][3:]
         st = status(g['id'])
         if st:
             f['statuses'][st] += 1
         fam = lbparse.family(g['statement'])
         hit = None if fam else plugins.family_of(g['statement'], found)
-        f['_coverage'][fam or (hit and 'plugin:' + hit[0]) or '']+=1
+        coverage = fam or (hit and 'plugin:' + hit[0]) or ''
+        f['_coverage'][coverage]+=1
+        refused = st in ('unsupported', 'failed', 'toobig')
+        weight = pts * (0.3 if s.get("level")=="open" else 1)
+        if offered and not coverage:
+            f["uncovered_offerable"] += 1
+            f["uncovered_points"] += weight
+        if offered and coverage and refused:
+            f["refused_offerable"] += 1
+            f["refused_points"] += weight
+        example={"id":g["id"],"statement":g["statement"][:1500],
+                 "sketch":(g.get("sketch") or "")[:400],"offered":bool(offered),
+                 "coverage":coverage, "refused":refused}
+        f["examples"].append(example)
+        f["examples"].sort(key=lambda x:(not x["offered"],bool(x["coverage"]),not x["refused"],-int(re.sub(r"\D","",x["id"]) or 0)))
+        del f["examples"][3:]
     for mod, who, at in recent_merges():
         keys=sk_families.get(mod_sk.get(mod),set())
         f = fams.get(next(iter(keys))) if len(keys)==1 else None
@@ -164,10 +174,31 @@ Create `missions/pnp/lbcert/generators/NAME/gen.py` (read missions/pnp/lbcert/pl
   per-instance data (a witness circuit, sampled rows, a certificate): compute the data, keep the library.
 - Test: `PYTHONPATH=/var/lib/lubko/wd/viche python3 -m missions.pnp.lbcert.plugtest NAME --holdout 3 --open 2`
   (local generation and static validation only; a candidate is not a compiler receipt).
-- Deliver it through the normal delivery/integration queue. Once on main, autosolve runs it on every unclaimed
-  matching step within a minute and the bulk lane opens the PRs; a new gen.py version retries refused instances.
+- Deliver it through the normal delivery/integration queue. The broker retains responsibility for leases;
+  the posting lane attempts applicable generators on legitimate assignments.
 Worked example of the method: missions/pnp/lbcert/onenot (one-NOT family; local generation).
 """
+
+
+def backlog_priorities(r):
+    """Separate current addressable work from historical learning leads.
+
+    Matching a plugin is only syntactic coverage, not evidence of a proof.
+    If offerability is unknown, historical activity is explicitly advisory.
+    """
+    families = r["families"]
+    uncovered = [f for f in families if f.get("uncovered_offerable", 0)]
+    refused = [f for f in families if f.get("refused_offerable", 0)]
+    historical = [f for f in families if
+                  (not f["coverage"] or f.get("coverage_counts", {}).get("", 0))
+                  and f["merged_6h"]]
+    if r.get("offers_known"):
+        todo = sorted(uncovered, key=lambda f: (-f["uncovered_points"], -f["uncovered_offerable"], -f["merged_6h"]))[:5]
+        hard = sorted(refused, key=lambda f: (-f["refused_points"], -f["refused_offerable"], -f["merged_6h"]))[:3]
+    else:
+        todo, hard = [], []
+    historical = sorted(historical, key=lambda f: -f["merged_6h"])[:3]
+    return todo, hard, historical
 
 
 def write(r):
@@ -186,10 +217,7 @@ def write(r):
             ', '.join('%s %d' % kv for kv in f['authors'].items()) or '-', f['coverage'] or '**none**',
             ', '.join('%s %d' % kv for kv in f['statuses'].items()) or '-', f['label'].replace('|', '/')))
     open(os.path.join(OUT, 'radar.md'), 'w').write('\n'.join(lines) + '\n')
-    todo = [f for f in r['families'] if (not f['coverage'] or f.get('coverage_counts',{}).get('',0))
-            and f['score'] >= 2][:5]
-    hard = [f for f in r['families'] if f['coverage'] and
-            sum(v for k, v in f['statuses'].items() if k in ('unsupported', 'failed', 'toobig')) >= 3][:3]
+    todo, hard, historical = backlog_priorities(r)
     b = ['# Generator backlog (written by missions/pnp/radar.py; refreshed every 10 minutes)', '',
          'Actual offers are cross-checked against the public catalog/status; unknown offerability is not zero work.',
          'Credits go to the first accepted PR. Competitors win batches with per-family generators that open a PR',
@@ -206,14 +234,21 @@ def write(r):
             if e['sketch']:
                 b += ['  desk sketch: %s' % e['sketch'][:300]]
         b.append('')
-    b.append(CONTRACT)
+    if not todo:
+        b += ['No verified currently offerable uncovered family. Do not interpret this as a solved frontier.', '']
+    b += ['## Historical learning leads (not current offers)', '']
+    for f in historical:
+        b += ['- %s: %d recent merges; %s' % (f['label'], f['merged_6h'], ', '.join(f['newest_merged']) or '-')]
+    b += ['', CONTRACT]
     _put(os.path.join(SWARM, 'tool', 'BACKLOG.md'), '\n'.join(b))
     m = ['# Method backlog (missions/pnp/radar.py)', '',
          'Families where the town has a generator but it refuses many instances: a stronger argument',
          'turns refusals into credits. Preserve exact lemma source and independent semantic tests; kernel checks require a bound lease.', '']
     for f in hard:
-        m += ['## %s' % f['label'], 'statuses: %s; unclaimed %d; newest merged: %s' % (
-            f['statuses'], f['unclaimed'], ', '.join(f['newest_merged']) or '-'), '']
+        m += ['## %s' % f['label'], 'currently offerable refusals: %d (%d weighted points); statuses: %s; newest merged: %s' % (
+            f['refused_offerable'], f['refused_points'], f['statuses'], ', '.join(f['newest_merged']) or '-'), '']
+    if not hard:
+        m += ['No verified offerable generator refusals; use the historical leads or exact held work.', '']
     m += ['One-NOT family: monotone size >= 12 needs the gate-elimination proof of the merged L-meta-14412',
           '(library from L-meta-9266); the live-set template of L-meta-14150 takes > 1 h of kernel time there.']
     _put(os.path.join(SWARM, 'method', 'BACKLOG.md'), '\n'.join(m) + '\n')

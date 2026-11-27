@@ -20,8 +20,27 @@ class Tests(unittest.TestCase):
             self.assertTrue(r["offers_known"])
             self.assertEqual(r["families"][0]["label"],"Actual shard")
             self.assertEqual(r["families"][0]["free_points"],120)
+            self.assertEqual(r["families"][0]["uncovered_points"],120)
+            self.assertEqual(r["families"][0]["uncovered_offerable"],1)
+            self.assertEqual(r["families"][1]["uncovered_offerable"],0)
             self.assertEqual(r["families"][1]["free_points"],0)
             self.assertTrue(r["families"][0]["examples"][0]["offered"])
+    def test_live_priority_over_merges_and_closed_refusals(self):
+        def f(name, **kw):
+            return dict(label=name, coverage='', coverage_counts={}, merged_6h=0,
+                        uncovered_offerable=0, uncovered_points=0,
+                        refused_offerable=0, refused_points=0) | kw
+        old=f("closed",merged_6h=200)
+        live=f("live",uncovered_offerable=1,uncovered_points=30)
+        partial=f("partial",coverage="partial: plugin:x",coverage_counts={"":1,"plugin:x":8},
+                  uncovered_offerable=1,uncovered_points=150)
+        refused=f("refused",coverage="plugin:x",refused_offerable=2,refused_points=60)
+        rows=[old,live,partial,refused]
+        todo,hard,history=radar.backlog_priorities({"families":rows,"offers_known":True})
+        self.assertEqual([x["label"] for x in todo],["partial","live"])
+        self.assertEqual(hard,[refused])
+        self.assertEqual(history,[old])
+        self.assertEqual(radar.backlog_priorities({"families":rows,"offers_known":False}),([],[],[old]))
     def test_stale_observation_is_not_ranked(self):
         with patch.object(live,"gaps_bytes",return_value=b'{"gaps":[]}'),patch.object(frontier,"load",return_value={}), \
              patch.object(radar.sibling,"index",return_value=("head",{})),patch.object(radar.plugins,"discover",return_value={}):
