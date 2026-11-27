@@ -37,11 +37,14 @@ def fingerprint(gen):
     h=hashlib.sha256()
     parent=Path(gen).parent
     files=[p for p in sorted(parent.rglob("*")) if p.is_file() and p.suffix in (".py",".json",".c",".lean")]
+    if parent.name=="onenot_candidates":
+        helper=parent.parent.parent/"onenot"
+        files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c"))
     if files==[Path(gen)]:
         return hashlib.sha256(Path(gen).read_bytes()).hexdigest()[:12]
     for path in files:
         if path.is_file():
-            h.update(str(path.relative_to(parent)).encode()+b"\0")
+            h.update(os.path.relpath(path,parent).encode()+b"\0")
             h.update(path.read_bytes()+b"\0")
     return h.hexdigest()[:12]
 
