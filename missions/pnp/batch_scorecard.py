@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import statistics
+import subprocess
 import sys
 import time
 
@@ -85,6 +86,26 @@ def observe_first(prs, request=None):
         return {}
 
 
+def board_report(data):
+    from .readiness import MANDATE
+    count = len(data["prs"])
+    text = (f"PnP batch scorecard: {data['seen']} observed units, "
+            f"{data['leased']} leased, {count} PRs, "
+            f"{data['first']} indexed first / {data['later']} later / "
+            f"{data['first_unknown']} unknown; {data['accepted']} accepted verdicts. "
+            f"Median lease-to-PR: {data['median_lease_to_pr_s']} s. "
+            f"Official all-time points: {data['official_points_total']} "
+            f"(source checked {data['official_score_checked_at']}). "
+            "This is a cohort report, not an assertion of batch-attributed credit.")
+    try:
+        p=subprocess.run(["antonina","board","comment","--id",MANDATE,
+                          "--author","Viche PnP scorecard","--body",text],
+                         capture_output=True,timeout=15)
+        return p.returncode==0
+    except (OSError,subprocess.SubprocessError):
+        return False
+
+
 def main():
     events=ledger.read(72)
     window=last_closed_window(events)
@@ -116,7 +137,18 @@ def main():
                 official_score_checked_at=score.get("source_checked_at"),
                 note="First status uses complete indexed exact-title search; unknown is explicit. "
                      "Official points are the all-time total, not an attribution to this batch.")
+    data["board_report_at"]=old.get("board_report_at")
+    # First report after every observed window; later reports at most hourly
+    # when accepted, race or points evidence actually changes.
+    fields=("accepted","first","later","first_unknown","official_points_total")
+    changed=any(data.get(k)!=old.get("board_report_values",{}).get(k) for k in fields)
+    data["board_report_values"]=old.get("board_report_values",{})
     state.atomic_write(str(path),json.dumps(data,sort_keys=True)+"\n")
+    if "--report" in sys.argv[1:] and changed and time.time()-(data["board_report_at"] or 0)>=3600:
+        if board_report(data):
+            data["board_report_at"]=time.time()
+            data["board_report_values"]={k:data[k] for k in fields}
+            state.atomic_write(str(path),json.dumps(data,sort_keys=True)+"\n")
     print(json.dumps(data,sort_keys=True))
     return 0
 
