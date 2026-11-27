@@ -26,10 +26,15 @@ def tick():
         issues=[]
         slots=plan.desired(p,running,issues)
         if recovery:
-            # No obligation/focus fan-out. Keep the posting pool dominant.
+            # A stalled posting lane is not a reason to leave live research
+            # leases unstaffed. Every researchable lease has a standing
+            # obligation to one persistent general researcher, and a posting
+            # stall is not a valid release, publication or resource blocker.
+            # Recovery caps only optional tool/support fan-out, never the
+            # per-lease general obligation.
             general=sorted((s for s in slots if s.label=="general"),key=lambda s:s.path)
             tools=[s for s in slots if s.label=="tool" and not s.gap]
-            slots=general[:1]+tools[:1]
+            slots=general+tools[:1]
         # Known positions do not wait for the historical registry scan.
         # Cold/ambiguous identities need complete history before creating.
         warm=[];cold=[]
