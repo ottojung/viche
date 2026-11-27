@@ -7,13 +7,18 @@ from pathlib import Path
 import sys
 import time
 
-from .. import staff
+from .. import staff, surge
 from . import backend, plan, policy, reconcile, store
 
 
 def tick():
     now=time.time()
     p=policy.load()
+    batch=surge.active(now)
+    # Ephemeral policy only: no new starts or destructive retirements while
+    # the posting lane competes. The operator's persisted pause is untouched.
+    if batch:
+        p={**p,"paused":True}
     # The lock also fences legacy helpers during the migration.
     with staff.staffing_lock():
         running=backend.running()
@@ -71,7 +76,7 @@ def tick():
                       and t-r["uncovered_since"]>=p["alert_after"])
         if issues:
             alerts.append("planning degraded")
-        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,"alerts":alerts,
+        out={"at":t,"last_good_at":t,"state":"paused" if p["paused"] else "degraded" if issues or any(r["phase"]=="unknown" for r in rows) else "healthy" if all(r["phase"] in ("running","completed") for r in rows) else "reconciling","issues":issues,"alerts":alerts,"surge":batch,
              "duration":round(t-now,3),"slots":rows,"retired":retired,
              "desired":len(rows),"running":sum(r["phase"]=="running" for r in rows),
              "unknown":sum(r["phase"]=="unknown" for r in rows)}

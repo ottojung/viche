@@ -1,0 +1,8 @@
+#!/bin/sh
+. /home/lubko/.profile
+set -eu
+export VICHE_TOWN_ROOT=/var/lib/lubko/wd/viche
+export VICHE_STATE_ROOT=/var/lib/lubko/wd/viche-state
+export PNP_STATE_ROOT="$VICHE_STATE_ROOT/pnp"
+mkdir -p "$PNP_STATE_ROOT"
+exec /bin/sh "$VICHE_TOWN_ROOT/missions/pnp/allocator.sh" supervised >>"$PNP_STATE_ROOT/allocator.log" 2>&1

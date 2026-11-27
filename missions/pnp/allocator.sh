@@ -13,6 +13,9 @@ mkdir -p "$state/lbcert" "$state/bulk"
 mkdir -p "$state/cache"
 last_maintenance=0
 last_observation=0
+last_readiness=0
+last_scorecard=0
+last_readiness_mode=unknown
 while [ -f missions/pnp/allocator.py ]; do
     # Keep fresh allocation and generation separate from slow roster/network
     # maintenance. Only this loop writes allocator memory and calls next.
@@ -23,7 +26,27 @@ while [ -f missions/pnp/allocator.py ]; do
             python3 -m missions.pnp.allocator --observe \
             </dev/null >>"$state/cache/allocator-observe.log" 2>&1 9>&- &
     fi
+    # The probe is observational and never blocks the posting lane.
+    # Run hourly and at the first observation of a surge; no overlap.
+    readiness_mode=$(python3 -m missions.pnp.surge --mode 2>/dev/null || echo unknown)
+    if [ "$((now - last_readiness))" -ge 3600 ] || \
+       { [ "$readiness_mode" = surge ] && [ "$last_readiness_mode" != surge ]; }; then
+        last_readiness=$now
+        nohup flock -n "$state/cache/readiness.lock" timeout -k 5 240 \
+            python3 -m missions.pnp.readiness --report </dev/null >>"$state/cache/readiness.log" 2>&1 9>&- &
+    fi
+    if [ "$readiness_mode" != surge ] && { [ "$last_readiness_mode" = surge ] ||
+        [ "$((now - last_scorecard))" -ge 300 ]; }; then
+        last_scorecard=$now
+        nohup flock -n "$state/cache/batch-scorecard.lock" timeout -k 5 90 \
+            python3 -m missions.pnp.batch_scorecard --refresh --report \
+            </dev/null >>"$state/cache/batch-scorecard.log" 2>&1 9>&- &
+    fi
+    last_readiness_mode=$readiness_mode
     python3 -m missions.pnp.allocator --posting || :
+    if [ "${1:-}" != supervised ] && [ -d /run/service/viche-pnp-allocator ]; then
+        exit 0
+    fi
     now=$(date +%s)
     if [ "$((now - last_maintenance))" -lt 30 ]; then
         sleep 5
@@ -31,8 +54,8 @@ while [ -f missions/pnp/allocator.py ]; do
     fi
     last_maintenance=$now
     # Keep exactly one certificate pre-generator alive (it holds its own lock; see missions/pnp/lbcert).
-    if [ ! -f "$state/lbcert/STOP" ] && flock -n "$state/lbcert/autosolve.lock" true; then
-        nohup python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 9>&- &
+    if python3 -m missions.pnp.pause allowed && flock -n "$state/lbcert/autosolve.lock" true; then
+        nohup nice -n 19 python3 -m missions.pnp.lbcert.autosolve >> "$state/lbcert/autosolve.log" 2>&1 9>&- &
     fi
     # Keep receipt collection independent of agent turns and expensive desk I/O.
     mkdir -p "$state/cache"

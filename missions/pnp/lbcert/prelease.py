@@ -65,7 +65,8 @@ def private_json(name):
 
 
 def enablement():
-    if not deployment() or (PRODUCTION / "lbcert/STOP").exists():
+    from missions.pnp import pause
+    if not deployment() or pause.paused(PRODUCTION):
         return None
     try:
         cfg = private_json("enable.json")

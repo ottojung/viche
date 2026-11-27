@@ -6,7 +6,7 @@ import time
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from missions.pnp import config, posting, state, support, focus, fastlane
+from missions.pnp import config, posting, state, support, focus, fastlane, surge
 from missions.pnp.lbcert import ready
 from missions.pnp.staffing import plan
 
@@ -98,6 +98,28 @@ class Tests(unittest.TestCase):
             release.assert_not_called()
             state.update(GID,acquisition_hard=False,lease_terms={"level":"solid","points":30})
             self.assertEqual(posting.maintain(None,{},time.time(),{},[state.load(GID)]),[GID])
+            self.assertEqual(release.call_args.kwargs["expected_lease"],r["lease"])
+
+    def test_surge_preserves_young_hard_and_cached_candidates(self):
+        r=self.rec(work_lane="research",acquisition_hard=True,
+                   lease_terms={"level":"hard","points":600})
+        now=time.time()
+        with patch.object(surge,"active",return_value=True), \
+             patch.object(fastlane,"release",return_value=True) as release, \
+             patch.object(fastlane,"cand_ready",return_value="complete.lean"):
+            self.assertEqual(posting.maintain(None,{},now,{},[r]),[])
+            release.assert_not_called()
+            state.update(GID,lease_obtained_at=now-1201)
+            self.assertEqual(posting.maintain(None,{},now,{},[state.load(GID)]),[])
+            release.assert_not_called()
+
+    def test_surge_yields_mature_research_with_no_candidate(self):
+        r=self.rec(work_lane="research",acquisition_hard=True,
+                   lease_obtained_at=time.time()-1201,lease_terms={"level":"hard","points":600})
+        with patch.object(surge,"active",return_value=True), \
+             patch.object(fastlane,"release",return_value=True) as release, \
+             patch.object(fastlane,"cand_ready",return_value=None):
+            self.assertEqual(posting.maintain(None,{},time.time(),{},[r]),[GID])
             self.assertEqual(release.call_args.kwargs["expected_lease"],r["lease"])
 
     def test_posting_not_model_focus(self):
