@@ -430,7 +430,7 @@ def staged_candidates(cfg, now=None):
     try:
         with contextlib.closing(sqlite3.connect(f"file:{db}?mode=ro",uri=True,timeout=2)) as conn:
             for gid,source,observed in conn.execute(
-                    "SELECT gap,source,observed FROM attempt WHERE status='staged' AND source IS NOT NULL ORDER BY observed DESC LIMIT 128"):
+                    "SELECT gap,source,observed FROM attempt WHERE status IN ('staged','delegated','checked') AND source IS NOT NULL ORDER BY observed DESC LIMIT 128"):
                 if isinstance(source,str):add(gid,source.encode(),observed)
     except sqlite3.Error:
         pass

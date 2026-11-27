@@ -41,12 +41,24 @@ class Fairness(unittest.TestCase):
              patch.object(plugins,"run",side_effect=generate), \
              patch.object(validate,"validate"), patch.object(state,"load",return_value=None), \
              patch.object(support,"active",return_value=False), \
-             patch.object(checklocal,"check",return_value=(2,{"status":"bound_workspace_required"})), \
+             patch.object(checklocal,"check",side_effect=AssertionError("unbound check forbidden")), \
              patch.object(fastlane,"submit_ready"):
             a.gen_plugin(g,"test","123")
             self.assertEqual((Path(d)/"L-meta-42.lean").read_text(),"candidate")
             self.assertTrue(a.status(g["id"]).startswith("generated plugin"))
             self.assertFalse(a.fresh(g["id"],"123"))
+
+    def test_staging_preserves_existing_bytes(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d);old=p/"proof.lean";new=p/"alternate.lean"
+            old.write_text("original");new.write_text("replacement")
+            self.assertFalse(a.stage_bytes(str(new),str(old)))
+            self.assertEqual(old.read_text(),"original")
+            self.assertEqual(new.read_text(),"replacement")
+            new.write_text("original")
+            self.assertTrue(a.stage_bytes(str(new),str(old)))
+            self.assertFalse(new.exists())
 
     def test_independent_lanes(self):
         with tempfile.TemporaryDirectory() as d, patch.dict(os.environ,{"PNP_STATE_ROOT":d}):
@@ -86,10 +98,10 @@ class Fairness(unittest.TestCase):
                  patch.object(a.time,"sleep",side_effect=stop), \
                  patch.object(a.managed_process,"stop_all"):
                 self.assertEqual(a.main(),0)
-            self.assertEqual([p.limit for p in pools],[1,2,1])
+            self.assertEqual([p.limit for p in pools],[1,2])
             self.assertEqual(len(pools[0].jobs),1)
             self.assertEqual(pools[1].jobs,[("gen_plugin","L-meta-100")])
-            self.assertEqual(pools[2].jobs,[("check_prepared","L-meta-101")])
+
 
     def test_generation_timeout_frees_worker_with_retryable_status(self):
         from missions.pnp.lbcert import autosolve as a

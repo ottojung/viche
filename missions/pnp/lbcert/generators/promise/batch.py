@@ -1,9 +1,9 @@
 """Shared-table two-lit proof stock. No desk claims or direct PR operations.
 
 One bounded generator shares semantic formula tables between masks. A
-separate pair of workers verifies exact standalone Lean files. SQLite keeps
-staged bytes and negative attempts across restarts, keyed by exact statement
-and solver version. Only an exact compiler receipt enters ready stock.
+separate publisher worker handles held exact assignments. Unheld bytes
+remain staged for the separately authorized private checker; no unbound
+compiler calls. SQLite keys exact statements and solver version.
 """
 from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
@@ -18,11 +18,11 @@ import tempfile
 import time
 
 from . import gen, dag, anneal
-from ... import checklocal, live, ready
-from .... import config, state, support, validate, ledger, fastlane, freshness
+from ... import live, ready
+from .... import config, state, support, validate, ledger, jobs, freshness
 
 STOCK_TARGET = 32
-VERIFY_WORKERS = 2
+PUBLISH_WORKERS = 2
 MAX_STAGE = 256
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS attempt (
@@ -105,7 +105,9 @@ def eligible(q,row,rec):
         return False
     if support.active(rec):
         return rec.get("work_lane")!="posting" and rec.get("statement")==q.get("statement")
-    return not q.get("pr_open") and (row.get("held") or 0)<(row.get("parallel") or 1)
+    return (q.get("offerable_now") is True and q.get("pr_open")==0
+            and type(row.get("held")) is int and row["held"]==0
+            and type(row.get("parallel")) is int and row["parallel"]>0)
 
 
 def priority(q,p,row,rec,seen=None):
@@ -140,32 +142,32 @@ def candidate(q,p):
     return source,len(sol[0]),time.monotonic()-start
 
 
-def verify(q,source):
+def publish_staged(q,source,expected_lease):
+    """Publish only a held, exact, still-current candidate; never acquire."""
     if (root()/"STOP").exists():
         return "transient","generator paused"
     gid=q["id"];data=source.encode()
     validate.validate(q,data)
-    with tempfile.TemporaryDirectory(prefix="promise-check-",dir=root()) as d:
-        p=Path(d)/"candidate.lean";p.write_bytes(data)
-        rc,r=checklocal.check(str(p),q["module"],timeout=120)
-    if (root()/"STOP").exists():return "transient","generator paused"
-    if rc!=0:return ("transient" if rc==2 else "invalid"),str(r.get("status"))+": "+str(r.get("log") or "")[-300:]
-    receipt=dict(r,compiled=True)
-    if not ready.exact_receipt(receipt,data):return "transient","receipt mismatch"
-    if ready.verified(gid):return "checked","existing exact receipt"
+    p=gen.parse(q["statement"]);sol=gen.lean_witness(p,source) if p else None
+    if not sol or not gen.valid(p,sol) or gen.emit(gid,q["statement"],p,sol)!=source:
+        return "invalid","staged bytes fail canonical witness audit"
     rec=state.load(gid)
-    if rec and (rec.get("pr_number") or rec.get("candidate_digest") or rec.get("queued_lease")):
-        return "obsolete","publication already owns unit"
-    dst=ready.directory()/(gid+".lean")
-    state.atomic_write(str(dst),source)
-    if not ready.record(gid,receipt,data):
-        return "transient","receipt mismatch"
-    state.atomic_write(str(dst.with_suffix(".status")),"ok plugin promise batch standalone compiled\n")
-    try:
-        from .... import allocator
-        print("checked proof broker",gid,allocator.proof_of_now(gid),flush=True)
-    except Exception as e:print("checked proof broker deferred",gid,type(e).__name__,flush=True)
-    return "checked",r.get("id") or "exact receipt"
+    if (not support.active(rec) or rec.get("lease")!=expected_lease
+            or rec.get("statement")!=q["statement"] or rec.get("work_lane")=="posting"
+            or rec.get("candidate_digest") or rec.get("queued_lease") or rec.get("pr_number")):
+        return "transient","assignment no longer publishable"
+    with tempfile.TemporaryDirectory(prefix="promise-publish-",dir=root()) as d:
+        path=Path(d)/"candidate.lean";path.write_bytes(data)
+        if (root()/"STOP").exists():return "transient","generator paused"
+        result=jobs.submit(gid,str(path),expected_lease=expected_lease,only_unclaimed=True)
+    latest=state.load(gid)
+    # A busy publisher can return status=publishing without accepting our
+    # bytes. Keep the source and retry if the exact bytes were not queued.
+    digest=hashlib.sha256(data).hexdigest()
+    if latest and latest.get("candidate_digest")==digest and (
+            latest.get("queued_lease")==expected_lease or latest.get("pr_number")):
+        return "delegated","exact bytes accepted by ordinary publisher"
+    return "transient",str(result)[:140]
 
 
 def current(v):
@@ -211,7 +213,7 @@ def main():
     v=version();db=database(root()/"promise-batch.sqlite")
     with db:db.execute("DELETE FROM attempt WHERE observed<?",(time.time()-7*86400,))
     deadline=time.monotonic()+300;next_refresh=0;items=[];running={};stock=0;attempts={}
-    with ThreadPoolExecutor(max_workers=1) as generation, ThreadPoolExecutor(max_workers=VERIFY_WORKERS) as verification:
+    with ThreadPoolExecutor(max_workers=1) as generation, ThreadPoolExecutor(max_workers=PUBLISH_WORKERS) as publication:
         while True:
             now=time.time()
             scheduling=time.monotonic()<deadline and version()==v and not (root()/"STOP").exists()
@@ -230,20 +232,22 @@ def main():
             if scheduling:
                 keys={x[2] for x in running.values()}
                 gen_busy=any(x[0]=="generate" for x in running.values())
-                ver_busy=sum(x[0]=="verify" for x in running.values())
+                pub_busy=sum(x[0]=="publish" for x in running.values())
                 staged=sum(1 for _,q,p,row,k in items if (r:=attempts.get(k)) and r["status"]=="staged")
                 for pr,q,p,row,k in items:
                     if k in keys:continue
                     r=attempts.get(k)
-                    if r and r["status"] in ("staged","checked") and r["source"] and r["retry"]<=now and ver_busy<VERIFY_WORKERS and (stock+ver_busy<STOCK_TARGET or not pr[0] or not pr[1]):
-                        if ready.verified(q["id"]):continue
-                        running[verification.submit(verify,q,r["source"])]=("verify",q,k,r)
-                        keys.add(k);ver_busy+=1
-                    elif not r and not gen_busy and (staged<MAX_STAGE or not pr[0]):
+                    if (r and r["status"] in ("staged","checked","delegated") and r["source"]
+                            and r["retry"]<=now and pub_busy<PUBLISH_WORKERS and not pr[0]):
+                        rec=state.load(q["id"])
+                        if not support.active(rec) or not eligible(q,row,rec):continue
+                        running[publication.submit(publish_staged,q,r["source"],rec["lease"])]=("publish",q,k,r)
+                        keys.add(k);pub_busy+=1
+                    elif not r and not gen_busy and (staged<MAX_STAGE or not pr[0] or not pr[1]):
                         if ready.verified(q["id"]):continue
                         running[generation.submit(candidate,q,p)]=("generate",q,k,None)
                         keys.add(k);gen_busy=True
-                    if gen_busy and ver_busy>=VERIFY_WORKERS:break
+                    if gen_busy and pub_busy>=PUBLISH_WORKERS:break
             if not running:
                 time.sleep(3);continue
             done,_=wait(running,timeout=1,return_when=FIRST_COMPLETED)
@@ -260,14 +264,13 @@ def main():
                         status,detail=result
                         failures=r["failures"]+1
                         put(db,k,"staged" if status=="transient" else status,
-                            r["source"] if status in ("transient","checked") else None,r["gates"],detail,
+                            r["source"] if status in ("transient","delegated") else None,r["gates"],detail,
                             now+min(900,60*2**min(failures,4)) if status=="transient" else 0,failures)
-                        if status=="checked":stock+=1
                         print(status,q["id"],detail,flush=True)
                     attempts[k]=get(db,k)
                 except Exception as e:
                     # Infrastructure exceptions are not negative mathematical results.
-                    if mode=="verify":
+                    if mode=="publish":
                         put(db,k,"staged",r["source"],r["gates"],type(e).__name__,now+120,r["failures"]+1)
                         attempts[k]=get(db,k)
                     else:
