@@ -3,24 +3,41 @@
 A proof checked immediately after a newly seen unit is eligible for the
 fast targeted path. Initial inventory or missing telemetry is not fresh.
 """
+import json
+import os
 import time
-from . import ledger
+from . import config
 
 WINDOW = 300
 CHECK_AGE = 120
+OBSERVATION_MAX_GAP = 120
+
+
+def observation_path():
+    return os.path.join(config.STATE_ROOT, "lbcert", "seen-observation.json")
 
 
 def recent(now=None):
+    """Read the observer's atomic recent index, not the growing latency log.
+
+    A missing, stale, pre-migration or malformed index is not evidence
+    of a fresh release. The audit ledger remains available for reports.
+    """
     now = time.time() if now is None else now
-    # First sighting is unique under note_seen. Look back enough to avoid
-    # labelling a repeated observation of an old gap as a new release.
-    seen = {}
-    for row in ledger.read(hours=24):
-        if row.get("stage") == "seen":
-            gid, t = row.get("gid"), row.get("t")
-            if isinstance(gid,str) and type(t) in (int,float):
-                seen.setdefault(gid,t)
-    return {g:t for g,t in seen.items() if 0<=now-t<=WINDOW}
+    try:
+        with open(observation_path(), encoding="utf-8") as f:
+            data = json.load(f)
+        at = data["at"]
+        rows = data["recent"]
+        if type(at) not in (int, float) or not 0 <= now - at <= OBSERVATION_MAX_GAP:
+            return {}
+        if not isinstance(rows, dict):
+            return {}
+        return {g: t for g, t in rows.items()
+                if isinstance(g, str) and type(t) in (int, float)
+                and t <= at and 0 <= now - t <= WINDOW}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
 
 
 def fresh(gid, receipt, seen, now):
