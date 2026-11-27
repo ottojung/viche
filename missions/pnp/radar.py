@@ -48,21 +48,31 @@ def label(g):
     return family_key(g).split(':',1)[1]
 
 
-def recent_merges(hours=HOURS):
-    """[(module, author, unix time)] of upstream commits touching Outside/L_meta_*.lean."""
+def recent_merges(hours=HOURS, ref='refs/remotes/upstream/main'):
+    """Advisory recent merge subjects; build() cross-checks indexed modules.
+
+    The path-filtered git history walk times out on large proof bursts.
+    Upstream squash-merge subjects name the lemma and PR. Read the pinned
+    first-parent commit metadata only; ignore ambiguous subjects and count
+    each lemma at most once. This is a learning signal, not a credit receipt.
+    """
     git = ['git', '--git-dir=' + gitctl.MIRROR]
-    p = subprocess.run(git + ['log', '--since=%d hours ago' % hours, '--format=@%an|%at', '--name-only',
-                              'refs/remotes/upstream/main', '--', 'lean/PEqualNP/Outside/'],
-                       capture_output=True, text=True, timeout=120)
-    out, who, at = [], None, 0
+    p = subprocess.run(git + ['log', '--first-parent', '--since=%d hours ago' % hours,
+                              '--format=%at%x00%an%x00%s', ref],
+                       capture_output=True, text=True, timeout=20, check=True)
+    out, seen = [], set()
     for line in p.stdout.splitlines():
-        if line.startswith('@'):
-            who, at = line[1:].rsplit('|', 1)
-            at = int(at)
-        else:
-            m = re.fullmatch(r'lean/PEqualNP/Outside/(L_meta_\d+)\.lean', line.strip())
-            if m:
-                out.append(('PEqualNP.Outside.' + m.group(1), who, at))
+        fields = line.split('\0', 2)
+        if len(fields) != 3 or not fields[0].isdigit():
+            continue
+        at, who, subject = fields
+        match = re.fullmatch(r'(?:Prove )?L-meta-(\d+)(?: \([A-Za-z0-9_-]+\))? \(#\d+\)', subject)
+        if not match:
+            continue
+        module = 'PEqualNP.Outside.L_meta_' + match.group(1)
+        if module not in seen:
+            seen.add(module)
+            out.append((module, who, int(at)))
     return out
 
 
@@ -160,7 +170,7 @@ def build():
         f["examples"].append(example)
         f["examples"].sort(key=lambda x:(not x["offered"],bool(x["coverage"]),not x["refused"],-int(re.sub(r"\D","",x["id"]) or 0)))
         del f["examples"][3:]
-    for mod, who, at in recent_merges():
+    for mod, who, at in recent_merges(ref=head):
         keys=sk_families.get(mod_sk.get(mod),set())
         f = fams.get(next(iter(keys))) if len(keys)==1 else None
         if f:
@@ -186,7 +196,7 @@ def build():
         f['statuses'] = dict(f['statuses'])
         f['posting_attempts'] = dict(f['posting_attempts'])
     ranked = sorted(fams.values(), key=lambda f: -f['score'])
-    return {'at': time.time(), 'corpus': head, 'offers_known':offers_known,'families': ranked}
+    return {'at': time.time(), 'corpus': head, 'history_evidence': 'first-parent subjects matched to indexed proof modules', 'offers_known':offers_known,'families': ranked}
 
 
 CONTRACT = """## How to deliver a generator (plugin contract)
@@ -244,6 +254,7 @@ def write(r):
     lines = ['# PnP family radar (%s, corpus %s)' % (time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime(r['at'])), r['corpus'][:12]),
              '', 'score = actual offerable desk points / 100 (no rival PR; verified catalog/status agreement) + 0.5 x merges in the last %d h.'
              ' coverage: built-in family, plugin, or none.' % HOURS,
+             'Recent merge counts are advisory: first-parent merge subjects matched to indexed proof modules; ambiguous subjects omitted, not official credits.',
              '', '| score | free pts | unclaimed | open | merged %dh | top authors | coverage | our statuses | family |' % HOURS,
              '|---|---|---|---|---|---|---|---|---|']
     for f in r['families'][:30]:

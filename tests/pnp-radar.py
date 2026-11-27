@@ -5,6 +5,19 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from missions.pnp import radar,frontier
 from missions.pnp.lbcert import live
 class Tests(unittest.TestCase):
+    def test_fast_history_exact_subjects_and_dedup(self):
+        from types import SimpleNamespace
+        rows = ["20\0A\0L-meta-12 (#100)", "19\0B\0Prove L-meta-13 (edge_detect_prove) (#101)",
+                "18\0C\0L-meta-12 (#99)", "17\0D\0Discuss L-meta-14 (#102)",
+                "16\0E\0L-meta-15", "15\0F\0L-pcx-15 (#103)", "broken"]
+        with patch.object(radar.subprocess, "run", return_value=SimpleNamespace(stdout="\n".join(rows))) as run:
+            self.assertEqual(radar.recent_merges(ref="pinned-head"), [
+                ("PEqualNP.Outside.L_meta_12", "A", 20),
+                ("PEqualNP.Outside.L_meta_13", "B", 19)])
+            args = run.call_args.args[0]
+            self.assertIn("--first-parent", args)
+            self.assertEqual(args[-1], "pinned-head")
+            self.assertNotIn("--name-only", args)
     def test_radar_scores_actual_offers_only(self):
         rows=[{"id":"L-meta-1","title":"Unclaimable","statement":"True","offerable_now":False},
               {"id":"L-meta-2","title":"Actual shard","statement":"False","offerable_now":True}]
