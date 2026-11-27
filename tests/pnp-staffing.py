@@ -332,6 +332,21 @@ class Tests(unittest.TestCase):
         self.assertEqual({s["label"] for s in out["slots"]},{"general","tool"})
         self.assertLessEqual(len(self.fake.runs),2)
 
+    def test_stalled_surge_preserves_existing_extra_research(self):
+        path=assignment.prepare(self.rec["gap_id"],checkout=False,worker="extra-1")["cwd"]
+        self.fake.agents["existing-extra"]={"id":"existing-extra","cwd":path,
+                    "state":"running","alive":True,"created_at":time.time()}
+        with patch.object(focus,"current",return_value=self.rec), \
+             patch.object(controller.surge,"active",return_value=True), \
+             patch.object(controller.surge,"recovery",return_value=True), \
+             patch.object(staff,"roster",return_value=self.fake.history()):
+            self.assertTrue(plan.obsolete(self.fake.agents["existing-extra"],[]))
+            out=controller.tick()
+        self.assertTrue(out["surge_recovery"])
+        self.assertEqual(out["retired"],[])
+        self.assertNotIn("existing-extra",self.fake.stops)
+        self.assertTrue(self.fake.agents["existing-extra"]["alive"])
+
     def test_partial_running_snapshot_never_starts(self):
         with patch.object(backend,"running",side_effect=backend.Uncertain("partial")):
             with self.assertRaises(backend.Uncertain):controller.tick()
