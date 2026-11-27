@@ -50,4 +50,3 @@ def lower(f):
     b=min(opts)
     if b>best[0]:best=(b,('three',))
     return best
-

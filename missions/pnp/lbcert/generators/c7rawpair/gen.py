@@ -10,7 +10,7 @@ def checked(name,digest):
     if hashlib.sha256(b).hexdigest()!=digest:raise ValueError("template hash mismatch")
     return b.decode()
 
-helpers=checked("helpers.lean","dae5e878fb81f4dff0c83a081d30b20b5b26b7c0e30353ccae11ebf7b11a3cbf")
+helpers=checked("helpers.lean","fb21fb32e7aa916a452f4337bcef91c6953e4f29e96c776ce1eec9b1b904fe56")
 shape=json.loads(checked("shape.json","ee77009b61dc6c7dd763208b4b23f0ca22c528040e8874ec5e93f488512b5f31"))
 lemma=r"""
 lemma agree (C : Circuit) (i : Fin C.gates.length) (a : ℕ)

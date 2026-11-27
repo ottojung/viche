@@ -55,4 +55,3 @@ lemma fold_spec : ∀ (gs : List Gate) (x : List Bool),
     · intro w hw
       rw [List.foldl_cons]
       exact h3 w (by simp only [List.length_cons] at hw; omega)
-
