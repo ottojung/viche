@@ -123,8 +123,11 @@ def desired(p, running, issues=None):
             issues.append(role+": signature "+type(exc).__name__)
             continue
         if role in support.FAMILY_ROLES:
-            # No dependency on the old fixed ten-minute cadence.
-            sig = role
+            # Stable across ticks, but changes immediately when the standing
+            # goal text changes. The controller then dispatches a fresh pass to
+            # the new actionable goals instead of reporting "evidence already
+            # investigated" for the old prompt until support_refresh elapses.
+            sig = hashlib.sha256((role+"|"+continuity.SUPPORT[role]).encode()).hexdigest()
         path = continuity.support_path(role)
         slots.append(Slot(str(path),role,continuity.SUPPORT[role],signature=sig,priority=3))
     return slots
