@@ -7,6 +7,7 @@ No agent commands or desk mutations are performed here.
 import json
 import fcntl
 import os
+from pathlib import Path
 import subprocess
 import time
 from urllib.parse import urlencode
@@ -50,12 +51,65 @@ def normalize(raw, now):
             "held": count(raw.get("held_now")), "gaps": rows}
 
 
+def ordinary_count(snapshot, now):
+    at=snapshot.get("observed")
+    value=count(snapshot.get("ordinary"))
+    if (snapshot.get("complete") is True and type(at) in (int,float)
+            and 0<=now-at<=60):
+        return value
+    return None
+
+
+def quiet(snapshot, now):
+    return ordinary_count(snapshot,now)==0
+
+
+def offer_levels(snapshot, rows):
+    """Cross-check actual catalog offerability against the status total.
+
+    A status row with held < parallel is not necessarily offerable: cuts,
+    twins, cooldowns, reservations and shard limits also matter. Conversely,
+    a sharded unit can be offered despite an apparently full row.
+    """
+    if snapshot.get("complete") is not True or type(snapshot.get("offerable")) is not int:
+        return None
+    levels={}
+    seen=set()
+    for row in rows:
+        if not isinstance(row,dict) or row.get("offerable_now") is not True:
+            continue
+        gid=row.get("id")
+        if not isinstance(gid,str) or gid in seen:return None
+        level=snapshot.get("gaps",{}).get(gid,{}).get("level")
+        if level not in ("warmup","solid","hard","open"):return None
+        seen.add(gid);levels[level]=levels.get(level,0)+1
+    return levels if len(seen)==snapshot["offerable"] else None
+
+
+def cached_offer_levels(snapshot, now):
+    """Only a recent matching public cache can narrow the quiet probe."""
+    try:
+        p=Path(config.STATE_ROOT)/"lbcert"/"gaps-cache.json"
+        meta=p.with_suffix(".json.meta")
+        before=json.loads(meta.read_text())
+        at=before["at"]
+        if not 0<=now-at<=90 or abs(snapshot["observed"]-at)>90:return None
+        if p.stat().st_size>16*1024*1024 or p.stat().st_mtime>at+1:return None
+        rows=json.loads(p.read_text())["gaps"]
+        if json.loads(meta.read_text())!=before or not isinstance(rows,list):return None
+        return offer_levels(snapshot,rows)
+    except (OSError,ValueError,TypeError,KeyError):
+        return None
+
+
 def refresh():
     # A second uncoordinated curl defeats shared pacing on contention/429.
     # Retain the existing snapshot on failure, with its original timestamp.
     from .lbcert import live
     doc, observed = live.status_doc(max_age=15, timeout=20, with_time=True)
     snapshot = normalize(doc, observed)
+    levels=cached_offer_levels(snapshot,time.time())
+    if levels is not None:snapshot["offerable_levels"]=levels
     path=cache_path()
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path+".lock","a") as lk:

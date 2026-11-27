@@ -23,7 +23,7 @@ ROLES = {
     "method": ("Prove a reusable theorem for a family, independently of any desk lease.",
         "Use a cached public revision and exact mathematical hypotheses; test multiple applications. Record checked lemmas and failed generalizations."),
     "tool": ("Turn mathematical techniques into reusable proof-generating software.",
-        "Use the existing star/circuit search and corpus tools. Benchmark holdout families, independently verify certificates, and check Lean proof output. Work in your own workspace."),
+        "Use the existing star/circuit search and corpus tools. Benchmark holdout families, independently audit certificates, and statically validate exact Lean output. Kernel verification requires a live bound assignment. Work in your own workspace."),
     "flow": ("Eliminate measurable bottlenecks in actual proof production.",
         "Use adoption evidence, queue latency and outcomes; propose concrete corrections rather than reports or extra gates."),
     "portfolio": ("Choose the best focus using actual remaining mathematical work and expected yield.",
@@ -72,7 +72,7 @@ def guide(role):
     elif role in METHOD:
         lines += [
           "Use pnp-research obligations request --base SHA --family FAMILY --provenance SOURCE --statement TYPE to preserve method research. Independent unbound Lean checks are disabled; do not create async checks or use a relay. A check requires an exact active bound workspace.",
-          "Run pnp-research knowledge find QUERY; store exact reusable objects with knowledge add. Use pnp-research certificate GRAPH.json --base SHA --check to generate and asynchronously verify a graph certificate in one command; --output FILE also writes the standalone Lean source."
+          "Run pnp-research knowledge find QUERY; store exact reusable objects with knowledge add. Use pnp-research certificate GRAPH.json --base SHA --output FILE to generate and semantically audit a standalone candidate. Unbound kernel checks are disabled; do not pass --check."
         ]
     elif role in DECISIONS:
         lines += ["Use pnp-research yield (empirical baseline; not calibrated) and " + P + "portfolio inspect. Read current proof artifacts before deciding."]
@@ -130,7 +130,7 @@ INDEPENDENT METHOD WORKFLOW:
     --statement '∀ a b : Bool, a && b = b && a'
   # proof.body: by intro a b; exact Bool.and_comm a b
   # Unbound independent method checks are disabled; preserve source only.
-  pnp-research certificate GRAPH.json --base BASE --check --output Candidate.lean
+  pnp-research certificate GRAPH.json --base BASE --output Candidate.lean
 Keep reusable lemmas and counterexamples in the graph, not only in your transcript.
 """
     if role in {"knowledge","methods"}:

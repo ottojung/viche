@@ -27,6 +27,9 @@ TWO = re.compile(PREFIX + PRED + r"∀ i j : Fin (\d+), C.eval \(List.ofFn fun k
 
 def parse(s):
     s = " ".join(s.split())
+    # Accept parentheses around the whole supported proposition, not a prefix.
+    while s.startswith("(") and s.endswith(")"):
+        s = s[1:-1].strip()
     m = MONO.fullmatch(s)
     pred = "Monotone2"
     if m:
@@ -325,6 +328,78 @@ def heuristic(problem,seconds=.5):
             if best and len(best[0])<=k:return best
         if time.monotonic()-start>seconds:break
     return best if best and len(best[0])<=k else None
+
+
+def matrix_mixed(p,seconds=.25):
+    """Greedy rectangle covers with shared selectors, mixed pairs and dual CNF.
+
+    On one-hot inputs with disjoint R,S and C,D, the union R×C ∪ S×D
+    equals (R ∪ D) ∩ (S ∪ C). Each candidate is independently audited.
+    Refusal is not a proof of impossibility.
+    """
+    kind,n,m,k,mask,pred=p
+    if kind!="matrix" or not 2<=n<=8 or not 2<=m<=8:return None
+    rng=random.Random(mask^8731)
+    deadline=time.monotonic()+seconds
+    full=(1<<(n*m))-1
+    if not mask&full or mask&full==full:return None
+    for iteration in range(64):
+        if time.monotonic()>deadline:return None
+        dual=iteration%2
+        target=mask&full
+        if dual:target^=full
+        if not target:continue
+        rows=[(target>>(i*m))&((1<<m)-1) for i in range(n)]
+        boxes=set()
+        for r in range(1,1<<n):
+            c=(1<<m)-1
+            for i in range(n):
+                if r>>i&1:c&=rows[i]
+            if c:
+                # Include both closure and non-maximal rectangles, since
+                # non-maximal selectors may share more with their neighbors.
+                rr=sum(1<<i for i in range(n) if rows[i]&c==c)
+                for a in (r,rr):
+                    b=sum(c<<(i*m) for i in range(n) if a>>i&1)
+                    boxes.add((a,c,b))
+        boxes=sorted(boxes)
+        chosen=[];left=target
+        power=(.5,1.,1.5)[(iteration//2)%3]
+        while left:
+            r,c,b=max(boxes,key=lambda q: ((q[2]&left).bit_count()/(q[0].bit_count()+q[1].bit_count())**power*rng.uniform(.65,1.35)))
+            if not b&left:break
+            chosen.append((r,c,b));left&=~b
+        if left:continue
+        for i in range(len(chosen)-1,-1,-1):
+            union=0
+            for j,q in enumerate(chosen):
+                if i!=j:union|=q[2]
+            if union==target:chosen.pop(i)
+        rng.shuffle(chosen)
+        def A(r):return {i for i in range(n) if r>>i&1}
+        def B(c):return {n+j for j in range(m) if c>>j&1}
+        selectors=[]
+        if dual:
+            for r,c,_ in chosen:
+                selectors.append(A(((1<<n)-1)^r)|B(((1<<m)-1)^c))
+        else:
+            while chosen:
+                r,c,_=chosen.pop()
+                other=None
+                if iteration%3:
+                    other=next((i for i,(a,b,_) in enumerate(chosen) if not a&r and not b&c),None)
+                if other is not None:
+                    a,b,_=chosen.pop(other)
+                    selectors.extend((A(r)|B(b),A(a)|B(c)))
+                else:selectors.extend((A(r),B(c)))
+        unions=shared_unions(selectors)
+        if dual:expr=join("and",unions)
+        else:expr=join("or",[combine("and",a,b) for a,b in zip(unions[::2],unions[1::2])])
+        raw=compile_expr(n+m,expr)
+        if len(raw[0])>k+4:continue
+        sol=compact(p,*raw)
+        if sol and valid(p,sol):return sol
+    return None
 
 
 @lru_cache(maxsize=12)
@@ -655,7 +730,7 @@ def main():
         from . import anneal
     except ImportError:
         import anneal
-    solution=sketch_witness(p,sketch) or heuristic(p) or two_order(p) or small_formula(p) or anneal.search(p,sys.modules[__name__]) or synth_sat(p)
+    solution=sketch_witness(p,sketch) or heuristic(p) or matrix_mixed(p) or two_order(p) or small_formula(p) or anneal.search(p,sys.modules[__name__]) or synth_sat(p)
     if solution is None:
         print("bounded promise synthesis refused",file=sys.stderr);return 3
     if not valid(p,solution):raise ValueError("independent witness audit failed")
