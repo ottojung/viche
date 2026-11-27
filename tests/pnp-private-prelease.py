@@ -100,8 +100,8 @@ class Tests(unittest.TestCase):
     def test_namespace_wrapper_bounded_and_cleans_job(self):
         self.enable()
         def run(cmd,**kw):
-            self.assertEqual(cmd[:8],["/run/current-system/profile/bin/unshare","--user","--map-root-user","--net","--pid","--fork","--kill-child=SIGKILL","--"])
-            self.assertEqual(cmd[8:],["python3","-m","missions.pnp.compile","--prelease","--","lake","build","+PEqualNP.Defs"])
+            self.assertEqual(cmd[:10],["/run/current-system/profile/bin/unshare","--user","--map-root-user","--net","--pid","--mount","--mount-proc","--fork","--kill-child=SIGKILL","--"])
+            self.assertEqual(cmd[10:],["python3","-m","missions.pnp.compile","--prelease","--","lake","build","+PEqualNP.Defs"])
             self.assertEqual(kw["timeout"],p.BUILD_BUDGET+40)
             self.assertEqual(kw["env"]["PYTHONPATH"],p.host_boundary.PYTHONPATH)
             raise subprocess.TimeoutExpired(cmd,kw["timeout"])
