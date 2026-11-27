@@ -12,11 +12,20 @@ from missions.pnp import batch_scorecard, config, leaderboard, pause, readiness,
 
 class Batch(unittest.TestCase):
     def test_offers_trigger_and_quiet_hysteresis(self):
-        busy = surge.decide({}, {"observed":1000,"ordinary":100}, {}, 1000)
+        # Surge throttles only on an actual burst of new witness-hint arrivals;
+        # a large claimable frontier alone must never suppress staffing.
+        gaps = {"L-meta-0": {"title": "two-lit row"}}
+        seen = {"L-meta-0": 1000}
+        busy = surge.decide({}, {"observed":1000,"ordinary":100,"gaps":gaps}, seen, 1000)
         self.assertTrue(busy["active"])
         quiet = surge.decide(busy, {"observed":2199,"ordinary":0}, {}, 2199)
         self.assertTrue(quiet["active"])
         self.assertFalse(surge.decide(quiet, {"observed":2200,"ordinary":0}, {}, 2200)["active"])
+
+    def test_large_frontier_alone_does_not_trigger_surge(self):
+        # A plentiful claimable frontier with no new witness-hint arrivals must
+        # not by itself keep surge permanently active and block staffing.
+        self.assertFalse(surge.decide({}, {"observed":1000,"ordinary":1000}, {}, 1000)["active"])
 
     def test_fifty_fresh_witnesses(self):
         gaps = {f"L-meta-{i}":{"title":"two-lit row"} for i in range(50)}
@@ -27,7 +36,9 @@ class Batch(unittest.TestCase):
         self.assertFalse(surge.decide({},doc,seen,1061).get("active",False))
 
     def test_stale_observation_neither_refreshes_nor_holds_forever(self):
-        old = surge.decide({}, {"observed":1000,"ordinary":100}, {}, 1000)
+        gaps = {"L-meta-0": {"title": "two-lit row"}}
+        seen = {"L-meta-0": 1000}
+        old = surge.decide({}, {"observed":1000,"ordinary":100,"gaps":gaps}, seen, 1000)
         self.assertEqual(surge.decide(old,{"observed":1000,"ordinary":0},{},1200),old)
         self.assertTrue(surge.active(2199,old))
         self.assertFalse(surge.active(2201,old))

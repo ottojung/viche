@@ -40,7 +40,10 @@ def decide(previous, snapshot, seen, now):
                 and any(h in str(rows[gid].get("title", "")).lower()
                         for h in WITNESS_HINTS)]
     witnesses = len(arrivals)
-    busy = type(ordinary) is int and ordinary >= 100
+    # A large claimable frontier alone is not a posting burst: surge must not
+    # permanently suppress staffing whenever ordinary gaps are plentiful.
+    # Only an actual burst of new witness-hint arrivals throttles new starts.
+    busy = type(ordinary) is int and ordinary >= 100 and bool(arrivals)
     last_busy = previous.get("last_busy")
     if busy:
         last_busy = observed
