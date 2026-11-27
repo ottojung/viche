@@ -13,6 +13,7 @@ generator (say why on stderr); anything else: a bug.  Runs on billy-dev, <= 600 
 The town does the rest (autosolve): every open step whose statement a plugin matches and nobody has
 claimed is generated, validated, and prepared for the documented proof-of lease. Held steps
 are submitted immediately and checked concurrently.  A changed gen.py automatically retries the instances it refused before.
+The promise generator also versions failures by solver sources and its exact index domain.
 Test before delivering:  python3 -m missions.pnp.lbcert.plugtest NAME --holdout 3
 """
 import hashlib
@@ -29,6 +30,31 @@ import lbparse  # noqa: E402
 import process as managed_process
 
 _cache = {}
+
+
+def promise_version(gen_path, source_sha, parse):
+    """Freeze cheap index metadata and solver sources for this discovery pass.
+
+    A negative result is specific to its statement's domain; a new 4x5
+    index must not replay every failed two-lit or 3x6 attempt.
+    """
+    from missions.pnp.lbcert.generators.promise import stock_index
+    h = hashlib.sha256(source_sha.encode())
+    for name in ("anneal.py", "anneal.c", "stock_index.py"):
+        h.update(name.encode() + b"\0")
+        try:
+            with open(os.path.join(os.path.dirname(gen_path), name), "rb") as f:
+                h.update(f.read())
+        except OSError:
+            h.update(b"\0missing")
+    prefix = h.digest()
+    versions = stock_index.index_versions()
+
+    def for_statement(statement):
+        return hashlib.sha256(prefix + stock_index.version_for(
+            parse(statement), versions)).hexdigest()[:12]
+
+    return for_statement
 
 
 def discover():
@@ -51,20 +77,28 @@ def discover():
                 else:
                     rx = re.compile(mod.MATCH)
                     fn = lambda s, rx=rx: bool(rx.match(lbparse.norm(s)))
-                _cache[key] = fn
+                _cache[key] = (fn, getattr(mod, 'parse', None))
             except Exception as e:      # a broken plugin must not stop the others
                 print('plugin', name, 'not loadable:', type(e).__name__, str(e)[:200], file=sys.stderr)
                 _cache[key] = None
         if _cache[key]:
-            out[name] = (gen, sha, _cache[key])
+            fn, parse = _cache[key]
+            version = sha
+            if name == "promise" and callable(parse):
+                try:
+                    version = promise_version(gen, sha, parse)
+                except ImportError:
+                    # Older installations can still use the ordinary generator.
+                    pass
+            out[name] = (gen, version, fn)
     return out
 
 
 def family_of(statement, found=None):
-    for name, (gen, sha, fn) in (found or discover()).items():
+    for name, (gen, version, fn) in (discover() if found is None else found).items():
         try:
             if fn(statement):
-                return name, sha
+                return name, version(statement) if callable(version) else version
         except Exception:
             continue
     return None
