@@ -81,14 +81,18 @@ def discover():
     return out
 
 
-def family_of(statement, found=None):
+def families_of(statement, found=None):
+    """Lazy matching in stable priority order, allowing a bounded fallback."""
     for name, (gen, sha, fn) in (discover() if found is None else found).items():
         try:
             if fn(statement):
-                return name, sha
+                yield name, sha
         except Exception:
             continue
-    return None
+
+
+def family_of(statement, found=None):
+    return next(families_of(statement, found), None)
 
 
 def run(name, gid, statement_file, out, timeout=600):

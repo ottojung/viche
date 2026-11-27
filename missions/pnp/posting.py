@@ -121,22 +121,33 @@ def generate(rec, work):
         out.write_bytes(data)
         ledger.mark("posting_cache_hit",rec["gap_id"],engine="promise-batch")
         return "generated",out
-    family = plugins.family_of(rec["statement"])
-    if not family:
-        return "unsupported", None
+    deadline = time.monotonic() + BUDGET
     sf = work/"statement.txt"
     out = work/"candidate.lean"
     sf.write_text(rec["statement"])
     sketch = (rec.get("desk_notes") or {}).get("sketch")
     if isinstance(sketch, str):
         sf.with_suffix(sf.suffix+".sketch").write_text(sketch[:65536])
-    rc, detail = plugins.run(family[0], rec["gap_id"], str(sf), str(out), timeout=BUDGET)
-    if rc or not out.is_file():
-        return "unknown", None
-    meta = {"id":rec["gap_id"], "file":rec["path"], "module":rec["module"],
-            "statement":rec["statement"], "imports":rec["imports"]}
-    validate.validate(meta, out.read_bytes())
-    return "generated", out
+    attempted = False
+    for family in plugins.families_of(rec["statement"]):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return "unknown", None
+        attempted = True
+        out.unlink(missing_ok=True)
+        rc, detail = plugins.run(family[0], rec["gap_id"], str(sf), str(out), timeout=remaining)
+        if rc == 3:
+            # An explicit unsupported-instance result is not an error.
+            # Never reuse bytes written by a refusing plugin.
+            out.unlink(missing_ok=True)
+            continue
+        if rc or not out.is_file():
+            return "unknown", None
+        meta = {"id":rec["gap_id"], "file":rec["path"], "module":rec["module"],
+                "statement":rec["statement"], "imports":rec["imports"]}
+        validate.validate(meta, out.read_bytes())
+        return "generated", out
+    return ("unknown" if attempted else "unsupported"), None
 
 
 def run(gid, attempt):

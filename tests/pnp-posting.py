@@ -60,6 +60,40 @@ class Tests(unittest.TestCase):
         send.assert_called_once()
         self.assertEqual(state.load(GID)["posting"]["result"],"submitted")
 
+    def test_refusal_falls_through_within_original_budget(self):
+        r=self.rec()
+        from missions.pnp.lbcert.generators.promise import batch
+        def fake(name,gid,sf,out,timeout):
+            self.assertGreater(timeout,0)
+            self.assertLessEqual(timeout,posting.BUDGET)
+            if name=="first":
+                Path(out).write_text("discard")
+                return 3,"not supported"
+            self.assertFalse(Path(out).exists())
+            Path(out).write_text("second candidate")
+            return 0,""
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(batch,"staged_candidate",return_value=None), \
+             patch.object(posting.plugins,"families_of",return_value=iter([("first","x"),("second","y")])), \
+             patch.object(posting.plugins,"run",side_effect=fake) as run, \
+             patch.object(posting.validate,"validate") as validate:
+            status,out=posting.generate(r,Path(d))
+            self.assertEqual(status,"generated")
+            self.assertEqual(out.read_text(),"second candidate")
+            self.assertEqual(run.call_count,2)
+            validate.assert_called_once()
+            self.assertLessEqual(run.call_args_list[1].kwargs["timeout"],run.call_args_list[0].kwargs["timeout"])
+
+    def test_plugin_failure_does_not_fall_through(self):
+        r=self.rec()
+        from missions.pnp.lbcert.generators.promise import batch
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(batch,"staged_candidate",return_value=None), \
+             patch.object(posting.plugins,"families_of",return_value=iter([("first","x"),("second","y")])), \
+             patch.object(posting.plugins,"run",return_value=(124,"timeout")) as run:
+            self.assertEqual(posting.generate(r,Path(d)),("unknown",None))
+            run.assert_called_once()
+
     def test_contested_offer_not_generated(self):
         r=self.rec(acquisition_prs=1)
         with patch.object(ready,"competition",return_value={}),patch.object(posting,"generate") as gen:
