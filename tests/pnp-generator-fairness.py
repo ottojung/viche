@@ -70,12 +70,14 @@ class Fairness(unittest.TestCase):
         def generate(name,gid,sf,out):
             Path(out).write_text("candidate")
             return 0,""
+        from missions.pnp import ledger
         with tempfile.TemporaryDirectory() as d, patch.object(a,"CANDS",d), \
              patch.object(plugins,"run",side_effect=generate), \
              patch.object(validate,"validate"), patch.object(state,"load",return_value=None), \
              patch.object(support,"active",return_value=False), \
              patch.object(checklocal,"check",return_value=(2,{"status":"bound_workspace_required"})), \
-             patch.object(fastlane,"submit_ready"):
+             patch.object(fastlane,"submit_ready"), \
+             patch.object(ledger,"mark"):
             a.gen_plugin(g,"test","123")
             self.assertEqual((Path(d)/"L-meta-42.lean").read_text(),"candidate")
             self.assertTrue(a.status(g["id"]).startswith("generated plugin"))
