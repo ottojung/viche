@@ -10,6 +10,8 @@ import time
 import unittest
 import urllib.error
 from unittest.mock import patch
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from missions.pnp import config, desk, frontier
 from missions.pnp.lbcert import live
 
