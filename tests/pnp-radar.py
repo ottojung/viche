@@ -41,6 +41,19 @@ class Tests(unittest.TestCase):
         self.assertEqual(hard,[refused])
         self.assertEqual(history,[old])
         self.assertEqual(radar.backlog_priorities({"families":rows,"offers_known":False}),([],[],[old]))
+    def test_fast_history_exact_subjects_and_dedup(self):
+        from types import SimpleNamespace
+        rows = ["20\0A\0L-meta-12 (#100)", "19\0B\0Prove L-meta-13 (edge_detect_prove) (#101)",
+                "18\0C\0L-meta-12 (#99)", "17\0D\0Discuss L-meta-14 (#102)",
+                "16\0E\0L-meta-15", "15\0F\0L-pcx-15 (#103)", "broken"]
+        with patch.object(radar.subprocess, "run", return_value=SimpleNamespace(stdout="\n".join(rows))) as run:
+            self.assertEqual(radar.recent_merges(ref="pinned-head"), [
+                ("PEqualNP.Outside.L_meta_12", "A", 20),
+                ("PEqualNP.Outside.L_meta_13", "B", 19)])
+            args = run.call_args.args[0]
+            self.assertIn("--first-parent", args)
+            self.assertEqual(args[-1], "pinned-head")
+            self.assertNotIn("--name-only", args)
     def test_stale_observation_is_not_ranked(self):
         with patch.object(live,"gaps_bytes",return_value=b'{"gaps":[]}'),patch.object(frontier,"load",return_value={}), \
              patch.object(radar.sibling,"index",return_value=("head",{})),patch.object(radar.plugins,"discover",return_value={}):
