@@ -222,6 +222,25 @@ def packet(role, cwd=None):
         out["next_commands"]=["pnp-research yield",P+"portfolio inspect"]
     else:
         out["next_commands"]=["pnp-research knowledge stats",P+"support targets"]
+        # Unbound roles (notably flow) open 300+ packets a day but rarely run a
+        # separate `knowledge find`: 24 h adoption 2026-11-27 had 314 flow starts
+        # against 16 finds and 3 reuses.  Surface the current target's relevant
+        # checked objects in the packet itself; no new gate or extra command.
+        try:
+            from .. import support as _support
+            targets = _support.targets()
+            if targets:
+                t = targets[0]
+                rec = {"gap_id": t.get("gap"),
+                       "gap_title": ((t.get("desk_notes") or {}).get("title") or t.get("gap") or ""),
+                       "statement": t.get("statement") or ""}
+                out["gap"] = t.get("gap")
+                ctx = knowledge.relevant(rec)
+                out["cumulative_research"] = ctx
+                if ctx.get("family"):
+                    out["next_commands"].insert(0, "pnp-research knowledge find --family " + ctx["family"])
+        except (OSError, ValueError, TypeError, KeyError, ImportError):
+            pass
     return out
 
 def main():

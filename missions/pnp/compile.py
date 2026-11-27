@@ -1,5 +1,6 @@
 """One supervised entry point for research and publisher Lean compilation."""
 import argparse
+import json
 import os
 from pathlib import Path
 import signal
@@ -76,6 +77,46 @@ def run(args, cwd=None, heavy=True, publication=False,
             raise
 
 
+TIMING_PATH = os.path.join(os.environ.get("PNP_STATE_ROOT",
+                         "/var/lib/lubko/wd/viche-state/pnp"), "cache", "local-compile-timings.jsonl")
+
+
+def record_timing(args, elapsed, code):
+    """Append-only local compile timing evidence; never a receipt or gate."""
+    try:
+        import hashlib
+        source = next((str(a) for a in args if str(a).endswith(".lean")), None)
+        digest = hashlib.sha256(open(source, "rb").read()).hexdigest() if source else None
+        row = {"at": time.time(), "tool": " ".join(str(a) for a in args[:3]),
+               "elapsed_s": round(elapsed, 3), "exit": code, "sha256": digest}
+        os.makedirs(os.path.dirname(TIMING_PATH), exist_ok=True)
+        with open(TIMING_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(row, sort_keys=True) + "\n")
+    except (OSError, ValueError, TypeError):
+        pass
+
+
+def unprepared_workspace(args, cwd=None):
+    """Fail before Lake/network work when a PEqualNP proof has no prepared oleans."""
+    root = Path(cwd or Path.cwd())
+    for arg in args:
+        if not str(arg).endswith(".lean"):
+            continue
+        path = root / str(arg)
+        try:
+            head = path.read_text(errors="replace")[:4096]
+        except OSError:
+            continue
+        if "import PEqualNP" not in head:
+            continue
+        if (root / ".lake" / "build" / "lib" / "lean" / "PEqualNP").exists():
+            return None
+        return ("UNPREPARED WORKSPACE: %s needs PEqualNP oleans absent from %s; "
+                "prepare the exact bound workspace before compiling (not a proof defect)"
+                % (path.name, root))
+    return None
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--light", action="store_true")
@@ -85,6 +126,11 @@ def main(argv=None):
     p.add_argument("args", nargs=argparse.REMAINDER)
     ns = p.parse_args(argv)
     args = ns.args[1:] if ns.args[:1] == ["--"] else ns.args
+    if not ns.prelease:
+        reason = unprepared_workspace(args)
+        if reason:
+            print(reason, file=sys.stderr, flush=True)
+            return 75
     def interrupted(signum, frame):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, interrupted)
@@ -96,7 +142,10 @@ def main(argv=None):
         try:
             from .lbcert import prelease as private_check
             private = private_check.compiler_context(args, Path.cwd())
-            return run(args, heavy=True, prelease=private)
+            started = time.monotonic()
+            code = run(args, heavy=True, prelease=private)
+            record_timing(args, time.monotonic() - started, code)
+            return code
         except (control.BuildDeferred, KeyboardInterrupt, OSError) as exc:
             print("RESOURCE DEFERRED:", exc, file=sys.stderr, flush=True)
             return 75
@@ -122,7 +171,9 @@ def main(argv=None):
         before = evidence.snapshot(rec, Path.cwd(), args) if rec and not ns.light else None
         if before:
             os.environ["PNP_EVIDENCE_BUILD"] = "1"
+        started = time.monotonic()
         code = run(args, heavy=not ns.light)
+        record_timing(args, time.monotonic() - started, code)
         if code == 0 and before:
             try:
                 evidence.record(rec, before, evidence.snapshot(rec, Path.cwd(), args))
