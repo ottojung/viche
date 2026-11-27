@@ -11,6 +11,36 @@ from unittest.mock import patch, Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 class Fairness(unittest.TestCase):
+    def test_runtime_fingerprint_tracks_helper_and_data_not_docs(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            (root/"gen.py").write_text("x=1")
+            h=a.runtime_hash(root)
+            (root/"README.md").write_text("docs")
+            self.assertEqual(a.runtime_hash(root),h)
+            (root/"helper.py").write_text("x=2")
+            h2=a.runtime_hash(root);self.assertNotEqual(h,h2)
+            (root/"helper.py").write_text("x=3")
+            self.assertNotEqual(a.runtime_hash(root),h2)
+            (root/"witnesses.json").write_text("{}")
+            self.assertNotEqual(a.runtime_hash(root),h2)
+            with patch.object(a,"START_HASH",h),patch.object(a,"runtime_hash",return_value=h2):
+                self.assertTrue(a.source_changed())
+
+    def test_reload_drains_mutations_before_releasing_owner(self):
+        from missions.pnp.lbcert import autosolve as a
+        order=[]
+        class Pool:
+            def shutdown(self,**kw):
+                self.kw=kw
+                order.append("drain")
+        pools=[Pool(),Pool(),Pool()]
+        with patch.object(a.managed_process,"stop_all",side_effect=lambda:order.append("stop")):
+            a.drain_workers(pools)
+        self.assertEqual(order,["stop","drain","drain","drain"])
+        self.assertTrue(all(p.kw=={"wait":True,"cancel_futures":True} for p in pools))
+
     def test_transient_retry_only_after_backoff(self):
         from missions.pnp.lbcert import autosolve as a
         with tempfile.TemporaryDirectory() as d, patch.object(a, "CANDS", d):
