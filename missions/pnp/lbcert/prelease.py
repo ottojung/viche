@@ -279,8 +279,13 @@ def managed(args, lean, cfg, job, budget):
         return 75, "authorization changed"
     job = {**job, **cfg, "host_net": os.readlink("/proc/self/ns/net")}
     state.atomic_write(str(PRIVATE / "job.json"), json.dumps(job))
+    # A new PID namespace needs a matching procfs: without it Lean cannot
+    # resolve its own application path and exits with "failed to locate
+    # application" before any proof bytes are compiled. Mount a fresh procfs
+    # inside the namespace (requires --mount) so the isolated build works.
     cmd = ["/run/current-system/profile/bin/unshare", "--user", "--map-root-user",
-           "--net", "--pid", "--fork", "--kill-child=SIGKILL", "--",
+           "--net", "--pid", "--mount", "--mount-proc", "--fork",
+           "--kill-child=SIGKILL", "--",
            *host_boundary.managed_compile_command(args)]
     cmd.insert(len(cmd)-len(args)-1, "--prelease")
     env = host_boundary.managed_compile_env()
