@@ -10,6 +10,7 @@ from . import config
 
 BANNED_DECLARATIONS = (
     "initialize", "macro", "syntax", "notation", "elab", "native_decide",
+    "admit", "run_cmd", "run_tac",
 )
 BANNED_AXIOM = re.compile(r"(?<![\w.])axiom\b")
 BANNED_SORRY = re.compile(r"(?<![\w.])sorry\b")
