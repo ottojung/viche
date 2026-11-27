@@ -11,7 +11,11 @@ MAX_SECONDS = 3600
 
 
 def status(root=None, now=None):
-    root = Path(config.STATE_ROOT if root is None else root)/"lbcert"
+    return status_directory(Path(config.STATE_ROOT if root is None else root)/"lbcert", now)
+
+
+def status_directory(directory, now=None):
+    root = Path(directory)
     now = time.time() if now is None else now
     # Existing STOP is an emergency/host-boundary interlock. It is not
     # silently reinterpreted as permission to resume.
@@ -43,6 +47,10 @@ def status(root=None, now=None):
 
 def paused(root=None, now=None):
     return status(root, now)["paused"]
+
+
+def paused_directory(directory, now=None):
+    return status_directory(directory, now)["paused"]
 
 
 def main():

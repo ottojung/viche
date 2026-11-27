@@ -174,7 +174,7 @@ def generate(g, engines):
         log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % GEN_TIMEOUT)
         return
     where = 'billy-dev'
-    if pause.paused(STATE):
+    if pause.paused_directory(WORK):
         return
     r = {'status': {0: 'ok', 2: 'unsupported', 3: 'false', 4: 'toobig'}.get(p.returncode, 'error'),
          'engine': os.path.basename(engines[0]) if engines else None}
@@ -218,7 +218,7 @@ def gen_plugin(g, name, sha):
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
     rc, why = plugins.run(name, gid, sf, out + '.gen')
-    if pause.paused(STATE):
+    if pause.paused_directory(WORK):
         return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
     if rc != 0:
@@ -259,7 +259,7 @@ def gen_plugin(g, name, sha):
 
 
 def check_prepared(g):
-    if pause.paused(STATE):
+    if pause.paused_directory(WORK):
         return
     from missions.pnp.lbcert import checklocal
     from missions.pnp import state, support, validate, fastlane
@@ -318,7 +318,7 @@ def sweep_pass():
 
 
 def sibling_loop():
-    while not pause.paused(STATE):
+    while not pause.paused_directory(WORK):
         if surge.active():
             time.sleep(30)
             continue
@@ -331,7 +331,7 @@ def sibling_loop():
 
 def sweep_loop():
     last_radar = 0
-    while not pause.paused(STATE):
+    while not pause.paused_directory(WORK):
         if surge.active():
             time.sleep(30)
             continue
@@ -348,7 +348,7 @@ def sweep_loop():
 
 def promise_batch_loop():
     """Independent shared-table lane; the guardian kills it with autosolve."""
-    while not pause.paused(STATE):
+    while not pause.paused_directory(WORK):
         try:
             p=managed_process.run([sys.executable,"-m","missions.pnp.lbcert.generators.promise.batch"],timeout=900)
             if p.returncode:log("promise batch deferred",p.returncode)
@@ -363,7 +363,7 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         return 0
-    if pause.paused(STATE):
+    if pause.paused_directory(WORK):
         log('STOP file found; exiting before starting workers')
         return 0
     engines = ensure_engines()
@@ -379,7 +379,7 @@ def main():
     plugin_pending = {}
     prepared = {}
     prepare_retry = {}
-    while not pause.paused(STATE):
+    while not pause.paused_directory(WORK):
         if source_changed():
             # Exit now: returning would drop our flock while interpreter shutdown keeps draining the
             # pool's queue, so a second instance would run beside this one (seen 2026-11-25).
