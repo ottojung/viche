@@ -14,7 +14,7 @@ SOURCE="PEqualNP.Outside.L_meta_27460"
 RULES_SHA="9f016fc75ab68ccd04a39889704e934cd00c2925d0af445985fad94bb44d6f1a"
 SHAPE_SHA="cd6c0013f4462012f855b148da463743fdc18f123497a46eceffaecc8c7e14b2"
 N=8
-SEEDS_SHA="498425bebf5d6333446cc3beec31ab9f733be3f581fb986749444ad2f587a9f3"
+SEEDS_SHA="acaf2061c5aad7ae5cceedcf63a39921800ab1db9ff9e54637d16489a2ff6658"
 
 def checked(name,digest):
     data=(HERE/name).read_bytes()
