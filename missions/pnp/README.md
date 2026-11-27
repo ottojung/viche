@@ -130,3 +130,53 @@ examples. The work packet includes reusable discoveries across lease changes,
 exact open Lean dependencies, and relevant proof generators. See
 [research/README.md](research/README.md) for async checks, independent method
 research, symbolic Lean certificates, and adoption measurements.
+
+## Batch readiness and competitive mode
+
+Run on billy-dev, from the canonical checkout:
+
+    python3 -m missions.pnp.readiness --report
+    python3 -m missions.pnp.pause status
+    python3 -m missions.pnp.surge --mode
+    python3 -m missions.pnp.batch_scorecard --refresh --report
+
+The allocator runs readiness off its critical path hourly and on batch entry.
+The merged holdout probe requires a static-valid promise candidate in 12 seconds;
+it is not kernel verification. A failed probe, unknown capacity, old frontier,
+stale lease heartbeat or invalid publisher identity produces NOT READY and a
+standing-mission board comment. The result is saved to cache/readiness.json.
+
+Routine maintenance pauses must be bounded and attributed:
+
+    python3 -m missions.pnp.pause maintenance --author executive --reason 'deploy reviewed repair' --seconds 3600
+
+An expired maintenance record cannot keep the pipeline down. The legacy STOP
+file remains an explicit emergency/host-boundary interlock: only the responsible
+operator may remove it after independently checking the reason for containment.
+Do not replace an unresolved emergency with an expiring maintenance pause.
+
+Surge starts from at least 50 newly observed witness-family units in five minutes
+or at least 100 offerable ordinary units. Fresh observations extend the window;
+20 minutes of quiet ends it. The broker prioritizes all free slots for posting,
+yields eligible research holds only when the existing fenced release is safe
+(no queued, cached complete, signed or published candidate; respect the desk's
+20-minute minimum for hard work). New PnP staffing starts and speculative checks
+are deferred during surge. The ordinary policy is not mutated. The shared
+constructive batch producer remains available at background priority. Existing
+agent and government processes are not forcibly killed by this patch.
+
+The s6 template deploy/s6/viche-pnp-allocator/run uses the same lifetime lock as
+the existing boot fallback; the fallback relinquishes ownership once the
+service registers. Install the run template executable via the ordinary billy-dev
+s6 deployment mechanism; do not start it on another host. Verify a single
+allocator, fresh log ticks, and readiness after the switch.
+
+Scorecards are written under cache/batch-scorecards/ after observed surge exit,
+with bounded, asynchronous exact-title PR searches including closed rivals.
+Unknown first-PR status is explicit. The site's all-time points total is not
+automatically attributed to a batch; source timestamps accompany it. Local
+acceptance events, first-PR evidence, and actual credited points remain distinct.
+
+All changes require the ordinary independent review and exact candidate suite.
+No constitution, law, protected identity, signed publisher, host boundary or
+upstream checker rule is changed by this patch.

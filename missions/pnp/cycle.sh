@@ -9,8 +9,10 @@ export PATH=/home/lubko/.local/bin:/home/lubko/.elan/bin:/var/guix/profiles/per-
 cd "$town"
 # Start the work-conserving allocator before optional slow network work.
 mkdir -p "${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}"
-nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
-    >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
+if [ ! -d /run/service/viche-pnp-allocator ]; then
+    nohup setsid /bin/sh "$town/missions/pnp/allocator.sh" </dev/null \
+        >>"${PNP_STATE_ROOT:-/var/lib/lubko/wd/viche-state/pnp}/allocator.log" 2>&1 &
+fi
 # Observation must continue even while certificate generation is STOPped.
 nohup setsid /bin/sh "$town/missions/pnp/catalog.sh" </dev/null \
     >>"${PNP_STATE_ROOT}/catalog.log" 2>&1 &

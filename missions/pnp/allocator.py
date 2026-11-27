@@ -7,7 +7,7 @@ import sys
 import time
 from types import SimpleNamespace
 
-from . import assignment, cli, competition, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting, freshness, ledger
+from . import assignment, cli, competition, config, desk, fastlane, frontier, focus, state, status, portfolio, support, posting, freshness, ledger, surge
 
 POLL_SECONDS = 30
 NULL_RETRY_SECONDS = 120  # the fast lane clears this backoff whenever it frees a slot
@@ -187,6 +187,8 @@ def fill(d, mem, now, snapshot):
     """
     from .lbcert import ready
     acquired=[]
+    seen=freshness.recent(now)
+    batch=surge.update(snapshot,seen,now)
     # Existing leases continue through heartbeat/portfolio; no new hybrid
     # claims while the executive has paused the generator.
     if posting.paused():
@@ -194,11 +196,10 @@ def fill(d, mem, now, snapshot):
     ordinary=snapshot.get("ordinary")
     previous=mem.get("posting_ordinary")
     mem["posting_ordinary"]=ordinary
-    if type(ordinary) is int and ordinary>0 and previous==0:
+    if type(ordinary) is int and ordinary>0 and (previous==0 or (batch and type(previous) is int and previous<100<=ordinary)):
         mem.pop("posting_retry_at",None)
     if desk.retry_until()>time.time():
         return acquired
-    seen=freshness.recent(now)
     urgent=fresh_targets(snapshot,now,seen)
     # Network reads for older stock happen before, not inside, the claim lock.
     old_target=None
@@ -229,9 +230,9 @@ def fill(d, mem, now, snapshot):
             reserve=bool(seen and any(freshness.available(g,snapshot,seen[g])
                        and not state.load(g) and not ready.verified(g)
                        for g in seen))
-            if reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
+            if not batch and reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
                 break
-            open_probe=(not research and high and desk.lease_limit()>1 and len(held)==desk.lease_limit()-1
+            open_probe=(not batch and not research and high and desk.lease_limit()>1 and len(held)==desk.lease_limit()-1
                         and now-mem.get("last_open_probe",0)>=300)
             if open_probe:
                 level,lane="open","research"
