@@ -94,7 +94,7 @@ if grep -Eq '^## Act [0-9]+ — Integration Queue Act ' "$town/government/LAWS.m
     mkdir -p "$integration_state"
     (
         flock -n 9 || exit 0
-        timeout 7200 nice python3 "$town/government/integrator.py" run ||
+        timeout 7200 python3 "$town/government/integrator.py" run ||
             echo "Viche: integration queue pass failed" >&2
     ) 9>"$integration_state/run.lock" >> "$integration_state/run.log" 2>&1 < /dev/null &
 fi

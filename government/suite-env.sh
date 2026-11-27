@@ -29,6 +29,10 @@ mkdir -p "$PNP_STATE_ROOT"
 PATH=$scratch/bin:$PATH
 export HOME XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME XDG_CACHE_HOME
 export VICHE_TOWN_ROOT VICHE_STATE_ROOT VICHE_SEATS_ROOT PNP_STATE_ROOT PATH
+# Detached fixture monitors must not outlive the suite that created them.
+# suite-env.sh remains alive as the parent of the requested test command.
+VICHE_SUITE_ROOT_PID=$$
+export VICHE_SUITE_ROOT_PID
 # Janitor's normal inventory includes the entire production home, workspace,
 # /tmp and Guix store. A suite is a scratch workload, not a host inventory.
 JANITOR_ROOTS="$scratch/town-state $scratch/seats $scratch/home"
