@@ -1,12 +1,19 @@
 """First-sighting evidence from complete, timely public frontier observations."""
 import fcntl
 import json
+import math
 import os
 import time
 
 from . import freshness, ledger, state
 
 MAX_GAP = freshness.OBSERVATION_MAX_GAP
+
+
+def validated_ids(value):
+    if not isinstance(value, list) or any(not isinstance(g, str) for g in value):
+        raise ValueError("invalid historical IDs")
+    return set(value)
 
 
 def record(snapshot, now=None):
@@ -24,8 +31,10 @@ def record(snapshot, now=None):
             try:
                 with open(path) as f:
                     previous = json.load(f)
-                old = set(previous["ids"])
-                last = float(previous["at"])
+                old = validated_ids(previous["ids"])
+                last = previous["at"]
+                if type(last) not in (int, float) or not math.isfinite(last) or last <= 0:
+                    raise ValueError("invalid observation time")
                 prior = previous.get("recent", {})
                 if not isinstance(prior, dict):
                     prior = {}
@@ -35,7 +44,7 @@ def record(snapshot, now=None):
                 # consider the first new observation itself a fresh release.
                 try:
                     with open(os.path.join(root, "seen.json")) as f:
-                        old = set(json.load(f))
+                        old = validated_ids(json.load(f))
                 except (OSError, ValueError, TypeError):
                     pass
             if at <= last:
