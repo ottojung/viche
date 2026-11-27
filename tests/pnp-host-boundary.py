@@ -109,7 +109,10 @@ class HostBoundary(unittest.TestCase):
                 self.assertTrue(host_boundary.is_managed_compile(argv))
                 self.assertEqual(kwargs["env"]["PYTHONPATH"], host_boundary.PYTHONPATH)
                 self.assertEqual(Path(kwargs["cwd"]).resolve(), (work/"lean").resolve())
-                return SimpleNamespace(returncode=0, stdout="checked", stderr="")
+                from missions.pnp.research.obligations import axiom_guard
+                compiled = (work/"lean"/argv[-1]).read_bytes()
+                self.assertTrue(compiled.endswith(axiom_guard("M").encode()))
+                return SimpleNamespace(returncode=0, stdout="'M' does not depend on any axioms", stderr="")
             with patch.object(assignment, "binding", return_value=(rec["gap_id"],"lease")), \
                  patch.object(assignment, "workspace", return_value=(rec["gap_id"],work,Path(td)/"binding.json")), \
                  patch.object(state, "load", return_value=rec), patch.object(support, "active", return_value=True), \
@@ -122,6 +125,27 @@ class HostBoundary(unittest.TestCase):
             self.assertTrue(result["compiled"])
             self.assertEqual(result["checked_base"],"a"*40)
             spawned.assert_called_once()
+
+    def test_local_check_rejects_placeholder_axiom_report(self):
+        from missions.pnp.lbcert import checklocal
+        from missions.pnp import assignment, state, support, focus
+        with tempfile.TemporaryDirectory() as td:
+            work = Path(td); (work/"lean").mkdir(); (work/"lean"/"lean-toolchain").write_text("toolchain\n")
+            rec = {"gap_id":"L-meta-315","lease":"lease","base_sha":"a"*40,"state":"RESEARCHING"}
+            for log in ("'M' depends on axioms: [sorryAx]", "'M' depends on axioms: [Classical.choice, sorryAx]"):
+                def run(argv, **kwargs):
+                    return SimpleNamespace(returncode=0, stdout=log, stderr="")
+                with patch.object(assignment, "binding", return_value=(rec["gap_id"],"lease")), \
+                     patch.object(assignment, "workspace", return_value=(rec["gap_id"],work,Path(td)/"binding.json")), \
+                     patch.object(state, "load", return_value=rec), patch.object(support, "active", return_value=True), \
+                     patch.object(focus, "eligible", return_value=True), \
+                     patch("subprocess.check_output", return_value="a"*40), \
+                     patch("subprocess.run", side_effect=run):
+                    candidate=work/"candidate.lean"; candidate.write_text("theorem M : True := by admit\n")
+                    code,result=checklocal.check(str(candidate),"M")
+                self.assertEqual(code,1)
+                self.assertFalse(result["compiled"])
+                self.assertEqual(result["status"],"placeholder_axiom")
 
     def test_executable_tree_has_no_relay_spawn_or_ci_disablement(self):
         sources=list((ROOT/"missions/pnp").rglob("*.py"))

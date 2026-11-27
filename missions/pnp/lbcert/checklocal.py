@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 
 from .. import assignment, config, focus, state, support, host_boundary
+from ..research.obligations import axiom_guard, verify_report
 
 
 def check(path, module, timeout=900):
@@ -38,7 +39,13 @@ def check(path, module, timeout=900):
         fd, tmp = tempfile.mkstemp(prefix=".pnp-local-check-", suffix=".lean", dir=str(lean))
         os.close(fd)
         try:
-            Path(tmp).write_bytes(data)
+            # Compile a guarded copy, not the bare candidate. The trusted
+            # axiom guard appends a collectAxioms check and `#print axioms`
+            # for the gap's theorem, so a clean compiler exit alone cannot
+            # certify an incompletely proved `admit`/`sorryAx` placeholder.
+            # The receipt identity stays bound to the raw candidate bytes.
+            guard = axiom_guard(module).encode()
+            Path(tmp).write_bytes(data + guard)
             env = host_boundary.managed_compile_env()
             cmd = host_boundary.managed_compile_command(["lake", "env", "lean", Path(tmp).name])
             proc = subprocess.run(cmd, cwd=str(lean), env=env, capture_output=True,
@@ -46,11 +53,16 @@ def check(path, module, timeout=900):
         finally:
             os.unlink(tmp)
         output = (proc.stdout + "\n" + proc.stderr)[-16000:]
-        result = {"status": "ok" if proc.returncode == 0 else "compile_error",
-                  "compiled": proc.returncode == 0,
+        # Exit 0 is necessary but not sufficient: require exactly one trusted
+        # allowed-axiom report for this theorem, as the private checker does.
+        trusted = proc.returncode == 0 and verify_report(output, module)
+        status = ("ok" if trusted else
+                  "compile_error" if proc.returncode != 0 else "placeholder_axiom")
+        result = {"status": status,
+                  "compiled": trusted,
                   "sha256": hashlib.sha256(data).hexdigest(),
                   "checked_base": base, "id": "managed-local", "log": output,
                   "returncode": proc.returncode}
-        return (0 if proc.returncode == 0 else 1), result
+        return (0 if trusted else 1), result
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         return 2, {"status": "managed_compile_unavailable", "detail": str(exc)[-500:]}
