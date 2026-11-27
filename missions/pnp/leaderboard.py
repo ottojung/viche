@@ -69,6 +69,41 @@ def scoreboard(entries, owner=OWNER):
             "rank_one": rank == 1}
 
 
+def credit_details(entries, owner=OWNER):
+    """Validate the public contributor's complete per-unit credit breakdown.
+
+    A missing, truncated, or inconsistent list is unknown, not zero credit.
+    The all-time scoreboard remains independently usable.
+    """
+    entry = next((e for e in entries if e.get("github", "").lower() == owner.lower()), None)
+    if entry is None:
+        return {}
+    lemmas = entry.get("lemmas")
+    if not isinstance(lemmas, list) or len(lemmas) != entry.get("steps"):
+        return None
+    credits = {}
+    for row in lemmas:
+        if not isinstance(row, dict):
+            return None
+        gid, points, at = row.get("id"), row.get("points"), row.get("at")
+        if (not isinstance(gid, str) or not config.GAP_ID_RE.fullmatch(gid)
+                or gid in credits or type(points) is not int or points < 0
+                or not isinstance(at, str)):
+            return None
+        try:
+            dt = datetime.datetime.fromisoformat(at.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                return None
+            ts = dt.timestamp()
+        except (ValueError, OverflowError, OSError):
+            return None
+        credits[gid] = {"points": points, "at": ts,
+                        "estimated": row.get("points_estimated") is True}
+    if sum(c["points"] for c in credits.values()) != entry.get("points"):
+        return None
+    return credits
+
+
 def record_path():
     return Path(os.environ.get("VICHE_STATE_ROOT",
                               "/var/lib/lubko/wd/viche-state")) / "pnp/leaderboard"
@@ -125,6 +160,7 @@ def update():
     if not isinstance(checked_at, str) or not checked_at:
         raise ValueError("leaderboard source timestamp missing")
     result.update({"available": True, "source": BASE + rel,
+                   "our_credit_details": credit_details(entries),
                    "source_version": head.get("version"),
                    "source_checked_at": checked_at,
                    "observed_at": datetime.datetime.now(
