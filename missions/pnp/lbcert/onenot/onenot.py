@@ -275,7 +275,8 @@ def lean_file(gid, stmt, n, pairs, M, wit, parts=24):
     k = M - 2          # refuted binary gate count
     m = k - 1
     name = 'L_meta_' + gid.split('-')[-1]
-    src = open(TEMPLATE, encoding='utf-8').read().split('\n')
+    with open(TEMPLATE, encoding='utf-8') as source:
+        src = source.read().split('\n')
     cut = next(i for i, l in enumerate(src) if l.startswith('def inputs : List W'))
     out = []
     for l in src[:cut]:

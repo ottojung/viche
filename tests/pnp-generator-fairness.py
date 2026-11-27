@@ -25,6 +25,9 @@ class Fairness(unittest.TestCase):
             self.assertNotEqual(a.runtime_hash(root),h2)
             (root/"witnesses.json").write_text("{}")
             self.assertNotEqual(a.runtime_hash(root),h2)
+            h3=a.runtime_hash(root)
+            (root/"template.lean").write_text("def a := 1")
+            self.assertNotEqual(a.runtime_hash(root),h3)
             with patch.object(a,"START_HASH",h),patch.object(a,"runtime_hash",return_value=h2):
                 self.assertTrue(a.source_changed())
 
