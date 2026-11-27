@@ -29,12 +29,14 @@ def recent(now=None):
             data = json.load(f)
         at = data["at"]
         rows = data["recent"]
+        ids = data["ids"]
         if type(at) not in (int, float) or not 0 <= now - at <= OBSERVATION_MAX_GAP:
             return {}
-        if not isinstance(rows, dict):
+        if not isinstance(rows, dict) or not isinstance(ids, list) or any(not isinstance(g, str) for g in ids):
             return {}
+        known = set(ids)
         return {g: t for g, t in rows.items()
-                if isinstance(g, str) and type(t) in (int, float)
+                if g in known and type(t) in (int, float)
                 and t <= at and 0 <= now - t <= WINDOW}
     except (OSError, ValueError, KeyError, TypeError):
         return {}
