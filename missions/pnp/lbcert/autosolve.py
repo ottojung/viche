@@ -249,12 +249,16 @@ def gen_plugin(g, name, sha):
     open(sf+'.sketch','w').write(sketch if isinstance(sketch,str) else '')
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
-    rc, why = plugins.run(name, gid, sf, out + '.gen')
+    try:
+        rc, why = plugins.run(name, gid, sf, out + '.gen')
+    except (OSError, subprocess.SubprocessError) as exc:
+        rc, why = 75, type(exc).__name__ + ': ' + str(exc)
     if os.path.exists(os.path.join(WORK, 'STOP')):
         return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
     if rc != 0:
-        write_status(gid, '%s plugin %s %s rc=%s %s' % ('unsupported' if rc == 3 else 'failed', name, sha, rc,
+        outcome = 'unsupported' if rc == 3 else 'deferred' if rc in (75, 124) else 'failed'
+        write_status(gid, '%s plugin %s %s rc=%s %s' % (outcome, name, sha, rc,
                                                      why.strip().replace('\n', ' ')[-160:]))
         log('plugin', name, gid, 'rc', rc, '%.0fs' % (time.time() - t0))
         return
@@ -310,8 +314,16 @@ def fresh(gid, plugin_sha=None):
     st = status(gid)
     if st is None:
         return True
-    m = re.match(r'(unsupported|failed) plugin \S+ (\w+)', st)
-    return bool(m and plugin_sha and m.group(2) != plugin_sha)
+    m = re.match(r'(unsupported|failed|deferred) plugin \S+ (\w+)', st)
+    return bool(m and ((plugin_sha and m.group(2) != plugin_sha)
+                       or (m.group(1) == 'deferred' and retryable(gid))))
+
+
+def generation_rank(gap, held, recent):
+    """Actual first observation precedes numeric IDs, without extra I/O."""
+    gid = gap['id']
+    return (gid not in held, gid not in recent,
+            gap.get('offerable_now') is not True)
 
 
 SWEEP_STATE = os.path.join(WORK, 'sweep.json')
@@ -430,8 +442,9 @@ def main():
             # race (hundreds posted at once, cleared within the hour): first, and only while unclaimed.
             # Within the family, fewest edges first: those are the instances the generator can
             # do (monotone size <= 11) and the ones competitors take within minutes.
-            from missions.pnp import cli
+            from missions.pnp import cli, freshness
             records=cli.held_records()
+            recent=freshness.recent()
             held = {r['gap_id'] for r in records}
             posting_held={r['gap_id'] for r in records if r.get('work_lane')=='posting'}
             from missions.pnp import fastlane
@@ -440,7 +453,7 @@ def main():
                 except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
             from missions.pnp.lbcert import ready
             for g in sorted((g for g in gaps if g['id'] in fam),
-                            key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
+                            key=lambda g: (*generation_rank(g, held, recent), fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
                                            -int(re.sub(r'\D', '', g['id']) or 0))):
                 if g['id'] in posting_held or (g.get('pr_open', 0) and g['id'] not in held):
@@ -459,7 +472,7 @@ def main():
                     from missions.pnp.lbcert.generators.promise import batch
                     batch_active=batch.alive()
                     batch_fallback=batch.fallback_keys() if batch_active else set()
-                    for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
+                    for g in sorted(concrete, key=lambda g: (*generation_rank(g, held, recent), not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
                         if len(plugin_pending) >= PLUGIN_WORKERS:
                             break
                         if g['id'] in posting_held or g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
