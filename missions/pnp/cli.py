@@ -36,20 +36,26 @@ def cmd_status(args):
     d = desk_mod.Desk()
     docs = d.docs()
     desk_state = d.status()
+    # A gap directory can outlive its state file (for example an archived
+    # test fixture leaves only lock files behind). Such a directory is not a
+    # gap: skip it so the documented operator status command reports local
+    # state instead of crashing on a None record.
+    loaded = [(g, state.load(g)) for g in state.all_gaps()]
+    loaded = [(g, rec) for g, rec in loaded if rec is not None]
     _printer({
         "headline": config.HEADER,
         "open_gaps": desk_state.get("open_gaps"),
         "held_now": desk_state.get("held_now"),
         "docs_bytes": len(docs),
         "leases": [{"gap": g,
-                    "state": state.load(g)["state"],
-                    "expires": state.load(g).get("lease_expires_at")}
-                   for g in state.all_gaps()
-                   if state.load(g).get("lease")],
-        "gaps": [{k: state.load(g).get(k)
+                    "state": rec["state"],
+                    "expires": rec.get("lease_expires_at")}
+                   for g, rec in loaded
+                   if rec.get("lease")],
+        "gaps": [{k: rec.get(k)
                   for k in ("gap_id", "state", "lease", "branch",
                             "commit_sha", "pr_number", "external_verdict")}
-                 for g in state.all_gaps()],
+                 for g, rec in loaded],
     })
 
 
