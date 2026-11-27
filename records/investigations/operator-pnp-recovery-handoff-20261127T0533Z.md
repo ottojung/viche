@@ -16,7 +16,7 @@ Preserved deliveries:
 - `delivery/queue-descendant-priority-20261127` at `9e65c95b46825bfd79761877a80dbae7e9fd1330`
 
 Additional **unreviewed drafts** prepared via repository-only editing:
-- `operator/pnp-index-cache-version-20261127`: code through `cb1c93e89dfc45274be29c0267b66a4f3303d57e` (this note follows it). Parent delivery is receipt-provenance. Includes per-domain positive-index versioning, dependency reload, atomic recent observation and idle-promotion fast path. Tests written but not run.
+- `operator/pnp-index-cache-version-20261127`: code through `cb1c93e89dfc45274be29c0267b66a4f3303d57e`, followed by generator priority/retry changes `374081120d238546470ca9f5c96853b1e6f205ad` and regressions `092dc408f458529e6b7645fb6e62a36cb8708489`. Parent delivery is receipt-provenance. Includes per-domain positive-index versioning, dependency reload, atomic recent observation, idle-promotion fast path, actual first-sighting priority and bounded plugin transient-error retries. Tests written but not run.
 - `operator/queue-descendant-age-20261127`: `8bf6a73d1bb897aa9e509949e2f5c53620ccf672`, descendant priority across age tiers and full suite charged only when verification actually starts. Tests written but not run.
 
 Do not treat these drafts as queue proposals or authorizations. Do not force-push an existing reviewed branch.
@@ -30,7 +30,8 @@ Do not treat these drafts as queue proposals or authorizations. Do not force-pus
 5. Preserve legacy `.checked.json` markers as evidence only; do not relabel or promote them. The prior session counted 137 such markers without local-check origin. Verify the new receipt suffix/provenance and exact statement/base/guard checks.
 6. The previous session prepared six checksum-verified witness indexes under `/var/lib/lubko/wd/viche-state/pnp/research/operator-structured-20261126/validated-indexes`. Verify the actual files, manifest and domain compatibility before atomic installation into the configured index root. An index lookup supplies a candidate witness, never a Lean receipt.
 7. Executive alone may remove STOP and create the separately authorized checker and promotion flags after the existing review/deployment gates. Follow the two canonical Executive decisions, PRELEASE.md and PROMOTION.md. No competing checker, no remote proof compute, no manual PR or lease path.
-8. Verify actual adoption: generator sees relevant index version changes; no unrelated domain retries; observation baseline after outage is not fresh; old receipts cannot reach have=proof; actual local receipt is admitted only under its gate. Observe fresh arrival-to-candidate, candidate-to-PR, and competitor-first latency. Count only credited points.
+8. Review the exact-unit and reduction opportunities in `records/investigations/operator-pnp-exact-unit-and-cut-opportunities-20261127T0538Z.md`. Exact ordinary unit selection is now supported by the upstream reference client; do not enable new acquisition logic until the normal review and broker tests pass.
+9. Verify actual adoption: generator sees relevant index version changes; no unrelated domain retries; observation baseline after outage is not fresh; old receipts cannot reach have=proof; actual local receipt is admitted only under its gate. Observe fresh arrival-to-candidate, candidate-to-PR, and competitor-first latency. Count only credited points.
 
 ## Race evidence
 
