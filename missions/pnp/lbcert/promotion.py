@@ -177,11 +177,17 @@ def promote_once():
     now=time.time()
     if desk.retry_until()>now:return []
     counts=observations(now)
+    # An idle or contested promotion lane must not scan the historical
+    # ledger on the broker's frequent posting path.
+    if not counts or not any(v==0 for v in counts.values()):return []
+    if len(cli.held_records())>=desk.lease_limit():return []
+    eligible=[(g,d) for g,d in pending(auth) if counts.get(g)==0]
+    if not eligible:return []
     # A malformed/deferred item cannot monopolize every cheap allocator pass.
     attempts={(e.get("gid"),e.get("digest")):e for e in ledger.read(hours=1)
               if e.get("stage")=="private_promotion" and e.get("authorization")==auth[1]["authorization"]}
-    candidates=[(g,d) for g,d in pending(auth) if counts.get(g)==0
-                and now-attempts.get((g,d),{}).get("t",0)>=60]
+    candidates=[(g,d) for g,d in eligible
+                if now-attempts.get((g,d),{}).get("t",0)>=60]
     if not candidates:return []
     with cli.acquisition_lock():
         # At most one per cheap allocator pass; no direct claims from here.
