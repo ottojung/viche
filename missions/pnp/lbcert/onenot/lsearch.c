@@ -138,8 +138,11 @@ int main(void) {
     for (int i = 0; i < NIN; i++) { if (scanf("%4095s", buf) != 1) return 2; in[i] = parsehex(buf); }
     if (getenv("LSEARCH_PAIRS_ONLY")) FULLSEP = 0;
     STAMP = calloc(1u << 20, sizeof(uint32_t));
-    TMASK = (1ULL << 26) - 1;
+    uint64_t cap = 1024;
+    while (cap < (uint64_t)LIMIT * 2 && cap < (1ULL << 26)) cap <<= 1;
+    TMASK = cap - 1;
     TAB = calloc(TMASK + 1, sizeof(uint64_t));
+    if (!STAMP || !TAB) { puts("limit"); return 0; }
     for (int mask = 1; mask < (1 << NIN); mask++) {
         W S[MAXS]; int ns = 0;
         for (int i = 0; i < NIN; i++) if ((mask >> i) & 1) S[ns++] = in[i];
