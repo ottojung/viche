@@ -24,6 +24,8 @@ class Tests(unittest.TestCase):
         p=patch.multiple(config,STATE_ROOT=self.tmp.name,GAPS_DIR=self.tmp.name+"/gaps",
                          CACHE_DIR=self.tmp.name+"/cache")
         p.start();self.addCleanup(p.stop)
+        q=patch.object(posting.competition,"observe",return_value={})
+        q.start();self.addCleanup(q.stop)
 
     def rec(self, **fields):
         now=time.time()
@@ -100,6 +102,28 @@ class Tests(unittest.TestCase):
             posting.run(GID,support.attempt(r))
         gen.assert_not_called()
         self.assertEqual(state.load(GID)["posting"]["result"],"contested")
+
+    def test_old_candidate_rival_prevents_submission(self):
+        r=self.rec()
+        with patch.object(ready,"competition",return_value={}), \
+             patch.object(ready,"verified",return_value=None), \
+             patch.object(posting.competition,"observe",return_value={GID:1}) as observe, \
+             patch.object(posting.jobs,"submit") as send:
+            posting.run(GID,support.attempt(r))
+        observe.assert_called_once_with([GID]);send.assert_not_called()
+        self.assertEqual(state.load(GID)["posting"]["result"],"contested")
+
+    def test_fresh_candidate_avoids_query_and_unknown_is_not_rival(self):
+        r=self.rec()
+        with patch.object(posting.freshness,"recent",return_value={GID:100}), \
+             patch.object(posting.competition,"observe",return_value={GID:1}) as observe:
+            self.assertFalse(posting.older_rival(r,110))
+            observe.assert_not_called()
+            self.assertTrue(posting.older_rival(r,180))
+            observe.assert_called_once_with([GID])
+        with patch.object(posting.freshness,"recent",return_value={}), \
+             patch.object(posting.competition,"observe",return_value={}):
+            self.assertFalse(posting.older_rival(r,180))
 
     def test_stale_attempt_does_not_submit(self):
         old=self.rec()

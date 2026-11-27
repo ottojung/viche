@@ -6,7 +6,7 @@ import math
 import statistics
 import time
 
-from . import config, github, leaderboard, ledger
+from . import competition, config, github, leaderboard, ledger
 
 
 def epoch(s):
@@ -43,7 +43,7 @@ def classify(row, search):
     nodes, total = search.get("nodes"), search.get("issueCount")
     if not isinstance(nodes, list) or type(total) is not int or total != len(nodes):
         return "unknown"
-    exact = [n for n in nodes if isinstance(n, dict) and n.get("title") == row["gid"]]
+    exact = [n for n in nodes if isinstance(n, dict) and competition.matches_title(n.get("title"),row["gid"])]
     ours = [n for n in exact if n.get("number") == row["pr"]]
     if len(ours) != 1 or (ours[0].get("author") or {}).get("login", "").lower() != config.DESK_HANDLE.lower():
         return "unknown"

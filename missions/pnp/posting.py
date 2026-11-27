@@ -12,7 +12,7 @@ import sys
 import tempfile
 import time
 
-from . import config, jobs, ledger, state, support, validate
+from . import competition, config, freshness, jobs, ledger, state, support, validate
 from .lbcert import plugins, ready
 
 BUDGET = 12
@@ -20,6 +20,7 @@ MAX_ATTEMPTS = 2
 MIN_RESEARCH_POINTS = 300
 HARD_MIN_SECONDS = 1200
 LEGACY_GRACE = 1200
+FRESH_RACE_SECONDS = 60
 
 
 def paused():
@@ -52,6 +53,24 @@ def rival(rec, counts):
     # Positive evidence is enough to avoid starting another race.
     return any(type(v) is int and v > 0 for v in
                (rec.get("acquisition_prs"), counts.get(rec["gap_id"])))
+
+
+def older_rival(rec, now=None):
+    """Only check once a viable candidate exists. Fresh work avoids network I/O.
+
+    Desk counts can be zero even when a much earlier PR exists. A positive
+    indexed observation vetoes duplicate posting; unknown is not evidence.
+    """
+    now = time.time() if now is None else now
+    gid = rec["gap_id"]
+    seen = freshness.recent(now).get(gid)
+    if type(seen) in (int,float) and 0 <= now-seen < FRESH_RACE_SECONDS:
+        return False
+    count = competition.observe([gid]).get(gid)
+    if type(count) is int and count > 0:
+        ledger.mark("posting_rival_observed",gid,open_prs=count)
+        return True
+    return False
 
 
 def status(gid, attempt, result, **fields):
@@ -163,7 +182,12 @@ def run(gid, attempt):
             return
         # Checked stock for this exact held unit is a useful immediate answer.
         from . import fastlane
+        probed = False
         if not paused() and ready.verified(gid):
+            if older_rival(rec):
+                status(gid,attempt,"contested",detail="indexed older rival")
+                return
+            probed = True
             res = fastlane.submit_ready(gid)
             if res and not current(state.load(gid),attempt):
                 status(gid, attempt, "submitted", method="checked stock")
@@ -177,6 +201,11 @@ def run(gid, attempt):
                 return
             latest = state.load(gid)
             if paused() or not current(latest, attempt):
+                return
+            if not probed and older_rival(latest):
+                status(gid,attempt,"contested",detail="indexed older rival")
+                return
+            if paused() or not current(state.load(gid),attempt):
                 return
             # No extra compilation before the PR; existing publisher checks
             # exact bytes concurrently and never bypasses official verification.
