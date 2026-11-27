@@ -31,13 +31,19 @@ def decide(previous, snapshot, seen, now):
         return previous
     ordinary = snapshot.get("ordinary")
     rows = snapshot.get("gaps", {})
-    witnesses = sum(any(h in str(rows.get(gid, {}).get("title", "")).lower()
-                        for h in WITNESS_HINTS)
-                    for gid in seen if gid in rows)
-    busy = (type(ordinary) is int and ordinary >= 100) or witnesses >= 50
+    arrivals = [t for gid,t in seen.items() if gid in rows
+                and type(t) in (int,float) and 0 <= now-t <= 300
+                and any(h in str(rows[gid].get("title", "")).lower()
+                        for h in WITNESS_HINTS)]
+    witnesses = len(arrivals)
+    busy = type(ordinary) is int and ordinary >= 100
     last_busy = previous.get("last_busy")
     if busy:
         last_busy = observed
+    elif arrivals and (witnesses >= 50 or previous.get("active")):
+        # Keep the batch alive through sporadic new arrivals, but never
+        # refresh its timer merely because an old arrival remains in-window.
+        last_busy = max(last_busy or 0, min(observed, max(arrivals)))
     active = bool(busy or (type(last_busy) in (int, float)
                             and 0 <= observed-last_busy < QUIET_SECONDS))
     # Stale input never extends a burst; a fresh positive observation does.
