@@ -98,6 +98,45 @@ class Tests(unittest.TestCase):
         self.assertEqual(state.load("L-meta-1")["work_lane"],"research")
         self.assertEqual(self.launch.call_count,4)
 
+    def quiet_snapshot(self, **kw):
+        return dict({"complete":True,"observed":NOW-5,"ordinary":0,"offerable":12,
+            "gaps":{"L-meta-1":{"points":900,"level":"open","held":0,"parallel":1}}},**kw)
+
+    def test_quiet_frontier_uses_one_research_slot_without_ordinary_leases(self):
+        d=Desk([(True,"L-meta-1")])
+        mem={}
+        self.assertEqual(allocator.fill(d,mem,NOW,self.quiet_snapshot()),["L-meta-1"])
+        self.assertEqual(state.load("L-meta-1")["work_lane"],"research")
+        self.assertEqual(allocator.fill(d,mem,NOW+5,self.quiet_snapshot()),[])
+        self.assertEqual(d.calls,[(True,False,"open")])
+        self.launch.assert_not_called()
+
+    def test_quiet_probe_null_respects_cadence(self):
+        d=Desk()
+        mem={}
+        self.assertEqual(allocator.fill(d,mem,NOW,self.quiet_snapshot()),[])
+        self.assertEqual(allocator.fill(d,mem,NOW+30,self.quiet_snapshot()),[])
+        self.assertEqual(d.calls,[(True,False,"open")])
+        self.assertEqual(allocator.fill(d,mem,NOW+300,self.quiet_snapshot(observed=NOW+299)),[])
+        self.assertEqual(d.calls,[(True,False,"open")]*2)
+
+    def test_quiet_probe_needs_fresh_complete_available_observation(self):
+        for snap in (self.quiet_snapshot(observed=NOW-61),self.quiet_snapshot(complete=False),
+                     self.quiet_snapshot(offerable=0)):
+            d=Desk()
+            self.assertEqual(allocator.fill(d,{},NOW,snap),[])
+            self.assertFalse(any(hard for hard,_,_ in d.calls))
+        with patch.object(allocator.surge,"update",return_value=True):
+            d=Desk()
+            self.assertEqual(allocator.fill(d,{},NOW,self.quiet_snapshot()),[])
+            self.assertEqual(d.calls,[])
+
+    def test_quiet_probe_obeys_global_cooldown(self):
+        d=Desk()
+        with patch.object(desk,"retry_until",return_value=time.time()+100):
+            self.assertEqual(allocator.fill(d,{},NOW,self.quiet_snapshot()),[])
+        self.assertEqual(d.calls,[])
+
     def test_stock_fallback_requires_fresh_uncontested_offer(self):
         from missions.pnp.lbcert import ready
         class StockDesk(Desk):
