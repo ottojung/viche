@@ -120,6 +120,7 @@ class Fairness(unittest.TestCase):
                  patch.object(plugins,"discover",return_value={"x":1}), \
                  patch.object(plugins,"family_of",side_effect=lambda s,_:("x","v1") if s in ("constructive","mono") else None), \
                  patch.object(a.time,"sleep",side_effect=stop), \
+                 patch.object(a,"bound_here",return_value=True), \
                  patch.object(a.managed_process,"stop_all"):
                 self.assertEqual(a.main(),0)
             self.assertEqual([p.limit for p in pools],[1,2,1])

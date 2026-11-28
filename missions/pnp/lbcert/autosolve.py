@@ -34,12 +34,24 @@ LOCAL_FALLBACK = threading.BoundedSemaphore(1)
 # Include runtime sources and generator data; ignore docs, tests and bytecode.
 # A clean restart is required for the registry and imported helpers to agree.
 def runtime_hash(root=None):
-    root=Path(root) if root is not None else Path(HERE).parent
-    h=hashlib.sha256()
-    for path in sorted(root.rglob("*")):
-        if path.suffix in (".py",".c",".sh",".json",".lean") and path.is_file():
-            h.update(str(path.relative_to(root)).encode()+b"\0")
-            h.update(hashlib.sha256(path.read_bytes()).digest())
+    # Only sources autosolve can actually execute belong in the restart key.
+    # The old default walked all of missions/pnp, so an unrelated edit to a
+    # research/onboarding module drained every bounded generator and restarted
+    # the whole loop. Track the lbcert tree plus top-level core modules.
+    parent = Path(HERE).parent
+    if root is not None:
+        paths = sorted(p for p in Path(root).rglob("*")
+                       if p.suffix in (".py",".c",".sh",".json",".lean") and p.is_file())
+        base = Path(root)
+    else:
+        paths = sorted(p for p in Path(HERE).rglob("*")
+                       if p.suffix in (".py",".c",".sh",".json",".lean") and p.is_file())
+        paths += sorted(p for p in parent.glob("*.py") if p.is_file())
+        base = parent
+    h = hashlib.sha256()
+    for path in paths:
+        h.update(str(path.relative_to(base)).encode()+b"\0")
+        h.update(hashlib.sha256(path.read_bytes()).digest())
     return h.hexdigest()
 
 
@@ -79,6 +91,16 @@ LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 in
 MAXSTATES = 4800       # keep local candidate generation below the 512 KiB certificate bound
 RECOVERY_TIMEOUT = 60  # maximum wall time for a held-only recovery generator
 GEN_TIMEOUT = 300      # bounded local CPU work; generation never invokes Lean
+# The engine is content-pinned (ensure_engines) and the gap statement is
+# immutable, so an identical 300s timeout carries no new evidence. Stop after
+# a few identical attempts instead of re-spending the single local generator
+# slot on the same refused instance every 30 minutes (45 such retries for
+# L-meta-9822 in the last 24h).
+GEN_TIMEOUT_LIMIT = 3
+# A plugin that exhausts its whole 600s budget is a bounded refusal, not a
+# transient infrastructure error. Cap identical retries for the same engine
+# version (three 600-610s events are already recorded in autosolve.log).
+PLUGIN_TIMEOUT_LIMIT = 2
 os.makedirs(CANDS, exist_ok=True)
 
 
@@ -129,6 +151,40 @@ def ensure_engines():
 def status(gid):
     p = os.path.join(CANDS, gid + '.status')
     return open(p).read().strip() if os.path.exists(p) else None
+
+
+def gen_timeout_count(gid, increment=False, reset=False):
+    """Count identical bounded-generation timeouts for one immutable instance."""
+    path = os.path.join(CANDS, gid + '.gentimeouts')
+    try:
+        n = int(open(path).read().strip() or 0)
+    except (OSError, ValueError):
+        n = 0
+    if increment or reset:
+        n = n + 1 if increment else 0
+        tmp = path + '.tmp'
+        open(tmp, 'w').write(str(n))
+        os.replace(tmp, path)
+    return n
+
+
+def plugin_timeout_count(gid, key, increment=False, reset=False):
+    path = os.path.join(CANDS, gid + '.plugintimeouts')
+    try:
+        data = json.load(open(path))
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, ValueError):
+        data = {}
+    if increment or reset:
+        if reset:
+            data.pop(key, None)
+        else:
+            data[key] = int(data.get(key) or 0) + 1
+        tmp = path + '.tmp'
+        json.dump(data, open(tmp, 'w'))
+        os.replace(tmp, path)
+    return int(data.get(key) or 0)
 
 
 def write_status(gid, text):
@@ -190,14 +246,23 @@ def generate(g, engines, timeout=None):
                            cwd=HERE, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         # A hung local generator must not monopolize the bounded worker.
-        write_status(gid, 'deferred generation timeout %ss' % timeout)
+        n = gen_timeout_count(gid, increment=True)
         from missions.pnp import ledger
         ledger.mark('generated', gid, status='timeout', secs=timeout, where='billy-dev')
-        log('generated', gid, 'timeout', 'billy-dev', None, '%ss' % timeout)
+        if n >= GEN_TIMEOUT_LIMIT:
+            # No further evidence can come from rerunning the same pinned
+            # engine on the same statement; 'deferred' would be retried
+            # forever by retryable(). Keep the source, stop the burn.
+            write_status(gid, 'settled generation timeout %ss x%d bounded' % (timeout, n))
+            log('generated', gid, 'timeout_bound', 'billy-dev', None, '%ss x%d' % (timeout, n))
+        else:
+            write_status(gid, 'deferred generation timeout %ss x%d' % (timeout, n))
+            log('generated', gid, 'timeout', 'billy-dev', None, '%ss x%d' % (timeout, n))
         return
     where = 'billy-dev'
     if pause.paused_directory(WORK):
         return
+    gen_timeout_count(gid, reset=True)  # a non-timeout outcome is new evidence
     r = {'status': {0: 'ok', 2: 'unsupported', 3: 'false', 4: 'toobig'}.get(p.returncode, 'error'),
          'engine': os.path.basename(engines[0]) if engines else None}
     if p.returncode == 0 and os.path.isfile(out + '.tmp'):
@@ -215,14 +280,39 @@ def generate(g, engines, timeout=None):
 
 SIB_RETRY = 300
 SIB_STATE = os.path.join(WORK, 'sibling.json')
+_SIB_HEAD = None
+_SIB_LOCK = threading.Lock()
 
 
 def sibling_pass():
     """Refresh the local sibling index; do not generate/check via another host."""
+    # sibling_loop and sweep_loop call this from different threads; without a
+    # lock both can observe the same changed head and duplicate the index walk
+    # and log line (two identical lines one second apart in autosolve.log).
+    with _SIB_LOCK:
+        return _sibling_pass_locked()
+
+
+def _sibling_pass_locked():
+    global _SIB_HEAD
     import sibling
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
     from missions.pnp import gitctl
+    # sibling_loop and sweep/radar both call this every 30s. The index is
+    # content-addressed by the mirror head; rewalking git ls-tree and the blob
+    # cache on an unchanged head is pure duplicated computation and is the
+    # source of the repeated 'local sibling index' log lines. Rebuild only on
+    # a new head (or if the lightweight ref read fails).
+    try:
+        cur = subprocess.run(['git', '--git-dir=' + gitctl.MIRROR, 'rev-parse',
+                              'refs/remotes/upstream/main'],
+                             capture_output=True, text=True, check=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        cur = None
+    if cur is not None and cur == _SIB_HEAD:
+        return
     head, idx = sibling.index(gitctl.MIRROR, WORK)
+    _SIB_HEAD = cur or head
     log('local sibling index', head[:12], 'shapes', len(idx or {}),
         'adaptation disabled until exact bound managed check')
 
@@ -248,8 +338,20 @@ def gen_plugin(g, name, sha, timeout=None):
     if pause.paused_directory(WORK):
         return
     ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=engine,secs=round(time.time()-t0,3))
-    if rc == 124 and timeout is not None:
-        write_status(gid, 'deferred plugin %s %s bounded recovery timeout' % (name, sha))
+    if rc == 0:
+        plugin_timeout_count(gid, name + ':' + sha, reset=True)
+    if rc == 124:
+        # gen_plugin's `timeout` parameter is None when autosolve calls the
+        # normal-mode path, but run_chain still enforces a 600s budget. Treat
+        # any rc 124 as a full-budget timeout, not a transient infrastructure
+        # error.
+        key = name + ':' + sha
+        n = plugin_timeout_count(gid, key, increment=True)
+        if n >= PLUGIN_TIMEOUT_LIMIT:
+            write_status(gid, 'settled plugin %s %s timeout x%d bounded' % (name, sha, n))
+            log('plugin', name, gid, 'timeout_bound', '%.0fs' % (time.time() - t0))
+        else:
+            write_status(gid, 'deferred plugin %s %s bounded recovery timeout x%d' % (name, sha, n))
         return
     if rc != 0:
         write_status(gid, '%s plugin %s %s rc=%s %s' % ('unsupported' if rc == 3 else 'failed', name, sha, rc,
@@ -269,6 +371,15 @@ def gen_plugin(g, name, sha, timeout=None):
         os.replace(out+'.gen',out)
         write_status(gid,'generated plugin %s %s secs=%.0f'%(name,sha,time.time()-t0))
         fastlane.submit_ready(gid)
+        return
+    if not bound_here():
+        # This loop runs on billy-dev; the exact check can only happen in a
+        # bound workspace. checklocal.check() would return code 2 immediately
+        # and only add another deferred log line. Promote the generated candidate
+        # now and leave verification to the bound lane.
+        os.replace(out + '.gen', out)
+        write_status(gid, 'generated plugin %s %s check deferred' % (name, sha))
+        log('plugin', name, gid, 'check deferred', 'bound_workspace_required')
         return
     from missions.pnp.lbcert import checklocal
     crc, res = checklocal.check(out + '.gen', g['module'])
@@ -307,6 +418,15 @@ def check_prepared(g):
         log('prepared validation refused',gid,str(e)[:160]);return
     if ready.verified(gid):
         return
+    if not bound_here():
+        # This loop runs on billy-dev; exact Lean checks are owned by the bound
+        # workspace/allocator lane. checklocal.check() here can only return
+        # 2/bound_workspace_required, so calling it wastes a prepare worker and
+        # produces the repeated 'prepared check ... bound_workspace_required'
+        # log lines. Record the deferral once and leave the candidate source in
+        # place for the bound lane; do not claim any check receipt.
+        log('prepared check deferred', gid, 'bound_workspace_required')
+        return
     code,result=checklocal.check(path,g['module'],timeout=600)
     if code==0:
         if ready.record(gid,dict(result,status='ok',compiled=True),data):
@@ -343,6 +463,12 @@ def fresh(gid, plugin_sha=None):
         return plugin_sha is not None
     m = re.match(r'(unsupported|failed) plugin \S+ (\w+)', st)
     return bool(m and plugin_sha and m.group(2) != plugin_sha)
+
+
+def bound_here():
+    """True only when this process runs inside an exact bound workspace."""
+    from missions.pnp import assignment
+    return bool(assignment.binding(Path.cwd()))
 
 
 SWEEP_STATE = os.path.join(WORK, 'sweep.json')
@@ -440,11 +566,28 @@ def main():
     plugin_pending = {}
     prepared = {}
     prepare_retry = {}
+    restart_since = None
+    restart_stable = None
+    restart_hash = None
     while not pause.paused_directory(WORK):
         if source_changed():
+            # Several agents may deploy source in several files within seconds.
+            # Restarting on each intermediate state kills bounded generator
+            # subprocesses (rc -9 after 200-470s of work). Wait for a quiet
+            # period, but cap the total wait so a busy deployment still starts.
+            now = time.time()
+            h = runtime_hash()
+            if restart_since is None:
+                restart_since = now
+            if h != restart_hash:
+                restart_hash, restart_stable = h, now
+            if now - restart_stable < 10 and now - restart_since < 60:
+                time.sleep(POLL)
+                continue
             log('runtime changed; draining workers for clean restart')
             drain_workers((pool,plugin_pool,prepare_pool))
             return 0
+        restart_since = restart_stable = restart_hash = None
         try:
             for pending in (outstanding, plugin_pending):
                 for gid,future in list(pending.items()):
@@ -527,7 +670,12 @@ def main():
                          and g['id'] not in prepare_retry and not g.get('pr_open',0)
                          and (status(g['id']) or '').split(' ')[0] in ('ok','generated')
                          and os.path.isfile(os.path.join(CANDS,g['id']+'.lean'))
-                         and not ready.verified(g['id'])]
+                         and not ready.verified(g['id'])
+                         # From billy-dev an exact check is impossible: do not
+                         # occupy a prepare worker or a 600s retry slot with a
+                         # candidate that can only be deferred to the bound
+                         # workspace/allocator lane.
+                         and bound_here()]
                 if choices:
                     # Prefer recent, cheaply solved candidates; no old FIFO backlog.
                     g=max(choices,key=lambda x:os.stat(os.path.join(CANDS,x['id']+'.lean')).st_mtime)
