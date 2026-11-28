@@ -67,7 +67,15 @@ case "$cmd" in
     case "$max_age" in ''|*[!0-9]*) max_age=21600 ;; esac
     # Act 31: a change in the office's own deliveries (landed, rejected, red,
     # conflict) is an input of every office, so the proposer wakes to act on it.
-    fp=$({ cat; cat "$state/delivery/office/$key.json" 2>/dev/null || :; } | sha256sum | cut -d ' ' -f 1)
+    # Fingerprint only the stable, actionable projection of each entry (branch,
+    # head, status). The full office record also carries prose fields ("reason",
+    # "log", "candidate", "reviewer_agent") that change without any status
+    # change: a stuck delivery whose "reason" flipped between null and a
+    # "waiting: untracked canonical file..." message on each integrator pass
+    # woke Economy every ~10 min with no actionable change
+    # (Act 29 s.7 / P-1795832443-b5a4). Fall back to the raw file if jq is
+    # unavailable, so a broken probe still fails open rather than silencing work.
+    fp=$({ cat; jq -cS 'map({branch, head, status})' "$state/delivery/office/$key.json" 2>/dev/null || cat "$state/delivery/office/$key.json" 2>/dev/null || :; } | sha256sum | cut -d ' ' -f 1)
     reason=
     if [ "${VICHE_DISPATCH_GATE:-on}" = off ]; then
       reason=gate_off

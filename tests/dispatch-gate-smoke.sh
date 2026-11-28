@@ -77,4 +77,25 @@ test "$sig" = '302 2026-11-16T10:00:00Z sha256:m302
 rc=0; $gate board-signature 302 999 >/dev/null 2>&1 || rc=$?; test "$rc" -eq 1
 rc=0; $gate board-signature 'a b' >/dev/null 2>&1 || rc=$?; test "$rc" -eq 2
 
+# Act 31 own-delivery projection: only actionable delivery changes wake an
+# office. Volatile prose in "reason" (a stuck delivery's "waiting:..." message
+# flipping to null on each integrator pass) must not re-dispatch, while a real
+# status change still must (Act 29 s.7 / P-1795832443-b5a4).
+mkdir -p "$d/state/delivery/office"
+cat > "$d/state/delivery/office/wake.json" <<'JSON'
+[{"branch":"delivery/x","head":"aaa","status":"approved","reason":"waiting: untracked canonical file"}]
+JSON
+check wake 86400 'stable inputs'; test "$rc" -eq 0; test "$out" = first_pass
+$gate commit wake
+# Reason-only drift: status/branch/head unchanged -> unchanged, so skip.
+cat > "$d/state/delivery/office/wake.json" <<'JSON'
+[{"branch":"delivery/x","head":"aaa","status":"approved","reason":null}]
+JSON
+check wake 86400 'stable inputs'; test "$rc" -eq 10
+# A genuine status change (approved -> rejected) must wake the office.
+cat > "$d/state/delivery/office/wake.json" <<'JSON'
+[{"branch":"delivery/x","head":"aaa","status":"rejected","reason":null}]
+JSON
+check wake 86400 'stable inputs'; test "$rc" -eq 0; test "$out" = inputs_changed
+
 echo 'dispatch gate smoke passed'
