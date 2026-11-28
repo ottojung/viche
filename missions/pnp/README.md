@@ -141,8 +141,10 @@ Run on billy-dev, from the canonical checkout:
     python3 -m missions.pnp.batch_scorecard --refresh --report
 
 The allocator runs readiness off its critical path hourly and on batch entry.
-The merged holdout probe requires a static-valid promise candidate in 12 seconds;
-it is not kernel verification. A failed probe, unknown capacity, old frontier,
+The fixed merged operational control (L-meta-26403) requires a static-valid
+promise candidate in 12 seconds; it is not kernel verification or a measure
+of current family coverage. Use plugtest holdouts separately for coverage.
+The direct mirror lookup avoids scanning thousands of unrelated recent proofs. A failed probe, unknown capacity, old frontier,
 stale lease heartbeat or invalid publisher identity produces NOT READY and a
 standing-mission board comment. The result is saved to cache/readiness.json.
 
