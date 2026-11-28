@@ -230,18 +230,27 @@ def fill(d, mem, now, snapshot):
                 if desk.retry_until()>time.time():break
                 # One targeted miss per tick; ordinary can use remaining
                 # capacity, but never spin against a server cooldown.
-            research=any(support.active(r,now) and r.get("work_lane")!="posting" for r in held)
             rows=snapshot.get("gaps",{})
             high=any(row.get("level")=="open" and type(row.get("points")) is int
                      and row["points"]>=posting.MIN_RESEARCH_POINTS
                      and type(row.get("held")) is int and type(row.get("parallel")) is int
                      and row["held"]<row["parallel"] for row in rows.values())
+            levels=snapshot.get("offerable_levels")
+            hard_fallback=(quiet_open and isinstance(levels,dict)
+                           and not levels.get("open") and type(levels.get("hard")) is int and levels["hard"]>0)
+            # A bounded high-value probe may use a genuinely spare slot even
+            # while another lease is live research. The desk advertises these
+            # units far above a random solid posting lease; this neither
+            # preempts the research lease nor fills an already full pool.
+            open_probe=(not batch and (high or hard_fallback)
+                        and desk.lease_limit()>1 and (len(held)==desk.lease_limit()-1 or quiet_open)
+                        and now-mem.get("last_open_probe",0)>=300)
             # Reserve only when genuinely new units are still being solved.
-            # On a quiet frontier, use the whole earned desk capacity.
+            # A due open probe is the deliberate use of that reserved slot.
             reserve=bool(seen and any(freshness.available(g,snapshot,seen[g])
                        and not state.load(g) and not ready.verified(g)
                        for g in seen))
-            if not batch and reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
+            if not batch and reserve and not open_probe and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
                 break
             if stock_priority and old_target:
                 gid,old_target=old_target,None
@@ -250,12 +259,6 @@ def fill(d, mem, now, snapshot):
                     acquired.append(result)
                     continue
                 if desk.retry_until()>time.time():break
-            levels=snapshot.get("offerable_levels")
-            hard_fallback=(quiet_open and isinstance(levels,dict)
-                           and not levels.get("open") and type(levels.get("hard")) is int and levels["hard"]>0)
-            open_probe=(not batch and not research and (high or hard_fallback)
-                        and desk.lease_limit()>1 and (len(held)==desk.lease_limit()-1 or quiet_open)
-                        and now-mem.get("last_open_probe",0)>=300)
             if open_probe:
                 level,lane=("hard" if hard_fallback else "open"),"research"
                 mem["last_open_probe"]=now
