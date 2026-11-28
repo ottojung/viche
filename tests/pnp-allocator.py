@@ -178,6 +178,36 @@ class Tests(unittest.TestCase):
         self.assertEqual(d.calls,[("solid",None),(None,"L-meta-99")])
         self.assertEqual(state.load("L-meta-99")["lease_terms"]["points"],51)
 
+    def test_checked_stock_precedes_random_ordinary_work_only_outside_productive_surge(self):
+        from missions.pnp.lbcert import ready
+        snap={"complete":True,"observed":NOW,"ordinary":200,"offerable":200,"gaps":{}}
+        for batch,recovery,expected in [(False,False,True),(True,True,True),(True,False,False)]:
+            d=Desk();mem={}
+            with patch.object(allocator.surge,"update",return_value=batch), \
+                 patch.object(allocator.surge,"recovery",return_value=recovery), \
+                 patch.object(ready,"offers",return_value=["L-meta-99"]), \
+                 patch.object(allocator.competition,"fallback_target",return_value="L-meta-99"), \
+                 patch.object(allocator,"ready_attempt",return_value=None) as target:
+                allocator.fill(d,mem,NOW,snap)
+                self.assertEqual(target.called,expected)
+                if expected:self.assertEqual(target.call_args.args[-1],"checked_stock")
+                self.assertEqual(d.calls,[(False,False,"solid")])
+
+    def test_checked_stock_does_not_consume_fresh_reservation(self):
+        from missions.pnp.lbcert import ready
+        for i in range(4):self.add("L-meta-"+str(i+1))
+        snap={"complete":True,"observed":NOW,"ordinary":200,"offerable":200,"gaps":{"L-meta-99":{"held":0,"parallel":1}}}
+        d=Desk()
+        with patch.object(allocator.surge,"update",return_value=False), \
+             patch.object(allocator.freshness,"recent",return_value={"L-meta-99":NOW-2}), \
+             patch.object(ready,"verified",return_value=None), \
+             patch.object(ready,"offers",return_value=["L-meta-100"]), \
+             patch.object(allocator.competition,"fallback_target",return_value="L-meta-100"), \
+             patch.object(allocator,"ready_attempt") as target:
+            self.assertEqual(allocator.fill(d,{},NOW,snap),[])
+            target.assert_not_called()
+            self.assertFalse(d.calls)
+
     def test_checked_candidate_does_not_preempt_fresh_slots(self):
         from missions.pnp.lbcert import ready
         d=Desk()
