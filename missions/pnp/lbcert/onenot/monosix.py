@@ -19,6 +19,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 import lbparse
 import monotone_witness
+import dontcare
 import onenot  # noqa: E402  (SAT witness search, critical pairs, C live search)
 
 TEMPLATE = os.environ.get('MONOSIX_TEMPLATE', os.path.join(HERE, 'ref_13175.lean'))
@@ -200,21 +201,31 @@ def solve(gid, stmt, binary=None, budget=None):
     # A cheap constructive upper bound is enough if the conditional lower
     # bound closes. Do not prove SAT optimality merely to obtain a witness.
     wit = monotone_witness.synthesize(n, f, budget=min(2, max(0, deadline-time.monotonic()-4)))
-    # In the measured historical sample the current kernel closed every
-    # 9/10-gate witness but none of the 11+ gate witnesses. Spend a little
-    # of the unused foreground budget on a wider constructive beam before
-    # invoking the lower-bound screen. This is an upper-bound heuristic,
-    # not an assertion about which circuits are minimum.
-    if wit and len(wit) > 10:
-        for width in (8, 16):
-            left = deadline-time.monotonic()-4
-            if left <= 0.1:
+    # Preserve the cheap path for easy cases. On hard witnesses, try a
+    # care-set resynthesis and alternative functional decomposition before
+    # widening the original beam. Every returned circuit is audited.
+    def improve(candidate):
+        nonlocal wit
+        if not candidate:
+            return
+        left = deadline-time.monotonic()-4.25
+        if len(candidate)>10 and left>0.1:
+            candidate=dontcare.compress(n,candidate,f,budget=min(.4,left),target_size=10)
+        if not wit or len(candidate)<len(wit):
+            log(gid,"resynthesis witness",len(wit) if wit else None,"->",len(candidate))
+            wit=candidate
+    improve(wit)
+    if wit and len(wit)>10:
+        left=deadline-time.monotonic()-4.25
+        if left>0.2:
+            improve(monotone_witness.synthesize(n,f,width=3,decompose=True,budget=min(1.2,left)))
+    if wit and len(wit)>10:
+        for width in (8,16):
+            left=deadline-time.monotonic()-4.25
+            if left<=0.1:
                 break
-            candidate = monotone_witness.synthesize(n, f, width=width, budget=min(2.5,left))
-            if candidate and len(candidate) < len(wit):
-                log(gid, "beam", width, "witness", len(wit), "->", len(candidate))
-                wit = candidate
-            if len(wit) <= 10:
+            improve(monotone_witness.synthesize(n,f,width=width,budget=min(2.5,left)))
+            if len(wit)<=10:
                 break
     M = len(wit) if wit else None
     text = screen(wit)
