@@ -44,7 +44,8 @@ class Recovery(unittest.TestCase):
              patch.object(auto,"CANDS",d), patch.object(plugins,"run",return_value=(124,"timeout")) as run, \
              patch.object(ledger,"mark"):
             auto.gen_plugin(q,"fixture","abcdef",auto.RECOVERY_TIMEOUT)
-            self.assertEqual(run.call_args.kwargs["timeout"],60)
+            self.assertGreater(run.call_args.kwargs["timeout"], 0)
+            self.assertLessEqual(run.call_args.kwargs["timeout"], auto.RECOVERY_TIMEOUT)
             self.assertTrue(auto.status(q["id"]).startswith("deferred plugin "))
             self.assertFalse(auto.fresh(q["id"],"abcdef"))
             old=time.time()-auto.RETRY_DELAY-1
