@@ -129,16 +129,50 @@ def launch(gid):
         os.close(fd)
 
 
+
+def cached_candidate(rec):
+    """A previously generated source can answer a newly held exact lease.
+
+    This is not a proof-of receipt. It is only consumed by the held posting
+    worker, which performs the ordinary competition/attempt checks and submits
+    through the signed publisher. Read immutable bytes into the caller's
+    scratch file rather than handing a mutable cache path to a job.
+    """
+    from .lbcert import ready
+    gid = rec["gap_id"]
+    if not config.GAP_ID_RE.fullmatch(gid):
+        return None
+    marker = ready.directory() / (gid + ".status")
+    source = ready.directory() / (gid + ".lean")
+    try:
+        if marker.is_symlink() or source.is_symlink():
+            return None
+        status = marker.read_text().split()
+        if not status or status[0] not in ("ok", "generated"):
+            return None
+        with source.open("rb") as f:
+            data = f.read(config.MAX_FILE_BYTES + 1)
+        meta = {"id":gid, "file":rec["path"], "module":rec["module"],
+                "statement":rec["statement"], "imports":rec["imports"]}
+        validate.validate(meta, data)
+        return data
+    except (OSError, UnicodeError, validate.InvalidCandidate):
+        return None
+
 def generate(rec, work):
     """Use the same audited family generators, but a short foreground budget."""
     # Reuse source-only batch stock under this exact lease; only the signed
     # publisher and its concurrent checker can advance publication state.
     from .lbcert.generators.promise import batch
     data=batch.staged_candidate(rec)
+    engine="promise-batch"
+    if data is None:
+        data=cached_candidate(rec)
+        engine="generated-stock"
     if data is not None:
         out=work/"candidate.lean"
         out.write_bytes(data)
-        ledger.mark("posting_cache_hit",rec["gap_id"],engine="promise-batch")
+        ledger.mark("posting_cache_hit",rec["gap_id"],engine=engine)
         return "generated",out
     deadline = time.monotonic() + BUDGET
     sf = work/"statement.txt"
@@ -147,26 +181,17 @@ def generate(rec, work):
     sketch = (rec.get("desk_notes") or {}).get("sketch")
     if isinstance(sketch, str):
         sf.with_suffix(sf.suffix+".sketch").write_text(sketch[:65536])
-    attempted = False
-    for family in plugins.families_of(rec["statement"]):
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            return "unknown", None
-        attempted = True
-        out.unlink(missing_ok=True)
-        rc, detail = plugins.run(family[0], rec["gap_id"], str(sf), str(out), timeout=remaining)
-        if rc == 3:
-            # An explicit unsupported-instance result is not an error.
-            # Never reuse bytes written by a refusing plugin.
-            out.unlink(missing_ok=True)
-            continue
-        if rc or not out.is_file():
-            return "unknown", None
-        meta = {"id":rec["gap_id"], "file":rec["path"], "module":rec["module"],
-                "statement":rec["statement"], "imports":rec["imports"]}
-        validate.validate(meta, out.read_bytes())
-        return "generated", out
-    return ("unknown" if attempted else "unsupported"), None
+    rc, _, provider = plugins.run_chain(plugins.families_of(rec["statement"]),
+        rec["gap_id"], str(sf), str(out), timeout=max(0, deadline-time.monotonic()))
+    ledger.mark("posting_route",rec["gap_id"],engine=provider or "none",rc=rc)
+    if rc == 3:
+        return ("unknown" if provider is not None else "unsupported"), None
+    if rc or not out.is_file():
+        return "unknown", None
+    meta = {"id":rec["gap_id"], "file":rec["path"], "module":rec["module"],
+            "statement":rec["statement"], "imports":rec["imports"]}
+    validate.validate(meta, out.read_bytes())
+    return "generated", out
 
 
 def run(gid, attempt):

@@ -1,8 +1,6 @@
 import os
 import random
-import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 def candidates(n,edges):
@@ -53,24 +51,21 @@ def screen(emitter,n,f,witness):
     rng=random.Random(1)
     base=[p for p in pairs if p[0].bit_count()==2]
     rest=[p for p in pairs if p not in set(base)]
-    cc=shutil.which("cc")
-    if not cc:return None
-    with tempfile.TemporaryDirectory(prefix="pnp-onenot-") as tmp:
-        binary=Path(tmp)/"lsearch"
+    import sys
+    sys.path.insert(0,str(Path(emitter.__file__).parent))
+    from screen_binary import cached_screen
+    binary=cached_screen(Path(emitter.__file__).with_name("lsearch.c"),budget=3)
+    if binary is None:return None
+    for _ in range(2):
+        trial=pairs if len(pairs)<=128 else (base+rng.sample(rest,128-len(base)))[:128]
+        rows=[a for a,b in trial]+[b for a,b in trial]
+        full=(1<<len(rows))-1
+        words=[full^sum(((r>>i)&1)<<j for j,r in enumerate(rows)) for i in range(n)]
+        inp="%d %d %d %d\n%s\n"%(n,len(trial),len(witness)-2,400000,"\n".join("%x"%w for w in words))
         try:
-            subprocess.run([cc,"-O2","-o",str(binary),str(Path(emitter.__file__).with_name("lsearch.c"))],
-                           capture_output=True,timeout=2,check=True)
-        except (OSError,subprocess.SubprocessError):return None
-        for _ in range(2):
-            trial=pairs if len(pairs)<=128 else (base+rng.sample(rest,128-len(base)))[:128]
-            rows=[a for a,b in trial]+[b for a,b in trial]
-            full=(1<<len(rows))-1
-            words=[full^sum(((r>>i)&1)<<j for j,r in enumerate(rows)) for i in range(n)]
-            inp="%d %d %d %d\n%s\n"%(n,len(trial),len(witness)-2,400000,"\n".join("%x"%w for w in words))
-            try:
-                run=subprocess.run([str(binary)],input=inp,capture_output=True,text=True,
-                      timeout=3,env={**os.environ,"LSEARCH_PAIRS_ONLY":"1"})
-            except (OSError,subprocess.TimeoutExpired):continue
-            if run.returncode==0 and run.stdout.strip()=="none":return trial
-            if len(pairs)<=128:break
+            run=subprocess.run([binary],input=inp,capture_output=True,text=True,
+                  timeout=3,env={**os.environ,"LSEARCH_PAIRS_ONLY":"1"})
+        except (OSError,subprocess.TimeoutExpired):continue
+        if run.returncode==0 and run.stdout.strip()=="none":return trial
+        if len(pairs)<=128:break
     return None

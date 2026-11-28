@@ -81,11 +81,35 @@ def classify(stmt):
     return None
 
 
+
+def table_literal(n, body, var="x"):
+    """Parse the fleet's bounded truth-table notation without evaluating code."""
+    if not 1 <= n <= 8 or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", var):
+        return None
+    b = norm(body)
+    suffix = r"\(∑ i : Fin %d, if %s i then 2 \^ \(i : ℕ\) else 0\)" % (n, re.escape(var))
+    match = re.fullmatch(r"Nat\.testBit\s+\((\d{1,20})\s*\*\s*2\s*\^\s*32\s*\+\s*(\d{1,10})\)\s+" + suffix, b)
+    if match:
+        hi, lo = map(int, match.groups())
+        if lo >= 2**32:
+            return None
+        val = hi * 2**32 + lo
+    else:
+        match = re.fullmatch(r"Nat\.testBit\s+\(?(\d{1,20})\)?\s+" + suffix, b)
+        if not match:
+            return None
+        val = int(match[1])
+    return val if val.bit_length() <= 1 << n else None
+
+
 def py_truth_table(n, fun):
     m = re.match(r'fun \(?(\w+) : Fin \(?\d+\)? → Bool\)? => (.*)$', fun)
     if not m:
         raise ValueError('binder')
     var, b = m.group(1), m.group(2)
+    literal = table_literal(n, b, var)
+    if literal is not None:
+        return literal
     b = re.sub(r'\b%s (\d+)' % re.escape(var), r'X[\1]', b)
     if re.search(r'\b%s\b' % re.escape(var), b):
         raise ValueError('var use')

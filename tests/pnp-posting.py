@@ -62,6 +62,30 @@ class Tests(unittest.TestCase):
         send.assert_called_once()
         self.assertEqual(state.load(GID)["posting"]["result"],"submitted")
 
+    def test_held_posting_reuses_exact_generated_stock_without_check(self):
+        from missions.pnp.lbcert.generators.promise import batch
+        r=self.rec()
+        cache=ready.directory();cache.mkdir(parents=True)
+        marker=cache/(GID+".status")
+        source=cache/(GID+".lean")
+        marker.write_text("generated plugin fixture")
+        source.write_text("cached exact source")
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(batch,"staged_candidate",return_value=None), \
+             patch.object(posting.validate,"validate") as validate, \
+             patch.object(posting.plugins,"run_chain") as generate, \
+             patch.object(posting.ledger,"mark") as mark:
+            status,path=posting.generate(r,Path(d))
+            self.assertEqual(status,"generated")
+            self.assertEqual(path.read_text(),"cached exact source")
+            validate.assert_called_once()
+            generate.assert_not_called()
+            mark.assert_called_once_with("posting_cache_hit",GID,engine="generated-stock")
+        with patch.object(posting.validate,"validate",side_effect=posting.validate.InvalidCandidate("stale")):
+            self.assertIsNone(posting.cached_candidate(r))
+        marker.write_text("failed plugin fixture")
+        self.assertIsNone(posting.cached_candidate(r))
+
     def test_refusal_falls_through_within_original_budget(self):
         r=self.rec()
         from missions.pnp.lbcert.generators.promise import batch
