@@ -146,7 +146,11 @@ for diagnostic in "$town"/missions/*/status.sh; do
   [ -f "$diagnostic" ] || continue
   label=${diagnostic%/status.sh}
   label=${label##*/}
-  line=$(timeout 15 /bin/sh "$diagnostic" 2>/dev/null) ||
+  # Mission diagnostics such as missions/pnp/status.sh legitimately need
+  # ~20-25 s (many gap states plus the live agent roster). A 15 s bound made
+  # them report "unavailable" on nearly every dispatch, hiding the mission
+  # coordination signal from the Executive. Keep it bounded but realistic.
+  line=$(timeout 45 /bin/sh "$diagnostic" 2>/dev/null) ||
     line='{"status":"unavailable","action":"investigate diagnostic failure"}'
   mission_diagnostics="$mission_diagnostics
 $label: $line"
