@@ -42,8 +42,19 @@ LINE_MAX = 300
 NEEDS_FOUNDER = re.compile(r"^\s*NEEDS-FOUNDER:\s*(.+)$", re.M)
 # An external scheduler floods Town Hall with operational records that can quote
 # the phrase "NEEDS-FOUNDER". They are not requests to the Founder and must not
-# crowd the real, once-posted asks out of the digest's four-item line.
+# crowd the real, once-posted asks out of the bounded "Needs you" line.
 SCHEDULER_TURN = re.compile(r"^\s*\[scheduler-turn\b", re.I)
+# The "Needs you" line is a 300-char attention surface, not the durable record
+# (Founder directive 2026-11-16 §4; Constitution VI). A volatile topic such as
+# disk capacity can be posted several times a day with different forecasts;
+# showing an older, more alarming reading beside a newer one presents as two
+# current asks what is one superseded ask. Supersede only a small, explicit
+# vocabulary of volatile topics; every other ask keeps the id-only behaviour.
+NEEDS_TOPICS = (
+    ("disk", re.compile(r"\b(?:disk|filesystem|free space|storage|quarantine)\b", re.I)),
+    ("models", re.compile(r"\b(?:model|quota|rate[- ]limit)\b", re.I)),
+)
+NEEDS_ITEM_MAX = 110
 
 town = pathlib.Path(os.environ.get("VICHE_TOWN_ROOT", "/var/lib/lubko/wd/viche"))
 state = pathlib.Path(os.environ.get("VICHE_STATE_ROOT", "/var/lib/lubko/wd/viche-state"))
@@ -417,6 +428,41 @@ def townhall_needs_messages(now):
     return messages
 
 
+def needs_topic(text):
+    """Volatile topic of an ask, or None for asks that must not be superseded."""
+    for name, pattern in NEEDS_TOPICS:
+        if pattern.search(text):
+            return name
+    return None
+
+
+def clip_ask(text, limit=NEEDS_ITEM_MAX):
+    """Fit one ask in `limit` chars without cutting a word or sentence short."""
+    if len(text) <= limit:
+        return text
+    marker = " … (see detail)"
+    budget = limit - len(marker)
+    head = text[:budget].rsplit(" ", 1)[0].rstrip(" ,;:.")
+    return (head or text[:budget].rstrip()) + marker
+
+
+def fit_needs_line(items, limit=LINE_MAX):
+    """Render the line whole; never amputate an ask at the line boundary."""
+    prefix = "Needs you: "
+    if not items:
+        return prefix + "nothing"
+    chosen = list(items)
+    while True:
+        hidden = len(items) - len(chosen)
+        suffix = " … +%d more on Town Hall" % hidden if hidden else ""
+        text = prefix + "; ".join(chosen) + suffix
+        if len(text) <= limit:
+            return text
+        if len(chosen) <= 1:
+            return prefix + clip_ask(items[0], limit - len(prefix) - len(suffix)) + suffix
+        chosen.pop()
+
+
 def line_needs(now, scan_ok):
     needs = []
     try:
@@ -430,15 +476,9 @@ def line_needs(now, scan_ok):
             needs.append("every configured model is rate-limited or out of quota (add quota or a model)")
     except (OSError, ValueError, KeyError):
         pass
-    try:
-        for message in townhall_needs_messages(now):
-            body = message.get("body") or ""
-            if message.get("author") == "Vitalik" or SCHEDULER_TURN.match(body):
-                continue
-            for match in NEEDS_FOUNDER.finditer(body):
-                needs.append(match.group(1).strip()[:110])
-    except Unavailable:
-        needs.append("Town Hall unreadable, so requests may be missing")
+    # Machine-derived needs go first: if the bounded line has to drop items,
+    # it drops the oldest Town Hall asks, never an unacknowledged Founder
+    # message or an unreadability warning.
     inbox = state / "founder-inbox"
     try:
         acked = {p.name for p in (inbox / "ack").iterdir()} if (inbox / "ack").exists() else set()
@@ -451,7 +491,26 @@ def line_needs(now, scan_ok):
             needs.append("%d Founder message(s) unacknowledged for over an hour" % len(pending))
     except OSError:
         pass
-    return "Needs you: " + ("; ".join(needs[:4]) if needs else "nothing")
+    try:
+        seen_topics = set()
+        messages = sorted(townhall_needs_messages(now),
+                          key=lambda m: iso_epoch(m.get("createdAt")) or 0,
+                          reverse=True)
+        for message in messages:
+            body = message.get("body") or ""
+            if message.get("author") == "Vitalik" or SCHEDULER_TURN.match(body):
+                continue
+            for match in NEEDS_FOUNDER.finditer(body):
+                ask = match.group(1).strip()
+                topic = needs_topic(ask)
+                if topic is not None:
+                    if topic in seen_topics:
+                        continue  # a newer reading of this volatile topic already stands
+                    seen_topics.add(topic)
+                needs.append(clip_ask(ask))
+    except Unavailable:
+        needs.append("Town Hall unreadable, so requests may be missing")
+    return fit_needs_line(needs)
 
 
 def build(now):

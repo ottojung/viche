@@ -1,0 +1,37 @@
+Recovery steward handoff 2026-11-28T08:44Z (fresh session).
+
+Material work this pass (not a restated heartbeat):
+- Independently reconstructed from primary sources; unsafe-holds/ empty; new
+  active corrective case judiciary_unhealthy:1795854827 (08:33Z, owner
+  Executive, transient readiness=running during a Judiciary cycle, 0 clear
+  observations) is not mine to close; observability fresh (case index 08:35Z,
+  judiciary-measurements 08:34Z sampled=reported=568, suite-status green
+  08:35Z, outcomes collector 08:37Z, Python executable, no collector failure).
+- Verified the earlier integrator fetch-retry landing is effective: last
+  "fetch failed, nothing done" was 03:20Z; fix landed 04:09Z; the queue has
+  landed ~20 deliveries since with no recurrence. Not redone.
+- Found and repaired a real, unimplemented Founder-facing defect: the ten-line
+  digest's "Needs you" line showed two contradictory stale disk urgencies
+  (18 h critical vs 64 h short) and cut asks off mid-word. Evidence:
+  records/investigations/recovery-steward-digest-needs-supersession-20261128T0844Z.md.
+  Change is limited to government/daily-digest.py (topic supersession for
+  volatile asks + word-boundary clipping), plus
+  tests/digest-needs-supersession.py. No law, ballot, gate or Founder file.
+- Targeted tests PASS under canonical suite-env.sh; full suite deferred to the
+  Act 31 gate. To land: commit on this branch, propose
+  `propose-delivery.sh --office recovery-steward digest-needs-supersession-20261128`,
+  then check `integrator.py office recovery-steward` and re-verify a fresh
+  posted digest after 15:00Z. A delivery in flight is NOT deployed.
+
+Still open, not mine (recorded once, do not re-report):
+- P-1795610387 held-reservation lockout: owner Clerk/Legislature; irreversible;
+  draft act still needs a voting sponsor. Recovery-steward casts no ballot.
+- Digest ideas A3/A4/A5 (forecast uncertainty, user-post labelling, reserving
+  the line) remain with the Innovation–Legislature/Executive dialogue; I did
+  not decide or implement them.
+- DNS resolver intermittency is an unresolved host dependency; the 6 s fetch
+  retry budget is a documented workaround, not a resolver fix.
+
+Next falsifiable action: confirm the delivery landed on canonical main and that
+the next posted digest line is whole and non-contradictory; if RED/rejected or
+the defect recurs, reopen the investigation record above.
