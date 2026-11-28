@@ -22,6 +22,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, 'generators')
@@ -37,9 +38,13 @@ def fingerprint(gen):
     h=hashlib.sha256()
     parent=Path(gen).parent
     files=[p for p in sorted(parent.rglob("*")) if p.is_file() and p.suffix in (".py",".json",".c",".lean")]
-    if parent.name=="onenot_candidates":
+    if parent.name in ("onenot_candidates", "monosix"):
         helper=parent.parent.parent/"onenot"
         files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c"))
+        if parent.name=="monosix":
+            files.extend([helper/"monosix.py", helper/"monotone_witness.py", parent.parent.parent/"lbparse.py"])
+    if parent.name=="zz_lbcert":
+        files.extend(parent.parent.parent/f for f in ("lbassemble.py","lbgen.py","lbparse.py"))
     if parent.name=="gateelim_residual":
         files.extend(p for p in sorted((parent.parent/"gateelim").rglob("*"))
                      if p.is_file() and p.suffix in (".py",".json",".lean"))
@@ -96,14 +101,46 @@ def families_of(statement, found=None):
 
 
 def family_of(statement, found=None):
-    return next(families_of(statement, found), None)
+    matches = list(families_of(statement, found))
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    # A change to a fallback is a new route even if the first engine is unchanged.
+    digest = hashlib.sha256(repr(matches).encode()).hexdigest()[:12]
+    return matches[0][0], digest
 
 
 def run(name, gid, statement_file, out, timeout=600):
     gen = os.path.join(ROOT, name, 'gen.py')
     try:
         p = managed_process.run([sys.executable, gen, gid, statement_file, out], capture_output=True, text=True,
-                           timeout=timeout, cwd=os.path.dirname(gen))
+                           timeout=timeout, cwd=os.path.dirname(gen),
+                           env={**os.environ, "PNP_GENERATOR_BUDGET_SECONDS":str(timeout)})
         return p.returncode, (p.stderr or p.stdout)[-400:]
     except subprocess.TimeoutExpired:
         return 124, 'timeout'
+
+
+def run_chain(families, gid, statement_file, out, timeout=600):
+    """Try every matching engine on an explicit refusal, within one budget.
+
+    rc 3 means no candidate from any matching engine; no-match has provider
+    None. An error or timeout is not a mathematical result and stops the chain.
+    Never reuse a partial output from a refusing engine.
+    """
+    deadline = time.monotonic() + timeout
+    provider = None
+    why = "no matching generator"
+    for name, _ in families:
+        left = deadline - time.monotonic()
+        if left <= 0:
+            return 124, "route budget exhausted", provider
+        provider = name
+        Path(out).unlink(missing_ok=True)
+        rc, why = run(name, gid, statement_file, out, timeout=left)
+        if rc == 3:
+            Path(out).unlink(missing_ok=True)
+            continue
+        return rc, why, name
+    return 3, why, provider

@@ -239,10 +239,15 @@ def gen_plugin(g, name, sha, timeout=None):
     open(sf+'.sketch','w').write(sketch if isinstance(sketch,str) else '')
     out = os.path.join(CANDS, gid + '.lean')
     t0 = time.time()
-    rc, why = plugins.run(name, gid, sf, out + '.gen', **({'timeout':timeout} if timeout is not None else {}))
+    routes = list(plugins.families_of(g['statement']))
+    if not routes:
+        routes = [(name, sha)]
+    rc, why, used = plugins.run_chain(routes, gid, sf, out + '.gen',
+                                      timeout=timeout if timeout is not None else 600)
+    engine = used or name
     if pause.paused_directory(WORK):
         return
-    ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=name,secs=round(time.time()-t0,3))
+    ledger.mark('generated',gid,status='ok' if rc==0 else 'failed',engine=engine,secs=round(time.time()-t0,3))
     if rc == 124 and timeout is not None:
         write_status(gid, 'deferred plugin %s %s bounded recovery timeout' % (name, sha))
         return
@@ -331,6 +336,11 @@ def fresh(gid, plugin_sha=None):
         return True
     if st.startswith('deferred plugin '):
         return retryable(gid)
+    # Older releases sent mono/one-NOT statements to the lower-bound-only
+    # assembler and wrote generic unsupported records. Give newly routed
+    # plugins exactly one chance; their versioned result replaces that record.
+    if st.split(' ')[0] in ('unsupported', 'toobig') and ' plugin ' not in st:
+        return plugin_sha is not None
     m = re.match(r'(unsupported|failed) plugin \S+ (\w+)', st)
     return bool(m and plugin_sha and m.group(2) != plugin_sha)
 
@@ -471,8 +481,11 @@ def main():
             for g in concrete:
                 f = lbparse.family(g['statement'])
                 if f:
-                    fam[g['id']] = f
                     desk[g['id']] = g.get('pr_open', 0)
+                # lbassemble only accepts ordinary lower bounds. Do not
+                # reserve mono/one-NOT jobs in that incompatible lane.
+                if f == 'lb':
+                    fam[g['id']] = f
                 if f == 'lb':
                     pos[lbparse.norm(g['statement'])] = g['id']
             for g in concrete:
@@ -543,12 +556,18 @@ def main():
                     for g in sorted(concrete, key=lambda g: (g['id'] not in held, not ('A held answer' in str(g.get('sketch') or '')), -int(re.sub(r'\D', '', g['id']) or 0))):
                         if len(plugin_pending) >= PLUGIN_WORKERS or (mode == "held-only" and (outstanding or plugin_pending)):
                             break
-                        if g['id'] in posting_held or g['id'] in fam or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
+                        if g['id'] in posting_held or (g.get('pr_open', 0) and g['id'] not in held) or g['id'] in queued:
                             continue
+                        if g['id'] in fam:
+                            # Ordinary lower bounds have their own pool. Only
+                            # try an alternative plugin after that pool declines.
+                            st = status(g['id']) or ''
+                            if st.split(' ')[0] not in ('unsupported', 'toobig', 'failed'):
+                                continue
                         if batch_active and batch.claimed(g,batch_fallback):
                             continue
                         hit = plugins.family_of(g['statement'], found)
-                        if hit and fresh(g['id'], hit[1]):
+                        if hit and not (g['id'] in fam and hit[0] == 'zz_lbcert') and fresh(g['id'], hit[1]):
                             queued.add(g['id'])
                             plugin_pending[g['id']] = plugin_pool.submit(gen_plugin, g, hit[0], hit[1], RECOVERY_TIMEOUT) if mode == "held-only" else plugin_pool.submit(gen_plugin, g, hit[0], hit[1])
             except Exception as e:

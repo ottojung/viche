@@ -16,6 +16,9 @@ import json, os, random, re, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(HERE))
+import lbparse
+import monotone_witness
 import onenot  # noqa: E402  (SAT witness search, critical pairs, C live search)
 
 TEMPLATE = os.environ.get('MONOSIX_TEMPLATE', os.path.join(HERE, 'ref_13175.lean'))
@@ -27,17 +30,18 @@ HEAD_RE = re.compile(r'^∀ s : ℕ, PEqualNP\.MetaComplexity\.HasCircuitSize (\
 
 
 def parse(stmt):
-    m = HEAD_RE.match(re.sub(r'\s+', ' ', stmt.strip()))
+    text = re.sub(r'\s+', ' ', stmt.strip())
+    if text.startswith('(') and text.endswith(')'):
+        text = text[1:-1].strip()
+    m = HEAD_RE.fullmatch(text)
     if not m or m.group(1) != m.group(2) or m.group(3).strip() != m.group(4).strip():
         return None
     n, body = int(m.group(1)), m.group(3).strip()
-    t = re.fullmatch(r'Nat\.testBit \((.*?)\) \(∑ i : Fin %d, if x i then 2 \^ \(i : ℕ\) else 0\)' % n, body)
-    if not t:
+    if n != 6:
         return None
-    expr = t.group(1).replace(' ', '')
-    if not re.fullmatch(r'[0-9*+^()]+', expr):
+    T = lbparse.table_literal(n, body)
+    if T is None:
         return None
-    T = eval(expr.replace('^', '**'), {'__builtins__': {}})
     f = [(T >> r) & 1 for r in range(1 << n)]
     return n, body, f
 
@@ -158,34 +162,71 @@ theorem PEqualNP.Outside.NAME :
     return '\n'.join(lines)
 
 
-def solve(gid, stmt):
+def solve(gid, stmt, binary=None, budget=None):
     p = parse(stmt)
     if not p:
         return None, 'statement shape not recognised'
     n, body, f = p
     if any(f[r] and not f[r | (1 << i)] for r in range(1 << n) for i in range(n)):
         return None, 'function not monotone'
-    t0 = time.time()
-    rng = random.Random(1)
-    rows = [r for r in range(1 << n)]
-    M = wit = None
-    for s in range(1, 4 * n + 4):
-        st, _, g = onenot.cegar(n, s, f, True, rows, rng, timeout=120)
-        if st is None:
-            return None, 'monotone witness search timed out at %d' % s
-        if st:
-            M, wit = s, g
-            break
-    log(gid, 'monotone size', M, '%.0fs' % (time.time() - t0))
+    t0 = time.monotonic()
+    deadline = t0 + (budget if budget is not None else 600)
     pairs = onenot.critical_pairs(n, f)
+    if not pairs:
+        return None, "no critical pairs"
     if len(pairs) > PAIR_MAX:
         pairs = pairs[:PAIR_MAX]
-    r = onenot.general_none(n, f, pairs, M - 2, STATE_CAP)
-    log(gid, 'general', M - 2, {True: 'none', False: 'found', None: 'over budget'}[r], 'pairs', len(pairs))
-    if not r:
-        return None, ('a circuit with %d binary gates exists on the sample: one NOT may save a gate' % (M - 2)
-                      if r is False else 'kernel search over budget')
-    return lean(gid, stmt, n, body, f, pairs, M, wit), None
+
+    def screen(witness):
+        if not witness or len(witness) < 2:
+            return None
+        if not all(onenot.evaluate(n,witness,r)==f[r] for r in range(1<<n)):
+            raise ValueError("monotone witness audit failed")
+        M = len(witness)
+        if len(set(tuple((r >> i) & 1 for r in
+                         [a for a,b in pairs]+[b for a,b in pairs])
+                   for i in range(n))) != n:
+            return None
+        left = deadline-time.monotonic()
+        if left <= 0:
+            return None
+        result = onenot.general_none(n, f, pairs, M-2, STATE_CAP,
+                                    timeout=min(4, left), binary=binary)
+        log(gid, "witness", M, "screen", result, "pairs", len(pairs))
+        if result is True:
+            return lean(gid, stmt, n, body, f, pairs, M, witness)
+        return None
+
+    # A cheap constructive upper bound is enough if the conditional lower
+    # bound closes. Do not prove SAT optimality merely to obtain a witness.
+    wit = monotone_witness.synthesize(n, f)
+    M = len(wit) if wit else None
+    text = screen(wit)
+    if text is not None:
+        return text, None
+    # Foreground posting has a short fixed budget; leave expensive search
+    # to the speculative/held research lane rather than monopolize leases.
+    if deadline-time.monotonic() < 30:
+        return None, "bounded constructive/screening route did not close"
+    rng = random.Random(1)
+    rows = list(range(1 << n))
+    # Start one gate below the constructive witness: try to improve the
+    # upper bound, not prove that every smaller circuit is impossible.
+    sizes = range(M-1, 1, -1) if M is not None else range(2,4*n+4)
+    for size in sizes:
+        left = deadline-time.monotonic()
+        if left < 5:
+            break
+        st, _, candidate = onenot.cegar(n,size,f,True,rows,rng,
+                                       timeout=min(30, left-4))
+        if st is not True:
+            if M is not None:
+                break
+            continue
+        text = screen(candidate)
+        if text is not None:
+            return text, None
+    return None, "conditional lower bound did not close under bounded search"
 
 
 def main():

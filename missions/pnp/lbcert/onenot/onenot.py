@@ -214,7 +214,7 @@ def critical_pairs(n, f):
             for i in range(n) if (x >> i) & 1 and not f[x ^ (1 << i)]]
 
 
-def general_none(n, f, pairs, k, limit, timeout=None, pairs_only=True):
+def general_none(n, f, pairs, k, limit, timeout=None, pairs_only=True, binary=None):
     """True: no circuit of k binary gates (NOTs free) separates the aligned pairs, decided by the C
     search with the kernel search's own pruning (pairs_only), so `limit` also caps the kernel work;
     False: such a circuit exists; None: over the limit / timeout."""
@@ -227,7 +227,7 @@ def general_none(n, f, pairs, k, limit, timeout=None, pairs_only=True):
     if pairs_only:
         env['LSEARCH_PAIRS_ONLY'] = '1'
     try:
-        r = subprocess.run([os.path.join(HERE, 'lsearch')], input=inp, capture_output=True, text=True,
+        r = subprocess.run([binary or os.path.join(HERE, 'lsearch')], input=inp, capture_output=True, text=True,
                            timeout=timeout or LIVE_TIMEOUT, env=env)
     except subprocess.TimeoutExpired:
         return None
