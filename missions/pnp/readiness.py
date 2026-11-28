@@ -2,13 +2,14 @@
 import json
 import math
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
 import tempfile
 import time
 
-from . import cli, config, desk, frontier, github, posting, state, validate
+from . import cli, config, desk, frontier, github, gitctl, posting, state, validate
 from .lbcert import plugins, plugtest
 
 MAX_BEAT_AGE = 300
@@ -27,14 +28,35 @@ def lease_errors(records, now):
     return errors
 
 
+# A known merged control case, not an estimate of current family coverage.
+# It passed production probes repeatedly on 2026-11-27, and passed again
+# on 2026-11-28 after falling outside the rolling 4,000-file scan window.
+PROMISE_CONTROL = "L-meta-26403"
+
+
+def promise_control():
+    num = PROMISE_CONTROL.rsplit("-", 1)[1]
+    module = "PEqualNP.Outside.L_meta_" + num
+    file = "lean/PEqualNP/Outside/L_meta_" + num + ".lean"
+    src = subprocess.run(["git", "--git-dir=" + gitctl.MIRROR, "show",
+                          "refs/remotes/upstream/main:" + file],
+                         capture_output=True, text=True, check=True, timeout=10).stdout
+    match = re.search(r"(?ms)^theorem " + re.escape(module) +
+                      r"\s*:\s*(.*?)\s*:=\s*by\b", src)
+    if match is None:
+        raise RuntimeError("merged promise control theorem unavailable")
+    return {"id": PROMISE_CONTROL, "module": module, "file": file,
+            "statement": match.group(1).strip(),
+            "imports": plugtest.historical_imports(src)}
+
+
 def promise_probe():
     found = plugins.discover()
     if "promise" not in found:
         raise RuntimeError("promise plugin absent")
-    cases = plugtest.merged(found["promise"][2], 1)
-    if not cases:
-        raise RuntimeError("no matching merged holdout in local mirror")
-    case = cases[0]
+    case = promise_control()
+    if not found["promise"][2](case["statement"]):
+        raise RuntimeError("promise control no longer matches generator")
     with tempfile.TemporaryDirectory(prefix="pnp-readiness-") as tmp:
         source, output = Path(tmp)/"statement.txt", Path(tmp)/"candidate.lean"
         source.write_text(case["statement"], encoding="utf-8")
@@ -46,7 +68,8 @@ def promise_probe():
             raise RuntimeError("promise holdout failed within posting budget")
         validate.validate(case, output.read_bytes())
         return {"gap": case["id"], "seconds": round(elapsed, 3),
-                "static_validated": True, "kernel_checked": False}
+                "static_validated": True, "kernel_checked": False,
+                "scope": "fixed merged operational control, not family coverage"}
 
 
 def check(now=None):
@@ -87,7 +110,7 @@ def report_board(result):
     probe = result["checks"].get("promise", {})
     failures = ", ".join(sorted(result["errors"])) or "none"
     body = (f"PnP batch readiness: {label}; failures: {failures}; "
-            f"promise generator: {probe.get('seconds', 'unverified')} s "
+            f"promise control: {probe.get('seconds', 'unverified')} s "
             "(candidate/static validation only, not upstream credit). "
             "Local details: pnp/cache/readiness.json. Standing mission remains open.")
     try:
