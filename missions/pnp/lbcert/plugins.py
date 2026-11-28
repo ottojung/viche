@@ -42,7 +42,7 @@ def fingerprint(gen):
         helper=parent.parent.parent/"onenot"
         files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c","screen_binary.py"))
         if parent.name=="monosix":
-            files.extend([helper/"monosix.py", helper/"monotone_witness.py", parent.parent.parent/"lbparse.py"])
+            files.extend([helper/"monosix.py", helper/"monotone_witness.py", helper/"dontcare.py", parent.parent.parent/"lbparse.py"])
     if parent.name=="zz_lbcert":
         files.extend(parent.parent.parent/f for f in ("lbassemble.py","lbgen.py","lbparse.py"))
     if parent.name=="gateelim_residual":
