@@ -783,6 +783,20 @@ class TestReconcile(unittest.TestCase):
         self.assertEqual(state.load(GAP)["state"], "FAULT")
         self.assertEqual(gh.created, 0)
 
+    def test_fault_with_expired_lease_is_not_resumed(self):
+        # Opening a PR needs a live desk beat. Do not bounce an ended lease
+        # back to the publisher on every reconciliation cycle.
+        self._set_candidate()
+        new_state("FAULT", commit_sha=SHA, base_sha="base1",
+                  branch=config.branch_for(GAP),
+                  lease_expires_at=time.time() - 1)
+        gh = self._open_pr_gh()
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh,
+                                    git=FakeGit(remote=SHA))
+        self.assertEqual(r["result"], "unresolved-fault")
+        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(gh.created, 0)
+
     def test_renamed_checker_link(self):
         c = verdict_comment(SHA, "ACCEPTED")
         resolve = FakeGH().repository_id

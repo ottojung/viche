@@ -23,12 +23,13 @@ STATE = Path(os.environ.get("VICHE_STATE_ROOT",
 def actionable_publication_alerts(rows, now=None):
     """Publication failures that still warrant Executive attention.
 
-    A FAULT with no signed commit cannot be recovered into a PR (reconcile's
-    recover_fault requires a commit_sha). Once its lease has also expired there
-    is no live assignment to retry, so it is a permanently settled failure kept
-    in mission state for audit -- not an actionable alert. Excluding only that
-    case stops a dead record from waking every Executive pass while keeping
-    live faults, recoverable faults, rejections and failed PRs visible.
+    A FAULT whose lease has ended and which has no PR cannot be recovered: the
+    publisher needs a live desk beat to open a PR, and FAULT cannot be re-leased.
+    Whether or not a signed commit was recorded, it is a permanently settled
+    failure kept in mission state for audit -- not an actionable alert. Excluding
+    only that case stops a dead record from waking every Executive pass while
+    keeping live faults, faults with an adoptable PR, rejections and failed PRs
+    visible.
     """
     now = time.time() if now is None else now
     out = []
@@ -39,9 +40,11 @@ def actionable_publication_alerts(rows, now=None):
             continue
         if r["state"] not in ("FAULT", "REJECTED"):
             continue
-        if r["state"] == "FAULT" and not r.get("commit_sha"):
+        if r["state"] == "FAULT":
             exp = r.get("lease_expires_at")
-            if type(exp) in (int, float) and exp <= now:
+            expired = type(exp) in (int, float) and exp <= now
+            has_pr = bool(r.get("pr_number") or r.get("pending_pr_number"))
+            if expired and not has_pr:
                 continue
         out.append(r["gap"])
     return sorted(out)
