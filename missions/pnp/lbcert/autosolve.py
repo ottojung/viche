@@ -74,7 +74,6 @@ SOURCE_SHA = '98c3a7192bc0d62775011eb073a212c7a2d0d9bf4da12e0e11980fd2fe002c74'
 POLL = 10            # gaps.json is a conditional GET now (304 when unchanged)
 LOCAL_GENERATORS = 1   # bounded local lower-bound generation
 PLUGIN_WORKERS = 2   # constructive generators cannot be starved by lower-bound search
-PREPARE_WORKERS = 1  # exact checked receipt for a completed candidate
 LB_MAX_INPUTS = 12   # see generate(): no lb_cert has ever succeeded above 11 inputs
 MAXSTATES = 4800       # keep local candidate generation below the 512 KiB certificate bound
 RECOVERY_TIMEOUT = 60  # maximum wall time for a held-only recovery generator
@@ -201,7 +200,9 @@ def generate(g, engines, timeout=None):
     r = {'status': {0: 'ok', 2: 'unsupported', 3: 'false', 4: 'toobig'}.get(p.returncode, 'error'),
          'engine': os.path.basename(engines[0]) if engines else None}
     if p.returncode == 0 and os.path.isfile(out + '.tmp'):
-        os.replace(out + '.tmp', out)
+        if not stage_bytes(out + '.tmp', out):
+            write_status(gid, 'deferred existing candidate differs; alternate retained')
+            return
     from missions.pnp import ledger
     ledger.mark('generated', gid, status=r.get('status'), secs=round(time.time() - t0), where=where)
     st = r.get('status')
@@ -227,11 +228,28 @@ def sibling_pass():
         'adaptation disabled until exact bound managed check')
 
 
+def stage_bytes(source, out):
+    """Publish candidate bytes atomically without replacing any earlier proof.
+
+    Existing bytes are never overwritten: an identical alternate is discarded
+    after staging, while a differing alternate is retained for inspection and
+    never attributed as our candidate.
+    """
+    try:
+        os.link(source, out)
+        os.unlink(source)
+        return True
+    except FileExistsError:
+        if not os.path.islink(out) and Path(source).read_bytes() == Path(out).read_bytes():
+            os.unlink(source)
+            return True
+        return False
+
+
 def gen_plugin(g, name, sha, timeout=None):
     """A town-written local plugin: generate and validate, then check only in bound workspaces."""
     import plugins
     from missions.pnp import state, support, validate, fastlane, ledger
-    from missions.pnp.lbcert import ready
     gid = g['id']
     sf = os.path.join(CANDS, gid + '.stmt')
     open(sf, 'w').write(g['statement'])
@@ -265,56 +283,34 @@ def gen_plugin(g, name, sha, timeout=None):
         write_status(gid,'failed plugin %s %s invalid %s'%(name,sha,str(e)[:120]))
         return
     rec=state.load(gid)
+    if not stage_bytes(out+'.gen',out):
+        # An existing checked or generated proof is not ours to replace. Keep
+        # the new alternate as .gen for inspection; no receipt is created.
+        if status(gid) is None:
+            write_status(gid,'deferred alternate retained; existing bytes not attributed')
+        if support.active(rec) and rec['statement']==g['statement']:
+            from missions.pnp import jobs
+            jobs.submit(gid,out+'.gen',expected_lease=rec['lease'],only_unclaimed=True)
+        return
+    write_status(gid,'generated plugin %s %s staged for private check'%(name,sha))
     if support.active(rec) and rec['statement']==g['statement']:
-        os.replace(out+'.gen',out)
-        write_status(gid,'generated plugin %s %s secs=%.0f'%(name,sha,time.time()-t0))
         fastlane.submit_ready(gid)
-        return
-    from missions.pnp.lbcert import checklocal
-    crc, res = checklocal.check(out + '.gen', g['module'])
-    if crc == 2:
-        os.replace(out + '.gen', out)
-        write_status(gid, 'generated plugin %s %s check deferred' % (name, sha))
-        log('plugin', name, gid, 'check deferred', res.get('status'))
-        return
-    if crc == 0:
-        os.replace(out + '.gen', out)
-        recorded = ready.record(gid,dict(res,status='ok',compiled=True),data)
-        write_status(gid, 'ok plugin %s %s managed-local compiled secs=%.0f' % (name, sha, time.time() - t0))
-        if recorded:
-            lease_now(gid)
-    else:
-        write_status(gid, 'failed plugin %s %s compile: %s' % (name, sha, (res.get('log') or '').replace('\n', ' ')[-160:]))
-    log('plugin', name, gid, 'ok' if crc == 0 else 'compile_error', '%.0fs' % (time.time() - t0))
+        log('plugin',name,gid,'staged for held publication, not checked')
 
 
 def check_prepared(g):
+    """Compatibility entry point: unheld candidates belong to private intake.
+
+    The fenced ready.record only accepts an exact private-prelease receipt from
+    the authorized promoter, so this lane never performs a local check or
+    records receipts. Held work is routed to the ordinary publisher.
+    """
     if pause.paused_directory(WORK):
         return
-    from missions.pnp.lbcert import checklocal
-    from missions.pnp import state, support, validate, fastlane
-    from missions.pnp.lbcert import ready
-    gid=g['id']
-    rec=state.load(gid)
-    if support.active(rec):
-        fastlane.submit_ready(gid)
-        return
-    path=os.path.join(CANDS,gid+'.lean')
-    try:
-        data=open(path,'rb').read()
-        validate.validate({k:g[k] for k in ('id','file','module','statement','imports')},data)
-    except (OSError,validate.InvalidCandidate) as e:
-        log('prepared validation refused',gid,str(e)[:160]);return
-    if ready.verified(gid):
-        return
-    code,result=checklocal.check(path,g['module'],timeout=600)
-    if code==0:
-        if ready.record(gid,dict(result,status='ok',compiled=True),data):
-            log('prepared exact proof',gid,result.get('checked_base'))
-            fastlane.submit_ready(gid)
-            lease_now(gid)
-    else:
-        log('prepared check',gid,code,result.get('status'),str(result.get('log',''))[-180:])
+    from missions.pnp import state, support, fastlane
+    rec=state.load(g['id'])
+    if support.active(rec) and rec.get('statement')==g.get('statement'):
+        fastlane.submit_ready(g['id'])
 
 
 def held_ids():
@@ -434,16 +430,13 @@ def main():
     threading.Thread(target=promise_batch_loop, daemon=True).start()
     pool = ThreadPoolExecutor(LOCAL_GENERATORS)
     plugin_pool = ThreadPoolExecutor(PLUGIN_WORKERS)
-    prepare_pool = ThreadPoolExecutor(PREPARE_WORKERS)
     queued = QUEUED
     outstanding = {}
     plugin_pending = {}
-    prepared = {}
-    prepare_retry = {}
     while not pause.paused_directory(WORK):
         if source_changed():
             log('runtime changed; draining workers for clean restart')
-            drain_workers((pool,plugin_pool,prepare_pool))
+            drain_workers((pool,plugin_pool))
             return 0
         try:
             for pending in (outstanding, plugin_pending):
@@ -453,14 +446,6 @@ def main():
                         except Exception as e:log('generator interrupted',gid,type(e).__name__,str(e)[:160])
                         pending.pop(gid)
                         queued.discard(gid)
-            for gid,future in list(prepared.items()):
-                if future.done():
-                    try:future.result()
-                    except Exception as e:log('prepared interrupted',gid,type(e).__name__,str(e)[:120])
-                    prepared.pop(gid)
-                    queued.discard(gid)
-                    prepare_retry[gid]=time.time()+600
-            prepare_retry={g:t for g,t in prepare_retry.items() if t>time.time()}
             gaps = json.loads(get(DESK))['gaps']
             # The desk also publishes unresolved value/template gaps that carry
             # `template` with @@VALUE@@ holes and no concrete `statement`.
@@ -509,7 +494,6 @@ def main():
             for gid in held-posting_held:
                 try:fastlane.submit_ready(gid)
                 except Exception as exc:log('held candidate deferred',gid,str(exc)[:120])
-            from missions.pnp.lbcert import ready
             # The held posting lane owns batch-time CPU. Continue catalog and
             # cached-candidate publication, but start no new speculative
             # certificate builds or per-instance background searches.
@@ -522,17 +506,6 @@ def main():
                 # exact currently held research assignment. No unheld check.
                 concrete = exact_held_research(concrete, records)
                 gaps = concrete
-            if mode == "normal" and len(prepared)<PREPARE_WORKERS:
-                choices=[g for g in concrete if g['id'] not in held and g['id'] not in queued
-                         and g['id'] not in prepare_retry and not g.get('pr_open',0)
-                         and (status(g['id']) or '').split(' ')[0] in ('ok','generated')
-                         and os.path.isfile(os.path.join(CANDS,g['id']+'.lean'))
-                         and not ready.verified(g['id'])]
-                if choices:
-                    # Prefer recent, cheaply solved candidates; no old FIFO backlog.
-                    g=max(choices,key=lambda x:os.stat(os.path.join(CANDS,x['id']+'.lean')).st_mtime)
-                    queued.add(g['id'])
-                    prepared[g['id']]=prepare_pool.submit(check_prepared,g)
             for g in sorted((g for g in gaps if g['id'] in fam),
                             key=lambda g: (g['id'] not in held, fam[g['id']] != 'onenot', g.get('pr_open', 0) > 0,
                                            g['statement'].count(',') if fam[g['id']] == 'onenot' else 0,
@@ -575,7 +548,7 @@ def main():
         except Exception as e:
             log('poll error', type(e).__name__, str(e)[:200])
         time.sleep(POLL)
-    drain_workers((pool,plugin_pool,prepare_pool))
+    drain_workers((pool,plugin_pool))
     log('STOP file found; exiting')
     return 0
 

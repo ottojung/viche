@@ -37,12 +37,16 @@ def launch(gap, fd):
 
 
 def submit(gap, source, expected_lease=None, contributors=None,
-           contributor_source=None):
+           contributor_source=None, *, only_unclaimed=False):
     """Queue a candidate for publication.
 
     Contributors are optional and must be declared explicitly by trusted
     producer code with a source; they are never read from the candidate file.
+    Automatic (only_unclaimed) submissions require an exact lease and are
+    fenced at the local authorization boundary.
     """
+    if only_unclaimed and not expected_lease:
+        raise publish.StopPublish("exact lease required for automatic submission")
     rec = state.load(gap)
     if expected_lease and (not rec or rec.get("lease") != expected_lease):
         raise publish.StopPublish("assignment superseded")
@@ -58,6 +62,12 @@ def submit(gap, source, expected_lease=None, contributors=None,
             rec = state.load(gap)
             if not rec or (expected_lease and rec.get("lease") != expected_lease):
                 raise publish.StopPublish("assignment superseded")
+            if only_unclaimed and os.path.exists(os.path.join(config.STATE_ROOT,"lbcert","STOP")):
+                raise publish.StopPublish("automatic publication paused")
+            if only_unclaimed and (rec["state"] not in ("LEASED","RESEARCHING")
+                    or rec.get("candidate_digest") or rec.get("queued_lease")
+                    or rec.get("pr_number") or rec.get("intent")):
+                raise publish.StopPublish("another publication owns this assignment")
             if rec["state"] not in ("LEASED", "RESEARCHING", "PR_OPEN") + READY:
                 raise publish.StopPublish("gap not publishable: " + rec["state"])
             meta = {"id": gap, "file": rec["path"], "module": rec["module"],

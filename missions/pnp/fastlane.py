@@ -62,11 +62,12 @@ def submit_ready(gap):
     No build gate, no direct GitHub mutation, no acquisition and no release.
     The normal jobs lock handles a concurrent allocator tick or worker.
     """
+    from . import posting
+    if posting.paused():return None
     rec = state.load(gap)
     if not support.active(rec) or rec.get("queued_lease") or rec.get("candidate_digest"):
         return None
     if rec.get("work_lane") == "posting":
-        from . import posting
         from .lbcert import ready
         # A stock completion may race a freshly acquired assignment. Only
         # exact receipts, and no already-observed rival, are useful here.
@@ -78,7 +79,7 @@ def submit_ready(gap):
     # A generator/twin candidate is data, not an authenticated contributor
     # identity; the publisher credits its actual producer, never a guessed
     # researcher. Explicit declarations must come from trusted producer code.
-    result = jobs.submit(gap, path, expected_lease=rec["lease"])
+    result = jobs.submit(gap, path, expected_lease=rec["lease"],only_unclaimed=True)
     state.event(gap, "generator_ready_submit", {"status": str(result)[:300]})
     return result
 
@@ -121,6 +122,8 @@ def release(d, mem, gap, reason, evidence, expected_lease=None):
 
 def tick(d, mem, now, roster_known=True, cycle_research=True):
     out = {"submitted": [], "twin_published": [], "released": []}
+    from . import posting
+    if posting.paused():return out
     twins, desk = _read("twins.json", {}), _read("desk.json", {})
     held = cli.held_records()
     for rec in held:
@@ -130,7 +133,7 @@ def tick(d, mem, now, roster_known=True, cycle_research=True):
         path = cand_ready(gap)
         if path:
             try:
-                res = jobs.submit(gap, path)
+                res = jobs.submit(gap, path,expected_lease=rec["lease"],only_unclaimed=True)
                 state.event(gap, "fastlane_submit", {"candidate": path, "result": str(res)[:300]})
                 out["submitted"].append(gap)
             except Exception as exc:
@@ -147,7 +150,7 @@ def tick(d, mem, now, roster_known=True, cycle_research=True):
         if not ready.verified(lb):
             continue
         if release(d, mem, gap, "statement_seems_false",
-                   "Exact checked proof of the negated twin %s establishes that this negation is false." % lb):
+                   "Exact checked proof of the negated twin %s establishes that this negation is false." % lb,expected_lease=rec["lease"]):
             out["released"].append(gap)
     # Rule 3: keep two slots cycling.
     held = cli.held_records()

@@ -61,27 +61,88 @@ class Fairness(unittest.TestCase):
                 os.utime(path,(t,t))
                 self.assertFalse(a.retryable(gid))
 
-    def test_unavailable_plugin_check_preserves_candidate(self):
+    def test_unheld_plugin_is_staged_without_unbound_check_or_receipt(self):
         from missions.pnp.lbcert import autosolve as a
         from missions.pnp import state, support, validate, fastlane
         import plugins
-        from missions.pnp.lbcert import checklocal
+        from missions.pnp.lbcert import checklocal, ready
         g=dict(id="L-meta-42",statement="True",module="M",file="M.lean",imports=[])
         def generate(name,gid,sf,out,timeout=None):
             Path(out).write_text("candidate")
             return 0,""
         from missions.pnp import ledger
-        with tempfile.TemporaryDirectory() as d, patch.object(a,"CANDS",d), \
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as w, \
+             patch.object(a,"CANDS",d), patch.object(a,"WORK",w), \
              patch.object(plugins,"run",side_effect=generate), \
              patch.object(validate,"validate"), patch.object(state,"load",return_value=None), \
              patch.object(support,"active",return_value=False), \
-             patch.object(checklocal,"check",return_value=(2,{"status":"bound_workspace_required"})), \
-             patch.object(fastlane,"submit_ready"), \
+             patch.object(checklocal,"check",side_effect=AssertionError("unbound check forbidden")), \
+             patch.object(ready,"record",side_effect=AssertionError("autosolve must not record receipts")), \
+             patch.object(fastlane,"submit_ready") as submit, \
              patch.object(ledger,"mark"):
             a.gen_plugin(g,"test","123")
             self.assertEqual((Path(d)/"L-meta-42.lean").read_text(),"candidate")
             self.assertTrue(a.status(g["id"]).startswith("generated plugin"))
+            self.assertIn("staged for private check",a.status(g["id"]))
             self.assertFalse(a.fresh(g["id"],"123"))
+            # write_status notifies the fast lane; the unheld step is not
+            # recorded as a private receipt by this generator.
+            submit.assert_called_once_with(g["id"])
+
+    def test_staging_preserves_existing_bytes(self):
+        from missions.pnp.lbcert import autosolve as a
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d);old=p/"proof.lean";new=p/"alternate.lean"
+            old.write_text("original");new.write_text("replacement")
+            self.assertFalse(a.stage_bytes(str(new),str(old)))
+            self.assertEqual(old.read_text(),"original")
+            self.assertEqual(new.read_text(),"replacement")
+            new.write_text("original")
+            self.assertTrue(a.stage_bytes(str(new),str(old)))
+            self.assertFalse(new.exists())
+
+    def test_gen_plugin_routes_held_without_private_record(self):
+        """Regression: ready.record is private-only, so autosolve must stage
+        bytes and route held work through the fenced publisher, never calling
+        ready.record() itself."""
+        from missions.pnp.lbcert import autosolve as a
+        from missions.pnp import state, support, validate, fastlane, ledger
+        from missions.pnp.lbcert import checklocal, ready
+        import plugins
+        g=dict(id="L-meta-77",statement="s",module="M",file="M.lean",imports=[])
+        rec={"statement":"s","lease":"lease-77"}
+        def generate(name,gid,sf,out,timeout=None):
+            Path(out).write_text("candidate")
+            return 0,""
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as w, \
+             patch.object(a,"CANDS",d), patch.object(a,"WORK",w), \
+             patch.object(plugins,"run",side_effect=generate), \
+             patch.object(validate,"validate"), \
+             patch.object(state,"load",return_value=rec), \
+             patch.object(support,"active",return_value=True), \
+             patch.object(checklocal,"check",side_effect=AssertionError("unbound check forbidden")), \
+             patch.object(ready,"record",side_effect=AssertionError("autosolve must not record receipts")), \
+             patch.object(fastlane,"submit_ready") as submit, \
+             patch.object(ledger,"mark"):
+            a.gen_plugin(g,"test","123")
+            self.assertEqual((Path(d)/"L-meta-77.lean").read_text(),"candidate")
+            submit.assert_any_call(g["id"])
+
+    def test_check_prepared_routes_held_without_private_record(self):
+        """Regression: check_prepared is a compatibility shim that routes held
+        work to fastlane.submit_ready and leaves receipts to the promoter."""
+        from missions.pnp.lbcert import autosolve as a
+        from missions.pnp import state, support, fastlane
+        from missions.pnp.lbcert import checklocal, ready
+        g=dict(id="L-meta-78",statement="s",module="M",file="M.lean",imports=[])
+        with tempfile.TemporaryDirectory() as w, patch.object(a,"WORK",w), \
+             patch.object(state,"load",return_value={"statement":"s"}), \
+             patch.object(support,"active",return_value=True), \
+             patch.object(checklocal,"check",side_effect=AssertionError("unbound check forbidden")), \
+             patch.object(ready,"record",side_effect=AssertionError("autosolve must not record receipts")), \
+             patch.object(fastlane,"submit_ready") as submit:
+            a.check_prepared(g)
+            submit.assert_called_once_with(g["id"])
 
     def test_independent_lanes(self):
         with tempfile.TemporaryDirectory() as d, patch.dict(os.environ,{"PNP_STATE_ROOT":d}):
@@ -122,10 +183,9 @@ class Fairness(unittest.TestCase):
                  patch.object(a.time,"sleep",side_effect=stop), \
                  patch.object(a.managed_process,"stop_all"):
                 self.assertEqual(a.main(),0)
-            self.assertEqual([p.limit for p in pools],[1,2,1])
+            self.assertEqual([p.limit for p in pools],[1,2])
             self.assertEqual(len(pools[0].jobs),1)
             self.assertEqual(pools[1].jobs,[("gen_plugin","L-meta-102"),("gen_plugin","L-meta-100")])
-            self.assertEqual(pools[2].jobs,[("check_prepared","L-meta-101")])
 
     def test_real_registry_recognizes_the_orphaned_families(self):
         from missions.pnp.lbcert import plugins, lbparse
