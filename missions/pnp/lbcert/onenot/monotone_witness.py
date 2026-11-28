@@ -6,10 +6,10 @@ This produces an independently audited upper-bound witness only: it never
 claims minimum size or a formal lower bound.
 """
 from functools import lru_cache
-from itertools import product
+from itertools import product,combinations
 import time
 
-def synthesize(n, f, width=3, budget=None):
+def synthesize(n, f, width=3, budget=None, decompose=False):
     deadline = None if budget is None else time.monotonic() + max(0, budget)
 
     def check_budget():
@@ -79,6 +79,47 @@ def synthesize(n, f, width=3, budget=None):
         if t in inputs:
             return (inputs[t],)
         candidates = set()
+        if decompose:
+            cof = [(cofactor(t,i,0),cofactor(t,i,1)) for i in range(n)]
+            support = [i for i,(a,b) in enumerate(cof) if a != b]
+            # Bi-decomposition: disjoint exclusive supports, common variables
+            # permitted. Removing one essential variable from each side gives
+            # the exact factors when the two restricted tables OR/AND to t.
+            for i,j in combinations(support,2):
+                for val,op in ((0,"or"),(1,"and")):
+                    a,b=cof[i][val],cof[j][val]
+                    if (a|b if val==0 else a&b)==t:
+                        for l,r in product(solve(a),solve(b)):
+                            candidates.add(combine(op,l,r))
+            # Detect a monotone functional divisor g(A) which can replace A
+            # by one variable in the remaining h. All nonconstant outer
+            # slices must be the same g. Neither subproblem has full support.
+            def restrict(tab,group,assignment):
+                for pos,i in enumerate(group):
+                    tab=cofactor(tab,i,(assignment>>pos)&1)
+                return tab
+            def substitute(e,var,rep):
+                if e==var:return rep
+                if e[0] in ("x","c"):return e
+                return combine(e[0],substitute(e[1],var,rep),substitute(e[2],var,rep))
+            for k in range(2,len(support)):
+                for A in combinations(support,k):
+                    check_budget()
+                    B=[i for i in support if i not in A]
+                    g=None; valid=True
+                    for assignment in range(1<<len(B)):
+                        part=restrict(t,B,assignment)
+                        if part in (0,full):continue
+                        if g is None:g=part
+                        elif g!=part:
+                            valid=False;break
+                    if not valid or g is None:continue
+                    rep=A[0]
+                    a,b=restrict(t,A,0),restrict(t,A,(1<<len(A))-1)
+                    h=(a&low[rep])|(b&high[rep])
+                    if h==t or g==t:continue
+                    for he,ge in product(solve(h),solve(g)):
+                        candidates.add(substitute(he,variables[rep],ge))
         for i, x in enumerate(variables):
             check_budget()
             a, b = cofactor(t, i, 0), cofactor(t, i, 1)
