@@ -10,6 +10,7 @@ each with example statements, the newest merged proofs to learn from and the plu
 run: python3 -m missions.pnp.radar      (autosolve's sweep thread refreshes it every 10 minutes)
 """
 import collections
+from datetime import datetime
 import json
 import os
 import re
@@ -103,9 +104,36 @@ def posting_evidence(events):
     return counts, {g: e[1] for g, e in latest.items()}
 
 
+def aligned_observations(doc, snap):
+    """Research hints may use aligned public observations with unequal totals.
+
+    This never asserts handle-specific offerability or authorizes acquisition.
+    The handle-aware status and anonymous catalog may disagree even at the
+    same source revision (local cooldowns, twin reservations, etc.).
+    """
+    try:
+        a=datetime.fromisoformat(doc["updated_at"].replace("Z","+00:00"))
+        b=datetime.fromisoformat(snap["source_updated_at"].replace("Z","+00:00"))
+        return a.tzinfo is not None and b.tzinfo is not None and abs((a-b).total_seconds())<=60
+    except (KeyError,ValueError,TypeError,AttributeError):
+        return False
+
+
+def advisory_offer(g,s):
+    """Conservative common row, not a reservation or a claim instruction."""
+    return (g.get("offerable_now") is True and g.get("pr_open")==0
+            and g.get("held_now") is False and type(g.get("holders_now")) is int
+            and g["holders_now"]==0 and type(s.get("held")) is int and s["held"]==0
+            and type(s.get("parallel")) is int and s["parallel"]>0
+            and g.get("parallel")==s["parallel"]
+            and g.get("level")==s.get("level")
+            and s.get("level") in ("warmup","solid","hard","open"))
+
+
 def build():
     from .lbcert import live
-    rows = json.loads(live.gaps_bytes(timeout=60))['gaps']
+    doc = json.loads(live.gaps_bytes(timeout=60))
+    rows = doc['gaps']
     gaps = [g for g in rows if isinstance(g.get('statement'), str)]
     head, idx = sibling.index(gitctl.MIRROR, os.path.join(config.STATE_ROOT, 'lbcert'))
     mod_sk = {m: normalize_skeleton(sk) for sk, ms in idx.items() for m in ms}
@@ -123,6 +151,7 @@ def build():
     lg=snap['gaps']
     levels=frontier.cached_offer_levels(snap,now)
     offers_known=levels is not None and levels==frontier.offer_levels(snap,rows)
+    advisory_known=not offers_known and aligned_observations(doc,snap)
     attempts, latest = posting_evidence(ledger.read(HOURS))
     fams = {}
     for g in gaps:
@@ -134,7 +163,7 @@ def build():
         f = fams.setdefault(key, {'label': label(g), 'open': 0, 'unclaimed': 0, 'examples': [],
                                  'merged_6h': 0, 'authors': collections.Counter(), 'newest_merged': [],
                                  'statuses': collections.Counter(), 'coverage': None,
-                                 'points': 0, 'free_points': 0, 'offerable':0, 'uncovered_offerable':0, 'uncovered_points':0, 'refused_offerable':0, 'refused_points':0, 'posting_attempts':collections.Counter(), '_skeletons':set(), '_coverage':collections.Counter()})
+                                 'points': 0, 'free_points': 0, 'offerable':0, 'uncovered_offerable':0, 'uncovered_points':0, 'refused_offerable':0, 'refused_points':0, 'advisory_offerable':0, 'advisory_points':0, 'advisory_uncovered':0, 'advisory_uncovered_points':0, 'advisory_refused':0, 'advisory_refused_points':0, 'posting_attempts':collections.Counter(), '_skeletons':set(), '_coverage':collections.Counter()})
         f['_skeletons'].add(sk)
         f['open'] += 1
         f['unclaimed'] += not g.get('pr_open')
@@ -142,6 +171,7 @@ def build():
         pts = s.get('points') or 0
         f['points'] += pts
         offered=offers_known and g.get("offerable_now") is True and not g.get("pr_open")
+        advisory=advisory_known and advisory_offer(g,s)
         if offered:
             f["offerable"]+=1
             f["free_points"] += pts * (0.3 if s.get("level")=="open" else 1)
@@ -164,11 +194,20 @@ def build():
         if offered and coverage and refused:
             f["refused_offerable"] += 1
             f["refused_points"] += weight
+        if advisory:
+            f["advisory_offerable"]+=1
+            f["advisory_points"]+=weight
+            if not coverage:
+                f["advisory_uncovered"]+=1
+                f["advisory_uncovered_points"]+=weight
+            elif refused:
+                f["advisory_refused"]+=1
+                f["advisory_refused_points"]+=weight
         example={"id":g["id"],"statement":g["statement"][:1500],
                  "sketch":(g.get("sketch") or "")[:400],"offered":bool(offered),
-                 "coverage":coverage, "refused":refused}
+                 "coverage":coverage, "refused":refused, "advisory":bool(advisory)}
         f["examples"].append(example)
-        f["examples"].sort(key=lambda x:(not x["offered"],bool(x["coverage"]),not x["refused"],-int(re.sub(r"\D","",x["id"]) or 0)))
+        f["examples"].sort(key=lambda x:(not (x["offered"] or x["advisory"]),bool(x["coverage"]),not x["refused"],-int(re.sub(r"\D","",x["id"]) or 0)))
         del f["examples"][3:]
     for mod, who, at in recent_merges(ref=head):
         keys=sk_families.get(mod_sk.get(mod),set())
@@ -196,7 +235,7 @@ def build():
         f['statuses'] = dict(f['statuses'])
         f['posting_attempts'] = dict(f['posting_attempts'])
     ranked = sorted(fams.values(), key=lambda f: -f['score'])
-    return {'at': time.time(), 'corpus': head, 'history_evidence': 'first-parent subjects matched to indexed proof modules', 'offers_known':offers_known,'families': ranked}
+    return {'at': time.time(), 'corpus': head, 'history_evidence': 'first-parent subjects matched to indexed proof modules', 'offers_known':offers_known,'advisory_known':advisory_known,'families': ranked}
 
 
 CONTRACT = """## How to deliver a generator (plugin contract)
@@ -237,6 +276,17 @@ def backlog_priorities(r):
     return todo, hard, historical
 
 
+def advisory_priorities(r):
+    """Separate suggestions: never fill confirmed-offer counters with hints."""
+    if r.get("offers_known") or not r.get("advisory_known"):
+        return [], []
+    fs=r["families"]
+    return (sorted((f for f in fs if f.get("advisory_uncovered")),
+                   key=lambda f:(-f["advisory_uncovered_points"],-f["advisory_uncovered"]))[:5],
+            sorted((f for f in fs if f.get("advisory_refused")),
+                   key=lambda f:(-f["advisory_refused_points"],-f["advisory_refused"]))[:3])
+
+
 def yield_leads(r):
     # Evidence on open catalog rows even when the offerability snapshots disagree.
     def failures(f):
@@ -264,6 +314,7 @@ def write(r):
             ', '.join('%s %d' % kv for kv in f['statuses'].items()) or '-', f['label'].replace('|', '/')))
     open(os.path.join(OUT, 'radar.md'), 'w').write('\n'.join(lines) + '\n')
     todo, hard, historical = backlog_priorities(r)
+    advisory, advisory_hard = advisory_priorities(r)
     b = ['# Generator backlog (written by missions/pnp/radar.py; refreshed every 10 minutes)', '',
          'Actual offers are cross-checked against the public catalog/status; unknown offerability is not zero work.',
          'Credits go to the first accepted PR. Competitors win batches with per-family generators that open a PR',
@@ -282,6 +333,14 @@ def write(r):
         b.append('')
     if not todo:
         b += ['No verified currently offerable uncovered family. Do not interpret this as a solved frontier.', '']
+    if advisory:
+        b += ['## Provisional research leads (NOT confirmed handle offers)', '',
+              'The public catalog and handle status disagree on totals, but their source revisions are close and these individual rows agree on zero holders. Use for research planning only; do not claim a lease based on this list.', '']
+        for f in advisory:
+            b += ['## '+f['label'], '%d provisional rows, %d weighted points; examples: '%(f['advisory_uncovered'],f['advisory_uncovered_points'])+
+                  ', '.join(e['id'] for e in f['examples'] if e.get('advisory')), '']
+            for e in [e for e in f['examples'] if e.get('advisory') and not e.get('coverage')][:2]:
+                b += ['- %s: `%s`'%(e['id'],e['statement'][:700].replace('`',"'"))]
     b += ['## Historical learning leads (not current offers)', '']
     for f in historical:
         b += ['- %s: %d recent merges; %s' % (f['label'], f['merged_6h'], ', '.join(f['newest_merged']) or '-')]
@@ -295,6 +354,11 @@ def write(r):
             f['refused_offerable'], f['refused_points'], f['statuses'], ', '.join(f['newest_merged']) or '-'), '']
     if not hard:
         m += ['No verified offerable generator refusals; use the historical leads or exact held work.', '']
+    if advisory_hard:
+        m += ['', '## Provisional research leads (NOT confirmed handle offers)', '']
+        for f in advisory_hard:
+            m += ['## '+f['label'], '%d provisional refused rows, %d weighted points; examples: '%(f['advisory_refused'],f['advisory_refused_points'])+
+                  ', '.join(e['id'] for e in f['examples'] if e.get('advisory')), '']
     m += ['', '## Recent direct posting evidence (not credits or guaranteed current offers)', '']
     for f in yield_leads(r):
         a = f['posting_attempts']
