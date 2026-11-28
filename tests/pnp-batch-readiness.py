@@ -122,6 +122,20 @@ class Readiness(unittest.TestCase):
             self.assertEqual(readiness.lease_errors([{"gap_id":"x","lease_expires_at":expiry}],now),["x"])
         self.assertEqual(readiness.lease_errors([{"gap_id":"x","lease_expires_at":1300}],now),[])
 
+    def test_promise_control_is_direct_and_not_recency_limited(self):
+        from types import SimpleNamespace
+        src = ("import PEqualNP.Defs\n\n"
+               "theorem PEqualNP.Outside.L_meta_26403 : True := by trivial\n")
+        with patch.object(readiness.subprocess, "run",
+                          return_value=SimpleNamespace(stdout=src)) as run:
+            case = readiness.promise_control()
+        self.assertEqual(case["id"], "L-meta-26403")
+        self.assertEqual(case["statement"], "True")
+        self.assertEqual(case["imports"], ["PEqualNP.Defs"])
+        self.assertIn("refs/remotes/upstream/main:lean/PEqualNP/Outside/L_meta_26403.lean",
+                      run.call_args.args[0])
+        self.assertEqual(run.call_args.kwargs["timeout"], 10)
+
     def test_no_pass_on_unknown_capacity_or_refused_generator(self):
         with patch.object(readiness.posting,"paused",return_value=False), \
              patch.object(readiness.desk,"capacity",return_value=None), \
