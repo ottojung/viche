@@ -199,7 +199,23 @@ def solve(gid, stmt, binary=None, budget=None):
 
     # A cheap constructive upper bound is enough if the conditional lower
     # bound closes. Do not prove SAT optimality merely to obtain a witness.
-    wit = monotone_witness.synthesize(n, f)
+    wit = monotone_witness.synthesize(n, f, budget=min(2, max(0, deadline-time.monotonic()-4)))
+    # In the measured historical sample the current kernel closed every
+    # 9/10-gate witness but none of the 11+ gate witnesses. Spend a little
+    # of the unused foreground budget on a wider constructive beam before
+    # invoking the lower-bound screen. This is an upper-bound heuristic,
+    # not an assertion about which circuits are minimum.
+    if wit and len(wit) > 10:
+        for width in (8, 16):
+            left = deadline-time.monotonic()-4
+            if left <= 0.1:
+                break
+            candidate = monotone_witness.synthesize(n, f, width=width, budget=min(2.5,left))
+            if candidate and len(candidate) < len(wit):
+                log(gid, "beam", width, "witness", len(wit), "->", len(candidate))
+                wit = candidate
+            if len(wit) <= 10:
+                break
     M = len(wit) if wit else None
     text = screen(wit)
     if text is not None:

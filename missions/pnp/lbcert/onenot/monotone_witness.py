@@ -7,8 +7,14 @@ claims minimum size or a formal lower bound.
 """
 from functools import lru_cache
 from itertools import product
+import time
 
-def synthesize(n, f, width=3):
+def synthesize(n, f, width=3, budget=None):
+    deadline = None if budget is None else time.monotonic() + max(0, budget)
+
+    def check_budget():
+        if deadline is not None and time.monotonic() >= deadline:
+            raise TimeoutError
     if not 1 <= n <= 6 or len(f) != 1 << n or any(v not in (0, 1) for v in f):
         return None
     if any(f[r] and not f[r | (1 << i)] for r in range(1 << n) for i in range(n)):
@@ -65,6 +71,7 @@ def synthesize(n, f, width=3):
 
     @lru_cache(None)
     def solve(t):
+        check_budget()
         if t == 0:
             return (zero,)
         if t == full:
@@ -73,6 +80,7 @@ def synthesize(n, f, width=3):
             return (inputs[t],)
         candidates = set()
         for i, x in enumerate(variables):
+            check_budget()
             a, b = cofactor(t, i, 0), cofactor(t, i, 1)
             if a == b:
                 continue
@@ -89,7 +97,10 @@ def synthesize(n, f, width=3):
                     candidates.add(combine("and", l, combine("or", x, rr)))
         return tuple(sorted(candidates, key=lambda e: (len(gates(e)), e))[:width])
 
-    exprs = solve(target)
+    try:
+        exprs = solve(target)
+    except TimeoutError:
+        return None
     for expr in exprs:
         code = []
         wires = {v: i for i, v in enumerate(variables)}

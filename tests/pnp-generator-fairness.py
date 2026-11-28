@@ -195,6 +195,58 @@ class Fairness(unittest.TestCase):
         self.assertEqual(plugins.family_of("test",a)[0],"first")
         self.assertNotEqual(plugins.family_of("test",a)[1],plugins.family_of("test",b)[1])
 
+    def test_wider_monotone_beam_improves_historical_witness(self):
+        from missions.pnp.lbcert.onenot import monotone_witness
+        mask=0xfeeaece8fee0ecc0
+        f=[(mask>>r)&1 for r in range(64)]
+        self.assertEqual(len(monotone_witness.synthesize(6,f,3)),11)
+        self.assertEqual(len(monotone_witness.synthesize(6,f,8)),10)
+        self.assertIsNone(monotone_witness.synthesize(6,f,16,budget=0))
+
+    def test_screen_binary_is_cached_by_source_and_compiler_identity(self):
+        from missions.pnp.lbcert.onenot import screen_binary as screen
+        import tempfile,sys
+        from unittest.mock import patch
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            source=root/"source.c"
+            source.write_text("first")
+            builds=[]
+            def build(argv, **kwargs):
+                builds.append(argv)
+                Path(argv[argv.index("-o")+1]).write_bytes(b"screen")
+            with patch.object(screen.shutil,"which",return_value=sys.executable), \
+                 patch.object(screen.subprocess,"run",side_effect=build):
+                first=screen.cached_screen(source,root=root/"cache")
+                self.assertIsNotNone(first)
+                self.assertEqual(first,screen.cached_screen(source,root=root/"cache"))
+                self.assertEqual(len(builds),1)
+                source.write_text("second")
+                second=screen.cached_screen(source,root=root/"cache")
+                self.assertNotEqual(first,second)
+                self.assertEqual(len(builds),2)
+                Path(second).chmod(0o777)
+                self.assertEqual(second,screen.cached_screen(source,root=root/"cache"))
+                self.assertEqual(len(builds),3)
+                link=root/"link"
+                link.symlink_to(root/"cache",target_is_directory=True)
+                self.assertIsNone(screen.cached_screen(source,root=link))
+
+    def test_screen_binary_failed_build_is_not_cached(self):
+        from missions.pnp.lbcert.onenot import screen_binary as screen
+        import tempfile,sys,subprocess
+        from unittest.mock import patch
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            source=root/"source.c";source.write_text("test")
+            with patch.object(screen.shutil,"which",return_value=sys.executable), \
+                 patch.object(screen.subprocess,"run",side_effect=subprocess.TimeoutExpired("cc",1)):
+                self.assertIsNone(screen.cached_screen(source,root=root/"cache"))
+                self.assertEqual(list((root/"cache").glob("*.bin")),[])
+                self.assertIsNone(screen.cached_screen(source,budget=0,root=root/"cache"))
+
     def test_generation_timeout_frees_worker_with_retryable_status(self):
         from missions.pnp.lbcert import autosolve as a
         from missions.pnp import state, support, ledger

@@ -45,8 +45,14 @@ class TestCandidates(unittest.TestCase):
         path=gen.HERE/"search.py"
         search=gen.load_module("screen_test",path)
         emitter=gen.load_module("emitter_test",gen.HERE.parent.parent/"onenot"/"onenot.py")
-        with patch.object(search.shutil,"which",return_value="cc"), patch.object(search.subprocess,"run",side_effect=subprocess.TimeoutExpired("cc",2)):
-            self.assertIsNone(search.screen(emitter,8,[False]*255+[True],[(0,1,{})]*3))
+        from types import SimpleNamespace
+        f=[False]*255+[True]
+        w=[(0,1,{})]*3
+        with patch.dict(sys.modules, {"screen_binary":SimpleNamespace(cached_screen=lambda *a,**kw:None)}):
+            self.assertIsNone(search.screen(emitter,8,f,w))
+        with patch.dict(sys.modules, {"screen_binary":SimpleNamespace(cached_screen=lambda *a,**kw:"screen")}), \
+             patch.object(search.subprocess,"run",side_effect=subprocess.TimeoutExpired("screen",2)):
+            self.assertIsNone(search.screen(emitter,8,f,w))
 
     def test_refuse_changed_statement_or_id(self):
         statement = next(iter(gen.records()))

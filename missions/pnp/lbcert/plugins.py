@@ -40,7 +40,7 @@ def fingerprint(gen):
     files=[p for p in sorted(parent.rglob("*")) if p.is_file() and p.suffix in (".py",".json",".c",".lean")]
     if parent.name in ("onenot_candidates", "monosix"):
         helper=parent.parent.parent/"onenot"
-        files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c"))
+        files.extend(helper/f for f in ("onenot.py","biclique.py","lsearch.c","screen_binary.py"))
         if parent.name=="monosix":
             files.extend([helper/"monosix.py", helper/"monotone_witness.py", parent.parent.parent/"lbparse.py"])
     if parent.name=="zz_lbcert":

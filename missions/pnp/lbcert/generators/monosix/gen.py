@@ -4,15 +4,13 @@ import os
 import time
 from pathlib import Path
 import re
-import shutil
-import subprocess
 import sys
-import tempfile
 
 HERE = Path(__file__).resolve().parent
 HELPER = HERE.parent.parent / "onenot"
 sys.path.insert(0, str(HELPER))
 import monosix
+from screen_binary import cached_screen
 
 TEMPLATE_SHA = "618cc509b1f7ecd5ca7ce8f30d6b64ffaca623c732b9ac32236e63b23a2a7e26"
 
@@ -31,21 +29,14 @@ def main():
     template = HERE / "template.lean"
     if hashlib.sha256(template.read_bytes()).hexdigest() != TEMPLATE_SHA:
         raise ValueError("monosix template digest mismatch")
-    cc = shutil.which("cc")
-    if cc is None:
-        print("local C compiler unavailable", file=sys.stderr)
-        return 3
     monosix.TEMPLATE = str(template)
-    with tempfile.TemporaryDirectory(prefix="pnp-monosix-") as tmp:
-        binary = Path(tmp) / "lsearch"
-        try:
-            subprocess.run([cc, "-O2", "-o", str(binary), str(HELPER / "lsearch.c")],
-                           timeout=5, check=True, capture_output=True)
-        except (OSError, subprocess.SubprocessError):
-            print("local live-set screening compiler unavailable", file=sys.stderr)
-            return 3
-        text, why = monosix.solve(gid, stmt, binary=str(binary),
-                                  budget=max(0,budget-(time.monotonic()-started)-0.25))
+    binary = cached_screen(HELPER / "lsearch.c",
+                           budget=min(5, max(0, budget-(time.monotonic()-started)-0.25)))
+    if binary is None:
+        print("local live-set screening compiler unavailable", file=sys.stderr)
+        return 3
+    text, why = monosix.solve(gid, stmt, binary=binary,
+                              budget=max(0,budget-(time.monotonic()-started)-0.25))
     if text is None:
         print(why, file=sys.stderr)
         return 3
