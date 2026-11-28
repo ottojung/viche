@@ -38,6 +38,34 @@ class Tests(unittest.TestCase):
             self.assertEqual(r["families"][1]["uncovered_offerable"],0)
             self.assertEqual(r["families"][1]["free_points"],0)
             self.assertTrue(r["families"][0]["examples"][0]["offered"])
+    def test_advisory_intersection_is_not_confirmed_offer(self):
+        row={"id":"L-meta-1","title":"Researchable cut","statement":"True",
+             "offerable_now":True,"pr_open":0,"held_now":False,"holders_now":0,
+             "level":"solid","parallel":1}
+        doc={"gaps":[row],"updated_at":"2026-11-28T00:00:00Z"}
+        snap={"observed":time.time(),"complete":True,"offerable":0,
+              "source_updated_at":"2026-11-28T00:00:00Z",
+              "gaps":{"L-meta-1":{"level":"solid","points":42,"held":0,"parallel":1}}}
+        with patch.object(live,"gaps_bytes",return_value=json.dumps(doc).encode()), \
+             patch.object(frontier,"load",return_value=snap),patch.object(frontier,"cached_offer_levels",return_value=None), \
+             patch.object(radar.sibling,"index",return_value=("head",{})),patch.object(radar.sibling,"skeleton",side_effect=lambda x:x), \
+             patch.object(radar.plugins,"discover",return_value={}),patch.object(radar.plugins,"family_of",return_value=None), \
+             patch.object(radar.lbparse,"family",return_value=None),patch.object(radar,"recent_merges",return_value=[]),patch.object(radar,"status",return_value=None):
+            r=radar.build()
+            self.assertFalse(r["offers_known"])
+            self.assertTrue(r["advisory_known"])
+            f=r["families"][0]
+            self.assertEqual(f["free_points"],0)
+            self.assertEqual(f["uncovered_offerable"],0)
+            self.assertEqual(f["advisory_uncovered"],1)
+            self.assertEqual(f["advisory_uncovered_points"],42)
+            self.assertEqual(radar.advisory_priorities(r),([f],[]))
+            self.assertEqual(radar.backlog_priorities(r),([],[],[]))
+        for extra in ({"held_now":True},{"holders_now":1},{"pr_open":1},{"parallel":2},{"level":"hard"},{"offerable_now":False}):
+            self.assertFalse(radar.advisory_offer({**row,**extra},snap["gaps"]["L-meta-1"]))
+        self.assertFalse(radar.advisory_offer(row,{**snap["gaps"]["L-meta-1"],"held":1}))
+        self.assertFalse(radar.aligned_observations(doc,{**snap,"source_updated_at":"2026-11-27T23:58:00Z"}))
+        self.assertFalse(radar.aligned_observations({},snap))
     def test_live_priority_over_merges_and_closed_refusals(self):
         def f(name, **kw):
             return dict(label=name, coverage='', coverage_counts={}, merged_6h=0,
