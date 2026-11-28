@@ -197,7 +197,9 @@ def verify(q,source):
         rc,r=checklocal.check(str(p),q["module"],timeout=120)
     if pause.paused_directory(root()):return "transient","generator paused"
     if rc!=0:return ("transient" if rc==2 else "invalid"),str(r.get("status"))+": "+str(r.get("log") or "")[-300:]
-    receipt=dict(r,compiled=True)
+    # An exact local managed check is a private admission into the candidate
+    # store: mark it as such with its check time, never as generic local stock.
+    receipt=dict(r,compiled=True,at=time.time())
     if not ready.exact_receipt(receipt,data):return "transient","receipt mismatch"
     if ready.verified(gid):return "checked","existing exact receipt"
     rec=state.load(gid)
@@ -205,7 +207,7 @@ def verify(q,source):
         return "obsolete","publication already owns unit"
     dst=ready.directory()/(gid+".lean")
     state.atomic_write(str(dst),source)
-    if not ready.record(gid,receipt,data):
+    if not ready.record(gid,receipt,data,private=True):
         return "transient","receipt mismatch"
     state.atomic_write(str(dst.with_suffix(".status")),"ok plugin promise batch standalone compiled\n")
     try:

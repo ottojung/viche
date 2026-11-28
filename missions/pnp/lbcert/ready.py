@@ -18,10 +18,13 @@ def directory():
     return Path(config.STATE_ROOT, "lbcert", "cands")
 
 
+LOCAL_SUFFIX = ".local-checked.json"
+
+
 def marker(gid):
     if not config.GAP_ID_RE.fullmatch(gid):
         raise ValueError("invalid gap")
-    return directory()/(gid+".checked.json")
+    return directory()/(gid+LOCAL_SUFFIX)
 
 
 def exact_receipt(result, data):
@@ -32,43 +35,41 @@ def exact_receipt(result, data):
 
 
 def record(gid, result, data, *, private=False):
-    """Record exact checked bytes. Private promotion is no-clobber and preserves check time."""
+    """Only the authorized private promoter may record new stock.
+
+    Legacy .checked.json files remain untouched, never accepted as local receipts.
+    The caller must independently validate the exact private compiler receipt.
+    """
     marker(gid)  # validate path component before any writes
-    if not exact_receipt(result,data):return False
+    if not private or not exact_receipt(result,data):return False
     digest=hashlib.sha256(data).hexdigest()
     path=directory()/(gid+".lean")
-    checked_at=time.time()
-    if private:
-        checked_at=result.get("at")
-        if type(checked_at) not in (float,int) or not 0<checked_at<=time.time():
-            return False
-        if os.path.lexists(marker(gid)):
-            return False
-        directory().mkdir(parents=True,exist_ok=True)
-        if not os.path.lexists(path):
-            fd,tmp=tempfile.mkstemp(prefix=".private-proof-",dir=directory())
-            try:
-                with os.fdopen(fd,"wb") as f:
-                    f.write(data);f.flush();os.fsync(f.fileno())
-                try:os.link(tmp,path)
-                except FileExistsError:pass
-            finally:os.unlink(tmp)
+    checked_at=result.get("at")
+    if type(checked_at) not in (float,int) or not 0<checked_at<=time.time():
+        return False
+    if os.path.lexists(marker(gid)):
+        return False
+    directory().mkdir(parents=True,exist_ok=True)
+    if not os.path.lexists(path):
+        fd,tmp=tempfile.mkstemp(prefix=".private-proof-",dir=directory())
+        try:
+            with os.fdopen(fd,"wb") as f:
+                f.write(data);f.flush();os.fsync(f.fileno())
+            try:os.link(tmp,path)
+            except FileExistsError:pass
+        finally:os.unlink(tmp)
     if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
         return False
     payload={
         "gap":gid,"digest":digest,"base":result["checked_base"],
-        "request":result.get("id"),"at":checked_at}
-    if private:
-        payload["origin"]="private-prelease"
-        fd,tmp=tempfile.mkstemp(prefix=".private-receipt-",dir=directory())
-        try:
-            with os.fdopen(fd,"w") as f:
-                json.dump(payload,f,sort_keys=True);f.flush();os.fsync(f.fileno())
-            try:os.link(tmp,marker(gid))
-            except FileExistsError:return False
-        finally:os.unlink(tmp)
-    else:
-        state.atomic_write(str(marker(gid)),json.dumps(payload,sort_keys=True))
+        "request":result.get("id"),"at":checked_at,"origin":"private-prelease"}
+    fd,tmp=tempfile.mkstemp(prefix=".private-receipt-",dir=directory())
+    try:
+        with os.fdopen(fd,"w") as f:
+            json.dump(payload,f,sort_keys=True);f.flush();os.fsync(f.fileno())
+        try:os.link(tmp,marker(gid))
+        except FileExistsError:return False
+    finally:os.unlink(tmp)
     from .. import ledger
     ledger.mark("checked",gid,base=result["checked_base"])
     return True
@@ -76,9 +77,14 @@ def record(gid, result, data, *, private=False):
 
 def verified(gid):
     try:
-        m=json.loads(marker(gid).read_text())
-        data=(directory()/(gid+".lean")).read_bytes()
-        if (m["gap"]==gid and re.fullmatch(r"[0-9a-f]{40}",m["base"])
+        receipt=marker(gid)
+        proof=directory()/(gid+".lean")
+        if receipt.is_symlink() or proof.is_symlink() or not receipt.is_file() or not proof.is_file():return None
+        m=json.loads(receipt.read_text())
+        data=proof.read_bytes()
+        if (isinstance(m,dict) and m.get("origin")=="private-prelease" and m["gap"]==gid
+                and type(m["at"]) in (int,float) and 0<m["at"]<=time.time()
+                and re.fullmatch(r"[0-9a-f]{40}",m["base"])
                 and hashlib.sha256(data).hexdigest()==m["digest"]):
             return m
     except (OSError,ValueError,KeyError,TypeError):
@@ -90,7 +96,7 @@ def offers(snapshot, mem, now, uncontested=False):
     attempts=mem.setdefault("proof_of_attempts",{})
     mem["proof_of_attempts"]=attempts={k:v for k,v in attempts.items()
                                        if now-v<600}
-    paths=list(directory().glob("*.checked.json"))
+    paths=list(directory().glob("*"+LOCAL_SUFFIX))
     if not paths:return []
     out=[]
     open_now=None
@@ -105,7 +111,8 @@ def offers(snapshot, mem, now, uncontested=False):
         open_now=set(rows)
     competing=competition(now)
     for path in paths:
-        gid=path.name[:-13]
+        gid=path.name[:-len(LOCAL_SUFFIX)]
+        if not config.GAP_ID_RE.fullmatch(gid):continue
         if uncontested and competing.get(gid) != 0:
             continue
         if now-attempts.get(gid,0)<120 or desk.retry_until(gid)>now:
