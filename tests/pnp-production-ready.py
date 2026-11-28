@@ -101,6 +101,14 @@ class TestReady(unittest.TestCase):
             self.assertEqual(call.call_args.args[2]["model"],"unknown")
             with self.assertRaises(desk.DeskError):d._next_gap(level="invalid")
 
+    def test_kind_wire_parameters(self):
+        d=desk.Desk()
+        with patch.object(d,"_call",return_value=(200,{"gap":None})) as call:
+            self.assertIsNone(d._next_gap(level="solid",kind="prove"))
+            self.assertEqual(call.call_args.args[2]["kind"],"prove")
+            with self.assertRaises(desk.DeskError): d._next_gap(kind="invalid")
+            with self.assertRaises(desk.DeskError): d._next_gap(kind="prove",proof_of="L-meta-123")
+
     def test_targeted_wire_parameters(self):
         d=desk.Desk()
         with patch.object(d,"_call",return_value=(200,{"gap":None})) as call:

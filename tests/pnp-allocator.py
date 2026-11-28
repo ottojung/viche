@@ -21,12 +21,14 @@ class Desk:
     def __init__(self, offers=()):
         self.offers = list(offers)
         self.calls = []
+        self.kinds = []
         self.releases = []
 
     def docs(self):
         return "fixture"
 
-    def _next_gap(self, hard=False, another=False, level=None):
+    def _next_gap(self, hard=False, another=False, level=None, kind=None):
+        self.kinds.append(kind)
         self.calls.append((hard, another, level))
         if not self.offers:
             return None
@@ -88,6 +90,30 @@ class Tests(unittest.TestCase):
         self.assertTrue(all(r["work_lane"]=="posting" for r in cli.held_records()))
         self.assertEqual(allocator.fill(d,mem,NOW+30,{}),[])
         self.assertEqual(len(d.calls),5)
+
+    def test_kind_bias_uses_three_of_four_requests_and_only_fresh_evidence(self):
+        from missions.pnp import posting_kind
+        observed={"at":NOW,"positive":736,"negative":1173,"positive_match":429,"negative_match":0}
+        state.atomic_write(posting_kind.path(),json.dumps(observed))
+        snap={"complete":True,"observed":NOW,"ordinary":100,"offerable":100}
+        d=Desk([(False,"L-meta-"+str(i)) for i in range(1,6)])
+        self.assertEqual(len(allocator.fill(d,{},NOW,snap)),5)
+        self.assertEqual(d.kinds,["prove","prove","prove",None,"prove"])
+        self.assertIsNone(posting_kind.choose({},dict(snap,observed=NOW+200),NOW+200))
+        self.assertIsNone(posting_kind.choose({},dict(snap,complete=False),NOW))
+        state.atomic_write(posting_kind.path(),json.dumps(dict(observed,negative_match=1000)))
+        self.assertIsNone(posting_kind.choose({},snap,NOW))
+
+    def test_kind_summary_is_advisory_and_excludes_contested_or_unavailable(self):
+        from missions.pnp import posting_kind
+        snapshot={"gaps":{str(i):{"level":"solid"} for i in range(1,7)}}
+        snapshot["gaps"]["6"]["level"]="open"
+        def row(i, statement, **kw):
+            return dict({"id":str(i),"statement":statement,"offerable_now":True},**kw)
+        rows=[row(1,"True"),row(2,"¬ False"),row(3,"True",pr_open=True),
+              row(4,"True",offerable_now=False),row(5,"unknown"),row(6,"True"),row(1,"True")]
+        self.assertEqual(posting_kind.summarize(snapshot,rows,lambda x:x=="True"),
+                         {"positive":2,"negative":1,"positive_match":1,"negative_match":0})
 
     def test_single_open_research_lease_when_high_value_available(self):
         d=Desk([(False,"L-meta-"+str(i)) for i in range(2,6)]+[(True,"L-meta-1")])

@@ -82,7 +82,9 @@ def roster_path():
 def observe():
     """Only read remote observations; never claim, release, submit or staff."""
     try:
-        frontier.refresh()
+        snapshot=frontier.refresh()
+        from . import posting_kind
+        posting_kind.observe(snapshot)
     except Exception as exc:
         print("allocator frontier unavailable:", type(exc).__name__, flush=True)
     at=time.time()
@@ -267,8 +269,10 @@ def fill(d, mem, now, snapshot):
                         if result:acquired.append(result)
                     break
             before={r["gap_id"] for r in held}
+            from . import posting_kind
+            kind=posting_kind.choose(mem,snapshot,now) if lane=="posting" else None
             result=cli.acquire(SimpleNamespace(hard=level in ("open","hard"),another=bool(held),
-                                level=level,work_lane=lane),d,report=False)
+                                level=level,work_lane=lane,kind=kind),d,report=False)
             new={r["gap_id"] for r in cli.held_records()}-before
             if result==0 and new:
                 acquired.extend(sorted(new))
