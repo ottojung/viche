@@ -181,8 +181,10 @@ def fresh_targets(snapshot,now,seen):
 def fill(d, mem, now, snapshot):
     """Hybrid: fresh checked proofs first, ordinary posting lanes second.
 
-    Old stock is a fallback only with a direct zero-rival observation.
-    A short reservation leaves capacity for new arrivals while their exact
+    Outside a productive surge, verified stock with a direct zero-rival
+    observation precedes arbitrary ordinary work. During a productive surge
+    it remains a quiet/backoff fallback. A short reservation leaves capacity
+    for new arrivals while their exact
     checks are running. Never exceed earned capacity or server pacing.
     """
     from .lbcert import ready
@@ -206,7 +208,13 @@ def fill(d, mem, now, snapshot):
     urgent=fresh_targets(snapshot,now,seen)
     # Network reads for older stock happen before, not inside, the claim lock.
     old_target=None
-    if not urgent and (quiet_empty or now<mem.get("posting_retry_at",0)) and snapshot.get("complete"):
+    # A large ordinary frontier does not make random acquisitions useful.
+    # Prefer one already checked, independently uncontested candidate outside
+    # a productive burst. This is the existing proof-of path, not a new claim
+    # mode; no unchecked stock may enter it.
+    stock_priority=(not batch or surge.recovery(now)) and frontier.ordinary_count(snapshot,now) is not None
+    if (not urgent and (stock_priority or quiet_empty or now<mem.get("posting_retry_at",0))
+            and snapshot.get("complete") and len(cli.held_records())<desk.lease_limit()):
         old_target=competition.fallback_target(ready.offers(snapshot,mem,now,uncontested=True),mem,now)
     with cli.acquisition_lock():
         for _ in range(desk.lease_limit()):
@@ -235,6 +243,13 @@ def fill(d, mem, now, snapshot):
                        for g in seen))
             if not batch and reserve and desk.lease_limit()>1 and len(held)>=desk.lease_limit()-1:
                 break
+            if stock_priority and old_target:
+                gid,old_target=old_target,None
+                result=ready_attempt(gid,d,mem,now,held,"checked_stock")
+                if result:
+                    acquired.append(result)
+                    continue
+                if desk.retry_until()>time.time():break
             levels=snapshot.get("offerable_levels")
             hard_fallback=(quiet_open and isinstance(levels,dict)
                            and not levels.get("open") and type(levels.get("hard")) is int and levels["hard"]>0)
