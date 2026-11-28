@@ -82,6 +82,14 @@ LANDED_VISIBLE = 3 * 86400
 # `timeout 7200` integrator wrapper remains the real backstop; this stays finite
 # and far below it, and VICHE_SUITE_TIMEOUT still overrides for operators/tests.
 SUITE_TIMEOUT_SECONDS = int(os.environ.get("VICHE_SUITE_TIMEOUT", "1800"))
+# A checked origin fetch is a single point of failure for the whole queue. A
+# transient resolver fault made 82 passes log "fetch failed, nothing done"
+# between 2026-11-23T17:44Z and 2026-11-28T03:20Z while the same host resolved
+# github.com on the very next minute. Retry only this read-only fetch, with a
+# bounded backoff; a still-failing fetch raises as before (fail closed, no push,
+# no gate waiver). Best-effort (check=False) fetches are unchanged.
+FETCH_ATTEMPTS = 3
+FETCH_RETRY_DELAY_SECONDS = 2
 # Final for this exact head: a new proposal (a new head) starts again.
 TERMINAL = {"landed", "no_delta", "refused", "rejected", "superseded", "expired", "red", "conflict"}
 OFFICE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -134,6 +142,26 @@ def git(*args, cwd=None, check=True, env=None):
 
 class GitError(Exception):
     pass
+
+
+def fetch_origin(*refs):
+    """Read-only origin fetch with bounded retries for transient faults.
+
+    DNS/SSH resolution on this box is occasionally unavailable for a few
+    minutes. One failed fetch previously aborted an entire integration pass
+    without reviewing or landing anything. Repeating the idempotent fetch a
+    bounded number of times removes that single point of failure without
+    changing the Act 21 gate: on exhaustion the original GitError propagates
+    and the caller fails closed exactly as before.
+    """
+    args = ("fetch", "-q", "origin") + tuple(refs)
+    for attempt in range(1, FETCH_ATTEMPTS + 1):
+        try:
+            return git(*args)
+        except GitError:
+            if attempt == FETCH_ATTEMPTS:
+                raise
+            time.sleep(FETCH_RETRY_DELAY_SECONDS * attempt)
 
 
 # The shared signing identity is Otto Jung. Contributor credit is separate.
@@ -595,7 +623,7 @@ def verify_suite(wt, candidate, suite, logs, entry):
 
 
 def land(p, entry, review):
-    git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main")
+    fetch_origin("+refs/heads/main:refs/remotes/origin/main")
     base = git("rev-parse", "refs/remotes/origin/main")
     info = classify(base, p["head"])
     wt = ROOT / "work"
@@ -804,8 +832,8 @@ def ready_priority_key(p, suite, contained, at):
 
 def run_locked():
     try:
-        git("fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main",
-            "+refs/heads/delivery/*:refs/remotes/origin/delivery/*")
+        fetch_origin("+refs/heads/main:refs/remotes/origin/main",
+                     "+refs/heads/delivery/*:refs/remotes/origin/delivery/*")
     except GitError as error:
         log("fetch failed, nothing done: %s" % error)
         return 1
