@@ -168,6 +168,12 @@ printf '%s\n' "$((now - 8000))" > "$d/state/executive/economy/last-dispatch"
 printf '{"overall":"critical","resources":{"disk:state":{"status":"critical","used_pct":93.4}},"needs_founder":["NEEDS-FOUNDER: disk state is critical"]}\n' > "$d/state/economy/resources.json"
 cycle
 test "$(dispatches)" -eq $((runs_before + 1))
+# A rewrite of the live numbers inside needs_founder alone does not wake it again
+# (Act 29 s.7 / P-1795828244-819f): the fingerprint tracks presence, not text.
+printf '%s\n' "$((now - 8000))" > "$d/state/executive/economy/last-dispatch"
+printf '{"overall":"critical","resources":{"disk:state":{"status":"critical","used_pct":93.4}},"needs_founder":["NEEDS-FOUNDER: disk state is critical (4.1 GiB free, full in about 2 h)"]}\n' > "$d/state/economy/resources.json"
+cycle
+test "$(dispatches)" -eq $((runs_before + 1))
 
 # A blocked refresh must not block the cycle. Use a causal barrier rather than
 # a 2-second timing threshold, which spuriously fails on a loaded, niced host.

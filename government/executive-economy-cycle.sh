@@ -114,7 +114,12 @@ case "$mode" in
              # Exclude the CPU-derived load status and capacity.dispatch_signal: they drift with live
              # load and caused ~66 economy wakeups/day with no stable input changing (Act 29 s.7/P-1795821311-4d7b).
              if [ -s "$econ/resources.json" ]; then
-               jq -cS '{overall, s: (.resources | map_values(.status) | del(.load)), needs: .needs_founder}' "$econ/resources.json" 2>/dev/null || :
+               # needs_founder embeds live numbers (e.g. disk percentages and hours
+               # to full) that are rewritten every ~10 min while disk is short, so
+               # hashing the raw text woke Economy on every refresh with no stable
+               # input changing (Act 29 s.7/P-1795828244-819f). Fingerprint only
+               # whether there is a need; a status change still wakes via overall/s.
+               jq -cS '{overall, s: (.resources | map_values(.status) | del(.load)), needs: (.needs_founder | length > 0)}' "$econ/resources.json" 2>/dev/null || :
              fi
              printf '%s\n' "$cases" | jq -cS '[.open_cases[]? | {id,signal,state,owner}]' 2>/dev/null || :
              } | /bin/sh "$town/government/dispatch-gate.sh" check economy 86400 > "$root/gate.log"; then
