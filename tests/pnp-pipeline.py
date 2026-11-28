@@ -888,6 +888,43 @@ class TestPostcheck(unittest.TestCase):
     def setUp(self):
         fresh()
 
+    def test_interrupted_locked_worktree_is_reclaimed(self):
+        from missions.pnp import postcheck
+        with tempfile.TemporaryDirectory() as tmp:
+            mirror = os.path.join(tmp, "fork.git")
+            worktree = os.path.join(tmp, "worktrees", "pnp-postcheck-deadbeef")
+            admin = os.path.join(mirror, "worktrees", "pnp-postcheck-deadbeef")
+            os.makedirs(os.path.join(worktree, "lean", ".lake", "build"))
+            with open(os.path.join(worktree, "lean", ".lake", "build", "blob"), "w") as f:
+                f.write("x" * 4096)
+            os.makedirs(admin)
+            with open(os.path.join(admin, "locked"), "w"):
+                pass
+            with open(os.path.join(admin, "gitdir"), "w") as f:
+                f.write(worktree + "/.git\n")
+            # No .git file: a killed `git worktree add` cannot be validated.
+            with mock.patch.object(postcheck.gitctl, "MIRROR", mirror):
+                postcheck._drop_fast_worktree(worktree)
+            self.assertFalse(os.path.exists(worktree))
+            self.assertFalse(os.path.exists(admin))
+
+    def test_shared_build_is_keyed_by_exact_commit(self):
+        from missions.pnp import postcheck
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = os.path.join(tmp, "cache")
+            worktree = os.path.join(tmp, "wt")
+            os.makedirs(os.path.join(worktree, "lean"))
+            with mock.patch.object(postcheck.config, "CACHE_DIR", cache):
+                fd = postcheck._shared_build(worktree, "b" * 40)
+            self.assertIsNotNone(fd)
+            try:
+                build = os.path.join(worktree, "lean", ".lake", "build")
+                self.assertTrue(os.path.islink(build))
+                self.assertEqual(os.readlink(build),
+                                 os.path.join(cache, "postcheck-build", "b" * 40))
+            finally:
+                os.close(fd)
+
     def test_exact_published_revision_checked_and_failure_recorded(self):
         from missions.pnp import postcheck, build_control
         from pathlib import Path as P
