@@ -263,7 +263,7 @@ class Desk:
         raise DeskError("next is a mutating acquisition, not a diagnostic. "
                         "Use status; the automatic allocator records every claim.")
 
-    def _next_gap(self, hard=False, another=False, proof_of=None, level=None):
+    def _next_gap(self, hard=False, another=False, proof_of=None, level=None, kind=None):
         """Private wire operation; only the locked, recording broker calls it."""
         if retry_until(proof_of) > time.time():
             return None
@@ -272,6 +272,10 @@ class Desk:
             if level not in ("warmup", "solid", "hard", "open") or proof_of is not None:
                 raise DeskError("invalid level for next")
             params["level"] = level
+        if kind is not None:
+            if kind not in ("prove", "refute", "search", "cut", "value") or proof_of is not None:
+                raise DeskError("invalid kind for next")
+            params["kind"] = kind
         if hard:
             params["hard"] = "1"
         if another:
@@ -298,7 +302,7 @@ class Desk:
                 from . import ledger
                 ledger.mark("offer_declined",proof_of or "ordinary",
                             retry_after_s=data.get("retry_after_s"),note=str(data.get("note") or "")[:200],
-                            holding=data.get("holding"),capacity=data.get("capacity"))
+                            holding=data.get("holding"),capacity=data.get("capacity"),requested_kind=kind)
                 return None
             raise DeskError("desk next is missing gap key")
         if lease is None:

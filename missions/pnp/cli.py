@@ -118,7 +118,8 @@ def acquire(args, d, report=True):
             return 2
     answer = d._next_gap(hard=args.hard, another=args.another,
                          **({"proof_of":proof_of} if proof_of else {}),
-                         **({"level":args.level} if getattr(args,"level",None) else {}))
+                         **({"level":args.level} if getattr(args,"level",None) else {}),
+                         **({"kind":args.kind} if getattr(args,"kind",None) else {}))
     if answer is None:
         print("no claimable gap right now; retry later", file=sys.stderr)
         return 1
@@ -173,7 +174,7 @@ def acquire(args, d, report=True):
                                           "another": bool(args.another),
                                           "reacquired": True, "lease_terms":terms})
             from . import ledger
-            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True, lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"))
+            ledger.mark("leased", gid, proof_of=bool(proof_of), reacquired=True, lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"), requested_kind=getattr(args,"kind",None))
             if report:
                 _printer({"gap": gid, "file": rec["path"],
                           "module": rec["module"], "lease": lease,
@@ -205,7 +206,7 @@ def acquire(args, d, report=True):
     state.event(gid, "acquired", {"hard": hard,
                                   "another": bool(args.another), "lease_terms":terms})
     from . import ledger
-    ledger.mark("leased", gid, proof_of=bool(proof_of), lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"))
+    ledger.mark("leased", gid, proof_of=bool(proof_of), lease_terms=terms, lane=lane, rival_prs=gap.get("pr_open"), requested_kind=getattr(args,"kind",None))
     if report:
         _printer({"gap": gid, "file": rec["path"], "module": rec["module"],
                   "lease": lease, "headline": config.HEADER})
