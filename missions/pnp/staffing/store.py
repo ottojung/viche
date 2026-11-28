@@ -13,18 +13,43 @@ from . import policy
 def connect():
     root = policy.root()
     root.mkdir(parents=True,exist_ok=True,mode=0o700)
-    c = sqlite3.connect(root/"controller.sqlite", timeout=10)
-    c.row_factory = sqlite3.Row
-    c.execute("PRAGMA journal_mode=WAL")
-    c.execute("PRAGMA synchronous=FULL")
-    c.executescript("""
-        CREATE TABLE IF NOT EXISTS slots(key TEXT PRIMARY KEY, data TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS events(at REAL, slot TEXT, kind TEXT, detail TEXT);
-        CREATE INDEX IF NOT EXISTS events_at ON events(at);
-        CREATE TABLE IF NOT EXISTS coverage(at REAL PRIMARY KEY, desired INTEGER,
-             running INTEGER, unknown INTEGER, general_desired INTEGER, general_running INTEGER);
-    """)
-    return c
+    c = sqlite3.connect(root/"controller.sqlite", timeout=15)
+    try:
+        c.row_factory = sqlite3.Row
+        c.execute("PRAGMA busy_timeout=15000")
+        # SQLite can return BUSY immediately during DELETE -> WAL conversion,
+        # even with busy_timeout installed. Check the current mode first to
+        # avoid an unnecessary conversion, and retry only transient lock
+        # contention within a bounded startup window. This mirrors the proven
+        # government/post.py initialization pattern: an unconditional WAL
+        # pragma once made every concurrent reconcile worker fail with
+        # "slot error OperationalError" while the controller was busy.
+        deadline = time.monotonic() + 15
+        while True:
+            try:
+                mode = c.execute("PRAGMA journal_mode").fetchone()[0]
+                if str(mode).lower() != "wal":
+                    mode = c.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+                if str(mode).lower() != "wal":
+                    raise RuntimeError("staffing database did not enter WAL mode")
+                break
+            except sqlite3.OperationalError as exc:
+                code = getattr(exc, "sqlite_errorcode", 0) & 0xff
+                if code not in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED) or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
+        c.execute("PRAGMA synchronous=FULL")
+        c.executescript("""
+            CREATE TABLE IF NOT EXISTS slots(key TEXT PRIMARY KEY, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS events(at REAL, slot TEXT, kind TEXT, detail TEXT);
+            CREATE INDEX IF NOT EXISTS events_at ON events(at);
+            CREATE TABLE IF NOT EXISTS coverage(at REAL PRIMARY KEY, desired INTEGER,
+                 running INTEGER, unknown INTEGER, general_desired INTEGER, general_running INTEGER);
+        """)
+        return c
+    except BaseException:
+        c.close()
+        raise
 
 
 @contextmanager

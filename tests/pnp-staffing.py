@@ -2,9 +2,11 @@
 """Hermetic failure-injection tests of the standing staffing controller."""
 import json
 from pathlib import Path
+import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from unittest.mock import patch
@@ -386,6 +388,38 @@ class Tests(unittest.TestCase):
         m=store.metrics()
         self.assertEqual(m["general_covered_seconds"],60)
         self.assertEqual(m["unobserved_seconds"],140)
+
+    def test_connect_retries_transient_writer_during_wal_init(self):
+        root=policy.root()
+        root.mkdir(parents=True,exist_ok=True,mode=0o700)
+        path=root/"controller.sqlite"
+        # A cold rollback-journal database held by another writer. WAL
+        # conversion can return BUSY immediately, ignoring busy_timeout; the
+        # controller must wait rather than raise "slot error OperationalError".
+        db=sqlite3.connect(str(path),timeout=2)
+        self.addCleanup(db.close)
+        db.execute("CREATE TABLE fixture (x INTEGER)")
+        db.commit()
+        db.execute("BEGIN IMMEDIATE")
+        outcome={}
+        def open_store():
+            try:
+                c=store.connect()
+                c.close()
+                outcome["ok"]=True
+            except Exception as exc:
+                outcome["error"]=repr(exc)
+        worker=threading.Thread(target=open_store)
+        worker.start()
+        time.sleep(0.3)
+        waiting=worker.is_alive()
+        db.commit()
+        worker.join(timeout=15)
+        self.assertFalse(worker.is_alive(),"connect did not settle")
+        self.assertTrue(waiting,"connect failed instead of waiting for the writer")
+        self.assertTrue(outcome.get("ok"),outcome.get("error"))
+        with sqlite3.connect(str(path)) as fresh:
+            self.assertEqual(fresh.execute("PRAGMA journal_mode").fetchone()[0],"wal")
 
 if __name__=="__main__":
     unittest.main(verbosity=2)
