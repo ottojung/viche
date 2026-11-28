@@ -23,7 +23,7 @@ class TestProcess(unittest.TestCase):
             marker = Path(d)/"pid"
             code = ("import subprocess,sys,time,pathlib; "
                     "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(90)']); "
-                    "pathlib.Path(sys.argv[1]).write_text(str(p.pid));time.sleep(90)")
+                    "m=pathlib.Path(sys.argv[1]);t=m.with_suffix('.tmp');t.write_text(str(p.pid));t.replace(m);time.sleep(90)")
             original=subprocess.Popen.communicate
             def after_start(proc,*args,**kw):
                 if kw.get("timeout") is not None:
@@ -51,7 +51,7 @@ class TestProcess(unittest.TestCase):
             script.write_text("import sys,os,time\n"
                 "from missions.pnp.lbcert import process\n"
                 "process.run([sys.executable,'-c',"
-                "'import pathlib,os,time,sys;pathlib.Path(sys.argv[1]).write_text(str(os.getpid()));time.sleep(90)',"
+                "'import pathlib,os,time,sys;m=pathlib.Path(sys.argv[1]);t=m.with_suffix(\".tmp\");t.write_text(str(os.getpid()));t.replace(m);time.sleep(90)',"
                 "sys.argv[1]],timeout=120)\n")
             env=dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
             p=subprocess.Popen([sys.executable,str(script),str(marker)],env=env)
