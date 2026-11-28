@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from missions.pnp.lbcert.generators.core_reuse import gen
+from missions.pnp.lbcert.research.core_reuse import gen
 from missions.pnp import validate
 
 def statement(mask):

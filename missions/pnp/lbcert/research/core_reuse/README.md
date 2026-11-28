@@ -1,6 +1,6 @@
 # Reusable cofactor lower bounds (compact certificate data)
 
-This plugin transports exact 5-variable sample columns by input permutation.
+This offline research generator transports exact 5-variable sample columns by input permutation.
 The reusable Lean engine from public merged L-meta-40976 (Apache-2.0,
 preserved attribution to its predecessor L-meta-36515) proves leaf bounds
 with kernel replay, then applies one/two-gate elimination. A monotone witness
@@ -24,3 +24,13 @@ No Lean execution, proof-of lease or competition submission was done.
 The 04:37:20Z live snapshot had 910 matches including weaker routes; only
 71 had bound 10, of which 25 were offerable and uncontested. No live yield
 is inferred from those match counts. Kernel verification cost remains unknown.
+
+## Deployment decision
+
+Kept outside automatic plugin discovery: the 04:42Z live offerable test
+refused all 23 matching targets and the follow-up decomposition/resynthesis
+test refused all 20 attempted targets. They are overlapping samples, not 43
+independent targets. Do not spend production posting time on this route yet.
+The historical yield supports further bounded research on stronger witnesses
+or stronger leaf bounds. Invoke gen.py explicitly on a statement file with
+the ordinary generator arguments; this produces only static candidate bytes.
