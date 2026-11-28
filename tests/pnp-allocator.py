@@ -98,6 +98,26 @@ class Tests(unittest.TestCase):
         self.assertEqual(state.load("L-meta-1")["work_lane"],"research")
         self.assertEqual(self.launch.call_count,4)
 
+    def test_open_probe_uses_spare_slot_despite_live_research_and_reservation(self):
+        # Live 2026-11-28 defect: a high-value open unit was advertised while
+        # a research lease was live and a fresh observation reserved the last
+        # slot. The old `not research` guard plus the reservation break left
+        # that slot idle. A due bounded probe fills it without preemption.
+        for gid, lane in (("L-meta-1", "research"), ("L-meta-2", "posting"),
+                          ("L-meta-3", "posting"), ("L-meta-4", "posting")):
+            self.add(gid, work_lane=lane)
+        snap = {"complete": True, "observed": NOW, "ordinary": 12, "offerable": 12,
+                "gaps": {"L-meta-1": {"points": 900, "level": "open", "held": 1, "parallel": 1},
+                         "L-meta-9": {"points": 1000, "level": "open", "held": 0, "parallel": 1},
+                         "L-meta-8": {"points": 10, "level": "solid", "held": 0, "parallel": 1}}}
+        d = Desk([(True, "L-meta-9")]); mem = {}
+        with patch.object(allocator.freshness, "recent", return_value={"L-meta-8": NOW-2}):
+            self.assertEqual(allocator.fill(d, mem, NOW, snap), ["L-meta-9"])
+            self.assertEqual(allocator.fill(d, mem, NOW+5, snap), [])
+        self.assertEqual(d.calls, [(True, True, "open")])
+        self.assertEqual(state.load("L-meta-9")["work_lane"], "research")
+        self.launch.assert_not_called()
+
     def quiet_snapshot(self, **kw):
         return dict({"complete":True,"observed":NOW-5,"ordinary":0,"offerable":12,
             "gaps":{"L-meta-1":{"points":900,"level":"open","held":0,"parallel":1}}},**kw)
