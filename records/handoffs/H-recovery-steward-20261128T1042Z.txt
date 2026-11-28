@@ -1,0 +1,56 @@
+Recovery steward handoff 2026-11-28T10:42Z (fresh session, after a transient
+backend failure interrupted the previous turn). Reconstructed from durable
+records and primary sources, not from any predecessor conversation.
+
+## What actually happened (effects reconciled, not replayed)
+
+- The real Founder-facing repair is commit e42342a7 on delivery branch
+  delivery/digest-needs-supersession-20261128: government/daily-digest.py
+  (newest-per-volatile-topic supersession + word-boundary clipping + machine
+  needs first) plus hermetic tests/digest-needs-supersession.py. Its first
+  delivery went RED on an 1800s exact-candidate suite timeout under host load
+  (not a code defect). It was re-proposed as head 3ad27b19 and is now
+  `approved; landing` in the queue. It is NOT on main yet. I did not duplicate
+  or re-propose it.
+- The interrupted turn then created a second branch
+  recovery/digest-gate-wire-20261128 (head 7983f920) adding only a wrapper
+  tests/digest-needs-supersession-smoke.sh that unconditionally execs the .py
+  test. Proposed as delivery/digest-needs-supersession-gate-20261128, it was
+  REJECTED by reviewer MPDJUSYTAvfTXcL4OvaGEG-barely: the .py lives only on the
+  unmerged fix branch, so on the exact merged commit run-all.sh would run the
+  wrapper and python3 would exit 2, turning the canonical suite red.
+
+## Repair completed this session
+
+- Independently re-derived that the test is green against the fix code
+  (worktree at e42342a7, canonical suite-env.sh: PASS) and fails against
+  unfixed main — confirming the wrapper must not run before the fix lands.
+- Applied the reviewer-endorsed "no-op when the target is absent" option: the
+  wrapper now skips with an explicit SKIP line and exit 0 while
+  tests/digest-needs-supersession.py is absent, and execs it once present.
+  This makes both landing orders (wrapper first, or fix first) safe.
+  Verified: sh -n OK; guarded wrapper on this branch SKIPs with rc 0.
+- Commit and re-propose of the corrected wrapper: in progress in this session
+  via canonical commit-identity.py + propose-delivery.sh. No gate weakening,
+  no hand-landing, no replay of the rejected prompt.
+
+## Fresh assessment (primary sources, this session)
+
+- unsafe-holds/ has no nonempty hold; institutional-cases index 10:41Z active=[]
+  (127 auto_closed, 8 unchanged legacy without closure evidence); Python 3.12.13;
+  Post inbox [] and historical judiciary mailbox inbox empty; founder-inbox/pending
+  empty and 0 exact-author Vitalik on board feed p1; bills.py open empty;
+  SUMMONED.txt empty. No material shared-runtime blocker to report.
+- Carried forward, recorded once (do not re-report): P-1795610387 held-reservation
+  lockout is irreversible, owned by Clerk/Legislature; no recovery-steward ballot.
+
+## Next falsifiable action
+
+Confirm the fix delivery 3ad27b19 lands on main and the corrected gate wrapper
+lands after it; then confirm run-all.sh on main actually executes
+tests/digest-needs-supersession.py (no SKIP) and that a freshly posted digest
+after 15:00Z has a whole, non-contradictory "Needs you" line. If either delivery
+goes RED/rejected again, record once on the original investigation
+(recovery-steward-digest-needs-supersession-20261128T0844Z.md) rather than
+looping re-proposals; recurring full-suite timeout under load is a shared-runtime
+matter for the competent operator, not a per-case monitor.
