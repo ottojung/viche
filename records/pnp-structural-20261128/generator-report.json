@@ -1,0 +1,358 @@
+{
+  "generator": "missions.pnp.structural.bitpack",
+  "purpose": "reusable finite bit-reflection structural cut",
+  "kernel_checked": false,
+  "desk_credit_claimed": false,
+  "upstream": {
+    "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+    "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+    "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+    "license": "Apache-2.0"
+  },
+  "results": [
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 13,
+      "diffs": [
+        0,
+        1,
+        3,
+        9
+      ],
+      "sha256": "0a45e0cd51c10fb8c3a03f2b715eb7f3bf79e05bd93f36452f121440356714cf",
+      "oracle_identity": {
+        "verified": true,
+        "n": 13,
+        "diffs": [
+          0,
+          1,
+          3,
+          9
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "development",
+      "file": "records/pnp-structural-20261128/candidates/n13_0-1-3-9.lean",
+      "file_sha256": "0a45e0cd51c10fb8c3a03f2b715eb7f3bf79e05bd93f36452f121440356714cf"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 7,
+      "diffs": [
+        0,
+        1,
+        3
+      ],
+      "sha256": "6abca96454cda51e237ccce7b6326fa36465f23fd0c6701d93f1223137c55c3f",
+      "oracle_identity": {
+        "verified": true,
+        "n": 7,
+        "diffs": [
+          0,
+          1,
+          3
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "development",
+      "file": "records/pnp-structural-20261128/candidates/n7_0-1-3.lean",
+      "file_sha256": "6abca96454cda51e237ccce7b6326fa36465f23fd0c6701d93f1223137c55c3f"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 21,
+      "diffs": [
+        0,
+        1,
+        4,
+        14,
+        16
+      ],
+      "sha256": "0530dd5310267d74ca3ad9a662f69aa70bd371b57aa9acc89c65ba633b875469",
+      "oracle_identity": {
+        "verified": true,
+        "n": 21,
+        "diffs": [
+          0,
+          1,
+          4,
+          14,
+          16
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "held_out",
+      "file": "records/pnp-structural-20261128/candidates/n21_0-1-4-14-16.lean",
+      "file_sha256": "0530dd5310267d74ca3ad9a662f69aa70bd371b57aa9acc89c65ba633b875469"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 5,
+      "diffs": [
+        0,
+        1
+      ],
+      "sha256": "a1706f2f8e330749a0c4b8898f38f838d11792050dba752786cda23d34e5a563",
+      "oracle_identity": {
+        "verified": true,
+        "n": 5,
+        "diffs": [
+          0,
+          1
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "held_out",
+      "file": "records/pnp-structural-20261128/candidates/n5_0-1.lean",
+      "file_sha256": "a1706f2f8e330749a0c4b8898f38f838d11792050dba752786cda23d34e5a563"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 9,
+      "diffs": [
+        0,
+        1,
+        3
+      ],
+      "sha256": "ad1035fbae5abcb0f5c18cbfae4cebfa191b1217b43f242acc555f5c60fd111c",
+      "oracle_identity": {
+        "verified": true,
+        "n": 9,
+        "diffs": [
+          0,
+          1,
+          3
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "held_out",
+      "file": "records/pnp-structural-20261128/candidates/n9_0-1-3.lean",
+      "file_sha256": "ad1035fbae5abcb0f5c18cbfae4cebfa191b1217b43f242acc555f5c60fd111c"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 31,
+      "diffs": [
+        0,
+        1,
+        3,
+        8,
+        12,
+        18
+      ],
+      "sha256": "daa43680145ed489e3228a1da6e68a98716fde7439db6240d5d870912036629b",
+      "oracle_identity": {
+        "verified": true,
+        "n": 31,
+        "diffs": [
+          0,
+          1,
+          3,
+          8,
+          12,
+          18
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "held_out",
+      "file": "records/pnp-structural-20261128/candidates/n31_0-1-3-8-12-18.lean",
+      "file_sha256": "daa43680145ed489e3228a1da6e68a98716fde7439db6240d5d870912036629b"
+    },
+    {
+      "result": "candidate",
+      "family": "bitpack_flag",
+      "n": 3,
+      "diffs": [
+        0,
+        1
+      ],
+      "sha256": "5f592380a2d8fa8014dbf70e0710b2035f5bc61022e694aaf02cdf86681c9b65",
+      "oracle_identity": {
+        "verified": true,
+        "n": 3,
+        "diffs": [
+          0,
+          1
+        ],
+        "trials": 400,
+        "seed": 20261128,
+        "family": "bitpack_flag",
+        "local_lean_checked": false
+      },
+      "oracle_lemmas": {
+        "verified": true,
+        "trials": 400,
+        "seed": 20261129,
+        "lemmas": [
+          "readPack",
+          "foldOr",
+          "readMap",
+          "input_read",
+          "bitwise"
+        ],
+        "local_lean_checked": false
+      },
+      "upstream": {
+        "path": "lean/PEqualNP/Outside/L_meta_17487.lean",
+        "revision": "54000fdbe91c846adb213e5acde692ef02bec05f",
+        "blob": "1052b76494a2972ca5ee978fd4dfa6e60b9bd302",
+        "license": "Apache-2.0"
+      },
+      "local_lean_checked": false,
+      "desk_credit_claimed": false,
+      "split": "held_out",
+      "file": "records/pnp-structural-20261128/candidates/n3_0-1.lean",
+      "file_sha256": "5f592380a2d8fa8014dbf70e0710b2035f5bc61022e694aaf02cdf86681c9b65"
+    }
+  ]
+}
