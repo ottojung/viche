@@ -842,4 +842,3 @@ theorem compile (gs : List Gate) (out : ℕ) (hg : ∀ g ∈ gs, legal g)
         exact ⟨t,ht,Or.inl run⟩
       · obtain ⟨t,ht,run⟩ := cont (insert new av) (fun u hu => holds_insert (hw u hu)) rep
         exact ⟨t,ht,Or.inr ⟨a,ha,b,hb,ne,new,op,run⟩⟩
-

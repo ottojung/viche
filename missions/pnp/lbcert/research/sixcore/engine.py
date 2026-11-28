@@ -39,7 +39,7 @@ def _table_literal(n, body, var='x'):
     return val if val.bit_length() <= (1 << n) else None
 
 TEMPLATE = os.path.join(HERE, 'ref_40311.lean')
-TEMPLATE_SHA = '98c3253b88ca8d9ad7441a26c31420da8e776a16a7450988f399328060b19392'
+TEMPLATE_SHA = '2dc325916999e1d8527b68497eefb3b9d1df4eefd0a32099f05994ab909af153'
 STATE_CAP = int(os.environ.get('SIXCORE_STATE_CAP', '400000'))
 SAT_TIMEOUT = int(os.environ.get('SIXCORE_SAT_TIMEOUT', '120'))
 MONO_TIMEOUT = int(os.environ.get('SIXCORE_MONO_TIMEOUT', '30'))
@@ -211,7 +211,8 @@ def solve(gid, stmt, budget=600):
 
 
 def _emit(gid, stmt, n, body, f, T, rows, M, wit, k_refute, name):
-    data = open(TEMPLATE, 'rb').read()
+    with open(TEMPLATE, 'rb') as src_file:
+        data = src_file.read()
     if hashlib.sha256(data).hexdigest() != TEMPLATE_SHA:
         raise ValueError('template digest mismatch')
     src = data.decode('utf-8').split('\n')
