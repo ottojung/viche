@@ -720,6 +720,69 @@ class TestReconcile(unittest.TestCase):
         self.assertIsNone(state.load(GAP)["pr_number"])
         self.assertEqual(d.releases, [])
 
+    def _set_candidate(self, present=True):
+        from missions.pnp import jobs
+        path = jobs.candidate_path(GAP)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if os.path.exists(path):
+            os.unlink(path)
+        if present:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(GOOD)
+        return path
+
+    def _open_pr_gh(self):
+        gh = FakeGH()
+        gh.get_pr = lambda number: {**owned_pr_identity(),
+                                    "url": "https://example.test/pr/123",
+                                    "number": number, "head_sha": SHA,
+                                    "state": "open"}
+        gh.pr_comments = lambda number: []
+        return gh
+
+    def test_pushed_fault_resumes_to_single_pr(self):
+        # A fork push timed out after the signed commit landed.  No PR exists
+        # yet, so recover_fault cannot help; reconciliation must return the
+        # record to the publisher and finish at exactly one PR, never strand
+        # the proof in FAULT.
+        self._set_candidate()
+        new_state("FAULT", commit_sha=SHA, base_sha="base1",
+                  branch=config.branch_for(GAP))
+        gh = self._open_pr_gh()
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(r["state"], "PR_OPEN")
+        self.assertEqual(state.load(GAP)["state"], "PR_OPEN")
+        self.assertEqual(gh.created, 1)
+        # Idempotent: a repeated pass must not open a duplicate PR.
+        reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh, git=FakeGit(remote=SHA))
+        self.assertEqual(gh.created, 1)
+
+    def test_fault_without_landed_commit_is_not_resumed(self):
+        # The fork does not carry the signed commit: the push truly failed, so
+        # there is nothing to resume and the publisher must not re-push here.
+        self._set_candidate()
+        new_state("FAULT", commit_sha=SHA, base_sha="base1",
+                  branch=config.branch_for(GAP))
+        gh = self._open_pr_gh()
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh,
+                                    git=FakeGit(remote=None))
+        self.assertEqual(r["result"], "unresolved-fault")
+        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(gh.created, 0)
+
+    def test_fault_without_candidate_bytes_is_not_resumed(self):
+        # No preserved candidate means the publisher cannot finish; do not
+        # manufacture a transition or a PR from an absent proof.
+        self._set_candidate(present=False)
+        new_state("FAULT", commit_sha=SHA, base_sha="base1",
+                  branch=config.branch_for(GAP))
+        gh = self._open_pr_gh()
+        r = reconcile.reconcile_gap(GAP, desk=FakeDesk(), gh=gh,
+                                    git=FakeGit(remote=SHA))
+        self.assertEqual(r["result"], "unresolved-fault")
+        self.assertEqual(state.load(GAP)["state"], "FAULT")
+        self.assertEqual(gh.created, 0)
+
     def test_renamed_checker_link(self):
         c = verdict_comment(SHA, "ACCEPTED")
         resolve = FakeGH().repository_id

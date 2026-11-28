@@ -84,6 +84,38 @@ def recover_fault(gap_id, rec, desk, gh):
         os.close(fd)
 
 
+def recover_pushed_fault(gap_id, rec, git):
+    """Return a FAULT with a landed signed commit to the publisher.
+
+    A fork push can time out after the commit was accepted remotely.  The
+    publisher already recorded the exact signed commit and preserved the
+    candidate bytes, but the FAULT state is otherwise terminal (reconcile's
+    recover_fault only adopts an already existing PR, and the state machine
+    forbids re-leasing or re-signing).  When the signed commit is confirmed on
+    the fork and no PR exists yet, move the record back to SIGNED so the
+    ordinary detached publisher resumes from that commit and opens the one PR.
+    Never rebuild, re-sign or push here; that remains the publisher's job.
+    """
+    if rec["state"] != "FAULT" or not rec.get("commit_sha"):
+        return False
+    if rec.get("pr_number") or rec.get("pending_pr_number"):
+        return False
+    from . import jobs
+    if not os.path.isfile(jobs.candidate_path(gap_id)):
+        return False
+    branch = rec.get("branch") or config.branch_for(gap_id)
+    try:
+        remote = git.remote_branch_sha(branch)
+    except Exception:
+        return False
+    if remote != rec["commit_sha"]:
+        return False
+    state.transition(gap_id, "SIGNED",
+                     failure_reason="recovered FAULT: signed commit present on fork",
+                     intent=None)
+    return True
+
+
 def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
     """Return a short summary; never raise for one bad gap."""
     desk = desk or desk_mod.Desk()
@@ -101,7 +133,8 @@ def reconcile_gap(gap_id, desk=None, gh=None, git=None, observed=None):
 
     if rec["state"] == "FAULT":
         if not recover_fault(gap_id, rec, desk, gh):
-            return {"gap": gap_id, "result": "unresolved-fault", "state": "FAULT"}
+            if not recover_pushed_fault(gap_id, rec, git):
+                return {"gap": gap_id, "result": "unresolved-fault", "state": "FAULT"}
         rec = state.load(gap_id)
 
     # Missing from a complete fresh frontier is a reason to confirm, not a verdict.

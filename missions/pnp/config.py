@@ -77,7 +77,10 @@ ALLOWED = {
     "PUSHED": {"PR_OPEN", "FAULT"},
     "PR_OPEN": {"ACCEPTED", "REJECTED", "STALE", "FAULT"},
     "REJECTED": {"RESEARCHING", "SIGNED", "FAULT", "STALE"},
-    "FAULT": {"RESEARCHING", "RELEASED", "PR_OPEN"},
+    # A push can time out after the signed commit actually landed on the fork.
+    # Allow returning such a recoverable FAULT to SIGNED so the detached
+    # publisher can finish the PR idempotently (see reconcile.recover_pushed_fault).
+    "FAULT": {"RESEARCHING", "RELEASED", "PR_OPEN", "SIGNED"},
 }
 
 
