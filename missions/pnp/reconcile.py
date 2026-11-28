@@ -100,6 +100,12 @@ def recover_pushed_fault(gap_id, rec, git):
         return False
     if rec.get("pr_number") or rec.get("pending_pr_number"):
         return False
+    # Opening a PR requires a live desk beat; a resume on an ended lease just
+    # bounces back to FAULT every cycle.  A FAULT cannot be re-leased either,
+    # so leave an expired one settled in state instead of looping forever.
+    exp = rec.get("lease_expires_at")
+    if type(exp) not in (int, float) or exp <= time.time():
+        return False
     from . import jobs
     if not os.path.isfile(jobs.candidate_path(gap_id)):
         return False

@@ -33,9 +33,16 @@ class Tests(unittest.TestCase):
         self.assertEqual(status.actionable_publication_alerts(rows, self.NOW), ["L-meta-b"])
 
     def test_recoverable_fault_with_commit_is_an_alert(self):
-        rows = [row("L-meta-c", "FAULT", lease_expires_at=900.0,
+        rows = [row("L-meta-c", "FAULT", lease_expires_at=1100.0,
                     commit_sha="a" * 40, failure_reason="push failed")]
         self.assertEqual(status.actionable_publication_alerts(rows, self.NOW), ["L-meta-c"])
+
+    def test_expired_fault_with_commit_is_not_an_alert(self):
+        # The publisher cannot open a PR without a live desk beat, and FAULT
+        # cannot be re-leased, so a signed commit on an ended lease is settled.
+        rows = [row("L-meta-c2", "FAULT", lease_expires_at=900.0,
+                    commit_sha="a" * 40, failure_reason="lease ended before PR creation")]
+        self.assertEqual(status.actionable_publication_alerts(rows, self.NOW), [])
 
     def test_fault_without_lease_expiry_is_an_alert(self):
         rows = [row("L-meta-d", "FAULT", failure_reason="unknown fault")]
@@ -50,7 +57,7 @@ class Tests(unittest.TestCase):
 
     def test_mixed_pool_keeps_only_actionable(self):
         rows = [row("L-meta-z", "FAULT", lease_expires_at=900.0),
-                row("L-meta-y", "FAULT", lease_expires_at=900.0, commit_sha="b" * 40),
+                row("L-meta-y", "FAULT", lease_expires_at=1100.0, commit_sha="b" * 40),
                 row("L-meta-x", "RELEASED"),
                 row("L-meta-w", "PR_OPEN", failure_reason="drive failed")]
         self.assertEqual(status.actionable_publication_alerts(rows, self.NOW),
